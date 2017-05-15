@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,15 +30,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractThreadLocalLazy;
 import com.vedsoft.lazyj.ILazy;
 
 import java.util.List;
 
-/**
- * Created by david on 6/6/15.
- */
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+
 public class ActiveFileDownloadsFragment extends Fragment {
 
 	private BroadcastReceiver onSyncStartedReceiver;
@@ -74,19 +73,21 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		listView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
 
+		final FragmentActivity activity = getActivity();
+
 		lazyLibraryProvider
 			.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
-				final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
+			.then(runCarelessly(library -> {
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library);
 				storedFileAccess.getDownloadingStoredFiles()
-					.onComplete((storedFiles) -> {
+					.then(Dispatch.toContext(runCarelessly(storedFiles -> {
 						final List<StoredFile> localStoredFiles =
 							Stream.of(storedFiles)
 								.filter(f -> f.getLibraryId() == library.getId())
 								.collect(Collectors.toList());
 
-						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), localStoredFiles);
+						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(activity, localStoredFiles);
 
 						if (onFileDownloadedReceiver != null)
 							localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
@@ -129,13 +130,13 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								}
 
 								storedFileAccess
-										.getStoredFile(storedFileId)
-										.onComplete((storedFile) -> {
-											if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
+									.getStoredFile(storedFileId)
+									.then(Dispatch.toContext(runCarelessly(storedFile -> {
+										if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
 
-											localStoredFiles.add(storedFile);
-											activeFileDownloadsAdapter.add(new ServiceFile(storedFile.getServiceId()));
-										});
+										localStoredFiles.add(storedFile);
+										activeFileDownloadsAdapter.add(new ServiceFile(storedFile.getServiceId()));
+									}), activity));
 							}
 						};
 
@@ -145,12 +146,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 						progressBar.setVisibility(View.INVISIBLE);
 						listView.setVisibility(View.VISIBLE);
-					});
-		}), getActivity()));
+					}), activity));
+		}));
 
 		final Button toggleSyncButton = (Button) viewFileslayout.findViewById(R.id.toggleSyncButton);
-		final CharSequence startSyncLabel = getActivity().getText(R.string.start_sync_button);
-		final CharSequence stopSyncLabel = getActivity().getText(R.string.stop_sync_button);
+		final CharSequence startSyncLabel = activity.getText(R.string.start_sync_button);
+		final CharSequence stopSyncLabel = activity.getText(R.string.stop_sync_button);
 
 		toggleSyncButton.setText(!SyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
 

@@ -13,9 +13,6 @@ import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbit
 
 import java.io.File;
 
-/**
- * Created by david on 7/24/15.
- */
 public class StoredFileUriProvider implements IFileUriProvider {
 	private final StoredFileAccess storedFileAccess;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
@@ -27,20 +24,19 @@ public class StoredFileUriProvider implements IFileUriProvider {
 
 	@Override
 	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
-		return
-			storedFileAccess
-				.getStoredFile(serviceFile)
-				.then(storedFile -> {
-					if (storedFile == null || !storedFile.isDownloadComplete() || storedFile.getPath() == null || storedFile.getPath().isEmpty()) return null;
+		return storedFileAccess
+			.getStoredFile(serviceFile)
+			.then(storedFile -> {
+				if (storedFile == null || !storedFile.isDownloadComplete() || storedFile.getPath() == null || storedFile.getPath().isEmpty()) return null;
 
-					final File systemFile = new File(storedFile.getPath());
-					if (systemFile.getAbsolutePath().contains(Environment.getExternalStorageDirectory().getAbsolutePath()) && !this.externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
-						return null;
-
-					if (systemFile.exists())
-						return Uri.fromFile(systemFile);
-
+				final File systemFile = new File(storedFile.getPath());
+				if (systemFile.getAbsolutePath().contains(Environment.getExternalStorageDirectory().getAbsolutePath()) && !this.externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 					return null;
-				});
+
+				if (systemFile.exists())
+					return Uri.fromFile(systemFile);
+
+				return null;
+			});
 	}
 }
