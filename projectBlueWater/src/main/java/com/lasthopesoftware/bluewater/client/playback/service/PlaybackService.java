@@ -292,7 +292,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		stopForeground(true);
 		isNotificationForeground = false;
 		notificationManagerLazy.getObject().cancel(notificationId);
-		updateClientBitmap(null);
 	}
 
 	private void notifyStartingService() {
@@ -613,13 +612,15 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void pausePlayback(boolean isUserInterrupted) {
 		isPlaying = false;
 
+		updateClientBitmap(null);
+
 		stopNotification();
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
-		updateClientBitmap(null);
-
 		if (playlistManager == null) return;
+
+		playlistManager.pause();
 
 		if (positionedPlaybackFile != null)
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
@@ -737,6 +738,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
+		ImageProvider
+			.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getServiceFile().getKey())
+			.then(Dispatch.toContext(this::updateClientBitmap, this))
+			.error(e -> {
+				logger.warn("There was an error getting the image for the file with id `" + positionedPlaybackFile.getServiceFile().getKey() + "`", e);
+				return null;
+			});
+
 		cachedFilePropertiesProvider
 			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
 			.then(Dispatch.toContext(runCarelessly(fileProperties -> {
@@ -763,10 +772,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				if (trackNumber != null)
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 				metaData.apply();
-
-				ImageProvider
-					.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getServiceFile().getKey())
-					.then(Dispatch.toContext(this::updateClientBitmap, this));
 			}), this))
 		.error(Dispatch.toContext(exception -> {
 			final Builder builder = new Builder(this);
@@ -788,8 +793,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (remoteClientBitmap != null) remoteClientBitmap.recycle();
 		remoteClientBitmap = bitmap;
 
-		final MetadataEditor metaData1 = remoteControlClient.getObject().editMetadata(false);
-		metaData1.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
+		final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(false);
+		metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
 
 		return null;
 	}
@@ -801,6 +806,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private void onPlaylistPlaybackComplete() {
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
+
+		updateClientBitmap(null);
 
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();
