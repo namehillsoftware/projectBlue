@@ -103,6 +103,7 @@ public abstract class Messenger<Input, Resolution> implements
 		while (rejectionRecipients.size() > 0)
 			rejectionRecipients.poll().requestResolution(rejection);
 
-		resolutionRecipients.clear();
+		while (resolutionRecipients.size() > 0)
+			resolutionRecipients.poll().sendRejection(rejection);
 	}
 }
