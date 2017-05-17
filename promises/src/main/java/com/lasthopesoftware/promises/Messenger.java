@@ -7,20 +7,30 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-abstract class Messenger<Input, Resolution> implements
+public abstract class Messenger<Input, Resolution> implements
 	IResolvedPromise<Resolution>,
 	IRejectedPromise,
 	OneParameterAction<Runnable> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-	private final Queue<Messenger<Resolution, ?>> recipients = new ConcurrentLinkedQueue<>();
+	private final Queue<Messenger<Resolution, ?>> resolutionRecipients = new ConcurrentLinkedQueue<>();
+	private final Queue<Messenger<Throwable, ?>> rejectionRecipients = new ConcurrentLinkedQueue<>();
 	private final Cancellation cancellation = new Cancellation();
 
 	private boolean isResolved;
 	private Resolution resolution;
 	private Throwable rejection;
 
-	protected abstract void requestResolution(Input input, Throwable throwable);
+	private boolean getIsResolvedSynchronously() {
+		resolveSync.readLock().lock();
+		try {
+			return isResolved;
+		} finally {
+			resolveSync.readLock().unlock();
+		}
+	}
+
+	protected abstract void requestResolution(Input input);
 
 	@Override
 	public final void sendRejection(Throwable error) {
@@ -51,7 +61,13 @@ abstract class Messenger<Input, Resolution> implements
 	}
 
 	final void awaitResolution(Messenger<Resolution, ?> recipient) {
-		recipients.offer(recipient);
+		resolutionRecipients.offer(recipient);
+
+		processQueue(resolution, rejection);
+	}
+
+	final void awaitRejection(Messenger<Throwable, ?> recipient) {
+		rejectionRecipients.offer(recipient);
 
 		processQueue(resolution, rejection);
 	}
@@ -73,14 +89,20 @@ abstract class Messenger<Input, Resolution> implements
 	}
 
 	private void processQueue(Resolution resolution, Throwable rejection) {
-		resolveSync.readLock().lock();
-		try {
-			if (!isResolved) return;
-		} finally {
-			resolveSync.readLock().unlock();
+		if (!getIsResolvedSynchronously()) return;
+
+		if (rejection == null) {
+			while (resolutionRecipients.size() > 0)
+				resolutionRecipients.poll().requestResolution(resolution);
+
+			rejectionRecipients.clear();
+
+			return;
 		}
 
-		while (recipients.size() > 0)
-			recipients.poll().requestResolution(resolution, rejection);
+		while (rejectionRecipients.size() > 0)
+			rejectionRecipients.poll().requestResolution(rejection);
+
+		resolutionRecipients.clear();
 	}
 }

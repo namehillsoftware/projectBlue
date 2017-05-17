@@ -7,7 +7,7 @@ package com.lasthopesoftware.promises;
 public abstract class EmptyMessenger<Resolution> extends Messenger<Void, Resolution> {
 
 	@Override
-	protected final void requestResolution(Void empty, Throwable ignored) {
+	protected final void requestResolution(Void empty) {
 		requestResolution();
 	}
 
