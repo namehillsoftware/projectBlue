@@ -84,18 +84,21 @@ public abstract class Messenger<Input, Resolution> implements
 		if (!isResolvedSynchronously()) return;
 
 		if (rejection == null) {
-			while (resolutionRecipients.size() > 0)
-				resolutionRecipients.poll().requestResolution(resolution);
+			Messenger<Resolution, ?> oldestResolutionMessenger;
+			while ((oldestResolutionMessenger = resolutionRecipients.poll()) != null)
+				oldestResolutionMessenger.requestResolution(resolution);
 
 			rejectionRecipients.clear();
 
 			return;
 		}
 
-		while (rejectionRecipients.size() > 0)
-			rejectionRecipients.poll().requestResolution(rejection);
+		Messenger<Throwable, ?> oldestThrowableMessenger;
+		while ((oldestThrowableMessenger = rejectionRecipients.poll()) != null)
+			oldestThrowableMessenger.requestResolution(rejection);
 
-		while (resolutionRecipients.size() > 0)
-			resolutionRecipients.poll().sendRejection(rejection);
+		Messenger<Resolution, ?> oldestResolutionMessenger;
+		while ((oldestResolutionMessenger = resolutionRecipients.poll()) != null)
+			oldestResolutionMessenger.sendRejection(rejection);
 	}
 }
