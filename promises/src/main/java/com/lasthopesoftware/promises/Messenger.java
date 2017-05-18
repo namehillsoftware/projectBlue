@@ -7,30 +7,20 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public abstract class Messenger<Input, Resolution> implements
+abstract class Messenger<Input, Resolution> implements
 	IResolvedPromise<Resolution>,
 	IRejectedPromise,
 	OneParameterAction<Runnable> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-	private final Queue<Messenger<Resolution, ?>> resolutionRecipients = new ConcurrentLinkedQueue<>();
-	private final Queue<Messenger<Throwable, ?>> rejectionRecipients = new ConcurrentLinkedQueue<>();
+	private final Queue<Messenger<Resolution, ?>> recipients = new ConcurrentLinkedQueue<>();
 	private final Cancellation cancellation = new Cancellation();
 
 	private boolean isResolved;
 	private Resolution resolution;
 	private Throwable rejection;
 
-	private boolean isResolvedSynchronously() {
-		resolveSync.readLock().lock();
-		try {
-			return isResolved;
-		} finally {
-			resolveSync.readLock().unlock();
-		}
-	}
-
-	protected abstract void requestResolution(Input input);
+	protected abstract void requestResolution(Input input, Throwable throwable);
 
 	@Override
 	public final void sendRejection(Throwable error) {
@@ -48,18 +38,20 @@ public abstract class Messenger<Input, Resolution> implements
 	}
 
 	final void cancel() {
-		if (!isResolvedSynchronously())
+		final boolean isResolvedLocally;
+		resolveSync.readLock().lock();
+		try {
+			isResolvedLocally = isResolved;
+		} finally {
+			resolveSync.readLock().unlock();
+		}
+
+		if (!isResolvedLocally)
 			cancellation.cancel();
 	}
 
 	final void awaitResolution(Messenger<Resolution, ?> recipient) {
-		resolutionRecipients.offer(recipient);
-
-		processQueue(resolution, rejection);
-	}
-
-	final void awaitRejection(Messenger<Throwable, ?> recipient) {
-		rejectionRecipients.offer(recipient);
+		recipients.offer(recipient);
 
 		processQueue(resolution, rejection);
 	}
@@ -81,21 +73,14 @@ public abstract class Messenger<Input, Resolution> implements
 	}
 
 	private void processQueue(Resolution resolution, Throwable rejection) {
-		if (!isResolvedSynchronously()) return;
-
-		if (rejection == null) {
-			for (Messenger<Resolution, ?> oldestResolutionMessenger = resolutionRecipients.poll(); oldestResolutionMessenger != null; oldestResolutionMessenger = resolutionRecipients.poll())
-				oldestResolutionMessenger.requestResolution(resolution);
-
-			rejectionRecipients.clear();
-
-			return;
+		resolveSync.readLock().lock();
+		try {
+			if (!isResolved) return;
+		} finally {
+			resolveSync.readLock().unlock();
 		}
 
-		for (Messenger<Throwable, ?> oldestThrowableMessenger = rejectionRecipients.poll(); oldestThrowableMessenger != null; oldestThrowableMessenger = rejectionRecipients.poll())
-			oldestThrowableMessenger.requestResolution(rejection);
-
-		for (Messenger<Resolution, ?> oldestResolutionMessenger = resolutionRecipients.poll(); oldestResolutionMessenger != null; oldestResolutionMessenger = resolutionRecipients.poll())
-			oldestResolutionMessenger.sendRejection(rejection);
+		while (recipients.size() > 0)
+			recipients.poll().requestResolution(resolution, rejection);
 	}
 }

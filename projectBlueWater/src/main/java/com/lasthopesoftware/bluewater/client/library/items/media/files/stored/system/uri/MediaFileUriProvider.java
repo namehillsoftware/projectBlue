@@ -73,7 +73,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 						final String fileUriString = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
 						if (fileUriString == null || fileUriString.isEmpty()) return null;
 
-						// The serviceFile object will producePromise a properly escaped ServiceFile URI, as opposed to what is stored in the DB
+						// The serviceFile object will produce a properly escaped ServiceFile URI, as opposed to what is stored in the DB
 						final java.io.File systemFile = new java.io.File(fileUriString.replaceFirst(IoCommon.FileUriScheme + "://", ""));
 
 						if (!systemFile.exists()) return null;

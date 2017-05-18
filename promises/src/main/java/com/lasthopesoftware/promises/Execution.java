@@ -97,7 +97,7 @@ final class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
+		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends ResolutionProcessor<TResult, TNewResult> {
 			private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled;
 
 			ErrorPropagatingCancellableExecutor(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
@@ -105,7 +105,7 @@ final class Execution {
 			}
 
 			@Override
-			protected void requestResolution(TResult result) {
+			protected void processResolution(TResult result) {
 				onFulfilled.runWith(result, this, this, this);
 			}
 		}
@@ -113,7 +113,7 @@ final class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static final class RejectionDependentCancellableExecutor<TNewRejectedResult> extends Messenger<Throwable, TNewRejectedResult> {
+		static final class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends ErrorProcessor<TResult, TNewRejectedResult> {
 			private final FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
 
 			RejectionDependentCancellableExecutor(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
@@ -121,8 +121,28 @@ final class Execution {
 			}
 
 			@Override
-			protected void requestResolution(Throwable throwable) {
+			protected void processError(Throwable throwable) {
 				onRejected.runWith(throwable, this, this, this);
+			}
+		}
+
+		static final class ResolvedCancellablePromise<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+			private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled;
+
+			ResolvedCancellablePromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled) {
+				this.onFulfilled = onFulfilled;
+			}
+
+			@Override
+			public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+				try {
+					onFulfilled
+						.resultFrom(result, onCancelled)
+						.then(new Resolution.ResolveWithPromiseResult<>(resolve))
+						.error(new Resolution.RejectWithPromiseError(reject));
+				} catch (Throwable rejection) {
+					reject.sendRejection(rejection);
+				}
 			}
 		}
 	}
@@ -130,7 +150,7 @@ final class Execution {
 	/**
 	 * Created by david on 10/19/16.
 	 */
-	static final class RejectionDependentExecutor<TNewRejectedResult> extends Messenger<Throwable, TNewRejectedResult> {
+	static final class RejectionDependentExecutor<TResult, TNewRejectedResult> extends ErrorProcessor<TResult, TNewRejectedResult> {
 		private final ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected;
 
 		RejectionDependentExecutor(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
@@ -138,7 +158,7 @@ final class Execution {
 		}
 
 		@Override
-		protected void requestResolution(Throwable throwable) {
+		protected void processError(Throwable throwable) {
 			onRejected.runWith(throwable, this, this);
 		}
 	}
@@ -166,7 +186,7 @@ final class Execution {
 	/**
 	 * Created by david on 10/18/16.
 	 */
-	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> extends Messenger<TResult, TNewResult> {
+	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> extends ResolutionProcessor<TResult, TNewResult> {
 		private final ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
 		ErrorPropagatingResolveExecutor(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
@@ -174,15 +194,15 @@ final class Execution {
 		}
 
 		@Override
-		protected void requestResolution(TResult result) {
+		protected void processResolution(TResult result) {
 			onFulfilled.runWith(result, this, this);
 		}
 	}
 
 	static final class PromisedResolution<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
-		private final ProducePromise<TResult, TNewResult> onFulfilled;
+		private final CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled;
 
-		PromisedResolution(ProducePromise<TResult, TNewResult> onFulfilled) {
+		PromisedResolution(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
 			this.onFulfilled = onFulfilled;
 		}
 
@@ -190,7 +210,7 @@ final class Execution {
 		public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
 			try {
 				onFulfilled
-					.producePromise(result)
+					.resultFrom(result)
 					.then(new Resolution.ResolveWithPromiseResult<>(resolve))
 					.error(new Resolution.RejectWithPromiseError(reject));
 			} catch (Throwable rejection) {
