@@ -84,8 +84,7 @@ public abstract class Messenger<Input, Resolution> implements
 		if (!isResolvedSynchronously()) return;
 
 		if (rejection == null) {
-			Messenger<Resolution, ?> oldestResolutionMessenger;
-			while ((oldestResolutionMessenger = resolutionRecipients.poll()) != null)
+			for (Messenger<Resolution, ?> oldestResolutionMessenger = resolutionRecipients.poll(); oldestResolutionMessenger != null; oldestResolutionMessenger = resolutionRecipients.poll())
 				oldestResolutionMessenger.requestResolution(resolution);
 
 			rejectionRecipients.clear();
@@ -93,12 +92,10 @@ public abstract class Messenger<Input, Resolution> implements
 			return;
 		}
 
-		Messenger<Throwable, ?> oldestThrowableMessenger;
-		while ((oldestThrowableMessenger = rejectionRecipients.poll()) != null)
+		for (Messenger<Throwable, ?> oldestThrowableMessenger = rejectionRecipients.poll(); oldestThrowableMessenger != null; oldestThrowableMessenger = rejectionRecipients.poll())
 			oldestThrowableMessenger.requestResolution(rejection);
 
-		Messenger<Resolution, ?> oldestResolutionMessenger;
-		while ((oldestResolutionMessenger = resolutionRecipients.poll()) != null)
+		for (Messenger<Resolution, ?> oldestResolutionMessenger = resolutionRecipients.poll(); oldestResolutionMessenger != null; oldestResolutionMessenger = resolutionRecipients.poll())
 			oldestResolutionMessenger.sendRejection(rejection);
 	}
 }
