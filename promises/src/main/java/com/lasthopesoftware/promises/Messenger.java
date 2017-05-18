@@ -21,7 +21,7 @@ public abstract class Messenger<Input, Resolution> implements
 	private Resolution resolution;
 	private Throwable rejection;
 
-	private boolean getIsResolvedSynchronously() {
+	private boolean isResolvedSynchronously() {
 		resolveSync.readLock().lock();
 		try {
 			return isResolved;
@@ -48,15 +48,7 @@ public abstract class Messenger<Input, Resolution> implements
 	}
 
 	final void cancel() {
-		final boolean isResolvedLocally;
-		resolveSync.readLock().lock();
-		try {
-			isResolvedLocally = isResolved;
-		} finally {
-			resolveSync.readLock().unlock();
-		}
-
-		if (!isResolvedLocally)
+		if (!isResolvedSynchronously())
 			cancellation.cancel();
 	}
 
@@ -89,7 +81,7 @@ public abstract class Messenger<Input, Resolution> implements
 	}
 
 	private void processQueue(Resolution resolution, Throwable rejection) {
-		if (!getIsResolvedSynchronously()) return;
+		if (!isResolvedSynchronously()) return;
 
 		if (rejection == null) {
 			while (resolutionRecipients.size() > 0)
