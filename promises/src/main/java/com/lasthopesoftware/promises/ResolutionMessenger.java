@@ -1,7 +1,7 @@
 package com.lasthopesoftware.promises;
 
 
-public abstract class ResolutionProcessor<InputResolution, NewResolution> extends Messenger<InputResolution, NewResolution> {
+public abstract class ResolutionMessenger<InputResolution, NewResolution> extends Messenger<InputResolution, NewResolution> {
 
 	@Override
 	protected final void requestResolution(InputResolution inputResolution, Throwable throwable) {

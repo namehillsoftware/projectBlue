@@ -50,7 +50,7 @@ public class Promise<TResult> {
 		return new Promise<>(onFulfilled);
 	}
 
-	public final <NewResult> Promise<NewResult> then(ResolutionProcessor<TResult, NewResult> onFulfilled) {
+	public final <NewResult> Promise<NewResult> then(ResolutionMessenger<TResult, NewResult> onFulfilled) {
 		return then((Messenger<TResult, NewResult>)onFulfilled);
 	}
 
@@ -62,8 +62,8 @@ public class Promise<TResult> {
 		return then(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorProcessor<TResult, TNewRejectedResult> errorProcessor) {
-		return then(errorProcessor);
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorMessenger<TResult, TNewRejectedResult> errorMessenger) {
+		return then(errorMessenger);
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {

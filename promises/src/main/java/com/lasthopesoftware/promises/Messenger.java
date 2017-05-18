@@ -4,6 +4,7 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -22,6 +23,16 @@ abstract class Messenger<Input, Resolution> implements
 
 	protected abstract void requestResolution(Input input, Throwable throwable);
 
+	private boolean isResolvedSynchronously() {
+		final Lock readLock = resolveSync.readLock();
+		readLock.lock();
+		try {
+			return isResolved;
+		} finally {
+			readLock.unlock();
+		}
+	}
+
 	@Override
 	public final void sendRejection(Throwable error) {
 		resolve(null, error);
@@ -38,22 +49,14 @@ abstract class Messenger<Input, Resolution> implements
 	}
 
 	final void cancel() {
-		final boolean isResolvedLocally;
-		resolveSync.readLock().lock();
-		try {
-			isResolvedLocally = isResolved;
-		} finally {
-			resolveSync.readLock().unlock();
-		}
-
-		if (!isResolvedLocally)
+		if (!isResolvedSynchronously())
 			cancellation.cancel();
 	}
 
 	final void awaitResolution(Messenger<Resolution, ?> recipient) {
 		recipients.offer(recipient);
 
-		processQueue(resolution, rejection);
+		dispatchMessage(resolution, rejection);
 	}
 
 	private void resolve(Resolution resolution, Throwable rejection) {
@@ -69,18 +72,13 @@ abstract class Messenger<Input, Resolution> implements
 			resolveSync.writeLock().unlock();
 		}
 
-		processQueue(resolution, rejection);
+		dispatchMessage(resolution, rejection);
 	}
 
-	private void processQueue(Resolution resolution, Throwable rejection) {
-		resolveSync.readLock().lock();
-		try {
-			if (!isResolved) return;
-		} finally {
-			resolveSync.readLock().unlock();
-		}
+	private synchronized void dispatchMessage(Resolution resolution, Throwable rejection) {
+		if (!isResolvedSynchronously()) return;
 
-		while (recipients.size() > 0)
-			recipients.poll().requestResolution(resolution, rejection);
+		for (Messenger<Resolution, ?> r = recipients.poll(); r != null; r = recipients.poll())
+			r.requestResolution(resolution, rejection);
 	}
 }

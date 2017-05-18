@@ -97,7 +97,7 @@ final class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends ResolutionProcessor<TResult, TNewResult> {
+		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends ResolutionMessenger<TResult, TNewResult> {
 			private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled;
 
 			ErrorPropagatingCancellableExecutor(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
@@ -113,7 +113,7 @@ final class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static final class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends ErrorProcessor<TResult, TNewRejectedResult> {
+		static final class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends ErrorMessenger<TResult, TNewRejectedResult> {
 			private final FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
 
 			RejectionDependentCancellableExecutor(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
@@ -150,7 +150,7 @@ final class Execution {
 	/**
 	 * Created by david on 10/19/16.
 	 */
-	static final class RejectionDependentExecutor<TResult, TNewRejectedResult> extends ErrorProcessor<TResult, TNewRejectedResult> {
+	static final class RejectionDependentExecutor<TResult, TNewRejectedResult> extends ErrorMessenger<TResult, TNewRejectedResult> {
 		private final ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected;
 
 		RejectionDependentExecutor(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
@@ -186,7 +186,7 @@ final class Execution {
 	/**
 	 * Created by david on 10/18/16.
 	 */
-	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> extends ResolutionProcessor<TResult, TNewResult> {
+	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> extends ResolutionMessenger<TResult, TNewResult> {
 		private final ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
 
 		ErrorPropagatingResolveExecutor(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
