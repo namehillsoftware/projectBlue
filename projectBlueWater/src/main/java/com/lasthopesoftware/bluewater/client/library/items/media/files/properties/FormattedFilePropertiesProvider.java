@@ -76,7 +76,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		return
 			super
 				.promiseFileProperties(fileKey)
-				.then(FormattedFilePropertiesProvider::buildFormattedReadonlyProperties);
+				.next(FormattedFilePropertiesProvider::buildFormattedReadonlyProperties);
 	}
 
 	/* Formatted properties helpers */

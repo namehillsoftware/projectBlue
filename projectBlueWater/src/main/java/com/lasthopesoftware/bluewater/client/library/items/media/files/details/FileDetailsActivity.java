@@ -138,7 +138,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 		formattedFilePropertiesProvider
 			.promiseFileProperties(fileKey)
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileProperties -> {
+			.next(Dispatch.toContext(VoidFunc.runCarelessly(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -197,7 +197,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
         ImageProvider
 			.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, fileKey)
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
+			.next(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 
 				if (isDestroyed) {

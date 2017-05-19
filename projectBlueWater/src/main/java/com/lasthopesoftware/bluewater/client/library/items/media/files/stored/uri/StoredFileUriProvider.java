@@ -26,7 +26,7 @@ public class StoredFileUriProvider implements IFileUriProvider {
 	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
 		return storedFileAccess
 			.getStoredFile(serviceFile)
-			.then(storedFile -> {
+			.next(storedFile -> {
 				if (storedFile == null || !storedFile.isDownloadComplete() || storedFile.getPath() == null || storedFile.getPath().isEmpty()) return null;
 
 				final File systemFile = new File(storedFile.getPath());

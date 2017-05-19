@@ -40,12 +40,12 @@ public class WhenChainingResolutionTwice {
 		firstResultHandler = mock(CarelessOneParameterFunction.class);
 
 		rootPromise
-			.then(firstResultHandler);
+			.next(firstResultHandler);
 
 		secondResultHandler = mock(CarelessOneParameterFunction.class);
 
 		rootPromise
-			.then(secondResultHandler);
+			.next(secondResultHandler);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}

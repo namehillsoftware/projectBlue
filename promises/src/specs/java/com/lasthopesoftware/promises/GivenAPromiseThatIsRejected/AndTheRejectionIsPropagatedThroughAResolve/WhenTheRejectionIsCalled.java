@@ -19,7 +19,7 @@ public class WhenTheRejectionIsCalled {
 	public void before() {
 		thrownException = new Exception();
 		new Promise<String>(() -> { throw thrownException; })
-				.then(result -> null)
+				.next(result -> null)
 				.error(exception -> caughtException = exception);
 	}
 

@@ -29,7 +29,7 @@ public class FilePlayClickListener extends AbstractMenuClickHandler {
 
 		FileStringListUtilities
 			.promiseSerializedFileStringList(serviceFiles)
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(serviceFiles))), context));
+			.next(Dispatch.toContext(VoidFunc.runCarelessly(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(serviceFiles))), context));
 
         super.onClick(v);
 	}

@@ -29,7 +29,7 @@ public class WhenChainingAResolutionAndError {
 		});
 
 		Promise.whenAll(firstPromise, secondPromise, thirdPromise, fourthPromise)
-			.then(strings -> result = new ArrayList<>(strings))
+			.next(strings -> result = new ArrayList<>(strings))
 			.error(e -> caughtException = e);
 	}
 

@@ -102,17 +102,17 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}, handler);
 
 		getSelectedBrowserLibrary()
-			.then(Dispatch.toHandler(activeLibrary ->
+			.next(Dispatch.toHandler(activeLibrary ->
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.then(onGetVisibleViewsCompleteListener)
+					.next(onGetVisibleViewsCompleteListener)
 					.error(new HandleViewIoException<>(getContext(), new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.then(onGetVisibleViewsCompleteListener)
+								.next(onGetVisibleViewsCompleteListener)
 								.error(new HandleViewIoException<>(getContext(), this));
 						}
 					})), handler));
@@ -156,7 +156,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
 
 		getSelectedBrowserLibrary()
-			.then(VoidFunc.runCarelessly(library -> {
+			.next(VoidFunc.runCarelessly(library -> {
 				if (library != null)
 					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 			}));
@@ -169,7 +169,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		if (savedInstanceState == null || viewPager == null) return;
 
 		getSelectedBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
+			.next(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

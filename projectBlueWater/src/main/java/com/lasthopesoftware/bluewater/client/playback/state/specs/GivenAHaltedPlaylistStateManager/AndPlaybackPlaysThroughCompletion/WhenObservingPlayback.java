@@ -64,7 +64,7 @@ public class WhenObservingPlayback {
 					new ServiceFile(3),
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0)
-			.then(obs ->  obs.subscribe(p -> {
+			.next(obs ->  obs.subscribe(p -> {
 				countDownLatch.countDown();
 			}));
 

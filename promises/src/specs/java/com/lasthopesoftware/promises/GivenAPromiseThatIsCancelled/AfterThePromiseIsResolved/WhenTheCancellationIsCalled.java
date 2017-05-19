@@ -28,7 +28,7 @@ public class WhenTheCancellationIsCalled {
 				resolve.sendResolution(expectedResult);
 			});
 
-		cancellablePromise.then(result -> WhenTheCancellationIsCalled.result = result);
+		cancellablePromise.next(result -> WhenTheCancellationIsCalled.result = result);
 
 		cancellablePromise.cancel();
 	}

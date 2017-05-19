@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -28,6 +27,7 @@ import java.util.Set;
 
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class SessionConnection {
 
@@ -62,7 +62,7 @@ public class SessionConnection {
 		final LibraryRepository libraryRepository = new LibraryRepository(context);
 		libraryRepository
 			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
-				.then(VoidFunc.runCarelessly(library -> {
+				.next(runCarelessly(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 					isRunning = false;
@@ -87,7 +87,7 @@ public class SessionConnection {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
 					LibraryViewsProvider.provide(sessionConnectionProvider)
-						.then(result1 -> {
+						.next(result1 -> {
 
 							if (result1 == null || result1.size() == 0) {
 								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
@@ -101,7 +101,7 @@ public class SessionConnection {
 
 							libraryRepository
 								.saveLibrary(library)
-								.then(VoidFunc.runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+								.next(runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 
 							return null;
 						});

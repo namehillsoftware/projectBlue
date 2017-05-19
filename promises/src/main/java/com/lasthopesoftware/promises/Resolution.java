@@ -45,7 +45,7 @@ final class Resolution {
 		ResultCollector(Collection<Promise<TResult>> promises) {
 			this.results = new ArrayList<>(promises.size());
 			for (Promise<TResult> promise : promises)
-				promise.then(this);
+				promise.next(this);
 		}
 
 		@Override

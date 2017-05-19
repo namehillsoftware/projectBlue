@@ -54,7 +54,7 @@ class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 
 			final File[] filesInCacheDir = cacheDir.listFiles();
 
-			// If the # of files in the cache dir is equal to the database size, then
+			// If the # of files in the cache dir is equal to the database size, next
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
 			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(repositoryAccessHelper))

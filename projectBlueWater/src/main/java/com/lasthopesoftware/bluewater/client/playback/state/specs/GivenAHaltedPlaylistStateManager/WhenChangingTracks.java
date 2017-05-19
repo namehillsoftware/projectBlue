@@ -89,7 +89,7 @@ public class WhenChangingTracks {
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		playlistManager.changePosition(3, 0).then(p -> {
+		playlistManager.changePosition(3, 0).next(p -> {
 			nextSwitchedFile = p;
 			countDownLatch.countDown();
 			return null;

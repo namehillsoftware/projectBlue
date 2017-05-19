@@ -57,7 +57,7 @@ public class WhenATrackIsSwitched {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		playlistManager.changePosition(3, 0).then(p -> nextSwitchedFile = p);
+		playlistManager.changePosition(3, 0).next(p -> nextSwitchedFile = p);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}

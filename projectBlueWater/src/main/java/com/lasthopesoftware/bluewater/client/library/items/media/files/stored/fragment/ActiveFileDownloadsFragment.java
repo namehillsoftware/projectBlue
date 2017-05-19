@@ -69,10 +69,10 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		selectedBrowserLibraryProvider
 			.getBrowserLibrary()
-			.then(runCarelessly(library -> {
+			.next(runCarelessly(library -> {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library);
 				storedFileAccess.getDownloadingStoredFiles()
-					.then(Dispatch.toContext(runCarelessly(storedFiles -> {
+					.next(Dispatch.toContext(runCarelessly(storedFiles -> {
 						final List<StoredFile> localStoredFiles =
 							Stream.of(storedFiles)
 								.filter(f -> f.getLibraryId() == library.getId())
@@ -122,7 +122,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 								storedFileAccess
 									.getStoredFile(storedFileId)
-									.then(Dispatch.toContext(runCarelessly(storedFile -> {
+									.next(Dispatch.toContext(runCarelessly(storedFile -> {
 										if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
 
 										localStoredFiles.add(storedFile);

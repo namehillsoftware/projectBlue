@@ -67,14 +67,14 @@ public class WhenChangingTracks {
 					new ServiceFile(3),
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0)
-			.then(obs -> obs.subscribe(p -> {
+			.next(obs -> obs.subscribe(p -> {
 				latestFile = p;
 				countDownLatch.countDown();
 			}));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
 
-		playlistManager.changePosition(3, 0).then(p -> {
+		playlistManager.changePosition(3, 0).next(p -> {
 			nextSwitchedFile = p;
 			countDownLatch.countDown();
 			return null;

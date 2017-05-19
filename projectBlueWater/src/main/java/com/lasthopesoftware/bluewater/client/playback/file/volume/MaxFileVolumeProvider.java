@@ -38,7 +38,7 @@ public class MaxFileVolumeProvider {
 		return
 			cachedFilePropertiesProvider
 				.promiseFileProperties(serviceFile.getKey())
-				.then(fileProperties -> {
+				.next(fileProperties -> {
 					if (!fileProperties.containsKey(FilePropertiesProvider.VolumeLevelR128))
 						return UnityVolume;
 

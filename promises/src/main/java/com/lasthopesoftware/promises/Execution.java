@@ -138,7 +138,7 @@ final class Execution {
 				try {
 					onFulfilled
 						.resultFrom(result, onCancelled)
-						.then(new Resolution.ResolveWithPromiseResult<>(resolve))
+						.next(new Resolution.ResolveWithPromiseResult<>(resolve))
 						.error(new Resolution.RejectWithPromiseError(reject));
 				} catch (Throwable rejection) {
 					reject.sendRejection(rejection);
@@ -211,7 +211,7 @@ final class Execution {
 			try {
 				onFulfilled
 					.resultFrom(result)
-					.then(new Resolution.ResolveWithPromiseResult<>(resolve))
+					.next(new Resolution.ResolveWithPromiseResult<>(resolve))
 					.error(new Resolution.RejectWithPromiseError(reject));
 			} catch (Throwable rejection) {
 				reject.sendRejection(rejection);

@@ -34,7 +34,7 @@ public class WhenResolvingTwice {
 			resolve.sendResolution(unexpectedResult);
 			latch.countDown();
 		}).start())
-		.then(result -> WhenResolvingTwice.result = result);;
+		.next(result -> WhenResolvingTwice.result = result);;
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}

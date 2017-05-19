@@ -64,7 +64,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 		return
 			mediaQueryCursorProvider
 				.getMediaQueryCursor(serviceFile)
-				.then(cursor -> {
+				.next(cursor -> {
 					if (cursor == null) return null;
 
 					try {

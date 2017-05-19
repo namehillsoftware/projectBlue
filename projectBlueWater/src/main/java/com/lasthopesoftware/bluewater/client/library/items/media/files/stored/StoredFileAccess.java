@@ -203,14 +203,14 @@ public class StoredFileAccess {
 					reject.sendRejection(e);
 				}
 			}, RepositoryAccessHelper.databaseExecutor)
-			.thenPromise(storedFile -> {
+			.then(storedFile -> {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 					return new Promise<>(storedFile);
 
 				final Promise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(serviceFile);
 
 				return fileUriPromise
-					.thenPromise(localUri -> {
+					.then(localUri -> {
 						if (localUri == null)
 							return new Promise<>(storedFile);
 
@@ -222,7 +222,7 @@ public class StoredFileAccess {
 							return
 								mediaFileIdProvider
 									.getMediaId()
-									.then(mediaId -> {
+									.next(mediaId -> {
 										storedFile.setStoredMediaId(mediaId);
 										return storedFile;
 									});
@@ -232,13 +232,13 @@ public class StoredFileAccess {
 						}
 					});
 				})
-				.thenPromise(storedFile -> {
+				.then(storedFile -> {
 					if (storedFile.getPath() != null)
 						return new Promise<>(storedFile);
 
 					return cachedFilePropertiesProvider
 						.promiseFileProperties(serviceFile.getKey())
-						.then(fileProperties -> {
+						.next(fileProperties -> {
 							String fullPath = library.getSyncDir(context).getPath();
 
 							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
@@ -266,7 +266,7 @@ public class StoredFileAccess {
 							return storedFile;
 						});
 				})
-				.thenPromise(storedFile -> new QueuedPromise<>(() -> {
+				.then(storedFile -> new QueuedPromise<>(() -> {
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 						updateStoredFile(repositoryAccessHelper, storedFile);
 						return storedFile;

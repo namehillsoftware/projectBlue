@@ -88,7 +88,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
         itemProvider
 			.promiseData()
-			.then(itemProviderComplete)
+			.next(itemProviderComplete)
 			.error(
 				new HandleViewIoException<>(this,
 					new Runnable() {
@@ -96,7 +96,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 						public void run() {
 							itemProvider
 								.promiseData()
-								.then(itemProviderComplete)
+								.next(itemProviderComplete)
 								.error(new HandleViewIoException<>(ItemListActivity.this, this));
 						}
 					}));
@@ -118,7 +118,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 	private void BuildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
+			.next(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 

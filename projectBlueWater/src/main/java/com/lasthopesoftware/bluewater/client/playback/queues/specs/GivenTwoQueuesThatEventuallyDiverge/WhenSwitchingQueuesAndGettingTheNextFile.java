@@ -59,7 +59,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(file -> positionedPlaybackFile = file);
+			.next(file -> positionedPlaybackFile = file);
 	}
 
 	@Test

@@ -146,7 +146,7 @@ public class SyncService extends Service {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(storedFile.getLibraryId())
-			.then((Library library, IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
+			.next((Library library, IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
 				final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
@@ -156,10 +156,10 @@ public class SyncService extends Service {
 				onCancelled.runWith(filePropertiesPromise::cancel);
 
 				filePropertiesPromise
-					.then(runCarelessly(resolve::sendResolution))
+					.next(runCarelessly(resolve::sendResolution))
 					.error(runCarelessly(reject::sendRejection));
 			}))
-			.then(Dispatch.toContext(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
+			.next(Dispatch.toContext(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
 			.error(Dispatch.toContext(exception -> {
 				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
 				return true;
@@ -249,7 +249,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		lazyLibraryProvider.getObject().getAllLibraries().then(Dispatch.toContext(runCarelessly(libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().next(Dispatch.toContext(runCarelessly(libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {

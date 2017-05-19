@@ -234,7 +234,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					return;
 				}
 
-				playlistManager.resume().then(observable -> observePlaybackFileChanges(observable));
+				playlistManager.resume().next(observable -> observePlaybackFileChanges(observable));
 			};
 		}
 	};
@@ -363,8 +363,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.then(this::initializePlaybackPlaylistStateManager)
-				.then(runCarelessly(m -> actOnIntent(intent)))
+				.next(this::initializePlaybackPlaylistStateManager)
+				.next(runCarelessly(m -> actOnIntent(intent)))
 				.error(UnhandledRejectionHandler);
 
 			return START_NOT_STICKY;
@@ -421,8 +421,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.then(this::initializePlaybackPlaylistStateManager)
-				.then(runCarelessly(m -> actOnIntent(intentToRun)))
+				.next(this::initializePlaybackPlaylistStateManager)
+				.next(runCarelessly(m -> actOnIntent(intentToRun)))
 				.error(UnhandledRejectionHandler);
 
 			return;
@@ -486,10 +486,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.thenPromise(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0))
-				.then(this::observePlaybackFileChanges)
-				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(this::handlePlaybackStarted)
+				.then(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0))
+				.next(this::observePlaybackFileChanges)
+				.next(lazyPlaybackStartedBroadcaster.getObject())
+				.next(this::handlePlaybackStarted)
 				.error(UnhandledRejectionHandler);
 
 			return;
@@ -501,9 +501,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (action.equals(Action.play)) {
         	playlistManager
 				.resume()
-				.then(this::restartObservable)
-				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(this::handlePlaybackStarted)
+				.next(this::restartObservable)
+				.next(lazyPlaybackStartedBroadcaster.getObject())
+				.next(this::handlePlaybackStarted)
 				.error(UnhandledRejectionHandler);
 
         	return;
@@ -523,19 +523,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.changePosition(playlistPosition, filePosition)
-				.then(this::broadcastChangedFile)
+				.next(this::broadcastChangedFile)
 				.error(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playlistManager.skipToPrevious().then(this::broadcastChangedFile).error(UnhandledRejectionHandler);
+			playlistManager.skipToPrevious().next(this::broadcastChangedFile).error(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playlistManager.skipToNext().then(this::broadcastChangedFile).error(UnhandledRejectionHandler);
+			playlistManager.skipToNext().next(this::broadcastChangedFile).error(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -550,7 +550,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.addFile(new ServiceFile(fileKey))
-				.then(Dispatch.toContext(library -> {
+				.next(Dispatch.toContext(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
 				}, this))
@@ -682,8 +682,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (!playlistManager.isPlaying())
 				playlistManager
 					.resume()
-					.then(this::restartObservable)
-					.then(lazyPlaybackStartedBroadcaster.getObject());
+					.next(this::restartObservable)
+					.next(lazyPlaybackStartedBroadcaster.getObject());
 
 			return;
 		}
@@ -725,7 +725,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		playbackHandler
 			.promisePlayback()
-			.then(runCarelessly(handler -> {
+			.next(runCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 				localFilePositionSubscription.dispose();
 			}));
@@ -740,7 +740,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		ImageProvider
 			.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getServiceFile().getKey())
-			.then(Dispatch.toContext(this::updateClientBitmap, this))
+			.next(Dispatch.toContext(this::updateClientBitmap, this))
 			.error(e -> {
 				logger.warn("There was an error getting the image for the file with id `" + positionedPlaybackFile.getServiceFile().getKey() + "`", e);
 				return null;
@@ -748,7 +748,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
-			.then(Dispatch.toContext(runCarelessly(fileProperties -> {
+			.next(Dispatch.toContext(runCarelessly(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
@@ -812,7 +812,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();
 
-		playlistManager.changePosition(0, 0).then(this::broadcastChangedFile);
+		playlistManager.changePosition(0, 0).next(this::broadcastChangedFile);
 	}
 		
 	@Override

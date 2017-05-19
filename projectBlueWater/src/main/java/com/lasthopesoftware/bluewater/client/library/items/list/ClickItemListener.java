@@ -30,7 +30,7 @@ public class ClickItemListener implements OnItemClickListener {
         final Item item = mItems.get(position);
 
         ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
-            .then(runCarelessly(items -> {
+            .next(runCarelessly(items -> {
 				if (items == null) return;
 
 				if (items.size() > 0) {

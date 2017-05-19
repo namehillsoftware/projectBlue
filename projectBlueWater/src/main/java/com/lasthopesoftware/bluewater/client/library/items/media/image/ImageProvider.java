@@ -60,7 +60,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		return
 			cachedFilePropertiesProvider
 				.promiseFileProperties(fileKey)
-				.thenPromise(fileProperties -> new ImageProvider(context, connectionProvider, fileProperties, fileKey));
+				.then(fileProperties -> new ImageProvider(context, connectionProvider, fileProperties, fileKey));
 	}
 
 	private ImageProvider(final Context context, final IConnectionProvider connectionProvider, Map<String, String> fileProperties, final int fileKey) {
@@ -95,7 +95,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 			if (rejectingCancellationHandler.isCancelled()) return;
 
 			// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
-			// artists), and then by artist if that field is empty
+			// artists), and next by artist if that field is empty
 			String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
 			if (artist == null || artist.isEmpty())
 				artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -116,7 +116,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 			libraryProvider
 				.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-				.thenPromise(library -> {
+				.then(library -> {
 					final Promise<Bitmap> httpAccessPromise =
 						new QueuedPromise<>(new ImageIoAccessTask(uniqueKey, context, library, connectionProvider, fillerBitmap, fileKey), imageAccessExecutor);
 
@@ -124,7 +124,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 					return httpAccessPromise;
 				})
-				.then(VoidFunc.runCarelessly(resolve::sendResolution))
+				.next(VoidFunc.runCarelessly(resolve::sendResolution))
 				.error(VoidFunc.runCarelessly(reject::sendRejection));
 		}
 

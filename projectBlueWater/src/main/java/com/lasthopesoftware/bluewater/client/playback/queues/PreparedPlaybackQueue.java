@@ -86,7 +86,7 @@ public class PreparedPlaybackQueue implements
 			currentPreparingPlaybackHandlerPromise != null
 				? currentPreparingPlaybackHandlerPromise
 					.promisePositionedBufferingPlaybackHandler()
-					.then(this)
+					.next(this)
 				: null;
 	}
 
@@ -111,7 +111,7 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public PositionedPlaybackFile resultFrom(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
-		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.runCarelessly(this));
+		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().next(VoidFunc.runCarelessly(this));
 
 		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile);
 	}
@@ -132,7 +132,7 @@ public class PreparedPlaybackQueue implements
 	}
 
 	private void enqueuePositionedPreparingFile(PositionedPreparingFile positionedPreparingFile) {
-		positionedPreparingFile.bufferingPlaybackHandlerPromise.then(handler -> new PositionedBufferingPlaybackHandler(currentPreparingPlaybackHandlerPromise.positionedFile, handler)).then(this);
+		positionedPreparingFile.bufferingPlaybackHandlerPromise.next(handler -> new PositionedBufferingPlaybackHandler(currentPreparingPlaybackHandlerPromise.positionedFile, handler)).next(this);
 
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
@@ -170,7 +170,7 @@ public class PreparedPlaybackQueue implements
 		Promise<PositionedBufferingPlaybackHandler> promisePositionedBufferingPlaybackHandler() {
 			return
 				bufferingPlaybackHandlerPromise
-					.then(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));
+					.next(handler -> new PositionedBufferingPlaybackHandler(positionedFile, handler));
 		}
 	}
 }

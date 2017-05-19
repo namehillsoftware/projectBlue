@@ -111,7 +111,7 @@ public class DiskFileCache {
 					} catch (IOException e) {
 						logger.error("Unable to write to serviceFile!", e);
 
-						// Check if free space is too low and then attempt to free up enough space
+						// Check if free space is too low and next attempt to free up enough space
 						// to store image
 						final long freeDiskSpace = getFreeDiskSpace(context);
 						if (freeDiskSpace > maxSize) {

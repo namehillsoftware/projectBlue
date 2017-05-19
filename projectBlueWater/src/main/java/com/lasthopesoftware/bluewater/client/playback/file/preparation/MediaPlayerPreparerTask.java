@@ -40,7 +40,7 @@ final class MediaPlayerPreparerTask implements
 	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 		uriProvider
 			.getFileUri(serviceFile)
-			.then(new MediaPlayerPreparationTask(playbackInitialization, prepareAt, resolve, reject, onCancelled))
+			.next(new MediaPlayerPreparationTask(playbackInitialization, prepareAt, resolve, reject, onCancelled))
 			.error(new UriProviderErrorHandler(reject));
 	}
 

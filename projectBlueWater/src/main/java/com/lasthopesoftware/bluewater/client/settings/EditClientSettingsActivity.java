@@ -139,7 +139,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(libraryId)
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
+			.next(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (result == null) return;
 
 				library = result;
@@ -192,7 +192,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	}
 
 	private void saveLibraryAndFinish() {
-		lazyLibraryProvider.getObject().saveLibrary(library).then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
+		lazyLibraryProvider.getObject().saveLibrary(library).next(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 			saveButton.findView().setText(getText(R.string.btn_saved));
 			finish();
 		}), this));

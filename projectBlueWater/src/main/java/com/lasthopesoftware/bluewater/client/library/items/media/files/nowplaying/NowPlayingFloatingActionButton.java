@@ -56,7 +56,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         NowPlayingFileProvider
             .fromActiveLibrary(getContext())
             .getNowPlayingFile()
-            .then(VoidFunc.runCarelessly(result -> {
+            .next(VoidFunc.runCarelessly(result -> {
                 isNowPlayingFileSet = result != null;
                 setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 

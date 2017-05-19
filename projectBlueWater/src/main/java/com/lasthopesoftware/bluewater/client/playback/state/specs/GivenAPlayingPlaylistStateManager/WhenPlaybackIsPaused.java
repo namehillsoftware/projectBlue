@@ -76,7 +76,7 @@ public class WhenPlaybackIsPaused {
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		nowPlayingRepository
 			.getNowPlaying()
-			.then(np -> {
+			.next(np -> {
 				nowPlaying = np;
 				countDownLatch.countDown();
 				return null;

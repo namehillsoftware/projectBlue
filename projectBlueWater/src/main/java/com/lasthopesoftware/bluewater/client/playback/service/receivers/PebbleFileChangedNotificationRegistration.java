@@ -57,7 +57,7 @@ public class PebbleFileChangedNotificationRegistration implements IConnectionDep
 
 			cachedFilePropertiesProvider
 				.promiseFileProperties(fileKey)
-				.then(runCarelessly(fileProperties -> {
+				.next(runCarelessly(fileProperties -> {
 					final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 					final String name = fileProperties.get(FilePropertiesProvider.NAME);
 					final String album = fileProperties.get(FilePropertiesProvider.ALBUM);

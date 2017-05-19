@@ -59,8 +59,8 @@ public class WhenATrackIsSwitchedTwice {
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 
-		playlistManager.changePosition(3, 0).then(p -> nextSwitchedFile = p);
-		playlistManager.changePosition(4, 0).then(p -> nextSwitchedFile = p);
+		playlistManager.changePosition(3, 0).next(p -> nextSwitchedFile = p);
+		playlistManager.changePosition(4, 0).next(p -> nextSwitchedFile = p);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}

@@ -25,7 +25,7 @@ public class WhenTheCancellationIsCalled {
 		final ExternallyResolvableTask<String> resolvableTask = new ExternallyResolvableTask<>();
 		final Promise<String> promise = new Promise<>(resolvableTask);
 
-		Promise<Object> cancellablePromise = promise.then(
+		Promise<Object> cancellablePromise = promise.next(
 			(result, resolve, reject, onCancelled) -> onCancelled.runWith(() -> reject.sendRejection(thrownException)));
 
 		cancellablePromise.error((exception, onCancelled) -> caughtException = exception);

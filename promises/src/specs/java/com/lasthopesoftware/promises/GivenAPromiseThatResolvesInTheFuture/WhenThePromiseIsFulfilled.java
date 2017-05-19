@@ -31,7 +31,7 @@ public class WhenThePromiseIsFulfilled {
 			resolve.sendResolution(expectedResult);
 			latch.countDown();
 		}).start())
-		.then(result -> this.result = result);
+		.next(result -> this.result = result);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}

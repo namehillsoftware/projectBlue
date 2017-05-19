@@ -54,7 +54,7 @@ public class PlaylistListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(VoidFunc.runCarelessly(library -> {
+			.next(VoidFunc.runCarelessly(library -> {
 				final ThreeParameterAction<List<Playlist>, IResolvedPromise<Void>, IRejectedPromise> listResolvedPromise =
 					Dispatch.toContext(
 						new OnGetLibraryViewPlaylistResultsComplete(
@@ -70,7 +70,7 @@ public class PlaylistListFragment extends Fragment {
 				final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
 				playlistsProvider
 					.promiseData()
-					.then(listResolvedPromise)
+					.next(listResolvedPromise)
 					.error(new HandleViewIoException<>(activity, new Runnable() {
 
 						@Override
@@ -79,7 +79,7 @@ public class PlaylistListFragment extends Fragment {
 
 							playlistsProvider
 								.promiseData()
-								.then(listResolvedPromise)
+								.next(listResolvedPromise)
 								.error(new HandleViewIoException<>(activity, this));
 						}
 					}));

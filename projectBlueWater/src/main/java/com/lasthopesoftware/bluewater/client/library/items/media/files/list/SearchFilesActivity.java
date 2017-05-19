@@ -79,14 +79,14 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
         SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
 			.promiseData()
-            .then(onSearchFilesComplete)
+            .next(onSearchFilesComplete)
             .error(new HandleViewIoException<>(this, new Runnable() {
 
 					@Override
 					public void run() {
 						SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
 							.promiseData()
-							.then(onSearchFilesComplete)
+							.next(onSearchFilesComplete)
 							.error(new HandleViewIoException<>(SearchFilesActivity.this, this));
 					}
 				})

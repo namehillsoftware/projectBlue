@@ -64,7 +64,7 @@ public class ItemListFragment extends Fragment {
 
     	libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(runCarelessly(activeLibrary -> {
+			.next(runCarelessly(activeLibrary -> {
 				final ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetVisibleViewsCompleteListener = Dispatch.toContext(result -> {
 					if (result == null || result.size() == 0) return null;
 
@@ -78,14 +78,14 @@ public class ItemListFragment extends Fragment {
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.then(onGetVisibleViewsCompleteListener)
+					.next(onGetVisibleViewsCompleteListener)
 					.error(new HandleViewIoException<>(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.then(onGetVisibleViewsCompleteListener)
+								.next(onGetVisibleViewsCompleteListener)
 								.error(new HandleViewIoException<>(activity, this));
 						}
 					}));
@@ -103,7 +103,7 @@ public class ItemListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(runCarelessly(library -> {
+			.next(runCarelessly(library -> {
 				ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetLibraryViewItemResultsComplete = Dispatch.toContext(new OnGetLibraryViewItemResultsComplete(
 					activity,
 					container,
@@ -116,14 +116,14 @@ public class ItemListFragment extends Fragment {
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-					.then(onGetLibraryViewItemResultsComplete)
+					.next(onGetLibraryViewItemResultsComplete)
 					.error(new HandleViewIoException<>(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-								.then(onGetLibraryViewItemResultsComplete)
+								.next(onGetLibraryViewItemResultsComplete)
 								.error(new HandleViewIoException<>(activity, this));
 						}
 					}));

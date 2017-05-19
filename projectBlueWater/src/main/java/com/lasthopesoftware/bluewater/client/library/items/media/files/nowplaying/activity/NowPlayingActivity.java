@@ -241,7 +241,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				lazyNowPlayingRepository.getObject()
 					.getNowPlaying()
-					.then(Dispatch.toHandler(result -> {
+					.next(Dispatch.toHandler(result -> {
 						final boolean isRepeating = !result.isRepeating;
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -289,7 +289,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runCarelessly(np -> {
+			.next(Dispatch.toHandler(runCarelessly(np -> {
 				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
 
 				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
@@ -320,7 +320,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		setRepeatingIcon(imageButton, false);
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runCarelessly(result -> {
+			.next(Dispatch.toHandler(runCarelessly(result -> {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating);
 			}), messageHandler.getObject()));
@@ -351,7 +351,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private void setView(final int playlistPosition) {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runCarelessly(np -> {
+			.next(Dispatch.toHandler(runCarelessly(np -> {
 				if (playlistPosition >= np.playlist.size()) return;
 
 				final ServiceFile serviceFile = np.playlist.get(playlistPosition);
@@ -401,7 +401,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 							serviceFile.getKey());
 
 				getFileImageTask
-					.then(Dispatch.toContext(runCarelessly(bitmap -> {
+					.next(Dispatch.toContext(runCarelessly(bitmap -> {
 						if (viewStructure.nowPlayingImage != null)
 							viewStructure.nowPlayingImage.recycle();
 						viewStructure.nowPlayingImage = bitmap;
@@ -430,7 +430,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
 		filePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
-			.then(Dispatch.toHandler(runCarelessly(fileProperties -> {
+			.next(Dispatch.toHandler(runCarelessly(fileProperties -> {
 				viewStructure.fileProperties = fileProperties;
 				setFileProperties(serviceFile, initialFilePosition, fileProperties);
 			}), messageHandler.getObject()))

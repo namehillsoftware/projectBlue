@@ -65,7 +65,7 @@ public class WhenTheQueueIsStarted {
 	public void thenTheQueueStartsAtTheCorrectPosition() {
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(VoidFunc.runCarelessly(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
+			.next(VoidFunc.runCarelessly(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 
 	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {

@@ -138,7 +138,7 @@ public class LibrarySyncHandler {
 							final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
 
 							fileProviders.add(fileProvider.promiseData()
-								.thenPromise(serviceFiles -> {
+								.then(serviceFiles -> {
 									final List<Promise<Void>> upsertStoredFilePromises = new ArrayList<>(serviceFiles.size());
 									for (final ServiceFile serviceFile : serviceFiles) {
 										allSyncedFileKeys.add(serviceFile.getKey());
@@ -155,7 +155,7 @@ public class LibrarySyncHandler {
 										final Promise<Void> upsertStoredFilePromise =
 											storedFileAccess
 												.createOrUpdateFile(connectionProvider, serviceFile)
-												.then(new DownloadGuard(storedFileDownloader, serviceFile));
+												.next(new DownloadGuard(storedFileDownloader, serviceFile));
 
 										upsertStoredFilePromise
 											.error(runCarelessly(e -> {
@@ -173,7 +173,7 @@ public class LibrarySyncHandler {
 						}
 
 						Promise.whenAll(fileProviders)
-							.then(runCarelessly(files -> {
+							.next(runCarelessly(files -> {
 								storedFileDownloader.setOnQueueProcessingCompleted(() -> {
 									if (!isCancelled && !isFaulted)
 										storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
