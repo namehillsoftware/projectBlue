@@ -228,7 +228,7 @@ final class Execution {
 			try {
 				final Promise<TNewResult> fulfilledPromise = onFulfilled.resultFrom(result);
 
-				runWith(fulfilledPromise::cancel);
+				runWith(new PassThroughCancellable<>(fulfilledPromise));
 
 				fulfilledPromise
 					.next(new Resolution.ResolveWithPromiseResult<>(this))
@@ -236,6 +236,20 @@ final class Execution {
 			} catch (Throwable rejection) {
 				sendRejection(rejection);
 			}
+		}
+	}
+
+
+	private static class PassThroughCancellable<TNewResult> implements Runnable {
+		private final Promise<TNewResult> fulfilledPromise;
+
+		PassThroughCancellable(Promise<TNewResult> fulfilledPromise) {
+			this.fulfilledPromise = fulfilledPromise;
+		}
+
+		@Override
+		public void run() {
+			fulfilledPromise.cancel();
 		}
 	}
 }
