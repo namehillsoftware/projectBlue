@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedCancellableExecutor;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedExecutor;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedFunction;
+import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -31,51 +32,51 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 	}
 
 	private static class Executors {
-		static class QueuedCancellableTask<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
+		static class QueuedCancellableTask<Result> extends EmptyMessenger<Result> {
 
-			private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task;
+			private final ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> task;
 			private final Executor executor;
 
-			QueuedCancellableTask(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task, Executor executor) {
+			QueuedCancellableTask(ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> task, Executor executor) {
 				this.task = task;
 				this.executor = executor;
 			}
 
 			@Override
-			public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				this.executor.execute(new WrappedCancellableExecutor<>(task, resolve, reject, onCancelled));
+			public void requestResolution() {
+				this.executor.execute(new WrappedCancellableExecutor<>(task, this));
 			}
 		}
 
-		static class QueuedTask<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
+		static class QueuedTask<Result> extends EmptyMessenger<Result> {
 
-			private final TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> task;
+			private final TwoParameterAction<IResolvedPromise<Result>, IRejectedPromise> task;
 			private final Executor executor;
 
-			QueuedTask(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> task, Executor executor) {
+			QueuedTask(TwoParameterAction<IResolvedPromise<Result>, IRejectedPromise> task, Executor executor) {
 				this.task = task;
 				this.executor = executor;
 			}
 
 			@Override
-			public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
-				this.executor.execute(new WrappedExecutor<>(task, resolve, reject));
+			public void requestResolution() {
+				this.executor.execute(new WrappedExecutor<>(task, this));
 			}
 		}
 
-		static class QueuedFunction<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
+		static class QueuedFunction<Result> extends EmptyMessenger<Result> {
 
-			private final CarelessFunction<TResult> callable;
+			private final CarelessFunction<Result> callable;
 			private final Executor executor;
 
-			QueuedFunction(CarelessFunction<TResult> callable, Executor executor) {
+			QueuedFunction(CarelessFunction<Result> callable, Executor executor) {
 				this.callable = callable;
 				this.executor = executor;
 			}
 
 			@Override
-			public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
-				this.executor.execute(new WrappedFunction<>(callable, resolve, reject));
+			public void requestResolution() {
+				this.executor.execute(new WrappedFunction<>(callable, this));
 			}
 		}
 	}

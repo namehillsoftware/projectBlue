@@ -1,28 +1,22 @@
 package com.lasthopesoftware.bluewater.shared.promises;
 
+import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
-/**
- * Created by david on 2/12/17.
- */
-public class WrappedCancellableExecutor<TResult> implements Runnable {
-	private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task;
-	private final OneParameterAction<Runnable> onCancelled;
-	private final IRejectedPromise reject;
-	private final IResolvedPromise<TResult> resolve;
+public class WrappedCancellableExecutor<Result> implements Runnable {
+	private final ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> task;
+	private final EmptyMessenger<Result> messenger;
 
-	public WrappedCancellableExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task, IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	public WrappedCancellableExecutor(ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> task, EmptyMessenger<Result> messenger) {
 		this.task = task;
-		this.onCancelled = onCancelled;
-		this.reject = reject;
-		this.resolve = resolve;
+		this.messenger = messenger;
 	}
 
 	@Override
 	public void run() {
-		this.task.runWith(resolve, reject, onCancelled);
+		this.task.runWith(messenger, messenger, messenger);
 	}
 }
