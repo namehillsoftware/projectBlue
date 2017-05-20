@@ -125,26 +125,6 @@ final class Execution {
 				onRejected.runWith(throwable, this, this, this);
 			}
 		}
-
-		static final class ResolvedCancellablePromise<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
-			private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled;
-
-			ResolvedCancellablePromise(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled) {
-				this.onFulfilled = onFulfilled;
-			}
-
-			@Override
-			public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				try {
-					onFulfilled
-						.resultFrom(result, onCancelled)
-						.next(new Resolution.ResolveWithPromiseResult<>(resolve))
-						.error(new Resolution.RejectWithPromiseError(reject));
-				} catch (Throwable rejection) {
-					reject.sendRejection(rejection);
-				}
-			}
-		}
 	}
 
 	/**
@@ -213,43 +193,6 @@ final class Execution {
 		@Override
 		protected void requestResolution(TResult result) {
 			onFulfilled.runWith(result, this, this);
-		}
-	}
-
-	static final class PromisedResolution<TResult, TNewResult> extends ResolutionMessenger<TResult, TNewResult> {
-		private final CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled;
-
-		PromisedResolution(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
-			this.onFulfilled = onFulfilled;
-		}
-
-		@Override
-		protected void requestResolution(TResult result) {
-			try {
-				final Promise<TNewResult> fulfilledPromise = onFulfilled.resultFrom(result);
-
-				runWith(new PassThroughCancellable<>(fulfilledPromise));
-
-				fulfilledPromise
-					.next(new Resolution.ResolveWithPromiseResult<>(this))
-					.error(new Resolution.RejectWithPromiseError(this));
-			} catch (Throwable rejection) {
-				sendRejection(rejection);
-			}
-		}
-	}
-
-
-	private static class PassThroughCancellable<TNewResult> implements Runnable {
-		private final Promise<TNewResult> fulfilledPromise;
-
-		PassThroughCancellable(Promise<TNewResult> fulfilledPromise) {
-			this.fulfilledPromise = fulfilledPromise;
-		}
-
-		@Override
-		public void run() {
-			fulfilledPromise.cancel();
 		}
 	}
 }

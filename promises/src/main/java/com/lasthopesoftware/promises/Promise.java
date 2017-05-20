@@ -71,7 +71,7 @@ public class Promise<TResult> {
 	}
 
 	public final <TNewResult> Promise<TNewResult> then(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
-		return next(new Execution.PromisedResolution<>(onFulfilled));
+		return next(new PromisedResolution<>(onFulfilled));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorMessenger<TResult, TNewRejectedResult> errorMessenger) {

@@ -7,38 +7,7 @@ import com.vedsoft.futures.runnables.ThreeParameterAction;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * Created by david on 4/2/17.
- */
 final class Resolution {
-	static final class ResolveWithPromiseResult<TNewResult> implements CarelessOneParameterFunction<TNewResult, Void> {
-		private final IResolvedPromise<TNewResult> resolve;
-
-		ResolveWithPromiseResult(IResolvedPromise<TNewResult> resolve) {
-			this.resolve = resolve;
-		}
-
-		@Override
-		public final Void resultFrom(TNewResult result) {
-			resolve.sendResolution(result);
-			return null;
-		}
-	}
-
-	static final class RejectWithPromiseError implements CarelessOneParameterFunction<Throwable, Void> {
-		private final IRejectedPromise reject;
-
-		RejectWithPromiseError(IRejectedPromise reject) {
-			this.reject = reject;
-		}
-
-		@Override
-		public final Void resultFrom(Throwable exception) {
-			reject.sendRejection(exception);
-			return null;
-		}
-	}
-
 	private static class ResultCollector<TResult> implements CarelessOneParameterFunction<TResult, TResult> {
 		private final Collection<TResult> results;
 
