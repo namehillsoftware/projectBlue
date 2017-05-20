@@ -72,8 +72,10 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 			if (isCancelled) return;
 
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
-			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision))
+			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
 				sendResolution(new HashMap<>(filePropertiesContainer.getProperties()));
+				return;
+			}
 
 			try {
 				if (isCancelled) return;
