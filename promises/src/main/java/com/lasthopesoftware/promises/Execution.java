@@ -122,6 +122,23 @@ final class Execution {
 				onRejected.runWith(throwable, this, this, this);
 			}
 		}
+
+		static final class RejectionDependentCancellableCaller<Result, NewResult> extends ErrorMessenger<Result, NewResult> {
+			private final CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled;
+
+			RejectionDependentCancellableCaller(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled) {
+				this.onFulfilled = onFulfilled;
+			}
+
+			@Override
+			protected void processError(Throwable throwable) {
+				try {
+					sendResolution(onFulfilled.resultFrom(throwable, this));
+				} catch (Throwable rejection) {
+					sendRejection(rejection);
+				}
+			}
+		}
 	}
 
 	/**

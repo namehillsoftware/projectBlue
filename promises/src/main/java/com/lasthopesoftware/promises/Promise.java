@@ -83,7 +83,7 @@ public class Promise<TResult> {
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
-		return error(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onRejected));
+		return error(new Execution.Cancellable.RejectionDependentCancellableCaller<>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
