@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
+import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
@@ -141,7 +142,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		}
 	}
 
-	private static class ImageIoAccessTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class ImageIoAccessTask extends EmptyMessenger<Bitmap> {
 
 		private final String uniqueKey;
 		private final Context context;
@@ -160,14 +161,14 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		public void requestResolution() {
 			if (library == null) {
-				resolve.sendResolution(fillerBitmap.getFillerBitmap());
+				sendResolution(fillerBitmap.getFillerBitmap());
 				return;
 			}
 
-			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, reject);
-			onCancelled.runWith(rejectingCancellationHandler);
+			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, this);
+			runWith(rejectingCancellationHandler);
 
 			final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 
@@ -177,7 +178,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				if (imageCacheFile != null) {
 					imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
 					if (imageBytes.length > 0) {
-						resolve.sendResolution(getBitmapFromBytes(imageBytes));
+						sendResolution(getBitmapFromBytes(imageBytes));
 						return;
 					}
 				}
@@ -190,7 +191,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				try {
 					// Connection failed to build
 					if (connection == null) {
-						resolve.sendResolution(fillerBitmap.getFillerBitmap());
+						sendResolution(fillerBitmap.getFillerBitmap());
 						return;
 					}
 
@@ -201,17 +202,17 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 							imageBytes = IOUtils.toByteArray(is);
 						} catch (InterruptedIOException interruptedIoException) {
 							logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
-							reject.sendRejection(interruptedIoException);
+							sendRejection(interruptedIoException);
 							return;
 						}
 
 						if (imageBytes.length == 0) {
-							resolve.sendResolution(fillerBitmap.getFillerBitmap());
+							sendResolution(fillerBitmap.getFillerBitmap());
 							return;
 						}
 					} catch (FileNotFoundException fe) {
 						logger.warn("Image not found!");
-						resolve.sendResolution(fillerBitmap.getFillerBitmap());
+						sendResolution(fillerBitmap.getFillerBitmap());
 						return;
 					}
 
@@ -225,7 +226,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 					if (rejectingCancellationHandler.isCancelled()) return;
 
-					resolve.sendResolution(getBitmapFromBytes(imageBytes));
+					sendResolution(getBitmapFromBytes(imageBytes));
 				} catch (Exception e) {
 					logger.error(e.toString(), e);
 				} finally {
