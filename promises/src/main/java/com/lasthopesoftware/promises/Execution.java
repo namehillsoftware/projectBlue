@@ -8,15 +8,12 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
-/**
- * Created by david on 4/2/17.
- */
 final class Execution {
 
-	static final class InternalCancellablePromiseExecutor<TResult> extends EmptyMessenger<TResult> {
-		private final ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor;
+	static final class InternalCancellablePromiseExecutor<Result> extends EmptyMessenger<Result> {
+		private final ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> executor;
 
-		InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
+		InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
 			this.executor = executor;
 		}
 
@@ -29,46 +26,46 @@ final class Execution {
 	/**
 	 * Created by david on 10/8/16.
 	 */
-	static final class InternalPromiseExecutor<TResult> implements ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> {
-		private final TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor;
+	static final class InternalPromiseExecutor<Result> extends EmptyMessenger<Result> {
+		private final TwoParameterAction<IResolvedPromise<Result>, IRejectedPromise> executor;
 
-		InternalPromiseExecutor(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
+		InternalPromiseExecutor(TwoParameterAction<IResolvedPromise<Result>, IRejectedPromise> executor) {
 			this.executor = executor;
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			executor.runWith(resolve, reject);
+		public void requestResolution() {
+			executor.runWith(this, this);
 		}
 	}
 
-	static final class InternalExpectedPromiseExecutor<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
-		private final CarelessFunction<TResult> executor;
+	static final class InternalExpectedPromiseExecutor<Result> extends EmptyMessenger<Result> {
+		private final CarelessFunction<Result> executor;
 
-		InternalExpectedPromiseExecutor(CarelessFunction<TResult> executor) {
+		InternalExpectedPromiseExecutor(CarelessFunction<Result> executor) {
 			this.executor = executor;
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<TResult> resolve, IRejectedPromise reject) {
+		public void requestResolution() {
 			try {
-				resolve.sendResolution(executor.result());
+				sendResolution(executor.result());
 			} catch (Throwable rejection) {
-				reject.sendRejection(rejection);
+				sendRejection(rejection);
 			}
 		}
 	}
 
-	static final class PassThroughCallable<TPassThroughResult> implements CarelessFunction<TPassThroughResult> {
-		private final TPassThroughResult passThroughResult;
+	static final class PassThroughCallable<PassThroughResult> extends EmptyMessenger<PassThroughResult> {
+		private final PassThroughResult passThroughResult;
 
-		PassThroughCallable(TPassThroughResult passThroughResult) {
+		PassThroughCallable(PassThroughResult passThroughResult) {
 			this.passThroughResult = passThroughResult;
 		}
 
 		@Override
-		public TPassThroughResult result() throws Exception {
-			return passThroughResult;
+		public void requestResolution() {
+			sendResolution(passThroughResult);
 		}
 	}
 
@@ -77,19 +74,19 @@ final class Execution {
 		/**
 		 * Created by david on 10/30/16.
 		 */
-		static final class ExpectedResultCancellableExecutor<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
-			private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled;
+		static final class ExpectedResultCancellableExecutor<Result, NewResult> extends ResolutionMessenger<Result, NewResult> {
+			private final CarelessTwoParameterFunction<Result, OneParameterAction<Runnable>, NewResult> onFulfilled;
 
-			ExpectedResultCancellableExecutor(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+			ExpectedResultCancellableExecutor(CarelessTwoParameterFunction<Result, OneParameterAction<Runnable>, NewResult> onFulfilled) {
 				this.onFulfilled = onFulfilled;
 			}
 
 			@Override
-			public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+			protected void requestResolution(Result result) {
 				try {
-					resolve.sendResolution(onFulfilled.resultFrom(result, onCancelled));
+					sendResolution(onFulfilled.resultFrom(result, this));
 				} catch (Throwable rejection) {
-					reject.sendRejection(rejection);
+					sendRejection(rejection);
 				}
 			}
 		}
