@@ -56,7 +56,8 @@ abstract class Messenger<Input, Resolution> implements
 	final void awaitResolution(Messenger<Resolution, ?> recipient) {
 		recipients.offer(recipient);
 
-		dispatchMessage(resolution, rejection);
+		if (isResolvedSynchronously())
+			dispatchMessage(resolution, rejection);
 	}
 
 	private void resolve(Resolution resolution, Throwable rejection) {
@@ -76,8 +77,6 @@ abstract class Messenger<Input, Resolution> implements
 	}
 
 	private synchronized void dispatchMessage(Resolution resolution, Throwable rejection) {
-		if (!isResolvedSynchronously()) return;
-
 		for (Messenger<Resolution, ?> r = recipients.poll(); r != null; r = recipients.poll())
 			r.requestResolution(resolution, rejection);
 	}

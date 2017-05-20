@@ -6,10 +6,10 @@ public abstract class ResolutionMessenger<InputResolution, NewResolution> extend
 	@Override
 	protected final void requestResolution(InputResolution inputResolution, Throwable throwable) {
 		if (throwable == null)
-			processResolution(inputResolution);
+			requestResolution(inputResolution);
 		else
 			sendRejection(throwable);
 	}
 
-	protected abstract void processResolution(InputResolution inputResolution);
+	protected abstract void requestResolution(InputResolution inputResolution);
 }

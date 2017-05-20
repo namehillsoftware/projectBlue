@@ -105,7 +105,7 @@ final class Execution {
 			}
 
 			@Override
-			protected void processResolution(TResult result) {
+			protected void requestResolution(TResult result) {
 				onFulfilled.runWith(result, this, this, this);
 			}
 		}
@@ -166,7 +166,7 @@ final class Execution {
 	/**
 	 * Created by david on 10/8/16.
 	 */
-	static final class ExpectedResultExecutor<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	static final class ExpectedResultExecutor<TResult, TNewResult> extends ResolutionMessenger<TResult,TNewResult> {
 		private final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled;
 
 		ExpectedResultExecutor(CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
@@ -174,11 +174,28 @@ final class Execution {
 		}
 
 		@Override
-		public final void runWith(TResult originalResult, IResolvedPromise<TNewResult> newResolve, IRejectedPromise newReject) {
+		protected void requestResolution(TResult originalResult) {
 			try {
-				newResolve.sendResolution(onFulfilled.resultFrom(originalResult));
+				sendResolution(onFulfilled.resultFrom(originalResult));
 			} catch (Throwable rejection) {
-				newReject.sendRejection(rejection);
+				sendRejection(rejection);
+			}
+		}
+	}
+
+	static final class ErrorResultExecutor<TResult, TNewResult> extends ErrorMessenger<TResult, TNewResult> {
+		private final CarelessOneParameterFunction<Throwable, TNewResult> onFulfilled;
+
+		ErrorResultExecutor(CarelessOneParameterFunction<Throwable, TNewResult> onFulfilled) {
+			this.onFulfilled = onFulfilled;
+		}
+
+		@Override
+		protected void processError(Throwable throwable) {
+			try {
+				sendResolution(onFulfilled.resultFrom(throwable));
+			} catch (Throwable rejection) {
+				sendRejection(rejection);
 			}
 		}
 	}
@@ -194,12 +211,12 @@ final class Execution {
 		}
 
 		@Override
-		protected void processResolution(TResult result) {
+		protected void requestResolution(TResult result) {
 			onFulfilled.runWith(result, this, this);
 		}
 	}
 
-	static final class PromisedResolution<TResult, TNewResult> implements ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> {
+	static final class PromisedResolution<TResult, TNewResult> extends ResolutionMessenger<TResult, TNewResult> {
 		private final CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled;
 
 		PromisedResolution(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
@@ -207,14 +224,17 @@ final class Execution {
 		}
 
 		@Override
-		public final void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject) {
+		protected void requestResolution(TResult result) {
 			try {
-				onFulfilled
-					.resultFrom(result)
-					.next(new Resolution.ResolveWithPromiseResult<>(resolve))
-					.error(new Resolution.RejectWithPromiseError(reject));
+				final Promise<TNewResult> fulfilledPromise = onFulfilled.resultFrom(result);
+
+				runWith(fulfilledPromise::cancel);
+
+				fulfilledPromise
+					.next(new Resolution.ResolveWithPromiseResult<>(this))
+					.error(new Resolution.RejectWithPromiseError(this));
 			} catch (Throwable rejection) {
-				reject.sendRejection(rejection);
+				sendRejection(rejection);
 			}
 		}
 	}

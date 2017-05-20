@@ -44,7 +44,7 @@ public class Promise<TResult> {
 		messenger.cancel();
 	}
 
-	protected final <TNewResult> Promise<TNewResult> next(Messenger<TResult, TNewResult> onFulfilled) {
+	private <TNewResult> Promise<TNewResult> next(Messenger<TResult, TNewResult> onFulfilled) {
 		messenger.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
@@ -91,11 +91,7 @@ public class Promise<TResult> {
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
-		return error(new Execution.ExpectedResultExecutor<>(onRejected));
-	}
-
-	public final <TNewResult> Promise<TNewResult> then(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, Promise<TNewResult>> onFulfilled) {
-		return next(new Execution.Cancellable.ResolvedCancellablePromise<>(onFulfilled));
+		return error(new Execution.ErrorResultExecutor<>(onRejected));
 	}
 
 	public static <TResult> Promise<TResult> empty() {

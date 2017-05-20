@@ -113,7 +113,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return nowPlayingPromise
 			.next(new ResolutionMessenger<NowPlaying, PositionedFile>() {
 				@Override
-				protected void processResolution(NowPlaying nowPlaying) {
+				protected void requestResolution(NowPlaying nowPlaying) {
 					final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 					try {
 						final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
