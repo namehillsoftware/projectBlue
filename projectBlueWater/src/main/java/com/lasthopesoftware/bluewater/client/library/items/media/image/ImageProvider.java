@@ -18,12 +18,8 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.EmptyMessenger;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -68,7 +64,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		super(new ImageMemoryTask(context, connectionProvider, new FillerBitmap(context), fileProperties, fileKey), imageAccessExecutor);
 	}
 
-	private static class ImageMemoryTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class ImageMemoryTask extends EmptyMessenger<Bitmap> {
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
 		private final Map<String, String> fileProperties;
@@ -88,10 +84,10 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, reject);
+		public void requestResolution() {
+			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, this);
 
-			onCancelled.runWith(rejectingCancellationHandler);
+			runWith(rejectingCancellationHandler);
 
 			if (rejectingCancellationHandler.isCancelled()) return;
 
@@ -111,7 +107,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 			final byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) {
-				resolve.sendResolution(getBitmapFromBytes(imageBytes));
+				sendResolution(getBitmapFromBytes(imageBytes));
 				return;
 			}
 
@@ -121,12 +117,12 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 					final Promise<Bitmap> httpAccessPromise =
 						new QueuedPromise<>(new ImageIoAccessTask(uniqueKey, context, library, connectionProvider, fillerBitmap, fileKey), imageAccessExecutor);
 
-					onCancelled.runWith(httpAccessPromise::cancel);
+					runWith(httpAccessPromise::cancel);
 
 					return httpAccessPromise;
 				})
-				.next(VoidFunc.runCarelessly(resolve::sendResolution))
-				.error(VoidFunc.runCarelessly(reject::sendRejection));
+				.next(VoidFunc.runCarelessly(this::sendResolution))
+				.error(VoidFunc.runCarelessly(this::sendRejection));
 		}
 
 		private static byte[] getBitmapBytesFromMemory(final String uniqueKey) {
