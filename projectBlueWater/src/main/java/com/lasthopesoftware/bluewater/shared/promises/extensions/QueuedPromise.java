@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedCancellableExecutor;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedExecutor;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedFunction;
+import com.lasthopesoftware.bluewater.shared.promises.WrappedMessenger;
 import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
@@ -29,6 +30,10 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 
 	public QueuedPromise(Callable<TResult> task, Executor executor) {
 		super(new Executors.QueuedFunction<>(task, executor));
+	}
+
+	public QueuedPromise(EmptyMessenger<TResult> messenger, Executor executor) {
+		super(new Executors.QueuedMessenger<>(messenger, executor));
 	}
 
 	private static class Executors {
@@ -77,6 +82,22 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 			@Override
 			public void requestResolution() {
 				this.executor.execute(new WrappedFunction<>(callable, this));
+			}
+		}
+
+		static class QueuedMessenger<Result> extends EmptyMessenger<Result> {
+
+			private final EmptyMessenger<Result> messenger;
+			private final Executor executor;
+
+			QueuedMessenger(EmptyMessenger<Result> messenger, Executor executor) {
+				this.messenger = messenger;
+				this.executor = executor;
+			}
+
+			@Override
+			public void requestResolution() {
+				executor.execute(new WrappedMessenger(messenger));
 			}
 		}
 	}
