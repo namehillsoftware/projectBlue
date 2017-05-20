@@ -60,7 +60,7 @@ final class PromisedResolution<TResult, TNewResult> extends ResolutionMessenger<
 		}
 
 		@Override
-		protected void processError(Throwable throwable) {
+		protected void requestResolution(Throwable throwable) {
 			reject.sendRejection(throwable);
 			sendResolution(null);
 		}

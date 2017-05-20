@@ -118,7 +118,7 @@ final class Execution {
 			}
 
 			@Override
-			protected void processError(Throwable throwable) {
+			protected void requestResolution(Throwable throwable) {
 				onRejected.runWith(throwable, this, this, this);
 			}
 		}
@@ -131,7 +131,7 @@ final class Execution {
 			}
 
 			@Override
-			protected void processError(Throwable throwable) {
+			protected void requestResolution(Throwable throwable) {
 				try {
 					sendResolution(onFulfilled.resultFrom(throwable, this));
 				} catch (Throwable rejection) {
@@ -152,7 +152,7 @@ final class Execution {
 		}
 
 		@Override
-		protected void processError(Throwable throwable) {
+		protected void requestResolution(Throwable throwable) {
 			onRejected.runWith(throwable, this, this);
 		}
 	}
@@ -185,7 +185,7 @@ final class Execution {
 		}
 
 		@Override
-		protected void processError(Throwable throwable) {
+		protected void requestResolution(Throwable throwable) {
 			try {
 				sendResolution(onFulfilled.resultFrom(throwable));
 			} catch (Throwable rejection) {

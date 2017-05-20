@@ -5,8 +5,8 @@ public abstract class ErrorMessenger<InputResolution, NewResolution> extends Mes
 	@Override
 	protected final void requestResolution(InputResolution inputResolution, Throwable throwable) {
 		if (throwable != null)
-			processError(throwable);
+			requestResolution(throwable);
 	}
 
-	protected abstract void processError(Throwable throwable);
+	protected abstract void requestResolution(Throwable throwable);
 }
