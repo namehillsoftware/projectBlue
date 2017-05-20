@@ -1,12 +1,13 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
+
+import java.util.concurrent.Callable;
 
 final class Execution {
 
@@ -40,16 +41,16 @@ final class Execution {
 	}
 
 	static final class InternalExpectedPromiseExecutor<Result> extends EmptyMessenger<Result> {
-		private final CarelessFunction<Result> executor;
+		private final Callable<Result> executor;
 
-		InternalExpectedPromiseExecutor(CarelessFunction<Result> executor) {
+		InternalExpectedPromiseExecutor(Callable<Result> executor) {
 			this.executor = executor;
 		}
 
 		@Override
 		public void requestResolution() {
 			try {
-				sendResolution(executor.result());
+				sendResolution(executor.call());
 			} catch (Throwable rejection) {
 				sendRejection(rejection);
 			}

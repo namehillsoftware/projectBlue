@@ -7,11 +7,11 @@ import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /**
@@ -27,7 +27,7 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 		super(new Executors.QueuedTask<>(task, executor));
 	}
 
-	public QueuedPromise(CarelessFunction<TResult> task, Executor executor) {
+	public QueuedPromise(Callable<TResult> task, Executor executor) {
 		super(new Executors.QueuedFunction<>(task, executor));
 	}
 
@@ -66,10 +66,10 @@ public class QueuedPromise<TResult> extends Promise<TResult> {
 
 		static class QueuedFunction<Result> extends EmptyMessenger<Result> {
 
-			private final CarelessFunction<Result> callable;
+			private final Callable<Result> callable;
 			private final Executor executor;
 
-			QueuedFunction(CarelessFunction<Result> callable, Executor executor) {
+			QueuedFunction(Callable<Result> callable, Executor executor) {
 				this.callable = callable;
 				this.executor = executor;
 			}

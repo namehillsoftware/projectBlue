@@ -1,6 +1,5 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.runnables.FourParameterAction;
@@ -10,6 +9,7 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.Callable;
 
 public class Promise<TResult> {
 
@@ -23,7 +23,7 @@ public class Promise<TResult> {
 		this(new Execution.InternalPromiseExecutor<>(executor));
 	}
 
-	public Promise(CarelessFunction<TResult> executor) {
+	public Promise(Callable<TResult> executor) {
 		this(new Execution.InternalExpectedPromiseExecutor<>(executor));
 	}
 
