@@ -23,16 +23,6 @@ abstract class Messenger<Input, Resolution> implements
 
 	protected abstract void requestResolution(Input input, Throwable throwable);
 
-	private boolean isResolvedSynchronously() {
-		final Lock readLock = resolveSync.readLock();
-		readLock.lock();
-		try {
-			return isResolved;
-		} finally {
-			readLock.unlock();
-		}
-	}
-
 	@Override
 	public final void sendRejection(Throwable error) {
 		resolve(null, error);
@@ -60,6 +50,16 @@ abstract class Messenger<Input, Resolution> implements
 			dispatchMessage(resolution, rejection);
 	}
 
+	private boolean isResolvedSynchronously() {
+		final Lock readLock = resolveSync.readLock();
+		readLock.lock();
+		try {
+			return isResolved;
+		} finally {
+			readLock.unlock();
+		}
+	}
+
 	private void resolve(Resolution resolution, Throwable rejection) {
 		resolveSync.writeLock().lock();
 		try {
@@ -77,7 +77,8 @@ abstract class Messenger<Input, Resolution> implements
 	}
 
 	private synchronized void dispatchMessage(Resolution resolution, Throwable rejection) {
-		for (Messenger<Resolution, ?> r = recipients.poll(); r != null; r = recipients.poll())
+		Messenger<Resolution, ?> r;
+		while ((r = recipients.poll()) != null)
 			r.requestResolution(resolution, rejection);
 	}
 }
