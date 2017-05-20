@@ -7,8 +7,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.EmptyMessenger;
+import com.lasthopesoftware.promises.IRejectedPromise;
+import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -44,7 +47,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey), filePropertiesExecutor);
 	}
 
-	private static final class FilePropertiesTask extends EmptyMessenger<Map<String, String>> {
+	private static final class FilePropertiesTask implements ThreeParameterAction<IResolvedPromise<Map<String, String>>, IRejectedPromise, OneParameterAction<Runnable>> {
 
 		private final IConnectionProvider connectionProvider;
 		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
@@ -58,10 +61,10 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		}
 
 		@Override
-		public void requestResolution() {
-			runWith(() -> {
+		public void runWith(IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+			onCancelled.runWith(() -> {
 				isCancelled = true;
-				sendRejection(new CancellationException());
+				reject.sendRejection(new CancellationException());
 			});
 
 			if (isCancelled) return;
@@ -73,7 +76,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
-				sendResolution(new HashMap<>(filePropertiesContainer.getProperties()));
+				resolve.sendResolution(new HashMap<>(filePropertiesContainer.getProperties()));
 				return;
 			}
 
@@ -97,14 +100,14 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
 
-						sendResolution(returnProperties);
+						resolve.sendResolution(returnProperties);
 					}
 				} finally {
 					conn.disconnect();
 				}
 			} catch (IOException | XmlParseException e) {
 				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
-				sendRejection(e);
+				reject.sendRejection(e);
 			}
 		}
 	}
