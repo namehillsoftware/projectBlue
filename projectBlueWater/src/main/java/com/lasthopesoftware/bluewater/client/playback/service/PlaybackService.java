@@ -788,13 +788,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private Void updateClientBitmap(Bitmap bitmap) {
 		if (remoteClientBitmap == bitmap) return null;
 
+		final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(false);
+		metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
+
 		// Track the remote client bitmap and recycle it in case the remote control client
 		// does not properly recycle the bitmap
 		if (remoteClientBitmap != null) remoteClientBitmap.recycle();
 		remoteClientBitmap = bitmap;
-
-		final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(false);
-		metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
 
 		return null;
 	}

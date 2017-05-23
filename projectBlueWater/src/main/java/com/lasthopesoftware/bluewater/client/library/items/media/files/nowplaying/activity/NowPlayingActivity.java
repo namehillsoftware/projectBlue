@@ -402,13 +402,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 					.then(bitmap ->
 						bitmap != null
 							? new Promise<>(bitmap)
-							: defaultImageProvider.getObject().promiseFileBitmap(serviceFile))
+							: defaultImageProvider.getObject().promiseFileBitmap())
 					.next(Dispatch.toContext(runCarelessly(bitmap -> {
+						nowPlayingImage.setImageBitmap(bitmap);
+
 						if (viewStructure.nowPlayingImage != null)
 							viewStructure.nowPlayingImage.recycle();
 						viewStructure.nowPlayingImage = bitmap;
-
-						nowPlayingImage.setImageBitmap(bitmap);
 
 						displayImageBitmap();
 					}), this))
