@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -109,6 +110,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					libraryRepository);
 		}
 	};
+	private final Lazy<DefaultImageProvider> defaultImageProvider = new Lazy<>(() -> new DefaultImageProvider(this));
 
 	private TimerTask timerTask;
 
@@ -393,14 +395,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
 				getFileImageTask =
-					ImageProvider
-						.getImage(
-							this,
-							connectionProvider,
-							new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)),
-							serviceFile.getKey());
+					new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
+						.promiseFileBitmap(serviceFile);
 
 				getFileImageTask
+					.then(bitmap ->
+						bitmap != null
+							? new Promise<>(bitmap)
+							: defaultImageProvider.getObject().promiseFileBitmap(serviceFile))
 					.next(Dispatch.toContext(runCarelessly(bitmap -> {
 						if (viewStructure.nowPlayingImage != null)
 							viewStructure.nowPlayingImage.recycle();

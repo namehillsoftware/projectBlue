@@ -738,8 +738,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
-		ImageProvider
-			.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, positionedPlaybackFile.getServiceFile().getKey())
+		new ImageProvider(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider)
+			.promiseFileBitmap(positionedPlaybackFile.getServiceFile())
 			.next(Dispatch.toContext(this::updateClientBitmap, this))
 			.error(e -> {
 				logger.warn("There was an error getting the image for the file with id `" + positionedPlaybackFile.getServiceFile().getKey() + "`", e);

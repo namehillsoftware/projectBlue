@@ -23,17 +23,21 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
+import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,6 +104,7 @@ public class FileDetailsActivity extends AppCompatActivity {
     //        final RatingBar rbFileRating = (RatingBar) findViewById(R.id.rbFileRating);
     private LazyViewFinder<TextView> fileNameTextViewFinder = new LazyViewFinder<>(this, R.id.tvFileName);
     private LazyViewFinder<TextView> artistTextViewFinder = new LazyViewFinder<>(this, R.id.tvArtist);
+	private final Lazy<DefaultImageProvider> defaultImageProvider = new Lazy<>(() -> new DefaultImageProvider(this));
 
 	private boolean isDestroyed;
 
@@ -195,8 +200,12 @@ public class FileDetailsActivity extends AppCompatActivity {
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
 			new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-        ImageProvider
-			.getImage(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider, fileKey)
+        new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider)
+			.promiseFileBitmap(new ServiceFile(fileKey))
+			.then(bitmap ->
+				bitmap != null
+					? new Promise<>(bitmap)
+					: defaultImageProvider.getObject().promiseFileBitmap())
 			.next(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 

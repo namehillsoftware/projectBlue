@@ -4,12 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v4.util.LruCache;
-import android.util.DisplayMetrics;
 
-import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -39,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ImageProvider extends QueuedPromise<Bitmap> {
+public class ImageProvider {
 	
 	private static final String IMAGE_FORMAT = "jpg";
 	
@@ -56,31 +55,35 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 	private static final String cancellationMessage = "The image task was cancelled";
 
-	public static Promise<Bitmap> getImage(final Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, final int fileKey) {
-		return
-			cachedFilePropertiesProvider
-				.promiseFileProperties(fileKey)
-				.then(fileProperties -> new ImageProvider(context, connectionProvider, fileProperties, fileKey));
+	private final Context context;
+	private final IConnectionProvider connectionProvider;
+	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+
+	public ImageProvider(final Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+		this.context = context;
+		this.connectionProvider = connectionProvider;
+		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
-	private ImageProvider(final Context context, final IConnectionProvider connectionProvider, Map<String, String> fileProperties, final int fileKey) {
-		super(new ImageMemoryTask(context, connectionProvider, new FillerBitmap(context), fileProperties, fileKey), imageAccessExecutor);
+	public Promise<Bitmap> promiseFileBitmap(ServiceFile serviceFile) {
+		return
+			cachedFilePropertiesProvider
+				.promiseFileProperties(serviceFile.getKey())
+				.then(fileProperties -> new QueuedPromise<>(new ImageMemoryTask(context, connectionProvider, fileProperties, serviceFile.getKey()), imageAccessExecutor));
 	}
 
 	private static class ImageMemoryTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
 		private final Map<String, String> fileProperties;
-		private final FillerBitmap fillerBitmap;
 		private final int fileKey;
 		private final ILibraryProvider libraryProvider;
 		private final SelectedBrowserLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 
-		ImageMemoryTask(Context context, IConnectionProvider connectionProvider, FillerBitmap fillerBitmap, Map<String, String> fileProperties, int fileKey) {
+		ImageMemoryTask(Context context, IConnectionProvider connectionProvider, Map<String, String> fileProperties, int fileKey) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
 			this.fileProperties = fileProperties;
-			this.fillerBitmap = fillerBitmap;
 			this.fileKey = fileKey;
 			this.libraryProvider = new LibraryRepository(context);
 			this.selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
@@ -118,7 +121,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 				.then(library -> {
 					final Promise<Bitmap> httpAccessPromise =
-						new QueuedPromise<>(new ImageIoAccessTask(uniqueKey, context, library, connectionProvider, fillerBitmap, fileKey), imageAccessExecutor);
+						new QueuedPromise<>(new ImageIoAccessTask(uniqueKey, context, library, connectionProvider, fileKey), imageAccessExecutor);
 
 					onCancelled.runWith(httpAccessPromise::cancel);
 
@@ -147,22 +150,20 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 		private final Context context;
 		private final Library library;
 		private final IConnectionProvider connectionProvider;
-		private final FillerBitmap fillerBitmap;
 		private final int fileKey;
 
-		ImageIoAccessTask(String uniqueKey, Context context, Library library, IConnectionProvider connectionProvider, FillerBitmap fillerBitmap, int fileKey) {
+		ImageIoAccessTask(String uniqueKey, Context context, Library library, IConnectionProvider connectionProvider, int fileKey) {
 			this.uniqueKey = uniqueKey;
 			this.context = context;
 			this.library = library;
 			this.connectionProvider = connectionProvider;
-			this.fillerBitmap = fillerBitmap;
 			this.fileKey = fileKey;
 		}
 
 		@Override
 		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
 			if (library == null) {
-				resolve.sendResolution(fillerBitmap.getFillerBitmap());
+				resolve.sendResolution(null);
 				return;
 			}
 
@@ -190,7 +191,7 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 				try {
 					// Connection failed to build
 					if (connection == null) {
-						resolve.sendResolution(fillerBitmap.getFillerBitmap());
+						resolve.sendResolution(null);
 						return;
 					}
 
@@ -206,12 +207,12 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 						}
 
 						if (imageBytes.length == 0) {
-							resolve.sendResolution(fillerBitmap.getFillerBitmap());
+							resolve.sendResolution(null);
 							return;
 						}
 					} catch (FileNotFoundException fe) {
 						logger.warn("Image not found!");
-						resolve.sendResolution(fillerBitmap.getFillerBitmap());
+						resolve.sendResolution(null);
 						return;
 					}
 
@@ -269,37 +270,6 @@ public class ImageProvider extends QueuedPromise<Bitmap> {
 
 			putBitmapIntoMemory(uniqueKey, bytes);
 			return bytes;
-		}
-	}
-
-	private static class FillerBitmap {
-
-		private static Bitmap fillerBitmap;
-		private static final Object fillerBitmapSyncObj = new Object();
-
-		private Context context;
-
-		private FillerBitmap(Context context) {
-			this.context = context;
-		}
-
-		private Bitmap getFillerBitmap() {
-			synchronized (fillerBitmapSyncObj) {
-				if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
-
-				fillerBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.wave_background);
-
-				final DisplayMetrics dm = context.getResources().getDisplayMetrics();
-				int maxSize = Math.max(dm.heightPixels, dm.widthPixels);
-
-				fillerBitmap = Bitmap.createScaledBitmap(fillerBitmap, maxSize, maxSize, false);
-
-				return getBitmapCopy(fillerBitmap);
-			}
-		}
-
-		private static Bitmap getBitmapCopy(final Bitmap src) {
-			return src.copy(src.getConfig(), false);
 		}
 	}
 
