@@ -14,10 +14,6 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
-/**
- * Created by david on 2/12/17.
- */
-
 public class QueuedPromise<TResult> extends Promise<TResult> {
 	public QueuedPromise(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> task, Executor executor) {
 		super(new Executors.QueuedCancellableTask<>(task, executor));

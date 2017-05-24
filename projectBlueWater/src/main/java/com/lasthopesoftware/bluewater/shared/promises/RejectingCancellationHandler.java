@@ -4,10 +4,6 @@ import com.lasthopesoftware.promises.IRejectedPromise;
 
 import java.util.concurrent.CancellationException;
 
-/**
- * Created by david on 2/28/17.
- */
-
 public class RejectingCancellationHandler implements Runnable {
 
 	private final String cancellationMessage;

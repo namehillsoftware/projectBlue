@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 

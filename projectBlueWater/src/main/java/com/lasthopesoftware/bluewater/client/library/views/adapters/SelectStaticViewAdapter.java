@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.views.adapters;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -10,9 +11,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 import java.util.List;
 
-/**
- * Created by david on 11/23/15.
- */
 public class SelectStaticViewAdapter extends ArrayAdapter<String> {
 
 	private final SelectViewAdapterBuilder selectViewAdapterBuilder;
@@ -27,8 +25,9 @@ public class SelectStaticViewAdapter extends ArrayAdapter<String> {
 		selectViewAdapterBuilder = new SelectViewAdapterBuilder(context);
 	}
 
+	@NonNull
 	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
+	public View getView(int position, View convertView, @NonNull ViewGroup parent) {
 		final String item = getItem(position);
 		return selectViewAdapterBuilder.getView(convertView, parent, item, selectedViewType == Library.ViewType.DownloadView && position == selectedViewPosition);
 	}
