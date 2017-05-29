@@ -97,7 +97,7 @@ final class Resolution {
 		}
 	}
 
-	static final class AggregatePromiseResolver<TResult> implements ThreeParameterAction<IResolvedPromise<Collection<TResult>>, IRejectedPromise, OneParameterAction<Runnable>> {
+	static final class AggregatePromiseResolver<TResult> extends EmptyMessenger<Collection<TResult>> {
 
 		private final CollectedPromiseCanceller<TResult> canceller;
 		private final CollectedResultsResolver<TResult> resolver;
@@ -110,12 +110,12 @@ final class Resolution {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<Collection<TResult>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			if (errorHandler.rejectWith(reject)) return;
+		public void requestResolution() {
+			if (errorHandler.rejectWith(this)) return;
 
-			resolver.resolveWith(resolve);
+			resolver.resolveWith(this);
 
-			onCancelled.runWith(canceller.rejection(reject));
+			cancellationRequested(canceller.rejection(this));
 		}
 	}
 

@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFi
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -35,7 +36,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenAQueueIsCycledThroughManyTimes {
 
-	private static Map<ServiceFile, ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>>> fileActionMap;
+	private static Map<ServiceFile, OneParameterAction<Messenger<IBufferingPlaybackHandler>>> fileActionMap;
 	private static int expectedNumberAbsolutePromises;
 	private static int expectedCycles;
 	private static int returnedPromiseCount;
@@ -80,7 +81,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 
 	@Test
 	public void thenEachFileIsPreparedTheAppropriateAmountOfTimes() {
-		Stream.of(fileActionMap).forEach(entry -> verify(entry.getValue(), times(expectedCycles)).runWith(any(), any(), any()));
+		Stream.of(fileActionMap).forEach(entry -> verify(entry.getValue(), times(expectedCycles)).runWith(any()));
 	}
 
 	@Test
@@ -88,10 +89,10 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		Assert.assertEquals(expectedNumberAbsolutePromises, returnedPromiseCount);
 	}
 
-	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class MockResolveAction implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
 		@Override
-		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
+		public void runWith(Messenger<IBufferingPlaybackHandler> messenger) {
+			messenger.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}
 	}
 }

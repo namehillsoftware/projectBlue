@@ -2,7 +2,9 @@ package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType;
 
 import com.lasthopesoftware.promises.AggregateCancellationException;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -23,12 +25,12 @@ public class WhenCancellingWhileResolving {
 
 	@BeforeClass
 	public static void before() {
-		final List<IResolvedPromise<String>> resolutions = new ArrayList<>();
+		final List<Messenger<String>> resolutions = new ArrayList<>();
 
-		final Promise<String> firstPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
-		final Promise<String> secondPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
-		final Promise<String> thirdPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
-		final Promise<String> fourthPromise = new Promise<>((resolve, reject) -> resolutions.add(resolve));
+		final Promise<String> firstPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
+		final Promise<String> secondPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
+		final Promise<String> thirdPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
+		final Promise<String> fourthPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
 
 		final Promise<Collection<String>> aggregatePromise = Promise.whenAll(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		aggregatePromise

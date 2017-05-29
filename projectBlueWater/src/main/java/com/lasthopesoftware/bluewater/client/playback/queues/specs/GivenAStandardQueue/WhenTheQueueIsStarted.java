@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFi
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -70,9 +71,9 @@ public class WhenTheQueueIsStarted {
 			.next(VoidFunc.runCarelessly(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 
-	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class MockResolveAction implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
 		@Override
-		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		public void runWith(Messenger<IBufferingPlaybackHandler> resolve) {
 			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}
 	}

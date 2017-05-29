@@ -27,20 +27,20 @@ public class WhenThePromiseIsCancelledBeforeResolution {
 		expectedResult = new Object();
 
 		final CountDownLatch latch = new CountDownLatch(1);
-		final Promise<Object> promise = new Promise<>((resolve, reject, onCancelled) -> {
+		final Promise<Object> promise = new Promise<>((messenger) -> {
 			final Thread myNewThread = new Thread(() -> {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					reject.sendRejection(e);
+					messenger.sendRejection(e);
 					return;
 				}
-				resolve.sendResolution(expectedResult);
+				messenger.sendResolution(expectedResult);
 				latch.countDown();
 			});
 
 			cancellationRunnable = spy(new ThreadCanceller(myNewThread));
-			onCancelled.runWith(cancellationRunnable);
+			messenger.cancellationRequested(cancellationRunnable);
 
 			myNewThread.start();
 		});

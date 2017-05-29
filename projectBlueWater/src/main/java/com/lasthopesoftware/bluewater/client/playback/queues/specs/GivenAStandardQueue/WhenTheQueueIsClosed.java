@@ -26,8 +26,8 @@ public class WhenTheQueueIsClosed {
 	public static void before() throws IOException {
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider = new CompletingFileQueueProvider();
 
-		final Promise<IBufferingPlaybackHandler> cancelRecordingPromise = new Promise<>((resolve, reject, onCancelled) -> {
-			onCancelled.runWith(() -> isCancelled = true);
+		final Promise<IBufferingPlaybackHandler> cancelRecordingPromise = new Promise<>((messenger) -> {
+			messenger.cancellationRequested(() -> isCancelled = true);
 		});
 
 		final PreparedPlaybackQueue queue =

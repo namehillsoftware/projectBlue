@@ -15,7 +15,7 @@ final class PromisedResolution<TResult, TNewResult> extends ResolutionMessenger<
 		try {
 			final Promise<TNewResult> fulfilledPromise = onFulfilled.resultFrom(result);
 
-			runWith(new PromisedCancellable<>(fulfilledPromise));
+			cancellationRequested(new PromisedCancellable<>(fulfilledPromise));
 
 			fulfilledPromise
 				.next(new ResolveWithPromiseResult<>(this))

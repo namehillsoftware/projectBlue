@@ -6,13 +6,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlayback
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
-
-/**
- * Created by david on 3/12/17.
- */
 
 public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerProvider {
 
@@ -23,9 +20,9 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		return (file, preparedAt) -> new Promise<>(deferredResolution);
 	}
 
-	public static class DeferredResolution implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+	public static class DeferredResolution implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
 
-		private IResolvedPromise<IBufferingPlaybackHandler> resolve;
+		private Messenger<IBufferingPlaybackHandler> resolve;
 
 		public ResolveablePlaybackHandler resolve() {
 			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
@@ -35,7 +32,7 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		public void runWith(Messenger<IBufferingPlaybackHandler> resolve) {
 			this.resolve = resolve;
 		}
 	}

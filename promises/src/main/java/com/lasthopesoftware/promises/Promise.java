@@ -11,70 +11,66 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
-public class Promise<TResult> {
+public class Promise<Resolution> {
 
-	private final Messenger<?, TResult> messenger;
+	private final AwaitingMessenger<?, Resolution> messenger;
 
-	public Promise(ThreeParameterAction<IResolvedPromise<TResult>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
-		this(new Execution.InternalCancellablePromiseExecutor<>(executor));
+	public Promise(OneParameterAction<Messenger<Resolution>> executor) {
+		this(new Execution.MessengerTunnel<Resolution>(executor));
 	}
 
-	public Promise(TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> executor) {
-		this(new Execution.InternalPromiseExecutor<>(executor));
+	public Promise(Callable<Resolution> executor) {
+		this(new Execution.InternalExpectedPromiseExecutor<Resolution>(executor));
 	}
 
-	public Promise(Callable<TResult> executor) {
-		this(new Execution.InternalExpectedPromiseExecutor<>(executor));
+	public Promise(Resolution passThroughResult) {
+		this(new Execution.PassThroughCallable<Resolution>(passThroughResult));
 	}
 
-	public Promise(TResult passThroughResult) {
-		this(new Execution.PassThroughCallable<>(passThroughResult));
-	}
-
-	public Promise(EmptyMessenger<TResult> messenger) {
-		this((Messenger<Void, TResult>)messenger);
+	public Promise(EmptyMessenger<Resolution> messenger) {
+		this((AwaitingMessenger<Void, Resolution>)messenger);
 		messenger.requestResolution();
 	}
 
-	private Promise(Messenger<?, TResult> messenger) {
-		this.messenger = messenger;
+	private Promise(AwaitingMessenger<?, Resolution> awaitingMessenger) {
+		this.messenger = awaitingMessenger;
 	}
 
 	public final void cancel() {
 		messenger.cancel();
 	}
 
-	private <TNewResult> Promise<TNewResult> next(Messenger<TResult, TNewResult> onFulfilled) {
+	private <NewResolution> Promise<NewResolution> next(AwaitingMessenger<Resolution, NewResolution> onFulfilled) {
 		messenger.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
 	}
 
-	public final <NewResult> Promise<NewResult> next(ResolutionMessenger<TResult, NewResult> onFulfilled) {
-		return next((Messenger<TResult, NewResult>)onFulfilled);
+	public final <NewResult> Promise<NewResult> next(ResolutionMessenger<Resolution, NewResult> onFulfilled) {
+		return next((AwaitingMessenger<Resolution, NewResult>)onFulfilled);
 	}
 
-	public final <TNewResult> Promise<TNewResult> next(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> next(FourParameterAction<Resolution, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
 		return next(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
 	}
 
-	public final <TNewResult> Promise<TNewResult> next(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> next(CarelessTwoParameterFunction<Resolution, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 		return next(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
 	}
 
-	public final <TNewResult> Promise<TNewResult> next(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> next(ThreeParameterAction<Resolution, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
 		return next(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
-	public final <TNewResult> Promise<TNewResult> next(final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> next(final CarelessOneParameterFunction<Resolution, TNewResult> onFulfilled) {
 		return next(new Execution.ExpectedResultExecutor<>(onFulfilled));
 	}
 
-	public final <TNewResult> Promise<TNewResult> then(CarelessOneParameterFunction<TResult, Promise<TNewResult>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(CarelessOneParameterFunction<Resolution, Promise<TNewResult>> onFulfilled) {
 		return next(new PromisedResolution<>(onFulfilled));
 	}
 
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorMessenger<TResult, TNewRejectedResult> errorMessenger) {
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorMessenger<Resolution, TNewRejectedResult> errorMessenger) {
 		return next(errorMessenger);
 	}
 
@@ -104,7 +100,7 @@ public class Promise<TResult> {
 	}
 
 	public static <TResult> Promise<Collection<TResult>> whenAll(Collection<Promise<TResult>> promises) {
-		return new Promise<>(new Resolution.AggregatePromiseResolver<>(promises));
+		return new Promise<>(new com.lasthopesoftware.promises.Resolution.AggregatePromiseResolver<TResult>(promises));
 	}
 
 }

@@ -11,35 +11,6 @@ import java.util.concurrent.Callable;
 
 final class Execution {
 
-	static final class InternalCancellablePromiseExecutor<Result> extends EmptyMessenger<Result> {
-		private final ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> executor;
-
-		InternalCancellablePromiseExecutor(ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> executor) {
-			this.executor = executor;
-		}
-
-		@Override
-		public void requestResolution() {
-			executor.runWith(this, this, this);
-		}
-	}
-
-	/**
-	 * Created by david on 10/8/16.
-	 */
-	static final class InternalPromiseExecutor<Result> extends EmptyMessenger<Result> {
-		private final TwoParameterAction<IResolvedPromise<Result>, IRejectedPromise> executor;
-
-		InternalPromiseExecutor(TwoParameterAction<IResolvedPromise<Result>, IRejectedPromise> executor) {
-			this.executor = executor;
-		}
-
-		@Override
-		public void requestResolution() {
-			executor.runWith(this, this);
-		}
-	}
-
 	static final class InternalExpectedPromiseExecutor<Result> extends EmptyMessenger<Result> {
 		private final Callable<Result> executor;
 
@@ -54,6 +25,20 @@ final class Execution {
 			} catch (Throwable rejection) {
 				sendRejection(rejection);
 			}
+		}
+	}
+
+	static final class MessengerTunnel<Result> extends EmptyMessenger<Result> {
+
+		private final OneParameterAction<Messenger<Result>> messengerDestination;
+
+		MessengerTunnel(OneParameterAction<Messenger<Result>> messengerDestination) {
+			this.messengerDestination = messengerDestination;
+		}
+
+		@Override
+		public void requestResolution() {
+			messengerDestination.runWith(this);
 		}
 	}
 

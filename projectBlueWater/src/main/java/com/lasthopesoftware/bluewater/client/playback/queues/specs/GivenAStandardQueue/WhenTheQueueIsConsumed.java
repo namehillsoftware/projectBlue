@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFi
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -78,11 +79,11 @@ public class WhenTheQueueIsConsumed {
 		assertThat(returnedPromiseCount).isEqualTo(expectedNumberOfFiles);
 	}
 
-	private static class MockResolveAction implements ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class MockResolveAction implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
 		private int calls;
 
 		@Override
-		public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		public void runWith(Messenger<IBufferingPlaybackHandler> resolve) {
 			++calls;
 			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}

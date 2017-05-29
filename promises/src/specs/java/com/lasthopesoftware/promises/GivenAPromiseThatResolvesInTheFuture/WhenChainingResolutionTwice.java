@@ -27,13 +27,13 @@ public class WhenChainingResolutionTwice {
 	public void before() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final Promise<String> rootPromise =
-			new Promise<>((resolve, reject) -> new Thread(() -> {
+			new Promise<>((messenger) -> new Thread(() -> {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				resolve.sendResolution("test");
+				messenger.sendResolution("test");
 				latch.countDown();
 			}).start());
 

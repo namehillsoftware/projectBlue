@@ -2,7 +2,9 @@ package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled.BeforeTheProm
 
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import org.junit.BeforeClass;
@@ -40,9 +42,9 @@ public class WhenTheCancellationIsCalled {
 		assertThat(caughtException).isEqualTo(thrownException);
 	}
 
-	private static class ExternallyResolvableTask<TResult> implements TwoParameterAction<IResolvedPromise<TResult>, IRejectedPromise> {
+	private static class ExternallyResolvableTask<TResult> implements OneParameterAction<Messenger<TResult>> {
 
-		private IResolvedPromise<TResult> resolve;
+		private Messenger<TResult> resolve;
 
 		public void resolve(TResult resolution) {
 			if (resolve != null)
@@ -50,8 +52,8 @@ public class WhenTheCancellationIsCalled {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<TResult> parameterOne, IRejectedPromise parameterTwo) {
-			resolve = parameterOne;
+		public void runWith(Messenger<TResult> messenger) {
+			resolve = messenger;
 		}
 	}
 }

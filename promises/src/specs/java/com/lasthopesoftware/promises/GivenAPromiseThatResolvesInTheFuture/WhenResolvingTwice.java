@@ -1,4 +1,4 @@
-package specs.GivenAPromiseThatResolvesInTheFuture;
+package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.lasthopesoftware.promises.Promise;
 
@@ -23,15 +23,15 @@ public class WhenResolvingTwice {
 	public static void before() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(2);
 
-		new Promise<>((resolve, reject) ->  new Thread(() -> {
+		new Promise<>((messenger) ->  new Thread(() -> {
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			resolve.sendResolution(expectedResult);
+			messenger.sendResolution(expectedResult);
 			latch.countDown();
-			resolve.sendResolution(unexpectedResult);
+			messenger.sendResolution(unexpectedResult);
 			latch.countDown();
 		}).start())
 		.next(result -> WhenResolvingTwice.result = result);;

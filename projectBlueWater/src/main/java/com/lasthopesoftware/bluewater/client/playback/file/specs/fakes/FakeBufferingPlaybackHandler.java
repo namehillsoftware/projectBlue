@@ -52,7 +52,7 @@ public class FakeBufferingPlaybackHandler implements IBufferingPlaybackHandler {
 	@Override
 	public Promise<IPlaybackHandler> promisePlayback() {
 		isPlaying = true;
-		return new Promise<>((resolve, reject) -> {});
+		return new Promise<>((messenger) -> {});
 	}
 
 	@Override

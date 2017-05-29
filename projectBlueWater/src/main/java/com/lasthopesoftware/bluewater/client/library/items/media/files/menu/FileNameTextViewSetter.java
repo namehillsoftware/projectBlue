@@ -33,18 +33,18 @@ public class FileNameTextViewSetter implements CarelessTwoParameterFunction<Map<
 
 		fileNameTextViewSetter.setLoading();
 
-		return new Promise<>((resolve, reject, onCancelled) -> {
+		return new Promise<>((messenger) -> {
 			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
 			final Promise<Map<String, String>> promise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
-			promise.next(runCarelessly(resolve::sendResolution));
-			promise.error(runCarelessly(reject::sendRejection));
+			promise.next(runCarelessly(messenger::sendResolution));
+			promise.error(runCarelessly(messenger::sendRejection));
 
 			final Promise<Void> textViewUpdatePromise = promise.next(Dispatch.toHandler(fileNameTextViewSetter, handler));
 
-			onCancelled.runWith(() -> {
+			messenger.cancellationRequested(() -> {
 				promise.cancel();
 				textViewUpdatePromise.cancel();
 			});

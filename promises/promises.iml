@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":promises" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/.." external.system.id="GRADLE" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":promises" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/../lazy-j" external.system.id="GRADLE" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="futures" exported="" />
     <orderEntry type="library" exported="" scope="TEST" name="mockito-core-2.8.9" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="junit-4.12" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="assertj-core-2.7.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="assertj-core-2.8.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-1.6.14" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-agent-1.6.14" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="objenesis-2.5" level="project" />
