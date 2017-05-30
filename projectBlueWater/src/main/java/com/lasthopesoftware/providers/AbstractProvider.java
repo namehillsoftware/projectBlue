@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -28,7 +29,7 @@ abstract class AbstractProvider<Data> {
 	protected abstract Data getData(IConnectionProvider connectionProvider, Cancellation cancellation, String[] params) throws Throwable;
 
 	private static class ProvideDataTask<Data> implements
-		ThreeParameterAction<IResolvedPromise<Data>, IRejectedPromise, OneParameterAction<Runnable>>,
+		OneParameterAction<Messenger<Data>>,
 		Runnable {
 		private final AbstractProvider<Data> provider;
 		private final IConnectionProvider connectionProvider;
@@ -42,13 +43,13 @@ abstract class AbstractProvider<Data> {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<Data> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			onCancelled.runWith(this);
+		public void runWith(Messenger<Data> messenger) {
+			messenger.cancellationRequested(this);
 
 			try {
-				resolve.sendResolution(provider.getData(connectionProvider, cancellation, params));
+				messenger.sendResolution(provider.getData(connectionProvider, cancellation, params));
 			} catch (Throwable e) {
-				reject.sendRejection(e);
+				messenger.sendRejection(e);
 			}
 		}
 

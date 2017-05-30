@@ -111,25 +111,22 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		}
 
 		return nowPlayingPromise
-			.next(new ResolutionMessenger<NowPlaying, PositionedFile>() {
-				@Override
-				protected void requestResolution(NowPlaying nowPlaying) {
-					final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
-					try {
-						final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
-						final Observable<PositionedPlaybackFile> playbackFileObservable =
-							startPlayback(preparedPlaybackQueue, filePosition);
+			.then((nowPlaying) -> new Promise<>(messenger -> {
+				final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
+				try {
+					final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
+					final Observable<PositionedPlaybackFile> playbackFileObservable =
+						startPlayback(preparedPlaybackQueue, filePosition);
 
-						playbackFileObservable
-							.firstElement()
-							.subscribe(playbackFile -> this.sendResolution(playbackFile.asPositionedFile()));
+					playbackFileObservable
+						.firstElement()
+						.subscribe(playbackFile -> messenger.sendResolution(playbackFile.asPositionedFile()));
 
-						switchObservation(playbackFileObservable);
-					} catch (Exception e) {
-						sendRejection(e);
-					}
+					switchObservation(playbackFileObservable);
+				} catch (Exception e) {
+					messenger.sendRejection(e);
 				}
-			});
+			}));
 	}
 
 	public void playRepeatedly() {

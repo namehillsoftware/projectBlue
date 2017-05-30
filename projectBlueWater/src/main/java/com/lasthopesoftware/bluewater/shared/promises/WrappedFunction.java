@@ -1,14 +1,16 @@
 package com.lasthopesoftware.bluewater.shared.promises;
 
 import com.lasthopesoftware.promises.EmptyMessenger;
+import com.lasthopesoftware.promises.Messenger;
+import com.vedsoft.futures.callables.CarelessFunction;
 
 import java.util.concurrent.Callable;
 
 public class WrappedFunction<TResult> implements Runnable {
-	private final Callable<TResult> callable;
-	private final EmptyMessenger<TResult> messenger;
+	private final CarelessFunction<TResult> callable;
+	private final Messenger<TResult> messenger;
 
-	public WrappedFunction(Callable<TResult> callable, EmptyMessenger<TResult> messenger) {
+	public WrappedFunction(CarelessFunction<TResult> callable, Messenger<TResult> messenger) {
 		this.callable = callable;
 		this.messenger = messenger;
 	}
@@ -16,7 +18,7 @@ public class WrappedFunction<TResult> implements Runnable {
 	@Override
 	public void run() {
 		try {
-			messenger.sendResolution(callable.call());
+			messenger.sendResolution(callable.result());
 		} catch (Throwable rejection) {
 			messenger.sendRejection(rejection);
 		}

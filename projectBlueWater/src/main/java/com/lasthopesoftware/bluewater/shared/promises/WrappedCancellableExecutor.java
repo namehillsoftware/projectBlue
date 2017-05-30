@@ -3,20 +3,21 @@ package com.lasthopesoftware.bluewater.shared.promises;
 import com.lasthopesoftware.promises.EmptyMessenger;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 public class WrappedCancellableExecutor<Result> implements Runnable {
-	private final ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> task;
-	private final EmptyMessenger<Result> messenger;
+	private final Messenger<Result> messenger;
+	private final OneParameterAction<Messenger<Result>> task;
 
-	public WrappedCancellableExecutor(ThreeParameterAction<IResolvedPromise<Result>, IRejectedPromise, OneParameterAction<Runnable>> task, EmptyMessenger<Result> messenger) {
-		this.task = task;
+	public WrappedCancellableExecutor(Messenger<Result> messenger, OneParameterAction<Messenger<Result>> task) {
 		this.messenger = messenger;
+		this.task = task;
 	}
 
 	@Override
 	public void run() {
-		this.task.runWith(messenger, messenger, messenger);
+		task.runWith(messenger);
 	}
 }

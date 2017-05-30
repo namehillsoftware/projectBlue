@@ -102,11 +102,11 @@ public class StoredFileAccess {
 	}
 
 	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
-		return new QueuedPromise<>((resolve, reject) -> {
+		return new QueuedPromise<>((messenger) -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				resolve.sendResolution(getStoredFile(repositoryAccessHelper, serviceServiceFile));
+				messenger.sendResolution(getStoredFile(repositoryAccessHelper, serviceServiceFile));
 			} catch(SQLException e) {
-				reject.sendRejection(e);
+				messenger.sendRejection(e);
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
@@ -189,7 +189,7 @@ public class StoredFileAccess {
 		final MediaFileUriProvider mediaFileUriProvider =
 			new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
 
-		return new QueuedPromise<StoredFile>((resolve, reject) -> {
+		return new QueuedPromise<StoredFile>((messenger) -> {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 					if (storedFile == null) {
@@ -198,9 +198,9 @@ public class StoredFileAccess {
 						storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 					}
 
-					resolve.sendResolution(storedFile);
+					messenger.sendResolution(storedFile);
 				} catch (Exception e) {
-					reject.sendRejection(e);
+					messenger.sendRejection(e);
 				}
 			}, RepositoryAccessHelper.databaseExecutor)
 			.then(storedFile -> {

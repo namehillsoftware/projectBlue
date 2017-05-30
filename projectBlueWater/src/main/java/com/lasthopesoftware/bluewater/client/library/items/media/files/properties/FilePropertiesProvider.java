@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -47,7 +48,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey), filePropertiesExecutor);
 	}
 
-	private static final class FilePropertiesTask implements ThreeParameterAction<IResolvedPromise<Map<String, String>>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static final class FilePropertiesTask implements OneParameterAction<Messenger<Map<String, String>>> {
 
 		private final IConnectionProvider connectionProvider;
 		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
@@ -61,10 +62,10 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			onCancelled.runWith(() -> {
+		public void runWith(Messenger<Map<String, String>> messenger) {
+			messenger.cancellationRequested(() -> {
 				isCancelled = true;
-				reject.sendRejection(new CancellationException());
+				messenger.sendRejection(new CancellationException());
 			});
 
 			if (isCancelled) return;
@@ -76,7 +77,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
-				resolve.sendResolution(new HashMap<>(filePropertiesContainer.getProperties()));
+				messenger.sendResolution(new HashMap<>(filePropertiesContainer.getProperties()));
 				return;
 			}
 
@@ -100,14 +101,14 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
 
-						resolve.sendResolution(returnProperties);
+						messenger.sendResolution(returnProperties);
 					}
 				} finally {
 					conn.disconnect();
 				}
 			} catch (IOException | XmlParseException e) {
 				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
-				reject.sendRejection(e);
+				messenger.sendRejection(e);
 			}
 		}
 	}

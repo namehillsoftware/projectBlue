@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandl
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -72,7 +73,7 @@ public class ImageProvider {
 				.then(fileProperties -> new QueuedPromise<>(new ImageMemoryTask(context, connectionProvider, fileProperties, serviceFile.getKey()), imageAccessExecutor));
 	}
 
-	private static class ImageMemoryTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class ImageMemoryTask implements OneParameterAction<Messenger<Bitmap>> {
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
 		private final Map<String, String> fileProperties;
@@ -90,10 +91,10 @@ public class ImageProvider {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, reject);
+		public void runWith(Messenger<Bitmap> messenger) {
+			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, messenger);
 
-			onCancelled.runWith(rejectingCancellationHandler);
+			messenger.cancellationRequested(rejectingCancellationHandler);
 
 			if (rejectingCancellationHandler.isCancelled()) return;
 
@@ -113,7 +114,7 @@ public class ImageProvider {
 
 			final byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
 			if (imageBytes.length > 0) {
-				resolve.sendResolution(getBitmapFromBytes(imageBytes));
+				messenger.sendResolution(getBitmapFromBytes(imageBytes));
 				return;
 			}
 
@@ -123,12 +124,12 @@ public class ImageProvider {
 					final Promise<Bitmap> httpAccessPromise =
 						new QueuedPromise<>(new ImageIoAccessTask(uniqueKey, context, library, connectionProvider, fileKey), imageAccessExecutor);
 
-					onCancelled.runWith(httpAccessPromise::cancel);
+					messenger.cancellationRequested(httpAccessPromise::cancel);
 
 					return httpAccessPromise;
 				})
-				.next(VoidFunc.runCarelessly(resolve::sendResolution))
-				.error(VoidFunc.runCarelessly(reject::sendRejection));
+				.next(VoidFunc.runCarelessly(messenger::sendResolution))
+				.error(VoidFunc.runCarelessly(messenger::sendRejection));
 		}
 
 		private static byte[] getBitmapBytesFromMemory(final String uniqueKey) {
@@ -144,7 +145,7 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageIoAccessTask implements ThreeParameterAction<IResolvedPromise<Bitmap>, IRejectedPromise, OneParameterAction<Runnable>> {
+	private static class ImageIoAccessTask implements OneParameterAction<Messenger<Bitmap>> {
 
 		private final String uniqueKey;
 		private final Context context;
@@ -161,14 +162,14 @@ public class ImageProvider {
 		}
 
 		@Override
-		public void runWith(IResolvedPromise<Bitmap> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		public void runWith(Messenger<Bitmap> messenger) {
 			if (library == null) {
-				resolve.sendResolution(null);
+				messenger.sendResolution(null);
 				return;
 			}
 
-			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, reject);
-			onCancelled.runWith(rejectingCancellationHandler);
+			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, messenger);
+			messenger.cancellationRequested(rejectingCancellationHandler);
 
 			final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 
@@ -178,7 +179,7 @@ public class ImageProvider {
 				if (imageCacheFile != null) {
 					imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
 					if (imageBytes.length > 0) {
-						resolve.sendResolution(getBitmapFromBytes(imageBytes));
+						messenger.sendResolution(getBitmapFromBytes(imageBytes));
 						return;
 					}
 				}
@@ -191,7 +192,7 @@ public class ImageProvider {
 				try {
 					// Connection failed to build
 					if (connection == null) {
-						resolve.sendResolution(null);
+						messenger.sendResolution(null);
 						return;
 					}
 
@@ -202,17 +203,17 @@ public class ImageProvider {
 							imageBytes = IOUtils.toByteArray(is);
 						} catch (InterruptedIOException interruptedIoException) {
 							logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
-							reject.sendRejection(interruptedIoException);
+							messenger.sendRejection(interruptedIoException);
 							return;
 						}
 
 						if (imageBytes.length == 0) {
-							resolve.sendResolution(null);
+							messenger.sendResolution(null);
 							return;
 						}
 					} catch (FileNotFoundException fe) {
 						logger.warn("Image not found!");
-						resolve.sendResolution(null);
+						messenger.sendResolution(null);
 						return;
 					}
 
@@ -226,7 +227,7 @@ public class ImageProvider {
 
 					if (rejectingCancellationHandler.isCancelled()) return;
 
-					resolve.sendResolution(getBitmapFromBytes(imageBytes));
+					messenger.sendResolution(getBitmapFromBytes(imageBytes));
 				} catch (Exception e) {
 					logger.error(e.toString(), e);
 				} finally {

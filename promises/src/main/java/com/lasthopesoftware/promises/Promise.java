@@ -2,6 +2,7 @@ package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
+import com.vedsoft.futures.runnables.CarelessTwoParameterAction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
@@ -40,14 +41,10 @@ public class Promise<Resolution> {
 		messenger.cancel();
 	}
 
-	private <NewResolution> Promise<NewResolution> next(AwaitingMessenger<Resolution, NewResolution> onFulfilled) {
+	<NewResolution> Promise<NewResolution> next(AwaitingMessenger<Resolution, NewResolution> onFulfilled) {
 		messenger.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
-	}
-
-	public final <NewResult> Promise<NewResult> next(ResolutionMessenger<Resolution, NewResult> onFulfilled) {
-		return next((AwaitingMessenger<Resolution, NewResult>)onFulfilled);
 	}
 
 	public final <TNewResult> Promise<TNewResult> next(FourParameterAction<Resolution, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {

@@ -12,17 +12,15 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerExce
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.concurrent.CancellationException;
 
-/**
- * Created by david on 10/3/16.
- */
 final class MediaPlayerPreparerTask implements
-	ThreeParameterAction<IResolvedPromise<IBufferingPlaybackHandler>, IRejectedPromise, OneParameterAction<Runnable>> {
+	OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
 
 	private final ServiceFile serviceFile;
 	private final int prepareAt;
@@ -37,26 +35,22 @@ final class MediaPlayerPreparerTask implements
 	}
 
 	@Override
-	public void runWith(IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+	public void runWith(Messenger<IBufferingPlaybackHandler> messenger) {
 		uriProvider
 			.getFileUri(serviceFile)
-			.next(new MediaPlayerPreparationTask(playbackInitialization, prepareAt, resolve, reject, onCancelled))
-			.error(new UriProviderErrorHandler(reject));
+			.next(new MediaPlayerPreparationTask(playbackInitialization, prepareAt, messenger))
+			.error(new UriProviderErrorHandler(messenger));
 	}
 
 	private static final class MediaPlayerPreparationTask implements CarelessOneParameterFunction<Uri, Void> {
 		private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 		private final int prepareAt;
-		private final IResolvedPromise<IBufferingPlaybackHandler> resolve;
-		private final IRejectedPromise reject;
-		private final OneParameterAction<Runnable> onCancelled;
+		private final Messenger<IBufferingPlaybackHandler> messenger;
 
-		MediaPlayerPreparationTask(IPlaybackInitialization<MediaPlayer> playbackInitialization, int prepareAt, IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
+		MediaPlayerPreparationTask(IPlaybackInitialization<MediaPlayer> playbackInitialization, int prepareAt, Messenger<IBufferingPlaybackHandler> messenger) {
 			this.playbackInitialization = playbackInitialization;
 			this.prepareAt = prepareAt;
-			this.resolve = resolve;
-			this.reject = reject;
-			this.onCancelled = onCancelled;
+			this.messenger = messenger;
 		}
 
 		@Override
@@ -65,12 +59,12 @@ final class MediaPlayerPreparerTask implements
 			mediaPlayer = playbackInitialization.initializeMediaPlayer(uri);
 
 			final MediaPlayerPreparationHandler mediaPlayerPreparationHandler =
-				new MediaPlayerPreparationHandler(mediaPlayer, prepareAt, resolve, reject);
+				new MediaPlayerPreparationHandler(mediaPlayer, prepareAt, messenger);
 
-			onCancelled.runWith(mediaPlayerPreparationHandler);
+			messenger.cancellationRequested(mediaPlayerPreparationHandler);
 
 			if (mediaPlayerPreparationHandler.isCancelled()) {
-				reject.sendRejection(new CancellationException());
+				messenger.sendRejection(new CancellationException());
 				return null;
 			}
 
@@ -86,15 +80,15 @@ final class MediaPlayerPreparerTask implements
 
 	private static final class UriProviderErrorHandler implements CarelessOneParameterFunction<Throwable, Void> {
 
-		private final IRejectedPromise reject;
+		private final Messenger messenger;
 
-		UriProviderErrorHandler(IRejectedPromise reject) {
-			this.reject = reject;
+		UriProviderErrorHandler(Messenger messenger) {
+			this.messenger = messenger;
 		}
 
 		@Override
 		public Void resultFrom(Throwable throwable) throws Exception {
-			reject.sendRejection(throwable);
+			messenger.sendRejection(throwable);
 			return null;
 		}
 	}
@@ -107,29 +101,27 @@ final class MediaPlayerPreparerTask implements
 			Runnable
 	{
 		private final MediaPlayer mediaPlayer;
-		private final IResolvedPromise<IBufferingPlaybackHandler> resolve;
-		private final IRejectedPromise reject;
+		private final Messenger<IBufferingPlaybackHandler> messenger;
 		private final int prepareAt;
 
 		private boolean isCancelled;
 
-		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, IResolvedPromise<IBufferingPlaybackHandler> resolve, IRejectedPromise reject) {
+		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, Messenger<IBufferingPlaybackHandler> messenger) {
 			this.mediaPlayer = mediaPlayer;
-			this.resolve = resolve;
-			this.reject = reject;
 			this.prepareAt = prepareAt;
+			this.messenger = messenger;
 		}
 
 		@Override
 		public boolean onError(MediaPlayer mp, int what, int extra) {
-			reject.sendRejection(new MediaPlayerException(new EmptyPlaybackHandler(0), mp, what, extra));
+			messenger.sendRejection(new MediaPlayerException(new EmptyPlaybackHandler(0), mp, what, extra));
 			return true;
 		}
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
 			if (isCancelled) {
-				reject.sendRejection(new CancellationException());
+				messenger.sendRejection(new CancellationException());
 				return;
 			}
 
@@ -139,17 +131,17 @@ final class MediaPlayerPreparerTask implements
 				return;
 			}
 
-			resolve.sendResolution(new MediaPlayerPlaybackHandler(mp));
+			messenger.sendResolution(new MediaPlayerPlaybackHandler(mp));
 		}
 
 		@Override
 		public void onSeekComplete(MediaPlayer mp) {
 			if (isCancelled) {
-				reject.sendRejection(new CancellationException());
+				messenger.sendRejection(new CancellationException());
 				return;
 			}
 
-			resolve.sendResolution(new MediaPlayerPlaybackHandler(mp));
+			messenger.sendResolution(new MediaPlayerPlaybackHandler(mp));
 		}
 
 		@Override

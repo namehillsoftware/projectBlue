@@ -27,10 +27,10 @@ public class WhenCancellingWhileResolving {
 	public static void before() {
 		final List<Messenger<String>> resolutions = new ArrayList<>();
 
-		final Promise<String> firstPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
-		final Promise<String> secondPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
-		final Promise<String> thirdPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
-		final Promise<String> fourthPromise = new Promise<>((OneParameterAction<Messenger<String>>) resolutions::add);
+		final Promise<String> firstPromise = new Promise<>(resolutions::add);
+		final Promise<String> secondPromise = new Promise<>(resolutions::add);
+		final Promise<String> thirdPromise = new Promise<>(resolutions::add);
+		final Promise<String> fourthPromise = new Promise<>(resolutions::add);
 
 		final Promise<Collection<String>> aggregatePromise = Promise.whenAll(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		aggregatePromise
