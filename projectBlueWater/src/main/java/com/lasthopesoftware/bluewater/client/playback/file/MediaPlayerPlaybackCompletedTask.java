@@ -3,12 +3,10 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.promises.EmptyMessenger;
+import com.lasthopesoftware.promises.Messenger;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
-/**
- * Created by david on 10/4/16.
- */
-final class MediaPlayerPlaybackCompletedTask extends EmptyMessenger<IPlaybackHandler> {
+final class MediaPlayerPlaybackCompletedTask implements OneParameterAction<Messenger<IPlaybackHandler>> {
 
 	private final IPlaybackHandler playbackHandler;
 	private final MediaPlayer mediaPlayer;
@@ -19,10 +17,10 @@ final class MediaPlayerPlaybackCompletedTask extends EmptyMessenger<IPlaybackHan
 	}
 
 	@Override
-	public void requestResolution() {
-		mediaPlayer.setOnCompletionListener(mp -> sendResolution(playbackHandler));
+	public void runWith(Messenger<IPlaybackHandler> messenger) {
+		mediaPlayer.setOnCompletionListener(mp -> messenger.sendResolution(playbackHandler));
 		mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-			sendRejection(new MediaPlayerException(playbackHandler, mp, what, extra));
+			messenger.sendRejection(new MediaPlayerException(playbackHandler, mp, what, extra));
 			return true;
 		});
 	}

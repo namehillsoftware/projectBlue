@@ -3,15 +3,12 @@ package com.lasthopesoftware.promises;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.runnables.CarelessTwoParameterAction;
 import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
-import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.Callable;
 
 public class Promise<Resolution> {
 
@@ -68,16 +65,12 @@ public class Promise<Resolution> {
 		return next(new PromisedResolution<>(onFulfilled));
 	}
 
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorMessenger<Resolution, TNewRejectedResult> errorMessenger) {
-		return next(errorMessenger);
-	}
-
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
 		return next(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
-		return error(new Execution.Cancellable.RejectionDependentCancellableCaller<>(onRejected));
+		return next(new Execution.Cancellable.RejectionDependentCancellableCaller<>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
@@ -85,7 +78,7 @@ public class Promise<Resolution> {
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
-		return error(new Execution.ErrorResultExecutor<>(onRejected));
+		return next(new Execution.ErrorResultExecutor<>(onRejected));
 	}
 
 	public static <TResult> Promise<TResult> empty() {
