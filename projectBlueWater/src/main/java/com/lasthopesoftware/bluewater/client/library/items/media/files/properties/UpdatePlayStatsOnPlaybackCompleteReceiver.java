@@ -37,32 +37,32 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 
 		libraryProvider
 			.getLibrary(libraryId)
-			.next(VoidFunc.runCarelessly(library -> AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
-					this.filePropertiesProvider
-						.promiseFileProperties(fileKey)
-						.next(VoidFunc.runCarelessly(fileProperties -> {
-							final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-							try {
-								final String lastPlayedServer = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
-								final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+			.then(library -> AccessConfigurationBuilder.buildConfiguration(context, library))
+			.then(urlProvider ->
+				filePropertiesProvider
+					.promiseFileProperties(fileKey)
+					.next(VoidFunc.runCarelessly(fileProperties -> {
+						final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+						try {
+							final String lastPlayedServer = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
+							final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
-								final long currentTime = System.currentTimeMillis();
-								if (lastPlayedServer != null && (currentTime - duration) <= Long.valueOf(lastPlayedServer) * 1000) return;
+							final long currentTime = System.currentTimeMillis();
+							if (lastPlayedServer != null && (currentTime - duration) <= Long.valueOf(lastPlayedServer) * 1000) return;
 
-								final String numberPlaysString = fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS);
+							final String numberPlaysString = fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS);
 
-								int numberPlays = 0;
-								if (numberPlaysString != null && !numberPlaysString.isEmpty())
-									numberPlays = Integer.parseInt(numberPlaysString);
+							int numberPlays = 0;
+							if (numberPlaysString != null && !numberPlaysString.isEmpty())
+								numberPlays = Integer.parseInt(numberPlaysString);
 
-								FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays));
+							FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays));
 
-								final String newLastPlayed = String.valueOf(currentTime / 1000);
-								FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.LAST_PLAYED, newLastPlayed);
-							} catch (NumberFormatException ne) {
-								logger.error(ne.toString(), ne);
-							}
-						}));
-			})));
+							final String newLastPlayed = String.valueOf(currentTime / 1000);
+							FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.LAST_PLAYED, newLastPlayed);
+						} catch (NumberFormatException ne) {
+							logger.error(ne.toString(), ne);
+						}
+					})));
 	}
 }

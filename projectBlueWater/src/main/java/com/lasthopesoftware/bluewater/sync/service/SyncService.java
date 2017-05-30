@@ -48,9 +48,6 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
-import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
@@ -65,7 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
-import java.util.Map;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
@@ -146,18 +142,12 @@ public class SyncService extends Service {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(storedFile.getLibraryId())
-			.next((Library library, IResolvedPromise<Map<String, String>> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
+			.then((library) ->  AccessConfigurationBuilder.buildConfiguration(this, library).then(urlProvider -> {
 				final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-				final Promise<Map<String, String>> filePropertiesPromise = filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
-
-				onCancelled.runWith(filePropertiesPromise::cancel);
-
-				filePropertiesPromise
-					.next(runCarelessly(resolve::sendResolution))
-					.error(runCarelessly(reject::sendRejection));
+				return filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
 			}))
 			.next(Dispatch.toContext(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
 			.error(Dispatch.toContext(exception -> {
@@ -261,7 +251,7 @@ public class SyncService extends Service {
 				if (library.isSyncLocalConnectionsOnly())
 					library.setLocalOnly(true);
 
-				AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
+				AccessConfigurationBuilder.buildConfiguration(context, library).next(runCarelessly(urlProvider -> {
 					if (urlProvider == null) {
 						if (--librariesProcessing == 0) finishSync();
 						return;
@@ -279,7 +269,7 @@ public class SyncService extends Service {
 					librarySyncHandler.startSync();
 
 					librarySyncHandlers.add(librarySyncHandler);
-				});
+				}));
 			}
 		}), this));
 

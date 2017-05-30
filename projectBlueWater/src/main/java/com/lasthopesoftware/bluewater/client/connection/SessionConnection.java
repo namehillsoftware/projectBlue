@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
@@ -62,7 +63,7 @@ public class SessionConnection {
 		final LibraryRepository libraryRepository = new LibraryRepository(context);
 		libraryRepository
 			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
-				.next(runCarelessly(library -> {
+			.next(runCarelessly(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 					isRunning = false;
@@ -71,41 +72,42 @@ public class SessionConnection {
 
 				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 
-				AccessConfigurationBuilder.buildConfiguration(context, library, (result) -> {
-					if (result == null) {
-						doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
-						return;
-					}
+				AccessConfigurationBuilder
+						.buildConfiguration(context, library)
+						.then(urlProvider -> {
+							if (urlProvider == null) {
+								doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+								return Promise.empty();
+							}
 
-					sessionConnectionProvider = new ConnectionProvider(result);
+							sessionConnectionProvider = new ConnectionProvider(urlProvider);
 
-					if (library.getSelectedView() >= 0) {
-						doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
-						return;
-					}
-
-					doStateChange(context, BuildingSessionConnectionStatus.GettingView);
-
-					LibraryViewsProvider.provide(sessionConnectionProvider)
-						.next(result1 -> {
-
-							if (result1 == null || result1.size() == 0) {
-								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-								return null;
+							if (library.getSelectedView() >= 0) {
+								doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+								return Promise.empty();
 							}
 
 							doStateChange(context, BuildingSessionConnectionStatus.GettingView);
-							final int selectedView = result1.get(0).getKey();
-							library.setSelectedView(selectedView);
-							library.setSelectedViewType(Library.ViewType.StandardServerView);
 
-							libraryRepository
-								.saveLibrary(library)
-								.next(runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+							return LibraryViewsProvider
+								.provide(sessionConnectionProvider)
+								.then(libraryViews -> {
+									if (libraryViews == null || libraryViews.size() == 0) {
+										doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+										return Promise.empty();
+									}
 
-							return null;
-						});
-				});
+									doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+									final int selectedView = libraryViews.get(0).getKey();
+									library.setSelectedView(selectedView);
+									library.setSelectedViewType(Library.ViewType.StandardServerView);
+
+									return
+										libraryRepository
+											.saveLibrary(library)
+											.next(runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+								});
+							});
 			}));
 		
 		return buildingStatus;
