@@ -65,6 +65,10 @@ public class Promise<Resolution> {
 		return next(new PromisedResolution<>(onFulfilled));
 	}
 
+	final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorMessenger<Resolution, TNewRejectedResult> errorMessenger) {
+		return next(errorMessenger);
+	}
+
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
 		return next(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
 	}

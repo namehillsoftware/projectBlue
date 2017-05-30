@@ -6,10 +6,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by david on 10/17/16.
- */
-
 public class WhenTheRejectionIsCalled {
 
 	private Exception thrownException;

@@ -9,10 +9,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-/**
- * Created by david on 10/17/16.
- */
-
 public class WhenTheCancellationIsCalledTwice {
 
 	private static final Runnable mockCancel = mock(Runnable.class);

@@ -1,20 +1,13 @@
 package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled.BeforeThePromiseIsExecuted;
 
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by david on 10/17/16.
- */
 
 public class WhenTheCancellationIsCalled {
 
