@@ -1,5 +1,6 @@
 package com.lasthopesoftware.promises;
 
+import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.runnables.CarelessTwoParameterAction;
@@ -20,7 +21,7 @@ public class Promise<Resolution> {
 		this(new Execution.MessengerTunnel<Resolution>(executor));
 	}
 
-	public Promise(Callable<Resolution> executor) {
+	public Promise(CarelessFunction<Resolution> executor) {
 		this(new Execution.InternalExpectedPromiseExecutor<Resolution>(executor));
 	}
 
