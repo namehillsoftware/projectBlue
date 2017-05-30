@@ -4,14 +4,12 @@ import android.content.Context;
 import android.os.Handler;
 
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.TwoParameterAction;
 
 public class Dispatch {
 	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> toContext(CarelessOneParameterFunction<TResult, TNewResult> task, Context context) {
@@ -22,8 +20,8 @@ public class Dispatch {
 		return new OneParameterExecutors.ReducingFunction<>(task, handler);
 	}
 
-	public static <TResult, TNewResult> FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> toHandler(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task, Handler handler) {
-		return new OneParameterExecutors.DispatchedCancellableFunction<>(task, handler);
+	public static <Result, NewResult> CarelessOneParameterFunction<Result, Promise<NewResult>> toHandler(TwoParameterAction<Result, Messenger<NewResult>> task, Handler handler) {
+		return new OneParameterExecutors.ReducingAction<>(task, handler);
 	}
 
 	private static class OneParameterExecutors {
@@ -52,43 +50,26 @@ public class Dispatch {
 			}
 		}
 
-		static class DispatchedCancellableFunction<TResult, TNewResult> implements FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> {
-			private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task;
-			private final Handler handler;
+		static class ReducingAction<Result, NewResult> implements CarelessOneParameterFunction<Result, Promise<NewResult>>, OneParameterAction<Messenger<NewResult>> {
 
-			DispatchedCancellableFunction(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task, Handler handler) {
-				this.task = task;
+			private final TwoParameterAction<Result, Messenger<NewResult>> action;
+			private final Handler handler;
+			private Result result;
+
+			ReducingAction(TwoParameterAction<Result, Messenger<NewResult>> action, Handler handler) {
+				this.action = action;
 				this.handler = handler;
 			}
 
 			@Override
-			public void runWith(TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-				this.handler.post(new WrappedCancellableFunction<>(this.task, result, resolve, reject, onCancelled));
+			public void runWith(Messenger<NewResult> newResultMessenger) {
+				action.runWith(result, newResultMessenger);
 			}
 
-			private static class WrappedCancellableFunction<TResult, TNewResult> implements Runnable {
-				private final CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task;
-				private final TResult result;
-				private final IResolvedPromise<TNewResult> resolve;
-				private final IRejectedPromise reject;
-				private final OneParameterAction<Runnable> onCancelled;
-
-				WrappedCancellableFunction(CarelessTwoParameterFunction<TResult, OneParameterAction<Runnable>, TNewResult> task, TResult result, IResolvedPromise<TNewResult> resolve, IRejectedPromise reject, OneParameterAction<Runnable> onCancelled) {
-					this.task = task;
-					this.result = result;
-					this.resolve = resolve;
-					this.reject = reject;
-					this.onCancelled = onCancelled;
-				}
-
-				@Override
-				public void run() {
-					try {
-						this.resolve.sendResolution(this.task.resultFrom(result, onCancelled));
-					} catch (Throwable rejection) {
-						this.reject.sendRejection(rejection);
-					}
-				}
+			@Override
+			public Promise<NewResult> resultFrom(Result result) throws Throwable {
+				this.result = result;
+				return new DispatchedPromise<>(this, handler);
 			}
 		}
 	}

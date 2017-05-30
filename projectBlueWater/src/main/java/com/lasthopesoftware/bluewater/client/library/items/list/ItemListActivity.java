@@ -28,11 +28,9 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
@@ -82,8 +80,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> itemProviderComplete =
-			Dispatch.toContext(this, this);
+		final CarelessOneParameterFunction<List<Item>, Promise<Void>> itemProviderComplete = Dispatch.toContext(this, this);
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
         itemProvider

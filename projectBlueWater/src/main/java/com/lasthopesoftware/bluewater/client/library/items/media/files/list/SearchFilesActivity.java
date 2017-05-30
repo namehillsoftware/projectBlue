@@ -22,10 +22,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
 
@@ -74,7 +72,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.setVisibility(View.VISIBLE);
 		pbLoading.setVisibility(View.INVISIBLE);
 
-		final ThreeParameterAction<List<ServiceFile>, IResolvedPromise<Void>, IRejectedPromise> onSearchFilesComplete =
+		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onSearchFilesComplete =
 			Dispatch.toContext(this, this);
 
         SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)

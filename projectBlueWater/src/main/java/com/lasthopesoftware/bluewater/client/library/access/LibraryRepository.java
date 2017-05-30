@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.concurrent.Callable;
 
 public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 	private final Context context;
@@ -42,7 +41,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		return new QueuedPromise<>(new SaveLibraryTask(context, library), RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private static class GetAllLibrariesTask implements Callable<Collection<Library>> {
+	private static class GetAllLibrariesTask implements CarelessFunction<Collection<Library>> {
 
 		private Context context;
 
@@ -51,7 +50,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Collection<Library> call() throws Exception {
+		public Collection<Library> result() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return
 					repositoryAccessHelper
@@ -61,7 +60,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 	}
 
-	private static class GetLibraryTask implements Callable<Library> {
+	private static class GetLibraryTask implements CarelessFunction<Library> {
 
 		private int libraryId;
 		private Context context;
@@ -72,7 +71,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Library call() throws Exception {
+		public Library result() throws Exception {
 			if (libraryId < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -85,7 +84,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 	}
 
-	private static class SaveLibraryTask implements Callable<Library> {
+	private static class SaveLibraryTask implements CarelessFunction<Library> {
 
 		private static final Logger logger = LoggerFactory.getLogger(SaveLibraryTask.class);
 
@@ -140,7 +139,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Library call() throws Exception {
+		public Library result() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;

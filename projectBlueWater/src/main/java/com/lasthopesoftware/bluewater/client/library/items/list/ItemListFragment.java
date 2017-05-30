@@ -24,9 +24,8 @@ import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibrary
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
+import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.util.List;
 
@@ -65,7 +64,7 @@ public class ItemListFragment extends Fragment {
     	libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.next(runCarelessly(activeLibrary -> {
-				final ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetVisibleViewsCompleteListener = Dispatch.toContext(result -> {
+				final CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetVisibleViewsCompleteListener = Dispatch.toContext(result -> {
 					if (result == null || result.size() == 0) return null;
 
 					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
@@ -104,7 +103,7 @@ public class ItemListFragment extends Fragment {
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.next(runCarelessly(library -> {
-				ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetLibraryViewItemResultsComplete = Dispatch.toContext(new OnGetLibraryViewItemResultsComplete(
+				CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetLibraryViewItemResultsComplete = Dispatch.toContext(new OnGetLibraryViewItemResultsComplete(
 					activity,
 					container,
 					listView,

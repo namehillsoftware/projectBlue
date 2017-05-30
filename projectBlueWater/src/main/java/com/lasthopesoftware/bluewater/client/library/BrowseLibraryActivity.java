@@ -45,9 +45,8 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
+import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
@@ -211,7 +210,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
-		ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onCompleteAction =
+		CarelessOneParameterFunction<List<Item>, Promise<Void>> onCompleteAction =
 			Dispatch.toContext(runCarelessly(items -> {
 				if (isStopped || items == null) return;
 

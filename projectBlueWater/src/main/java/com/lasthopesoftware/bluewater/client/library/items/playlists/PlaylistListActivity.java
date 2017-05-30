@@ -29,10 +29,9 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
@@ -75,7 +74,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final ThreeParameterAction<List<Playlist>, IResolvedPromise<Void>, IRejectedPromise> onPlaylistProviderComplete = Dispatch.toContext(result -> {
+		final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> onPlaylistProviderComplete = Dispatch.toContext(result -> {
 			if (result == null) return null;
 
 			BuildPlaylistView(result);

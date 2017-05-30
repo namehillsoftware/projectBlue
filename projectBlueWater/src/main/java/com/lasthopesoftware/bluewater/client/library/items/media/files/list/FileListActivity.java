@@ -25,10 +25,8 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
 
@@ -64,7 +62,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final ThreeParameterAction<List<ServiceFile>, IResolvedPromise<Void>, IRejectedPromise> onFileProviderComplete = Dispatch.toContext(this, this);
+		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onFileProviderComplete = Dispatch.toContext(this, this);
 
 		getNewFileProvider()
 			.promiseData()

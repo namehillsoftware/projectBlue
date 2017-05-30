@@ -23,10 +23,9 @@ import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibrary
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
 
@@ -55,7 +54,7 @@ public class PlaylistListFragment extends Fragment {
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.next(VoidFunc.runCarelessly(library -> {
-				final ThreeParameterAction<List<Playlist>, IResolvedPromise<Void>, IRejectedPromise> listResolvedPromise =
+				final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> listResolvedPromise =
 					Dispatch.toContext(
 						new OnGetLibraryViewPlaylistResultsComplete(
 							activity,

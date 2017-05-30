@@ -27,11 +27,10 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
+import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.CarelessOneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
@@ -39,10 +38,10 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 	private final LazyViewFinder<ProgressBar> mLoadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingItems);
-	private final ILazy<ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise>> lazyDispatchedLibraryCompleteResolution =
-		new AbstractSynchronousLazy<ThreeParameterAction<NowPlaying,IResolvedPromise<Void>,IRejectedPromise>>() {
+	private final ILazy<CarelessOneParameterFunction<NowPlaying, Promise<Void>>> lazyDispatchedLibraryCompleteResolution =
+		new AbstractSynchronousLazy<CarelessOneParameterFunction<NowPlaying, Promise<Void>>>() {
 			@Override
-			protected ThreeParameterAction<NowPlaying, IResolvedPromise<Void>, IRejectedPromise> initialize() throws Exception {
+			protected CarelessOneParameterFunction<NowPlaying, Promise<Void>> initialize() throws Exception {
 				return
 					Dispatch.toContext(
 						VoidFunc.runCarelessly(

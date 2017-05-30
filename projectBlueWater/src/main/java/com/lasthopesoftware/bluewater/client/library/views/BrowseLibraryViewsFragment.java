@@ -27,11 +27,9 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.List;
 
@@ -80,7 +78,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		final Handler handler = new Handler(getContext().getMainLooper());
 
-		final ThreeParameterAction<List<Item>, IResolvedPromise<Void>, IRejectedPromise> onGetVisibleViewsCompleteListener =
+		final CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetVisibleViewsCompleteListener =
 			Dispatch.toHandler((result) -> {
 				if (result == null) return null;
 

@@ -11,18 +11,15 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import java.util.Map;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
-/**
- * Created by david on 4/14/15.
- */
-public class FileNameTextViewSetter implements CarelessTwoParameterFunction<Map<String, String>, OneParameterAction<Runnable>, Void>, Runnable {
+public class FileNameTextViewSetter implements TwoParameterAction<Map<String, String>, Messenger<Void>>, Runnable {
 
 	private final TextView textView;
 	private boolean isCancelled;
@@ -42,7 +39,7 @@ public class FileNameTextViewSetter implements CarelessTwoParameterFunction<Map<
 			promise.next(runCarelessly(messenger::sendResolution));
 			promise.error(runCarelessly(messenger::sendRejection));
 
-			final Promise<Void> textViewUpdatePromise = promise.next(Dispatch.toHandler(fileNameTextViewSetter, handler));
+			final Promise<Void> textViewUpdatePromise = promise.then(Dispatch.toHandler(fileNameTextViewSetter, handler));
 
 			messenger.cancellationRequested(() -> {
 				promise.cancel();
@@ -65,14 +62,14 @@ public class FileNameTextViewSetter implements CarelessTwoParameterFunction<Map<
 	}
 
 	@Override
-	public Void resultFrom(Map<String, String> properties, OneParameterAction<Runnable> onCancelled) {
-		onCancelled.runWith(this);
+	public void runWith(Map<String, String> properties, Messenger<Void> messenger) {
+		messenger.cancellationRequested(this);
 
 		final String fileName = properties.get(FilePropertiesProvider.NAME);
 
 		if (!isCancelled && fileName != null)
 			textView.setText(fileName);
 
-		return null;
+		messenger.sendResolution(null);
 	}
 }
