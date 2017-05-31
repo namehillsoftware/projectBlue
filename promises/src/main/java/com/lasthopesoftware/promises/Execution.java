@@ -3,12 +3,7 @@ package com.lasthopesoftware.promises;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
-import com.vedsoft.futures.runnables.TwoParameterAction;
-
-import java.util.concurrent.Callable;
 
 final class Execution {
 
@@ -78,38 +73,6 @@ final class Execution {
 			}
 		}
 
-		/**
-		 * Created by david on 10/30/16.
-		 */
-		static final class ErrorPropagatingCancellableExecutor<TResult, TNewResult> extends ResolutionMessenger<TResult, TNewResult> {
-			private final FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled;
-
-			ErrorPropagatingCancellableExecutor(FourParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
-				this.onFulfilled = onFulfilled;
-			}
-
-			@Override
-			protected void requestResolution(TResult result) {
-				onFulfilled.runWith(result, this, this, this);
-			}
-		}
-
-		/**
-		 * Created by david on 10/30/16.
-		 */
-		static final class RejectionDependentCancellableExecutor<TResult, TNewRejectedResult> extends ErrorMessenger<TResult, TNewRejectedResult> {
-			private final FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected;
-
-			RejectionDependentCancellableExecutor(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
-				this.onRejected = onRejected;
-			}
-
-			@Override
-			protected void requestResolution(Throwable throwable) {
-				onRejected.runWith(throwable, this, this, this);
-			}
-		}
-
 		static final class RejectionDependentCancellableCaller<Result, NewResult> extends ErrorMessenger<Result, NewResult> {
 			private final CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled;
 
@@ -125,22 +88,6 @@ final class Execution {
 					sendRejection(rejection);
 				}
 			}
-		}
-	}
-
-	/**
-	 * Created by david on 10/19/16.
-	 */
-	static final class RejectionDependentExecutor<TResult, TNewRejectedResult> extends ErrorMessenger<TResult, TNewRejectedResult> {
-		private final ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected;
-
-		RejectionDependentExecutor(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
-			this.onRejected = onRejected;
-		}
-
-		@Override
-		protected void requestResolution(Throwable throwable) {
-			onRejected.runWith(throwable, this, this);
 		}
 	}
 
@@ -178,22 +125,6 @@ final class Execution {
 			} catch (Throwable rejection) {
 				sendRejection(rejection);
 			}
-		}
-	}
-
-	/**
-	 * Created by david on 10/18/16.
-	 */
-	static final class ErrorPropagatingResolveExecutor<TResult, TNewResult> extends ResolutionMessenger<TResult, TNewResult> {
-		private final ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled;
-
-		ErrorPropagatingResolveExecutor(ThreeParameterAction<TResult, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
-			this.onFulfilled = onFulfilled;
-		}
-
-		@Override
-		protected void requestResolution(TResult result) {
-			onFulfilled.runWith(result, this, this);
 		}
 	}
 }

@@ -3,9 +3,7 @@ package com.lasthopesoftware.promises;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.runnables.FourParameterAction;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,16 +43,8 @@ public class Promise<Resolution> {
 		return new Promise<>(onFulfilled);
 	}
 
-	public final <TNewResult> Promise<TNewResult> next(FourParameterAction<Resolution, IResolvedPromise<TNewResult>, IRejectedPromise, OneParameterAction<Runnable>> onFulfilled) {
-		return next(new Execution.Cancellable.ErrorPropagatingCancellableExecutor<>(onFulfilled));
-	}
-
 	public final <TNewResult> Promise<TNewResult> next(CarelessTwoParameterFunction<Resolution, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
 		return next(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
-	}
-
-	public final <TNewResult> Promise<TNewResult> next(ThreeParameterAction<Resolution, IResolvedPromise<TNewResult>, IRejectedPromise> onFulfilled) {
-		return next(new Execution.ErrorPropagatingResolveExecutor<>(onFulfilled));
 	}
 
 	public final <TNewResult> Promise<TNewResult> next(final CarelessOneParameterFunction<Resolution, TNewResult> onFulfilled) {
@@ -69,16 +59,8 @@ public class Promise<Resolution> {
 		return next(errorMessenger);
 	}
 
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(FourParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise, OneParameterAction<Runnable>> onRejected) {
-		return next(new Execution.Cancellable.RejectionDependentCancellableExecutor<>(onRejected));
-	}
-
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
 		return next(new Execution.Cancellable.RejectionDependentCancellableCaller<>(onRejected));
-	}
-
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(ThreeParameterAction<Throwable, IResolvedPromise<TNewRejectedResult>, IRejectedPromise> onRejected) {
-		return next(new Execution.RejectionDependentExecutor<>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
