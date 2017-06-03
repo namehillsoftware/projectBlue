@@ -128,7 +128,7 @@ public class MainApplication extends Application {
 
 		final Collection<IConnectionDependentReceiverRegistration> connectionDependentReceiverRegistrations =
 			Arrays.asList(
-				new UpdatePlayStatsOnCompleteRegistration(new LibraryRepository(this)),
+				new UpdatePlayStatsOnCompleteRegistration(),
 				new PlaybackFileStartedScrobblerRegistration(),
 				new PlaybackFileStoppedScrobblerRegistration(),
 				new PebbleFileChangedNotificationRegistration());
