@@ -29,7 +29,7 @@ public class UpdatePlayStatsOnCompleteRegistration implements IConnectionDepende
 	@Override
 	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance());
-		return new UpdatePlayStatsOnPlaybackCompleteReceiver(libraryProvider, filePropertiesProvider);
+		return new UpdatePlayStatsOnPlaybackCompleteReceiver(connectionProvider, filePropertiesProvider);
 	}
 
 	@Override
