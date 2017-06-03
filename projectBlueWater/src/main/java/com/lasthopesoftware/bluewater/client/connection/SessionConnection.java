@@ -13,10 +13,10 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -39,6 +39,8 @@ public class SessionConnection {
 
 	private static volatile boolean isRunning;
 	private static volatile int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
+
+	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
 
 	private static ConnectionProvider sessionConnectionProvider;
 
@@ -63,16 +65,17 @@ public class SessionConnection {
 		final LibraryRepository libraryRepository = new LibraryRepository(context);
 		libraryRepository
 			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
-			.next(runCarelessly(library -> {
+			.then(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 					isRunning = false;
-					return;
+					return Promise.empty();
 				}
 
 				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 
-				AccessConfigurationBuilder
+				return
+					AccessConfigurationBuilder
 						.buildConfiguration(context, library)
 						.then(urlProvider -> {
 							if (urlProvider == null) {
@@ -108,7 +111,13 @@ public class SessionConnection {
 											.next(runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 								});
 							});
-			}));
+				})
+				.error(e -> {
+					logger.error("There was an error building the session connection", e);
+					doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+
+					return null;
+				});
 		
 		return buildingStatus;
 	}
@@ -121,18 +130,21 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final OneParameterAction<Boolean> testConnectionCompleteListener = (result) -> {
-			if (!result) build(context);
+		final Promise<Boolean> promisedConnectionTest =
+			timeout > 0
+				? ConnectionTester.doTest(sessionConnectionProvider, timeout)
+				: ConnectionTester.doTest(sessionConnectionProvider);
 
-			final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
-			refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
-			LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
-		};
+		promisedConnectionTest
+			.next(result -> {
+				if (!result) build(context);
 
-		if (timeout > 0)
-			ConnectionTester.doTest(sessionConnectionProvider, timeout, testConnectionCompleteListener);
-		else
-			ConnectionTester.doTest(sessionConnectionProvider, testConnectionCompleteListener);
+				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
+				refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
+				LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
+
+				return null;
+			});
 	}
 	
 	private static void doStateChange(final Context context, final int status) {

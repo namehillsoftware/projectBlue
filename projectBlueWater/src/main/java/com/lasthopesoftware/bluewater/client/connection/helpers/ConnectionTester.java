@@ -4,8 +4,8 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
+import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,38 +14,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-/**
- * Created by david on 8/10/15.
- */
 public class ConnectionTester {
 
 	private static final int stdTimeoutTime = 30000;
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static void doTest(ConnectionProvider connectionProvider, OneParameterAction<Boolean> onTestComplete) {
-		doTest(connectionProvider, stdTimeoutTime, onTestComplete);
-	}
-
-	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, OneParameterAction<Boolean> onTestComplete) {
-		final FluentCallable<Boolean> connectionTestTask = new FluentCallable<Boolean>() {
-			@Override
-			protected Boolean executeInBackground() {
-				return doTest(connectionProvider, timeout);
-			}
-		};
-
-		if (onTestComplete != null)
-			connectionTestTask.onComplete(onTestComplete);
-
-		connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-	}
-
-	public static boolean doTest(final ConnectionProvider connectionProvider) {
+	public static Promise<Boolean> doTest(ConnectionProvider connectionProvider) {
 		return doTest(connectionProvider, stdTimeoutTime);
 	}
 
-	public static boolean doTest(final ConnectionProvider connectionProvider, final int timeout) {
+	public static Promise<Boolean> doTest(final ConnectionProvider connectionProvider, final int timeout) {
+		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
+	}
+
+	private static boolean doTestSynchronously(final ConnectionProvider connectionProvider, final int timeout) {
 		try {
 
 			final HttpURLConnection conn = connectionProvider.getConnection("Alive");
