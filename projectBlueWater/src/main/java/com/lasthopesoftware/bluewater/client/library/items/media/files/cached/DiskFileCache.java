@@ -11,8 +11,9 @@ import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransactio
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.fluent.FluentRunnable;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -26,7 +27,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLDataException;
 import java.util.Date;
-import java.util.concurrent.ExecutionException;
 
 public class DiskFileCache {
 	
@@ -76,15 +76,10 @@ public class DiskFileCache {
 		expirationTime = expirationDays * msInDay;
 	}
 
-	public void put(final String uniqueKey, final byte[] fileData) throws IOException {
-
+	public Promise<Void> put(final String uniqueKey, final byte[] fileData) {
 		// Just execute this on the thread pool executor as it doesn't write to the database
-		final FluentRunnable putTask = new FluentRunnable() {
-
-			@Override
-			protected void runInBackground() {
-				if (isCancelled()) return;
-
+		final QueuedPromise<Void> putPromise =
+			new QueuedPromise<>(() -> {
 				final String suffix = ".cache";
 				final String uniqueKeyHashCode = String.valueOf(uniqueKey.hashCode());
 				final File diskCacheDir = lazyDiskCacheDir.getObject();
@@ -98,8 +93,6 @@ public class DiskFileCache {
 				}
 
 				do {
-					if (isCancelled()) return;
-
 					try {
 						try (FileOutputStream fos = new FileOutputStream(file)) {
 							fos.write(fileData);
@@ -107,7 +100,7 @@ public class DiskFileCache {
 						}
 
 						putIntoDatabase(uniqueKey, file);
-						return;
+						return null;
 					} catch (IOException e) {
 						logger.error("Unable to write to serviceFile!", e);
 
@@ -115,34 +108,25 @@ public class DiskFileCache {
 						// to store image
 						final long freeDiskSpace = getFreeDiskSpace(context);
 						if (freeDiskSpace > maxSize) {
-							setException(e);
-							return;
+							return null;
 						}
 
-						try {
-							new CacheFlusherTask(context, cacheName, freeDiskSpace + file.length()).get();
-						} catch (ExecutionException | InterruptedException ignored) {
-							setException(e);
-							return;
-						}
+						new CacheFlusherTask(context, cacheName, freeDiskSpace + file.length()).get();
 					}
-
-					if (isCancelled()) return;
 				} while (getFreeDiskSpace(context) >= file.length());
-			}
-		};
 
-		try {
-			putTask.get(AsyncTask.THREAD_POOL_EXECUTOR);
-		} catch (ExecutionException e) {
-			final Throwable cause = e.getCause();
-			if (cause instanceof IOException)
-				throw (IOException)cause;
+				return null;
+			}, AsyncTask.THREAD_POOL_EXECUTOR);
+
+		putPromise.error(e -> {
+			if (e instanceof IOException) throw e;
 
 			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
-		} catch (InterruptedException e) {
-			logger.warn("Putting the serviceFile with the unique key " + uniqueKey + " into the cache was interrupted.", e);
-		}
+
+			return null;
+		});
+
+		return putPromise;
 	}
 
 	private void putIntoDatabase(final String uniqueKey, final File file) {

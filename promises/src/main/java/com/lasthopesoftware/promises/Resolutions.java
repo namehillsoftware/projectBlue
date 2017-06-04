@@ -1,13 +1,11 @@
 package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-final class Resolution {
+final class Resolutions {
 	private static class ResultCollector<TResult> implements CarelessOneParameterFunction<TResult, TResult> {
 		private final Collection<TResult> results;
 

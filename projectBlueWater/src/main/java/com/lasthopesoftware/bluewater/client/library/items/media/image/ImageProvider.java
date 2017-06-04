@@ -16,13 +16,10 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -217,11 +214,12 @@ public class ImageProvider {
 						return;
 					}
 
-					try {
-						imageDiskCache.put(uniqueKey, imageBytes);
-					} catch (IOException ioe) {
-						logger.error("Error writing serviceFile!", ioe);
-					}
+					imageDiskCache
+						.put(uniqueKey, imageBytes)
+						.error(ioe -> {
+							logger.error("Error writing serviceFile!", ioe);
+							return null;
+						});
 
 					putBitmapIntoMemory(uniqueKey, imageBytes);
 

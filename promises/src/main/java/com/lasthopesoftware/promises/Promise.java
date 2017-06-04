@@ -43,10 +43,6 @@ public class Promise<Resolution> {
 		return new Promise<>(onFulfilled);
 	}
 
-	public final <TNewResult> Promise<TNewResult> next(CarelessTwoParameterFunction<Resolution, OneParameterAction<Runnable>, TNewResult> onFulfilled) {
-		return next(new Execution.Cancellable.ExpectedResultCancellableExecutor<>(onFulfilled));
-	}
-
 	public final <TNewResult> Promise<TNewResult> next(final CarelessOneParameterFunction<Resolution, TNewResult> onFulfilled) {
 		return next(new Execution.ExpectedResultExecutor<>(onFulfilled));
 	}
@@ -77,7 +73,7 @@ public class Promise<Resolution> {
 	}
 
 	public static <TResult> Promise<Collection<TResult>> whenAll(Collection<Promise<TResult>> promises) {
-		return new Promise<>(new com.lasthopesoftware.promises.Resolution.AggregatePromiseResolver<TResult>(promises));
+		return new Promise<>(new Resolutions.AggregatePromiseResolver<TResult>(promises));
 	}
 
 }
