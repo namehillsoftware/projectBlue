@@ -2,7 +2,6 @@ package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType.An
 
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
-import com.lasthopesoftware.promises.errors.AggregateCancellationException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -11,10 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenCancellingWhileResolving {
+public class WhenCancellingBeforeResolving {
 	private static CancellationException cancellationException;
 	private static String result;
 
@@ -30,26 +28,27 @@ public class WhenCancellingWhileResolving {
 		final Promise<String> racingPromise = Promise.whenAny(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		racingPromise
 			.next(string -> result = string)
-			.error(runCarelessly(e -> {
+			.error(e -> {
 				if (e instanceof CancellationException)
-					cancellationException = (AggregateCancellationException) e;
-			}));
+					cancellationException = (CancellationException) e;
 
+				return null;
+			});
+
+		racingPromise.cancel();
 		messengers.get(0).sendResolution("resolution_1");
 		messengers.get(1).sendResolution("resolution_2");
-		racingPromise.cancel();
-
 		messengers.get(2).sendResolution("resolution_3");
 		messengers.get(3).sendResolution("resolution_4");
 	}
 
 	@Test
-	public void thenACancellationExceptionDoesNotOccur() {
-		assertThat(cancellationException).isNull();
+	public void thenACancellationExceptionOccurs() {
+		assertThat(cancellationException).isNotNull();
 	}
 
 	@Test
-	public void thenTheResultIsReturned() {
-		assertThat(result).isEqualTo("resolution_1");
+	public void thenTheResultIsNotReturned() {
+		assertThat(result).isNull();
 	}
 }

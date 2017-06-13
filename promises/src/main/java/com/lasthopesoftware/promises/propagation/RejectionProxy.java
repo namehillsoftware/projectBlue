@@ -4,10 +4,10 @@ package com.lasthopesoftware.promises.propagation;
 import com.lasthopesoftware.promises.Messenger;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
-public final class RejectWithPromiseError implements CarelessOneParameterFunction<Throwable, Void> {
+public final class RejectionProxy implements CarelessOneParameterFunction<Throwable, Void> {
 	private final Messenger<?> reject;
 
-	public RejectWithPromiseError(Messenger<?> reject) {
+	public RejectionProxy(Messenger<?> reject) {
 		this.reject = reject;
 	}
 

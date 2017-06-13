@@ -15,8 +15,7 @@ public class PromiseProxy<Resolution> {
 	public void proxy(Promise<Resolution> promise) {
 		messenger.cancellationRequested(new CancellationProxy(promise));
 
-		promise
-			.next(new ResolveWithPromiseResult<>(messenger))
-			.error(new RejectWithPromiseError(messenger));
+		promise.next(new ResolutionProxy<>(messenger));
+		promise.error(new RejectionProxy(messenger));
 	}
 }

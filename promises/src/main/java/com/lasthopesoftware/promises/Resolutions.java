@@ -1,9 +1,12 @@
 package com.lasthopesoftware.promises;
 
+import com.lasthopesoftware.promises.errors.AggregateCancellationException;
+import com.lasthopesoftware.promises.propagation.PromiseProxy;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 
 final class Resolutions {
 	private static class ResultCollector<TResult> implements CarelessOneParameterFunction<TResult, TResult> {
@@ -95,23 +98,6 @@ final class Resolutions {
 		}
 	}
 
-	private static final class SingleResultErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
-
-		private final Messenger<TResult> messenger;
-		private Throwable error;
-
-		SingleResultErrorHandler(Collection<Promise<TResult>> promises, Messenger<TResult> messenger) {
-			this.messenger = messenger;
-			for (Promise<TResult> promise : promises) promise.error(this);
-		}
-
-		@Override
-		public Throwable resultFrom(Throwable throwable) throws Exception {
-			messenger.sendRejection(throwable);
-			return throwable;
-		}
-	}
-
 	static final class AggregatePromiseResolver<TResult> extends EmptyMessenger<Collection<TResult>> {
 
 		private final CollectedResultsCanceller<TResult> canceller;
@@ -134,21 +120,24 @@ final class Resolutions {
 		}
 	}
 
-	static final class FirstPromiseResolver<Result> extends EmptyMessenger<Result> implements CarelessOneParameterFunction<Result, Result> {
+	static final class FirstPromiseResolver<Result> extends EmptyMessenger<Result> implements
+		CarelessOneParameterFunction<Result, Result>,
+		Runnable {
 
-		private final CollectedPromisesCanceller<Result> canceller;
-		private final SingleResultErrorHandler<Result> errorHandler;
+		private final Collection<Promise<Result>> promises;
 
 		FirstPromiseResolver(Collection<Promise<Result>> promises) {
-			for (Promise<Result> promise : promises) promise.next(this);
-
-			errorHandler = new SingleResultErrorHandler<>(promises, this);
-			canceller = new CollectedPromisesCanceller<>(promises);
+			this.promises = promises;
 		}
 
 		@Override
 		public void requestResolution() {
-			cancellationRequested(canceller.rejection(this));
+			final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
+			for (Promise<Result> promise : promises) {
+				promiseProxy.proxy(promise);
+			}
+
+			cancellationRequested(this);
 		}
 
 		@Override
@@ -156,6 +145,13 @@ final class Resolutions {
 			sendResolution(result);
 
 			return result;
+		}
+
+		@Override
+		public void run() {
+			for (Promise<Result> promise : promises) promise.cancel();
+
+			sendRejection(new CancellationException());
 		}
 	}
 
@@ -180,26 +176,6 @@ final class Resolutions {
 			for (Promise<?> promise : promises) promise.cancel();
 
 			reject.sendRejection(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
-		}
-	}
-
-	private static final class CollectedPromisesCanceller<Result> implements Runnable {
-
-		private Messenger messenger;
-		private Collection<Promise<Result>> promises;
-
-		private CollectedPromisesCanceller(Collection<Promise<Result>> promises) {
-			this.promises = promises;
-		}
-
-		Runnable rejection(Messenger messenger) {
-			this.messenger = messenger;
-			return this;
-		}
-
-		@Override
-		public void run() {
-			for (Promise<Result> promise : promises) promise.cancel();
 		}
 	}
 }

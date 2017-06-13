@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises;
+package com.lasthopesoftware.promises.errors;
 
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
@@ -10,7 +10,7 @@ import java.util.concurrent.CancellationException;
 public class AggregateCancellationException extends CancellationException {
 	private final Collection<?> results;
 
-	<TResult> AggregateCancellationException(Collection<TResult> results) {
+	public <TResult> AggregateCancellationException(Collection<TResult> results) {
 		super();
 		this.results = results;
 	}

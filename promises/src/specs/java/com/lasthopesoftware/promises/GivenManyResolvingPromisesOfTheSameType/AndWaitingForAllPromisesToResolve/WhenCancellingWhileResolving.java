@@ -1,8 +1,8 @@
 package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType.AndWaitingForAllPromisesToResolve;
 
-import com.lasthopesoftware.promises.AggregateCancellationException;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.errors.AggregateCancellationException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
