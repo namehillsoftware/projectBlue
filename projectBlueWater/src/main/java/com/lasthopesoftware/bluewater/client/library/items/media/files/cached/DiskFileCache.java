@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.fluent.FluentCallable;
 import com.vedsoft.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.lazyj.ILazy;
 import com.vedsoft.lazyj.Lazy;
@@ -111,7 +110,7 @@ public class DiskFileCache {
 							return null;
 						}
 
-						new CacheFlusherTask(context, cacheName, freeDiskSpace + file.length()).get();
+						CacheFlusherTask.futureCacheFlushing(context, cacheName, freeDiskSpace + file.length()).get();
 					}
 				} while (getFreeDiskSpace(context) >= file.length());
 
@@ -182,80 +181,75 @@ public class DiskFileCache {
 					logger.warn("There was an error inserting the cached serviceFile with the unique key " + uniqueKey, sqlException);
 				}
 			} finally {
-				new CacheFlusherTask(context, cacheName, maxSize).execute();
+				CacheFlusherTask.futureCacheFlushing(context, cacheName, maxSize);
 			}
 		});
 	}
 
-	public File get(final String uniqueKey) throws IOException {
-		final FluentCallable<File> getFileTask = new FluentCallable<File>() {
-
-			@Override
-			protected File executeInBackground() {
-				logger.info("Getting cached serviceFile " + uniqueKey);
+	public Promise<File> promiseCachedFile(final String uniqueKey) {
+		return new QueuedPromise<>((messenger) -> {
+			logger.info("Getting cached serviceFile " + uniqueKey);
+			try {
+				final CachedFile cachedFile;
 				try {
-					final CachedFile cachedFile;
-					try {
-						cachedFile = getCachedFile(uniqueKey);
-					} catch (IOException e) {
-						setException(e);
-						return null;
-					}
-
-					if (cachedFile == null) return null;
-
-					final File returnFile = new File(cachedFile.getFileName());
-					logger.info("Checking if " + cachedFile.getFileName() + " exists.");
-					if (!returnFile.exists()) {
-						logger.warn("Cached serviceFile `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
-						if (deleteCachedFile(cachedFile.getId()) <= 0)
-							setException(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
-
-						return null;
-					}
-
-					// Remove the serviceFile and return null if it's past its expired time
-					if (cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
-						logger.info("Cached serviceFile " + uniqueKey + " expired. Deleting.");
-						if (!returnFile.delete()) {
-							setException(new IOException("Unable to delete serviceFile " + returnFile.getAbsolutePath()));
-							return null;
-						}
-
-						if (deleteCachedFile(cachedFile.getId()) <= 0)
-							setException(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
-
-						return null;
-					}
-
-					doFileAccessedUpdate(cachedFile.getId());
-
-					logger.info("Returning cached serviceFile " + uniqueKey);
-					return returnFile;
-				} catch (SQLException sqlException) {
-					logger.error("There was an error attempting to get the cached serviceFile " + uniqueKey, sqlException);
-					return null;
+					cachedFile = getCachedFile(uniqueKey);
+				} catch (IOException e) {
+					messenger.sendRejection(e);
+					return;
 				}
+
+				if (cachedFile == null) return;
+
+				final File returnFile = new File(cachedFile.getFileName());
+				logger.info("Checking if " + cachedFile.getFileName() + " exists.");
+				if (!returnFile.exists()) {
+					logger.warn("Cached serviceFile `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
+					if (deleteCachedFile(cachedFile.getId()) <= 0)
+						messenger.sendRejection(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
+
+					return;
+				}
+
+				// Remove the serviceFile and return null if it's past its expired time
+				if (cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
+					logger.info("Cached serviceFile " + uniqueKey + " expired. Deleting.");
+					if (!returnFile.delete()) {
+						messenger.sendRejection(new IOException("Unable to delete serviceFile " + returnFile.getAbsolutePath()));
+						return;
+					}
+
+					if (deleteCachedFile(cachedFile.getId()) <= 0)
+						messenger.sendRejection(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
+
+					return;
+				}
+
+				doFileAccessedUpdate(cachedFile.getId());
+
+				logger.info("Returning cached serviceFile " + uniqueKey);
+				messenger.sendResolution(returnFile);
+			} catch (SQLException sqlException) {
+				logger.error("There was an error attempting to get the cached serviceFile " + uniqueKey, sqlException);
 			}
-		};
-
-		try {
-			return getFileTask.get(RepositoryAccessHelper.databaseExecutor);
-		} catch (Exception e) {
-			logger.error("There was an error running the database task.", e);
-
-			if (!getFileTask.isCancelled())
-				getFileTask.cancel(true);
-
-			if (e.getCause() instanceof IOException)
-				throw (IOException)e.getCause();
-		}
-
-		return null;
+		}, RepositoryAccessHelper.databaseExecutor);
+//
+//		try {
+//			return getFileTask.get(RepositoryAccessHelper.databaseExecutor);
+//		} catch (Exception e) {
+//			logger.error("There was an error running the database task.", e);
+//
+//			if (!getFileTask.isCancelled())
+//				getFileTask.cancel(true);
+//
+//			if (e.getCause() instanceof IOException)
+//				throw (IOException)e.getCause();
+//		}
+//
+//		return null;
 	}
 
-	public boolean containsKey(final String uniqueKey) throws IOException {
-		return get(uniqueKey) != null;
+	public Promise<Boolean> containsKey(final String uniqueKey) throws IOException {
+		return promiseCachedFile(uniqueKey).next(file -> file != null);
 	}
 
 	private void updateFilePath(final long cachedFileId, final String filePath) {

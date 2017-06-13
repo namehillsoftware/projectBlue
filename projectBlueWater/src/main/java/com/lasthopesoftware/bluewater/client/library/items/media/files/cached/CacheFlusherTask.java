@@ -4,40 +4,43 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * Flush a given cache until it reaches the given target size
  * @author david
  *
  */
-class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
+class CacheFlusherTask implements Callable<Void> {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 	
 	private final Context context;
 	private final String cacheName;
 	private final long targetSize;
-	
+
+	static Future<Void> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
+		return RepositoryAccessHelper.databaseExecutor.submit(new CacheFlusherTask(context, cacheName, targetSize));
+	}
+
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
-	CacheFlusherTask(final Context context, final String cacheName, final long targetSize) {
-		super(RepositoryAccessHelper.databaseExecutor);
-		
+	private CacheFlusherTask(final Context context, final String cacheName, final long targetSize) {
 		this.context = context;
 		this.cacheName = cacheName;
 		this.targetSize = targetSize;
 	}
 
 	@Override
-	protected Void executeInBackground(Void[] params) {
+	public Void call() {
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return null;
 
