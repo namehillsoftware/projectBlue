@@ -5,8 +5,6 @@ import com.lasthopesoftware.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -14,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 public class WhenChainingAResolution {
-	private static ArrayList<String> result;
+	private static String result;
 
 	@BeforeClass
 	public static void before() {
@@ -22,12 +20,12 @@ public class WhenChainingAResolution {
 		final Promise<String> secondPromise = new Promise<>(() -> "test_2");
 		final Promise<String> thirdPromise = new Promise<>(() -> "test_3");
 
-		Promise.whenAll(firstPromise, secondPromise, thirdPromise)
-			.next(strings -> result = new ArrayList<>(strings));
+		Promise.whenAny(firstPromise, secondPromise, thirdPromise)
+			.next(string -> result = string);
 	}
 
 	@Test
 	public void thenTheResolutionIsCorrect() {
-		assertThat(result).containsExactly("test_1", "test_2", "test_3");
+		assertThat(result).isEqualTo("test_1");
 	}
 }
