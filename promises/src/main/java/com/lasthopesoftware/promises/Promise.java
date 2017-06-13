@@ -76,4 +76,12 @@ public class Promise<Resolution> {
 		return new Promise<>(new Resolutions.AggregatePromiseResolver<TResult>(promises));
 	}
 
+	@SafeVarargs
+	public static <TResult> Promise<TResult> whenAny(Promise<TResult>... promises) {
+		return whenAny(Arrays.asList(promises));
+	}
+
+	public static <TResult> Promise<TResult> whenAny(Collection<Promise<TResult>> promises) {
+		return new Promise<>(new Resolutions.FirstPromiseResolver<TResult>(promises));
+	}
 }

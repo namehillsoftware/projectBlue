@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType;
+package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType.AndWaitingForOnePromiseToResolve;
 
 import com.lasthopesoftware.promises.Promise;
 

@@ -1,10 +1,8 @@
-package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType;
+package com.lasthopesoftware.promises.GivenManyResolvingPromisesOfTheSameType.AndWaitingForAllPromisesToResolve;
 
 import com.lasthopesoftware.promises.AggregateCancellationException;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
