@@ -133,7 +133,10 @@ public class ImageProvider {
 											})
 											.then(imageBitmap -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
-									return Promise.whenAny(cachedSuccessTask, cachedErrorTask);
+									final Promise<Bitmap> returnPromise = Promise.whenAny(cachedSuccessTask, cachedErrorTask);
+									promiseProxy.proxy(returnPromise);
+
+									return returnPromise;
 								});
 						});
 				});
