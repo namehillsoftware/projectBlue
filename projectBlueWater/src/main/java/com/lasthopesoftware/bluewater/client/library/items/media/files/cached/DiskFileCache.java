@@ -198,7 +198,10 @@ public class DiskFileCache {
 					return;
 				}
 
-				if (cachedFile == null) return;
+				if (cachedFile == null) {
+					messenger.sendResolution(null);
+					return;
+				}
 
 				final File returnFile = new File(cachedFile.getFileName());
 				logger.info("Checking if " + cachedFile.getFileName() + " exists.");
@@ -206,6 +209,8 @@ public class DiskFileCache {
 					logger.warn("Cached serviceFile `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
 					if (deleteCachedFile(cachedFile.getId()) <= 0)
 						messenger.sendRejection(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
+					else
+						messenger.sendResolution(null);
 
 					return;
 				}
@@ -220,6 +225,8 @@ public class DiskFileCache {
 
 					if (deleteCachedFile(cachedFile.getId()) <= 0)
 						messenger.sendRejection(new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId()));
+					else
+						messenger.sendResolution(null);
 
 					return;
 				}
@@ -230,6 +237,7 @@ public class DiskFileCache {
 				messenger.sendResolution(returnFile);
 			} catch (SQLException sqlException) {
 				logger.error("There was an error attempting to get the cached serviceFile " + uniqueKey, sqlException);
+				messenger.sendResolution(null);
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
 //

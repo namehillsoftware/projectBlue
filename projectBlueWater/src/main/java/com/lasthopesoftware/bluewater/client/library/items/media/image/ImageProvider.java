@@ -86,60 +86,61 @@ public class ImageProvider {
 		public void runWith(Messenger<Bitmap> messenger) {
 			final Promise<Map<String, String>> promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
 
-			messenger.cancellationRequested(new CancellationProxy(promisedFileProperties));
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			messenger.cancellationRequested(cancellationProxy);
+			cancellationProxy.doCancel(promisedFileProperties);
 
-			promisedFileProperties
-				.next(fileProperties -> {
-					// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
-					// artists), and next by artist if that field is empty
-					String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
-					if (artist == null || artist.isEmpty())
-						artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+			final PromiseProxy<Bitmap> promiseProxy = new PromiseProxy<>(messenger);
+			final Promise<Bitmap> promisedBitmap =
+				promisedFileProperties
+					.next(fileProperties -> {
+						// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
+						// artists), and next by artist if that field is empty
+						String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+						if (artist == null || artist.isEmpty())
+							artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
-					String albumOrTrackName = fileProperties.get(FilePropertiesProvider.ALBUM);
-					if (albumOrTrackName == null)
-						albumOrTrackName = fileProperties.get(FilePropertiesProvider.NAME);
+						String albumOrTrackName = fileProperties.get(FilePropertiesProvider.ALBUM);
+						if (albumOrTrackName == null)
+							albumOrTrackName = fileProperties.get(FilePropertiesProvider.NAME);
 
-					return artist + ":" + albumOrTrackName;
-				})
-				.then(uniqueKey -> {
-					final PromiseProxy<Bitmap> promiseProxy = new PromiseProxy<>(messenger);
-					final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryTask(uniqueKey), imageAccessExecutor);
-					promiseProxy.proxy(memoryTask);
+						return artist + ":" + albumOrTrackName;
+					})
+					.then(uniqueKey -> {
+						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryTask(uniqueKey), imageAccessExecutor);
 
-					return memoryTask.then(bitmap -> {
-						if (bitmap != null) return new Promise<>(bitmap);
+						return memoryTask.then(bitmap -> {
+							if (bitmap != null) return new Promise<>(bitmap);
 
-						final LibraryRepository libraryProvider = new LibraryRepository(context);
-						final SelectedBrowserLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
+							final LibraryRepository libraryProvider = new LibraryRepository(context);
+							final SelectedBrowserLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
 
-						return
-							libraryProvider
-								.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-								.then(library -> {
-									final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
-									final Promise<File> cachedFilePromise = imageDiskCache.promiseCachedFile(uniqueKey);
+							return
+								libraryProvider
+									.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+									.then(library -> {
+										final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
+										final Promise<File> cachedFilePromise = imageDiskCache.promiseCachedFile(uniqueKey);
 
-									final Promise<Bitmap> cachedSuccessTask =
-										cachedFilePromise
-											.then(imageFile -> new QueuedPromise<>(new ImageDiskCacheTask(uniqueKey, imageFile), imageAccessExecutor))
-											.then(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+										final Promise<Bitmap> cachedSuccessTask =
+											cachedFilePromise
+												.then(imageFile -> new QueuedPromise<>(new ImageDiskCacheTask(uniqueKey, imageFile), imageAccessExecutor))
+												.then(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
-									final Promise<Bitmap> cachedErrorTask =
-										cachedFilePromise
-											.error(e -> {
-												logger.warn("There was an error getting the file from the cache!", e);
-												return e;
-											})
-											.then(imageBitmap -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+										final Promise<Bitmap> cachedErrorTask =
+											cachedFilePromise
+												.error(e -> {
+													logger.warn("There was an error getting the file from the cache!", e);
+													return e;
+												})
+												.then(e -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
-									final Promise<Bitmap> returnPromise = Promise.whenAny(cachedSuccessTask, cachedErrorTask);
-									promiseProxy.proxy(returnPromise);
+										return Promise.whenAny(cachedSuccessTask, cachedErrorTask);
+									});
+							});
+					});
 
-									return returnPromise;
-								});
-						});
-				});
+			promiseProxy.proxy(promisedBitmap);
 		}
 	}
 
@@ -188,9 +189,8 @@ public class ImageProvider {
 
 		@Override
 		public Bitmap result() {
-			byte[] imageBytes;
 			if (imageCacheFile != null) {
-				imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
+				final byte[] imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
 				if (imageBytes.length > 0)
 					return getBitmapFromBytes(imageBytes);
 			}
@@ -229,10 +229,7 @@ public class ImageProvider {
 
 					byte[] imageBytes;
 					try {
-						if (rejectingCancellationHandler.isCancelled()) {
-							messenger.sendResolution(null);
-							return;
-						}
+						if (rejectingCancellationHandler.isCancelled())	return;
 
 						try (InputStream is = connection.getInputStream()) {
 							imageBytes = IOUtils.toByteArray(is);
@@ -247,7 +244,7 @@ public class ImageProvider {
 						}
 					} catch (FileNotFoundException fe) {
 						logger.warn("Image not found!");
-						messenger.sendRejection(fe);
+						messenger.sendResolution(null);
 						return;
 					}
 
@@ -260,14 +257,12 @@ public class ImageProvider {
 
 					putBitmapIntoMemory(uniqueKey, imageBytes);
 
-					if (rejectingCancellationHandler.isCancelled()) {
-						messenger.sendResolution(null);
-						return;
-					}
+					if (rejectingCancellationHandler.isCancelled())	return;
 
 					messenger.sendResolution(getBitmapFromBytes(imageBytes));
 				} catch (Exception e) {
 					logger.error(e.toString(), e);
+					messenger.sendRejection(e);
 				} finally {
 					if (connection != null)
 						connection.disconnect();
