@@ -125,19 +125,16 @@ final class Resolutions {
 		Runnable {
 
 		private final Collection<Promise<Result>> promises;
+		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
 
 		FirstPromiseResolver(Collection<Promise<Result>> promises) {
 			this.promises = promises;
+			cancellationRequested(this);
 		}
 
 		@Override
 		public void requestResolution() {
-			final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
-			for (Promise<Result> promise : promises) {
-				promiseProxy.proxy(promise);
-			}
-
-			cancellationRequested(this);
+			for (Promise<Result> promise : promises) promiseProxy.proxy(promise);
 		}
 
 		@Override
@@ -149,8 +146,6 @@ final class Resolutions {
 
 		@Override
 		public void run() {
-			for (Promise<Result> promise : promises) promise.cancel();
-
 			sendRejection(new CancellationException());
 		}
 	}
