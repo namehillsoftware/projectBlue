@@ -104,14 +104,14 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
 					.next(onGetVisibleViewsCompleteListener)
-					.error(new HandleViewIoException<>(getContext(), new Runnable() {
+					.error(new HandleViewIoException(getContext(), new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
 								.next(onGetVisibleViewsCompleteListener)
-								.error(new HandleViewIoException<>(getContext(), this));
+								.error(new HandleViewIoException(getContext(), this));
 						}
 					})), handler));
 

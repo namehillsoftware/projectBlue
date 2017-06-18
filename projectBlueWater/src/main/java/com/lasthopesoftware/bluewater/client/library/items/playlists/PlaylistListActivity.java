@@ -90,14 +90,14 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 		playlistsProvider
 			.promiseData()
 			.next(onPlaylistProviderComplete)
-			.error(new HandleViewIoException<>(PlaylistListActivity.this, new Runnable() {
+			.error(new HandleViewIoException(PlaylistListActivity.this, new Runnable() {
 
 				@Override
 				public void run() {
 					playlistsProvider
 						.promiseData()
 						.next(onPlaylistProviderComplete)
-						.error(new HandleViewIoException<>(PlaylistListActivity.this, this));
+						.error(new HandleViewIoException(PlaylistListActivity.this, this));
 				}
 			}));
 

@@ -78,14 +78,14 @@ public class ItemListFragment extends Fragment {
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
 					.next(onGetVisibleViewsCompleteListener)
-					.error(new HandleViewIoException<>(activity, new Runnable() {
+					.error(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
 								.next(onGetVisibleViewsCompleteListener)
-								.error(new HandleViewIoException<>(activity, this));
+								.error(new HandleViewIoException(activity, this));
 						}
 					}));
 	    }));
@@ -116,14 +116,14 @@ public class ItemListFragment extends Fragment {
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 					.next(onGetLibraryViewItemResultsComplete)
-					.error(new HandleViewIoException<>(activity, new Runnable() {
+					.error(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
 								.next(onGetLibraryViewItemResultsComplete)
-								.error(new HandleViewIoException<>(activity, this));
+								.error(new HandleViewIoException(activity, this));
 						}
 					}));
 			}));

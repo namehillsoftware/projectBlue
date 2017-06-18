@@ -160,7 +160,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				pbLoadingFileDetails.findView().setVisibility(View.INVISIBLE);
 				lvFileDetails.findView().setVisibility(View.VISIBLE);
 			}), this))
-			.error(new HandleViewIoException<>(this, () -> setView(fileKey)));
+			.error(new HandleViewIoException(this, () -> setView(fileKey)));
 
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 //

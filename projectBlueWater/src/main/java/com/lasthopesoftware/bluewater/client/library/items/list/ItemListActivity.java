@@ -87,14 +87,14 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 			.promiseData()
 			.next(itemProviderComplete)
 			.error(
-				new HandleViewIoException<>(this,
+				new HandleViewIoException(this,
 					new Runnable() {
 						@Override
 						public void run() {
 							itemProvider
 								.promiseData()
 								.next(itemProviderComplete)
-								.error(new HandleViewIoException<>(ItemListActivity.this, this));
+								.error(new HandleViewIoException(ItemListActivity.this, this));
 						}
 					}));
 

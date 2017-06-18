@@ -70,7 +70,7 @@ public class PlaylistListFragment extends Fragment {
 				playlistsProvider
 					.promiseData()
 					.next(listResolvedPromise)
-					.error(new HandleViewIoException<>(activity, new Runnable() {
+					.error(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
@@ -79,7 +79,7 @@ public class PlaylistListFragment extends Fragment {
 							playlistsProvider
 								.promiseData()
 								.next(listResolvedPromise)
-								.error(new HandleViewIoException<>(activity, this));
+								.error(new HandleViewIoException(activity, this));
 						}
 					}));
 			}));

@@ -29,7 +29,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="futures" exported="" />
-    <orderEntry type="library" exported="" scope="TEST" name="mockito-core-2.8.9" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="mockito-core-2.8.47" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="junit-4.12" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="assertj-core-2.8.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-1.6.14" level="project" />

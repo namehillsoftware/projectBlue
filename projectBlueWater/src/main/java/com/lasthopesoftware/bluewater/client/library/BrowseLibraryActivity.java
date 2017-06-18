@@ -256,7 +256,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
 					.promiseData()
 					.next(onCompleteAction)
-					.error(new HandleViewIoException<>(BrowseLibraryActivity.this, this));
+					.error(new HandleViewIoException(BrowseLibraryActivity.this, this));
 			}
 		};
 
