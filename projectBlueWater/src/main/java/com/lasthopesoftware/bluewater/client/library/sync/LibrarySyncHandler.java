@@ -114,90 +114,93 @@ public class LibrarySyncHandler {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess
 			.getStoredItems()
-			.onComplete((storedItems) -> {
-				AsyncTask
-					.THREAD_POOL_EXECUTOR
-					.execute(() -> {
+			.next(runCarelessly(storedItems -> AsyncTask
+				.THREAD_POOL_EXECUTOR
+				.execute(() -> {
+					if (isCancelled) {
+						handleQueueProcessingCompleted();
+						return;
+					}
+
+					final Set<Integer> allSyncedFileKeys = new HashSet<>();
+					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
+
+					final List<Promise<Collection<Void>>> fileProviders = new ArrayList<>();
+					for (StoredItem storedItem : storedItems) {
 						if (isCancelled) {
 							handleQueueProcessingCompleted();
 							return;
 						}
 
-						final Set<Integer> allSyncedFileKeys = new HashSet<>();
-						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
+						final int serviceId = storedItem.getServiceId();
+						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+						final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
 
-						final List<Promise<Collection<Void>>> fileProviders = new ArrayList<>();
-						for (StoredItem storedItem : storedItems) {
+						fileProviders.add(fileProvider.promiseData()
+							.then(serviceFiles -> {
+								final List<Promise<Void>> upsertStoredFilePromises = new ArrayList<>(serviceFiles.size());
+								for (final ServiceFile serviceFile : serviceFiles) {
+									allSyncedFileKeys.add(serviceFile.getKey());
+
+									if (isCancelled) {
+										LibrarySyncHandler.this.handleQueueProcessingCompleted();
+
+										final Promise<Collection<Void>> aggregateUpsertPromises = Promise.whenAll(upsertStoredFilePromises);
+										aggregateUpsertPromises.cancel();
+
+										return aggregateUpsertPromises;
+									}
+
+									final Promise<Void> upsertStoredFilePromise =
+										storedFileAccess
+											.createOrUpdateFile(connectionProvider, serviceFile)
+											.next(new DownloadGuard(storedFileDownloader, serviceFile));
+
+									upsertStoredFilePromise
+										.error(runCarelessly(e -> {
+											if (e instanceof FileNotFoundException) {
+												logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+												storedItemAccess.toggleSync(item, false);
+											}
+										}));
+
+									upsertStoredFilePromises.add(upsertStoredFilePromise);
+								}
+
+								return Promise.whenAll(upsertStoredFilePromises);
+							}));
+					}
+
+					Promise.whenAll(fileProviders)
+						.next(runCarelessly(files -> {
+							storedFileDownloader.setOnQueueProcessingCompleted(() -> {
+								if (isCancelled || isFaulted) {
+									handleQueueProcessingCompleted();
+									return;
+								}
+
+								storedFileAccess
+									.pruneStoredFiles(allSyncedFileKeys)
+									.next(runCarelessly(voids -> handleQueueProcessingCompleted()))
+									.error(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
+							});
+
 							if (isCancelled) {
 								handleQueueProcessingCompleted();
 								return;
 							}
 
-							final int serviceId = storedItem.getServiceId();
-							final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-							final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
+							storedFileDownloader.process();
+						}))
+						.error(runCarelessly(e -> {
+							isFaulted = true;
+							logger.warn("There was an error retrieving the files", e);
 
-							fileProviders.add(fileProvider.promiseData()
-								.then(serviceFiles -> {
-									final List<Promise<Void>> upsertStoredFilePromises = new ArrayList<>(serviceFiles.size());
-									for (final ServiceFile serviceFile : serviceFiles) {
-										allSyncedFileKeys.add(serviceFile.getKey());
-
-										if (isCancelled) {
-											LibrarySyncHandler.this.handleQueueProcessingCompleted();
-
-											final Promise<Collection<Void>> aggregateUpsertPromises = Promise.whenAll(upsertStoredFilePromises);
-											aggregateUpsertPromises.cancel();
-
-											return aggregateUpsertPromises;
-										}
-
-										final Promise<Void> upsertStoredFilePromise =
-											storedFileAccess
-												.createOrUpdateFile(connectionProvider, serviceFile)
-												.next(new DownloadGuard(storedFileDownloader, serviceFile));
-
-										upsertStoredFilePromise
-											.error(runCarelessly(e -> {
-												if (e instanceof FileNotFoundException) {
-													logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-													storedItemAccess.toggleSync(item, false);
-												}
-											}));
-
-										upsertStoredFilePromises.add(upsertStoredFilePromise);
-									}
-
-									return Promise.whenAll(upsertStoredFilePromises);
-								}));
-						}
-
-						Promise.whenAll(fileProviders)
-							.next(runCarelessly(files -> {
-								storedFileDownloader.setOnQueueProcessingCompleted(() -> {
-									if (!isCancelled && !isFaulted)
-										storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
-
-									handleQueueProcessingCompleted();
-								});
-
-								if (isCancelled) {
-									handleQueueProcessingCompleted();
-									return;
-								}
-
-								storedFileDownloader.process();
-							}))
-							.error(runCarelessly(e -> {
-								isFaulted = true;
-								logger.warn("There was an error retrieving the files", e);
-
-								if (isCancelled) {
-									handleQueueProcessingCompleted();
-								}
-							}));
-					});
-			});
+							if (isCancelled) {
+								handleQueueProcessingCompleted();
+							}
+						}));
+				})));
 	}
 
 	private void handleQueueProcessingCompleted() {

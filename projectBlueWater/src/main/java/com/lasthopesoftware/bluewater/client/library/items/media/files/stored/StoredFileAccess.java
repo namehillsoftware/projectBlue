@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
-import com.vedsoft.fluent.FluentSpecifiedTask;
 import com.vedsoft.lazyj.Lazy;
 
 import org.apache.commons.io.FilenameUtils;
@@ -33,9 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by david on 7/14/15.
@@ -87,18 +86,15 @@ public class StoredFileAccess {
 		return getStoredFileTask(serviceServiceFile);
 	}
 
-	List<StoredFile> getAllStoredFilesInLibrary() throws ExecutionException, InterruptedException {
-		return new FluentSpecifiedTask<Void, Void, List<StoredFile>>() {
-			@Override
-			public List<StoredFile> executeInBackground(Void... params) {
-				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-					return repositoryAccessHelper
-						.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " + @" + StoredFileEntityInformation.libraryIdColumnName)
-						.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
-						.fetch(StoredFile.class);
-				}
+	private Promise<Collection<StoredFile>> promiseAllStoredFilesInLibrary() {
+		return new QueuedPromise<>(() -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				return repositoryAccessHelper
+					.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " + @" + StoredFileEntityInformation.libraryIdColumnName)
+					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
+					.fetch(StoredFile.class);
 			}
-		}.get(RepositoryAccessHelper.databaseExecutor);
+		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
 	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
@@ -274,12 +270,8 @@ public class StoredFileAccess {
 				}, RepositoryAccessHelper.databaseExecutor));
 	}
 
-	public void pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		try {
-			new PruneFilesTask(context, library, serviceIdsToKeep).get();
-		} catch (ExecutionException | InterruptedException e) {
-			logger.error("There was an exception while pruning the files", e);
-		}
+	public Promise<Collection<Void>> pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
+		return promiseAllStoredFilesInLibrary().then(new PruneFilesTask(context, library, serviceIdsToKeep));
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, ServiceFile serviceFile) {

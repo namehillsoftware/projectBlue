@@ -8,14 +8,12 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentCallable;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
+import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.lazyj.Lazy;
 
 import java.util.List;
 
-/**
- * Created by david on 7/5/15.
- */
 public class StoredItemAccess {
 
 	private static final Lazy<String> storedItemInsertSql = new Lazy<>(
@@ -41,20 +39,12 @@ public class StoredItemAccess {
 		    disableItemSync(item, getListType(item));
     }
 
-    public FluentCallable<Boolean> isItemMarkedForSync(final IItem item) {
-        final FluentCallable<Boolean> isItemSyncedTask = new FluentCallable<Boolean>() {
-
-            @Override
-            protected Boolean executeInBackground() {
-	            try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+    public Promise<Boolean> isItemMarkedForSync(final IItem item) {
+        return new QueuedPromise<>(() -> {
+	           try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 		            return isItemMarkedForSync(repositoryAccessHelper, library, item, getListType(item));
-	            }
-            }
-        };
-
-        isItemSyncedTask.execute(RepositoryAccessHelper.databaseExecutor);
-
-		return isItemSyncedTask;
+	           }
+            }, RepositoryAccessHelper.databaseExecutor);
     }
 
     private void enableItemSync(final IItem item, final StoredItem.ItemType itemType) {
@@ -98,24 +88,16 @@ public class StoredItemAccess {
         });
     }
 
-    public FluentCallable<List<StoredItem>> getStoredItems() {
-        final FluentCallable<List<StoredItem>> getAllStoredItemsTasks = new FluentCallable<List<StoredItem>>() {
-
-            @Override
-            protected List<StoredItem> executeInBackground() {
-	            try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-		            return
-			            repositoryAccessHelper
-				            .mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
-				            .addParameter(StoredItem.libraryIdColumnName, library.getId())
-				            .fetch(StoredItem.class);
-	            }
-            }
-        };
-
-        getAllStoredItemsTasks.execute(RepositoryAccessHelper.databaseExecutor);
-
-		return getAllStoredItemsTasks;
+    public Promise<List<StoredItem>> getStoredItems() {
+        return new QueuedPromise<>(() -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				return
+					repositoryAccessHelper
+						.mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
+						.addParameter(StoredItem.libraryIdColumnName, library.getId())
+						.fetch(StoredItem.class);
+			}
+		}, RepositoryAccessHelper.databaseExecutor);
     }
 
     private static boolean isItemMarkedForSync(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
