@@ -113,103 +113,96 @@ public class LibrarySyncHandler {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess
 			.getStoredItems()
-			.next(runCarelessly(storedItems -> AsyncTask
-				.THREAD_POOL_EXECUTOR
-				.execute(() -> {
-					if (isCancelled) {
-						handleQueueProcessingCompleted();
-						return;
-					}
+			.next(runCarelessly(storedItems -> AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+				if (isCancelled) {
+					handleQueueProcessingCompleted();
+					return;
+				}
 
-					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
-					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
-						.map(storedItem -> {
-							if (isCancelled) {
-								handleQueueProcessingCompleted();
-								return Promise.empty();
-							}
+				final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
+					.map(storedItem -> {
+						if (isCancelled) {
+							handleQueueProcessingCompleted();
+							return new Promise<>(Collections.emptyList());
+						}
 
-							final int serviceId = storedItem.getServiceId();
-							final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-							final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
+						final int serviceId = storedItem.getServiceId();
+						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+						final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
 
-							final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseData();
-							serviceFileListPromise
-								.error(runCarelessly(e -> {
-									if (e instanceof FileNotFoundException) {
-										logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-										storedItemAccess.toggleSync(item, false);
-									}
-								}));
+						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseData();
+						serviceFileListPromise
+							.error(runCarelessly(e -> {
+								if (e instanceof FileNotFoundException) {
+									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+									storedItemAccess.toggleSync(item, false);
+								}
+							}));
 
-							return serviceFileListPromise;
-						});
+						return serviceFileListPromise;
+					});
 
-					if (isCancelled) {
-						handleQueueProcessingCompleted();
-						return;
-					}
+				final Promise<Set<ServiceFile>> promiseAllFilesToSync =
+					Promise
+						.whenAll(mappedFileDataPromises.toList())
+						.next(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()));
 
-					final Promise<Set<ServiceFile>> promiseAllFilesToSync =
-						Promise
-							.whenAll(mappedFileDataPromises.toList())
-							.next(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()));
+				final Promise<Collection<StoredFile>> fileDownloadTasks = promiseAllFilesToSync
+					.then(allServiceFilesToSync -> {
+						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
+						pruneFilesTask.error(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
 
-					final Promise<Collection<StoredFile>> fileDownloadTasks = promiseAllFilesToSync
-						.then(allServiceFilesToSync -> {
-							final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
-							pruneFilesTask.error(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
+						if (isCancelled) {
+							handleQueueProcessingCompleted();
+							return new Promise<Set<ServiceFile>>(Collections.emptySet());
+						}
 
-							if (isCancelled) {
-								handleQueueProcessingCompleted();
-								return new Promise<Set<ServiceFile>>(Collections.emptySet());
-							}
+						return pruneFilesTask.next(voids -> allServiceFilesToSync);
+					})
+					.then(allServiceFilesToSync -> {
+						if (isCancelled) {
+							handleQueueProcessingCompleted();
+							return new Promise<>(Collections.emptySet());
+						}
 
-							return pruneFilesTask.next(voids -> allServiceFilesToSync);
-						})
-						.then(allKeysToSync -> {
-							if (isCancelled) {
-								handleQueueProcessingCompleted();
-								return new Promise<>(Collections.emptyList());
-							}
+						final List<Promise<StoredFile>> upsertFiles = Stream.of(allServiceFilesToSync)
+							.map(serviceFile -> {
+								if (isCancelled) {
+									handleQueueProcessingCompleted();
+									return new Promise<>((StoredFile) null);
+								}
 
-							final List<Promise<StoredFile>> upsertFiles = Stream.of(allKeysToSync)
-								.map(serviceFile -> {
-									if (isCancelled) {
-										handleQueueProcessingCompleted();
-										return new Promise<>((StoredFile) null);
-									}
+								return storedFileAccess
+									.createOrUpdateFile(connectionProvider, serviceFile)
+									.next(new DownloadGuard(storedFileDownloader, serviceFile));
+							})
+							.toList();
 
-									return storedFileAccess
-										.createOrUpdateFile(connectionProvider, serviceFile)
-										.next(new DownloadGuard(storedFileDownloader, serviceFile));
-								})
-								.toList();
+						return Promise.whenAll(upsertFiles);
+					});
 
-							return Promise.whenAll(upsertFiles);
-						});
+				fileDownloadTasks
+					.next(runCarelessly(vs -> {
+						storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
 
-					fileDownloadTasks
-						.next(runCarelessly(vs -> {
-							storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
+						if (isCancelled) {
+							handleQueueProcessingCompleted();
+							return;
+						}
 
-							if (isCancelled) {
-								handleQueueProcessingCompleted();
-								return;
-							}
+						storedFileDownloader.process();
+					}))
+					.error(runCarelessly(e -> {
+						isFaulted = true;
+						logger.warn("There was an error retrieving the files", e);
 
-							storedFileDownloader.process();
-						}))
-						.error(runCarelessly(e -> {
-							isFaulted = true;
-							logger.warn("There was an error retrieving the files", e);
-
-							if (isCancelled) {
-								handleQueueProcessingCompleted();
-							}
-						}));
-				})));
+						if (isCancelled) {
+							handleQueueProcessingCompleted();
+						}
+					}));
+			})));
 	}
 
 	private void handleQueueProcessingCompleted() {
