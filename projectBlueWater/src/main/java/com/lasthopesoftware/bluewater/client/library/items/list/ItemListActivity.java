@@ -84,7 +84,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
         itemProvider
-			.promiseData()
+			.promiseItems()
 			.next(itemProviderComplete)
 			.error(
 				new HandleViewIoException(this,
@@ -92,7 +92,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 						@Override
 						public void run() {
 							itemProvider
-								.promiseData()
+								.promiseItems()
 								.next(itemProviderComplete)
 								.error(new HandleViewIoException(ItemListActivity.this, this));
 						}

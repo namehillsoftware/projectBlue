@@ -7,8 +7,9 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
-import com.lasthopesoftware.providers.AbstractConnectionProvider;
+import com.lasthopesoftware.providers.AbstractProvider;
 import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.Logger;
@@ -20,17 +21,17 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
+public class ItemProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
 
     private static class ItemHolder {
-        public ItemHolder(Integer revision, List<Item> items) {
+        ItemHolder(Integer revision, List<Item> items) {
             this.revision = revision;
             this.items = items;
         }
 
-        public final Integer revision;
+        final Integer revision;
         public final List<Item> items;
     }
 
@@ -42,46 +43,65 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
 	private final ConnectionProvider connectionProvider;
 
 	public static Promise<List<Item>> provide(ConnectionProvider connectionProvider, int itemKey) {
-		return new ItemProvider(connectionProvider, itemKey).promiseData();
+		return new ItemProvider(connectionProvider, itemKey).promiseItems();
 	}
 	
 	public ItemProvider(ConnectionProvider connectionProvider, int itemKey) {
-		super(connectionProvider, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
-
 		this.connectionProvider = connectionProvider;
         this.itemKey = itemKey;
 	}
 
-    @Override
-    protected List<Item> getData(HttpURLConnection connection, Cancellation cancellation) throws IOException {
-        final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
-        final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
+    public Promise<List<Item>> promiseItems() {
+		return
+			RevisionChecker.promiseRevision(connectionProvider)
+				.then(serverRevision -> new QueuedPromise<>((messenger) -> {
+					final Cancellation cancellation = new Cancellation();
+					messenger.cancellationRequested(cancellation::cancel);
 
-        ItemHolder itemHolder;
-        synchronized (itemsCache) {
-            itemHolder = itemsCache.get(boxedItemKey);
-        }
+					final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
-        if (itemHolder != null && itemHolder.revision.equals(serverRevision))
-            return itemHolder.items;
+					final ItemHolder itemHolder;
+					synchronized (itemsCache) {
+						itemHolder = itemsCache.get(boxedItemKey);
+					}
 
-        if (cancellation.isCancelled()) return new ArrayList<>();
+					if (itemHolder != null && itemHolder.revision.equals(serverRevision)) {
+						messenger.sendResolution(itemHolder.items);
+						return;
+					}
 
-        try {
-            try (InputStream is = connection.getInputStream()) {
-                final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
+					if (cancellation.isCancelled()) {
+						messenger.sendResolution(new ArrayList<>());
+						return;
+					}
 
-                itemHolder = new ItemHolder(serverRevision, items);
+					final HttpURLConnection connection;
+					try {
+						connection = connectionProvider.getConnection(LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
+					} catch (IOException e) {
+						messenger.sendRejection(e);
+						return;
+					}
 
-                synchronized (itemsCache) {
-                    itemsCache.put(boxedItemKey, itemHolder);
-                }
+					try {
+						try (InputStream is = connection.getInputStream()) {
+							final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
 
-                return items;
-            }
-        } catch (IOException e) {
-            logger.error("There was an error getting the inputstream", e);
-            throw e;
-        }
+							final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
+
+							synchronized (itemsCache) {
+								itemsCache.put(boxedItemKey, newItemHolder);
+							}
+
+							messenger.sendResolution(items);
+						}
+					} catch (IOException e) {
+						logger.error("There was an error getting the inputstream", e);
+						messenger.sendRejection(e);
+					} finally {
+						if (connection != null)
+							connection.disconnect();
+					}
+				}, AbstractProvider.providerExecutor));
 	}
 }
