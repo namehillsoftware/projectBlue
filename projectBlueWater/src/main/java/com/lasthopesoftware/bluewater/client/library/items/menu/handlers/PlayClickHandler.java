@@ -20,8 +20,8 @@ public final class PlayClickHandler extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(final View v) {
-	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider(), item))
-				.promiseData()
+	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
+				.promiseFileStringList(item)
 			    .next(new OnGetFileStringListForClickCompleteListener(v.getContext()))
 			    .error(new OnGetFileStringListForClickErrorListener(v, this));
 

@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
@@ -130,9 +131,9 @@ public class LibrarySyncHandler {
 
 						final int serviceId = storedItem.getServiceId();
 						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-						final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
+						final FileProvider fileProvider = new FileProvider(new FileStringListProvider(connectionProvider));
 
-						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles();
+						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles((IFileListParameterProvider) item);
 						serviceFileListPromise
 							.error(runCarelessly(e -> {
 								if (e instanceof FileNotFoundException) {
