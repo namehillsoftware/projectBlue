@@ -132,7 +132,7 @@ public class LibrarySyncHandler {
 						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
 						final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
 
-						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseData();
+						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles();
 						serviceFileListPromise
 							.error(runCarelessly(e -> {
 								if (e instanceof FileNotFoundException) {

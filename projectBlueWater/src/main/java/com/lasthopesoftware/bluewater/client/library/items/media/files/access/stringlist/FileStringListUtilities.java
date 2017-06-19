@@ -13,9 +13,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Created by david on 11/26/15.
- */
 public class FileStringListUtilities {
 
 	private static final Lazy<ExecutorService> fileParsingExecutor = new Lazy<>(Executors::newCachedThreadPool);
@@ -24,7 +21,7 @@ public class FileStringListUtilities {
 		return new QueuedPromise<>(() -> parseFileStringList(fileList), fileParsingExecutor.getObject());
 	}
 
-	public static List<ServiceFile> parseFileStringList(@NonNull String fileList) {
+	private static List<ServiceFile> parseFileStringList(@NonNull String fileList) {
 		final String[] keys = fileList.split(";");
 
 		if (keys.length < 2) return Collections.emptyList();

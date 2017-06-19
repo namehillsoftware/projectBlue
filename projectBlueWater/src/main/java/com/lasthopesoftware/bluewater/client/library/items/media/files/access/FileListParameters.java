@@ -3,9 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
- * Created by david on 11/26/15.
- */
 public class FileListParameters {
 	public enum Options {
 		None,

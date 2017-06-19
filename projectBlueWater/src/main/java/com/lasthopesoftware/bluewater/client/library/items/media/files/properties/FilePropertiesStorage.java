@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.providers.AbstractInputStreamProvider;
 import com.lasthopesoftware.providers.Cancellation;
 
@@ -13,9 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
-
 public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
+
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorage.class);
 	private final IConnectionProvider connectionProvider;
 	private final int fileKey;
@@ -43,16 +41,19 @@ public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
 
 	@Override
 	protected Void getData(InputStream inputStream, Cancellation cancellation) {
-		final Promise<Integer> promisedRevision = RevisionChecker.promiseRevision(connectionProvider);
+		RevisionChecker.promiseRevision(connectionProvider)
+			.next(revision -> {
+				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+				final FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
 
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
-		final FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
-
-		promisedRevision
-			.next(runCarelessly(revision -> {
 				if (filePropertiesContainer.revision == revision) filePropertiesContainer.updateProperty(property, value);
-			}))
-			.error(runCarelessly(e -> logger.warn(this.fileKey + "'s property cache item " + this.property + " was not updated with the new value of " + this.value, e)));
+
+				return null;
+			})
+			.error(e -> {
+				logger.warn(fileKey + "'s property cache item " + property + " was not updated with the new value of " + value, e);
+				return null;
+			});
 
 		return null;
 	}

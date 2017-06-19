@@ -2,19 +2,16 @@ package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
-import com.lasthopesoftware.promises.IRejectedPromise;
-import com.lasthopesoftware.promises.IResolvedPromise;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.ThreeParameterAction;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-abstract class AbstractProvider<Data> {
+public abstract class AbstractProvider<Data> {
 
-	private static final ExecutorService providerExecutor = Executors.newSingleThreadExecutor();
+	public static final ExecutorService providerExecutor = Executors.newSingleThreadExecutor();
 
 	private final ProvideDataTask<Data> provideDataTask;
 
