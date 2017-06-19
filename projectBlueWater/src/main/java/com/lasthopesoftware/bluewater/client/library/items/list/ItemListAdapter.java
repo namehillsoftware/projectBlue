@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter;
 
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.ListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;

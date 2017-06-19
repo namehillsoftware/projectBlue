@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 

@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ShuffleClickHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.SyncFilesIsVisibleHandler;

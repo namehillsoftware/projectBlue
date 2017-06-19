@@ -2,8 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access.s
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.providers.AbstractProvider;
@@ -18,21 +17,15 @@ import java.net.HttpURLConnection;
 
 public class FileStringListProvider {
 	private static final Logger logger = LoggerFactory.getLogger(FileStringListProvider.class);
-	private final FileListParameters.Options option;
 	private final IConnectionProvider connectionProvider;
 
 	public FileStringListProvider(ConnectionProvider connectionProvider) {
-		this(connectionProvider, FileListParameters.Options.None);
-	}
-
-	public FileStringListProvider(ConnectionProvider connectionProvider, FileListParameters.Options option) {
 		this.connectionProvider = connectionProvider;
-		this.option = option;
 	}
 
-	public Promise<String> promiseFileStringList(IFileListParameterProvider fileListParameterProvider) {
+	public Promise<String> promiseFileStringList(FileListParameters.Options option, String... params) {
 		return new QueuedPromise<>(() -> {
-			final String[] allConnectionParams = FileListParameters.Helpers.processParams(option, fileListParameterProvider.getFileListParameters());
+			final String[] allConnectionParams = FileListParameters.Helpers.processParams(option, params);
 			final HttpURLConnection connection = connectionProvider.getConnection(allConnectionParams);
 			try {
 				try (final InputStream is = connection.getInputStream()) {

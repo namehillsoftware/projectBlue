@@ -3,7 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
@@ -21,7 +22,7 @@ public final class PlayClickHandler extends AbstractMenuClickHandler {
     @Override
     public void onClick(final View v) {
 	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
-				.promiseFileStringList(item)
+				.promiseFileStringList(FileListParameters.Options.None, item.getFileListParameters())
 			    .next(new OnGetFileStringListForClickCompleteListener(v.getContext()))
 			    .error(new OnGetFileStringListForClickErrorListener(v, this));
 

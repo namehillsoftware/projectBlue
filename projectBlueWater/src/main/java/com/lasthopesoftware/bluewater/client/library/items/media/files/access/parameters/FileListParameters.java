@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.access;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters;
 
 import java.util.ArrayList;
 import java.util.Arrays;

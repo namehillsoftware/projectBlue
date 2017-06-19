@@ -16,11 +16,17 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
+import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.SearchFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.SearchFileParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
@@ -29,8 +35,8 @@ import java.util.List;
 
 public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<ServiceFile>, Void> {
 
-	private ProgressBar pbLoading;
-	private ListView fileListView;
+	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
     private ViewAnimator viewAnimator;
     private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
@@ -40,11 +46,9 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_items);
-        fileListView = (ListView)findViewById(R.id.lvItems);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
-        
-        fileListView.setVisibility(View.INVISIBLE);
-        pbLoading.setVisibility(View.VISIBLE);
+
+        fileListView.findView().setVisibility(View.INVISIBLE);
+        pbLoading.findView().setVisibility(View.VISIBLE);
 
         nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
         handleIntent(getIntent());
@@ -69,21 +73,21 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
         setTitle(String.format(getString(R.string.title_activity_search_results), query));
 
-		fileListView.setVisibility(View.VISIBLE);
-		pbLoading.setVisibility(View.INVISIBLE);
+		fileListView.findView().setVisibility(View.VISIBLE);
+		pbLoading.findView().setVisibility(View.INVISIBLE);
 
 		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onSearchFilesComplete =
 			Dispatch.toContext(this, this);
 
-        SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
-			.promiseData()
+        new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
+			.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
             .next(onSearchFilesComplete)
             .error(new HandleViewIoException(this, new Runnable() {
 
 					@Override
 					public void run() {
-						SearchFileProvider.get(SessionConnection.getSessionConnectionProvider(), query)
-							.promiseData()
+						new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
+							.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
 							.next(onSearchFilesComplete)
 							.error(new HandleViewIoException(SearchFilesActivity.this, this));
 					}
@@ -93,6 +97,24 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
 	@Override
 	public Void resultFrom(List<ServiceFile> serviceFiles) throws Throwable {
+		if (serviceFiles == null) return null;
+
+		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+
+		fileListView.findView().setOnItemLongClickListener(longClickViewAnimatorListener);
+		final FileListAdapter fileListAdapter =
+			new FileListAdapter(
+				this,
+				R.id.tvStandard,
+				serviceFiles,
+				new ItemListMenuChangeHandler(this),
+				NowPlayingFileProvider.fromActiveLibrary(this));
+
+		fileListView.findView().setAdapter(fileListAdapter);
+
+		fileListView.findView().setVisibility(View.VISIBLE);
+		pbLoading.findView().setVisibility(View.INVISIBLE);
+
 		return null;
 	}
 

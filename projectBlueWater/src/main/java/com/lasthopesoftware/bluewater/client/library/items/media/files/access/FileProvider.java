@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.promises.Promise;
@@ -14,10 +15,10 @@ public class FileProvider {
 		this.fileStringListProvider = fileStringListProvider;
 	}
 
-	public Promise<List<ServiceFile>> promiseFiles(IFileListParameterProvider fileListParameterProvider) {
+	public Promise<List<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params) {
 		return
 			fileStringListProvider
-				.promiseFileStringList(fileListParameterProvider)
+				.promiseFileStringList(option, params)
 				.then(FileStringListUtilities::promiseParsedFileStringList);
 	}
 }

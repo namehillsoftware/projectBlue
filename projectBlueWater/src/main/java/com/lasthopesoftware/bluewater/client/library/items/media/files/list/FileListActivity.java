@@ -19,11 +19,14 @@ import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewCon
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
@@ -39,8 +42,8 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	
 	private int mItemId;
 
-	private ProgressBar pbLoading;
-	private ListView fileListView;
+	private LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -52,11 +55,8 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_items);
 
-		fileListView = (ListView)findViewById(R.id.lvItems);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
-        
-        fileListView.setVisibility(View.INVISIBLE);
-        pbLoading.setVisibility(View.VISIBLE);
+        fileListView.findView().setVisibility(View.INVISIBLE);
+        pbLoading.findView().setVisibility(View.VISIBLE);
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
 
@@ -64,15 +64,17 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onFileProviderComplete = Dispatch.toContext(this, this);
 
+		final String[] parameters = (getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
+
 		getNewFileProvider()
-			.promiseData()
+			.promiseFiles(FileListParameters.Options.None, parameters)
 			.next(onFileProviderComplete)
 			.error(new HandleViewIoException(this, new Runnable() {
 
 					@Override
 					public void run() {
 						getNewFileProvider()
-							.promiseData()
+							.promiseFiles(FileListParameters.Options.None, parameters)
 							.next(onFileProviderComplete)
 							.error(new HandleViewIoException(FileListActivity.this, this));
 					}
@@ -88,7 +90,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
 
-		fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
+		fileListView.findView().setOnItemLongClickListener(longClickViewAnimatorListener);
 		final FileListAdapter fileListAdapter =
 			new FileListAdapter(
 				this,
@@ -97,16 +99,16 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 				new ItemListMenuChangeHandler(this),
 				NowPlayingFileProvider.fromActiveLibrary(this));
 
-		fileListView.setAdapter(fileListAdapter);
+		fileListView.findView().setAdapter(fileListAdapter);
 
-		fileListView.setVisibility(View.VISIBLE);
-		pbLoading.setVisibility(View.INVISIBLE);
+		fileListView.findView().setVisibility(View.VISIBLE);
+		pbLoading.findView().setVisibility(View.INVISIBLE);
 
 		return null;
 	}
 
 	private FileProvider getNewFileProvider() {
-		return new FileProvider(SessionConnection.getSessionConnectionProvider(), getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId));
+		return new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()));
 	}
 	
 	@Override

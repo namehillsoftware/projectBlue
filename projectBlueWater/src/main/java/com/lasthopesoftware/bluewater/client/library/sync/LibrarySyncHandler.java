@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
@@ -130,13 +130,14 @@ public class LibrarySyncHandler {
 						}
 
 						final int serviceId = storedItem.getServiceId();
-						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+						final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
 						final FileProvider fileProvider = new FileProvider(new FileStringListProvider(connectionProvider));
 
-						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles((IFileListParameterProvider) item);
+						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 						serviceFileListPromise
 							.error(runCarelessly(e -> {
 								if (e instanceof FileNotFoundException) {
+									final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
 									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
 									storedItemAccess.toggleSync(item, false);
 								}
