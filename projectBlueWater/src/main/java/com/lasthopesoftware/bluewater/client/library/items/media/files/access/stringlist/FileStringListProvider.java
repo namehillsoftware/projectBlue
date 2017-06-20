@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-public class FileStringListProvider {
+public final class FileStringListProvider {
 	private static final Logger logger = LoggerFactory.getLogger(FileStringListProvider.class);
 	private final IConnectionProvider connectionProvider;
 
