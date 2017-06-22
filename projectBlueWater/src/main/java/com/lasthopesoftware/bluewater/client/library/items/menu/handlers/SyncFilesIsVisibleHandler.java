@@ -8,11 +8,9 @@ import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 
-/**
- * Created by david on 8/16/15.
- */
 public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 
 	private final NotifyOnFlipViewAnimator notifyOnFlipViewAnimator;
@@ -35,7 +33,7 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 
 		storedItemAccess
 			.isItemMarkedForSync(item)
-			.next((isSynced) -> {
+			.next(Dispatch.toContext(isSynced -> {
 				if (!v.isShown()) return null;
 
 				syncButton.setImageDrawable(ViewUtils.getDrawable(v.getContext(), isSynced ? R.drawable.ic_sync_on : R.drawable.ic_sync_off));
@@ -43,6 +41,6 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 				syncButton.setEnabled(true);
 
 				return null;
-			});
+			}, v.getContext()));
 	}
 }
