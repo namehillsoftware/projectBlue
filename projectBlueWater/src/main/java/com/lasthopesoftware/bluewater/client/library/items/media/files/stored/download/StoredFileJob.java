@@ -24,9 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-/**
- * Created by david on 7/17/16.
- */
 class StoredFileJob {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
@@ -57,7 +54,7 @@ class StoredFileJob {
 	}
 
 	StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
-		final java.io.File file = new java.io.File(storedFile.getPath());
+		final File file = new File(storedFile.getPath());
 		if (isCancelled) return getCancelledStoredFileJobResult(file);
 
 		if (file.exists()) {
@@ -71,7 +68,7 @@ class StoredFileJob {
 		if (!fileWritePossibleArbitrator.isFileWritePossible(file))
 			throw new StoredFileWriteException(file, storedFile);
 
-		HttpURLConnection connection;
+		final HttpURLConnection connection;
 		try {
 			connection = connectionProvider.getConnection(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
 		} catch (IOException e) {
@@ -82,7 +79,7 @@ class StoredFileJob {
 		if (isCancelled) return getCancelledStoredFileJobResult(file);
 
 		try {
-			InputStream is;
+			final InputStream is;
 			try {
 				is = connection.getInputStream();
 			} catch (IOException ioe) {
@@ -92,7 +89,7 @@ class StoredFileJob {
 
 			if (isCancelled) return getCancelledStoredFileJobResult(file);
 
-			final java.io.File parent = file.getParentFile();
+			final File parent = file.getParentFile();
 			if (!parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
 
 			try {
@@ -108,12 +105,10 @@ class StoredFileJob {
 				logger.error("Error writing file!", ioe);
 				throw new StoredFileWriteException(file, storedFile, ioe);
 			} finally {
-				if (is != null) {
-					try {
-						is.close();
-					} catch (IOException e) {
-						logger.error("Error closing input stream", e);
-					}
+				try {
+					is.close();
+				} catch (IOException e) {
+					logger.error("Error closing input stream", e);
 				}
 			}
 		} finally {
