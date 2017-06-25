@@ -5,14 +5,14 @@ import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.providers.AbstractInputStreamProvider;
-import com.lasthopesoftware.providers.Cancellation;
+import com.lasthopesoftware.providers.AbstractProvider;
 
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
-public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
+public class FilePropertiesStorage implements Runnable {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorage.class);
 	private final IConnectionProvider connectionProvider;
@@ -21,18 +21,10 @@ public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
 	private final String value;
 
 	public static void storeFileProperty(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
-		new FilePropertiesStorage(connectionProvider, fileKey, property, value).promiseData();
+		AbstractProvider.providerExecutor.execute(new FilePropertiesStorage(connectionProvider, fileKey, property, value));
 	}
 
 	private FilePropertiesStorage(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
-		super(
-			connectionProvider,
-			"File/SetInfo",
-			"File=" + String.valueOf(fileKey),
-			"Field=" + property,
-			"Value=" + value,
-			"formatted=0");
-
 		this.connectionProvider = connectionProvider;
 		this.fileKey = fileKey;
 		this.property = property;
@@ -40,7 +32,25 @@ public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
 	}
 
 	@Override
-	protected Void getData(InputStream inputStream, Cancellation cancellation) {
+	public void run() {
+//		if (cancellation.isCancelled()) return null;
+
+		try {
+			final HttpURLConnection connection = connectionProvider.getConnection(
+				"File/SetInfo",
+				"File=" + String.valueOf(fileKey),
+				"Field=" + property,
+				"Value=" + value,
+				"formatted=0");
+			try {
+				final int responseCode = connection.getResponseCode();
+			} finally {
+				connection.disconnect();
+			}
+		} catch (IOException ioe) {
+			logger.error("There was an error opening the connection", ioe);
+		}
+
 		RevisionChecker.promiseRevision(connectionProvider)
 			.next(revision -> {
 				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
@@ -54,7 +64,5 @@ public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
 				logger.warn(fileKey + "'s property cache item " + property + " was not updated with the new value of " + value, e);
 				return null;
 			});
-
-		return null;
 	}
 }
