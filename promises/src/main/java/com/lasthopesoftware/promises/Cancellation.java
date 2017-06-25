@@ -2,28 +2,37 @@ package com.lasthopesoftware.promises;
 
 import com.vedsoft.futures.runnables.OneParameterAction;
 
-/**
- * Created by david on 10/25/16.
- */
+import java.util.concurrent.locks.ReentrantLock;
 
 class Cancellation implements OneParameterAction<Runnable> {
 
+	private final ReentrantLock reentrantLock = new ReentrantLock();
 	private Runnable reaction;
 	private boolean isCancelled;
 
 	public final void cancel() {
-		isCancelled = true;
+		reentrantLock.lock();
+		try {
+			isCancelled = true;
 
-		if (reaction != null)
-			reaction.run();
+			if (reaction != null)
+				reaction.run();
 
-		reaction = null;
+			reaction = null;
+		} finally {
+			reentrantLock.unlock();
+		}
 	}
 
 	@Override
 	public final void runWith(Runnable reaction) {
-		this.reaction = reaction;
-		if (isCancelled)
-			cancel();
+		reentrantLock.lock();
+		try {
+			this.reaction = reaction;
+			if (isCancelled)
+				cancel();
+		} finally {
+			reentrantLock.unlock();
+		}
 	}
 }

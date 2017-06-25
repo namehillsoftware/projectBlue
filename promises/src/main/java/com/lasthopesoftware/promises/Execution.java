@@ -53,26 +53,6 @@ final class Execution {
 
 	static final class Cancellable {
 
-		/**
-		 * Created by david on 10/30/16.
-		 */
-		static final class ExpectedResultCancellableExecutor<Result, NewResult> extends ResolutionMessenger<Result, NewResult> {
-			private final CarelessTwoParameterFunction<Result, OneParameterAction<Runnable>, NewResult> onFulfilled;
-
-			ExpectedResultCancellableExecutor(CarelessTwoParameterFunction<Result, OneParameterAction<Runnable>, NewResult> onFulfilled) {
-				this.onFulfilled = onFulfilled;
-			}
-
-			@Override
-			protected void requestResolution(Result result) {
-				try {
-					sendResolution(onFulfilled.resultFrom(result, this));
-				} catch (Throwable rejection) {
-					sendRejection(rejection);
-				}
-			}
-		}
-
 		static final class RejectionDependentCancellableCaller<Result, NewResult> extends ErrorMessenger<Result, NewResult> {
 			private final CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled;
 
@@ -89,6 +69,7 @@ final class Execution {
 				}
 			}
 		}
+
 	}
 
 	/**

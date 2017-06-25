@@ -1,9 +1,5 @@
 package com.lasthopesoftware.promises;
 
-/**
- * Created by david on 4/2/17.
- */
-
 public abstract class EmptyMessenger<Resolution> extends AwaitingMessenger<Void, Resolution> {
 
 	@Override
