@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
@@ -18,7 +17,7 @@ import java.util.concurrent.Future;
  * @author david
  *
  */
-class CacheFlusherTask implements Callable<Void> {
+class CacheFlusherTask implements Runnable {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 	
@@ -26,7 +25,7 @@ class CacheFlusherTask implements Callable<Void> {
 	private final String cacheName;
 	private final long targetSize;
 
-	static Future<Void> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
+	static Future<?> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
 		return RepositoryAccessHelper.databaseExecutor.submit(new CacheFlusherTask(context, cacheName, targetSize));
 	}
 
@@ -40,9 +39,9 @@ class CacheFlusherTask implements Callable<Void> {
 	}
 
 	@Override
-	public Void call() {
-		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return null;
+	public void run() {
+		try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return;
 
 			do {
 				final CachedFile cachedFile = getOldestCachedFile(repositoryAccessHelper);
@@ -53,7 +52,7 @@ class CacheFlusherTask implements Callable<Void> {
 			// Remove any files in the cache dir but not in the database
 			final File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
 
-			if (cacheDir == null || !cacheDir.exists()) return null;
+			if (cacheDir == null || !cacheDir.exists()) return;
 
 			final File[] filesInCacheDir = cacheDir.listFiles();
 
@@ -61,20 +60,21 @@ class CacheFlusherTask implements Callable<Void> {
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
 			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(repositoryAccessHelper))
-				return null;
+				return;
 
-			for (File fileInCacheDir : filesInCacheDir) {
+			// Remove all files that aren't tracked in the database
+			for (final File fileInCacheDir : filesInCacheDir) {
 				try {
 					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null)
 						continue;
 				} catch (IOException e) {
 					logger.warn("Issue getting canonical serviceFile path.");
 				}
-				fileInCacheDir.delete();
+
+				if (!fileInCacheDir.delete())
+					logger.warn("The cached file `" + fileInCacheDir.getPath() + "` could not be deleted.");
 			}
 		}
-
-		return null;
 	}
 
 	private long getCachedFileSizeFromDatabase(final RepositoryAccessHelper repositoryAccessHelper) {
