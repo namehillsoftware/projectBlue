@@ -14,9 +14,7 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 	private final Queue<AwaitingMessenger<Resolution, ?>> recipients = new ConcurrentLinkedQueue<>();
 	private final Cancellation cancellation = new Cancellation();
 
-	private boolean isResolved;
-	private Resolution resolution;
-	private Throwable rejection;
+	private Message<Resolution> message;
 
 	protected abstract void requestResolution(Input input, Throwable throwable);
 
@@ -49,14 +47,14 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 		recipients.offer(recipient);
 
 		if (isResolvedSynchronously())
-			dispatchMessage(resolution, rejection);
+			dispatchMessage(message);
 	}
 
 	private boolean isResolvedSynchronously() {
 		final Lock readLock = resolveSync.readLock();
 		readLock.lock();
 		try {
-			return isResolved;
+			return message != null;
 		} finally {
 			readLock.unlock();
 		}
@@ -65,22 +63,19 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 	private void resolve(Resolution resolution, Throwable rejection) {
 		resolveSync.writeLock().lock();
 		try {
-			if (isResolved) return;
+			if (message != null) return;
 
-			this.resolution = resolution;
-			this.rejection = rejection;
-
-			isResolved = true;
+			message = new Message<>(resolution, rejection);
 		} finally {
 			resolveSync.writeLock().unlock();
 		}
 
-		dispatchMessage(resolution, rejection);
+		dispatchMessage(message);
 	}
 
-	private synchronized void dispatchMessage(Resolution resolution, Throwable rejection) {
+	private synchronized void dispatchMessage(Message<Resolution> message) {
 		AwaitingMessenger<Resolution, ?> r;
 		while ((r = recipients.poll()) != null)
-			r.requestResolution(resolution, rejection);
+			r.requestResolution(message.resolution, message.rejection);
 	}
 }

@@ -2,17 +2,18 @@ package com.lasthopesoftware.promises.GivenAPromiseThatIsRejected;
 
 import com.lasthopesoftware.promises.Promise;
 
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenTheRejectionIsCalled {
 
-	private Exception thrownException;
-	private Throwable caughtException;
+	private static Exception thrownException;
+	private static Throwable caughtException;
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 		thrownException = new Exception();
 		new Promise<String>(
 				() -> {
@@ -22,6 +23,6 @@ public class WhenTheRejectionIsCalled {
 
 	@Test
 	public void thenTheRejectionIsCorrect() {
-		Assert.assertEquals(thrownException, caughtException);
+		assertThat(caughtException).isEqualTo(thrownException);
 	}
 }

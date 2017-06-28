@@ -37,7 +37,7 @@ public class Promise<Resolution> {
 		messenger.cancel();
 	}
 
-	<NewResolution> Promise<NewResolution> next(AwaitingMessenger<Resolution, NewResolution> onFulfilled) {
+	private <NewResolution> Promise<NewResolution> next(AwaitingMessenger<Resolution, NewResolution> onFulfilled) {
 		messenger.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);

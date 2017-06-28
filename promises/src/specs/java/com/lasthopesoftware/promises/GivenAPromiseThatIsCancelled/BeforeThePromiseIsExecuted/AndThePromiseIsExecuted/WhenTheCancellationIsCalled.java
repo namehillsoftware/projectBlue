@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled.BeforeThePromiseIsExecuted;
+package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled.BeforeThePromiseIsExecuted.AndThePromiseIsExecuted;
 
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
@@ -24,11 +24,13 @@ public class WhenTheCancellationIsCalled {
 		cancellablePromise.error((exception) -> caughtException = exception);
 
 		cancellablePromise.cancel();
+
+		resolvableTask.resolve("");
 	}
 
 	@Test
-	public void thenTheRejectionIsNotSet() {
-		assertThat(caughtException).isNull();
+	public void thenTheRejectionIsCorrect() {
+		assertThat(caughtException).isEqualTo(thrownException);
 	}
 
 	private static class ExternallyResolvableTask<TResult> implements OneParameterAction<Messenger<TResult>> {
