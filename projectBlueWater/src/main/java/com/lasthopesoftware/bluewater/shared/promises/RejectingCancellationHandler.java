@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.shared.promises;
 
-import com.lasthopesoftware.promises.IRejectedPromise;
 import com.lasthopesoftware.promises.Messenger;
 
 import java.util.concurrent.CancellationException;

@@ -18,7 +18,6 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 
 	protected abstract void requestResolution(Input input, Throwable throwable);
 
-	@Override
 	public final void sendRejection(Throwable error) {
 		resolve(null, error);
 	}
