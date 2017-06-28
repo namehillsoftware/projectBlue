@@ -23,7 +23,7 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
-		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedTask(this, mediaPlayer));
+		playbackPromise = new MediaPlayerPlaybackCompletedPromise(this, mediaPlayer);
 		bufferingPromise = new MediaPlayerBufferedPromise(this, mediaPlayer);
 	}
 
