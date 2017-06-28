@@ -14,7 +14,7 @@ abstract class AwaitingMessenger<Resolution> {
 
 	private Message<Resolution> message;
 
-	public final void sendRejection(Throwable error) {
+	protected final void sendRejection(Throwable error) {
 		resolve(null, error);
 	}
 
