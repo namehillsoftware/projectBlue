@@ -23,7 +23,7 @@ public class WhenChainingResolutionTwice {
 	@BeforeClass
 	public static void before() {
 		final Promise<String> rootPromise =
-			new Promise<>(() -> "test");
+			new Promise<>("test");
 
 		firstResultHandler = mock(CarelessOneParameterFunction.class);
 

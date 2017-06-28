@@ -16,7 +16,7 @@ public class WhenAnotherReturningPromiseIsExpected {
 
 	@Before
 	public void before() {
-		new Promise<>(() -> "test")
+		new Promise<>("test")
 				.next(result -> 330 + result.hashCode())
 				.next(nextResult -> nextReturningPromiseResult = nextResult)
 				.error(err -> isCalled = true);

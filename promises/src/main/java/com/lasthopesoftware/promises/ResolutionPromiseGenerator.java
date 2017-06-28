@@ -6,7 +6,7 @@ import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 final class ResolutionPromiseGenerator<Resolution, Response> extends ResolutionRespondingPromise<Resolution, Response> {
 	private final CarelessOneParameterFunction<Resolution, Promise<Response>> onFulfilled;
-	private final PromiseProxy<Response> promiseProxy = new PromiseProxy<>(this);
+	private final PromiseProxy<Response> promiseProxy = new PromiseProxy<>(new Execution.MessengerTunnel<>(this));
 
 	ResolutionPromiseGenerator(CarelessOneParameterFunction<Resolution, Promise<Response>> onFulfilled) {
 		this.onFulfilled = onFulfilled;

@@ -21,12 +21,10 @@ public class WhenChainingAResolutionAndError {
 
 	@BeforeClass
 	public static void before() {
-		final Promise<String> firstPromise = new Promise<>(() -> "test_1");
-		final Promise<String> secondPromise = new Promise<>(() -> "test_2");
-		final Promise<String> thirdPromise = new Promise<>(() -> "test_3");
-		final Promise<String> fourthPromise = new Promise<>(() -> {
-			throw expectedException;
-		});
+		final Promise<String> firstPromise = new Promise<>("test_1");
+		final Promise<String> secondPromise = new Promise<>("test_2");
+		final Promise<String> thirdPromise = new Promise<>("test_3");
+		final Promise<String> fourthPromise = new Promise<>((messenger) -> messenger.sendRejection(expectedException));
 
 		Promise.whenAll(firstPromise, secondPromise, thirdPromise, fourthPromise)
 			.next(strings -> result = new ArrayList<>(strings))
