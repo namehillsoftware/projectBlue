@@ -1,6 +1,6 @@
 package com.lasthopesoftware.promises;
 
 
-interface RespondingMessenger<Input, Resolution> extends Messenger<Resolution> {
-	void requestResponse(Message<Input> message);
+interface RespondingMessenger<Input> {
+	void respond(Message<Input> message);
 }

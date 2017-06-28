@@ -1,29 +1,22 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class Promise<Resolution> extends AwaitingMessenger<Void, Resolution> {
+public class Promise<Resolution> extends AwaitingMessenger<Resolution> {
 
 	public Promise(OneParameterAction<Messenger<Resolution>> executor) {
-		this(new Execution.MessengerTunnel<Resolution>(executor));
-	}
-
-	public Promise(CarelessFunction<Resolution> executor) {
-		this(new Execution.InternalExpectedPromiseExecutor<Resolution>(executor));
+		executor.runWith(new Execution.MessengerTunnel<>(this));
 	}
 
 	public Promise(Resolution passThroughResult) {
 		sendResolution(passThroughResult);
 	}
 
-	public Promise() {
-	}
+	public Promise() {}
 
 	private <NewResolution> Promise<NewResolution> next(ResolutionRespondingPromise<Resolution, NewResolution> onFulfilled) {
 		awaitResolution(onFulfilled);
@@ -39,14 +32,10 @@ public class Promise<Resolution> extends AwaitingMessenger<Void, Resolution> {
 		return next(new ResolutionPromiseGenerator<>(onFulfilled));
 	}
 
-	final <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorRespondingPromise<Resolution, TNewRejectedResult> errorRespondingPromise) {
+	private <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorRespondingPromise<Resolution, TNewRejectedResult> errorRespondingPromise) {
 		awaitResolution(errorRespondingPromise);
 
 		return errorRespondingPromise;
-	}
-
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, TNewRejectedResult> onRejected) {
-		return error(new Execution.Cancellable.RejectionDependentCancellableCaller<>(onRejected));
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
@@ -72,6 +61,6 @@ public class Promise<Resolution> extends AwaitingMessenger<Void, Resolution> {
 	}
 
 	public static <TResult> Promise<TResult> whenAny(Collection<Promise<TResult>> promises) {
-		return new Promise<>(new Resolutions.FirstPromiseResolver<TResult>(promises));
+		return new Resolutions.FirstPromiseResolver<>(promises);
 	}
 }

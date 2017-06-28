@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.playback.file.buffering;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.promises.EmptyMessenger;
+import com.lasthopesoftware.promises.Promise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class MediaPlayerBufferedPromise extends EmptyMessenger<IBufferingPlaybackHandler> implements MediaPlayer.OnBufferingUpdateListener {
+public final class MediaPlayerBufferedPromise extends Promise<IBufferingPlaybackHandler> implements MediaPlayer.OnBufferingUpdateListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerBufferedPromise.class);
 
@@ -21,11 +21,6 @@ public final class MediaPlayerBufferedPromise extends EmptyMessenger<IBufferingP
 	public MediaPlayerBufferedPromise(IBufferingPlaybackHandler bufferingPlaybackHandler, MediaPlayer mediaPlayer) {
 		this.bufferingPlaybackHandler = bufferingPlaybackHandler;
 		mediaPlayer.setOnBufferingUpdateListener(this);
-	}
-
-	public void requestResolution() {
-		if (isBuffered())
-			sendResolution(bufferingPlaybackHandler);
 	}
 
 	@Override

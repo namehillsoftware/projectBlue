@@ -31,7 +31,7 @@ final class Resolutions {
 
 	private static final class CollectedResultsResolver<TResult> extends ResultCollector<TResult> {
 		private final int expectedResultSize;
-		private Messenger<Collection<TResult>> collectionMessenger;
+		private Promise<Collection<TResult>> collectionPromise;
 
 		CollectedResultsResolver(Collection<Promise<TResult>> promises) {
 			super(promises);
@@ -48,8 +48,8 @@ final class Resolutions {
 			return resultFrom;
 		}
 
-		CollectedResultsResolver resolveWith(Messenger<Collection<TResult>> collectionMessenger) {
-			this.collectionMessenger = collectionMessenger;
+		CollectedResultsResolver resolveWith(Promise<Collection<TResult>> collectionPromise) {
+			this.collectionPromise = collectionPromise;
 
 			attemptResolve();
 
@@ -57,18 +57,18 @@ final class Resolutions {
 		}
 
 		private void attemptResolve() {
-			if (collectionMessenger == null) return;
+			if (collectionPromise == null) return;
 
 			final Collection<TResult> results = getResults();
 			if (results.size() < expectedResultSize) return;
 
-			collectionMessenger.sendResolution(results);
+			collectionPromise.sendResolution(results);
 		}
 	}
 
 	private static final class ErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
 
-		private Messenger<Collection<TResult>> messenger;
+		private Promise<Collection<TResult>> promise;
 		private Throwable error;
 
 		ErrorHandler(Collection<Promise<TResult>> promises) {
@@ -82,15 +82,15 @@ final class Resolutions {
 			return throwable;
 		}
 
-		boolean rejectWith(Messenger<Collection<TResult>> messenger) {
-			this.messenger = messenger;
+		boolean rejectWith(Promise<Collection<TResult>> promise) {
+			this.promise = promise;
 
 			return attemptRejection();
 		}
 
 		private boolean attemptRejection() {
-			if (messenger != null && error != null) {
-				messenger.sendRejection(error);
+			if (promise != null && error != null) {
+				promise.sendRejection(error);
 				return true;
 			}
 
@@ -117,7 +117,7 @@ final class Resolutions {
 		CarelessOneParameterFunction<Result, Result>,
 		Runnable {
 
-		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
+		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(new Execution.MessengerTunnel<>(this));
 
 		FirstPromiseResolver(Collection<Promise<Result>> promises) {
 			cancellationRequested(this);
@@ -140,7 +140,7 @@ final class Resolutions {
 
 	private static final class CollectedResultsCanceller<TResult> implements Runnable {
 
-		private Messenger messenger;
+		private Promise<Collection<TResult>> promise;
 		private final Collection<Promise<TResult>> promises;
 		private final ResultCollector<TResult> resultCollector;
 
@@ -149,8 +149,8 @@ final class Resolutions {
 			this.resultCollector = resultCollector;
 		}
 
-		Runnable rejection(Messenger messenger) {
-			this.messenger = messenger;
+		Runnable rejection(Promise<Collection<TResult>> collectionPromise) {
+			this.promise = collectionPromise;
 			return this;
 		}
 
@@ -158,7 +158,7 @@ final class Resolutions {
 		public void run() {
 			for (Promise<?> promise : promises) promise.cancel();
 
-			messenger.sendRejection(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
+			promise.sendRejection(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
 		}
 	}
 }

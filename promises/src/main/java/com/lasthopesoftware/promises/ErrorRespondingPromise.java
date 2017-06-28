@@ -1,12 +1,12 @@
 package com.lasthopesoftware.promises;
 
 
-abstract class ErrorRespondingPromise<InputResolution, NewResolution> extends Promise<NewResolution> implements RespondingMessenger<InputResolution, NewResolution> {
+abstract class ErrorRespondingPromise<InputResolution, NewResolution> extends Promise<NewResolution> implements RespondingMessenger<InputResolution> {
 	@Override
-	public final void requestResponse(Message<InputResolution> inputResolution) {
+	public final void respond(Message<InputResolution> inputResolution) {
 		if (inputResolution.rejection != null)
-			requestResolution(inputResolution.rejection);
+			respond(inputResolution.rejection);
 	}
 
-	protected abstract void requestResolution(Throwable throwable);
+	protected abstract void respond(Throwable throwable);
 }

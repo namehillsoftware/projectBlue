@@ -18,7 +18,7 @@ public class WhenTheRejectionIsCalled {
 	@Before
 	public void before() {
 		thrownException = new Exception();
-		new Promise<String>(() -> { throw thrownException; })
+		new Promise<String>((messenger) -> messenger.sendRejection(thrownException))
 				.next(result -> null)
 				.error(exception -> caughtException = exception);
 	}

@@ -13,7 +13,7 @@ final class ResolutionPromiseGenerator<Resolution, Response> extends ResolutionR
 	}
 
 	@Override
-	void requestResponse(Resolution resolution) {
+	void respond(Resolution resolution) {
 		try {
 			promiseProxy.proxy(onFulfilled.resultFrom(resolution));
 		} catch (Throwable throwable) {

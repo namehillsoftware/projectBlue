@@ -1,17 +1,15 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.runnables.OneParameterAction;
-
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolution>, OneParameterAction<Runnable> {
+abstract class AwaitingMessenger<Resolution> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-	private final Queue<RespondingMessenger<Resolution, ?>> recipients = new ConcurrentLinkedQueue<>();
+	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
 	private final Cancellation cancellation = new Cancellation();
 
 	private Message<Resolution> message;
@@ -20,27 +18,24 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 		resolve(null, error);
 	}
 
-	@Override
-	public final void sendResolution(Resolution resolution) {
+	protected final void sendResolution(Resolution resolution) {
 		resolve(resolution, null);
 	}
 
-	@Override
-	public final void runWith(Runnable response) {
+	protected final void runWith(Runnable response) {
 		cancellationRequested(response);
 	}
 
-	@Override
-	public final void cancellationRequested(Runnable reaction) {
+	protected final void cancellationRequested(Runnable reaction) {
 		cancellation.runWith(reaction);
 	}
 
-	final void cancel() {
+	public final void cancel() {
 		if (!isResolvedSynchronously())
 			cancellation.cancel();
 	}
 
-	final void awaitResolution(RespondingMessenger<Resolution, ?> recipient) {
+	final void awaitResolution(RespondingMessenger<Resolution> recipient) {
 		recipients.offer(recipient);
 
 		if (isResolvedSynchronously())
@@ -71,8 +66,8 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 	}
 
 	private synchronized void dispatchMessage(Message<Resolution> message) {
-		RespondingMessenger<Resolution, ?> r;
+		RespondingMessenger<Resolution> r;
 		while ((r = recipients.poll()) != null)
-			r.requestResponse(message);
+			r.respond(message);
 	}
 }

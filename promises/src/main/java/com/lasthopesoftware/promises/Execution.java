@@ -1,75 +1,31 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.CarelessTwoParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 final class Execution {
 
-	static final class InternalExpectedPromiseExecutor<Result> extends EmptyMessenger<Result> {
-		private final CarelessFunction<Result> executor;
+	static final class MessengerTunnel<Result> implements Messenger<Result> {
 
-		InternalExpectedPromiseExecutor(CarelessFunction<Result> executor) {
-			this.executor = executor;
+		private final AwaitingMessenger<Result> messenger;
+
+		MessengerTunnel(AwaitingMessenger<Result> messenger) {
+			this.messenger = messenger;
 		}
 
 		@Override
-		public void requestResolution() {
-			try {
-				sendResolution(executor.result());
-			} catch (Throwable rejection) {
-				sendRejection(rejection);
-			}
-		}
-	}
-
-	static final class MessengerTunnel<Result> extends EmptyMessenger<Result> {
-
-		private final OneParameterAction<Messenger<Result>> messengerDestination;
-
-		MessengerTunnel(OneParameterAction<Messenger<Result>> messengerDestination) {
-			this.messengerDestination = messengerDestination;
+		public void sendResolution(Result result) {
+			messenger.sendResolution(result);
 		}
 
 		@Override
-		public void requestResolution() {
-			messengerDestination.runWith(this);
-		}
-	}
-
-	static final class PassThroughCallable<PassThroughResult> extends EmptyMessenger<PassThroughResult> {
-		private final PassThroughResult passThroughResult;
-
-		PassThroughCallable(PassThroughResult passThroughResult) {
-			this.passThroughResult = passThroughResult;
+		public void sendRejection(Throwable error) {
+			messenger.sendRejection(error);
 		}
 
 		@Override
-		public void requestResolution() {
-			sendResolution(passThroughResult);
+		public void cancellationRequested(Runnable response) {
+			messenger.cancellationRequested(response);
 		}
-	}
-
-	static final class Cancellable {
-
-		static final class RejectionDependentCancellableCaller<Result, NewResult> extends ErrorRespondingPromise<Result, NewResult> {
-			private final CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled;
-
-			RejectionDependentCancellableCaller(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled) {
-				this.onFulfilled = onFulfilled;
-			}
-
-			@Override
-			protected void requestResolution(Throwable throwable) {
-				try {
-					sendResolution(onFulfilled.resultFrom(throwable, this));
-				} catch (Throwable rejection) {
-					sendRejection(rejection);
-				}
-			}
-		}
-
 	}
 
 	/**
@@ -83,7 +39,7 @@ final class Execution {
 		}
 
 		@Override
-		void requestResponse(Resolution resolution) {
+		void respond(Resolution resolution) {
 			try {
 				sendResolution(onFulfilled.resultFrom(resolution));
 			} catch (Throwable rejection) {
@@ -100,7 +56,7 @@ final class Execution {
 		}
 
 		@Override
-		protected void requestResolution(Throwable throwable) {
+		protected void respond(Throwable throwable) {
 			try {
 				sendResolution(onFulfilled.resultFrom(throwable));
 			} catch (Throwable rejection) {
