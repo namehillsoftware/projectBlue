@@ -53,7 +53,7 @@ final class Execution {
 
 	static final class Cancellable {
 
-		static final class RejectionDependentCancellableCaller<Result, NewResult> extends ErrorMessenger<Result, NewResult> {
+		static final class RejectionDependentCancellableCaller<Result, NewResult> extends ErrorRespondingPromise<Result, NewResult> {
 			private final CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled;
 
 			RejectionDependentCancellableCaller(CarelessTwoParameterFunction<Throwable, OneParameterAction<Runnable>, NewResult> onFulfilled) {
@@ -75,24 +75,24 @@ final class Execution {
 	/**
 	 * Created by david on 10/8/16.
 	 */
-	static final class ExpectedResultExecutor<TResult, TNewResult> extends ResolutionMessenger<TResult,TNewResult> {
-		private final CarelessOneParameterFunction<TResult, TNewResult> onFulfilled;
+	static final class ExpectedResultPromise<Resolution, Response> extends ResolutionRespondingPromise<Resolution, Response> {
+		private final CarelessOneParameterFunction<Resolution, Response> onFulfilled;
 
-		ExpectedResultExecutor(CarelessOneParameterFunction<TResult, TNewResult> onFulfilled) {
+		ExpectedResultPromise(CarelessOneParameterFunction<Resolution, Response> onFulfilled) {
 			this.onFulfilled = onFulfilled;
 		}
 
 		@Override
-		protected void requestResolution(TResult originalResult) {
+		void requestResponse(Resolution resolution) {
 			try {
-				sendResolution(onFulfilled.resultFrom(originalResult));
+				sendResolution(onFulfilled.resultFrom(resolution));
 			} catch (Throwable rejection) {
 				sendRejection(rejection);
 			}
 		}
 	}
 
-	static final class ErrorResultExecutor<TResult, TNewResult> extends ErrorMessenger<TResult, TNewResult> {
+	static final class ErrorResultExecutor<TResult, TNewResult> extends ErrorRespondingPromise<TResult, TNewResult> {
 		private final CarelessOneParameterFunction<Throwable, TNewResult> onFulfilled;
 
 		ErrorResultExecutor(CarelessOneParameterFunction<Throwable, TNewResult> onFulfilled) {

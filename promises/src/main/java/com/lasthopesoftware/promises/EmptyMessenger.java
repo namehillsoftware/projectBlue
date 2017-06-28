@@ -3,7 +3,7 @@ package com.lasthopesoftware.promises;
 public abstract class EmptyMessenger<Resolution> extends AwaitingMessenger<Void, Resolution> {
 
 	@Override
-	protected final void requestResolution(Void empty, Throwable ignored) {
+	protected final void requestResponse(Void empty, Throwable ignored) {
 		requestResolution();
 	}
 

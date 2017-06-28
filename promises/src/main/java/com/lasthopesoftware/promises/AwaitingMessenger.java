@@ -11,12 +11,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolution>, OneParameterAction<Runnable> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-	private final Queue<AwaitingMessenger<Resolution, ?>> recipients = new ConcurrentLinkedQueue<>();
+	private final Queue<RespondingMessenger<Resolution, ?>> recipients = new ConcurrentLinkedQueue<>();
 	private final Cancellation cancellation = new Cancellation();
 
 	private Message<Resolution> message;
-
-	protected abstract void requestResolution(Input input, Throwable throwable);
 
 	public final void sendRejection(Throwable error) {
 		resolve(null, error);
@@ -42,7 +40,7 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 			cancellation.cancel();
 	}
 
-	final void awaitResolution(AwaitingMessenger<Resolution, ?> recipient) {
+	final void awaitResolution(RespondingMessenger<Resolution, ?> recipient) {
 		recipients.offer(recipient);
 
 		if (isResolvedSynchronously())
@@ -73,8 +71,8 @@ abstract class AwaitingMessenger<Input, Resolution> implements Messenger<Resolut
 	}
 
 	private synchronized void dispatchMessage(Message<Resolution> message) {
-		AwaitingMessenger<Resolution, ?> r;
+		RespondingMessenger<Resolution, ?> r;
 		while ((r = recipients.poll()) != null)
-			r.requestResolution(message.resolution, message.rejection);
+			r.requestResponse(message);
 	}
 }

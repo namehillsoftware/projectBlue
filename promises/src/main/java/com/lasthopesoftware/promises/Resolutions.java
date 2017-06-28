@@ -68,7 +68,7 @@ final class Resolutions {
 
 	private static final class ErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
 
-		private Messenger<TResult> messenger;
+		private Messenger<Collection<TResult>> messenger;
 		private Throwable error;
 
 		ErrorHandler(Collection<Promise<TResult>> promises) {
@@ -82,7 +82,7 @@ final class Resolutions {
 			return throwable;
 		}
 
-		boolean rejectWith(Messenger<TResult> messenger) {
+		boolean rejectWith(Messenger<Collection<TResult>> messenger) {
 			this.messenger = messenger;
 
 			return attemptRejection();
@@ -98,20 +98,13 @@ final class Resolutions {
 		}
 	}
 
-	static final class AggregatePromiseResolver<TResult> extends EmptyMessenger<Collection<TResult>> {
-
-		private final CollectedResultsCanceller<TResult> canceller;
-		private final CollectedResultsResolver<TResult> resolver;
-		private final ErrorHandler errorHandler;
+	static final class AggregatePromiseResolver<TResult> extends Promise<Collection<TResult>> {
 
 		AggregatePromiseResolver(Collection<Promise<TResult>> promises) {
-			resolver = new CollectedResultsResolver<>(promises);
-			errorHandler = new ErrorHandler<>(promises);
-			canceller = new CollectedResultsCanceller<>(promises, resolver);
-		}
+			final CollectedResultsResolver<TResult> resolver = new CollectedResultsResolver<>(promises);
+			final ErrorHandler<TResult> errorHandler = new ErrorHandler<>(promises);
+			final CollectedResultsCanceller<TResult> canceller = new CollectedResultsCanceller<>(promises, resolver);
 
-		@Override
-		public void requestResolution() {
 			if (errorHandler.rejectWith(this)) return;
 
 			resolver.resolveWith(this);
@@ -120,20 +113,15 @@ final class Resolutions {
 		}
 	}
 
-	static final class FirstPromiseResolver<Result> extends EmptyMessenger<Result> implements
+	static final class FirstPromiseResolver<Result> extends Promise<Result> implements
 		CarelessOneParameterFunction<Result, Result>,
 		Runnable {
 
-		private final Collection<Promise<Result>> promises;
 		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
 
 		FirstPromiseResolver(Collection<Promise<Result>> promises) {
-			this.promises = promises;
 			cancellationRequested(this);
-		}
 
-		@Override
-		public void requestResolution() {
 			for (Promise<Result> promise : promises) promiseProxy.proxy(promise);
 		}
 
