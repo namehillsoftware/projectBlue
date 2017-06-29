@@ -18,7 +18,7 @@ public class Promise<Resolution> extends AwaitingMessenger<Resolution> {
 
 	public Promise() {}
 
-	private <NewResolution> Promise<NewResolution> next(ResolutionRespondingPromise<Resolution, NewResolution> onFulfilled) {
+	private <NewResolution> Promise<NewResolution> next(ResolutionResponsePromise<Resolution, NewResolution> onFulfilled) {
 		awaitResolution(onFulfilled);
 
 		return onFulfilled;
@@ -29,13 +29,13 @@ public class Promise<Resolution> extends AwaitingMessenger<Resolution> {
 	}
 
 	public final <TNewResult> Promise<TNewResult> then(CarelessOneParameterFunction<Resolution, Promise<TNewResult>> onFulfilled) {
-		return next(new ResolutionPromiseGenerator<>(onFulfilled));
+		return next(new PromisedResolutionResponsePromise<>(onFulfilled));
 	}
 
-	private <TNewRejectedResult> Promise<TNewRejectedResult> error(ErrorRespondingPromise<Resolution, TNewRejectedResult> errorRespondingPromise) {
-		awaitResolution(errorRespondingPromise);
+	private <TNewRejectedResult> Promise<TNewRejectedResult> error(RejectionResponsePromise<Resolution, TNewRejectedResult> rejectionResponsePromise) {
+		awaitResolution(rejectionResponsePromise);
 
-		return errorRespondingPromise;
+		return rejectionResponsePromise;
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {

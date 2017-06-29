@@ -31,7 +31,7 @@ final class Execution {
 	/**
 	 * Created by david on 10/8/16.
 	 */
-	static final class ExpectedResultPromise<Resolution, Response> extends ResolutionRespondingPromise<Resolution, Response> {
+	static final class ExpectedResultPromise<Resolution, Response> extends ResolutionResponsePromise<Resolution, Response> {
 		private final CarelessOneParameterFunction<Resolution, Response> onFulfilled;
 
 		ExpectedResultPromise(CarelessOneParameterFunction<Resolution, Response> onFulfilled) {
@@ -48,7 +48,7 @@ final class Execution {
 		}
 	}
 
-	static final class ErrorResultExecutor<TResult, TNewResult> extends ErrorRespondingPromise<TResult, TNewResult> {
+	static final class ErrorResultExecutor<TResult, TNewResult> extends RejectionResponsePromise<TResult, TNewResult> {
 		private final CarelessOneParameterFunction<Throwable, TNewResult> onFulfilled;
 
 		ErrorResultExecutor(CarelessOneParameterFunction<Throwable, TNewResult> onFulfilled) {

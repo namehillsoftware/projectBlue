@@ -9,11 +9,9 @@ final class MediaPlayerPlaybackCompletedPromise extends Promise<IPlaybackHandler
 	implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
 
 	private final IPlaybackHandler playbackHandler;
-	private final MediaPlayer mediaPlayer;
 
 	MediaPlayerPlaybackCompletedPromise(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer) {
 		this.playbackHandler = playbackHandler;
-		this.mediaPlayer = mediaPlayer;
 
 		mediaPlayer.setOnCompletionListener(this);
 		mediaPlayer.setOnErrorListener(this);
