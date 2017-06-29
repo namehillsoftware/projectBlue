@@ -32,14 +32,14 @@ public class Promise<Resolution> extends AwaitingMessenger<Resolution> {
 		return next(new PromisedResolutionResponsePromise<>(onFulfilled));
 	}
 
-	private <TNewRejectedResult> Promise<TNewRejectedResult> error(RejectionResponsePromise<Resolution, TNewRejectedResult> rejectionResponsePromise) {
+	private <TNewRejectedResult> Promise<TNewRejectedResult> _catch(RejectionResponsePromise<Resolution, TNewRejectedResult> rejectionResponsePromise) {
 		awaitResolution(rejectionResponsePromise);
 
 		return rejectionResponsePromise;
 	}
 
 	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
-		return error(new Execution.ErrorResultExecutor<>(onRejected));
+		return _catch(new Execution.ErrorResultExecutor<>(onRejected));
 	}
 
 	public static <TResult> Promise<TResult> empty() {

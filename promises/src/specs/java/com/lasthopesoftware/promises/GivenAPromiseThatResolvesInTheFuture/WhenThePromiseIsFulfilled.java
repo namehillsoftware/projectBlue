@@ -3,7 +3,7 @@ package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -15,11 +15,11 @@ import java.util.concurrent.TimeUnit;
 
 public class WhenThePromiseIsFulfilled {
 
-	private Object result;
-	private Object expectedResult;
+	private static Object result;
+	private static Object expectedResult;
 
-	@Before
-	public void before() throws InterruptedException {
+	@BeforeClass
+	public static void before() throws InterruptedException {
 		expectedResult = new Object();
 		final CountDownLatch latch = new CountDownLatch(1);
 		new Promise<>((messenger) -> new Thread(() -> {
@@ -31,7 +31,7 @@ public class WhenThePromiseIsFulfilled {
 			messenger.sendResolution(expectedResult);
 			latch.countDown();
 		}).start())
-		.next(result -> this.result = result);
+		.next(r -> result = r);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}

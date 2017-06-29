@@ -3,7 +3,7 @@ package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -20,11 +20,11 @@ import static org.mockito.Mockito.verify;
 
 public class WhenChainingResolutionTwice {
 
-	private CarelessOneParameterFunction<String, ?> firstResultHandler;
-	private CarelessOneParameterFunction<String, ?> secondResultHandler;
+	private static CarelessOneParameterFunction<String, ?> firstResultHandler;
+	private static CarelessOneParameterFunction<String, ?> secondResultHandler;
 
-	@Before
-	public void before() throws InterruptedException {
+	@BeforeClass
+	public static void before() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final Promise<String> rootPromise =
 			new Promise<>((messenger) -> new Thread(() -> {

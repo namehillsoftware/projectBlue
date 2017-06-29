@@ -3,7 +3,7 @@ package com.lasthopesoftware.promises.GivenAPromiseThatResolvesInTheFuture;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -18,12 +18,12 @@ import static org.mockito.Mockito.verify;
  */
 
 public class WhenThePromiseIsCancelledBeforeResolution {
-	private Object result;
-	private Object expectedResult;
-	private Runnable cancellationRunnable;
+	private static Object result;
+	private static Object expectedResult;
+	private static Runnable cancellationRunnable;
 
-	@Before
-	public void before() throws InterruptedException {
+	@BeforeClass
+	public static void before() throws InterruptedException {
 		expectedResult = new Object();
 
 		final CountDownLatch latch = new CountDownLatch(1);
@@ -47,7 +47,7 @@ public class WhenThePromiseIsCancelledBeforeResolution {
 
 		promise.cancel();
 
-		promise.next(result -> this.result = result);
+		promise.next(r -> result = r);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}
