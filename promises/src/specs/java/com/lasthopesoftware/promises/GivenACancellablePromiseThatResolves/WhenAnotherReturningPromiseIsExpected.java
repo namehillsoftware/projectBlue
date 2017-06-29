@@ -3,7 +3,7 @@ package com.lasthopesoftware.promises.GivenACancellablePromiseThatResolves;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -11,11 +11,11 @@ import org.junit.Test;
  */
 public class WhenAnotherReturningPromiseIsExpected {
 
-	private Integer nextReturningPromiseResult;
-	private boolean isCalled;
+	private static Integer nextReturningPromiseResult;
+	private static boolean isCalled;
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 		new Promise<>((messenger) -> messenger.sendResolution("test"))
 				.next(result -> 330 + result.hashCode())
 				.next(nextResult -> nextReturningPromiseResult = nextResult)
