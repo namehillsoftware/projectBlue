@@ -808,8 +808,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();
-
-		playlistManager.changePosition(0, 0).next(this::broadcastChangedFile);
 	}
 		
 	@Override

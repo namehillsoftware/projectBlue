@@ -212,7 +212,10 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 				saveStateToLibrary(p);
 			},
 			Functions.ON_ERROR_MISSING,
-			() -> isPlaying = false);
+			() -> {
+				isPlaying = false;
+				changePosition(0, 0);
+			});
 
 		return observable;
 	}
