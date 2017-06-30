@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.sync;
 
 import android.content.Context;
-import android.os.AsyncTask;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -114,7 +113,7 @@ public class LibrarySyncHandler {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess
 			.getStoredItems()
-			.next(runCarelessly(storedItems -> AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+			.next(runCarelessly(storedItems -> {
 				if (isCancelled) {
 					handleQueueProcessingCompleted();
 					return;
@@ -146,12 +145,9 @@ public class LibrarySyncHandler {
 						return serviceFileListPromise;
 					});
 
-				final Promise<Set<ServiceFile>> promiseAllFilesToSync =
-					Promise
-						.whenAll(mappedFileDataPromises.toList())
-						.next(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()));
-
-				final Promise<Collection<StoredFile>> fileDownloadTasks = promiseAllFilesToSync
+				Promise
+					.whenAll(mappedFileDataPromises.toList())
+					.next(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
 					.then(allServiceFilesToSync -> {
 						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
 						pruneFilesTask.error(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
@@ -183,9 +179,7 @@ public class LibrarySyncHandler {
 							.toList();
 
 						return Promise.whenAll(upsertFiles);
-					});
-
-				fileDownloadTasks
+					})
 					.next(runCarelessly(vs -> {
 						storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
 
@@ -204,7 +198,7 @@ public class LibrarySyncHandler {
 							handleQueueProcessingCompleted();
 						}
 					}));
-			})));
+			}));
 	}
 
 	private void handleQueueProcessingCompleted() {
