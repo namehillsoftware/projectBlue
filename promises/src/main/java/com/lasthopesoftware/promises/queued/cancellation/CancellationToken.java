@@ -1,4 +1,4 @@
-package com.lasthopesoftware.promises.cancellation;
+package com.lasthopesoftware.promises.queued.cancellation;
 
 
 import java.util.concurrent.locks.Lock;

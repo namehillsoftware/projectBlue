@@ -98,11 +98,9 @@ public class StoredFileAccess {
 	}
 
 	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
-		return new QueuedPromise<>((messenger) -> {
+		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				messenger.sendResolution(getStoredFile(repositoryAccessHelper, serviceServiceFile));
-			} catch(SQLException e) {
-				messenger.sendRejection(e);
+				return getStoredFile(repositoryAccessHelper, serviceServiceFile);
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
@@ -185,20 +183,18 @@ public class StoredFileAccess {
 		final MediaFileUriProvider mediaFileUriProvider =
 			new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
 
-		return new QueuedPromise<StoredFile>((messenger) -> {
-				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-					StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
-					if (storedFile == null) {
-						logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
-						createStoredFile(repositoryAccessHelper, serviceFile);
-						storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
-					}
-
-					messenger.sendResolution(storedFile);
-				} catch (Exception e) {
-					messenger.sendRejection(e);
+		return new QueuedPromise<>(() -> {
+			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
+				if (storedFile == null) {
+					logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
+					createStoredFile(repositoryAccessHelper, serviceFile);
+					storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 				}
-			}, RepositoryAccessHelper.databaseExecutor)
+
+				return storedFile;
+			}
+		}, RepositoryAccessHelper.databaseExecutor)
 			.then(storedFile -> {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 					return new Promise<>(storedFile);

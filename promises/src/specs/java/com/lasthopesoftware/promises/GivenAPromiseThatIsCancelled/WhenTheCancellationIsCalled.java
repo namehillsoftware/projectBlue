@@ -3,7 +3,7 @@ package com.lasthopesoftware.promises.GivenAPromiseThatIsCancelled;
 import com.lasthopesoftware.promises.Promise;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -12,11 +12,11 @@ import org.junit.Test;
 
 public class WhenTheCancellationIsCalled {
 
-	private Throwable thrownException;
-	private Throwable caughtException;
+	private static Throwable thrownException;
+	private static Throwable caughtException;
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 		thrownException = new Exception();
 		final Promise<String> cancellablePromise = new Promise<>(
 			(messenger) -> messenger.cancellationRequested(() -> messenger.sendRejection(thrownException)));
