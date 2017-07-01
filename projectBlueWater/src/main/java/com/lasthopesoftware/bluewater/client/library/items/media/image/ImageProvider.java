@@ -13,11 +13,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandler;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.promises.propagation.PromiseProxy;
+import com.lasthopesoftware.promises.queued.QueuedPromise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 

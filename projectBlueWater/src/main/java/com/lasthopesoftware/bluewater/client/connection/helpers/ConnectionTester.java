@@ -4,8 +4,8 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.queued.QueuedPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

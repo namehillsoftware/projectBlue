@@ -1,9 +1,9 @@
 package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.queued.QueuedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.concurrent.ExecutorService;

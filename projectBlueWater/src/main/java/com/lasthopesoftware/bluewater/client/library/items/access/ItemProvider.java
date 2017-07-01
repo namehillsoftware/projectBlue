@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
 import com.lasthopesoftware.providers.Cancellation;
 

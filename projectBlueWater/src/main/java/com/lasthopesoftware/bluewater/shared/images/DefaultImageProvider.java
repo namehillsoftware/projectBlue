@@ -7,8 +7,8 @@ import android.graphics.BitmapFactory;
 import android.util.DisplayMetrics;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.queued.QueuedPromise;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

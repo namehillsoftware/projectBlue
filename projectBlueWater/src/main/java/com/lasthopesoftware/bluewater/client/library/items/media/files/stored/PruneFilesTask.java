@@ -6,8 +6,8 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.queued.QueuedPromise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.slf4j.Logger;

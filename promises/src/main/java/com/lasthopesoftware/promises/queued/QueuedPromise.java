@@ -1,13 +1,10 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions;
+package com.lasthopesoftware.promises.queued;
 
-import com.lasthopesoftware.bluewater.shared.promises.WrappedCancellableExecutor;
-import com.lasthopesoftware.bluewater.shared.promises.WrappedFunction;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 public class QueuedPromise<Result> extends Promise<Result> {

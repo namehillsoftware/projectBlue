@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.QueuedPromise;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.queued.QueuedPromise;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
