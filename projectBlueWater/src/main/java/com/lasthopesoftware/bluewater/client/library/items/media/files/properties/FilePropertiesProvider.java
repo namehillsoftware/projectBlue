@@ -6,10 +6,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.promises.queued.QueuedPromise;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -45,12 +45,11 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey), filePropertiesExecutor);
 	}
 
-	private static final class FilePropertiesTask implements OneParameterAction<Messenger<Map<String, String>>> {
+	private static final class FilePropertiesTask implements CarelessOneParameterFunction<CancellationToken, Map<String, String>> {
 
 		private final IConnectionProvider connectionProvider;
 		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 		private final Integer fileKey;
-		private volatile boolean isCancelled;
 
 		private FilePropertiesTask(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey) {
 			this.connectionProvider = connectionProvider;
@@ -59,35 +58,34 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		}
 
 		@Override
-		public void runWith(Messenger<Map<String, String>> messenger) {
-			messenger.cancellationRequested(() -> {
-				isCancelled = true;
-				messenger.sendRejection(new CancellationException());
-			});
-
-			if (isCancelled) return;
+		public Map<String, String> resultFrom(CancellationToken cancellationToken) throws Throwable {
+			if (cancellationToken.isCancelled())
+				throw new CancellationException();
 
 			final Integer revision = RevisionChecker.getRevision(connectionProvider);
 			final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 
-			if (isCancelled) return;
+			if (cancellationToken.isCancelled())
+				throw new CancellationException();
 
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
-				messenger.sendResolution(new HashMap<>(filePropertiesContainer.getProperties()));
-				return;
+				return new HashMap<>(filePropertiesContainer.getProperties());
 			}
 
 			try {
-				if (isCancelled) return;
+				if (cancellationToken.isCancelled())
+					throw new CancellationException();
 
 				final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
 				conn.setReadTimeout(45000);
 				try {
-					if (isCancelled) return;
+					if (cancellationToken.isCancelled())
+						throw new CancellationException();
 
 					try (InputStream is = conn.getInputStream()) {
-						if (isCancelled) return;
+						if (cancellationToken.isCancelled())
+							throw new CancellationException();
 
 						final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
 						final XmlElement parent = xml.get(0);
@@ -98,14 +96,14 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
 
-						messenger.sendResolution(returnProperties);
+						return returnProperties;
 					}
 				} finally {
 					conn.disconnect();
 				}
 			} catch (IOException | XmlParseException e) {
 				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
-				messenger.sendRejection(e);
+				throw e;
 			}
 		}
 	}

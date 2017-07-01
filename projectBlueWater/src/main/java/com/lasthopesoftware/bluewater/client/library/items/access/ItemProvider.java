@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
-import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,10 +53,7 @@ public class ItemProvider {
     public Promise<List<Item>> promiseItems() {
 		return
 			RevisionChecker.promiseRevision(connectionProvider)
-				.then(serverRevision -> new QueuedPromise<>((messenger) -> {
-					final Cancellation cancellation = new Cancellation();
-					messenger.cancellationRequested(cancellation::cancel);
-
+				.then(serverRevision -> new QueuedPromise<>((cancellationToken) -> {
 					final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
 					final ItemHolder itemHolder;
@@ -66,22 +62,15 @@ public class ItemProvider {
 					}
 
 					if (itemHolder != null && itemHolder.revision.equals(serverRevision)) {
-						messenger.sendResolution(itemHolder.items);
-						return;
+						return itemHolder.items;
 					}
 
-					if (cancellation.isCancelled()) {
-						messenger.sendResolution(new ArrayList<>());
-						return;
+					if (cancellationToken.isCancelled()) {
+						return new ArrayList<>();
 					}
 
 					final HttpURLConnection connection;
-					try {
-						connection = connectionProvider.getConnection(LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
-					} catch (IOException e) {
-						messenger.sendRejection(e);
-						return;
-					}
+					connection = connectionProvider.getConnection(LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
 
 					try {
 						try (InputStream is = connection.getInputStream()) {
@@ -93,11 +82,11 @@ public class ItemProvider {
 								itemsCache.put(boxedItemKey, newItemHolder);
 							}
 
-							messenger.sendResolution(items);
+							return items;
 						}
 					} catch (IOException e) {
 						logger.error("There was an error getting the inputstream", e);
-						messenger.sendRejection(e);
+						throw e;
 					} finally {
 						if (connection != null)
 							connection.disconnect();

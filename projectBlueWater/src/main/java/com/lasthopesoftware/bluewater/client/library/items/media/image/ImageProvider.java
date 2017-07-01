@@ -12,13 +12,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.Di
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.shared.promises.RejectingCancellationHandler;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.promises.propagation.PromiseProxy;
 import com.lasthopesoftware.promises.queued.QueuedPromise;
+import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.callables.CarelessFunction;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.apache.commons.io.IOUtils;
@@ -34,6 +35,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -144,23 +146,21 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageMemoryTask implements OneParameterAction<Messenger<Bitmap>> {
+	private static class ImageMemoryTask implements CarelessOneParameterFunction<CancellationToken, Bitmap> {
 		private final String uniqueKey;
 
 		ImageMemoryTask(String uniqueKey) {
 			this.uniqueKey = uniqueKey;
 		}
 
+
 		@Override
-		public void runWith(Messenger<Bitmap> messenger) {
-			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, messenger);
-
-			messenger.cancellationRequested(rejectingCancellationHandler);
-
-			if (rejectingCancellationHandler.isCancelled()) return;
+		public Bitmap resultFrom(CancellationToken cancellationToken) throws Throwable {
+			if (cancellationToken.isCancelled())
+				throw new CancellationException(cancellationMessage);
 
 			final byte[] imageBytes = getBitmapBytesFromMemory(uniqueKey);
-			messenger.sendResolution(imageBytes.length > 0 ? getBitmapFromBytes(imageBytes) : null);
+			return imageBytes.length > 0 ? getBitmapFromBytes(imageBytes) : null;
 		}
 
 		private static byte[] getBitmapBytesFromMemory(final String uniqueKey) {
@@ -199,7 +199,7 @@ public class ImageProvider {
 		}
 	}
 
-	private static class RemoteImageAccessTask implements OneParameterAction<Messenger<Bitmap>> {
+	private static class RemoteImageAccessTask implements CarelessOneParameterFunction<CancellationToken, Bitmap> {
 
 		private final String uniqueKey;
 		private final DiskFileCache imageDiskCache;
@@ -214,22 +214,17 @@ public class ImageProvider {
 		}
 
 		@Override
-		public void runWith(Messenger<Bitmap> messenger) {
-			final RejectingCancellationHandler rejectingCancellationHandler = new RejectingCancellationHandler(cancellationMessage, messenger);
-			messenger.cancellationRequested(rejectingCancellationHandler);
-
+		public Bitmap resultFrom(CancellationToken cancellationToken) throws Throwable {
 			try {
 				final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 				try {
 					// Connection failed to build
-					if (connection == null) {
-						messenger.sendResolution(null);
-						return;
-					}
+					if (connection == null)	return null;
 
 					byte[] imageBytes;
 					try {
-						if (rejectingCancellationHandler.isCancelled())	return;
+						if (cancellationToken.isCancelled())
+							throw new CancellationException(cancellationMessage);
 
 						try (InputStream is = connection.getInputStream()) {
 							imageBytes = IOUtils.toByteArray(is);
@@ -239,13 +234,11 @@ public class ImageProvider {
 						}
 
 						if (imageBytes.length == 0) {
-							messenger.sendResolution(null);
-							return;
+							return null;
 						}
 					} catch (FileNotFoundException fe) {
 						logger.warn("Image not found!");
-						messenger.sendResolution(null);
-						return;
+						return null;
 					}
 
 					imageDiskCache
@@ -257,19 +250,20 @@ public class ImageProvider {
 
 					putBitmapIntoMemory(uniqueKey, imageBytes);
 
-					if (rejectingCancellationHandler.isCancelled())	return;
+					if (cancellationToken.isCancelled())
+						throw new CancellationException(cancellationMessage);
 
-					messenger.sendResolution(getBitmapFromBytes(imageBytes));
+					return getBitmapFromBytes(imageBytes);
 				} catch (Exception e) {
 					logger.error(e.toString(), e);
-					messenger.sendRejection(e);
+					throw e;
 				} finally {
 					if (connection != null)
 						connection.disconnect();
 				}
 			} catch (IOException e) {
 				logger.error("There was an error getting the connection for images", e);
-				messenger.sendRejection(e);
+				throw e;
 			}
 		}
 	}
