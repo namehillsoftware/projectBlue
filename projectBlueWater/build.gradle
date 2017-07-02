@@ -82,6 +82,6 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.6'
     compile 'com.android.support:support-v4:25.+'
     compile 'com.annimon:stream:1.+'
-    compile project(path: ':promises')
+    compile project(path: ':messenger')
     compile 'io.reactivex.rxjava2:rxjava:2.+'
 }
