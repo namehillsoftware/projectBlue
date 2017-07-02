@@ -6,7 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-abstract class AwaitingMessenger<Resolution> {
+class AwaitingMessenger<Resolution> implements Messenger<Resolution> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
 	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
@@ -14,15 +14,18 @@ abstract class AwaitingMessenger<Resolution> {
 
 	private Message<Resolution> message;
 
-	protected final void sendRejection(Throwable error) {
+	@Override
+	public final void sendRejection(Throwable error) {
 		resolve(null, error);
 	}
 
-	protected final void sendResolution(Resolution resolution) {
+	@Override
+	public final void sendResolution(Resolution resolution) {
 		resolve(resolution, null);
 	}
 
-	protected final void cancellationRequested(Runnable reaction) {
+	@Override
+	public final void cancellationRequested(Runnable reaction) {
 		cancellation.respondToCancellation(reaction);
 	}
 

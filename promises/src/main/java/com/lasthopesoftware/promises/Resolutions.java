@@ -31,7 +31,7 @@ final class Resolutions {
 
 	private static final class CollectedResultsResolver<TResult> extends ResultCollector<TResult> {
 		private final int expectedResultSize;
-		private Promise<Collection<TResult>> collectionPromise;
+		private Messenger<Collection<TResult>> collectionMessenger;
 
 		CollectedResultsResolver(Collection<Promise<TResult>> promises) {
 			super(promises);
@@ -48,8 +48,8 @@ final class Resolutions {
 			return resultFrom;
 		}
 
-		CollectedResultsResolver resolveWith(Promise<Collection<TResult>> collectionPromise) {
-			this.collectionPromise = collectionPromise;
+		CollectedResultsResolver resolveWith(Messenger<Collection<TResult>> collectionMessenger) {
+			this.collectionMessenger = collectionMessenger;
 
 			attemptResolve();
 
@@ -57,18 +57,18 @@ final class Resolutions {
 		}
 
 		private void attemptResolve() {
-			if (collectionPromise == null) return;
+			if (collectionMessenger == null) return;
 
 			final Collection<TResult> results = getResults();
 			if (results.size() < expectedResultSize) return;
 
-			collectionPromise.sendResolution(results);
+			collectionMessenger.sendResolution(results);
 		}
 	}
 
 	private static final class ErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
 
-		private Promise<Collection<TResult>> promise;
+		private Messenger<Collection<TResult>> messenger;
 		private Throwable error;
 
 		ErrorHandler(Collection<Promise<TResult>> promises) {
@@ -82,15 +82,15 @@ final class Resolutions {
 			return throwable;
 		}
 
-		boolean rejectWith(Promise<Collection<TResult>> promise) {
-			this.promise = promise;
+		boolean rejectWith(Messenger<Collection<TResult>> messenger) {
+			this.messenger = messenger;
 
 			return attemptRejection();
 		}
 
 		private boolean attemptRejection() {
-			if (promise != null && error != null) {
-				promise.sendRejection(error);
+			if (messenger != null && error != null) {
+				messenger.sendRejection(error);
 				return true;
 			}
 
@@ -98,7 +98,7 @@ final class Resolutions {
 		}
 	}
 
-	static final class AggregatePromiseResolver<TResult> extends Promise<Collection<TResult>> {
+	static final class AggregatePromiseResolver<TResult> extends AwaitingMessenger<Collection<TResult>> {
 
 		AggregatePromiseResolver(Collection<Promise<TResult>> promises) {
 			final CollectedResultsResolver<TResult> resolver = new CollectedResultsResolver<>(promises);
@@ -113,11 +113,11 @@ final class Resolutions {
 		}
 	}
 
-	static final class FirstPromiseResolver<Result> extends Promise<Result> implements
+	static final class FirstPromiseResolver<Result> extends AwaitingMessenger<Result> implements
 		CarelessOneParameterFunction<Result, Result>,
 		Runnable {
 
-		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(new Execution.MessengerTunnel<>(this));
+		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
 
 		FirstPromiseResolver(Collection<Promise<Result>> promises) {
 			cancellationRequested(this);
@@ -140,7 +140,7 @@ final class Resolutions {
 
 	private static final class CollectedResultsCanceller<TResult> implements Runnable {
 
-		private Promise<Collection<TResult>> promise;
+		private Messenger<Collection<TResult>> collectionMessenger;
 		private final Collection<Promise<TResult>> promises;
 		private final ResultCollector<TResult> resultCollector;
 
@@ -149,8 +149,8 @@ final class Resolutions {
 			this.resultCollector = resultCollector;
 		}
 
-		Runnable rejection(Promise<Collection<TResult>> collectionPromise) {
-			this.promise = collectionPromise;
+		Runnable rejection(Messenger<Collection<TResult>> collectionMessenger) {
+			this.collectionMessenger = collectionMessenger;
 			return this;
 		}
 
@@ -158,7 +158,7 @@ final class Resolutions {
 		public void run() {
 			for (Promise<?> promise : promises) promise.cancel();
 
-			promise.sendRejection(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
+			collectionMessenger.sendRejection(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
 		}
 	}
 }
