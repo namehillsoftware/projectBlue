@@ -2,12 +2,13 @@ package com.lasthopesoftware.bluewater.client.playback.file.buffering;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.Messenger;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class MediaPlayerBufferedPromise extends Promise<IBufferingPlaybackHandler> implements MediaPlayer.OnBufferingUpdateListener {
+public final class MediaPlayerBufferedPromise implements OneParameterAction<Messenger<IBufferingPlaybackHandler>>, MediaPlayer.OnBufferingUpdateListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerBufferedPromise.class);
 
@@ -15,12 +16,21 @@ public final class MediaPlayerBufferedPromise extends Promise<IBufferingPlayback
 
 	private final IBufferingPlaybackHandler bufferingPlaybackHandler;
 
+	private volatile Messenger<IBufferingPlaybackHandler> messenger;
+
 	private int bufferPercentage;
 	private int lastBufferPercentage;
 
 	public MediaPlayerBufferedPromise(IBufferingPlaybackHandler bufferingPlaybackHandler, MediaPlayer mediaPlayer) {
 		this.bufferingPlaybackHandler = bufferingPlaybackHandler;
 		mediaPlayer.setOnBufferingUpdateListener(this);
+	}
+
+	@Override
+	public void runWith(Messenger<IBufferingPlaybackHandler> messenger) {
+		this.messenger = messenger;
+		if (isBuffered())
+			messenger.sendResolution(bufferingPlaybackHandler);
 	}
 
 	@Override
@@ -38,7 +48,8 @@ public final class MediaPlayerBufferedPromise extends Promise<IBufferingPlayback
 		// remove the listener
 		mp.setOnBufferingUpdateListener(null);
 
-		sendResolution(bufferingPlaybackHandler);
+		if (messenger != null)
+			messenger.sendResolution(bufferingPlaybackHandler);
 	}
 
 	private boolean isBuffered() {
