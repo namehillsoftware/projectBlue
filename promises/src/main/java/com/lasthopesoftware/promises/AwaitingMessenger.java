@@ -22,12 +22,8 @@ abstract class AwaitingMessenger<Resolution> {
 		resolve(resolution, null);
 	}
 
-	protected final void runWith(Runnable response) {
-		cancellationRequested(response);
-	}
-
 	protected final void cancellationRequested(Runnable reaction) {
-		cancellation.runWith(reaction);
+		cancellation.respondToCancellation(reaction);
 	}
 
 	public final void cancel() {

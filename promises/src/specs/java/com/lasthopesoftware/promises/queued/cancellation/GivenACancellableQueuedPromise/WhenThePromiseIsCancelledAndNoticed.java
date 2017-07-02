@@ -11,17 +11,17 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenThePromiseIsCancelled {
+public class WhenThePromiseIsCancelledAndNoticed {
 	private static Throwable thrownException;
 	private static Throwable caughtException;
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws InterruptedException {
 		thrownException = new Exception();
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		final CountDownLatch promiseLatch = new CountDownLatch(1);
 		final QueuedPromise<String> cancellablePromise = new QueuedPromise<>(
 			(cancellationToken) -> {
-				countDownLatch.await();
+				promiseLatch.await();
 
 				if (cancellationToken.isCancelled())
 					throw thrownException;
@@ -29,11 +29,18 @@ public class WhenThePromiseIsCancelled {
 				return "test";
 			}, Executors.newSingleThreadExecutor());
 
-		cancellablePromise.error((exception) -> caughtException = exception);
+		final CountDownLatch rejectionLatch = new CountDownLatch(1);
+		cancellablePromise.error((exception) -> {
+			caughtException = exception;
+			rejectionLatch.countDown();
+			return null;
+		});
 
 		cancellablePromise.cancel();
 
-		countDownLatch.countDown();
+		promiseLatch.countDown();
+
+		rejectionLatch.await();
 	}
 
 	@Test

@@ -19,7 +19,7 @@ public class QueuedPromise<Result> extends Promise<Result> {
 	}
 
 	public QueuedPromise(CarelessFunction<Result> task, Executor executor) {
-		super(new Executors.QueuedFunction<>(task, executor));
+		this(new Executors.FunctionExecutor<>(task), executor);
 	}
 
 	private static class Executors {
@@ -39,19 +39,21 @@ public class QueuedPromise<Result> extends Promise<Result> {
 			}
 		}
 
-		static class QueuedFunction<Result> implements OneParameterAction<Messenger<Result>> {
+		static class FunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
 
 			private final CarelessFunction<Result> callable;
-			private final Executor executor;
 
-			QueuedFunction(CarelessFunction<Result> callable, Executor executor) {
+			FunctionExecutor(CarelessFunction<Result> callable) {
 				this.callable = callable;
-				this.executor = executor;
 			}
 
 			@Override
-			public void runWith(Messenger<Result> resultMessenger) {
-				this.executor.execute(new WrappedFunction<>(callable, resultMessenger));
+			public void runWith(Messenger<Result> messenger) {
+				try {
+					messenger.sendResolution(callable.result());
+				} catch (Throwable rejection) {
+					messenger.sendRejection(rejection);
+				}
 			}
 		}
 

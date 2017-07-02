@@ -1,10 +1,8 @@
 package com.lasthopesoftware.promises;
 
-import com.vedsoft.futures.runnables.OneParameterAction;
-
 import java.util.concurrent.locks.ReentrantLock;
 
-class Cancellation implements OneParameterAction<Runnable> {
+class Cancellation {
 
 	private final ReentrantLock reentrantLock = new ReentrantLock();
 	private Runnable reaction;
@@ -24,8 +22,7 @@ class Cancellation implements OneParameterAction<Runnable> {
 		}
 	}
 
-	@Override
-	public final void runWith(Runnable reaction) {
+	public final void respondToCancellation(Runnable reaction) {
 		reentrantLock.lock();
 		try {
 			this.reaction = reaction;
