@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingP
 import com.lasthopesoftware.bluewater.client.playback.queues.CyclicalFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.promises.Messenger;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promise.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import junit.framework.Assert;

@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.promises.Messenger;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promise.Promise;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import java.util.Map;

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.state;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.promise.Promise;
 
 import java.io.IOException;
 

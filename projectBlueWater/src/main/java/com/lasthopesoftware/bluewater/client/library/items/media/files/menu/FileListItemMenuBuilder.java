@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.promise.Promise;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;

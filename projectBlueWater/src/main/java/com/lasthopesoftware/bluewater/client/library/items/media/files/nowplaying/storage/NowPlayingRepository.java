@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.promise.Promise;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

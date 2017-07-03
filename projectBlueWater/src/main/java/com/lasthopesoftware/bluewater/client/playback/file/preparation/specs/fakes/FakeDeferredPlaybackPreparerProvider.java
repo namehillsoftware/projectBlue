@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingP
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
-import com.lasthopesoftware.promises.Messenger;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promise.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerProvider {

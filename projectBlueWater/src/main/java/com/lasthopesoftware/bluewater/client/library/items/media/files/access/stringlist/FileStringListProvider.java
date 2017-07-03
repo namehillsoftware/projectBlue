@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.promises.Promise;
-import com.lasthopesoftware.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promise.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
 
 import org.apache.commons.io.IOUtils;

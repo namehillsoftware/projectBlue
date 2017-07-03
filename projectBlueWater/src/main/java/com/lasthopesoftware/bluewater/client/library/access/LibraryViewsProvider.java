@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
-import com.lasthopesoftware.promises.Promise;
-import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
+import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promise.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractConnectionProvider;
 
 import org.slf4j.Logger;

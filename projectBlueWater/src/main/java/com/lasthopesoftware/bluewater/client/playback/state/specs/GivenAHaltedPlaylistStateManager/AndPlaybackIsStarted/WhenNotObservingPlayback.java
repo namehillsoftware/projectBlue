@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueue
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.promise.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

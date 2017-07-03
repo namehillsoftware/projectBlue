@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.buffering;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.promises.Messenger;
+import com.lasthopesoftware.messenger.Messenger;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;

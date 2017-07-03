@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.promises;
 
-import com.lasthopesoftware.promises.Messenger;
+import com.lasthopesoftware.messenger.Messenger;
 import com.vedsoft.futures.callables.CarelessFunction;
 
 public class WrappedFunction<TResult> implements Runnable {

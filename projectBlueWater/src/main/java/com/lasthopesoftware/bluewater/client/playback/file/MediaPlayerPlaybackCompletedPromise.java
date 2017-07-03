@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.promises.Messenger;
+import com.lasthopesoftware.messenger.Messenger;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 final class MediaPlayerPlaybackCompletedPromise implements

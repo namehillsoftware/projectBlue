@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.f
 
 import android.widget.TextView;
 
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.promise.Promise;
 
 import java.util.Map;
 

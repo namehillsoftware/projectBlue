@@ -5,12 +5,10 @@ import android.os.Handler;
 
 import com.lasthopesoftware.bluewater.shared.promises.WrappedCancellableExecutor;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedFunction;
-import com.lasthopesoftware.promises.Messenger;
-import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promise.Promise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
-
-import java.util.concurrent.Callable;
 
 
 public class DispatchedPromise<Result> extends Promise<Result> {

@@ -1,10 +1,10 @@
 package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.promises.Messenger;
-import com.lasthopesoftware.promises.Promise;
-import com.lasthopesoftware.promises.queued.QueuedPromise;
-import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
+import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promise.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promise.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.concurrent.ExecutorService;
