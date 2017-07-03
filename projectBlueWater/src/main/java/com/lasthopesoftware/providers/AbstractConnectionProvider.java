@@ -1,6 +1,7 @@
 package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ public abstract class AbstractConnectionProvider<T> extends AbstractProvider<T> 
 	}
 
 	@Override
-	protected final T getData(IConnectionProvider connectionProvider, Cancellation cancellation, String... params) throws Exception {
+	protected final T getData(IConnectionProvider connectionProvider, CancellationToken cancellation, String... params) throws Exception {
 		if (cancellation.isCancelled()) return null;
 
 		try {
@@ -34,5 +35,5 @@ public abstract class AbstractConnectionProvider<T> extends AbstractProvider<T> 
 		return null;
 	}
 
-	protected abstract T getData(HttpURLConnection connection, Cancellation cancellation) throws Exception;
+	protected abstract T getData(HttpURLConnection connection, CancellationToken cancellation) throws Exception;
 }

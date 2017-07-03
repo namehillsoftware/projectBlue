@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
 import com.lasthopesoftware.promises.Promise;
+import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractConnectionProvider;
-import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>>
     }
 
     @Override
-    protected List<Item> getData(HttpURLConnection connection, Cancellation cancellation) throws IOException {
+    protected List<Item> getData(HttpURLConnection connection, CancellationToken cancellation) throws IOException {
         final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
 
         synchronized(browseLibraryParameter) {

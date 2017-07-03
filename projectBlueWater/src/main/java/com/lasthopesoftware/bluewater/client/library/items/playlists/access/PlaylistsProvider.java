@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractConnectionProvider;
-import com.lasthopesoftware.providers.Cancellation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class PlaylistsProvider extends AbstractConnectionProvider<List<Playlist>
 	}
 
     @Override
-    protected List<Playlist> getData(final HttpURLConnection connection, Cancellation cancellation) throws IOException {
+    protected List<Playlist> getData(final HttpURLConnection connection, CancellationToken cancellation) throws IOException {
 
         final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), RevisionChecker.getRevision(connectionProvider));
         if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))

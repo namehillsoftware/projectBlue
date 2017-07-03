@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.promises.Messenger;
 import com.lasthopesoftware.promises.Promise;
 import com.lasthopesoftware.promises.queued.QueuedPromise;
+import com.lasthopesoftware.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.concurrent.ExecutorService;
@@ -23,15 +24,13 @@ public abstract class AbstractProvider<Data> {
 		return new QueuedPromise<>(provideDataTask, providerExecutor);
 	}
 
-	protected abstract Data getData(IConnectionProvider connectionProvider, Cancellation cancellation, String[] params) throws Throwable;
+	protected abstract Data getData(IConnectionProvider connectionProvider, CancellationToken cancellation, String[] params) throws Throwable;
 
-	private static class ProvideDataTask<Data> implements
-		OneParameterAction<Messenger<Data>>,
-		Runnable {
+	private static class ProvideDataTask<Data> implements OneParameterAction<Messenger<Data>> {
 		private final AbstractProvider<Data> provider;
 		private final IConnectionProvider connectionProvider;
 		private final String[] params;
-		private final Cancellation cancellation = new Cancellation();
+		private final CancellationToken cancellation = new CancellationToken();
 
 		ProvideDataTask(AbstractProvider<Data> provider, IConnectionProvider connectionProvider, String... params) {
 			this.provider = provider;
@@ -41,18 +40,13 @@ public abstract class AbstractProvider<Data> {
 
 		@Override
 		public void runWith(Messenger<Data> messenger) {
-			messenger.cancellationRequested(this);
+			messenger.cancellationRequested(cancellation);
 
 			try {
 				messenger.sendResolution(provider.getData(connectionProvider, cancellation, params));
 			} catch (Throwable e) {
 				messenger.sendRejection(e);
 			}
-		}
-
-		@Override
-		public void run() {
-			cancellation.cancel();
 		}
 	}
 }
