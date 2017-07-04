@@ -1,4 +1,4 @@
-package com.lasthopesoftware.messenger.promise.queued;
+package com.lasthopesoftware.messenger.promises.queued;
 
 import com.lasthopesoftware.messenger.Messenger;
 import com.vedsoft.futures.runnables.OneParameterAction;

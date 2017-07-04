@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
 

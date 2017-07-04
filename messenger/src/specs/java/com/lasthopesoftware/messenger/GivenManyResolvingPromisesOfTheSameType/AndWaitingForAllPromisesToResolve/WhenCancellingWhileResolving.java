@@ -2,7 +2,7 @@ package com.lasthopesoftware.messenger.GivenManyResolvingPromisesOfTheSameType.A
 
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.errors.AggregateCancellationException;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.util.Map;
 

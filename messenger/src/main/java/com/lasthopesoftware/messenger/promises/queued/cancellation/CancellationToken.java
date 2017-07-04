@@ -1,4 +1,4 @@
-package com.lasthopesoftware.messenger.promise.queued.cancellation;
+package com.lasthopesoftware.messenger.promises.queued.cancellation;
 
 
 import java.util.concurrent.locks.Lock;

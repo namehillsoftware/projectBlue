@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.access;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.messenger.promise.Promise;
-import com.lasthopesoftware.messenger.promise.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.vedsoft.futures.callables.CarelessFunction;
 
 import java.io.InputStream;

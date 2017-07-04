@@ -1,8 +1,8 @@
-package com.lasthopesoftware.messenger.promise.propagation;
+package com.lasthopesoftware.messenger.promises.propagation;
 
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 public class PromiseProxy<Resolution> {
 

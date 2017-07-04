@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.CyclicalFileQueuePr
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import junit.framework.Assert;

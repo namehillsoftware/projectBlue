@@ -1,6 +1,6 @@
 package com.lasthopesoftware.messenger.GivenManyResolvingPromisesOfTheSameType.AndWaitingForAllPromisesToResolve;
 
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

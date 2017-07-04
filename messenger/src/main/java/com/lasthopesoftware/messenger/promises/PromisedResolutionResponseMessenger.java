@@ -1,7 +1,7 @@
-package com.lasthopesoftware.messenger.promise;
+package com.lasthopesoftware.messenger.promises;
 
 
-import com.lasthopesoftware.messenger.promise.propagation.PromiseProxy;
+import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 final class PromisedResolutionResponseMessenger<Resolution, Response> extends ResolutionResponseMessenger<Resolution, Response> {

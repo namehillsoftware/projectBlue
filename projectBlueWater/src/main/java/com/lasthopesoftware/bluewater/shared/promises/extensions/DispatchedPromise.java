@@ -6,7 +6,7 @@ import android.os.Handler;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedCancellableExecutor;
 import com.lasthopesoftware.bluewater.shared.promises.WrappedFunction;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 

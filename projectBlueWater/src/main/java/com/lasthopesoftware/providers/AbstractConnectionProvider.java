@@ -1,7 +1,7 @@
 package com.lasthopesoftware.providers;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.messenger.promise.queued.cancellation.CancellationToken;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

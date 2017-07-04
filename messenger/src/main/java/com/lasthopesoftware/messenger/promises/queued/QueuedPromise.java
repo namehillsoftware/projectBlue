@@ -1,8 +1,8 @@
-package com.lasthopesoftware.messenger.promise.queued;
+package com.lasthopesoftware.messenger.promises.queued;
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promise.Promise;
-import com.lasthopesoftware.messenger.promise.queued.cancellation.CancellationToken;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;

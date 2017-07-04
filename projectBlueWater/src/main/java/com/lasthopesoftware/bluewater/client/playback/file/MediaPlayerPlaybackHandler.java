@@ -4,7 +4,7 @@ import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.MediaPlayerBufferedPromise;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
 

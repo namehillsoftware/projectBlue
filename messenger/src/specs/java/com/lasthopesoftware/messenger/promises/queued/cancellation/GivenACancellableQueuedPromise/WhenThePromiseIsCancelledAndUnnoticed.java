@@ -1,7 +1,7 @@
-package com.lasthopesoftware.messenger.promise.queued.cancellation.GivenACancellableQueuedPromise;
+package com.lasthopesoftware.messenger.promises.queued.cancellation.GivenACancellableQueuedPromise;
 
 
-import com.lasthopesoftware.messenger.promise.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -11,40 +11,50 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenThePromiseIsCancelledAndNoticed {
-	private static Throwable thrownException;
+public class WhenThePromiseIsCancelledAndUnnoticed {
+
 	private static Throwable caughtException;
+	private static String result;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
-		thrownException = new Exception();
 		final CountDownLatch promiseLatch = new CountDownLatch(1);
 		final QueuedPromise<String> cancellablePromise = new QueuedPromise<>(
 			(cancellationToken) -> {
-				promiseLatch.await();
-
 				if (cancellationToken.isCancelled())
-					throw thrownException;
+					throw new Exception();
 
+				promiseLatch.await();
 				return "test";
 			}, Executors.newSingleThreadExecutor());
 
-		final CountDownLatch rejectionLatch = new CountDownLatch(1);
+		final CountDownLatch resolveLatch = new CountDownLatch(1);
 		cancellablePromise.error((exception) -> {
 			caughtException = exception;
-			rejectionLatch.countDown();
+			resolveLatch.countDown();
 			return null;
 		});
 
-		cancellablePromise.cancel();
+		cancellablePromise.next((r) -> {
+			result = r;
+			resolveLatch.countDown();
+			return null;
+		});
 
 		promiseLatch.countDown();
 
-		rejectionLatch.await();
+		resolveLatch.await();
+
+		cancellablePromise.cancel();
 	}
 
 	@Test
-	public void thenTheRejectionIsCorrect() {
-		assertThat(caughtException).isEqualTo(thrownException);
+	public void thenTheRejectionIsNull() {
+		assertThat(caughtException).isNull();
+	}
+
+	@Test
+	public void thenTheResultIsCorrect() {
+		assertThat(result).isEqualTo("test");
 	}
 }

@@ -1,9 +1,9 @@
-package com.lasthopesoftware.messenger.promise;
+package com.lasthopesoftware.messenger.promises;
 
 import com.lasthopesoftware.messenger.AwaitingMessenger;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.errors.AggregateCancellationException;
-import com.lasthopesoftware.messenger.promise.propagation.PromiseProxy;
+import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.messenger.promise.propagation;
+package com.lasthopesoftware.messenger.promises.propagation;
 
 
 import com.lasthopesoftware.messenger.Messenger;

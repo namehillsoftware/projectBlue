@@ -1,4 +1,4 @@
-package com.lasthopesoftware.messenger.promise;
+package com.lasthopesoftware.messenger.promises;
 
 import com.lasthopesoftware.messenger.AwaitingMessenger;
 import com.lasthopesoftware.messenger.Messenger;

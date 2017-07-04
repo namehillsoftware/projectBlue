@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQue
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.IStartPlayback;
 import com.lasthopesoftware.bluewater.shared.observables.SwitchableObservableSource;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

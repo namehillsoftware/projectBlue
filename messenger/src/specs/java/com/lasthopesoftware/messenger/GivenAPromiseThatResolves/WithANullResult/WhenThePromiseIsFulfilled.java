@@ -1,6 +1,6 @@
 package com.lasthopesoftware.messenger.GivenAPromiseThatResolves.WithANullResult;
 
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.Assert;
 import org.junit.Before;

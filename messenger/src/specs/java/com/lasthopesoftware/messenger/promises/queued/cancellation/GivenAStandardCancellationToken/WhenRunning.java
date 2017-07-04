@@ -1,7 +1,7 @@
-package com.lasthopesoftware.messenger.promise.queued.cancellation.GivenAStandardCancellationToken;
+package com.lasthopesoftware.messenger.promises.queued.cancellation.GivenAStandardCancellationToken;
 
 
-import com.lasthopesoftware.messenger.promise.queued.cancellation.CancellationToken;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

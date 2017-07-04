@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.queues;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.messenger.promise.Promise;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.Closeable;
 
