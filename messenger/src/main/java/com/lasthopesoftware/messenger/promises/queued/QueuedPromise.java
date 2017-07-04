@@ -23,7 +23,7 @@ public class QueuedPromise<Result> extends Promise<Result> {
 	}
 
 	private static class Executors {
-		static class QueuedCancellableTask<Result> implements OneParameterAction<Messenger<Result>> {
+		static final class QueuedCancellableTask<Result> implements OneParameterAction<Messenger<Result>> {
 
 			private final OneParameterAction<Messenger<Result>> task;
 			private final Executor executor;
@@ -39,7 +39,7 @@ public class QueuedPromise<Result> extends Promise<Result> {
 			}
 		}
 
-		static class FunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
+		static final class FunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
 
 			private final CarelessFunction<Result> callable;
 
@@ -57,7 +57,7 @@ public class QueuedPromise<Result> extends Promise<Result> {
 			}
 		}
 
-		private static class CancellableFunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
+		private static final class CancellableFunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
 			private final CarelessOneParameterFunction<CancellationToken, Result> task;
 
 			CancellableFunctionExecutor(CarelessOneParameterFunction<CancellationToken, Result> task) {
