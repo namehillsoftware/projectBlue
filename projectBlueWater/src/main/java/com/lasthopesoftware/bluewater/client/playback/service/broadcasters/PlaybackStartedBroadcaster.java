@@ -8,17 +8,15 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 
-/**
- * Created by david on 2/11/17.
- */
+public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<Observable<PositionedPlaybackFile>, Observable<PositionedPlaybackFile>>, Consumer<PositionedPlaybackFile> {
 
-public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<Observable<PositionedPlaybackFile>, Observable<PositionedPlaybackFile>> {
-
-	private final PositionedPlaybackFileConsumer positionedPlaybackFileConsumer;
+	private final ISelectedLibraryIdentifierProvider libraryIdentifierProvider;
+	private final IPlaybackBroadcaster playbackBroadcaster;
 	private Disposable subscription;
 
 	public PlaybackStartedBroadcaster(ISelectedLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
-		positionedPlaybackFileConsumer = new PositionedPlaybackFileConsumer(libraryIdentifierProvider, playbackBroadcaster);
+		this.libraryIdentifierProvider = libraryIdentifierProvider;
+		this.playbackBroadcaster = playbackBroadcaster;
 	}
 
 	@Override
@@ -26,23 +24,13 @@ public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<
 		if (subscription != null)
 			subscription.dispose();
 
-		subscription = observable.firstElement().subscribe(positionedPlaybackFileConsumer);
+		subscription = observable.firstElement().subscribe(this);
 
 		return observable;
 	}
 
-	private static class PositionedPlaybackFileConsumer implements Consumer<PositionedPlaybackFile> {
-		private final ISelectedLibraryIdentifierProvider libraryIdentifierProvider;
-		private final IPlaybackBroadcaster playbackBroadcaster;
-
-		private PositionedPlaybackFileConsumer(ISelectedLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
-			this.libraryIdentifierProvider = libraryIdentifierProvider;
-			this.playbackBroadcaster = playbackBroadcaster;
-		}
-
-		@Override
-		public void accept(PositionedPlaybackFile p) throws Exception {
-			playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getSelectedLibraryId(), p.asPositionedFile());
-		}
+	@Override
+	public void accept(PositionedPlaybackFile p) throws Exception {
+		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getSelectedLibraryId(), p.asPositionedFile());
 	}
 }

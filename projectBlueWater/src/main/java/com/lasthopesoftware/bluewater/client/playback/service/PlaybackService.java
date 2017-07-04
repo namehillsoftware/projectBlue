@@ -745,7 +745,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
-			.next(Dispatch.toContext(runCarelessly(fileProperties -> {
+			.next(Dispatch.toContext(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
@@ -769,7 +769,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				if (trackNumber != null)
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 				metaData.apply();
-			}), this))
+
+				return null;
+			}, this))
 		.error(Dispatch.toContext(exception -> {
 			final Builder builder = new Builder(this);
 			builder.setOngoing(true);
@@ -778,7 +780,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			builder.setContentIntent(pi);
 			notifyForeground(builder);
 
-			return true;
+			return null;
 		}, this));
 	}
 
