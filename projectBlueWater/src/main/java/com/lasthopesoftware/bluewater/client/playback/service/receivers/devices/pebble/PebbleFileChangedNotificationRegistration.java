@@ -28,7 +28,7 @@ public class PebbleFileChangedNotificationRegistration implements IConnectionDep
 					connectionProvider,
 					FilePropertyCache.getInstance()));
 
-		return new PlaybackFileChangedScrobbleDroidProxy(filePropertiesProvider);
+		return new PebbleFileChangedProxy(filePropertiesProvider);
 	}
 
 	@Override

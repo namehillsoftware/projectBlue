@@ -8,15 +8,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
-
-class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
+class PebbleFileChangedProxy extends BroadcastReceiver {
 
 	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
 
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
-	public PlaybackFileChangedScrobbleDroidProxy(CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+	public PebbleFileChangedProxy(CachedFilePropertiesProvider cachedFilePropertiesProvider) {
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
@@ -27,7 +25,7 @@ class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(fileKey)
-			.next(runCarelessly(fileProperties -> {
+			.next(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
@@ -38,6 +36,7 @@ class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
 				pebbleIntent.putExtra("track", name);
 
 				context.sendBroadcast(pebbleIntent);
-			}));
+				return null;
+			});
 	}
 }
