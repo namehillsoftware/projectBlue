@@ -29,9 +29,6 @@ import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;
 
-/**
- * Created by david on 11/29/15.
- */
 public class PlaylistListFragment extends Fragment {
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
@@ -66,18 +63,15 @@ public class PlaylistListFragment extends Fragment {
 							new StoredItemAccess(activity, library),
 							library), activity);
 
-				final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
-				playlistsProvider
-					.promiseData()
+				PlaylistsProvider
+					.promisePlaylists(SessionConnection.getSessionConnectionProvider())
 					.next(listResolvedPromise)
 					.error(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
-							final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
-
-							playlistsProvider
-								.promiseData()
+							PlaylistsProvider
+								.promisePlaylists(SessionConnection.getSessionConnectionProvider())
 								.next(listResolvedPromise)
 								.error(new HandleViewIoException(activity, this));
 						}
