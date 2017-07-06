@@ -42,36 +42,33 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 	@Override
 	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
-		return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey), filePropertiesExecutor);
+		return RevisionChecker.promiseRevision(connectionProvider).then(revision -> {
+			final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
+			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
+				return new Promise<>(new HashMap<>(filePropertiesContainer.getProperties()));
+			}
+
+			return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, fileKey, revision), filePropertiesExecutor);
+		});
 	}
 
 	private static final class FilePropertiesTask implements CarelessOneParameterFunction<CancellationToken, Map<String, String>> {
 
 		private final IConnectionProvider connectionProvider;
-		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 		private final Integer fileKey;
+		private final Integer serverRevision;
 
-		private FilePropertiesTask(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey) {
+		private FilePropertiesTask(IConnectionProvider connectionProvider, Integer fileKey, Integer serverRevision) {
 			this.connectionProvider = connectionProvider;
-			this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 			this.fileKey = fileKey;
+			this.serverRevision = serverRevision;
 		}
 
 		@Override
 		public Map<String, String> resultFrom(CancellationToken cancellationToken) throws Throwable {
 			if (cancellationToken.isCancelled())
 				throw new CancellationException();
-
-			final Integer revision = RevisionChecker.getRevision(connectionProvider);
-			final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
-
-			if (cancellationToken.isCancelled())
-				throw new CancellationException();
-
-			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
-			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
-				return new HashMap<>(filePropertiesContainer.getProperties());
-			}
 
 			try {
 				if (cancellationToken.isCancelled())
@@ -94,7 +91,8 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 						for (XmlElement el : parent)
 							returnProperties.put(el.getAttribute("Name"), el.getValue());
 
-						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(revision, returnProperties));
+						final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
 
 						return returnProperties;
 					}

@@ -43,7 +43,13 @@ public final class PlaylistsProvider implements CarelessOneParameterFunction<Can
 	public static Promise<List<Playlist>> promisePlaylists(IConnectionProvider connectionProvider, int playlistId) {
 		return RevisionChecker
 			.promiseRevision(connectionProvider)
-			.then(serverRevision -> new QueuedPromise<>(new PlaylistsProvider(connectionProvider, serverRevision, playlistId), AbstractProvider.providerExecutor));
+			.then(serverRevision -> {
+				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serverRevision);
+				if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))
+					return new Promise<>(getPlaylists(playlistId));
+
+				return new QueuedPromise<>(new PlaylistsProvider(connectionProvider, serverRevision, playlistId), AbstractProvider.providerExecutor);
+			});
 	}
 
 	private PlaylistsProvider(IConnectionProvider connectionProvider, Integer serverRevision, int playlistId) {
@@ -54,10 +60,6 @@ public final class PlaylistsProvider implements CarelessOneParameterFunction<Can
 
 	@Override
 	public List<Playlist> resultFrom(CancellationToken cancellationToken) throws Throwable {
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serverRevision);
-		if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))
-			return getPlaylists(playlistId);
-
 		if (cancellationToken.isCancelled())
 			throw new CancellationException("Retrieving the playlist was cancelled");
 

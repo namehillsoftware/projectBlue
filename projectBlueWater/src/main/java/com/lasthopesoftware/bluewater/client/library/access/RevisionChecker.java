@@ -10,12 +10,10 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RevisionChecker implements Callable<Integer>, CarelessFunction<Integer> {
+public class RevisionChecker implements CarelessFunction<Integer> {
 	
 	private final static Integer mBadRevision = -1;
     private static final Map<String, Integer> cachedRevisions = new HashMap<>();
@@ -27,15 +25,7 @@ public class RevisionChecker implements Callable<Integer>, CarelessFunction<Inte
 
 	private final IConnectionProvider connectionProvider;
 
-	public static Integer getRevision(IConnectionProvider connectionProvider) {
-        try {
-            return revisionExecutor.submit(new RevisionChecker(connectionProvider)).get();
-        } catch (ExecutionException | InterruptedException e) {
-            return getCachedRevision(connectionProvider);
-        }
-    }
-
-    public static Promise<Integer> promiseRevision(IConnectionProvider connectionProvider) {
+	public static Promise<Integer> promiseRevision(IConnectionProvider connectionProvider) {
 		return new QueuedPromise<>(new RevisionChecker(connectionProvider), revisionExecutor);
 	}
 
@@ -56,12 +46,7 @@ public class RevisionChecker implements Callable<Integer>, CarelessFunction<Inte
 		return getRevision();
 	}
 
-	@Override
-	public Integer call() throws Exception {
-		return getRevision();
-	}
-
-    private Integer getRevision() {
+	private Integer getRevision() {
         if (!getCachedRevision(connectionProvider).equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
             return getCachedRevision(connectionProvider);
         }
