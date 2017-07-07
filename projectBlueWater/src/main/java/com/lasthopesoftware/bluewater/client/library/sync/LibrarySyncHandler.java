@@ -52,8 +52,6 @@ public class LibrarySyncHandler {
 	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
-	private volatile boolean isFaulted;
-	private volatile boolean isQueueProcessingCompleteMessageSent;
 
 	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
 		this(
@@ -152,25 +150,18 @@ public class LibrarySyncHandler {
 						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
 						pruneFilesTask.error(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
 
-						if (isCancelled) {
-							handleQueueProcessingCompleted();
-							return new Promise<Set<ServiceFile>>(Collections.emptySet());
-						}
-
-						return pruneFilesTask.next(voids -> allServiceFilesToSync);
+						return !isCancelled
+							? pruneFilesTask.next(voids -> allServiceFilesToSync)
+							: new Promise<Set<ServiceFile>>(Collections.emptySet());
 					})
 					.then(allServiceFilesToSync -> {
-						if (isCancelled) {
-							handleQueueProcessingCompleted();
+						if (isCancelled)
 							return new Promise<>(Collections.emptySet());
-						}
 
 						final List<Promise<StoredFile>> upsertFiles = Stream.of(allServiceFilesToSync)
 							.map(serviceFile -> {
-								if (isCancelled) {
-									handleQueueProcessingCompleted();
+								if (isCancelled)
 									return new Promise<>((StoredFile) null);
-								}
 
 								return storedFileAccess
 									.createOrUpdateFile(connectionProvider, serviceFile)
@@ -180,32 +171,30 @@ public class LibrarySyncHandler {
 
 						return Promise.whenAll(upsertFiles);
 					})
-					.next(runCarelessly(vs -> {
+					.next(vs -> {
 						storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
 
-						if (isCancelled) {
+						if (!isCancelled)
+							storedFileDownloader.process();
+						else
 							handleQueueProcessingCompleted();
-							return;
-						}
 
-						storedFileDownloader.process();
-					}))
-					.error(runCarelessly(e -> {
-						isFaulted = true;
+						return null;
+					})
+					.error(e -> {
 						logger.warn("There was an error retrieving the files", e);
 
-						if (isCancelled) {
+						if (isCancelled)
 							handleQueueProcessingCompleted();
-						}
-					}));
+
+						return null;
+					});
 			}));
 	}
 
 	private void handleQueueProcessingCompleted() {
-		if (onQueueProcessingCompleted != null && !isQueueProcessingCompleteMessageSent)
+		if (onQueueProcessingCompleted != null)
 			onQueueProcessingCompleted.runWith(this);
-
-		isQueueProcessingCompleteMessageSent = true;
 	}
 
 	private static class DownloadGuard implements CarelessOneParameterFunction<StoredFile, StoredFile> {
