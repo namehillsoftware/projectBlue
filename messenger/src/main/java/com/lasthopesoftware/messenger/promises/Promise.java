@@ -1,7 +1,7 @@
 package com.lasthopesoftware.messenger.promises;
 
-import com.lasthopesoftware.messenger.AwaitingMessenger;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
@@ -10,32 +10,32 @@ import java.util.Collection;
 
 public class Promise<Resolution> {
 
-	private final AwaitingMessenger<Resolution> resolutionAwaitingMessenger;
+	private final SingleMessageBroadcaster<Resolution> singleMessageBroadcaster;
 
 	public Promise(OneParameterAction<Messenger<Resolution>> executor) {
 		this();
-		executor.runWith(resolutionAwaitingMessenger);
+		executor.runWith(singleMessageBroadcaster);
 	}
 
 	public Promise(Resolution passThroughResult) {
 		this();
-		resolutionAwaitingMessenger.sendResolution(passThroughResult);
+		singleMessageBroadcaster.sendResolution(passThroughResult);
 	}
 
 	private Promise() {
-		this(new AwaitingMessenger<>());
+		this(new SingleMessageBroadcaster<>());
 	}
 
-	private Promise(AwaitingMessenger<Resolution> resolutionAwaitingMessenger) {
-		this.resolutionAwaitingMessenger = resolutionAwaitingMessenger;
+	private Promise(SingleMessageBroadcaster<Resolution> singleMessageBroadcaster) {
+		this.singleMessageBroadcaster = singleMessageBroadcaster;
 	}
 
 	public final void cancel() {
-		resolutionAwaitingMessenger.cancel();
+		singleMessageBroadcaster.cancel();
 	}
 
 	private <NewResolution> Promise<NewResolution> next(ResolutionResponseMessenger<Resolution, NewResolution> onFulfilled) {
-		resolutionAwaitingMessenger.awaitResolution(onFulfilled);
+		singleMessageBroadcaster.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
 	}
@@ -49,7 +49,7 @@ public class Promise<Resolution> {
 	}
 
 	private <TNewRejectedResult> Promise<TNewRejectedResult> _catch(RejectionResponseMessenger<Resolution, TNewRejectedResult> rejectionResponseMessenger) {
-		resolutionAwaitingMessenger.awaitResolution(rejectionResponseMessenger);
+		singleMessageBroadcaster.awaitResolution(rejectionResponseMessenger);
 
 		return new Promise<>(rejectionResponseMessenger);
 	}

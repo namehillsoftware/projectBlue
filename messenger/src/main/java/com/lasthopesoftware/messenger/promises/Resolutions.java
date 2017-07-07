@@ -1,7 +1,7 @@
 package com.lasthopesoftware.messenger.promises;
 
-import com.lasthopesoftware.messenger.AwaitingMessenger;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
 import com.lasthopesoftware.messenger.errors.AggregateCancellationException;
 import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
@@ -100,7 +100,7 @@ final class Resolutions {
 		}
 	}
 
-	static final class AggregatePromiseResolver<TResult> extends AwaitingMessenger<Collection<TResult>> {
+	static final class AggregatePromiseResolver<TResult> extends SingleMessageBroadcaster<Collection<TResult>> {
 
 		AggregatePromiseResolver(Collection<Promise<TResult>> promises) {
 			final CollectedResultsResolver<TResult> resolver = new CollectedResultsResolver<>(promises);
@@ -115,7 +115,7 @@ final class Resolutions {
 		}
 	}
 
-	static final class FirstPromiseResolver<Result> extends AwaitingMessenger<Result> implements
+	static final class FirstPromiseResolver<Result> extends SingleMessageBroadcaster<Result> implements
 		CarelessOneParameterFunction<Result, Result>,
 		Runnable {
 

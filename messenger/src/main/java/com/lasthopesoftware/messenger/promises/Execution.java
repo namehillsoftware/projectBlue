@@ -1,16 +1,16 @@
 package com.lasthopesoftware.messenger.promises;
 
-import com.lasthopesoftware.messenger.AwaitingMessenger;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 final class Execution {
 
 	static final class MessengerTunnel<Result> implements Messenger<Result> {
 
-		private final AwaitingMessenger<Result> messenger;
+		private final SingleMessageBroadcaster<Result> messenger;
 
-		MessengerTunnel(AwaitingMessenger<Result> messenger) {
+		MessengerTunnel(SingleMessageBroadcaster<Result> messenger) {
 			this.messenger = messenger;
 		}
 

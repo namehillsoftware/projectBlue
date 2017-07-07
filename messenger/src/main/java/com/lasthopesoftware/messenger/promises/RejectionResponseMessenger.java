@@ -1,11 +1,11 @@
 package com.lasthopesoftware.messenger.promises;
 
 
-import com.lasthopesoftware.messenger.AwaitingMessenger;
 import com.lasthopesoftware.messenger.Message;
 import com.lasthopesoftware.messenger.RespondingMessenger;
+import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
 
-abstract class RejectionResponseMessenger<InputResolution, NewResolution> extends AwaitingMessenger<NewResolution> implements RespondingMessenger<InputResolution> {
+abstract class RejectionResponseMessenger<InputResolution, NewResolution> extends SingleMessageBroadcaster<NewResolution> implements RespondingMessenger<InputResolution> {
 	@Override
 	public final void respond(Message<InputResolution> inputResolution) {
 		if (inputResolution.rejection != null)

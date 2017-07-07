@@ -6,7 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class AwaitingMessenger<Resolution> implements Messenger<Resolution> {
+public class SingleMessageBroadcaster<Resolution> implements Messenger<Resolution> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
 	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
