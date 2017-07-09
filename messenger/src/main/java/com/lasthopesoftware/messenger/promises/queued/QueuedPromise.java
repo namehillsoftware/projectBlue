@@ -22,11 +22,14 @@ public class QueuedPromise<Result> extends Promise<Result> {
 		this(new Executors.FunctionExecutor<>(task), executor);
 	}
 
-	private static class Executors {
-		static final class QueuedCancellableTask<Result> implements OneParameterAction<Messenger<Result>> {
+	private static final class Executors {
+		static final class QueuedCancellableTask<Result> implements
+			OneParameterAction<Messenger<Result>>,
+			Runnable {
 
 			private final OneParameterAction<Messenger<Result>> task;
 			private final Executor executor;
+			private Messenger<Result> resultMessenger;
 
 			QueuedCancellableTask(OneParameterAction<Messenger<Result>> task, Executor executor) {
 				this.task = task;
@@ -35,7 +38,13 @@ public class QueuedPromise<Result> extends Promise<Result> {
 
 			@Override
 			public void runWith(Messenger<Result> resultMessenger) {
-				this.executor.execute(new WrappedCancellableExecutor<>(resultMessenger, task));
+				this.resultMessenger = resultMessenger;
+				executor.execute(this);
+			}
+
+			@Override
+			public void run() {
+				task.runWith(resultMessenger);
 			}
 		}
 
