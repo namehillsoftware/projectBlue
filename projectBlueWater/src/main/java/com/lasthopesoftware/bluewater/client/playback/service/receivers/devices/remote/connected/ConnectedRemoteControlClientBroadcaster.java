@@ -13,9 +13,21 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private final RemoteControlClient remoteControlClient;
 
+	private volatile int playstate = RemoteControlClient.PLAYSTATE_STOPPED;
+
 	public ConnectedRemoteControlClientBroadcaster(CachedFilePropertiesProvider cachedFilePropertiesProvider, RemoteControlClient remoteControlClient) {
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.remoteControlClient = remoteControlClient;
+	}
+
+	@Override
+	public void setPlaying() {
+		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PLAYING);
+	}
+
+	@Override
+	public void setPaused() {
+		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PAUSED);
 	}
 
 	@Override
@@ -45,6 +57,6 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	@Override
 	public void updateTrackPosition(int trackPosition) {
-
+		remoteControlClient.setPlaybackState(playstate, trackPosition, 1.0f);
 	}
 }
