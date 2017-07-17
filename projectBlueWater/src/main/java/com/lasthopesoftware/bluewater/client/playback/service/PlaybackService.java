@@ -443,6 +443,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		remoteControlProxy =
 			new RemoteControlProxy(
 				new ConnectedRemoteControlClientBroadcaster(
+					this,
 					cachedFilePropertiesProvider,
 					new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider),
 					remoteControlClient.getObject()));

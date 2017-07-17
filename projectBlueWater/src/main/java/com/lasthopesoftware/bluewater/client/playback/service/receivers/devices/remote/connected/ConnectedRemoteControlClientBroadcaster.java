@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaMetadataEditor;
 import android.media.MediaMetadataRetriever;
@@ -10,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 public class ConnectedRemoteControlClientBroadcaster implements IConnectedDeviceBroadcaster {
 	private static final Logger logger = LoggerFactory.getLogger(ConnectedRemoteControlClientBroadcaster.class);
 
+	private final Context context;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
 	private final RemoteControlClient remoteControlClient;
@@ -24,7 +27,8 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	private volatile int playstate = RemoteControlClient.PLAYSTATE_STOPPED;
 	private Bitmap remoteClientBitmap;
 
-	public ConnectedRemoteControlClientBroadcaster(CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
+	public ConnectedRemoteControlClientBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
+		this.context = context;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
 		this.remoteControlClient = remoteControlClient;
@@ -51,7 +55,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	public void updateNowPlaying(ServiceFile serviceFile) {
 		imageProvider
 			.promiseFileBitmap(serviceFile)
-			.next(this::updateClientBitmap)
+			.next(Dispatch.toContext(this::updateClientBitmap, context))
 			.error(e -> {
 				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
 				return null;
@@ -59,7 +63,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
-			.next(fileProperties -> {
+			.next(Dispatch.toContext(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
@@ -77,7 +81,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 				metaData.apply();
 
 				return null;
-			});
+			}, context));
 	}
 
 	@Override
@@ -85,7 +89,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 		remoteControlClient.setPlaybackState(playstate, trackPosition, 1.0f);
 	}
 
-	private Void updateClientBitmap(Bitmap bitmap) {
+	private synchronized Void updateClientBitmap(Bitmap bitmap) {
 		if (remoteClientBitmap == bitmap) return null;
 
 		final RemoteControlClient.MetadataEditor metaData = remoteControlClient.editMetadata(false);
