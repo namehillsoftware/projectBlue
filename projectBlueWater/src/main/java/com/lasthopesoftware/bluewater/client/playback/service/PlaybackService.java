@@ -13,10 +13,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
-import android.media.MediaMetadataEditor;
-import android.media.MediaMetadataRetriever;
 import android.media.RemoteControlClient;
-import android.media.RemoteControlClient.MetadataEditor;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.IBinder;
@@ -25,6 +22,7 @@ import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
@@ -38,7 +36,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -58,6 +55,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedRemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
@@ -162,9 +161,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	/* End streamer intent helpers */
-	
-	/* Miscellaneous programming related string constants */
-	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
+
 	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
 
 	private static final int notificationId = 42;
@@ -221,6 +218,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private Disposable filePositionSubscription;
 	private Disposable playbackFileChangesConnection;
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
+	private RemoteControlProxy remoteControlProxy;
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -439,6 +437,25 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 
 		cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
+		if (remoteControlProxy != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
+
+		remoteControlProxy =
+			new RemoteControlProxy(
+				new ConnectedRemoteControlClientBroadcaster(
+					cachedFilePropertiesProvider,
+					new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider),
+					remoteControlClient.getObject()));
+
+		localBroadcastManagerLazy
+			.getObject()
+			.registerReceiver(
+				remoteControlProxy,
+				Stream.of(remoteControlProxy.registerForIntents())
+					.reduce(new IntentFilter(), (intentFilter, action) -> {
+						intentFilter.addAction(action);
+						return intentFilter;
+					}));
 
 		if (playlistPlaybackBootstrapper != null)
 			playlistPlaybackBootstrapper.close();
@@ -609,8 +626,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void pausePlayback(boolean isUserInterrupted) {
 		isPlaying = false;
 
-		updateClientBitmap(null);
-
 		stopNotification();
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
@@ -735,14 +750,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
 
-		new ImageProvider(this, SessionConnection.getSessionConnectionProvider(), cachedFilePropertiesProvider)
-			.promiseFileBitmap(positionedPlaybackFile.getServiceFile())
-			.next(Dispatch.toContext(this::updateClientBitmap, this))
-			.error(e -> {
-				logger.warn("There was an error getting the image for the file with id `" + positionedPlaybackFile.getServiceFile().getKey() + "`", e);
-				return null;
-			});
-
 		cachedFilePropertiesProvider
 			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
 			.next(Dispatch.toContext(fileProperties -> {
@@ -756,46 +763,18 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				builder.setContentIntent(pi);
 				notifyForeground(builder);
 
-				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
-				final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-				final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
-				final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
-
-				final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(true);
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, artist);
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
-				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, name);
-				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
-				if (trackNumber != null)
-					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
-				metaData.apply();
-
 				return null;
 			}, this))
-		.error(Dispatch.toContext(exception -> {
-			final Builder builder = new Builder(this);
-			builder.setOngoing(true);
-			builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-			builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
-			builder.setContentIntent(pi);
-			notifyForeground(builder);
+			.error(Dispatch.toContext(exception -> {
+				final Builder builder = new Builder(this);
+				builder.setOngoing(true);
+				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
+				builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
+				builder.setContentIntent(pi);
+				notifyForeground(builder);
 
-			return null;
-		}, this));
-	}
-
-	private Void updateClientBitmap(Bitmap bitmap) {
-		if (remoteClientBitmap == bitmap) return null;
-
-		final MetadataEditor metaData = remoteControlClient.getObject().editMetadata(false);
-		metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
-
-		// Track the remote client bitmap and recycle it in case the remote control client
-		// does not properly recycle the bitmap
-		if (remoteClientBitmap != null) remoteClientBitmap.recycle();
-		remoteClientBitmap = bitmap;
-
-		return null;
+				return null;
+			}, this));
 	}
 
 	private Void broadcastChangedFile(PositionedFile positionedFile) {
@@ -805,8 +784,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private void onPlaylistPlaybackComplete() {
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
-
-		updateClientBitmap(null);
 
 		stopNotification();
 		if (areListenersRegistered) unregisterListeners();
@@ -835,7 +812,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 		
 		if (areListenersRegistered) unregisterListeners();
-		
+
+		if (remoteControlProxy != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 		if (remoteControlReceiver.isInitialized())
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
 		if (remoteControlClient.isInitialized())
