@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
@@ -31,6 +33,7 @@ public class WhenPlaybackCompletes {
 
 	private static PlaylistManager playlistManager;
 	private static NowPlaying nowPlaying;
+	private static PositionedPlaybackFile observedPlaybackFile;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -60,7 +63,8 @@ public class WhenPlaybackCompletes {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)), 0, 0)
+			.next(obs -> obs.subscribe(f -> observedPlaybackFile = f));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
@@ -83,6 +87,11 @@ public class WhenPlaybackCompletes {
 	@Test
 	public void thenThePlaybackStateIsNotPlaying() {
 		assertThat(playlistManager.isPlaying()).isFalse();
+	}
+
+	@Test
+	public void thenTheObservedFilePositionIsCorrect() {
+		assertThat(observedPlaybackFile.asPositionedFile()).isEqualTo(new PositionedFile(0, new ServiceFile(1)));
 	}
 
 	@Test

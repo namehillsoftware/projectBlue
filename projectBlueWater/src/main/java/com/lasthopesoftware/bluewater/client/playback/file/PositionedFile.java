@@ -40,4 +40,9 @@ public final class PositionedFile implements Comparable<PositionedFile> {
 	public boolean equals(@Nullable Object obj) {
 		return obj instanceof PositionedFile && compareTo((PositionedFile) obj) == 0;
 	}
+
+	@Override
+	public String toString() {
+		return "playlistPosition: " + playlistPosition + ", serviceFile" + serviceFile;
+	}
 }

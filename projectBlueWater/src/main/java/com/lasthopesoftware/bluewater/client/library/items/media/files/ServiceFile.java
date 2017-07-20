@@ -36,4 +36,9 @@ public final class ServiceFile implements IIntKey<ServiceFile> {
 	public boolean equals(Object obj) {
 		return obj instanceof ServiceFile ? compareTo((ServiceFile)obj) == 0 : super.equals(obj);
 	}
+
+	@Override
+	public String toString() {
+		return "key: " + key;
+	}
 }

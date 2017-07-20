@@ -5,6 +5,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
@@ -212,12 +213,18 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 				saveStateToLibrary(p);
 			},
 			Functions.ON_ERROR_MISSING,
-			() -> {
-				isPlaying = false;
-				changePosition(0, 0);
-			});
+			() -> isPlaying = false);
 
-		return observable;
+		return observable
+			.concatWith(Observable.create(e -> changePosition(0, 0).next(positionedFile -> {
+				e.onNext(new PositionedPlaybackFile(
+					new EmptyPlaybackHandler(0),
+					positionedFile));
+
+				e.onComplete();
+
+				return null;
+			})));
 	}
 
 	public Promise<NowPlaying> addFile(ServiceFile serviceFile) {

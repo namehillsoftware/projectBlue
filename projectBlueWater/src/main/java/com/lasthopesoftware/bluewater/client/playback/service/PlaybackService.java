@@ -511,9 +511,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
         }
 
 		if (action.equals(Action.togglePlayPause))
-			action = playlistManager.isPlaying() ? Action.pause : Action.play;
+			action = isPlaying ? Action.pause : Action.play;
 
 		if (action.equals(Action.play)) {
+			isPlaying = true;
         	playlistManager
 				.resume()
 				.next(this::restartObservable)
@@ -734,7 +735,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.interval(1, TimeUnit.SECONDS)
 				.map(i -> playbackHandler.getCurrentPosition())
 				.distinctUntilChanged()
-				.subscribe(new TrackPositionBroadcaster(this, positionedPlaybackFile));
+				.subscribe(new TrackPositionBroadcaster(this, playbackHandler));
 
 		playbackHandler
 			.promisePlayback()

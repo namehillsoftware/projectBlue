@@ -5,10 +5,6 @@ import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
 
-/**
- * Created by david on 2/4/17.
- */
-
 public class EmptyPlaybackHandler implements IBufferingPlaybackHandler {
 
 	private final int duration;
