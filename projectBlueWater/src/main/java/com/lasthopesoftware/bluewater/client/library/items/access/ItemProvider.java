@@ -74,7 +74,7 @@ public class ItemProvider {
 
 					try {
 						try (InputStream is = connection.getInputStream()) {
-							final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
+							final List<Item> items = ItemResponse.GetItems(is);
 
 							final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
 

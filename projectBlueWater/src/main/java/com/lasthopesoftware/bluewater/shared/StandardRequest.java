@@ -13,7 +13,7 @@ public class StandardRequest {
 	private final boolean status;
 	public final HashMap<String, String> items = new HashMap<>();
 	
-	public StandardRequest(String status) {
+	StandardRequest(String status) {
 		this.status = status != null && status.equalsIgnoreCase("OK");
 	}
 

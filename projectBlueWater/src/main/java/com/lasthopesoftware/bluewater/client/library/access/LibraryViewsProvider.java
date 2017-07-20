@@ -42,7 +42,7 @@ public class LibraryViewsProvider implements CarelessOneParameterFunction<Cancel
 				});
     }
 
-    public LibraryViewsProvider(ConnectionProvider connectionProvider, Integer serverRevision) {
+    private LibraryViewsProvider(ConnectionProvider connectionProvider, Integer serverRevision) {
         this.connectionProvider = connectionProvider;
 		this.serverRevision = serverRevision;
 	}
@@ -55,7 +55,7 @@ public class LibraryViewsProvider implements CarelessOneParameterFunction<Cancel
 			final HttpURLConnection connection = connectionProvider.getConnection(browseLibraryParameter);
 			try {
 				try (final InputStream is = connection.getInputStream()) {
-					final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
+					final List<Item> items = ItemResponse.GetItems(is);
 
 					synchronized (browseLibraryParameter) {
 						revision = serverRevision;

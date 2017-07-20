@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.access;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 
 import org.slf4j.LoggerFactory;
@@ -17,7 +16,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 public class ItemResponse {
 
-	public static List<Item> GetItems(ConnectionProvider connectionProvider, InputStream is) {
+	public static List<Item> GetItems(InputStream is) {
 
 		try {
 			
