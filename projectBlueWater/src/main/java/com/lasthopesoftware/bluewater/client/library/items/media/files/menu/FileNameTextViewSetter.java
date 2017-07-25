@@ -18,7 +18,7 @@ import java.util.Map;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
-public class FileNameTextViewSetter implements Runnable {
+public class FileNameTextViewSetter {
 
 	private final TextView textView;
 
@@ -38,6 +38,7 @@ public class FileNameTextViewSetter implements Runnable {
 			promise.error(runCarelessly(messenger::sendRejection));
 
 			final CancellationProxy cancellationProxy = new CancellationProxy();
+			messenger.cancellationRequested(cancellationProxy);
 			cancellationProxy.doCancel(promise);
 
 			final Promise<Void> textViewUpdatePromise =
@@ -56,10 +57,6 @@ public class FileNameTextViewSetter implements Runnable {
 
 	private FileNameTextViewSetter(TextView textView) {
 		this.textView = textView;
-	}
-
-	@Override
-	public void run() {
 	}
 
 	private void setLoading() {
