@@ -41,6 +41,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
@@ -723,9 +724,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
 		broadcastChangedFile(positionedPlaybackFile.asPositionedFile());
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+		if (playbackHandler instanceof EmptyPlaybackHandler) return;
+
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
