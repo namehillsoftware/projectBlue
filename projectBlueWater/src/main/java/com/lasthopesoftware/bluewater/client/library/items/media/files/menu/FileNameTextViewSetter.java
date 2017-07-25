@@ -14,17 +14,12 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromi
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<String, String>>> {
-
-	private static final Executor fileNameTextViewExecutor = Executors.newSingleThreadExecutor();
 
 	private final TextView textView;
 	private final Handler handler;
@@ -33,7 +28,7 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 	public static Promise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
 		textView.setText(R.string.lbl_loading);
 
-		return new QueuedPromise<>(new FileNameTextViewSetter(textView, serviceFile), fileNameTextViewExecutor);
+		return new Promise<>(new FileNameTextViewSetter(textView, serviceFile));
 	}
 
 	private FileNameTextViewSetter(TextView textView, ServiceFile serviceFile) {
@@ -52,6 +47,8 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+
+		if (cancellationToken.isCancelled()) return;
 
 		final Promise<Map<String, String>> promise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
 
