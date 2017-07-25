@@ -7,17 +7,19 @@ import com.lasthopesoftware.bluewater.shared.promises.WrappedCancellableExecutor
 import com.lasthopesoftware.bluewater.shared.promises.WrappedFunction;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.callables.CarelessFunction;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 
 public class DispatchedPromise<Result> extends Promise<Result> {
 	public DispatchedPromise(OneParameterAction<Messenger<Result>> task, Context context) {
-		super(new Executors.QueuedCancellableTask<>(task, new Handler(context.getMainLooper())));
+		super(new Executors.QueuedMessengerTask<>(task, new Handler(context.getMainLooper())));
 	}
 
 	public DispatchedPromise(OneParameterAction<Messenger<Result>> task, Handler handler) {
-		super(new Executors.QueuedCancellableTask<>(task, handler));
+		super(new Executors.QueuedMessengerTask<>(task, handler));
 	}
 
 	public DispatchedPromise(CarelessFunction<Result> task, Context context) {
@@ -28,13 +30,17 @@ public class DispatchedPromise<Result> extends Promise<Result> {
 		super(new Executors.QueuedFunction<>(task, handler));
 	}
 
+	public DispatchedPromise(CarelessOneParameterFunction<CancellationToken, Result> task, Handler handler) {
+		super(new Executors.QueuedMessengerTask<>(new Executors.QueuedCancellableFunctionExecutor<>(task), handler));
+	}
+
 	private static class Executors {
-		static class QueuedCancellableTask<Result> implements OneParameterAction<Messenger<Result>> {
+		static class QueuedMessengerTask<Result> implements OneParameterAction<Messenger<Result>> {
 
 			private final OneParameterAction<Messenger<Result>> task;
 			private final Handler handler;
 
-			QueuedCancellableTask(OneParameterAction<Messenger<Result>> task, Handler handler) {
+			QueuedMessengerTask(OneParameterAction<Messenger<Result>> task, Handler handler) {
 				this.task = task;
 				this.handler = handler;
 			}
@@ -58,6 +64,26 @@ public class DispatchedPromise<Result> extends Promise<Result> {
 			@Override
 			public void runWith(Messenger<Result> resultMessenger) {
 				this.handler.post(new WrappedFunction<>(callable, resultMessenger));
+			}
+		}
+
+		static class QueuedCancellableFunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
+			private final CarelessOneParameterFunction<CancellationToken, Result> task;
+
+			QueuedCancellableFunctionExecutor(CarelessOneParameterFunction<CancellationToken, Result> task) {
+				this.task = task;
+			}
+
+			@Override
+			public void runWith(Messenger<Result> messenger) {
+				final CancellationToken cancellationToken = new CancellationToken();
+				messenger.cancellationRequested(cancellationToken);
+
+				try {
+					messenger.sendResolution(task.resultFrom(cancellationToken));
+				} catch (Throwable throwable) {
+					messenger.sendRejection(throwable);
+				}
 			}
 		}
 	}

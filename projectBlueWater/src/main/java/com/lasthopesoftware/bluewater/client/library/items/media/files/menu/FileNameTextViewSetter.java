@@ -10,19 +10,17 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.runnables.TwoParameterAction;
+import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 
 import java.util.Map;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
-public class FileNameTextViewSetter implements TwoParameterAction<Map<String, String>, Messenger<Void>>, Runnable {
+public class FileNameTextViewSetter implements Runnable {
 
 	private final TextView textView;
-	private boolean isCancelled;
 
 	public static Promise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
 		final FileNameTextViewSetter fileNameTextViewSetter = new FileNameTextViewSetter(textView);
@@ -39,12 +37,20 @@ public class FileNameTextViewSetter implements TwoParameterAction<Map<String, St
 			promise.next(runCarelessly(messenger::sendResolution));
 			promise.error(runCarelessly(messenger::sendRejection));
 
-			final Promise<Void> textViewUpdatePromise = promise.then(Dispatch.toHandler(fileNameTextViewSetter, handler));
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			cancellationProxy.doCancel(promise);
 
-			messenger.cancellationRequested(() -> {
-				promise.cancel();
-				textViewUpdatePromise.cancel();
-			});
+			final Promise<Void> textViewUpdatePromise =
+				promise.then(properties -> new DispatchedPromise<>((cancellableToken) -> {
+					final String fileName = properties.get(FilePropertiesProvider.NAME);
+
+					if (!cancellableToken.isCancelled() && fileName != null)
+						textView.setText(fileName);
+
+					return null;
+				}, handler));
+
+			cancellationProxy.doCancel(textViewUpdatePromise);
 		});
 	}
 
@@ -54,22 +60,9 @@ public class FileNameTextViewSetter implements TwoParameterAction<Map<String, St
 
 	@Override
 	public void run() {
-		isCancelled = true;
 	}
 
 	private void setLoading() {
 		textView.setText(R.string.lbl_loading);
-	}
-
-	@Override
-	public void runWith(Map<String, String> properties, Messenger<Void> messenger) {
-		messenger.cancellationRequested(this);
-
-		final String fileName = properties.get(FilePropertiesProvider.NAME);
-
-		if (!isCancelled && fileName != null)
-			textView.setText(fileName);
-
-		messenger.sendResolution(null);
 	}
 }

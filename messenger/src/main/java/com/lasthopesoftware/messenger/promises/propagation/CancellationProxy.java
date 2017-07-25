@@ -10,10 +10,12 @@ public final class CancellationProxy implements Runnable {
 	private final Queue<Promise<?>> cancellablePromises = new LinkedBlockingQueue<>();
 	private volatile boolean isCancelled;
 
-	public void doCancel(Promise<?> promise){
+	public Runnable doCancel(Promise<?> promise) {
 		cancellablePromises.offer(promise);
 
 		if (isCancelled) run();
+
+		return this;
 	}
 
 	@Override
