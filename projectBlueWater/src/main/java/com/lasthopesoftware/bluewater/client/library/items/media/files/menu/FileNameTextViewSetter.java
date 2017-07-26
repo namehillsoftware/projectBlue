@@ -13,11 +13,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
+import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Map;
+
+import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<String, String>>> {
 
@@ -26,8 +28,6 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 	private final ServiceFile serviceFile;
 
 	public static Promise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
-		textView.setText(R.string.lbl_loading);
-
 		return new Promise<>(new FileNameTextViewSetter(textView, serviceFile));
 	}
 
@@ -39,6 +39,8 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 
 	@Override
 	public void runWith(Messenger<Map<String, String>> messenger) {
+		handler.post(() -> 	textView.setText(R.string.lbl_loading));
+
 		final CancellationToken cancellationToken = new CancellationToken();
 		messenger.cancellationRequested(cancellationToken);
 
@@ -50,13 +52,15 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 
 		if (cancellationToken.isCancelled()) return;
 
-		final Promise<Map<String, String>> promise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
+		final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
+		filePropertiesPromise.error(runCarelessly(messenger::sendRejection));
 
-		final PromiseProxy<Map<String, String>> promiseProxy = new PromiseProxy<>(messenger);
-		promiseProxy.proxy(promise);
+		final CancellationProxy cancellationProxy = new CancellationProxy();
+		messenger.cancellationRequested(cancellationProxy);
+		cancellationProxy.doCancel(filePropertiesPromise);
 
 		final Promise<Map<String, String>> textViewUpdatePromise =
-			promise.then(properties -> new DispatchedPromise<>(ct -> {
+			filePropertiesPromise.then(properties -> new DispatchedPromise<>(ct -> {
 				final String fileName = properties.get(FilePropertiesProvider.NAME);
 
 				if (!ct.isCancelled() && fileName != null)
@@ -65,6 +69,10 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 				return properties;
 			}, handler));
 
-		promiseProxy.proxy(textViewUpdatePromise);
+		textViewUpdatePromise
+			.next(runCarelessly(messenger::sendResolution))
+			.error(runCarelessly(messenger::sendRejection));
+
+		cancellationProxy.doCancel(textViewUpdatePromise);
 	}
 }
