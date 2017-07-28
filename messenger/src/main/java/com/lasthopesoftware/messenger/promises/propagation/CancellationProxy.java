@@ -7,21 +7,20 @@ import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationT
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public final class CancellationProxy implements Runnable {
+public final class CancellationProxy extends CancellationToken {
 	private final Queue<Promise<?>> cancellablePromises = new LinkedBlockingQueue<>();
-	private final CancellationToken cancellationToken = new CancellationToken();
 
 	public Runnable doCancel(Promise<?> promise) {
 		cancellablePromises.offer(promise);
 
-		if (cancellationToken.isCancelled()) run();
+		if (isCancelled()) run();
 
 		return this;
 	}
 
 	@Override
 	public void run() {
-		cancellationToken.run();
+		super.run();
 
 		Promise<?> cancellingPromise;
 		while ((cancellingPromise = cancellablePromises.poll()) != null)

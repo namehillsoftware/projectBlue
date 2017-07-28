@@ -10,7 +10,7 @@ public class CancellationToken implements Runnable {
 
 	private boolean isCancelled;
 
-	public boolean isCancelled() {
+	public final boolean isCancelled() {
 		final Lock readLock = readWriteLock.readLock();
 		readLock.lock();
 		try {
