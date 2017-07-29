@@ -19,12 +19,15 @@ import org.slf4j.LoggerFactory;
 public class ConnectedRemoteControlClientBroadcaster implements IConnectedDeviceBroadcaster {
 	private static final Logger logger = LoggerFactory.getLogger(ConnectedRemoteControlClientBroadcaster.class);
 
+	private static final float playbackSpeed = 1.0f;
+
 	private final Context context;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
 	private final RemoteControlClient remoteControlClient;
 
 	private volatile int playstate = RemoteControlClient.PLAYSTATE_STOPPED;
+	private volatile int trackPosition = -1;
 	private Bitmap remoteClientBitmap;
 
 	public ConnectedRemoteControlClientBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
@@ -36,18 +39,18 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	@Override
 	public void setPlaying() {
-		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PLAYING);
+		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PLAYING, trackPosition, playbackSpeed);
 	}
 
 	@Override
 	public void setPaused() {
-		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PAUSED);
+		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PAUSED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
 	}
 
 	@Override
 	public void setStopped() {
-		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_STOPPED);
+		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_STOPPED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
 	}
 
@@ -57,7 +60,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 			.promiseFileBitmap(serviceFile)
 			.then(Dispatch.toContext(this::updateClientBitmap, context))
 			.excuse(e -> {
-				logger.warn("There was an excuse getting the image for the file with id `" + serviceFile.getKey() + "`", e);
+				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
 				return null;
 			});
 
@@ -80,13 +83,15 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 				metaData.apply();
 
+				remoteControlClient.setPlaybackState(playstate);
+
 				return null;
 			}, context));
 	}
 
 	@Override
 	public void updateTrackPosition(int trackPosition) {
-		remoteControlClient.setPlaybackState(playstate, trackPosition, 1.0f);
+		remoteControlClient.setPlaybackState(playstate, this.trackPosition = trackPosition, playbackSpeed);
 	}
 
 	private synchronized Void updateClientBitmap(Bitmap bitmap) {
