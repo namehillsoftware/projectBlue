@@ -57,7 +57,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 		queue.updateQueue(newPositionedFileQueue);
 
 		queue.promiseNextPreparedPlaybackFile(0);
-		queue.promiseNextPreparedPlaybackFile(0).next(file -> positionedPlaybackFile = file);
+		queue.promiseNextPreparedPlaybackFile(0).then(file -> positionedPlaybackFile = file);
 	}
 
 	@Test

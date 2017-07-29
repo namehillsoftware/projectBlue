@@ -88,10 +88,10 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 
 		preparingPlaybackFile
-			.next(this::changeVolumeManager)
-			.next(this::changePlaybackFile)
-			.then(this::startFilePlayback)
-			.error(VoidFunc.runCarelessly(this::handlePlaybackException));
+			.then(this::changeVolumeManager)
+			.then(this::changePlaybackFile)
+			.eventually(this::startFilePlayback)
+			.excuse(VoidFunc.runCarelessly(this::handlePlaybackException));
 	}
 
 	private PositionedPlaybackFile changeVolumeManager(PositionedPlaybackFile positionedPlaybackFile) {
@@ -112,7 +112,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 		final Promise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
-		promisedPlayback.next(VoidFunc.runCarelessly(this::closeAndStartNextFile));
+		promisedPlayback.then(VoidFunc.runCarelessly(this::closeAndStartNextFile));
 
 		return promisedPlayback;
 	}
@@ -121,7 +121,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
-			logger.error("There was an error releasing the media player", e);
+			logger.error("There was an excuse releasing the media player", e);
 		}
 
 		volumeManager = null;
@@ -136,7 +136,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 			doCompletion();
 		} catch (IOException e) {
-			logger.error("There was an error releasing the media player", e);
+			logger.error("There was an excuse releasing the media player", e);
 			emitter.onError(e);
 		}
 	}

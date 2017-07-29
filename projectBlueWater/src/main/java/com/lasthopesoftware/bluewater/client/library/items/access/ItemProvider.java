@@ -53,7 +53,7 @@ public class ItemProvider {
     public Promise<List<Item>> promiseItems() {
 		return
 			RevisionChecker.promiseRevision(connectionProvider)
-				.then(serverRevision -> new QueuedPromise<>((cancellationToken) -> {
+				.eventually(serverRevision -> new QueuedPromise<>((cancellationToken) -> {
 					final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
 					final ItemHolder itemHolder;
@@ -85,7 +85,7 @@ public class ItemProvider {
 							return items;
 						}
 					} catch (IOException e) {
-						logger.error("There was an error getting the inputstream", e);
+						logger.error("There was an excuse getting the inputstream", e);
 						throw e;
 					} finally {
 						if (connection != null)

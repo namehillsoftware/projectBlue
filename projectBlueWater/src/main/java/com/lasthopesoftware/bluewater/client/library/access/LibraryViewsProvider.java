@@ -32,7 +32,7 @@ public class LibraryViewsProvider implements CarelessOneParameterFunction<Cancel
 	public static Promise<List<Item>> provide(ConnectionProvider connectionProvider) {
 		return
 			RevisionChecker.promiseRevision(connectionProvider)
-				.then(serverRevision -> {
+				.eventually(serverRevision -> {
 					synchronized(browseLibraryParameter) {
 						if (cachedFileSystemItems != null && revision.equals(serverRevision))
 							return new Promise<>(cachedFileSystemItems);
@@ -64,14 +64,14 @@ public class LibraryViewsProvider implements CarelessOneParameterFunction<Cancel
 
 					return items;
 				} catch (IOException e) {
-					logger.error("There was an error getting the inputstream", e);
+					logger.error("There was an excuse getting the inputstream", e);
 					throw e;
 				}
 			} finally {
 				connection.disconnect();
 			}
 		} catch (IOException ioe) {
-			logger.error("There was an error opening the connection", ioe);
+			logger.error("There was an excuse opening the connection", ioe);
 		}
 
 		return null;

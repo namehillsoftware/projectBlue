@@ -17,9 +17,9 @@ public class WhenAnotherReturningPromiseIsExpected {
 	@BeforeClass
 	public static void before() {
 		new Promise<>((messenger) -> messenger.sendResolution("test"))
-				.next(result -> 330 + result.hashCode())
-				.next(nextResult -> nextReturningPromiseResult = nextResult)
-				.error(err -> isCalled = true);
+				.then(result -> 330 + result.hashCode())
+				.then(nextResult -> nextReturningPromiseResult = nextResult)
+				.excuse(err -> isCalled = true);
 	}
 
 	@Test

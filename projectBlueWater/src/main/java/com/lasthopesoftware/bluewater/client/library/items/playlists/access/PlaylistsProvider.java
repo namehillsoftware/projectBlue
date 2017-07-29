@@ -43,7 +43,7 @@ public final class PlaylistsProvider implements CarelessOneParameterFunction<Can
 	public static Promise<List<Playlist>> promisePlaylists(IConnectionProvider connectionProvider, int playlistId) {
 		return RevisionChecker
 			.promiseRevision(connectionProvider)
-			.then(serverRevision -> {
+			.eventually(serverRevision -> {
 				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serverRevision);
 				if (cachedPlaylists != null && urlKeyHolder.equals(PlaylistsProvider.urlKeyHolder))
 					return new Promise<>(getPlaylists(playlistId));
@@ -80,7 +80,7 @@ public final class PlaylistsProvider implements CarelessOneParameterFunction<Can
 				return getPlaylists(playlistId);
 			}
 		} catch (IOException e) {
-			logger.error("There was an error getting the inputstream", e);
+			logger.error("There was an excuse getting the inputstream", e);
 			throw e;
 		}
 	}

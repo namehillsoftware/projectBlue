@@ -64,7 +64,7 @@ public class WhenPlaybackCompletes {
 					new ServiceFile(3),
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0)
-			.next(obs -> obs.subscribe(f -> observedPlaybackFile = f));
+			.then(obs -> obs.subscribe(f -> observedPlaybackFile = f));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
@@ -75,7 +75,7 @@ public class WhenPlaybackCompletes {
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		nowPlayingRepository
 			.getNowPlaying()
-			.next(np -> {
+			.then(np -> {
 				nowPlaying = np;
 				countDownLatch.countDown();
 				return null;

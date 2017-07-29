@@ -81,15 +81,15 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
         new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
 			.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
-            .next(onSearchFilesComplete)
-            .error(new HandleViewIoException(this, new Runnable() {
+            .then(onSearchFilesComplete)
+            .excuse(new HandleViewIoException(this, new Runnable() {
 
 					@Override
 					public void run() {
 						new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
 							.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
-							.next(onSearchFilesComplete)
-							.error(new HandleViewIoException(SearchFilesActivity.this, this));
+							.then(onSearchFilesComplete)
+							.excuse(new HandleViewIoException(SearchFilesActivity.this, this));
 					}
 				})
             );

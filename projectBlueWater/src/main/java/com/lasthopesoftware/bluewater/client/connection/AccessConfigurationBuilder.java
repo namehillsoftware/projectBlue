@@ -68,17 +68,17 @@ public class AccessConfigurationBuilder {
 			return
 				ConnectionTester
 					.doTest(new ConnectionProvider(urlProvider), timeout)
-					.then(result -> {
+					.eventually(result -> {
 						if (result) return new Promise<>(urlProvider);
 
 						return promiseServerInformation(localAccessString, timeout)
-							.then(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
+							.eventually(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
 					});
 		}
 
 		return
 			promiseServerInformation(localAccessString, timeout)
-				.then(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
+				.eventually(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
 	}
 
 	private static String parseAccessCode(Library library){
@@ -113,7 +113,7 @@ public class AccessConfigurationBuilder {
 		if (!library.isLocalOnly()) {
 			final MediaServerUrlProvider remoteUrlProvider = new MediaServerUrlProvider(authKey, xml.getUnique("ip").getValue(), port);
 			return ConnectionTester.doTest(new ConnectionProvider(remoteUrlProvider), timeout)
-				.then(testResult -> {
+				.eventually(testResult -> {
 					if (testResult) return new Promise<>(remoteUrlProvider);
 
 					final Collection<String> ipList = Arrays.asList(xml.getUnique("localiplist").getValue().split(","));
@@ -132,6 +132,6 @@ public class AccessConfigurationBuilder {
 		final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, ipAddress, port);
 		return
 			ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout)
-				.then(result -> result ? new Promise<>(urlProvider) : testUrls(urls, authKey, port, timeout));
+				.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls, authKey, port, timeout));
 	}
 }

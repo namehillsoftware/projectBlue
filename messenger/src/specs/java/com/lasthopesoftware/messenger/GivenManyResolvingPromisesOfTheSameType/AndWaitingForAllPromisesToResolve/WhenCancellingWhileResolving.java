@@ -32,7 +32,7 @@ public class WhenCancellingWhileResolving {
 
 		final Promise<Collection<String>> aggregatePromise = Promise.whenAll(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		aggregatePromise
-			.error(runCarelessly(e -> {
+			.excuse(runCarelessly(e -> {
 				if (e instanceof AggregateCancellationException)
 					aggregateCancellationException = (AggregateCancellationException) e;
 			}));

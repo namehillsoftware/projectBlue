@@ -195,14 +195,14 @@ public class StoredFileAccess {
 				return storedFile;
 			}
 		}, RepositoryAccessHelper.databaseExecutor)
-			.then(storedFile -> {
+			.eventually(storedFile -> {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 					return new Promise<>(storedFile);
 
 				final Promise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(serviceFile);
 
 				return fileUriPromise
-					.then(localUri -> {
+					.eventually(localUri -> {
 						if (localUri == null)
 							return new Promise<>(storedFile);
 
@@ -214,7 +214,7 @@ public class StoredFileAccess {
 							return
 								mediaFileIdProvider
 									.getMediaId()
-									.next(mediaId -> {
+									.then(mediaId -> {
 										storedFile.setStoredMediaId(mediaId);
 										return storedFile;
 									});
@@ -224,13 +224,13 @@ public class StoredFileAccess {
 						}
 					});
 				})
-				.then(storedFile -> {
+				.eventually(storedFile -> {
 					if (storedFile.getPath() != null)
 						return new Promise<>(storedFile);
 
 					return cachedFilePropertiesProvider
 						.promiseFileProperties(serviceFile.getKey())
-						.next(fileProperties -> {
+						.then(fileProperties -> {
 							String fullPath = library.getSyncDir(context).getPath();
 
 							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
@@ -258,7 +258,7 @@ public class StoredFileAccess {
 							return storedFile;
 						});
 				})
-				.then(storedFile -> new QueuedPromise<>(() -> {
+				.eventually(storedFile -> new QueuedPromise<>(() -> {
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 						updateStoredFile(repositoryAccessHelper, storedFile);
 						return storedFile;
@@ -267,7 +267,7 @@ public class StoredFileAccess {
 	}
 
 	public Promise<Collection<Void>> pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		return promiseAllStoredFilesInLibrary().then(new PruneFilesTask(context, library, serviceIdsToKeep));
+		return promiseAllStoredFilesInLibrary().eventually(new PruneFilesTask(context, library, serviceIdsToKeep));
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, ServiceFile serviceFile) {
@@ -333,7 +333,7 @@ public class StoredFileAccess {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException e) {
-				logger.error("There was an error deleting serviceFile " + storedFile.getId(), e);
+				logger.error("There was an excuse deleting serviceFile " + storedFile.getId(), e);
 			} finally {
 				closeableTransaction.close();
 				repositoryAccessHelper.close();

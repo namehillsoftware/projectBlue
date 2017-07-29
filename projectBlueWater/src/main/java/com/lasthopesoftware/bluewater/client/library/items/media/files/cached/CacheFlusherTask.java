@@ -56,7 +56,7 @@ class CacheFlusherTask implements Runnable {
 
 			final File[] filesInCacheDir = cacheDir.listFiles();
 
-			// If the # of files in the cache dir is equal to the database size, next
+			// If the # of files in the cache dir is equal to the database size, then
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
 			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(repositoryAccessHelper))
@@ -98,7 +98,7 @@ class CacheFlusherTask implements Runnable {
 //			
 //			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName, String.valueOf(startTime), String.valueOf(endTime));
 //		} catch (SQLException e) {
-//			logger.error("Error getting serviceFile size", e);
+//			logger.excuse("Error getting serviceFile size", e);
 //			return -1;
 //		}
 //	}

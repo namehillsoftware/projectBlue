@@ -62,15 +62,15 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 
 		return
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
-				.next(this::startPlaybackFromNowPlaying)
-				.next(this::startNewObservation);
+				.then(this::startPlaybackFromNowPlaying)
+				.then(this::startNewObservation);
 	}
 
 	public Promise<PositionedFile> skipToNext() {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.then(np -> changePosition(getNextPosition(np.playlistPosition, np.playlist), 0));
+				.eventually(np -> changePosition(getNextPosition(np.playlistPosition, np.playlist), 0));
 	}
 
 	private static int getNextPosition(int startingPosition, Collection<ServiceFile> playlist) {
@@ -81,7 +81,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.then(np -> changePosition(getPreviousPosition(np.playlistPosition), 0));
+				.eventually(np -> changePosition(getPreviousPosition(np.playlistPosition), 0));
 	}
 
 	private static int getPreviousPosition(int startingPosition) {
@@ -96,7 +96,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 
 		final Promise<NowPlaying> nowPlayingPromise =
 			updateLibraryPlaylistPositions(playlistPosition, filePosition)
-				.next(np -> {
+				.then(np -> {
 					logger.info("Position changed");
 					return np;
 				});
@@ -104,14 +104,14 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		if (!isPlaying) {
 			return
 				nowPlayingPromise
-					.next(np -> {
+					.then(np -> {
 						final ServiceFile serviceFile = np.playlist.get(playlistPosition);
 						return new PositionedFile(playlistPosition, serviceFile);
 					});
 		}
 
 		return nowPlayingPromise
-			.then((nowPlaying) -> new Promise<>(messenger -> {
+			.eventually((nowPlaying) -> new Promise<>(messenger -> {
 				final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 				try {
 					final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
@@ -152,8 +152,8 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 
 		return
 			restorePlaylistFromStorage()
-				.next(this::startPlaybackFromNowPlaying)
-				.next(this::switchObservation);
+				.then(this::startPlaybackFromNowPlaying)
+				.then(this::switchObservation);
 	}
 
 	public void pause() {
@@ -216,7 +216,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 			() -> isPlaying = false);
 
 		return observable
-			.concatWith(Observable.create(e -> changePosition(0, 0).next(positionedFile -> {
+			.concatWith(Observable.create(e -> changePosition(0, 0).then(positionedFile -> {
 				e.onNext(new PositionedPlaybackFile(
 					new EmptyPlaybackHandler(0),
 					positionedFile));
@@ -231,7 +231,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.then(np -> {
+				.eventually(np -> {
 					np.playlist.add(serviceFile);
 
 					final Promise<NowPlaying> nowPlayingPromise = nowPlayingRepository.updateNowPlaying(np);
@@ -249,7 +249,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.then(np -> {
+				.eventually(np -> {
 					np.playlist.remove(position);
 
 					final Promise<NowPlaying> libraryUpdatePromise = nowPlayingRepository.updateNowPlaying(np);
@@ -278,7 +278,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 
 		return
 			nowPlayingPromise
-				.then(np -> {
+				.eventually(np -> {
 					np.playlist = playlist;
 					np.playlistPosition = playlistPosition;
 					np.filePosition = filePosition;
@@ -290,7 +290,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.next(np -> {
+				.then(np -> {
 					this.playlist = np.playlist;
 					return np;
 				});
@@ -300,7 +300,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.next(result -> {
+				.then(result -> {
 					result.isRepeating = isRepeating;
 
 					nowPlayingRepository.updateNowPlaying(result);
@@ -314,7 +314,7 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 
 		nowPlayingRepository
 			.getNowPlaying()
-			.then(np -> {
+			.eventually(np -> {
 				np.playlist = playlist;
 
 				if (positionedPlaybackFile != null) {

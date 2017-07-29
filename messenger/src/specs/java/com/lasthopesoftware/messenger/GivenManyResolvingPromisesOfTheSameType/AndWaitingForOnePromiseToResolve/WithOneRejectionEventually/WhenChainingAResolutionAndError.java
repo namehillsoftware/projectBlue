@@ -24,8 +24,8 @@ public class WhenChainingAResolutionAndError {
 		final Promise<String> fourthPromise = new Promise<>((messenger) -> messenger.sendRejection(new Exception()));
 
 		Promise.whenAny(firstPromise, secondPromise, thirdPromise, fourthPromise)
-			.next(string -> result = string)
-			.error(e -> caughtException = e);
+			.then(string -> result = string)
+			.excuse(e -> caughtException = e);
 	}
 
 	@Test

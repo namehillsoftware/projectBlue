@@ -18,7 +18,7 @@ public class WhenThePromiseIsFulfilled {
 	public void before() {
 		result = new Object();
 		Promise.empty()
-				.next(result -> this.result = result);
+				.then(result -> this.result = result);
 	}
 
 	@Test

@@ -95,9 +95,9 @@ public class ImageProvider {
 			final PromiseProxy<Bitmap> promiseProxy = new PromiseProxy<>(messenger);
 			final Promise<Bitmap> promisedBitmap =
 				promisedFileProperties
-					.next(fileProperties -> {
+					.then(fileProperties -> {
 						// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
-						// artists), and next by artist if that field is empty
+						// artists), and then by artist if that field is empty
 						String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
 						if (artist == null || artist.isEmpty())
 							artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -108,10 +108,10 @@ public class ImageProvider {
 
 						return artist + ":" + albumOrTrackName;
 					})
-					.then(uniqueKey -> {
+					.eventually(uniqueKey -> {
 						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryTask(uniqueKey), imageAccessExecutor);
 
-						return memoryTask.then(bitmap -> {
+						return memoryTask.eventually(bitmap -> {
 							if (bitmap != null) return new Promise<>(bitmap);
 
 							final LibraryRepository libraryProvider = new LibraryRepository(context);
@@ -120,22 +120,22 @@ public class ImageProvider {
 							return
 								libraryProvider
 									.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-									.then(library -> {
+									.eventually(library -> {
 										final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
 										final Promise<File> cachedFilePromise = imageDiskCache.promiseCachedFile(uniqueKey);
 
 										final Promise<Bitmap> cachedSuccessTask =
 											cachedFilePromise
-												.then(imageFile -> new QueuedPromise<>(new ImageDiskCacheTask(uniqueKey, imageFile), imageAccessExecutor))
-												.then(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+												.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheTask(uniqueKey, imageFile), imageAccessExecutor))
+												.eventually(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
 										final Promise<Bitmap> cachedErrorTask =
 											cachedFilePromise
-												.error(e -> {
-													logger.warn("There was an error getting the file from the cache!", e);
+												.excuse(e -> {
+													logger.warn("There was an excuse getting the file from the cache!", e);
 													return e;
 												})
-												.then(e -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+												.eventually(e -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
 										return Promise.whenAny(cachedSuccessTask, cachedErrorTask);
 									});
@@ -243,7 +243,7 @@ public class ImageProvider {
 
 					imageDiskCache
 						.put(uniqueKey, imageBytes)
-						.error(ioe -> {
+						.excuse(ioe -> {
 							logger.error("Error writing serviceFile!", ioe);
 							return null;
 						});
@@ -262,7 +262,7 @@ public class ImageProvider {
 						connection.disconnect();
 				}
 			} catch (IOException e) {
-				logger.error("There was an error getting the connection for images", e);
+				logger.error("There was an excuse getting the connection for images", e);
 				throw e;
 			}
 		}

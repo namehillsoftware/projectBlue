@@ -230,7 +230,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					return;
 				}
 
-				playlistManager.resume().next(observable -> observePlaybackFileChanges(observable));
+				playlistManager.resume().then(observable -> observePlaybackFileChanges(observable));
 			};
 		}
 	};
@@ -256,7 +256,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			try {
 				playlistManager.close();
 			} catch (Exception e) {
-				logger.error("There was an error closing the playbackPlaylistStateManager", e);
+				logger.error("There was an excuse closing the playbackPlaylistStateManager", e);
 			}
 
 			playlistManager = null;
@@ -359,9 +359,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.next(this::initializePlaybackPlaylistStateManager)
-				.next(runCarelessly(m -> actOnIntent(intent)))
-				.error(UnhandledRejectionHandler);
+				.then(this::initializePlaybackPlaylistStateManager)
+				.then(runCarelessly(m -> actOnIntent(intent)))
+				.excuse(UnhandledRejectionHandler);
 
 			return START_NOT_STICKY;
 		}
@@ -417,9 +417,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.next(this::initializePlaybackPlaylistStateManager)
-				.next(runCarelessly(m -> actOnIntent(intentToRun)))
-				.error(UnhandledRejectionHandler);
+				.then(this::initializePlaybackPlaylistStateManager)
+				.then(runCarelessly(m -> actOnIntent(intentToRun)))
+				.excuse(UnhandledRejectionHandler);
 
 			return;
 		}
@@ -502,11 +502,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.then(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0))
-				.next(this::observePlaybackFileChanges)
-				.next(lazyPlaybackStartedBroadcaster.getObject())
-				.next(this::handlePlaybackStarted)
-				.error(UnhandledRejectionHandler);
+				.eventually(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0))
+				.then(this::observePlaybackFileChanges)
+				.then(lazyPlaybackStartedBroadcaster.getObject())
+				.then(this::handlePlaybackStarted)
+				.excuse(UnhandledRejectionHandler);
 
 			return;
         }
@@ -518,10 +518,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			isPlaying = true;
         	playlistManager
 				.resume()
-				.next(this::restartObservable)
-				.next(lazyPlaybackStartedBroadcaster.getObject())
-				.next(this::handlePlaybackStarted)
-				.error(UnhandledRejectionHandler);
+				.then(this::restartObservable)
+				.then(lazyPlaybackStartedBroadcaster.getObject())
+				.then(this::handlePlaybackStarted)
+				.excuse(UnhandledRejectionHandler);
 
         	return;
         }
@@ -540,19 +540,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.changePosition(playlistPosition, filePosition)
-				.next(this::broadcastChangedFile)
-				.error(UnhandledRejectionHandler);
+				.then(this::broadcastChangedFile)
+				.excuse(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playlistManager.skipToPrevious().next(this::broadcastChangedFile).error(UnhandledRejectionHandler);
+			playlistManager.skipToPrevious().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playlistManager.skipToNext().next(this::broadcastChangedFile).error(UnhandledRejectionHandler);
+			playlistManager.skipToNext().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -567,11 +567,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.addFile(new ServiceFile(fileKey))
-				.next(Dispatch.toContext(library -> {
+				.then(Dispatch.toContext(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
 				}, this))
-				.error(UnhandledRejectionHandler);
+				.excuse(UnhandledRejectionHandler);
 
 			return;
 		}
@@ -580,7 +580,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return;
 
-			playlistManager.removeFileAtPosition(filePosition).error(UnhandledRejectionHandler);
+			playlistManager.removeFileAtPosition(filePosition).excuse(UnhandledRejectionHandler);
 		}
 	}
 
@@ -650,18 +650,18 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return;
 		}
 
-		logger.error("An uncaught error has occurred!", exception);
+		logger.error("An uncaught excuse has occurred!", exception);
 	}
 
 	private void handleMediaPlayerException(MediaPlayerException exception) {
 		final long currentErrorTime = System.currentTimeMillis();
 		// Stop handling errors if more than the max errors has occurred
 		if (++numberOfErrors > maxErrors) {
-			// and the last error time is less than the error count reset duration
+			// and the last excuse time is less than the excuse count reset duration
 			if (currentErrorTime <= lastErrorTime + errorCountResetDuration)
 				return;
 
-			// reset the error count if enough time has elapsed to reset the error count
+			// reset the excuse count if enough time has elapsed to reset the excuse count
 			numberOfErrors = 1;
 		}
 
@@ -697,8 +697,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (!playlistManager.isPlaying())
 				playlistManager
 					.resume()
-					.next(this::restartObservable)
-					.next(lazyPlaybackStartedBroadcaster.getObject());
+					.then(this::restartObservable)
+					.then(lazyPlaybackStartedBroadcaster.getObject());
 
 			return;
 		}
@@ -742,7 +742,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		playbackHandler
 			.promisePlayback()
-			.next(runCarelessly(handler -> {
+			.then(runCarelessly(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 				localFilePositionSubscription.dispose();
 			}));
@@ -757,7 +757,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
-			.next(Dispatch.toContext(fileProperties -> {
+			.then(Dispatch.toContext(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
@@ -770,7 +770,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 				return null;
 			}, this))
-			.error(Dispatch.toContext(exception -> {
+			.excuse(Dispatch.toContext(exception -> {
 				final Builder builder = new Builder(this);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
@@ -804,7 +804,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			try {
 				playlistPlaybackBootstrapper.close();
 			} catch (IOException e) {
-				logger.warn("There was an error closing the prepared playback bootstrapper", e);
+				logger.warn("There was an excuse closing the prepared playback bootstrapper", e);
 			}
 		}
 
@@ -812,7 +812,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			try {
 				playlistManager.close();
 			} catch (Exception e) {
-				logger.warn("There was an error closing the prepared playback queue", e);
+				logger.warn("There was an excuse closing the prepared playback queue", e);
 			}
 		}
 		
@@ -861,7 +861,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		private static final String repeating = magicPropertyBuilder.buildProperty("repeating");
 		private static final String completing = magicPropertyBuilder.buildProperty("completing");
 		private static final String previous = magicPropertyBuilder.buildProperty("previous");
-		private static final String next = magicPropertyBuilder.buildProperty("next");
+		private static final String next = magicPropertyBuilder.buildProperty("then");
 		private static final String seekTo = magicPropertyBuilder.buildProperty("seekTo");
 		private static final String stopWaitingForConnection = magicPropertyBuilder.buildProperty("stopWaitingForConnection");
 		private static final String addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist");

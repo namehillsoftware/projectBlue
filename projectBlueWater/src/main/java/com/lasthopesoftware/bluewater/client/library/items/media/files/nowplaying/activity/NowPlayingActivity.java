@@ -243,7 +243,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				lazyNowPlayingRepository.getObject()
 					.getNowPlaying()
-					.next(Dispatch.toHandler(result -> {
+					.then(Dispatch.toHandler(result -> {
 						final boolean isRepeating = !result.isRepeating;
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -291,7 +291,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.next(Dispatch.toHandler(runCarelessly(np -> {
+			.then(Dispatch.toHandler(runCarelessly(np -> {
 				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
 
 				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
@@ -302,7 +302,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				setView(serviceFile, filePosition);
 			}), messageHandler.getObject()))
-			.error(runCarelessly(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
+			.excuse(runCarelessly(error -> logger.warn("An excuse occurred initializing `NowPlayingActivity`", error)));
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
 
@@ -322,7 +322,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		setRepeatingIcon(imageButton, false);
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.next(Dispatch.toHandler(runCarelessly(result -> {
+			.then(Dispatch.toHandler(runCarelessly(result -> {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating);
 			}), messageHandler.getObject()));
@@ -353,7 +353,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private void setView(final int playlistPosition) {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.next(Dispatch.toHandler(runCarelessly(np -> {
+			.then(Dispatch.toHandler(runCarelessly(np -> {
 				if (playlistPosition >= np.playlist.size()) return;
 
 				final ServiceFile serviceFile = np.playlist.get(playlistPosition);
@@ -365,7 +365,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				setView(serviceFile, filePosition);
 			}), messageHandler.getObject()))
-			.error(runCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
+			.excuse(runCarelessly(e -> logger.error("An excuse occurred while getting the Now Playing data", e)));
 	}
 	
 	private void setView(final ServiceFile serviceFile, final int initialFilePosition) {
@@ -399,11 +399,11 @@ public class NowPlayingActivity extends AppCompatActivity {
 						.promiseFileBitmap(serviceFile);
 
 				getFileImageTask
-					.then(bitmap ->
+					.eventually(bitmap ->
 						bitmap != null
 							? new Promise<>(bitmap)
 							: defaultImageProvider.getObject().promiseFileBitmap())
-					.next(Dispatch.toContext(runCarelessly(bitmap -> {
+					.then(Dispatch.toContext(runCarelessly(bitmap -> {
 						nowPlayingImage.setImageBitmap(bitmap);
 
 						if (viewStructure.nowPlayingImage != null)
@@ -412,7 +412,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 						displayImageBitmap();
 					}), this))
-					.error(runCarelessly(e -> logger.error("There was an error retrieving serviceFile details", e)));
+					.excuse(runCarelessly(e -> logger.error("There was an excuse retrieving serviceFile details", e)));
 				
 			} catch (Exception e) {
 				logger.error(e.toString(), e);
@@ -432,11 +432,11 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
 		filePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
-			.next(Dispatch.toHandler(runCarelessly(fileProperties -> {
+			.then(Dispatch.toHandler(runCarelessly(fileProperties -> {
 				viewStructure.fileProperties = fileProperties;
 				setFileProperties(serviceFile, initialFilePosition, fileProperties);
 			}), messageHandler.getObject()))
-			.error(Dispatch.toHandler(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()));
+			.excuse(Dispatch.toHandler(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()));
 	}
 
 	private void setFileProperties(final ServiceFile serviceFile, final int initialFilePosition, Map<String, String> fileProperties) {

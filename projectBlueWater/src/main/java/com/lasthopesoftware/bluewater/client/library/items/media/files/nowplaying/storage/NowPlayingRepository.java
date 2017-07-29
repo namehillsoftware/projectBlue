@@ -33,7 +33,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 		return
 			libraryProvider
 				.getLibrary()
-				.then(library -> {
+				.eventually(library -> {
 					libraryId = library.getId();
 
 					final String savedTracksString = library.getSavedTracksString();
@@ -52,7 +52,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 					return
 						FileStringListUtilities
 							.promiseParsedFileStringList(savedTracksString)
-							.next(files -> {
+							.then(files -> {
 								final NowPlaying nowPlaying =
 									new NowPlaying(
 										files,
@@ -70,13 +70,13 @@ public class NowPlayingRepository implements INowPlayingRepository {
 	@Override
 	public Promise<NowPlaying> updateNowPlaying(NowPlaying nowPlaying) {
 		if (libraryId < 0)
-			return getNowPlaying().then(np -> updateNowPlaying(nowPlaying));
+			return getNowPlaying().eventually(np -> updateNowPlaying(nowPlaying));
 
 		nowPlayingCache.put(libraryId, nowPlaying);
 
 		libraryProvider
 			.getLibrary()
-			.then(library -> {
+			.eventually(library -> {
 				library.setNowPlayingId(nowPlaying.playlistPosition);
 				library.setNowPlayingProgress(nowPlaying.filePosition);
 				library.setRepeating(nowPlaying.isRepeating);
@@ -84,7 +84,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 				return
 					FileStringListUtilities
 						.promiseSerializedFileStringList(nowPlaying.playlist)
-						.then(serializedPlaylist -> {
+						.eventually(serializedPlaylist -> {
 							library.setSavedTracksString(serializedPlaylist);
 
 							return libraryRepository.saveLibrary(library);

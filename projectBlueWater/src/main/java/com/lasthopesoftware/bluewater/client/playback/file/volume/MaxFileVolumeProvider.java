@@ -38,7 +38,7 @@ public class MaxFileVolumeProvider {
 		return
 			cachedFilePropertiesProvider
 				.promiseFileProperties(serviceFile.getKey())
-				.next(fileProperties -> {
+				.then(fileProperties -> {
 					if (!fileProperties.containsKey(FilePropertiesProvider.VolumeLevelR128))
 						return UnityVolume;
 
@@ -50,7 +50,7 @@ public class MaxFileVolumeProvider {
 
 						return Math.min(1 - (normalizedVolumeLevel / MaxComputedVolumeInDecibels), UnityVolume);
 					} catch (NumberFormatException e) {
-						logger.info("There was an error attempting to parse the given R128 level of " + r128VolumeLevelString + ".", e);
+						logger.info("There was an excuse attempting to parse the given R128 level of " + r128VolumeLevelString + ".", e);
 					}
 
 					return UnityVolume;

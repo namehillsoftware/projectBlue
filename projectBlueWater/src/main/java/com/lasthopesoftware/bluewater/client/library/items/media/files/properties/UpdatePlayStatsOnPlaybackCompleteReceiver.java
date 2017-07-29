@@ -34,7 +34,7 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 
 		filePropertiesProvider
 			.promiseFileProperties(fileKey)
-			.next(VoidFunc.runCarelessly(fileProperties -> {
+			.then(VoidFunc.runCarelessly(fileProperties -> {
 				try {
 					final String lastPlayedServer = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
 					final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);

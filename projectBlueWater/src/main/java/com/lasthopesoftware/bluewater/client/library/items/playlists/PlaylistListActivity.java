@@ -86,15 +86,15 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 		PlaylistsProvider
 			.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
-			.next(onPlaylistProviderComplete)
-			.error(new HandleViewIoException(PlaylistListActivity.this, new Runnable() {
+			.then(onPlaylistProviderComplete)
+			.excuse(new HandleViewIoException(PlaylistListActivity.this, new Runnable() {
 
 				@Override
 				public void run() {
 					PlaylistsProvider
 						.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
-						.next(onPlaylistProviderComplete)
-						.error(new HandleViewIoException(PlaylistListActivity.this, this));
+						.then(onPlaylistProviderComplete)
+						.excuse(new HandleViewIoException(PlaylistListActivity.this, this));
 				}
 			}));
 
@@ -110,7 +110,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
-			.next(Dispatch.toContext(library -> {
+			.then(Dispatch.toContext(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 

@@ -38,7 +38,7 @@ public class MediaQueryCursorProvider implements IMediaQueryCursorProvider, Care
 		return
 			cachedFilePropertiesProvider
 				.promiseFileProperties(serviceFile.getKey())
-				.next(this);
+				.then(this);
 	}
 
 	@Override

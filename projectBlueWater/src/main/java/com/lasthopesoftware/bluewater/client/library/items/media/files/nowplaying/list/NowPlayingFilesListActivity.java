@@ -79,7 +79,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.next(lazyDispatchedLibraryCompleteResolution.getObject());
+			.then(lazyDispatchedLibraryCompleteResolution.getObject());
 		
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
@@ -104,7 +104,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		if (requestCode != InstantiateSessionConnectionActivity.ACTIVITY_ID) return;
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
-			.next(lazyDispatchedLibraryCompleteResolution.getObject());
+			.then(lazyDispatchedLibraryCompleteResolution.getObject());
 	}
 	
 	@Override

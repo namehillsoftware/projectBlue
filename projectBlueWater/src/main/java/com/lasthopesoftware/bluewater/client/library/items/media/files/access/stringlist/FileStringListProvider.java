@@ -32,7 +32,7 @@ public final class FileStringListProvider {
 					return IOUtils.toString(is);
 				}
 			} catch (IOException e) {
-				logger.warn("There was an error getting the serviceFile list", e);
+				logger.warn("There was an excuse getting the serviceFile list", e);
 				throw e;
 			} finally {
 				connection.disconnect();

@@ -29,8 +29,8 @@ public class WhenCancellingWhileResolving {
 
 		final Promise<String> racingPromise = Promise.whenAny(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		racingPromise
-			.next(string -> result = string)
-			.error(runCarelessly(e -> {
+			.then(string -> result = string)
+			.excuse(runCarelessly(e -> {
 				if (e instanceof CancellationException)
 					cancellationException = (AggregateCancellationException) e;
 			}));

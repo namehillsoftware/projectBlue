@@ -143,7 +143,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 		formattedFilePropertiesProvider
 			.promiseFileProperties(fileKey)
-			.next(Dispatch.toContext(VoidFunc.runCarelessly(fileProperties -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -160,7 +160,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				pbLoadingFileDetails.findView().setVisibility(View.INVISIBLE);
 				lvFileDetails.findView().setVisibility(View.VISIBLE);
 			}), this))
-			.error(new HandleViewIoException(this, () -> setView(fileKey)));
+			.excuse(new HandleViewIoException(this, () -> setView(fileKey)));
 
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 //
@@ -202,11 +202,11 @@ public class FileDetailsActivity extends AppCompatActivity {
 
         new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider)
 			.promiseFileBitmap(new ServiceFile(fileKey))
-			.then(bitmap ->
+			.eventually(bitmap ->
 				bitmap != null
 					? new Promise<>(bitmap)
 					: defaultImageProvider.getObject().promiseFileBitmap())
-			.next(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
+			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 
 				if (isDestroyed) {

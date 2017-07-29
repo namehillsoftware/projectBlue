@@ -48,11 +48,11 @@ public class FilePropertiesStorage implements Runnable {
 				connection.disconnect();
 			}
 		} catch (IOException ioe) {
-			logger.error("There was an error opening the connection", ioe);
+			logger.error("There was an excuse opening the connection", ioe);
 		}
 
 		RevisionChecker.promiseRevision(connectionProvider)
-			.next(revision -> {
+			.then(revision -> {
 				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 				final FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
 
@@ -60,7 +60,7 @@ public class FilePropertiesStorage implements Runnable {
 
 				return null;
 			})
-			.error(e -> {
+			.excuse(e -> {
 				logger.warn(fileKey + "'s property cache item " + property + " was not updated with the new value of " + value, e);
 				return null;
 			});

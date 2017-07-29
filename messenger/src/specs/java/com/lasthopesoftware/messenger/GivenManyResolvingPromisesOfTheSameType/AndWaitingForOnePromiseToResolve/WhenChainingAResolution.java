@@ -21,7 +21,7 @@ public class WhenChainingAResolution {
 		final Promise<String> thirdPromise = new Promise<>("test_3");
 
 		Promise.whenAny(firstPromise, secondPromise, thirdPromise)
-			.next(string -> result = string);
+			.then(string -> result = string);
 	}
 
 	@Test

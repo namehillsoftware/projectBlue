@@ -34,7 +34,7 @@ public class WhenResolvingTwice {
 			messenger.sendResolution(unexpectedResult);
 			latch.countDown();
 		}).start())
-		.next(result -> WhenResolvingTwice.result = result);;
+		.then(result -> WhenResolvingTwice.result = result);;
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}

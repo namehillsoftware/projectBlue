@@ -185,7 +185,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.next(Dispatch.toContext(runCarelessly(library -> {
+			.then(Dispatch.toContext(runCarelessly(library -> {
 				// No library, must bail out
 				if (library == null) {
 					finish();
@@ -254,8 +254,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			@Override
 			public void run() {
 				LibraryViewsProvider.provide(SessionConnection.getSessionConnectionProvider())
-					.next(onCompleteAction)
-					.error(new HandleViewIoException(BrowseLibraryActivity.this, this));
+					.then(onCompleteAction)
+					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
 			}
 		};
 
@@ -275,7 +275,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.next(Dispatch.toContext(runCarelessly(library -> {
+			.then(Dispatch.toContext(runCarelessly(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);

@@ -142,15 +142,15 @@ public class SyncService extends Service {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(storedFile.getLibraryId())
-			.then((library) ->  AccessConfigurationBuilder.buildConfiguration(this, library).then(urlProvider -> {
+			.eventually((library) ->  AccessConfigurationBuilder.buildConfiguration(this, library).eventually(urlProvider -> {
 				final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
 				return filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
 			}))
-			.next(Dispatch.toContext(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
-			.error(Dispatch.toContext(exception -> {
+			.then(Dispatch.toContext(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
+			.excuse(Dispatch.toContext(exception -> {
 				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
 				return true;
 			}, this));
@@ -239,7 +239,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		lazyLibraryProvider.getObject().getAllLibraries().next(Dispatch.toContext(runCarelessly(libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().then(Dispatch.toContext(runCarelessly(libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {
@@ -251,7 +251,7 @@ public class SyncService extends Service {
 				if (library.isSyncLocalConnectionsOnly())
 					library.setLocalOnly(true);
 
-				AccessConfigurationBuilder.buildConfiguration(context, library).next(runCarelessly(urlProvider -> {
+				AccessConfigurationBuilder.buildConfiguration(context, library).then(runCarelessly(urlProvider -> {
 					if (urlProvider == null) {
 						if (--librariesProcessing == 0) finishSync();
 						return;
@@ -327,9 +327,9 @@ public class SyncService extends Service {
 	}
 
 	private void finishSync() {
-		logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
+		logger.info("Finishing sync. Scheduling then sync for " + syncInterval + "ms from now.");
 
-		// Set an alarm for the next time we runWith this bad boy
+		// Set an alarm for the then time we runWith this bad boy
 		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);

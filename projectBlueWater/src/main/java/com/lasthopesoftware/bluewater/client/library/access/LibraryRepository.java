@@ -174,7 +174,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 					logger.debug("Library saved.");
 					return library;
 				} catch (SQLException se) {
-					logger.error("There was an error saving the library", se);
+					logger.error("There was an excuse saving the library", se);
 					return null;
 				}
 			}

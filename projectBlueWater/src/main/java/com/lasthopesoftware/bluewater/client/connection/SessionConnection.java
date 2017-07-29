@@ -65,7 +65,7 @@ public class SessionConnection {
 		final LibraryRepository libraryRepository = new LibraryRepository(context);
 		libraryRepository
 			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
-			.then(library -> {
+			.eventually(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
 					isRunning = false;
@@ -77,7 +77,7 @@ public class SessionConnection {
 				return
 					AccessConfigurationBuilder
 						.buildConfiguration(context, library)
-						.then(urlProvider -> {
+						.eventually(urlProvider -> {
 							if (urlProvider == null) {
 								doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
 								return Promise.empty();
@@ -94,7 +94,7 @@ public class SessionConnection {
 
 							return LibraryViewsProvider
 								.provide(sessionConnectionProvider)
-								.then(libraryViews -> {
+								.eventually(libraryViews -> {
 									if (libraryViews == null || libraryViews.size() == 0) {
 										doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
 										return Promise.empty();
@@ -108,12 +108,12 @@ public class SessionConnection {
 									return
 										libraryRepository
 											.saveLibrary(library)
-											.next(runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+											.then(runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 								});
 							});
 				})
-				.error(e -> {
-					logger.error("There was an error building the session connection", e);
+				.excuse(e -> {
+					logger.error("There was an excuse building the session connection", e);
 					doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
 
 					return null;
@@ -136,7 +136,7 @@ public class SessionConnection {
 				: ConnectionTester.doTest(sessionConnectionProvider);
 
 		promisedConnectionTest
-			.next(result -> {
+			.then(result -> {
 				if (!result) build(context);
 
 				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);

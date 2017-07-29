@@ -8,6 +8,6 @@ import java.io.IOException;
  */
 public class StorageCreatePathException extends IOException {
 	public StorageCreatePathException(File file) {
-		super("There was an error creating the path " + file + ".");
+		super("There was an excuse creating the path " + file + ".");
 	}
 }

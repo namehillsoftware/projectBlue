@@ -63,7 +63,7 @@ public class ItemListFragment extends Fragment {
 
     	libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.next(runCarelessly(activeLibrary -> {
+			.then(runCarelessly(activeLibrary -> {
 				final CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetVisibleViewsCompleteListener = Dispatch.toContext(result -> {
 					if (result == null || result.size() == 0) return null;
 
@@ -77,15 +77,15 @@ public class ItemListFragment extends Fragment {
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.next(onGetVisibleViewsCompleteListener)
-					.error(new HandleViewIoException(activity, new Runnable() {
+					.then(onGetVisibleViewsCompleteListener)
+					.excuse(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.next(onGetVisibleViewsCompleteListener)
-								.error(new HandleViewIoException(activity, this));
+								.then(onGetVisibleViewsCompleteListener)
+								.excuse(new HandleViewIoException(activity, this));
 						}
 					}));
 	    }));
@@ -102,7 +102,7 @@ public class ItemListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.next(runCarelessly(library -> {
+			.then(runCarelessly(library -> {
 				CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetLibraryViewItemResultsComplete = Dispatch.toContext(new OnGetLibraryViewItemResultsComplete(
 					activity,
 					container,
@@ -115,15 +115,15 @@ public class ItemListFragment extends Fragment {
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-					.next(onGetLibraryViewItemResultsComplete)
-					.error(new HandleViewIoException(activity, new Runnable() {
+					.then(onGetLibraryViewItemResultsComplete)
+					.excuse(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-								.next(onGetLibraryViewItemResultsComplete)
-								.error(new HandleViewIoException(activity, this));
+								.then(onGetLibraryViewItemResultsComplete)
+								.excuse(new HandleViewIoException(activity, this));
 						}
 					}));
 			}));

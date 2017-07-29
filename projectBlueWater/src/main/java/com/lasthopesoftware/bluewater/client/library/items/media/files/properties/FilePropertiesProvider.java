@@ -42,7 +42,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 	@Override
 	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
-		return RevisionChecker.promiseRevision(connectionProvider).then(revision -> {
+		return RevisionChecker.promiseRevision(connectionProvider).eventually(revision -> {
 			final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {

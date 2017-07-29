@@ -28,12 +28,12 @@ public class WhenChainingResolutionTwice {
 		firstResultHandler = mock(CarelessOneParameterFunction.class);
 
 		rootPromise
-			.next(firstResultHandler);
+			.then(firstResultHandler);
 
 		secondResultHandler = mock(CarelessOneParameterFunction.class);
 
 		rootPromise
-			.next(secondResultHandler);
+			.then(secondResultHandler);
 	}
 
 	@Test

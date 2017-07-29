@@ -15,7 +15,7 @@ public class StorageWriteFileException extends IOException {
 	}
 
 	public StorageWriteFileException(File file, Exception innerException) {
-		super("There was an error writing the serviceFile " + file + ".", innerException);
+		super("There was an excuse writing the serviceFile " + file + ".", innerException);
 
 		this.file = file;
 	}

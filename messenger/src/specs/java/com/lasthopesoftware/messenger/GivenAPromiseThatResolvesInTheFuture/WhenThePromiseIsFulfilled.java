@@ -31,7 +31,7 @@ public class WhenThePromiseIsFulfilled {
 			messenger.sendResolution(expectedResult);
 			latch.countDown();
 		}).start())
-		.next(r -> result = r);
+		.then(r -> result = r);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 	}

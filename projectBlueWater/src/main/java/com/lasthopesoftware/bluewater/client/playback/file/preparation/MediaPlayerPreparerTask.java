@@ -35,8 +35,8 @@ final class MediaPlayerPreparerTask implements
 	public void runWith(Messenger<IBufferingPlaybackHandler> messenger) {
 		uriProvider
 			.getFileUri(serviceFile)
-			.next(new MediaPlayerPreparationTask(playbackInitialization, prepareAt, messenger))
-			.error(new UriProviderErrorHandler(messenger));
+			.then(new MediaPlayerPreparationTask(playbackInitialization, prepareAt, messenger))
+			.excuse(new UriProviderErrorHandler(messenger));
 	}
 
 	private static final class MediaPlayerPreparationTask implements CarelessOneParameterFunction<Uri, Void> {

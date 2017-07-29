@@ -63,7 +63,7 @@ public class WhenTheQueueIsStarted {
 	public void thenTheQueueStartsAtTheCorrectPosition() {
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.next(VoidFunc.runCarelessly(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
+			.then(VoidFunc.runCarelessly(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 
 	private static class MockResolveAction implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {

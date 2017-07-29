@@ -34,28 +34,28 @@ public class Promise<Resolution> {
 		singleMessageBroadcaster.cancel();
 	}
 
-	private <NewResolution> Promise<NewResolution> next(ResolutionResponseMessenger<Resolution, NewResolution> onFulfilled) {
+	private <NewResolution> Promise<NewResolution> then(ResolutionResponseMessenger<Resolution, NewResolution> onFulfilled) {
 		singleMessageBroadcaster.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
 	}
 
-	public final <TNewResult> Promise<TNewResult> next(final CarelessOneParameterFunction<Resolution, TNewResult> onFulfilled) {
-		return next(new Execution.ExpectedResult<>(onFulfilled));
+	public final <TNewResult> Promise<TNewResult> then(final CarelessOneParameterFunction<Resolution, TNewResult> onFulfilled) {
+		return then(new Execution.ExpectedResult<>(onFulfilled));
 	}
 
-	public final <TNewResult> Promise<TNewResult> then(CarelessOneParameterFunction<Resolution, Promise<TNewResult>> onFulfilled) {
-		return next(new PromisedResolutionResponseMessenger<>(onFulfilled));
+	public final <TNewResult> Promise<TNewResult> eventually(CarelessOneParameterFunction<Resolution, Promise<TNewResult>> onFulfilled) {
+		return then(new PromisedResolutionResponseMessenger<>(onFulfilled));
 	}
 
-	private <TNewRejectedResult> Promise<TNewRejectedResult> _catch(RejectionResponseMessenger<Resolution, TNewRejectedResult> rejectionResponseMessenger) {
+	private <TNewRejectedResult> Promise<TNewRejectedResult> excuse(RejectionResponseMessenger<Resolution, TNewRejectedResult> rejectionResponseMessenger) {
 		singleMessageBroadcaster.awaitResolution(rejectionResponseMessenger);
 
 		return new Promise<>(rejectionResponseMessenger);
 	}
 
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> error(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
-		return _catch(new Execution.ErrorResultExecutor<>(onRejected));
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> excuse(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
+		return excuse(new Execution.ErrorResultExecutor<>(onRejected));
 	}
 
 	public static <TResult> Promise<TResult> empty() {

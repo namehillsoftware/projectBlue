@@ -71,7 +71,7 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 					new ServiceFile(3),
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0)
-			.next(obs -> obs.subscribe(f -> positionedFiles.add(f)));
+			.then(obs -> obs.subscribe(f -> positionedFiles.add(f)));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
@@ -82,11 +82,11 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 
 		playlistManager
 			.skipToNext()
-			.then(p -> playlistManager.skipToNext())
-			.then(p -> playlistManager.resume())
-			.next(obs -> fakePlaybackPreparerProvider.deferredResolution.resolve())
-			.then(res -> nowPlayingRepository.getNowPlaying())
-			.next(np -> {
+			.eventually(p -> playlistManager.skipToNext())
+			.eventually(p -> playlistManager.resume())
+			.then(obs -> fakePlaybackPreparerProvider.deferredResolution.resolve())
+			.eventually(res -> nowPlayingRepository.getNowPlaying())
+			.then(np -> {
 				nowPlaying = np;
 				countDownLatch.countDown();
 				return null;

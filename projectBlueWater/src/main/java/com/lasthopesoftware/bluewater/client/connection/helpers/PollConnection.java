@@ -45,7 +45,7 @@ public class PollConnection {
 			@Override
 			protected Void doInBackground(String... params) {
 				// Don't use timeout since if it can't resolve a host it will throw an exception immediately
-				// TODO need a blocking refresh configuration (that throws an error when runWith on a UI thread) for this one scenario
+				// TODO need a blocking refresh configuration (that throws an excuse when runWith on a UI thread) for this one scenario
 
 				while (!isCancelled() && !mIsConnectionRestored.get()) {
 					

@@ -20,7 +20,7 @@ public final class FileProvider implements CarelessOneParameterFunction<String, 
 		return
 			fileStringListProvider
 				.promiseFileStringList(option, params)
-				.then(this);
+				.eventually(this);
 	}
 
 	@Override

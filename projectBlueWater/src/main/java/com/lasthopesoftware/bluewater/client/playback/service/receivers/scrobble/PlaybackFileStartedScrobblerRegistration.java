@@ -58,7 +58,7 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 
 			cachedFilePropertiesProvider
 				.promiseFileProperties(fileKey)
-				.next(runCarelessly(fileProperties -> {
+				.then(runCarelessly(fileProperties -> {
 					final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 					final String name = fileProperties.get(FilePropertiesProvider.NAME);
 					final String album = fileProperties.get(FilePropertiesProvider.ALBUM);

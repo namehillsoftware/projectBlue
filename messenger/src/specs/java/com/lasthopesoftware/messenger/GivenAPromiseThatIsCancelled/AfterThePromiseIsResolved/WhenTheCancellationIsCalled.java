@@ -28,7 +28,7 @@ public class WhenTheCancellationIsCalled {
 				messenger.sendResolution(expectedResult);
 			});
 
-		cancellablePromise.next(result -> WhenTheCancellationIsCalled.result = result);
+		cancellablePromise.then(result -> WhenTheCancellationIsCalled.result = result);
 
 		cancellablePromise.cancel();
 	}

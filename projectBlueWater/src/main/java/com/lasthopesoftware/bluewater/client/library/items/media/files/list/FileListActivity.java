@@ -68,15 +68,15 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		getNewFileProvider()
 			.promiseFiles(FileListParameters.Options.None, parameters)
-			.next(onFileProviderComplete)
-			.error(new HandleViewIoException(this, new Runnable() {
+			.then(onFileProviderComplete)
+			.excuse(new HandleViewIoException(this, new Runnable() {
 
 					@Override
 					public void run() {
 						getNewFileProvider()
 							.promiseFiles(FileListParameters.Options.None, parameters)
-							.next(onFileProviderComplete)
-							.error(new HandleViewIoException(FileListActivity.this, this));
+							.then(onFileProviderComplete)
+							.excuse(new HandleViewIoException(FileListActivity.this, this));
 					}
 				})
 			);

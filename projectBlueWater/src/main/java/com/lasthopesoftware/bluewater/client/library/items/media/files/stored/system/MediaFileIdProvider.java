@@ -38,7 +38,7 @@ public class MediaFileIdProvider implements CarelessOneParameterFunction<Cursor,
 		return
 			mediaQueryCursorProvider
 				.getMediaQueryCursor(serviceFile)
-				.next(this);
+				.then(this);
 	}
 
 	@Override

@@ -111,7 +111,7 @@ public class LibrarySyncHandler {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess
 			.getStoredItems()
-			.next(runCarelessly(storedItems -> {
+			.then(runCarelessly(storedItems -> {
 				if (isCancelled) {
 					handleQueueProcessingCompleted();
 					return;
@@ -132,7 +132,7 @@ public class LibrarySyncHandler {
 
 						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 						serviceFileListPromise
-							.error(runCarelessly(e -> {
+							.excuse(runCarelessly(e -> {
 								if (e instanceof FileNotFoundException) {
 									final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
 									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
@@ -145,16 +145,16 @@ public class LibrarySyncHandler {
 
 				Promise
 					.whenAll(mappedFileDataPromises.toList())
-					.next(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
-					.then(allServiceFilesToSync -> {
+					.then(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
+					.eventually(allServiceFilesToSync -> {
 						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
-						pruneFilesTask.error(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
+						pruneFilesTask.excuse(runCarelessly(e -> logger.warn("There was an excuse pruning the files", e)));
 
 						return !isCancelled
-							? pruneFilesTask.next(voids -> allServiceFilesToSync)
+							? pruneFilesTask.then(voids -> allServiceFilesToSync)
 							: new Promise<Set<ServiceFile>>(Collections.emptySet());
 					})
-					.then(allServiceFilesToSync -> {
+					.eventually(allServiceFilesToSync -> {
 						if (isCancelled)
 							return new Promise<>(Collections.emptySet());
 
@@ -165,13 +165,13 @@ public class LibrarySyncHandler {
 
 								return storedFileAccess
 									.createOrUpdateFile(connectionProvider, serviceFile)
-									.next(new DownloadGuard(storedFileDownloader, serviceFile));
+									.then(new DownloadGuard(storedFileDownloader, serviceFile));
 							})
 							.toList();
 
 						return Promise.whenAll(upsertFiles);
 					})
-					.next(vs -> {
+					.then(vs -> {
 						storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
 
 						if (!isCancelled)
@@ -181,8 +181,8 @@ public class LibrarySyncHandler {
 
 						return null;
 					})
-					.error(e -> {
-						logger.warn("There was an error retrieving the files", e);
+					.excuse(e -> {
+						logger.warn("There was an excuse retrieving the files", e);
 
 						if (isCancelled)
 							handleQueueProcessingCompleted();

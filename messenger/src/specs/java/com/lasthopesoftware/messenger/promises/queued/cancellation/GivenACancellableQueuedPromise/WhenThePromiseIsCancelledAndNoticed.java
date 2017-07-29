@@ -30,7 +30,7 @@ public class WhenThePromiseIsCancelledAndNoticed {
 			}, Executors.newSingleThreadExecutor());
 
 		final CountDownLatch rejectionLatch = new CountDownLatch(1);
-		cancellablePromise.error((exception) -> {
+		cancellablePromise.excuse((exception) -> {
 			caughtException = exception;
 			rejectionLatch.countDown();
 			return null;

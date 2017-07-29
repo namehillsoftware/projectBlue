@@ -23,7 +23,7 @@ public class WhenChainingAResolution {
 		final Promise<String> thirdPromise = new Promise<>("test_3");
 
 		Promise.whenAll(firstPromise, secondPromise, thirdPromise)
-			.next(strings -> result = new ArrayList<>(strings));
+			.then(strings -> result = new ArrayList<>(strings));
 	}
 
 	@Test

@@ -66,7 +66,7 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 		cancellationProxy.doCancel(filePropertiesPromise);
 
 		final Promise<Map<String, String>> textViewUpdatePromise =
-			filePropertiesPromise.then(properties -> new DispatchedPromise<>(ct -> {
+			filePropertiesPromise.eventually(properties -> new DispatchedPromise<>(ct -> {
 				final String fileName = properties.get(FilePropertiesProvider.NAME);
 
 				if (fileName != null && !ct.isCancelled())
@@ -80,7 +80,7 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
 		textViewUpdatePromise
-			.next(props -> {
+			.then(props -> {
 				if (cancellationProxy.isCancelled())
 					textView.setText(R.string.lbl_loading);
 
@@ -88,7 +88,7 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 				countDownLatch.countDown();
 				return null;
 			})
-			.error(e -> {
+			.excuse(e -> {
 				messenger.sendRejection(e);
 				countDownLatch.countDown();
 				return null;

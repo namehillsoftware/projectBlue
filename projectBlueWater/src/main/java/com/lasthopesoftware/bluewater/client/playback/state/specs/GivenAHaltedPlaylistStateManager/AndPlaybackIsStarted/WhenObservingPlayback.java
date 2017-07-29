@@ -60,7 +60,7 @@ public class WhenObservingPlayback {
 					new ServiceFile(3),
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0)
-			.next(obs -> obs.subscribe(p -> firstSwitchedFile = p));
+			.then(obs -> obs.subscribe(p -> firstSwitchedFile = p));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}

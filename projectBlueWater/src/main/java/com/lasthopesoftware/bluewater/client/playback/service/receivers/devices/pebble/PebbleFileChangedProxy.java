@@ -25,7 +25,7 @@ class PebbleFileChangedProxy extends BroadcastReceiver {
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(fileKey)
-			.next(fileProperties -> {
+			.then(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);

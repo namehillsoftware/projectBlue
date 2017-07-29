@@ -29,13 +29,13 @@ public class WhenThePromiseIsCancelledAndUnnoticed {
 			}, Executors.newSingleThreadExecutor());
 
 		final CountDownLatch resolveLatch = new CountDownLatch(1);
-		cancellablePromise.error((exception) -> {
+		cancellablePromise.excuse((exception) -> {
 			caughtException = exception;
 			resolveLatch.countDown();
 			return null;
 		});
 
-		cancellablePromise.next((r) -> {
+		cancellablePromise.then((r) -> {
 			result = r;
 			resolveLatch.countDown();
 			return null;

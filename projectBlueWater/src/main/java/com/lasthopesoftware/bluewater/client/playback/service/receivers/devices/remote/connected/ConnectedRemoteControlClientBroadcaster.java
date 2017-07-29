@@ -55,15 +55,15 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	public void updateNowPlaying(ServiceFile serviceFile) {
 		imageProvider
 			.promiseFileBitmap(serviceFile)
-			.next(Dispatch.toContext(this::updateClientBitmap, context))
-			.error(e -> {
-				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
+			.then(Dispatch.toContext(this::updateClientBitmap, context))
+			.excuse(e -> {
+				logger.warn("There was an excuse getting the image for the file with id `" + serviceFile.getKey() + "`", e);
 				return null;
 			});
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
-			.next(Dispatch.toContext(fileProperties -> {
+			.then(Dispatch.toContext(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);

@@ -28,8 +28,8 @@ public class WhenChainingAResolutionAndError {
 		});
 
 		Promise.whenAny(rejectingPromise, firstPromise, secondPromise, thirdPromise)
-			.next(string -> result = string)
-			.error(e -> caughtException = e);
+			.then(string -> result = string)
+			.excuse(e -> caughtException = e);
 	}
 
 	@Test

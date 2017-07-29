@@ -82,7 +82,7 @@ public class MainApplication extends Application {
 
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
-					.next(VoidFunc.runCarelessly(library -> {
+					.then(VoidFunc.runCarelessly(library -> {
 						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 						if (fileKey == -1) return;

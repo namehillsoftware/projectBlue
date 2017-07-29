@@ -38,6 +38,6 @@ public class NowPlayingFileProvider implements INowPlayingFileProvider {
 		return
 			nowPlayingRepository
 				.getNowPlaying()
-				.next(np -> np.playlist.size() > 0 ? np.playlist.get(np.playlistPosition) : null);
+				.then(np -> np.playlist.size() > 0 ? np.playlist.get(np.playlistPosition) : null);
 	}
 }

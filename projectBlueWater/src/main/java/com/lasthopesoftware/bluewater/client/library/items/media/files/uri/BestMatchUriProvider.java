@@ -48,7 +48,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 		return
 			storedFileUriProvider
 				.getFileUri(serviceFile)
-				.then(storedFileUri -> {
+				.eventually(storedFileUri -> {
 					if (storedFileUri != null)
 						return new Promise<>(storedFileUri);
 
@@ -58,7 +58,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 					return
 						mediaFileUriProvider
 							.getFileUri(serviceFile)
-							.then(mediaFileUri -> {
+							.eventually(mediaFileUri -> {
 								if (mediaFileUri != null)
 									return new Promise<>(mediaFileUri);
 

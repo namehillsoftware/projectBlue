@@ -27,8 +27,8 @@ public class WhenCancellingBeforeResolving {
 
 		final Promise<String> racingPromise = Promise.whenAny(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		racingPromise
-			.next(string -> result = string)
-			.error(e -> {
+			.then(string -> result = string)
+			.excuse(e -> {
 				if (e instanceof CancellationException)
 					cancellationException = (CancellationException) e;
 

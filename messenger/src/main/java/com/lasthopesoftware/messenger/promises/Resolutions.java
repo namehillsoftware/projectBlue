@@ -17,7 +17,7 @@ final class Resolutions {
 		ResultCollector(Collection<Promise<TResult>> promises) {
 			this.results = new ArrayList<>(promises.size());
 			for (Promise<TResult> promise : promises)
-				promise.next(this);
+				promise.then(this);
 		}
 
 		@Override
@@ -74,7 +74,7 @@ final class Resolutions {
 		private Throwable error;
 
 		ErrorHandler(Collection<Promise<TResult>> promises) {
-			for (Promise<TResult> promise : promises) promise.error(this);
+			for (Promise<TResult> promise : promises) promise.excuse(this);
 		}
 
 		@Override
