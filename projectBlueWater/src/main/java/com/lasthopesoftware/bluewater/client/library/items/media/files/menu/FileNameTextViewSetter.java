@@ -14,21 +14,25 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromi
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Map;
-
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<String, String>>> {
+
+	private static final Executor executor = Executors.newSingleThreadExecutor();
 
 	private final TextView textView;
 	private final Handler handler;
 	private final ServiceFile serviceFile;
 
 	public static Promise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
-		return new Promise<>(new FileNameTextViewSetter(textView, serviceFile));
+		textView.setText(R.string.lbl_loading);
+		return new QueuedPromise<>(new FileNameTextViewSetter(textView, serviceFile), executor);
 	}
 
 	private FileNameTextViewSetter(TextView textView, ServiceFile serviceFile) {
@@ -39,40 +43,54 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 
 	@Override
 	public void runWith(Messenger<Map<String, String>> messenger) {
-		handler.post(() -> 	textView.setText(R.string.lbl_loading));
+		final CancellationProxy cancellationProxy = new CancellationProxy();
+		messenger.cancellationRequested(cancellationProxy);
 
-		final CancellationToken cancellationToken = new CancellationToken();
-		messenger.cancellationRequested(cancellationToken);
-
-		if (cancellationToken.isCancelled()) return;
+		if (cancellationProxy.isCancelled()) return;
 
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-		if (cancellationToken.isCancelled()) return;
+		if (cancellationProxy.isCancelled()) return;
 
 		final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
-		filePropertiesPromise.error(runCarelessly(messenger::sendRejection));
 
-		final CancellationProxy cancellationProxy = new CancellationProxy();
-		messenger.cancellationRequested(cancellationProxy);
 		cancellationProxy.doCancel(filePropertiesPromise);
 
 		final Promise<Map<String, String>> textViewUpdatePromise =
 			filePropertiesPromise.then(properties -> new DispatchedPromise<>(ct -> {
 				final String fileName = properties.get(FilePropertiesProvider.NAME);
 
-				if (!ct.isCancelled() && fileName != null)
+				if (fileName != null && !ct.isCancelled())
 					textView.setText(fileName);
 
 				return properties;
 			}, handler));
 
-		textViewUpdatePromise
-			.next(runCarelessly(messenger::sendResolution))
-			.error(runCarelessly(messenger::sendRejection));
-
 		cancellationProxy.doCancel(textViewUpdatePromise);
+
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		textViewUpdatePromise
+			.next(props -> {
+				if (cancellationProxy.isCancelled())
+					textView.setText(R.string.lbl_loading);
+
+				messenger.sendResolution(props);
+				countDownLatch.countDown();
+				return null;
+			})
+			.error(e -> {
+				messenger.sendRejection(e);
+				countDownLatch.countDown();
+				return null;
+			});
+
+		try {
+			countDownLatch.await();
+		} catch (InterruptedException e) {
+			messenger.sendRejection(e);
+		}
 	}
 }
