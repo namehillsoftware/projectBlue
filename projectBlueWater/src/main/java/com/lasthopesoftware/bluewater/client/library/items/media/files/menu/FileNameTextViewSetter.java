@@ -18,6 +18,7 @@ import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -46,13 +47,19 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 		final CancellationProxy cancellationProxy = new CancellationProxy();
 		messenger.cancellationRequested(cancellationProxy);
 
-		if (cancellationProxy.isCancelled()) return;
+		if (cancellationProxy.isCancelled()) {
+			messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
+			return;
+		}
 
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-		if (cancellationProxy.isCancelled()) return;
+		if (cancellationProxy.isCancelled()) {
+			messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
+			return;
+		}
 
 		final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
 
