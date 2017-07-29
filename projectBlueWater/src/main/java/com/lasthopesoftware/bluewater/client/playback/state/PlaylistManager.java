@@ -27,7 +27,6 @@ import java.util.Map;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.functions.Functions;
 import io.reactivex.observables.ConnectableObservable;
 
 public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
@@ -211,20 +210,21 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 				positionedPlaybackFile = p;
 
 				saveStateToLibrary(p);
-			},
-			Functions.ON_ERROR_MISSING,
-			() -> isPlaying = false);
+			});
 
 		return observable
-			.concatWith(Observable.create(e -> changePosition(0, 0).then(positionedFile -> {
-				e.onNext(new PositionedPlaybackFile(
-					new EmptyPlaybackHandler(0),
-					positionedFile));
+			.concatWith(Observable.create(e -> {
+				isPlaying = false;
+				changePosition(0, 0).then(positionedFile -> {
+					e.onNext(new PositionedPlaybackFile(
+						new EmptyPlaybackHandler(0),
+						positionedFile));
 
-				e.onComplete();
+					e.onComplete();
 
-				return null;
-			})));
+					return null;
+				});
+			}));
 	}
 
 	public Promise<NowPlaying> addFile(ServiceFile serviceFile) {
