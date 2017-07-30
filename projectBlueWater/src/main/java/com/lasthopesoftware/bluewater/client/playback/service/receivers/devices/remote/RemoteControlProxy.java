@@ -8,60 +8,51 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.IConnectedDeviceBroadcaster;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class RemoteControlProxy extends BroadcastReceiver {
 
 	private final IConnectedDeviceBroadcaster connectedDeviceBroadcaster;
+	private final Map<String, OneParameterAction<Intent>> mappedEvents;
 
 	public RemoteControlProxy(IConnectedDeviceBroadcaster connectedDeviceBroadcaster) {
 		this.connectedDeviceBroadcaster = connectedDeviceBroadcaster;
+
+		mappedEvents = new HashMap<>();
+		mappedEvents.put(PlaylistEvents.onPlaylistChange, this::onPlaylistChange);
+		mappedEvents.put(PlaylistEvents.onPlaylistPause, i -> connectedDeviceBroadcaster.setPaused());
+		mappedEvents.put(PlaylistEvents.onPlaylistStart, i -> connectedDeviceBroadcaster.setPlaying());
+		mappedEvents.put(PlaylistEvents.onPlaylistStop, i -> connectedDeviceBroadcaster.setStopped());
+		mappedEvents.put(TrackPositionBroadcaster.trackPositionUpdate, this::onTrackPositionUpdate);
 	}
 
 	public Set<String> registerForIntents() {
-		return new HashSet<>(
-			Arrays.asList(
-				PlaylistEvents.onPlaylistChange,
-				PlaylistEvents.onPlaylistPause,
-				PlaylistEvents.onPlaylistStart,
-				PlaylistEvents.onPlaylistStop,
-				TrackPositionBroadcaster.trackPositionUpdate));
+		return mappedEvents.keySet();
 	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		final String action = intent.getAction();
+		if (action == null) return;
 
-		if (PlaylistEvents.onPlaylistChange.equals(action)) {
-			final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
-			if (fileKey > 0)
-				connectedDeviceBroadcaster.updateNowPlaying(new ServiceFile(fileKey));
+		final OneParameterAction<Intent> eventHandler = mappedEvents.get(action);
+		if (eventHandler != null)
+			eventHandler.runWith(intent);
+	}
 
-			return;
-		}
+	private void onPlaylistChange(Intent intent) {
+		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
+		if (fileKey > 0)
+			connectedDeviceBroadcaster.updateNowPlaying(new ServiceFile(fileKey));
+	}
 
-		if (PlaylistEvents.onPlaylistPause.equals(action)) {
-			connectedDeviceBroadcaster.setPaused();
-			return;
-		}
-
-		if (PlaylistEvents.onPlaylistStart.equals(action)) {
-			connectedDeviceBroadcaster.setPlaying();
-			return;
-		}
-
-		if (PlaylistEvents.onPlaylistStop.equals(action)) {
-			connectedDeviceBroadcaster.setStopped();
-			return;
-		}
-
-		if (TrackPositionBroadcaster.trackPositionUpdate.equals(action)) {
-			final int trackPosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
-			if (trackPosition >= 0)
-				connectedDeviceBroadcaster.updateTrackPosition(trackPosition);
-		}
+	private void onTrackPositionUpdate(Intent intent) {
+		final int trackPosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
+		if (trackPosition >= 0)
+			connectedDeviceBroadcaster.updateTrackPosition(trackPosition);
 	}
 }
