@@ -13,13 +13,13 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
-import android.media.RemoteControlClient;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
 
 import com.annimon.stream.Stream;
@@ -57,7 +57,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedRemoteControlClientBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
@@ -163,7 +163,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	/* End streamer intent helpers */
 
-	private static final String WIFI_LOCK_SVC_NAME =  "project_blue_water_svc_lock";
+	private static final String wifiLockSvcName =  MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "wifiLockSvcName");
+	private static final String mediaSessionCompatTag = MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "mediaSessionCompatTag");
 
 	private static final int notificationId = 42;
 	private static int startId;
@@ -176,27 +177,32 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final ILazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
 	private final ILazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 	private final ILazy<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
-	private final ILazy<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
-		@Override
-		protected RemoteControlClient initialize() throws Exception {
-			// build the PendingIntent for the remote control client
-			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
-			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(PlaybackService.this, 0, mediaButtonIntent, 0);
-			// create and register the remote control client
-			final RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
-			remoteControlClient.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
-			remoteControlClient.setTransportControlFlags(
-				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-					RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
-					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-					RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-					RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-					RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-
-			return remoteControlClient;
-		}
-	};
+//	private final ILazy<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
+//		@Override
+//		protected RemoteControlClient initialize() throws Exception {
+//			// build the PendingIntent for the remote control client
+//			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+//			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
+//			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(PlaybackService.this, 0, mediaButtonIntent, 0);
+//			// create and register the remote control client
+//			final RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
+//			remoteControlClient.setTransportControlFlags(
+//				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+//					RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+//					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
+//					RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+//					RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+//					RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+//
+//			return remoteControlClient;
+//		}
+//	};
+	private final ILazy<MediaSessionCompat> mediaSessionCompat =
+		new Lazy<>(() -> new MediaSessionCompat(
+			this,
+			mediaSessionCompatTag,
+			remoteControlReceiver.getObject(),
+			null));
 	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(this));
 	private final ILazy<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
 	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
@@ -301,7 +307,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void registerListeners() {
 		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 				
-		wifiLock = ((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_SVC_NAME);
+		wifiLock = ((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, wifiLockSvcName);
         wifiLock.acquire();
 		
         registerRemoteClientControl();
@@ -310,8 +316,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 	
 	private void registerRemoteClientControl() {
-		audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver.getObject());
-		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient.getObject());
+		mediaSessionCompat.getObject().setActive(true);
 	}
 	
 	private void unregisterListeners() {
@@ -443,11 +448,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		remoteControlProxy =
 			new RemoteControlProxy(
-				new ConnectedRemoteControlClientBroadcaster(
+				new MediaSessionBroadcaster(
 					this,
 					cachedFilePropertiesProvider,
 					new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider),
-					remoteControlClient.getObject()));
+					mediaSessionCompat.getObject()));
 
 		localBroadcastManagerLazy
 			.getObject()
@@ -820,10 +825,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
-		if (remoteControlReceiver.isInitialized())
-			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
-		if (remoteControlClient.isInitialized())
-			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
+		if (mediaSessionCompat.isInitialized()) {
+			mediaSessionCompat.getObject().setActive(false);
+			mediaSessionCompat.getObject().release();
+		}
 
 		if (remoteClientBitmap != null) {
 			remoteClientBitmap.recycle();
