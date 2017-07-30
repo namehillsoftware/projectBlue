@@ -177,32 +177,23 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final ILazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
 	private final ILazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 	private final ILazy<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
-//	private final ILazy<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
-//		@Override
-//		protected RemoteControlClient initialize() throws Exception {
-//			// build the PendingIntent for the remote control client
-//			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-//			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
-//			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(PlaybackService.this, 0, mediaButtonIntent, 0);
-//			// create and register the remote control client
-//			final RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
-//			remoteControlClient.setTransportControlFlags(
-//				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-//					RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
-//					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-//					RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-//					RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-//					RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-//
-//			return remoteControlClient;
-//		}
-//	};
 	private final ILazy<MediaSessionCompat> mediaSessionCompat =
-		new Lazy<>(() -> new MediaSessionCompat(
-			this,
-			mediaSessionCompatTag,
-			remoteControlReceiver.getObject(),
-			null));
+		new AbstractSynchronousLazy<MediaSessionCompat>() {
+			@Override
+			protected MediaSessionCompat initialize() throws Exception {
+				final MediaSessionCompat newMediaSession = new MediaSessionCompat(
+					PlaybackService.this,
+					mediaSessionCompatTag,
+					remoteControlReceiver.getObject(),
+					null);
+
+				newMediaSession.setFlags(
+					MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+						MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+				return newMediaSession;
+			}
+		};
 	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(this));
 	private final ILazy<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
 	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
