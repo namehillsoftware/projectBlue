@@ -55,6 +55,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
@@ -190,6 +191,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				newMediaSession.setFlags(
 					MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
 						MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+				newMediaSession.setCallback(new MediaSessionCallbackReceiver(PlaybackService.this));
 
 				return newMediaSession;
 			}

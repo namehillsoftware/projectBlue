@@ -36,5 +36,4 @@ public class RemoteControlReceiver extends BroadcastReceiver {
 	            break;
 	    }
 	}
-
 }
