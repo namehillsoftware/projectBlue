@@ -52,11 +52,11 @@ import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissi
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.ILazy;
-import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,9 +65,6 @@ import java.util.HashSet;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
-/**
- * Created by david on 7/26/15.
- */
 public class SyncService extends Service {
 
 	public static final String onSyncStartEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "onSyncStartEvent");

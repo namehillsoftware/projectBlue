@@ -83,5 +83,5 @@ dependencies {
     compile 'com.annimon:stream:1.+'
     compile project(path: ':messenger')
     compile 'io.reactivex.rxjava2:rxjava:2.+'
-    compile 'com.github.danrien:lazy-j:v1.0'
+    compile 'com.github.danrien:lazy-j:1.1'
 }

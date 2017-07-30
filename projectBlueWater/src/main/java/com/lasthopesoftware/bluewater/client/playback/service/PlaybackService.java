@@ -69,10 +69,10 @@ import com.lasthopesoftware.bluewater.client.settings.volumeleveling.VolumeLevel
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.ILazy;
-import com.vedsoft.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

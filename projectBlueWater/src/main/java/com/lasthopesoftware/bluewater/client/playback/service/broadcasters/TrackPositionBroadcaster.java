@@ -6,8 +6,8 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.lazyj.ILazy;
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.Lazy;
 
 import io.reactivex.functions.Consumer;
 

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.Lazy;
 
 /**
  * Created by david on 3/26/17.

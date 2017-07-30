@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.callables.CarelessFunction;
-import com.vedsoft.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;

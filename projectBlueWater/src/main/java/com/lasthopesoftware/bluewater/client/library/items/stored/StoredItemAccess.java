@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.List;
 

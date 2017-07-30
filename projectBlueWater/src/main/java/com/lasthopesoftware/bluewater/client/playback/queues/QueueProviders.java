@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.queues;
 
 
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.ILazy;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
 
 import java.util.Arrays;
 

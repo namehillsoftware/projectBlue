@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection.Buildi
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.Lazy;
 
 public class InstantiateSessionConnectionActivity extends Activity {
 	

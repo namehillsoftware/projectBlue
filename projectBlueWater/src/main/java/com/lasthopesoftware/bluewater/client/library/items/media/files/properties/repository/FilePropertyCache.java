@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import android.util.LruCache;
 
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.Lazy;
 
 /**
  * Created by david on 3/7/16.

@@ -5,8 +5,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.vedsoft.futures.runnables.ThreeParameterAction;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -19,9 +19,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Created by david on 12/13/15.
- */
 public class ObjectiveDroid {
 	private final SQLiteDatabase database;
 	private final String sqlQuery;

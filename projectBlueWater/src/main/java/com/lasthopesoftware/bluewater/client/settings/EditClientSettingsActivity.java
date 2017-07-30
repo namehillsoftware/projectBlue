@@ -27,8 +27,8 @@ import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissi
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
+import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.lazyj.Lazy;
 
 import java.util.ArrayList;
 

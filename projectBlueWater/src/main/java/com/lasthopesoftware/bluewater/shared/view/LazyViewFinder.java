@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.support.annotation.IdRes;
 import android.view.View;
 
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.ILazy;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
 
 /**
  * Created by david on 6/18/16.

@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.error;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.ILazy;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
 
 import java.util.Arrays;
 import java.util.Collections;
