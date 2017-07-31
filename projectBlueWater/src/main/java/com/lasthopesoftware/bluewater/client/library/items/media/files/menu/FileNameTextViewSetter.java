@@ -14,26 +14,38 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromi
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<String, String>>> {
 
-	private static final Executor executor = Executors.newSingleThreadExecutor();
+	private static final Lock lock = new ReentrantLock();
 
 	private final TextView textView;
 	private final Handler handler;
 	private final ServiceFile serviceFile;
 
 	public static Promise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
+		lock.lock();
+
 		textView.setText(R.string.lbl_loading);
-		return new QueuedPromise<>(new FileNameTextViewSetter(textView, serviceFile), executor);
+		final Promise<Map<String, String>> returnPromise = new Promise<>(new FileNameTextViewSetter(textView, serviceFile));
+
+		returnPromise
+			.then(m -> {
+				lock.unlock();
+				return null;
+			})
+			.excuse(r -> {
+				lock.unlock();
+				return null;
+			});
+
+		return returnPromise;
 	}
 
 	private FileNameTextViewSetter(TextView textView, ServiceFile serviceFile) {
@@ -77,27 +89,14 @@ public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<
 
 		cancellationProxy.doCancel(textViewUpdatePromise);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-
 		textViewUpdatePromise
 			.then(props -> {
-				if (cancellationProxy.isCancelled())
-					textView.setText(R.string.lbl_loading);
-
 				messenger.sendResolution(props);
-				countDownLatch.countDown();
 				return null;
 			})
 			.excuse(e -> {
 				messenger.sendRejection(e);
-				countDownLatch.countDown();
 				return null;
 			});
-
-		try {
-			countDownLatch.await();
-		} catch (InterruptedException e) {
-			messenger.sendRejection(e);
-		}
 	}
 }
