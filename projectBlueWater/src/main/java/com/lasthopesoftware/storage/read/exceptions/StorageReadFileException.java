@@ -3,9 +3,6 @@ package com.lasthopesoftware.storage.read.exceptions;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created by david on 7/17/16.
- */
 public class StorageReadFileException extends IOException {
 	private final File file;
 
@@ -14,7 +11,7 @@ public class StorageReadFileException extends IOException {
 	}
 
 	public StorageReadFileException(File file, Exception innerException) {
-		super("There was an excuse reading the serviceFile " + file + ".", innerException);
+		super("There was an error reading the serviceFile " + file + ".", innerException);
 
 		this.file = file;
 	}

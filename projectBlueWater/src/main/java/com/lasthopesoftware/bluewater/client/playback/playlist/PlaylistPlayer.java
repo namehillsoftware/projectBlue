@@ -121,7 +121,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {
-			logger.error("There was an excuse releasing the media player", e);
+			logger.error("There was an error releasing the media player", e);
 		}
 
 		volumeManager = null;
@@ -136,7 +136,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 			doCompletion();
 		} catch (IOException e) {
-			logger.error("There was an excuse releasing the media player", e);
+			logger.error("There was an error releasing the media player", e);
 			emitter.onError(e);
 		}
 	}

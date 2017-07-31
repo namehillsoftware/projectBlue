@@ -38,7 +38,7 @@ public class StoredFileEntityUpdater implements IEntityUpdater {
 		try {
 			db.execSQL("DROP TABLE `" + storedFilesTempTableName + "`");
 		} catch (SQLException se) {
-			logger.warn("There was an excuse while dropping the temp table", se);
+			logger.warn("There was an error while dropping the temp table", se);
 		}
 
 		final String createTempTableSql =
@@ -70,7 +70,7 @@ public class StoredFileEntityUpdater implements IEntityUpdater {
 
 			db.execSQL(insertIntoTempTable);
 		} catch (SQLException sqlException) {
-			logger.error("There was an excuse moving the data!", sqlException);
+			logger.error("There was an error moving the data!", sqlException);
 			throw sqlException;
 		}
 

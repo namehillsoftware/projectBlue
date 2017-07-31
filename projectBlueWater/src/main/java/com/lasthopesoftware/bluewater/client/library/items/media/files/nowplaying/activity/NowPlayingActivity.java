@@ -302,7 +302,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				setView(serviceFile, filePosition);
 			}), messageHandler.getObject()))
-			.excuse(runCarelessly(error -> logger.warn("An excuse occurred initializing `NowPlayingActivity`", error)));
+			.excuse(runCarelessly(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
 
@@ -365,7 +365,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				setView(serviceFile, filePosition);
 			}), messageHandler.getObject()))
-			.excuse(runCarelessly(e -> logger.error("An excuse occurred while getting the Now Playing data", e)));
+			.excuse(runCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
 	private void setView(final ServiceFile serviceFile, final int initialFilePosition) {
@@ -412,7 +412,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 						displayImageBitmap();
 					}), this))
-					.excuse(runCarelessly(e -> logger.error("There was an excuse retrieving serviceFile details", e)));
+					.excuse(runCarelessly(e -> logger.error("There was an error retrieving serviceFile details", e)));
 				
 			} catch (Exception e) {
 				logger.error(e.toString(), e);

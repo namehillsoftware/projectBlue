@@ -148,7 +148,7 @@ public class LibrarySyncHandler {
 					.then(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
 					.eventually(allServiceFilesToSync -> {
 						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
-						pruneFilesTask.excuse(runCarelessly(e -> logger.warn("There was an excuse pruning the files", e)));
+						pruneFilesTask.excuse(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
 
 						return !isCancelled
 							? pruneFilesTask.then(voids -> allServiceFilesToSync)
@@ -182,7 +182,7 @@ public class LibrarySyncHandler {
 						return null;
 					})
 					.excuse(e -> {
-						logger.warn("There was an excuse retrieving the files", e);
+						logger.warn("There was an error retrieving the files", e);
 
 						if (isCancelled)
 							handleQueueProcessingCompleted();

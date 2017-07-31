@@ -74,13 +74,13 @@ public final class PlaylistsProvider implements CarelessOneParameterFunction<Can
 					else i++;
 				}
 
-				PlaylistsProvider.urlKeyHolder = urlKeyHolder;
+				PlaylistsProvider.urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serverRevision);
 				cachedPlaylists = streamResult;
 				mappedPlaylists = null;
 				return getPlaylists(playlistId);
 			}
 		} catch (IOException e) {
-			logger.error("There was an excuse getting the inputstream", e);
+			logger.error("There was an error getting the inputstream", e);
 			throw e;
 		}
 	}

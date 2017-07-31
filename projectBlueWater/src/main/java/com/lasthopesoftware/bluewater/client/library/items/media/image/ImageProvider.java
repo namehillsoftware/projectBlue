@@ -132,7 +132,7 @@ public class ImageProvider {
 										final Promise<Bitmap> cachedErrorTask =
 											cachedFilePromise
 												.excuse(e -> {
-													logger.warn("There was an excuse getting the file from the cache!", e);
+													logger.warn("There was an error getting the file from the cache!", e);
 													return e;
 												})
 												.eventually(e -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
@@ -262,7 +262,7 @@ public class ImageProvider {
 						connection.disconnect();
 				}
 			} catch (IOException e) {
-				logger.error("There was an excuse getting the connection for images", e);
+				logger.error("There was an error getting the connection for images", e);
 				throw e;
 			}
 		}

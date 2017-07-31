@@ -48,7 +48,7 @@ public class FilePropertiesStorage implements Runnable {
 				connection.disconnect();
 			}
 		} catch (IOException ioe) {
-			logger.error("There was an excuse opening the connection", ioe);
+			logger.error("There was an error opening the connection", ioe);
 		}
 
 		RevisionChecker.promiseRevision(connectionProvider)

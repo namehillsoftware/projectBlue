@@ -85,7 +85,7 @@ public class ItemProvider {
 							return items;
 						}
 					} catch (IOException e) {
-						logger.error("There was an excuse getting the inputstream", e);
+						logger.error("There was an error getting the inputstream", e);
 						throw e;
 					} finally {
 						if (connection != null)

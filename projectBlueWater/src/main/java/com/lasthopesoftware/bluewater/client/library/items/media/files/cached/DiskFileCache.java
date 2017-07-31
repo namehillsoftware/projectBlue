@@ -120,7 +120,7 @@ public class DiskFileCache {
 		putPromise.excuse(e -> {
 			if (e instanceof IOException) throw e;
 
-			logger.error("There was an excuse putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
+			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
 
 			return null;
 		});
@@ -134,7 +134,7 @@ public class DiskFileCache {
 			try {
 				canonicalFilePath = file.getCanonicalPath();
 			} catch (IOException e) {
-				logger.error("There was an excuse getting the canonical path for " + file, e);
+				logger.error("There was an error getting the canonical path for " + file, e);
 				return;
 			}
 
@@ -142,7 +142,7 @@ public class DiskFileCache {
 			try {
 				cachedFile = getCachedFile(uniqueKey);
 			} catch (IOException e) {
-				logger.error("There was an excuse getting the cached serviceFile with unique key " + uniqueKey, e);
+				logger.error("There was an error getting the cached serviceFile with unique key " + uniqueKey, e);
 				return;
 			}
 
@@ -178,7 +178,7 @@ public class DiskFileCache {
 
 					closeableTransaction.setTransactionSuccessful();
 				} catch (SQLException sqlException) {
-					logger.warn("There was an excuse inserting the cached serviceFile with the unique key " + uniqueKey, sqlException);
+					logger.warn("There was an error inserting the cached serviceFile with the unique key " + uniqueKey, sqlException);
 				}
 			} finally {
 				CacheFlusherTask.futureCacheFlushing(context, cacheName, maxSize);
@@ -220,7 +220,7 @@ public class DiskFileCache {
 				logger.info("Returning cached serviceFile " + uniqueKey);
 				return returnFile;
 			} catch (SQLException sqlException) {
-				logger.error("There was an excuse attempting to get the cached serviceFile " + uniqueKey, sqlException);
+				logger.error("There was an error attempting to get the cached serviceFile " + uniqueKey, sqlException);
 				return null;
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
@@ -243,7 +243,7 @@ public class DiskFileCache {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException sqlException) {
-				logger.error("There was an excuse trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
+				logger.error("There was an error trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
 				throw sqlException;
 			}
 		}
@@ -263,7 +263,7 @@ public class DiskFileCache {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException sqlException) {
-				logger.error("There was an excuse trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
+				logger.error("There was an error trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
 				throw sqlException;
 			}
 		}
@@ -282,10 +282,10 @@ public class DiskFileCache {
 				closeableNonExclusiveTransaction.setTransactionSuccessful();
 				return cachedFile;
 			} catch (SQLException sqlException) {
-				logger.error("There was an excuse getting the serviceFile with unique key " + uniqueKey, sqlException);
+				logger.error("There was an error getting the serviceFile with unique key " + uniqueKey, sqlException);
 				return null;
 			} catch (IOException e) {
-				logger.error("There was an excuse opening the non exclusive transaction", e);
+				logger.error("There was an error opening the non exclusive transaction", e);
 				throw e;
 			}
 		}
@@ -312,7 +312,7 @@ public class DiskFileCache {
 
 				return executionResult;
 			} catch (SQLException sqlException) {
-				logger.warn("There was an excuse trying to delete the cached serviceFile with id " + cachedFileId, sqlException);
+				logger.warn("There was an error trying to delete the cached serviceFile with id " + cachedFileId, sqlException);
 			}
 		}
 

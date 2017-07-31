@@ -256,7 +256,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			try {
 				playlistManager.close();
 			} catch (Exception e) {
-				logger.error("There was an excuse closing the playbackPlaylistStateManager", e);
+				logger.error("There was an error closing the playbackPlaylistStateManager", e);
 			}
 
 			playlistManager = null;
@@ -648,18 +648,18 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return;
 		}
 
-		logger.error("An uncaught excuse has occurred!", exception);
+		logger.error("An uncaught error has occurred!", exception);
 	}
 
 	private void handleMediaPlayerException(MediaPlayerException exception) {
 		final long currentErrorTime = System.currentTimeMillis();
 		// Stop handling errors if more than the max errors has occurred
 		if (++numberOfErrors > maxErrors) {
-			// and the last excuse time is less than the excuse count reset duration
+			// and the last error time is less than the error count reset duration
 			if (currentErrorTime <= lastErrorTime + errorCountResetDuration)
 				return;
 
-			// reset the excuse count if enough time has elapsed to reset the excuse count
+			// reset the error count if enough time has elapsed to reset the error count
 			numberOfErrors = 1;
 		}
 
@@ -804,7 +804,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			try {
 				playlistPlaybackBootstrapper.close();
 			} catch (IOException e) {
-				logger.warn("There was an excuse closing the prepared playback bootstrapper", e);
+				logger.warn("There was an error closing the prepared playback bootstrapper", e);
 			}
 		}
 
@@ -812,7 +812,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			try {
 				playlistManager.close();
 			} catch (Exception e) {
-				logger.warn("There was an excuse closing the prepared playback queue", e);
+				logger.warn("There was an error closing the prepared playback queue", e);
 			}
 		}
 		

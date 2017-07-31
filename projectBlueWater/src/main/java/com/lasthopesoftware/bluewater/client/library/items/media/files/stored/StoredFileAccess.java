@@ -333,7 +333,7 @@ public class StoredFileAccess {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException e) {
-				logger.error("There was an excuse deleting serviceFile " + storedFile.getId(), e);
+				logger.error("There was an error deleting serviceFile " + storedFile.getId(), e);
 			} finally {
 				closeableTransaction.close();
 				repositoryAccessHelper.close();

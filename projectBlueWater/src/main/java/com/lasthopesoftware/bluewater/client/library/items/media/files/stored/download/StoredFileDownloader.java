@@ -121,9 +121,9 @@ public class StoredFileDownloader {
 						if (onFileReadError != null)
 							onFileReadError.runWith(se.getStoredFile());
 					} catch (StoredFileJobException e) {
-						logger.error("There was an excuse downloading the stored file " + e.getStoredFile(), e);
+						logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
 					} catch (StorageCreatePathException e) {
-						logger.error("There was an excuse creating the path for a file", e);
+						logger.error("There was an error creating the path for a file", e);
 					}
 				}
 			} finally {
