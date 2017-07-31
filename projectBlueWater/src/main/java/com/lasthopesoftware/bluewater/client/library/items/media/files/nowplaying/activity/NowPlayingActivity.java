@@ -64,6 +64,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TimerTask;
+import java.util.concurrent.CancellationException;
 
 import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
@@ -412,7 +413,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 						displayImageBitmap();
 					}), this))
-					.excuse(runCarelessly(e -> logger.error("There was an error retrieving serviceFile details", e)));
+					.excuse(e -> {
+						if (e instanceof CancellationException) {
+							logger.info("Bitmap retrieval cancelled", e);
+							return null;
+						}
+
+						logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
+						return null;
+					});
 				
 			} catch (Exception e) {
 				logger.error(e.toString(), e);
