@@ -58,7 +58,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedMediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
@@ -442,7 +442,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		remoteControlProxy =
 			new RemoteControlProxy(
-				new MediaSessionBroadcaster(
+				new ConnectedMediaSessionBroadcaster(
 					this,
 					cachedFilePropertiesProvider,
 					new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider),

@@ -16,8 +16,8 @@ import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MediaSessionBroadcaster implements IConnectedDeviceBroadcaster {
-	private static final Logger logger = LoggerFactory.getLogger(MediaSessionBroadcaster.class);
+public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadcaster {
+	private static final Logger logger = LoggerFactory.getLogger(ConnectedMediaSessionBroadcaster.class);
 
 	private static final float playbackSpeed = 1.0f;
 
@@ -38,7 +38,7 @@ public class MediaSessionBroadcaster implements IConnectedDeviceBroadcaster {
 	private volatile long capabilities = standardCapabilities;
 	private Bitmap remoteClientBitmap;
 
-	public MediaSessionBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, MediaSessionCompat mediaSessionCompat) {
+	public ConnectedMediaSessionBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, MediaSessionCompat mediaSessionCompat) {
 		this.context = context;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
