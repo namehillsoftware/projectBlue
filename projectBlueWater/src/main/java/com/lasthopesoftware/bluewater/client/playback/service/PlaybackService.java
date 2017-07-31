@@ -618,9 +618,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				this::uncaughtExceptionHandler,
 				this::onPlaylistPlaybackComplete);
 
-		playbackFileChangesConnection = playbackFileChangesPublisher.connect();
-
 		playbackFileChangesReplayer.connect();
+		playbackFileChangesConnection = playbackFileChangesPublisher.connect();
 
 		return playbackFileChangesReplayer;
 	}
@@ -697,7 +696,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				playlistManager
 					.resume()
 					.then(this::restartObservable)
-					.then(lazyPlaybackStartedBroadcaster.getObject());
+					.then(lazyPlaybackStartedBroadcaster.getObject())
+					.then(this::handlePlaybackStarted)
+					.excuse(UnhandledRejectionHandler);
 
 			return;
 		}
