@@ -404,7 +404,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 						bitmap != null
 							? new Promise<>(bitmap)
 							: defaultImageProvider.getObject().promiseFileBitmap())
-					.then(Dispatch.toContext(runCarelessly(bitmap -> {
+					.then(Dispatch.toContext(bitmap -> {
 						nowPlayingImage.setImageBitmap(bitmap);
 
 						if (viewStructure.nowPlayingImage != null)
@@ -412,16 +412,17 @@ public class NowPlayingActivity extends AppCompatActivity {
 						viewStructure.nowPlayingImage = bitmap;
 
 						displayImageBitmap();
-					}), this))
-					.excuse(e -> {
+
+						return null;
+					}, this))
+					.excuse(runCarelessly(e -> {
 						if (e instanceof CancellationException) {
 							logger.info("Bitmap retrieval cancelled", e);
-							return null;
+							return;
 						}
 
 						logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
-						return null;
-					});
+					}));
 				
 			} catch (Exception e) {
 				logger.error(e.toString(), e);
