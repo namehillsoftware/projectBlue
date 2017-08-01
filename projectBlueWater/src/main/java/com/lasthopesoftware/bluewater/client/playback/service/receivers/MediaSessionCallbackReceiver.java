@@ -1,11 +1,14 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers;
 
 import android.content.Context;
-import android.support.v4.media.session.MediaSessionCompat;
+import android.media.session.MediaSession;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 
-public class MediaSessionCallbackReceiver extends MediaSessionCompat.Callback {
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+public class MediaSessionCallbackReceiver extends MediaSession.Callback {
 	private final Context context;
 
 	public MediaSessionCallbackReceiver(Context context) {

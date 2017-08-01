@@ -13,13 +13,16 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.RemoteControlClient;
+import android.media.session.MediaSession;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.Build;
 import android.os.IBinder;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
 
 import com.annimon.stream.Stream;
@@ -59,6 +62,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSes
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedMediaSessionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedRemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
@@ -178,19 +182,38 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final ILazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
 	private final ILazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 	private final ILazy<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
-	private final ILazy<MediaSessionCompat> mediaSessionCompat =
-		new AbstractSynchronousLazy<MediaSessionCompat>() {
+	private final ILazy<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
+		@Override
+		protected RemoteControlClient initialize() throws Exception {
+			// build the PendingIntent for the remote control client
+			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
+			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(PlaybackService.this, 0, mediaButtonIntent, 0);
+			// create and register the remote control client
+			final RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
+			remoteControlClient.setTransportControlFlags(
+				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+					RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
+					RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+					RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+					RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+
+			return remoteControlClient;
+		}
+	};
+	private final ILazy<MediaSession> mediaSessionCompat =
+		new AbstractSynchronousLazy<MediaSession>() {
+			@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 			@Override
-			protected MediaSessionCompat initialize() throws Exception {
-				final MediaSessionCompat newMediaSession = new MediaSessionCompat(
+			protected MediaSession initialize() throws Exception {
+				final MediaSession newMediaSession = new MediaSession(
 					PlaybackService.this,
-					mediaSessionCompatTag,
-					remoteControlReceiver.getObject(),
-					null);
+					mediaSessionCompatTag);
 
 				newMediaSession.setFlags(
-					MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-						MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+					MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
+					MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
 				newMediaSession.setCallback(new MediaSessionCallbackReceiver(PlaybackService.this));
 
@@ -310,7 +333,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 	
 	private void registerRemoteClientControl() {
-		mediaSessionCompat.getObject().setActive(true);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			mediaSessionCompat.getObject().setActive(true);
+			return;
+		}
+
+		audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver.getObject());
+		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient.getObject());
 	}
 	
 	private void unregisterListeners() {
@@ -440,13 +469,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
+		final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider);
 		remoteControlProxy =
-			new RemoteControlProxy(
+			new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
 				new ConnectedMediaSessionBroadcaster(
 					this,
 					cachedFilePropertiesProvider,
-					new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider),
-					mediaSessionCompat.getObject()));
+					imageProvider,
+					mediaSessionCompat.getObject()) :
+				new ConnectedRemoteControlClientBroadcaster(
+					this,
+					cachedFilePropertiesProvider,
+					imageProvider,
+					remoteControlClient.getObject()));
 
 		localBroadcastManagerLazy
 			.getObject()
@@ -820,7 +855,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
-		if (mediaSessionCompat.isInitialized()) {
+
+		if (remoteControlReceiver.isInitialized())
+			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
+
+		if (remoteControlClient.isInitialized())
+			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mediaSessionCompat.isInitialized()) {
 			mediaSessionCompat.getObject().setActive(false);
 			mediaSessionCompat.getObject().release();
 		}
