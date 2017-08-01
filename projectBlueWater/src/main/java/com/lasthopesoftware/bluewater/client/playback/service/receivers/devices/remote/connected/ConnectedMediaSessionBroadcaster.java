@@ -19,25 +19,6 @@ import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static android.media.session.PlaybackState.ACTION_FAST_FORWARD;
-import static android.media.session.PlaybackState.ACTION_PAUSE;
-import static android.media.session.PlaybackState.ACTION_PLAY;
-import static android.media.session.PlaybackState.ACTION_PLAY_FROM_MEDIA_ID;
-import static android.media.session.PlaybackState.ACTION_PLAY_FROM_SEARCH;
-import static android.media.session.PlaybackState.ACTION_PLAY_FROM_URI;
-import static android.media.session.PlaybackState.ACTION_PLAY_PAUSE;
-import static android.media.session.PlaybackState.ACTION_PREPARE;
-import static android.media.session.PlaybackState.ACTION_PREPARE_FROM_MEDIA_ID;
-import static android.media.session.PlaybackState.ACTION_PREPARE_FROM_SEARCH;
-import static android.media.session.PlaybackState.ACTION_PREPARE_FROM_URI;
-import static android.media.session.PlaybackState.ACTION_REWIND;
-import static android.media.session.PlaybackState.ACTION_SEEK_TO;
-import static android.media.session.PlaybackState.ACTION_SET_RATING;
-import static android.media.session.PlaybackState.ACTION_SKIP_TO_NEXT;
-import static android.media.session.PlaybackState.ACTION_SKIP_TO_PREVIOUS;
-import static android.media.session.PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM;
-import static android.media.session.PlaybackState.ACTION_STOP;
-
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadcaster {
 	private static final Logger logger = LoggerFactory.getLogger(ConnectedMediaSessionBroadcaster.class);
@@ -45,10 +26,10 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 	private static final float playbackSpeed = 1.0f;
 
 	@Actions private static final long standardCapabilities =
-		ACTION_PLAY_PAUSE |
-		ACTION_SKIP_TO_NEXT |
-		ACTION_SKIP_TO_PREVIOUS |
-		ACTION_STOP;
+		PlaybackState.ACTION_PLAY_PAUSE |
+		PlaybackState.ACTION_SKIP_TO_NEXT |
+		PlaybackState.ACTION_SKIP_TO_PREVIOUS |
+		PlaybackState.ACTION_STOP;
 
 	private final Context context;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
@@ -71,7 +52,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 	@Override
 	public void setPlaying() {
 		final PlaybackState.Builder builder = new PlaybackState.Builder();
-		capabilities = ACTION_PAUSE | standardCapabilities;
+		capabilities = PlaybackState.ACTION_PAUSE | standardCapabilities;
 		builder.setActions(capabilities);
 		playbackState = PlaybackState.STATE_PLAYING;
 		builder.setState(
@@ -84,7 +65,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 	@Override
 	public void setPaused() {
 		final PlaybackState.Builder builder = new PlaybackState.Builder();
-		capabilities = ACTION_PLAY | standardCapabilities;
+		capabilities = PlaybackState.ACTION_PLAY | standardCapabilities;
 		builder.setActions(capabilities);
 		playbackState = PlaybackState.STATE_PAUSED;
 		builder.setState(
@@ -168,10 +149,19 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 		return null;
 	}
 
-	@IntDef(flag=true, value={ACTION_STOP, ACTION_PAUSE, ACTION_PLAY, ACTION_REWIND,
-		ACTION_SKIP_TO_PREVIOUS, ACTION_SKIP_TO_NEXT, ACTION_FAST_FORWARD, ACTION_SET_RATING,
-		ACTION_SEEK_TO, ACTION_PLAY_PAUSE, ACTION_PLAY_FROM_MEDIA_ID, ACTION_PLAY_FROM_SEARCH,
-		ACTION_SKIP_TO_QUEUE_ITEM, ACTION_PLAY_FROM_URI, ACTION_PREPARE,
-		ACTION_PREPARE_FROM_MEDIA_ID, ACTION_PREPARE_FROM_SEARCH, ACTION_PREPARE_FROM_URI})
+	@IntDef(flag=true, value={
+		PlaybackState.ACTION_STOP,
+		PlaybackState.ACTION_PAUSE,
+		PlaybackState.ACTION_PLAY,
+		PlaybackState.ACTION_REWIND,
+		PlaybackState.ACTION_SKIP_TO_PREVIOUS,
+		PlaybackState.ACTION_SKIP_TO_NEXT,
+		PlaybackState.ACTION_FAST_FORWARD,
+		PlaybackState.ACTION_SET_RATING,
+		PlaybackState.ACTION_SEEK_TO,
+		PlaybackState.ACTION_PLAY_PAUSE,
+		PlaybackState.ACTION_PLAY_FROM_MEDIA_ID,
+		PlaybackState.ACTION_PLAY_FROM_SEARCH,
+		PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM})
 	private @interface Actions {}
 }
