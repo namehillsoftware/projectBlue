@@ -40,17 +40,18 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
 
     private static final class ViewHolder extends BaseMenuViewHolder {
         final LazyViewFinder<ImageButton> addButtonFinder;
+        final FileListItemContainer fileListItemContainer;
+        AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
+        public Promise<Map<String, String>> filePropertiesProvider;
+        final FileNameTextViewSetter fileNameTextViewSetter;
 
-        ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> addButtonFinder) {
+        ViewHolder(final FileListItemContainer fileListItemContainer, FileNameTextViewSetter fileNameTextViewSetter, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> addButtonFinder) {
             super(viewFileDetailsButtonFinder, playButtonFinder);
 
             this.addButtonFinder = addButtonFinder;
             this.fileListItemContainer = fileListItemContainer;
+            this.fileNameTextViewSetter = fileNameTextViewSetter;
         }
-
-        final FileListItemContainer fileListItemContainer;
-        AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public Promise<Map<String, String>> filePropertiesProvider;
 
         final ImageButton getAddButton() {
             return addButtonFinder.findView();
@@ -78,6 +79,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
             notifyOnFlipViewAnimator.setTag(
                     new ViewHolder(
                             fileItemMenu,
+                            new FileNameTextViewSetter(fileItemMenu.findTextView()),
                             new LazyViewFinder<>(fileMenu, R.id.btnViewFileDetails),
                             new LazyViewFinder<>(fileMenu, R.id.btnPlaySong),
                             new LazyViewFinder<>(fileMenu, R.id.btnAddToPlaylist)));
@@ -89,10 +91,10 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
 
         final FileListItemContainer fileListItem = viewHolder.fileListItemContainer;
 
-        final TextView textView = fileListItem.getTextViewFinder();
+        final TextView textView = fileListItem.findTextView();
 
         if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
-        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(serviceFile, textView);
+        viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
 
         textView.setTypeface(null, Typeface.NORMAL);
         nowPlayingFileProvider

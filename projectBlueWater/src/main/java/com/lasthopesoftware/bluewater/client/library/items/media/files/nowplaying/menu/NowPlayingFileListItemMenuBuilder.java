@@ -37,18 +37,20 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
     private static final class ViewHolder extends BaseMenuViewHolder {
 
+        final FileNameTextViewSetter fileNameTextViewSetter;
         private final LazyViewFinder<ImageButton> removeButtonFinder;
-
-        ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
-            super(viewFileDetailsButtonFinder, playButtonFinder);
-
-            this.removeButtonFinder = removeButtonFinder;
-            this.fileListItemContainer = fileListItemContainer;
-        }
 
         final FileListItemContainer fileListItemContainer;
         AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
         public Promise<Map<String, String>> filePropertiesProvider;
+
+        ViewHolder(final FileListItemContainer fileListItemContainer, FileNameTextViewSetter fileNameTextViewSetter, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
+            super(viewFileDetailsButtonFinder, playButtonFinder);
+            this.fileNameTextViewSetter = fileNameTextViewSetter;
+
+            this.removeButtonFinder = removeButtonFinder;
+            this.fileListItemContainer = fileListItemContainer;
+        }
 
 	    final ImageButton getRemoveButton() {
 		    return removeButtonFinder.findView();
@@ -79,6 +81,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
             viewFlipper.setTag(
 		            new ViewHolder(
 				            fileItemMenu,
+                            new FileNameTextViewSetter(fileItemMenu.findTextView()),
 				            new LazyViewFinder<>(fileMenu, R.id.btnViewFileDetails),
 				            new LazyViewFinder<>(fileMenu, R.id.btnPlaySong),
 				            new LazyViewFinder<>(fileMenu, R.id.btnRemoveFromPlaylist)));
@@ -89,10 +92,10 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final FileListItemContainer fileListItem = viewHolder.fileListItemContainer;
 
-        final TextView textView = fileListItem.getTextViewFinder();
+        final TextView textView = fileListItem.findTextView();
 
         if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
-        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(serviceFile, textView);
+        viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
 
         textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
 

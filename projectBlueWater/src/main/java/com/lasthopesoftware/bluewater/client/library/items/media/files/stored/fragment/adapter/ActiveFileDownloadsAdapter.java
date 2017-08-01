@@ -12,15 +12,11 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.AbstractFileListAdapter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 
 import java.util.List;
 
-/**
- * Created by david on 8/23/15.
- */
 public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
 	public ActiveFileDownloadsAdapter(Context context, List<StoredFile> storedFiles) {
@@ -40,7 +36,7 @@ public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 		final ActiveFileDownloadsViewHolder viewHolder = (ActiveFileDownloadsViewHolder)convertView.getTag();
 
 		if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
-		viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(getItem(position), viewHolder.textView);
+		viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(getItem(position));
 
 		return convertView;
 	}

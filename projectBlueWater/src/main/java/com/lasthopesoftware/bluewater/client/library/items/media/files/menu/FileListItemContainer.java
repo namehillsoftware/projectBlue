@@ -36,7 +36,7 @@ public class FileListItemContainer {
         return textContainer;
     }
 
-    public TextView getTextViewFinder() {
+    public TextView findTextView() {
         return textViewFinder.findView();
     }
 

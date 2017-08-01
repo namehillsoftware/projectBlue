@@ -21,82 +21,90 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class FileNameTextViewSetter implements OneParameterAction<Messenger<Map<String, String>>> {
+public class FileNameTextViewSetter {
 
-	private static final Lock lock = new ReentrantLock();
+	private final Lock lock = new ReentrantLock();
 
 	private final TextView textView;
 	private final Handler handler;
-	private final ServiceFile serviceFile;
 
-	public static Promise<Map<String, String>> startNew(ServiceFile serviceFile, TextView textView) {
+	public FileNameTextViewSetter(TextView textView) {
+		this.textView = textView;
+		this.handler = new Handler(textView.getContext().getMainLooper());
+	}
+
+	public Promise<Map<String, String>> promiseTextViewUpdate(ServiceFile serviceFile) {
 		lock.lock();
 
 		textView.setText(R.string.lbl_loading);
-		final Promise<Map<String, String>> returnPromise = new Promise<>(new FileNameTextViewSetter(textView, serviceFile));
-
-		returnPromise
-			.then(m -> {
-				lock.unlock();
-				return null;
-			})
-			.excuse(r -> {
-				lock.unlock();
-				return null;
-			});
-
-		return returnPromise;
+		return new Promise<>(new LockedTextViewTask(lock, textView, handler, serviceFile));
 	}
 
-	private FileNameTextViewSetter(TextView textView, ServiceFile serviceFile) {
-		this.textView = textView;
-		this.handler = new Handler(textView.getContext().getMainLooper());
-		this.serviceFile = serviceFile;
-	}
+	private static class LockedTextViewTask implements OneParameterAction<Messenger<Map<String, String>>> {
 
-	@Override
-	public void runWith(Messenger<Map<String, String>> messenger) {
-		final CancellationProxy cancellationProxy = new CancellationProxy();
-		messenger.cancellationRequested(cancellationProxy);
+		private final Lock activeLock;
+		private final TextView textView;
+		private final Handler handler;
+		private final ServiceFile serviceFile;
 
-		if (cancellationProxy.isCancelled()) {
-			messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
-			return;
+		LockedTextViewTask(Lock activeLock, TextView textView, Handler handler, ServiceFile serviceFile) {
+			this.activeLock = activeLock;
+			this.textView = textView;
+			this.handler = handler;
+			this.serviceFile = serviceFile;
 		}
 
-		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+		@Override
+		public void runWith(Messenger<Map<String, String>> messenger) {
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			messenger.cancellationRequested(cancellationProxy);
 
-		if (cancellationProxy.isCancelled()) {
-			messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
-			return;
+			if (cancellationProxy.isCancelled()) {
+				messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
+				activeLock.unlock();
+				return;
+			}
+
+			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+
+			if (cancellationProxy.isCancelled()) {
+				messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
+				activeLock.unlock();
+				return;
+			}
+
+			final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
+
+			cancellationProxy.doCancel(filePropertiesPromise);
+
+			final Promise<Map<String, String>> textViewUpdatePromise =
+				filePropertiesPromise.eventually(properties -> new DispatchedPromise<>(ct -> {
+					final String fileName = properties.get(FilePropertiesProvider.NAME);
+
+					if (fileName != null && !ct.isCancelled())
+						textView.setText(fileName);
+
+					return properties;
+				}, handler));
+
+			cancellationProxy.doCancel(textViewUpdatePromise);
+
+			textViewUpdatePromise
+				.then(props -> {
+					if (cancellationProxy.isCancelled())
+						textView.setText(R.string.lbl_loading);
+
+					messenger.sendResolution(props);
+					activeLock.unlock();
+					return null;
+				})
+				.excuse(e -> {
+					messenger.sendRejection(e);
+					activeLock.unlock();
+					return null;
+				});
 		}
-
-		final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
-
-		cancellationProxy.doCancel(filePropertiesPromise);
-
-		final Promise<Map<String, String>> textViewUpdatePromise =
-			filePropertiesPromise.eventually(properties -> new DispatchedPromise<>(ct -> {
-				final String fileName = properties.get(FilePropertiesProvider.NAME);
-
-				if (fileName != null && !ct.isCancelled())
-					textView.setText(fileName);
-
-				return properties;
-			}, handler));
-
-		cancellationProxy.doCancel(textViewUpdatePromise);
-
-		textViewUpdatePromise
-			.then(props -> {
-				messenger.sendResolution(props);
-				return null;
-			})
-			.excuse(e -> {
-				messenger.sendRejection(e);
-				return null;
-			});
 	}
 }
