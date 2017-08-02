@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
@@ -25,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
@@ -136,6 +138,10 @@ public class MainApplication extends Application {
 		localBroadcastManager.registerReceiver(
 			new SessionConnectionRegistrationsMaintainer(localBroadcastManager, connectionDependentReceiverRegistrations),
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) return;
+
+		registerReceiver(new RemoteControlReceiver(), new IntentFilter("android.intent.action.MEDIA_BUTTON"));
 	}
 
 	private void initializeLogging() {
