@@ -8,7 +8,7 @@ import android.support.annotation.RequiresApi;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class MediaSessionCallbackReceiver extends MediaSession.Callback {
+public final class MediaSessionCallbackReceiver extends MediaSession.Callback {
 	private final Context context;
 
 	public MediaSessionCallbackReceiver(Context context) {

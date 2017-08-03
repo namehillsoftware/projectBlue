@@ -169,7 +169,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	/* End streamer intent helpers */
 
 	private static final String wifiLockSvcName =  MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "wifiLockSvcName");
-	private static final String mediaSessionCompatTag = MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "mediaSessionCompatTag");
+	private static final String mediaSessionTag = MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "mediaSessionTag");
 
 	private static final int notificationId = 42;
 	private static int startId;
@@ -202,20 +202,25 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return remoteControlClient;
 		}
 	};
-	private final ILazy<MediaSession> mediaSessionCompat =
+	private final ILazy<MediaSession> lazyMediaSession =
 		new AbstractSynchronousLazy<MediaSession>() {
 			@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 			@Override
 			protected MediaSession initialize() throws Exception {
 				final MediaSession newMediaSession = new MediaSession(
 					PlaybackService.this,
-					mediaSessionCompatTag);
+					mediaSessionTag);
 
 				newMediaSession.setFlags(
 					MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
 					MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
 				newMediaSession.setCallback(new MediaSessionCallbackReceiver(PlaybackService.this));
+
+				final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+				mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
+				final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(PlaybackService.this, 0, mediaButtonIntent, 0);
+				newMediaSession.setMediaButtonReceiver(mediaPendingIntent);
 
 				return newMediaSession;
 			}
@@ -334,7 +339,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	
 	private void registerRemoteClientControl() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			mediaSessionCompat.getObject().setActive(true);
+			lazyMediaSession.getObject().setActive(true);
 			return;
 		}
 
@@ -476,7 +481,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					this,
 					cachedFilePropertiesProvider,
 					imageProvider,
-					mediaSessionCompat.getObject()) :
+					lazyMediaSession.getObject()) :
 				new ConnectedRemoteControlClientBroadcaster(
 					this,
 					cachedFilePropertiesProvider,
@@ -862,9 +867,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (remoteControlClient.isInitialized())
 			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mediaSessionCompat.isInitialized()) {
-			mediaSessionCompat.getObject().setActive(false);
-			mediaSessionCompat.getObject().release();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isInitialized()) {
+			lazyMediaSession.getObject().setActive(false);
+			lazyMediaSession.getObject().release();
 		}
 
 		if (remoteClientBitmap != null) {
