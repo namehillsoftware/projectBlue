@@ -50,6 +50,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DispatchedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -87,11 +88,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<RatingBar> songRating = new LazyViewFinder<>(this, R.id.rbSongRating);
 	private final LazyViewFinder<RelativeLayout> contentView = new LazyViewFinder<>(this, R.id.viewNowPlayingRelativeLayout);
 	private final LazyViewFinder<ProgressBar> songProgressBar = new LazyViewFinder<>(this, R.id.pbNowPlaying);
-	private final LazyViewFinder<ProgressBar> loadingImg = new LazyViewFinder<>(this, R.id.pbLoadingImg);
 	private final LazyViewFinder<ImageView> nowPlayingImageViewFinder = new LazyViewFinder<>(this, R.id.imgNowPlaying);
 	private final LazyViewFinder<TextView> nowPlayingArtist = new LazyViewFinder<>(this, R.id.tvSongArtist);
 	private final LazyViewFinder<ImageButton> isScreenKeptOnButton = new LazyViewFinder<>(this, R.id.isScreenKeptOnButton);
 	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
+	private final LazyViewFinder<ImageView> nowPlayingImageLoading = new LazyViewFinder<>(this, R.id.imgNowPlayingLoading);
+	private final LazyViewFinder<RelativeLayout> nowPlayingImageLoadingRelativeLayout = new LazyViewFinder<>(this, R.id.rlNowPlayingImgLoading);
 	private final ILazy<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
 		protected NowPlayingToggledVisibilityControls initialize() throws Exception {
@@ -111,7 +113,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 					libraryRepository);
 		}
 	};
-	private final Lazy<DefaultImageProvider> defaultImageProvider = new Lazy<>(() -> new DefaultImageProvider(this));
 
 	private TimerTask timerTask;
 
@@ -206,6 +207,19 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionBroadcaster.trackPositionUpdate));
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
+
+		new DefaultImageProvider(this)
+			.promiseFileBitmap()
+			.eventually(bitmap -> new DispatchedPromise<>(() -> {
+				final ImageView nowPlayingImageLoadingView = nowPlayingImageLoading.findView();
+				nowPlayingImageLoadingView.setImageBitmap(bitmap);
+				nowPlayingImageLoadingView.setScaleType(ScaleType.CENTER_CROP);
+
+				nowPlayingImageLoadingView.setVisibility(View.VISIBLE);
+				findViewById(R.id.pbLoadingImg).setVisibility(View.GONE);
+
+				return null;
+			}, messageHandler.getObject()));
 		
 		playButton.findView().setOnClickListener(v -> {
 			if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
@@ -390,7 +404,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					getFileImageTask.cancel();
 				
 				nowPlayingImage.setVisibility(View.INVISIBLE);
-				loadingImg.findView().setVisibility(View.VISIBLE);
+				nowPlayingImageLoadingRelativeLayout.findView().setVisibility(View.VISIBLE);
 
 				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
@@ -400,10 +414,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 						.promiseFileBitmap(serviceFile);
 
 				getFileImageTask
-					.eventually(bitmap ->
-						bitmap != null
-							? new Promise<>(bitmap)
-							: defaultImageProvider.getObject().promiseFileBitmap())
 					.then(Dispatch.toContext(bitmap -> {
 						nowPlayingImage.setImageBitmap(bitmap);
 
@@ -524,7 +534,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	
 	private void displayImageBitmap() {
 		nowPlayingImageViewFinder.findView().setScaleType(ScaleType.CENTER_CROP);
-		loadingImg.findView().setVisibility(View.INVISIBLE);
+		nowPlayingImageLoadingRelativeLayout.findView().setVisibility(View.INVISIBLE);
 		nowPlayingImageViewFinder.findView().setVisibility(View.VISIBLE);
 	}
 

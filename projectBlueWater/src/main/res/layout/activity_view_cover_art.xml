@@ -11,15 +11,31 @@
 	    android:layout_alignParentLeft="true"
 	    android:layout_alignParentTop="true"
 	    android:contentDescription="@string/img_now_playing" />
-	     
-	 <ProgressBar
-	     android:id="@+id/pbLoadingImg"
-	     style="?android:attr/progressBarStyleLarge"
-	     android:layout_width="match_parent"
-	     android:layout_height="wrap_content"
-	     android:layout_centerHorizontal="true"
-	     android:layout_centerVertical="true"
-	     android:indeterminate="true"
-	     android:visibility="invisible" />
-	 
+
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:id="@+id/rlNowPlayingImgLoading"
+		android:visibility="invisible">
+
+		<ImageView
+			android:id="@+id/imgNowPlayingLoading"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_alignParentStart="true"
+			android:layout_alignParentLeft="true"
+			android:layout_alignParentTop="true"
+			android:contentDescription="@string/img_now_playing_loading" />
+
+		<ProgressBar
+			android:id="@+id/pbLoadingImg"
+			style="?android:attr/progressBarStyleLarge"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_centerHorizontal="true"
+			android:layout_centerVertical="true"
+			android:indeterminate="true"
+			android:visibility="visible" />
+
+	</RelativeLayout>
  </RelativeLayout>

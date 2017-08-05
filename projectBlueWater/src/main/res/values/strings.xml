@@ -17,6 +17,7 @@
     <string name="lbl_song_title">Now Playing</string>
     <string name="lbl_song_artist">Now Playing Artist</string>
     <string name="img_now_playing">Now Playing Album Image</string>
+    <string name="img_now_playing_loading">Now Playing Album Image Loading</string>
     <string name="btn_view_files">View Files</string>
     <string name="btn_shuffle_files">Shuffle</string>
     <string name="btn_repeat_playlist">Repeat Playlist</string>

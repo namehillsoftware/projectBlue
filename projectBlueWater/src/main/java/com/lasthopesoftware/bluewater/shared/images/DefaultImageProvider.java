@@ -16,11 +16,11 @@ import java.util.concurrent.Executors;
 public class DefaultImageProvider {
 
 	private static final ExecutorService defaultImageAccessExecutor = Executors.newSingleThreadExecutor();
-
-	private static Bitmap fillerBitmap;
 	private static final Object fillerBitmapSyncObj = new Object();
+	
+	private static Bitmap fillerBitmap;
 
-	private Context context;
+	private final Context context;
 
 	public DefaultImageProvider(Context context) {
 		this.context = context;
