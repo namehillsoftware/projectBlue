@@ -79,6 +79,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 		context.startActivity(viewIntent);
 	}
 
+
+	private static ViewStructure viewStructure;
+
+	private static final String fileNotFoundError = "The serviceFile %1s was not found!";
+
+	private static boolean isScreenKeptOn;
+
+	private static Bitmap nowPlayingBackgroundBitmap;
+
 	private final ILazy<Handler> messageHandler = new Lazy<>(() -> new Handler(getMainLooper()));
 
 	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
@@ -91,7 +100,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<ImageButton> isScreenKeptOnButton = new LazyViewFinder<>(this, R.id.isScreenKeptOnButton);
 	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
 	private final LazyViewFinder<ImageView> nowPlayingImageLoading = new LazyViewFinder<>(this, R.id.imgNowPlayingLoading);
-	private final LazyViewFinder<RelativeLayout> nowPlayingImageLoadingRelativeLayout = new LazyViewFinder<>(this, R.id.rlNowPlayingImgLoading);
 	private final ILazy<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
 		protected NowPlayingToggledVisibilityControls initialize() throws Exception {
@@ -112,17 +120,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 	};
 
-	private final ILazy<Promise<Bitmap>> promisedDefaultBitmap = new Lazy<>(() -> new DefaultImageProvider(this).promiseFileBitmap());
-
 	private TimerTask timerTask;
 
 	private LocalBroadcastManager localBroadcastManager;
-
-	private static ViewStructure viewStructure;
-
-	private static final String fileNotFoundError = "The serviceFile %1s was not found!";
-
-	private static boolean isScreenKeptOn;
 
 	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(NowPlayingActivity.this);
 
@@ -217,19 +217,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 
-		promisedDefaultBitmap
-			.getObject()
-			.eventually(bitmap -> new DispatchedPromise<>(() -> {
-				final ImageView nowPlayingImageLoadingView = nowPlayingImageLoading.findView();
-				nowPlayingImageLoadingView.setImageBitmap(bitmap);
-				nowPlayingImageLoadingView.setScaleType(ScaleType.CENTER_CROP);
+		setNowPlayingBackgroundBitmap();
 
-				nowPlayingImageLoadingView.setVisibility(View.VISIBLE);
-				findViewById(R.id.pbLoadingImg).setVisibility(View.GONE);
-
-				return null;
-			}, messageHandler.getObject()));
-		
 		playButton.findView().setOnClickListener(v -> {
 			if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
 			PlaybackService.play(v.getContext());
@@ -307,6 +296,24 @@ public class NowPlayingActivity extends AppCompatActivity {
 		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) initializeView();
 
 		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	private void setNowPlayingBackgroundBitmap() {
+		if (nowPlayingBackgroundBitmap != null) {
+			final ImageView nowPlayingImageLoadingView = nowPlayingImageLoading.findView();
+			nowPlayingImageLoadingView.setImageBitmap(nowPlayingBackgroundBitmap);
+			nowPlayingImageLoadingView.setScaleType(ScaleType.CENTER_CROP);
+			return;
+		}
+
+		new DefaultImageProvider(this).promiseFileBitmap()
+			.eventually(bitmap -> new DispatchedPromise<>(() -> {
+				nowPlayingBackgroundBitmap = bitmap;
+
+				setNowPlayingBackgroundBitmap();
+
+				return null;
+			}, messageHandler.getObject()));
 	}
 
 	private void initializeView() {
@@ -408,32 +415,31 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
 
 		nowPlayingImage.setVisibility(View.INVISIBLE);
-			nowPlayingImageLoadingRelativeLayout.findView().setVisibility(View.VISIBLE);
 
-			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
-			viewStructure.promisedNowPlayingImage =
-				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
-					.promiseFileBitmap(serviceFile);
+		viewStructure.promisedNowPlayingImage =
+			new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
+				.promiseFileBitmap(serviceFile);
 
-			viewStructure.promisedNowPlayingImage
-				.then(Dispatch.toHandler(bitmap -> {
-					nowPlayingImage.setImageBitmap(bitmap);
+		viewStructure.promisedNowPlayingImage
+			.then(Dispatch.toHandler(bitmap -> {
+				nowPlayingImage.setImageBitmap(bitmap);
 
-					if (bitmap != null)
-						displayImageBitmap();
+				if (bitmap != null)
+					displayImageBitmap();
 
-					return null;
-				}, messageHandler.getObject()))
-				.excuse(runCarelessly(e -> {
-					if (e instanceof CancellationException) {
-						logger.info("Bitmap retrieval cancelled", e);
-						return;
-					}
+				return null;
+			}, messageHandler.getObject()))
+			.excuse(runCarelessly(e -> {
+				if (e instanceof CancellationException) {
+					logger.info("Bitmap retrieval cancelled", e);
+					return;
+				}
 
-					logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
-				}));
+				logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
+			}));
 
 		if (viewStructure.fileProperties != null) {
 			setFileProperties(serviceFile, initialFilePosition, viewStructure.fileProperties);
@@ -527,7 +533,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 	
 	private void displayImageBitmap() {
 		nowPlayingImageViewFinder.findView().setScaleType(ScaleType.CENTER_CROP);
-		nowPlayingImageLoadingRelativeLayout.findView().setVisibility(View.INVISIBLE);
 		nowPlayingImageViewFinder.findView().setVisibility(View.VISIBLE);
 	}
 
@@ -589,12 +594,5 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (viewStructure != null)
 			viewStructure.release();
-
-		if (promisedDefaultBitmap.isInitialized()) {
-			promisedDefaultBitmap.getObject().then(bitmap -> {
-				bitmap.recycle();
-				return null;
-			});
-		}
 	}
 }

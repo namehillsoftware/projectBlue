@@ -27,24 +27,22 @@ public class DefaultImageProvider {
 	}
 
 	public Promise<Bitmap> promiseFileBitmap() {
-		return new QueuedPromise<>(this::getFillerBitmap, defaultImageAccessExecutor);
+		return fillerBitmap != null
+			? new Promise<>(getBitmapCopy(fillerBitmap))
+			: new QueuedPromise<>(this::getFillerBitmap, defaultImageAccessExecutor);
 	}
 
 	private Bitmap getFillerBitmap() {
 		if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
 
-		synchronized (fillerBitmapSyncObj) {
-			if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
+		fillerBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.wave_background);
 
-			fillerBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.wave_background);
+		final DisplayMetrics dm = context.getResources().getDisplayMetrics();
+		int maxSize = Math.max(dm.heightPixels, dm.widthPixels);
 
-			final DisplayMetrics dm = context.getResources().getDisplayMetrics();
-			int maxSize = Math.max(dm.heightPixels, dm.widthPixels);
+		fillerBitmap = Bitmap.createScaledBitmap(fillerBitmap, maxSize, maxSize, false);
 
-			fillerBitmap = Bitmap.createScaledBitmap(fillerBitmap, maxSize, maxSize, false);
-
-			return getBitmapCopy(fillerBitmap);
-		}
+		return getBitmapCopy(fillerBitmap);
 	}
 
 	private static Bitmap getBitmapCopy(final Bitmap src) {
