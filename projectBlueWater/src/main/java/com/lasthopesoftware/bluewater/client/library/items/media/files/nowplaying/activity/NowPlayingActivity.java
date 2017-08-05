@@ -100,6 +100,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<ImageButton> isScreenKeptOnButton = new LazyViewFinder<>(this, R.id.isScreenKeptOnButton);
 	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
 	private final LazyViewFinder<ImageView> nowPlayingImageLoading = new LazyViewFinder<>(this, R.id.imgNowPlayingLoading);
+	private final LazyViewFinder<ProgressBar> loadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingImg);
 	private final ILazy<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
 		protected NowPlayingToggledVisibilityControls initialize() throws Exception {
@@ -414,14 +415,17 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
 
+		loadingProgressBar.findView().setVisibility(View.VISIBLE);
 		nowPlayingImage.setVisibility(View.INVISIBLE);
 
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
-		viewStructure.promisedNowPlayingImage =
-			new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
-				.promiseFileBitmap(serviceFile);
+		if (viewStructure.promisedNowPlayingImage == null) {
+			viewStructure.promisedNowPlayingImage =
+				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
+					.promiseFileBitmap(serviceFile);
+		}
 
 		viewStructure.promisedNowPlayingImage
 			.then(Dispatch.toHandler(bitmap -> {
@@ -532,8 +536,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 	
 	private void displayImageBitmap() {
-		nowPlayingImageViewFinder.findView().setScaleType(ScaleType.CENTER_CROP);
-		nowPlayingImageViewFinder.findView().setVisibility(View.VISIBLE);
+		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
+		nowPlayingImage.setScaleType(ScaleType.CENTER_CROP);
+		loadingProgressBar.findView().setVisibility(View.INVISIBLE);
+		nowPlayingImage.setVisibility(View.VISIBLE);
 	}
 
 	private void showNowPlayingControls() {
