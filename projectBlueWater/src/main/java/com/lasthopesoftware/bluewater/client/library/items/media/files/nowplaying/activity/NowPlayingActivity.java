@@ -73,8 +73,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
-	private static Promise<Bitmap> getFileImageTask;
-
 	public static void startNowPlayingActivity(final Context context) {
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -113,6 +111,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 					libraryRepository);
 		}
 	};
+
+	private final ILazy<Promise<Bitmap>> promisedDefaultBitmap = new Lazy<>(() -> new DefaultImageProvider(this).promiseFileBitmap());
 
 	private TimerTask timerTask;
 
@@ -217,8 +217,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
 
-		new DefaultImageProvider(this)
-			.promiseFileBitmap()
+		promisedDefaultBitmap
+			.getObject()
 			.eventually(bitmap -> new DispatchedPromise<>(() -> {
 				final ImageView nowPlayingImageLoadingView = nowPlayingImageLoading.findView();
 				nowPlayingImageLoadingView.setImageBitmap(bitmap);
@@ -589,5 +589,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (viewStructure != null)
 			viewStructure.release();
+
+		if (promisedDefaultBitmap.isInitialized()) {
+			promisedDefaultBitmap.getObject().then(bitmap -> {
+				bitmap.recycle();
+				return null;
+			});
+		}
 	}
 }
