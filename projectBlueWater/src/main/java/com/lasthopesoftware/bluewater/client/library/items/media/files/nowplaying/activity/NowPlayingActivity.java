@@ -418,14 +418,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 					.promiseFileBitmap(serviceFile);
 
 			viewStructure.promisedNowPlayingImage
-				.then(Dispatch.toContext(bitmap -> {
+				.then(Dispatch.toHandler(bitmap -> {
 					nowPlayingImage.setImageBitmap(bitmap);
 
 					if (bitmap != null)
 						displayImageBitmap();
 
 					return null;
-				}, this))
+				}, messageHandler.getObject()))
 				.excuse(runCarelessly(e -> {
 					if (e instanceof CancellationException) {
 						logger.info("Bitmap retrieval cancelled", e);
