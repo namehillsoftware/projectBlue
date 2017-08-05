@@ -171,7 +171,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final UrlKeyHolder<Integer> urlKeyHolder;
 		final ServiceFile serviceFile;
 		Map<String, String> fileProperties;
-		Bitmap nowPlayingImage;
+		Promise<Bitmap> promisedNowPlayingImage;
 		int filePosition;
 		int fileDuration;
 		
@@ -181,8 +181,17 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 		
 		void release() {
-			if (nowPlayingImage != null)
-				nowPlayingImage.recycle();
+			if (promisedNowPlayingImage == null) return;
+
+			promisedNowPlayingImage
+				.then(bitmap -> {
+					if (bitmap != null)
+						bitmap.recycle();
+
+					return null;
+				});
+
+			promisedNowPlayingImage.cancel();
 		}
 	}
 
@@ -397,50 +406,34 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final ViewStructure viewStructure = NowPlayingActivity.viewStructure;
 
 		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
-		if (viewStructure.nowPlayingImage == null) {
-			try {				
-				// Cancel the getFileImageTask if it is already in progress
-				if (getFileImageTask != null)
-					getFileImageTask.cancel();
-				
-				nowPlayingImage.setVisibility(View.INVISIBLE);
-				nowPlayingImageLoadingRelativeLayout.findView().setVisibility(View.VISIBLE);
 
-				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+		nowPlayingImage.setVisibility(View.INVISIBLE);
+			nowPlayingImageLoadingRelativeLayout.findView().setVisibility(View.VISIBLE);
 
-				getFileImageTask =
-					new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
-						.promiseFileBitmap(serviceFile);
+			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
-				getFileImageTask
-					.then(Dispatch.toContext(bitmap -> {
-						nowPlayingImage.setImageBitmap(bitmap);
+			viewStructure.promisedNowPlayingImage =
+				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
+					.promiseFileBitmap(serviceFile);
 
-						if (viewStructure.nowPlayingImage != null)
-							viewStructure.nowPlayingImage.recycle();
-						viewStructure.nowPlayingImage = bitmap;
+			viewStructure.promisedNowPlayingImage
+				.then(Dispatch.toContext(bitmap -> {
+					nowPlayingImage.setImageBitmap(bitmap);
 
+					if (bitmap != null)
 						displayImageBitmap();
 
-						return null;
-					}, this))
-					.excuse(runCarelessly(e -> {
-						if (e instanceof CancellationException) {
-							logger.info("Bitmap retrieval cancelled", e);
-							return;
-						}
+					return null;
+				}, this))
+				.excuse(runCarelessly(e -> {
+					if (e instanceof CancellationException) {
+						logger.info("Bitmap retrieval cancelled", e);
+						return;
+					}
 
-						logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
-					}));
-				
-			} catch (Exception e) {
-				logger.error(e.toString(), e);
-			}
-		} else {
-			nowPlayingImage.setImageBitmap(viewStructure.nowPlayingImage);
-			displayImageBitmap();
-		}
+					logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
+				}));
 
 		if (viewStructure.fileProperties != null) {
 			setFileProperties(serviceFile, initialFilePosition, viewStructure.fileProperties);
@@ -593,5 +586,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.unregisterReceiver(onTrackPositionChanged);
 
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
+
+		if (viewStructure != null)
+			viewStructure.release();
 	}
 }
