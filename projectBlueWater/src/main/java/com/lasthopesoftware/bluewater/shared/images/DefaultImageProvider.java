@@ -17,7 +17,7 @@ public class DefaultImageProvider {
 
 	private static final ExecutorService defaultImageAccessExecutor = Executors.newSingleThreadExecutor();
 	private static final Object fillerBitmapSyncObj = new Object();
-	
+
 	private static Bitmap fillerBitmap;
 
 	private final Context context;
@@ -31,6 +31,8 @@ public class DefaultImageProvider {
 	}
 
 	private Bitmap getFillerBitmap() {
+		if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
+
 		synchronized (fillerBitmapSyncObj) {
 			if (fillerBitmap != null) return getBitmapCopy(fillerBitmap);
 
