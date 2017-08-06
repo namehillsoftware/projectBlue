@@ -415,17 +415,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 		loadingProgressBar.findView().setVisibility(View.VISIBLE);
 		nowPlayingImage.setVisibility(View.INVISIBLE);
 
-		if (viewStructure.nowPlayingImageResult != null) {
-			loadingProgressBar.findView().setVisibility(View.INVISIBLE);
-
-			if (!viewStructure.nowPlayingImageResult.isPresent()) return;
-
-			nowPlayingImage.setImageBitmap(viewStructure.nowPlayingImageResult.get());
-			displayImageBitmap();
-
-			return;
-		}
-
 		if (viewStructure.promisedNowPlayingImage == null) {
 			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
@@ -436,17 +425,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 
 		viewStructure.promisedNowPlayingImage
-			.then(Dispatch.toHandler(bitmap -> {
-				viewStructure.nowPlayingImageResult = Optional.ofNullable(bitmap);
+			.eventually(bitmap -> {
+				if (messageHandler.getObject().getLooper().getThread() == Thread.currentThread()) {
+					return new Promise<>(setNowPlayingImage(bitmap));
+				}
 
-				nowPlayingImage.setImageBitmap(bitmap);
-
-				loadingProgressBar.findView().setVisibility(View.INVISIBLE);
-				if (bitmap != null)
-					displayImageBitmap();
-
-				return null;
-			}, messageHandler.getObject()))
+				return new DispatchedPromise<>(() -> setNowPlayingImage(bitmap), messageHandler.getObject());
+			})
 			.excuse(runCarelessly(e -> {
 				if (e instanceof CancellationException) {
 					logger.info("Bitmap retrieval cancelled", e);
@@ -455,6 +440,18 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
 			}));
+	}
+
+	private Void setNowPlayingImage(Bitmap bitmap) {
+		viewStructure.nowPlayingImageResult = Optional.ofNullable(bitmap);
+
+		nowPlayingImageViewFinder.findView().setImageBitmap(bitmap);
+
+		loadingProgressBar.findView().setVisibility(View.INVISIBLE);
+		if (bitmap != null)
+			displayImageBitmap();
+
+		return null;
 	}
 
 	private void setFileProperties(final ServiceFile serviceFile, final int initialFilePosition, Map<String, String> fileProperties) {
