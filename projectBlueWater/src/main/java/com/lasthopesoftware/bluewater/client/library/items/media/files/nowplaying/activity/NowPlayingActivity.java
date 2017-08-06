@@ -415,15 +415,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 		loadingProgressBar.findView().setVisibility(View.VISIBLE);
 		nowPlayingImage.setVisibility(View.INVISIBLE);
 
-		if (viewStructure.promisedNowPlayingImage == null) {
-			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-
-			viewStructure.promisedNowPlayingImage =
-				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
-					.promiseFileBitmap(serviceFile);
-		}
-
 		if (viewStructure.nowPlayingImageResult != null) {
 			loadingProgressBar.findView().setVisibility(View.INVISIBLE);
 
@@ -433,6 +424,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 			displayImageBitmap();
 
 			return;
+		}
+
+		if (viewStructure.promisedNowPlayingImage == null) {
+			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+
+			viewStructure.promisedNowPlayingImage =
+				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
+					.promiseFileBitmap(serviceFile);
 		}
 
 		viewStructure.promisedNowPlayingImage
