@@ -25,7 +25,6 @@ import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.annimon.stream.Optional;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
@@ -443,8 +442,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 
 	private Void setNowPlayingImage(Bitmap bitmap) {
-		viewStructure.nowPlayingImageResult = Optional.ofNullable(bitmap);
-
 		nowPlayingImageViewFinder.findView().setImageBitmap(bitmap);
 
 		loadingProgressBar.findView().setVisibility(View.INVISIBLE);
@@ -598,7 +595,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final ServiceFile serviceFile;
 		Map<String, String> fileProperties;
 		Promise<Bitmap> promisedNowPlayingImage;
-		Optional<Bitmap> nowPlayingImageResult;
 		int filePosition;
 		int fileDuration;
 
