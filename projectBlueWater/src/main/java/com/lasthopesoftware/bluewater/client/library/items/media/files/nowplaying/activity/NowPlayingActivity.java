@@ -25,6 +25,7 @@ import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.annimon.stream.Optional;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
@@ -80,11 +81,11 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 
 
-	private static ViewStructure viewStructure;
-
 	private static final String fileNotFoundError = "The serviceFile %1s was not found!";
 
 	private static boolean isScreenKeptOn;
+
+	private static ViewStructure viewStructure;
 
 	private static Bitmap nowPlayingBackgroundBitmap;
 
@@ -120,11 +121,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 					libraryRepository);
 		}
 	};
-
-	private TimerTask timerTask;
-
-	private LocalBroadcastManager localBroadcastManager;
-
 	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(NowPlayingActivity.this);
 
 	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
@@ -168,33 +164,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 	};
 
-	private static class ViewStructure {
-		final UrlKeyHolder<Integer> urlKeyHolder;
-		final ServiceFile serviceFile;
-		Map<String, String> fileProperties;
-		Promise<Bitmap> promisedNowPlayingImage;
-		int filePosition;
-		int fileDuration;
-		
-		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, ServiceFile serviceFile) {
-			this.urlKeyHolder = urlKeyHolder;
-			this.serviceFile = serviceFile;
-		}
-		
-		void release() {
-			if (promisedNowPlayingImage == null) return;
+	private TimerTask timerTask;
 
-			promisedNowPlayingImage
-				.then(bitmap -> {
-					if (bitmap != null)
-						bitmap.recycle();
-
-					return null;
-				});
-
-			promisedNowPlayingImage.cancel();
-		}
-	}
+	private LocalBroadcastManager localBroadcastManager;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -411,7 +383,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		if (viewStructure == null)
 			viewStructure = new ViewStructure(urlKeyHolder, serviceFile);
 		
-		final ViewStructure viewStructure = NowPlayingActivity.viewStructure;
+		final ViewStructure localViewStructure = viewStructure;
 
 		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
 
@@ -421,32 +393,39 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
-		if (viewStructure.promisedNowPlayingImage == null) {
-			viewStructure.promisedNowPlayingImage =
+		if (localViewStructure.promisedNowPlayingImage == null) {
+			localViewStructure.promisedNowPlayingImage =
 				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
 					.promiseFileBitmap(serviceFile);
 		}
 
-		viewStructure.promisedNowPlayingImage
-			.then(Dispatch.toHandler(bitmap -> {
-				nowPlayingImage.setImageBitmap(bitmap);
+		if (localViewStructure.nowPlayingImageResult == null) {
+			localViewStructure.promisedNowPlayingImage
+				.then(Dispatch.toHandler(bitmap -> {
+					localViewStructure.nowPlayingImageResult = Optional.ofNullable(bitmap);
 
-				if (bitmap != null)
-					displayImageBitmap();
+					nowPlayingImage.setImageBitmap(bitmap);
 
-				return null;
-			}, messageHandler.getObject()))
-			.excuse(runCarelessly(e -> {
-				if (e instanceof CancellationException) {
-					logger.info("Bitmap retrieval cancelled", e);
-					return;
-				}
+					if (bitmap != null)
+						displayImageBitmap();
 
-				logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
-			}));
+					return null;
+				}, messageHandler.getObject()))
+				.excuse(runCarelessly(e -> {
+					if (e instanceof CancellationException) {
+						logger.info("Bitmap retrieval cancelled", e);
+						return;
+					}
 
-		if (viewStructure.fileProperties != null) {
-			setFileProperties(serviceFile, initialFilePosition, viewStructure.fileProperties);
+					logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
+				}));
+		} else if (localViewStructure.nowPlayingImageResult.isPresent()) {
+			nowPlayingImage.setImageBitmap(localViewStructure.nowPlayingImageResult.get());
+			displayImageBitmap();
+		}
+
+		if (localViewStructure.fileProperties != null) {
+			setFileProperties(serviceFile, initialFilePosition, localViewStructure.fileProperties);
 			return;
 		}
 
@@ -456,7 +435,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		filePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
 			.then(Dispatch.toHandler(runCarelessly(fileProperties -> {
-				viewStructure.fileProperties = fileProperties;
+				localViewStructure.fileProperties = fileProperties;
 				setFileProperties(serviceFile, initialFilePosition, fileProperties);
 			}), messageHandler.getObject()))
 			.excuse(Dispatch.toHandler(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()));
@@ -567,7 +546,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 	
 	private void resetViewOnReconnect(final ServiceFile serviceFile, final int position) {
-		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> setView(serviceFile, position));
+		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> {
+			if (viewStructure != null && serviceFile.equals(viewStructure.serviceFile))
+				setView(serviceFile, position);
+		});
 		WaitForConnectionDialog.show(this);
 	}
 
@@ -597,5 +579,34 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.unregisterReceiver(onTrackPositionChanged);
 
 		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
+	}
+
+	private static class ViewStructure {
+		final UrlKeyHolder<Integer> urlKeyHolder;
+		final ServiceFile serviceFile;
+		Map<String, String> fileProperties;
+		Promise<Bitmap> promisedNowPlayingImage;
+		Optional<Bitmap> nowPlayingImageResult;
+		int filePosition;
+		int fileDuration;
+
+		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, ServiceFile serviceFile) {
+			this.urlKeyHolder = urlKeyHolder;
+			this.serviceFile = serviceFile;
+		}
+
+		void release() {
+			if (promisedNowPlayingImage == null) return;
+
+			promisedNowPlayingImage
+				.then(bitmap -> {
+					if (bitmap != null)
+						bitmap.recycle();
+
+					return null;
+				});
+
+			promisedNowPlayingImage.cancel();
+		}
 	}
 }
