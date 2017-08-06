@@ -390,39 +390,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		loadingProgressBar.findView().setVisibility(View.VISIBLE);
 		nowPlayingImage.setVisibility(View.INVISIBLE);
 
-		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-
-		if (localViewStructure.promisedNowPlayingImage == null) {
-			localViewStructure.promisedNowPlayingImage =
-				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
-					.promiseFileBitmap(serviceFile);
-		}
-
-		if (localViewStructure.nowPlayingImageResult == null) {
-			localViewStructure.promisedNowPlayingImage
-				.then(Dispatch.toHandler(bitmap -> {
-					localViewStructure.nowPlayingImageResult = Optional.ofNullable(bitmap);
-
-					nowPlayingImage.setImageBitmap(bitmap);
-
-					if (bitmap != null)
-						displayImageBitmap();
-
-					return null;
-				}, messageHandler.getObject()))
-				.excuse(runCarelessly(e -> {
-					if (e instanceof CancellationException) {
-						logger.info("Bitmap retrieval cancelled", e);
-						return;
-					}
-
-					logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
-				}));
-		} else if (localViewStructure.nowPlayingImageResult.isPresent()) {
-			nowPlayingImage.setImageBitmap(localViewStructure.nowPlayingImageResult.get());
-			displayImageBitmap();
-		}
+		setNowPlayingImage(localViewStructure, serviceFile);
 
 		if (localViewStructure.fileProperties != null) {
 			setFileProperties(serviceFile, initialFilePosition, localViewStructure.fileProperties);
@@ -439,6 +407,54 @@ public class NowPlayingActivity extends AppCompatActivity {
 				setFileProperties(serviceFile, initialFilePosition, fileProperties);
 			}), messageHandler.getObject()))
 			.excuse(Dispatch.toHandler(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()));
+	}
+
+	private void setNowPlayingImage(ViewStructure viewStructure, ServiceFile serviceFile) {
+		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
+
+		loadingProgressBar.findView().setVisibility(View.VISIBLE);
+		nowPlayingImage.setVisibility(View.INVISIBLE);
+
+		if (viewStructure.promisedNowPlayingImage == null) {
+			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+
+			viewStructure.promisedNowPlayingImage =
+				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
+					.promiseFileBitmap(serviceFile);
+		}
+
+		if (viewStructure.nowPlayingImageResult != null) {
+			loadingProgressBar.findView().setVisibility(View.INVISIBLE);
+
+			if (!viewStructure.nowPlayingImageResult.isPresent()) return;
+
+			nowPlayingImage.setImageBitmap(viewStructure.nowPlayingImageResult.get());
+			displayImageBitmap();
+
+			return;
+		}
+
+		viewStructure.promisedNowPlayingImage
+			.then(Dispatch.toHandler(bitmap -> {
+				viewStructure.nowPlayingImageResult = Optional.ofNullable(bitmap);
+
+				nowPlayingImage.setImageBitmap(bitmap);
+
+				loadingProgressBar.findView().setVisibility(View.INVISIBLE);
+				if (bitmap != null)
+					displayImageBitmap();
+
+				return null;
+			}, messageHandler.getObject()))
+			.excuse(runCarelessly(e -> {
+				if (e instanceof CancellationException) {
+					logger.info("Bitmap retrieval cancelled", e);
+					return;
+				}
+
+				logger.error("There was an error retrieving the image for serviceFile " + serviceFile, e);
+			}));
 	}
 
 	private void setFileProperties(final ServiceFile serviceFile, final int initialFilePosition, Map<String, String> fileProperties) {
@@ -517,7 +533,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private void displayImageBitmap() {
 		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
 		nowPlayingImage.setScaleType(ScaleType.CENTER_CROP);
-		loadingProgressBar.findView().setVisibility(View.INVISIBLE);
 		nowPlayingImage.setVisibility(View.VISIBLE);
 	}
 
