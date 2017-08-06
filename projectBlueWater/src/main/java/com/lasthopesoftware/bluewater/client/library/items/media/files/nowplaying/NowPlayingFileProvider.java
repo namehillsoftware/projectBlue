@@ -10,9 +10,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
 
-/**
- * Created by david on 11/2/16.
- */
 public class NowPlayingFileProvider implements INowPlayingFileProvider {
 
 	private final INowPlayingRepository nowPlayingRepository;

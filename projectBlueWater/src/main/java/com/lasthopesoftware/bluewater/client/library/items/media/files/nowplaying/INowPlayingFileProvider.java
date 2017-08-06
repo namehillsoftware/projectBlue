@@ -3,10 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.messenger.promises.Promise;
 
-/**
- * Created by david on 11/2/16.
- */
-
 public interface INowPlayingFileProvider {
 	Promise<ServiceFile> getNowPlayingFile();
 }

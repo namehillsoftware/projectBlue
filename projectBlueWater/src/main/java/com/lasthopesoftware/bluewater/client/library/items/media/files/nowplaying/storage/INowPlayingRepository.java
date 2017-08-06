@@ -2,10 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 
 import com.lasthopesoftware.messenger.promises.Promise;
 
-/**
- * Created by david on 1/29/17.
- */
-
 public interface INowPlayingRepository {
 	Promise<NowPlaying> getNowPlaying();
 

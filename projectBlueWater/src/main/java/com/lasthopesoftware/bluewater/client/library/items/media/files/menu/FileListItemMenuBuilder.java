@@ -22,17 +22,14 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipView
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by david on 11/7/15.
- */
 public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
     private final List<ServiceFile> serviceFiles;
@@ -99,8 +96,10 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
         textView.setTypeface(null, Typeface.NORMAL);
         nowPlayingFileProvider
             .getNowPlayingFile()
-            .then(VoidFunc.runCarelessly(f ->
-                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile.getKey() == f.getKey()))));
+            .then(Dispatch.toContext(f -> {
+                textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile.getKey() == f.getKey()));
+                return null;
+            }, textView.getContext()));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {

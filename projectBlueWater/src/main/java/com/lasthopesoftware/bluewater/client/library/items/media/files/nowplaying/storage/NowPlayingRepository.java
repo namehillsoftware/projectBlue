@@ -8,9 +8,6 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by david on 1/29/17.
- */
 public class NowPlayingRepository implements INowPlayingRepository {
 
 	private static final Map<Integer, NowPlaying> nowPlayingCache = new ConcurrentHashMap<>();
