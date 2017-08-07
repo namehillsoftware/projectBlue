@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.shared.promises.resolutions;
 import android.content.Context;
 import android.os.Handler;
 
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ContextSafePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
@@ -39,7 +39,7 @@ public class Dispatch {
 			@Override
 			public Promise<TNewResult> resultFrom(TResult result) throws Throwable {
 				this.result = result;
-				return new ContextSafePromise<>(this, handler);
+				return new LoopedInPromise<>(this, handler);
 			}
 		}
 	}

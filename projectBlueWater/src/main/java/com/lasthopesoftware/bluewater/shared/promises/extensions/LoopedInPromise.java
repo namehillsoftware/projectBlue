@@ -13,27 +13,27 @@ import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 
-public class ContextSafePromise<Result> extends Promise<Result> {
-	public ContextSafePromise(CarelessFunction<Result> task, Context context) {
+public class LoopedInPromise<Result> extends Promise<Result> {
+	public LoopedInPromise(CarelessFunction<Result> task, Context context) {
 		this(task, new Handler(context.getMainLooper()));
 	}
 
-	public ContextSafePromise(CarelessFunction<Result> task, Handler handler) {
-		super(new Executors.QueuedMessengerTask<>(new FunctionResponse<>(task), handler));
+	public LoopedInPromise(CarelessFunction<Result> task, Handler handler) {
+		super(new Executors.LoopedInResponse<>(new FunctionResponse<>(task), handler));
 	}
 
-	public ContextSafePromise(CarelessOneParameterFunction<CancellationToken, Result> task, Handler handler) {
-		super(new Executors.QueuedMessengerTask<>(new CancellableFunctionResponse<>(task), handler));
+	public LoopedInPromise(CarelessOneParameterFunction<CancellationToken, Result> task, Handler handler) {
+		super(new Executors.LoopedInResponse<>(new CancellableFunctionResponse<>(task), handler));
 	}
 
 	private static class Executors {
-		static class QueuedMessengerTask<Result> implements OneParameterAction<Messenger<Result>>, Runnable {
+		static final class LoopedInResponse<Result> implements OneParameterAction<Messenger<Result>>, Runnable {
 
 			private final OneParameterAction<Messenger<Result>> task;
 			private final Handler handler;
 			private Messenger<Result> resultMessenger;
 
-			QueuedMessengerTask(OneParameterAction<Messenger<Result>> task, Handler handler) {
+			LoopedInResponse(OneParameterAction<Messenger<Result>> task, Handler handler) {
 				this.task = task;
 				this.handler = handler;
 			}

@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ContextSafePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
@@ -80,7 +80,7 @@ public class FileNameTextViewSetter {
 			cancellationProxy.doCancel(filePropertiesPromise);
 
 			final Promise<Map<String, String>> textViewUpdatePromise =
-				filePropertiesPromise.eventually(properties -> new ContextSafePromise<>(ct -> {
+				filePropertiesPromise.eventually(properties -> new LoopedInPromise<>(ct -> {
 					final String fileName = properties.get(FilePropertiesProvider.NAME);
 
 					if (fileName != null && !ct.isCancelled())

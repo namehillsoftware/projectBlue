@@ -50,7 +50,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ContextSafePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
 import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
@@ -279,7 +279,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 
 		new DefaultImageProvider(this).promiseFileBitmap()
-			.eventually(bitmap -> new ContextSafePromise<>(() -> {
+			.eventually(bitmap -> new LoopedInPromise<>(() -> {
 				nowPlayingBackgroundBitmap = bitmap;
 
 				setNowPlayingBackgroundBitmap();
@@ -424,7 +424,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 
 		viewStructure.promisedNowPlayingImage
-			.eventually(bitmap -> new ContextSafePromise<>(() -> setNowPlayingImage(bitmap), messageHandler.getObject()))
+			.eventually(bitmap -> new LoopedInPromise<>(() -> setNowPlayingImage(bitmap), messageHandler.getObject()))
 			.excuse(runCarelessly(e -> {
 				if (e instanceof CancellationException) {
 					logger.info("Bitmap retrieval cancelled", e);
