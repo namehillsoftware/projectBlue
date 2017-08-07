@@ -2,6 +2,7 @@ package com.lasthopesoftware.messenger.promises.queued;
 
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableFunctionResponse;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
@@ -11,19 +12,19 @@ import java.util.concurrent.Executor;
 
 public class QueuedPromise<Result> extends Promise<Result> {
 	public QueuedPromise(OneParameterAction<Messenger<Result>> task, Executor executor) {
-		super(new Executors.QueuedCancellableTask<>(task, executor));
+		super(new Execution.QueuedMessengerResponse<>(task, executor));
 	}
 
 	public QueuedPromise(CarelessOneParameterFunction<CancellationToken, Result> task, Executor executor) {
-		this((new Executors.CancellableFunctionExecutor<>(task)), executor);
+		this(new CancellableFunctionResponse<>(task), executor);
 	}
 
 	public QueuedPromise(CarelessFunction<Result> task, Executor executor) {
-		this(new Executors.FunctionExecutor<>(task), executor);
+		this(new FunctionResponse<>(task), executor);
 	}
 
-	private static final class Executors {
-		static final class QueuedCancellableTask<Result> implements
+	private static class Execution {
+		static final class QueuedMessengerResponse<Result> implements
 			OneParameterAction<Messenger<Result>>,
 			Runnable {
 
@@ -31,7 +32,7 @@ public class QueuedPromise<Result> extends Promise<Result> {
 			private final Executor executor;
 			private Messenger<Result> resultMessenger;
 
-			QueuedCancellableTask(OneParameterAction<Messenger<Result>> task, Executor executor) {
+			QueuedMessengerResponse(OneParameterAction<Messenger<Result>> task, Executor executor) {
 				this.task = task;
 				this.executor = executor;
 			}
@@ -45,44 +46,6 @@ public class QueuedPromise<Result> extends Promise<Result> {
 			@Override
 			public void run() {
 				task.runWith(resultMessenger);
-			}
-		}
-
-		static final class FunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
-
-			private final CarelessFunction<Result> callable;
-
-			FunctionExecutor(CarelessFunction<Result> callable) {
-				this.callable = callable;
-			}
-
-			@Override
-			public void runWith(Messenger<Result> messenger) {
-				try {
-					messenger.sendResolution(callable.result());
-				} catch (Throwable rejection) {
-					messenger.sendRejection(rejection);
-				}
-			}
-		}
-
-		private static final class CancellableFunctionExecutor<Result> implements OneParameterAction<Messenger<Result>> {
-			private final CarelessOneParameterFunction<CancellationToken, Result> task;
-
-			CancellableFunctionExecutor(CarelessOneParameterFunction<CancellationToken, Result> task) {
-				this.task = task;
-			}
-
-			@Override
-			public void runWith(Messenger<Result> messenger) {
-				final CancellationToken cancellationToken = new CancellationToken();
-				messenger.cancellationRequested(cancellationToken);
-
-				try {
-					messenger.sendResolution(task.resultFrom(cancellationToken));
-				} catch (Throwable throwable) {
-					messenger.sendRejection(throwable);
-				}
 			}
 		}
 	}
