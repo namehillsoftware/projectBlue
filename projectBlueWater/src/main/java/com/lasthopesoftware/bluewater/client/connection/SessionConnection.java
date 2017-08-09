@@ -19,8 +19,6 @@ import com.namehillsoftware.lazyj.ILazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -43,10 +41,6 @@ public class SessionConnection {
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
 
 	private static ConnectionProvider sessionConnectionProvider;
-
-	public static HttpURLConnection getSessionConnection(String... params) throws IOException {
-		return sessionConnectionProvider.getConnection(params);
-	}
 
 	public static ConnectionProvider getSessionConnectionProvider() {
 		return sessionConnectionProvider;

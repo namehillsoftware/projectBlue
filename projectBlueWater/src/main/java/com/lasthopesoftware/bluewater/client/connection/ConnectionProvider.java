@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.servers.ProgramVersion;
-import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -35,10 +33,5 @@ public class ConnectionProvider implements IConnectionProvider {
 
 	public IUrlProvider getUrlProvider() {
 		return urlProvider;
-	}
-
-	@Override
-	public Promise<ProgramVersion> promiseServerVersion() {
-		return null;
 	}
 }

@@ -120,7 +120,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					libraryRepository);
 		}
 	};
-	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(NowPlayingActivity.this);
+	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(this);
 
 	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
 		@Override
