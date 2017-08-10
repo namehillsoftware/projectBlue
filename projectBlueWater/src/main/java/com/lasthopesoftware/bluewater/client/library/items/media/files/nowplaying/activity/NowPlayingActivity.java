@@ -479,7 +479,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 				return;
 
 			final String stringRating = String.valueOf(Math.round(newRating));
-			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), serviceFile.getKey(), FilePropertiesProvider.RATING, stringRating);
+			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), serviceFile.getKey(), FilePropertiesProvider.RATING, stringRating, false);
 			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
 		});
 

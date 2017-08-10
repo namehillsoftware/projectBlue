@@ -10,5 +10,5 @@ import java.net.HttpURLConnection;
 public interface IConnectionProvider {
 	HttpURLConnection getConnection(String... params) throws IOException;
 	IUrlProvider getUrlProvider();
-	Promise<ProgramVersion> getConnectionProgramVersion();
+	Promise<ProgramVersion> promiseConnectionProgramVersion();
 }

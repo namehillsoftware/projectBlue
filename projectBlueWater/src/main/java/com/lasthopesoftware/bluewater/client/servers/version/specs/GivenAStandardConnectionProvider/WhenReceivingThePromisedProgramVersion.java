@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -23,7 +24,7 @@ public class WhenReceivingThePromisedProgramVersion {
 	private static ProgramVersion expectedVersion;
 
 	@BeforeClass
-	public static void before() throws IOException {
+	public static void before() throws IOException, InterruptedException {
 		final IUrlProvider urlProvider = mock(IUrlProvider.class);
 		when(urlProvider.getBaseUrl()).thenReturn("");
 
@@ -46,7 +47,14 @@ public class WhenReceivingThePromisedProgramVersion {
 		when(connectionProvider.getConnection("Alive")).thenReturn(urlConnection);
 
 		final ProgramVersionProvider programVersionProvider = new ProgramVersionProvider(connectionProvider);
-		programVersionProvider.promiseServerVersion().then(v -> version = v);
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		programVersionProvider.promiseServerVersion().then(v -> {
+			version = v;
+			countDownLatch.countDown();
+			return null;
+		});
+
+		countDownLatch.await();
 	}
 
 	@Test

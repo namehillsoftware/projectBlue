@@ -19,16 +19,18 @@ public class FilePropertiesStorage implements Runnable {
 	private final int fileKey;
 	private final String property;
 	private final String value;
+	private final boolean isFormatted;
 
-	public static void storeFileProperty(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
-		AbstractProvider.providerExecutor.execute(new FilePropertiesStorage(connectionProvider, fileKey, property, value));
+	public static void storeFileProperty(IConnectionProvider connectionProvider, int fileKey, String property, String value, boolean isFormatted) {
+		AbstractProvider.providerExecutor.execute(new FilePropertiesStorage(connectionProvider, fileKey, property, value, isFormatted));
 	}
 
-	private FilePropertiesStorage(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
+	private FilePropertiesStorage(IConnectionProvider connectionProvider, int fileKey, String property, String value, boolean isFormatted) {
 		this.connectionProvider = connectionProvider;
 		this.fileKey = fileKey;
 		this.property = property;
 		this.value = value;
+		this.isFormatted = isFormatted;
 	}
 
 	@Override
@@ -41,7 +43,7 @@ public class FilePropertiesStorage implements Runnable {
 				"File=" + String.valueOf(fileKey),
 				"Field=" + property,
 				"Value=" + value,
-				"formatted=0");
+				"formatted=" + (isFormatted ? "1" : "0"));
 			try {
 				final int responseCode = connection.getResponseCode();
 			} finally {

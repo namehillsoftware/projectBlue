@@ -48,7 +48,7 @@ public class ConnectionProvider implements IConnectionProvider {
 	}
 
 	@Override
-	public Promise<ProgramVersion> getConnectionProgramVersion() {
+	public Promise<ProgramVersion> promiseConnectionProgramVersion() {
 		return lazyPromisedProgramVersion.getObject();
 	}
 }

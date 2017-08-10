@@ -71,7 +71,7 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 				} finally {
 					--serverVersionThreads;
 				}
-			}, "server-version-thread-" + serverVersionThreads++).run();
+			}, "server-version-thread-" + serverVersionThreads++).start();
 		});
 	}
 }
