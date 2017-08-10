@@ -8,12 +8,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-public class ServerVersionProvider implements IProvideServerVersion {
+public class ServerVersionProvider implements IServerVersionProvider {
 
 	private final Object syncObject = new Object();
 	private final IConnectionProvider connectionProvider;
 
 	private ProgramVersion programVersion;
+	private volatile int serverVersionThreads;
 
 	public ServerVersionProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
@@ -28,52 +29,61 @@ public class ServerVersionProvider implements IProvideServerVersion {
 			}
 
 			new Thread(() -> {
-				synchronized (syncObject) {
-					if (programVersion != null) {
-						messenger.sendResolution(programVersion);
-						return;
-					}
-
-					final HttpURLConnection connection;
-					try {
-						connection = connectionProvider.getConnection("Alive");
-					} catch (IOException e) {
-						messenger.sendRejection(e);
-						return;
-					}
-
-					try {
-						try (final InputStream is = connection.getInputStream()) {
-							final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
-							if (standardRequest == null) {
-								messenger.sendResolution(null);
-								return;
-							}
-
-							final String semVerString = standardRequest.items.get("ProgramVersion");
-							final String[] semVerParts = semVerString.split("\\.");
-
-							int major = 0, minor = 0, patch = 0;
-
-							if (semVerParts.length > 0)
-								major = Integer.parseInt(semVerParts[0]);
-
-							if (semVerParts.length > 1)
-								minor = Integer.parseInt(semVerParts[1]);
-
-							if (semVerParts.length > 2)
-								patch = Integer.parseInt(semVerParts[2]);
-
-							programVersion = new ProgramVersion(major, minor, patch);
+				try {
+					synchronized (syncObject) {
+						if (programVersion != null) {
 							messenger.sendResolution(programVersion);
+							return;
+						}
+
+						final HttpURLConnection connection;
+						try {
+							connection = connectionProvider.getConnection("Alive");
 						} catch (IOException e) {
 							messenger.sendRejection(e);
+							return;
 						}
-					} finally {
-						connection.disconnect();
+
+						try {
+							try (final InputStream is = connection.getInputStream()) {
+								final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
+								if (standardRequest == null) {
+									messenger.sendResolution(null);
+									return;
+								}
+
+								final String semVerString = standardRequest.items.get("ProgramVersion");
+								if (semVerString == null) {
+									messenger.sendResolution(null);
+									return;
+								}
+
+								final String[] semVerParts = semVerString.split("\\.");
+
+								int major = 0, minor = 0, patch = 0;
+
+								if (semVerParts.length > 0)
+									major = Integer.parseInt(semVerParts[0]);
+
+								if (semVerParts.length > 1)
+									minor = Integer.parseInt(semVerParts[1]);
+
+								if (semVerParts.length > 2)
+									patch = Integer.parseInt(semVerParts[2]);
+
+								programVersion = new ProgramVersion(major, minor, patch);
+								messenger.sendResolution(programVersion);
+							} catch (IOException e) {
+								messenger.sendRejection(e);
+							}
+						} finally {
+							connection.disconnect();
+						}
 					}
+				} finally {
+					--serverVersionThreads;
 				}
-			}).run();
+			}, "server-version-thread-" + serverVersionThreads++).run();
 		});
 	}
 }
