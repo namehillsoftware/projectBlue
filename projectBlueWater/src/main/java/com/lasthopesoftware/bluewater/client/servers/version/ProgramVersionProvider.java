@@ -8,34 +8,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-public class ServerVersionProvider implements IServerVersionProvider {
+public class ProgramVersionProvider implements IProgramVersionProvider {
 
 	private final Object syncObject = new Object();
 	private final IConnectionProvider connectionProvider;
 
-	private ProgramVersion programVersion;
 	private volatile int serverVersionThreads;
 
-	public ServerVersionProvider(IConnectionProvider connectionProvider) {
+	public ProgramVersionProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
 	}
 
 	@Override
 	public Promise<ProgramVersion> promiseServerVersion() {
 		return new Promise<>((messenger) -> {
-			if (programVersion != null) {
-				messenger.sendResolution(programVersion);
-				return;
-			}
-
 			new Thread(() -> {
 				try {
 					synchronized (syncObject) {
-						if (programVersion != null) {
-							messenger.sendResolution(programVersion);
-							return;
-						}
-
 						final HttpURLConnection connection;
 						try {
 							connection = connectionProvider.getConnection("Alive");
@@ -71,8 +60,7 @@ public class ServerVersionProvider implements IServerVersionProvider {
 								if (semVerParts.length > 2)
 									patch = Integer.parseInt(semVerParts[2]);
 
-								programVersion = new ProgramVersion(major, minor, patch);
-								messenger.sendResolution(programVersion);
+								messenger.sendResolution(new ProgramVersion(major, minor, patch));
 							} catch (IOException e) {
 								messenger.sendRejection(e);
 							}

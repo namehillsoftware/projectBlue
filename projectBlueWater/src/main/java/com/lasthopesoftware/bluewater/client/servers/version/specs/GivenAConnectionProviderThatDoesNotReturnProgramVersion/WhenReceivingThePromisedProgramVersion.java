@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.servers.version.specs.GivenAConnec
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersion;
-import com.lasthopesoftware.bluewater.client.servers.version.ServerVersionProvider;
+import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenReceivingThePromisedServerVersion {
+public class WhenReceivingThePromisedProgramVersion {
 
 	private static ProgramVersion version;
 
@@ -33,8 +33,8 @@ public class WhenReceivingThePromisedServerVersion {
 			.thenReturn(new ByteArrayInputStream("<Response Status=\"OK\"></Response>".getBytes()));
 		when(connectionProvider.getConnection("Alive")).thenReturn(urlConnection);
 
-		final ServerVersionProvider serverVersionProviderProvider = new ServerVersionProvider(connectionProvider);
-		serverVersionProviderProvider.promiseServerVersion().then(v -> version = v);
+		final ProgramVersionProvider programVersionProvider = new ProgramVersionProvider(connectionProvider);
+		programVersionProvider.promiseServerVersion().then(v -> version = v);
 	}
 
 	@Test
