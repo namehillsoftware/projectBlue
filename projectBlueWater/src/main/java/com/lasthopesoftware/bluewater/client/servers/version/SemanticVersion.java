@@ -1,16 +1,16 @@
 package com.lasthopesoftware.bluewater.client.servers.version;
 
-public class ProgramVersion {
+public class SemanticVersion {
 	public final int major;
 	public final int minor;
 	public final int patch;
 	public final String label;
 
-	public ProgramVersion(int major, int minor, int patch) {
+	public SemanticVersion(int major, int minor, int patch) {
 		this(major, minor, patch, "");
 	}
 
-	public ProgramVersion(int major, int minor, int patch, String label) {
+	public SemanticVersion(int major, int minor, int patch, String label) {
 		this.major = major;
 		this.minor = minor;
 		this.patch = patch;
@@ -19,9 +19,9 @@ public class ProgramVersion {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof ProgramVersion)) return false;
+		if (!(obj instanceof SemanticVersion)) return false;
 
-		final ProgramVersion other = (ProgramVersion) obj;
+		final SemanticVersion other = (SemanticVersion) obj;
 		return other.major == major && other.minor == minor && other.patch == patch && ((label == null && other.label == null) || (label != null && label.equals(other.label)));
 	}
 

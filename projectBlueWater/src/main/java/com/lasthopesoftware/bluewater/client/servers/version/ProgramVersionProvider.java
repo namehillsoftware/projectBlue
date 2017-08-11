@@ -20,7 +20,7 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 	}
 
 	@Override
-	public Promise<ProgramVersion> promiseServerVersion() {
+	public Promise<SemanticVersion> promiseServerVersion() {
 		return new Promise<>((messenger) ->
 			new Thread("server-version-thread-" + serverVersionThreads++) {
 				@Override
@@ -62,7 +62,7 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 									if (semVerParts.length > 2)
 										patch = Integer.parseInt(semVerParts[2]);
 
-									messenger.sendResolution(new ProgramVersion(major, minor, patch));
+									messenger.sendResolution(new SemanticVersion(major, minor, patch));
 								} catch (IOException e) {
 									messenger.sendRejection(e);
 								}

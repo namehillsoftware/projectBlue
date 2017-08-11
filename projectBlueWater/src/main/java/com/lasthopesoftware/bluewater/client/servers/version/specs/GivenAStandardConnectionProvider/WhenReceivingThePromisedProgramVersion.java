@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.servers.version.specs.GivenAStanda
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersion;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
+import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 
 public class WhenReceivingThePromisedProgramVersion {
 
-	private static ProgramVersion version;
-	private static ProgramVersion expectedVersion;
+	private static SemanticVersion version;
+	private static SemanticVersion expectedVersion;
 
 	@BeforeClass
 	public static void before() throws IOException, InterruptedException {
@@ -34,7 +34,7 @@ public class WhenReceivingThePromisedProgramVersion {
 		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
 
 		final Random random = new Random();
-		expectedVersion = new ProgramVersion(random.nextInt(), random.nextInt(), random.nextInt());
+		expectedVersion = new SemanticVersion(random.nextInt(), random.nextInt(), random.nextInt());
 		when(urlConnection.getInputStream())
 			.thenReturn(new ByteArrayInputStream(
 				("<Response Status=\"OK\">" +

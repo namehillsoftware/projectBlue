@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.servers.version.specs.GivenAConnec
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersion;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
+import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenReceivingThePromisedProgramVersion {
 
-	private static ProgramVersion version;
+	private static SemanticVersion version;
 
 	@BeforeClass
 	public static void before() throws IOException, InterruptedException {

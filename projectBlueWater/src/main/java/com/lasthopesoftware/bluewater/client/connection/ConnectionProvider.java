@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersion;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
+import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
@@ -14,9 +14,9 @@ import java.net.URL;
 public class ConnectionProvider implements IConnectionProvider {
 
 	private final IUrlProvider urlProvider;
-	private final ILazy<Promise<ProgramVersion>> lazyPromisedProgramVersion = new AbstractSynchronousLazy<Promise<ProgramVersion>>() {
+	private final ILazy<Promise<SemanticVersion>> lazyPromisedProgramVersion = new AbstractSynchronousLazy<Promise<SemanticVersion>>() {
 		@Override
-		protected Promise<ProgramVersion> initialize() throws Exception {
+		protected Promise<SemanticVersion> initialize() throws Exception {
 			final ProgramVersionProvider programVersionProvider = new ProgramVersionProvider(ConnectionProvider.this);
 			return programVersionProvider.promiseServerVersion();
 		}
@@ -48,7 +48,7 @@ public class ConnectionProvider implements IConnectionProvider {
 	}
 
 	@Override
-	public Promise<ProgramVersion> promiseConnectionProgramVersion() {
+	public Promise<SemanticVersion> promiseConnectionProgramVersion() {
 		return lazyPromisedProgramVersion.getObject();
 	}
 }
