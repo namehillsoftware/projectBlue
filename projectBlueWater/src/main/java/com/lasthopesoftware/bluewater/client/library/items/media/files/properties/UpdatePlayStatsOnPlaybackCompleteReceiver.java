@@ -39,10 +39,10 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 			.eventually(programVersion -> {
 				if (programVersion != null && programVersion.major >= 22) {
 					return new QueuedPromise<>(() -> {
-						final HttpURLConnection playedConnection = connectionProvider.getConnection("Played", "File=" + fileKey, "FileType=Key");
+						final HttpURLConnection playedConnection = connectionProvider.getConnection("File/Played", "File=" + fileKey, "FileType=Key");
 						try {
 							final int responseCode = playedConnection.getResponseCode();
-							logger.info("api/v1/Played responded with a response code of " + responseCode);
+							logger.info("api/v1/File/Played responded with a response code of " + responseCode);
 						} finally {
 							playedConnection.disconnect();
 						}
