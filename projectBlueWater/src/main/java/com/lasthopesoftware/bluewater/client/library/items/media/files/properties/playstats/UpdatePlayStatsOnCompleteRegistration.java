@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats;
 
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 
