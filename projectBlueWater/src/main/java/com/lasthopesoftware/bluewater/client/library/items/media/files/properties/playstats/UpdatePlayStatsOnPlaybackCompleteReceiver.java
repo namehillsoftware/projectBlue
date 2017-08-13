@@ -32,9 +32,6 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		final int libraryId = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, -1);
-		if (libraryId < 0) return;
-
 		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
 		if (fileKey < 0) return;
 

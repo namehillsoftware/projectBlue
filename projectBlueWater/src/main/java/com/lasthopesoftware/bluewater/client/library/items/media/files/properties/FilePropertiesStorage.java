@@ -46,6 +46,7 @@ public class FilePropertiesStorage implements Runnable {
 				"formatted=" + (isFormatted ? "1" : "0"));
 			try {
 				final int responseCode = connection.getResponseCode();
+				logger.info("api/v1/File/SetInfo responded with a response code of " + responseCode);
 			} finally {
 				connection.disconnect();
 			}
