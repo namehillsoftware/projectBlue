@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.specs.GivenAFileWithLastPlayedBeforeNowAndSongsDuration.AndNumberPlaysIsPresent;
 
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeRevisionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -27,12 +26,9 @@ public class WhenStoringTheUpdatedPlayStats {
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
-		final IUrlProvider urlProvider = mock(IUrlProvider.class);
-		when(urlProvider.getBaseUrl()).thenReturn("");
-
 		final FakeRevisionConnectionProvider connectionProvider = new FakeRevisionConnectionProvider();
 
-		connectionProvider.setSyncRevision(2);
+		connectionProvider.setSyncRevision(0);
 
 		final long duration = 5 * 1000 * 60;
 
@@ -56,7 +52,11 @@ public class WhenStoringTheUpdatedPlayStats {
 				fileProperties = o;
 				countDownLatch.countDown();
 				return null;
-			});;
+			})
+			.excuse(e -> {
+				countDownLatch.countDown();
+				return null;
+			});
 
 		countDownLatch.await();
 	}
@@ -68,6 +68,6 @@ public class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	public void thenTheNumberPlaysIsIncremented() {
-		assertThat(fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS)).isEqualTo(53);
+		assertThat(fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS)).isEqualTo("53");
 	}
 }

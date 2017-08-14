@@ -46,7 +46,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 			final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
-				return new Promise<>(new HashMap<>(filePropertiesContainer.getProperties()));
+				return new Promise<>(new HashMap<String, String>(filePropertiesContainer.getProperties()));
 			}
 
 			return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, fileKey, revision), filePropertiesExecutor);

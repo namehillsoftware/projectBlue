@@ -15,13 +15,13 @@ import java.util.concurrent.Executors;
 
 public class RevisionChecker implements CarelessFunction<Integer> {
 	
-	private final static Integer mBadRevision = -1;
-    private static final Map<String, Integer> cachedRevisions = new HashMap<>();
+	private static final Integer badRevision = -1;
+    private static final long checkedExpirationTime = 30000;
 
-    private static long mLastCheckedTime = -1;
-    private final static long mCheckedExpirationTime = 30000;
+	private static final Map<String, Integer> cachedRevisions = new HashMap<>();
+	private static final Map<String, Long> lastRevisions = new HashMap<>();
 
-    private static final ExecutorService revisionExecutor = Executors.newSingleThreadExecutor();
+	private static final ExecutorService revisionExecutor = Executors.newSingleThreadExecutor();
 
 	private final IConnectionProvider connectionProvider;
 
@@ -32,7 +32,7 @@ public class RevisionChecker implements CarelessFunction<Integer> {
     private static Integer getCachedRevision(IConnectionProvider connectionProvider) {
         final String serverUrl = connectionProvider.getUrlProvider().getBaseUrl();
         if (!cachedRevisions.containsKey(serverUrl))
-            cachedRevisions.put(serverUrl, mBadRevision);
+            cachedRevisions.put(serverUrl, badRevision);
 
         return cachedRevisions.get(serverUrl);
     }
@@ -47,7 +47,9 @@ public class RevisionChecker implements CarelessFunction<Integer> {
 	}
 
 	private Integer getRevision() {
-        if (!getCachedRevision(connectionProvider).equals(mBadRevision) && System.currentTimeMillis() - mCheckedExpirationTime < mLastCheckedTime) {
+		final String baseServerUrl = connectionProvider.getUrlProvider().getBaseUrl();
+		final Long lastRevisionCheckedTime = lastRevisions.get(baseServerUrl);
+        if (lastRevisionCheckedTime != null && !getCachedRevision(connectionProvider).equals(badRevision) && System.currentTimeMillis() - checkedExpirationTime < lastRevisionCheckedTime) {
             return getCachedRevision(connectionProvider);
         }
 
@@ -61,10 +63,10 @@ public class RevisionChecker implements CarelessFunction<Integer> {
 
 					final String revisionValue = standardRequest.items.get("Sync");
 
-					if (revisionValue == null || revisionValue.isEmpty()) return mBadRevision;
+					if (revisionValue == null || revisionValue.isEmpty()) return badRevision;
 
-					cachedRevisions.put(connectionProvider.getUrlProvider().getBaseUrl(), Integer.valueOf(revisionValue));
-					mLastCheckedTime = System.currentTimeMillis();
+					cachedRevisions.put(baseServerUrl, Integer.valueOf(revisionValue));
+					lastRevisions.put(baseServerUrl, System.currentTimeMillis());
 					return getCachedRevision(connectionProvider);
 				}
             } finally {
