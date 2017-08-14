@@ -5,26 +5,35 @@ import android.util.LruCache;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.lazyj.Lazy;
 
-/**
- * Created by david on 3/7/16.
- */
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 public class FilePropertyCache implements IFilePropertiesContainerRepository {
 
 	private static final int maxSize = 500;
 
 	private final LruCache<UrlKeyHolder<Integer>, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
+	private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
 	@Override
 	public FilePropertiesContainer getFilePropertiesContainer(UrlKeyHolder<Integer> key) {
-		synchronized (propertiesCache) {
+		final Lock readLock = readWriteLock.readLock();
+		readLock.lock();
+		try {
 			return propertiesCache.get(key);
+		} finally {
+			readLock.unlock();
 		}
 	}
 
 	@Override
 	public void putFilePropertiesContainer(UrlKeyHolder<Integer> key, FilePropertiesContainer filePropertiesContainer) {
-		synchronized (propertiesCache) {
+		final Lock writeLock = readWriteLock.writeLock();
+		writeLock.lock();
+		try {
 			propertiesCache.put(key, filePropertiesContainer);
+		} finally {
+			writeLock.unlock();
 		}
 	}
 
