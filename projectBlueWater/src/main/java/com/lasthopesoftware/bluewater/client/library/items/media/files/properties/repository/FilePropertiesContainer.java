@@ -3,9 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by david on 3/14/17.
- */
 public class FilePropertiesContainer {
 	public final int revision;
 	private final ConcurrentHashMap<String, String> properties;

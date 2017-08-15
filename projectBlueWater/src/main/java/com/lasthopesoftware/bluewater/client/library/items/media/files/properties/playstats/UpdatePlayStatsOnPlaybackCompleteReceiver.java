@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.IFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
@@ -68,10 +69,10 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 							if (numberPlaysString != null && !numberPlaysString.isEmpty())
 								numberPlays = Integer.parseInt(numberPlaysString);
 
-							FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
+							FilePropertiesStorage.storeFileProperty(connectionProvider, FilePropertyCache.getInstance(), fileKey, FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
 
 							final String newLastPlayed = String.valueOf(currentTime / 1000);
-							FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.LAST_PLAYED, newLastPlayed, false);
+							FilePropertiesStorage.storeFileProperty(connectionProvider, FilePropertyCache.getInstance(), fileKey, FilePropertiesProvider.LAST_PLAYED, newLastPlayed, false);
 						} catch (NumberFormatException ne) {
 							logger.error(ne.toString(), ne);
 						}

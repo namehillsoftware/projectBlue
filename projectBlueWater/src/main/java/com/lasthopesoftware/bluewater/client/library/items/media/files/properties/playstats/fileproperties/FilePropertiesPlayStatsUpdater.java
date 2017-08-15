@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
@@ -16,25 +15,25 @@ public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 	private static final Logger logger = LoggerFactory.getLogger(FilePropertiesPlayStatsUpdater.class);
 
 	private final IFilePropertiesProvider filePropertiesProvider;
-	private final IConnectionProvider connectionProvider;
+	private final FilePropertiesStorage filePropertiesStorage;
 
-	public FilePropertiesPlayStatsUpdater(IConnectionProvider connectionProvider, IFilePropertiesProvider filePropertiesProvider) {
-		this.connectionProvider = connectionProvider;
+	public FilePropertiesPlayStatsUpdater(IFilePropertiesProvider filePropertiesProvider, FilePropertiesStorage filePropertiesStorage) {
 		this.filePropertiesProvider = filePropertiesProvider;
+		this.filePropertiesStorage = filePropertiesStorage;
 	}
 
 	@Override
 	public Promise<?> promisePlaystatsUpdate(ServiceFile serviceFile) {
 		final int fileKey = serviceFile.getKey();
 		return filePropertiesProvider.promiseFileProperties(fileKey)
-			.then(fileProperties -> {
+			.eventually(fileProperties -> {
 				try {
 					final String lastPlayedServer = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);
 					final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
 					final long currentTime = System.currentTimeMillis();
 					if (lastPlayedServer != null && (currentTime - duration) <= Long.valueOf(lastPlayedServer) * 1000)
-						return null;
+						return Promise.empty();
 
 					final String numberPlaysString = fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS);
 
@@ -42,15 +41,17 @@ public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 					if (numberPlaysString != null && !numberPlaysString.isEmpty())
 						numberPlays = Integer.parseInt(numberPlaysString);
 
-					FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
+					final Promise<Void> numberPlaysUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, FilePropertiesProvider.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
 
 					final String newLastPlayed = String.valueOf(currentTime / 1000);
-					FilePropertiesStorage.storeFileProperty(connectionProvider, fileKey, FilePropertiesProvider.LAST_PLAYED, newLastPlayed, false);
+					final Promise<Void> lastPlayedUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, FilePropertiesProvider.LAST_PLAYED, newLastPlayed, false);
+
+					return Promise.whenAll(numberPlaysUpdate, lastPlayedUpdate);
 				} catch (NumberFormatException ne) {
 					logger.error(ne.toString(), ne);
 				}
 
-				return null;
+				return Promise.empty();
 			});
 	}
 }

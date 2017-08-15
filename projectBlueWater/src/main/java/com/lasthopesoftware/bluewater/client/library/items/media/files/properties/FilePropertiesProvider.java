@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -49,7 +48,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 				return new Promise<>(new HashMap<String, String>(filePropertiesContainer.getProperties()));
 			}
 
-			return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, fileKey, revision), filePropertiesExecutor);
+			return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey, revision), filePropertiesExecutor);
 		});
 	}
 
@@ -58,11 +57,13 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		private final IConnectionProvider connectionProvider;
 		private final Integer fileKey;
 		private final Integer serverRevision;
+		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 
-		private FilePropertiesTask(IConnectionProvider connectionProvider, Integer fileKey, Integer serverRevision) {
+		private FilePropertiesTask(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey, Integer serverRevision) {
 			this.connectionProvider = connectionProvider;
 			this.fileKey = fileKey;
 			this.serverRevision = serverRevision;
+			this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 		}
 
 		@Override
@@ -92,7 +93,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 							returnProperties.put(el.getAttribute("Name"), el.getValue());
 
 						final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
-						FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
+						filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
 
 						return returnProperties;
 					}

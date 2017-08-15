@@ -3,22 +3,20 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeRevisionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenStoringTheUpdatedPlayStats {
 
@@ -28,21 +26,30 @@ public class WhenStoringTheUpdatedPlayStats {
 	public static void before() throws InterruptedException {
 		final FakeRevisionConnectionProvider connectionProvider = new FakeRevisionConnectionProvider();
 
-		connectionProvider.setSyncRevision(0);
+		connectionProvider.setSyncRevision(1);
 
-		final long duration = 5 * 1000 * 60;
+		final long duration = Duration.standardMinutes(5).getMillis();
+		final long lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).getMillis()).getStandardSeconds();
 
-		final IFilePropertiesContainerRepository repository = mock(IFilePropertiesContainerRepository.class);
-		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", 23)))
-			.thenReturn(new FilePropertiesContainer(0, new HashMap<String, String>() {{
-				put(FilePropertiesProvider.NUMBER_PLAYS, "52");
-				put(FilePropertiesProvider.LAST_PLAYED, String.valueOf(System.currentTimeMillis() - duration - 1000000));
-				put(FilePropertiesProvider.DURATION, String.valueOf(duration));
-			}}));
+		connectionProvider.mapResponse((params) ->
+			"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
+			"<MPL Version=\"2.0\" Title=\"MCWS - Files - 10936\" PathSeparator=\"\\\">\n" +
+				"<Item>\n" +
+					"<Field Name=\"Key\">23</Field>\n" +
+					"<Field Name=\"Media Type\">Audio</Field>\n" +
+					"<Field Name=\"" + FilePropertiesProvider.LAST_PLAYED + "\">" + String.valueOf(lastPlayed) + "</Field>\n" +
+					"<Field Name=\"Rating\">4</Field>\n" +
+					"<Field Name=\"File Size\">2345088</Field>\n" +
+					"<Field Name=\"" + FilePropertiesProvider.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
+					"<Field Name=\"" + FilePropertiesProvider.NUMBER_PLAYS + "\">52</Field>\n" +
+				"</Item>\n" +
+			"</MPL>\n",
+			"File/GetInfo", "File=23");
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, repository);
+		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertiesContainer);
 
-		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(connectionProvider, filePropertiesProvider);
+		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(filePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		filePropertiesPlayStatsUpdater
@@ -63,7 +70,7 @@ public class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	public void thenTheLastPlayedIsRecent() {
-		assertThat(Long.parseLong(fileProperties.get(FilePropertiesProvider.LAST_PLAYED))).isCloseTo(System.currentTimeMillis(), offset(10000L));
+		assertThat(Long.parseLong(fileProperties.get(FilePropertiesProvider.LAST_PLAYED))).isCloseTo(Duration.millis(System.currentTimeMillis()).getStandardSeconds(), offset(10L));
 	}
 
 	@Test
