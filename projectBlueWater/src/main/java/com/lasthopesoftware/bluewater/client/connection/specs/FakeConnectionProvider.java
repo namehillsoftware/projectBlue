@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection.specs;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
-import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.io.ByteArrayInputStream;
@@ -52,8 +50,4 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		return urlProvider;
 	}
 
-	@Override
-	public Promise<SemanticVersion> promiseConnectionProgramVersion() {
-		return null;
-	}
 }

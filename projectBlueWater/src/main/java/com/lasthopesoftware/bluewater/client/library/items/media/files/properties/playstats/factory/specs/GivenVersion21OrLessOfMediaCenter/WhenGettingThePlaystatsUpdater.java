@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.IPlaystatsUpdate;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.factory.PlaystatsUpdateFactory;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider;
@@ -31,13 +32,15 @@ public class WhenGettingThePlaystatsUpdater {
 		when(programVersionProvider.promiseServerVersion())
 			.thenReturn(new Promise<>(new SemanticVersion(21, 0, 0)));
 
-		final PlaystatsUpdateFactory playstatsUpdateFactory = new PlaystatsUpdateFactory(
+		final FakeFilePropertiesContainer fakeFilePropertiesContainer = new FakeFilePropertiesContainer();
+		final PlaystatsUpdateSelector playstatsUpdateSelector = new PlaystatsUpdateSelector(
 			fakeConnectionProvider,
-			new FilePropertiesProvider(fakeConnectionProvider, new FakeFilePropertiesContainer()),
+			new FilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer),
+			new FilePropertiesStorage(fakeConnectionProvider, fakeFilePropertiesContainer),
 			programVersionProvider);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		playstatsUpdateFactory.promisePlaystatsUpdater()
+		playstatsUpdateSelector.promisePlaystatsUpdater()
 			.then(u -> {
 				updater = u;
 				countDownLatch.countDown();

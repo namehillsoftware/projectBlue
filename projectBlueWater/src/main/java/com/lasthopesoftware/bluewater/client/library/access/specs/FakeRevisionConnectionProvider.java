@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.access.specs;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
-import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
-import com.lasthopesoftware.messenger.promises.Promise;
 
 
 public class FakeRevisionConnectionProvider extends FakeConnectionProvider {
@@ -18,11 +16,6 @@ public class FakeRevisionConnectionProvider extends FakeConnectionProvider {
 					"<Item Name=\"LibraryStartup\">1501430846</Item>" +
 				"</Response>",
 			"Library/GetRevision");
-	}
-
-	@Override
-	public Promise<SemanticVersion> promiseConnectionProgramVersion() {
-		return new Promise<>(new SemanticVersion(1, 0, 0));
 	}
 
 	public void setSyncRevision(int syncRevision) {
