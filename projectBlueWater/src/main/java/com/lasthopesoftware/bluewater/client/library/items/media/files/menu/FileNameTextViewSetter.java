@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.menu;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.widget.TextView;
 
@@ -14,6 +15,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.Map;
@@ -37,7 +39,7 @@ public class FileNameTextViewSetter {
 		lock.lock();
 
 		textView.setText(R.string.lbl_loading);
-		return new Promise<>(new LockedTextViewTask(lock, textView, handler, serviceFile));
+		return new QueuedPromise<>(new LockedTextViewTask(lock, textView, handler, serviceFile), AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	private static class LockedTextViewTask implements OneParameterAction<Messenger<Map<String, String>>> {
