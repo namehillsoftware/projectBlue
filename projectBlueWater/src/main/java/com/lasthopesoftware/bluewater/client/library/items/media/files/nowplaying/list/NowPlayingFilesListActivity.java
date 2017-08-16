@@ -77,11 +77,11 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
         
         this.setTitle(R.string.title_view_now_playing_files);
 
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
 			.then(lazyDispatchedLibraryCompleteResolution.getObject());
-		
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
 	
 	@Override

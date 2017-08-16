@@ -73,6 +73,8 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+
 		final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> onPlaylistProviderComplete = Dispatch.toContext(result -> {
 			if (result == null) return null;
 
@@ -97,8 +99,6 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 						.excuse(new HandleViewIoException(PlaylistListActivity.this, this));
 				}
 			}));
-
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 	}
 	
 	@Override

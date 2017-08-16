@@ -66,6 +66,8 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		final String[] parameters = (getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
 
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+
 		getNewFileProvider()
 			.promiseFiles(FileListParameters.Options.None, parameters)
 			.then(onFileProviderComplete)
@@ -78,10 +80,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 							.then(onFileProviderComplete)
 							.excuse(new HandleViewIoException(FileListActivity.this, this));
 					}
-				})
-			);
-
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+				}));
 	}
 
 	@Override
