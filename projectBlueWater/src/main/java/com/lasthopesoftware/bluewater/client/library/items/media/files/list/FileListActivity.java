@@ -62,11 +62,11 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+
 		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onFileProviderComplete = Dispatch.toContext(this, this);
 
 		final String[] parameters = (getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
-
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 
 		getNewFileProvider()
 			.promiseFiles(FileListParameters.Options.None, parameters)
