@@ -184,8 +184,7 @@ public class LibrarySyncHandler {
 					.excuse(e -> {
 						logger.warn("There was an error retrieving the files", e);
 
-						if (isCancelled)
-							handleQueueProcessingCompleted();
+						handleQueueProcessingCompleted();
 
 						return null;
 					});

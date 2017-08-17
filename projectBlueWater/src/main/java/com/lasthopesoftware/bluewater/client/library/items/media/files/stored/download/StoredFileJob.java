@@ -111,6 +111,8 @@ class StoredFileJob {
 					logger.error("Error closing input stream", e);
 				}
 			}
+		} catch (Throwable t) {
+			throw new StoredFileJobException(storedFile, t);
 		} finally {
 			connection.disconnect();
 		}
