@@ -26,6 +26,10 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 		super(new Executors.LoopedInResponse<>(new CancellableFunctionResponse<>(task), handler));
 	}
 
+	public LoopedInPromise(OneParameterAction<Messenger<Result>> task, Handler handler) {
+		super(new Executors.LoopedInResponse<>(task, handler));
+	}
+
 	private static class Executors {
 		static final class LoopedInResponse<Result> implements OneParameterAction<Messenger<Result>>, Runnable {
 

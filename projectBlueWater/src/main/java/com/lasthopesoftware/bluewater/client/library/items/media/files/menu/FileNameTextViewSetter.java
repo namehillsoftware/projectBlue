@@ -16,7 +16,11 @@ import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -25,10 +29,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class FileNameTextViewSetter {
 
-	private final Lock lock = new ReentrantLock();
+	private static final Logger logger = LoggerFactory.getLogger(FileNameTextViewSetter.class);
 
 	private final TextView textView;
 	private final Handler handler;
+
+	private Promise<Map<String, String>> currentlyPromisedTextViewUpdate;
 
 	public FileNameTextViewSetter(TextView textView) {
 		this.textView = textView;
@@ -36,21 +42,39 @@ public class FileNameTextViewSetter {
 	}
 
 	public Promise<Map<String, String>> promiseTextViewUpdate(ServiceFile serviceFile) {
-		lock.lock();
-
 		textView.setText(R.string.lbl_loading);
-		return new QueuedPromise<>(new LockedTextViewTask(lock, textView, handler, serviceFile), AsyncTask.THREAD_POOL_EXECUTOR);
+
+		if (currentlyPromisedTextViewUpdate == null) {
+			currentlyPromisedTextViewUpdate = new Promise<>(new LockedTextViewTask(textView, handler, serviceFile));
+			return currentlyPromisedTextViewUpdate;
+		}
+
+		AsyncTask.THREAD_POOL_EXECUTOR.execute(currentlyPromisedTextViewUpdate::cancel);
+
+		final Promise<Map<String, String>> successContinuation =
+			currentlyPromisedTextViewUpdate.eventually(o -> new Promise<>(new LockedTextViewTask(textView, handler, serviceFile)));
+
+		final Promise<Map<String, String>> failureContinuation =
+			currentlyPromisedTextViewUpdate
+				.excuse(r -> {
+					if (r instanceof CancellationException) return null;
+
+					logger.warn("Last promised text view update was cancelled, but an error occurred", r);
+					return null;
+				})
+				.eventually(o ->  new Promise<>(new LockedTextViewTask(textView, handler, serviceFile)));
+
+		currentlyPromisedTextViewUpdate = Promise.whenAny(successContinuation, failureContinuation);
+		return currentlyPromisedTextViewUpdate;
 	}
 
 	private static class LockedTextViewTask implements OneParameterAction<Messenger<Map<String, String>>> {
 
-		private final Lock activeLock;
 		private final TextView textView;
 		private final Handler handler;
 		private final ServiceFile serviceFile;
 
-		LockedTextViewTask(Lock activeLock, TextView textView, Handler handler, ServiceFile serviceFile) {
-			this.activeLock = activeLock;
+		LockedTextViewTask(TextView textView, Handler handler, ServiceFile serviceFile) {
 			this.textView = textView;
 			this.handler = handler;
 			this.serviceFile = serviceFile;
@@ -63,7 +87,6 @@ public class FileNameTextViewSetter {
 
 			if (cancellationProxy.isCancelled()) {
 				messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
-				activeLock.unlock();
 				return;
 			}
 
@@ -73,7 +96,6 @@ public class FileNameTextViewSetter {
 
 			if (cancellationProxy.isCancelled()) {
 				messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
-				activeLock.unlock();
 				return;
 			}
 
@@ -81,32 +103,19 @@ public class FileNameTextViewSetter {
 
 			cancellationProxy.doCancel(filePropertiesPromise);
 
-			final Promise<Map<String, String>> textViewUpdatePromise =
-				filePropertiesPromise.eventually(properties -> new LoopedInPromise<>(ct -> {
-					final String fileName = properties.get(FilePropertiesProvider.NAME);
+			filePropertiesPromise.eventually(properties -> new LoopedInPromise<>(() -> {
+				final String fileName = properties.get(FilePropertiesProvider.NAME);
 
-					if (fileName != null && !ct.isCancelled())
-						textView.setText(fileName);
+				if (fileName != null && !cancellationProxy.isCancelled())
+					textView.setText(fileName);
 
-					return properties;
-				}, handler));
-
-			cancellationProxy.doCancel(textViewUpdatePromise);
-
-			textViewUpdatePromise
-				.then(props -> {
-					if (cancellationProxy.isCancelled())
-						textView.setText(R.string.lbl_loading);
-
-					messenger.sendResolution(props);
-					activeLock.unlock();
-					return null;
-				})
-				.excuse(e -> {
-					messenger.sendRejection(e);
-					activeLock.unlock();
-					return null;
-				});
+				messenger.sendResolution(properties);
+				return null;
+			}, handler))
+			.excuse(e -> {
+				messenger.sendRejection(e);
+				return null;
+			});
 		}
 	}
 }

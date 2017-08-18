@@ -39,7 +39,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
         final LazyViewFinder<ImageButton> addButtonFinder;
         final FileListItemContainer fileListItemContainer;
         AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public Promise<Map<String, String>> filePropertiesProvider;
+        public Promise<Map<String, String>> promisedTextViewUpdate;
         final FileNameTextViewSetter fileNameTextViewSetter;
 
         ViewHolder(final FileListItemContainer fileListItemContainer, FileNameTextViewSetter fileNameTextViewSetter, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> addButtonFinder) {
@@ -90,8 +90,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
 
         final TextView textView = fileListItem.findTextView();
 
-        if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
-        viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
+		viewHolder.promisedTextViewUpdate = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
 
         textView.setTypeface(null, Typeface.NORMAL);
         nowPlayingFileProvider
