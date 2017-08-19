@@ -14,14 +14,12 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 
 public class FileNameTextViewSetter {
 
@@ -43,24 +41,10 @@ public class FileNameTextViewSetter {
 			return currentlyPromisedTextViewUpdate;
 		}
 
-//		currentlyPromisedTextViewUpdate.cancel();
+		currentlyPromisedTextViewUpdate.cancel();
 
-		final CarelessOneParameterFunction<Void, Promise<Void>> promiseGenerator =
-			o -> new Promise<>(new LockedTextViewTask(textView, handler, serviceFile));
-
-		final Promise<Void> successContinuation = currentlyPromisedTextViewUpdate.eventually(promiseGenerator);
-
-		final Promise<Void> failureContinuation =
-			currentlyPromisedTextViewUpdate
-				.excuse(r -> {
-					if (r instanceof CancellationException) return null;
-
-					logger.warn("Last promised text view update was cancelled, but an error occurred", r);
-					return (Void)null;
-				})
-				.eventually(promiseGenerator);
-
-		currentlyPromisedTextViewUpdate = Promise.whenAny(successContinuation, failureContinuation);
+		currentlyPromisedTextViewUpdate =
+			currentlyPromisedTextViewUpdate.eventually(o -> new Promise<>(new LockedTextViewTask(textView, handler, serviceFile)));
 
 		return currentlyPromisedTextViewUpdate;
 	}
@@ -79,6 +63,9 @@ public class FileNameTextViewSetter {
 
 		@Override
 		public void runWith(Messenger<Void> messenger) {
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			messenger.cancellationRequested(cancellationProxy);
+
 			if (handler.getLooper().getThread() == Thread.currentThread())
 				textView.setText(R.string.lbl_loading);
 			else
@@ -88,10 +75,8 @@ public class FileNameTextViewSetter {
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-			final CancellationProxy cancellationProxy = new CancellationProxy();
-			messenger.cancellationRequested(cancellationProxy);
 			if (cancellationProxy.isCancelled()) {
-				messenger.sendRejection(new CancellationException("`FileNameTextViewSetter` was cancelled"));
+				messenger.sendResolution(null);
 				return;
 			}
 
@@ -109,15 +94,7 @@ public class FileNameTextViewSetter {
 				return null;
 			}, handler))
 			.excuse(e -> {
-				if (handler.getLooper().getThread() == Thread.currentThread()) {
-					textView.setText(R.string.lbl_loading);
-					messenger.sendRejection(e);
-				} else {
-					handler.postAtFrontOfQueue(() -> {
-						textView.setText(R.string.lbl_loading);
-						messenger.sendRejection(e);
-					});
-				}
+				messenger.sendResolution(null);
 
 				return null;
 			});
