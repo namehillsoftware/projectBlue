@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 public class FileNameTextViewSetter {
 
@@ -94,6 +95,9 @@ public class FileNameTextViewSetter {
 				return null;
 			}, handler))
 			.excuse(e -> {
+				if (!(e instanceof CancellationException))
+					logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
+
 				messenger.sendResolution(null);
 
 				return null;
