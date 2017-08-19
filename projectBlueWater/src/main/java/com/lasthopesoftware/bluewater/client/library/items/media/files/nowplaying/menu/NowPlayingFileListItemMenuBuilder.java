@@ -28,11 +28,7 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
-import java.util.Map;
 
-/**
- * Created by david on 11/7/15.
- */
 public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
     private static final class ViewHolder extends BaseMenuViewHolder {
@@ -42,7 +38,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final FileListItemContainer fileListItemContainer;
         AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public Promise<Map<String, String>> filePropertiesProvider;
+        public Promise<?> filePropertiesProvider;
 
         ViewHolder(final FileListItemContainer fileListItemContainer, FileNameTextViewSetter fileNameTextViewSetter, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
             super(viewFileDetailsButtonFinder, playButtonFinder);
@@ -94,7 +90,6 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final TextView textView = fileListItem.findTextView();
 
-        if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel();
         viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
 
         textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));

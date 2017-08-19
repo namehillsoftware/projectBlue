@@ -28,7 +28,6 @@ import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.util.List;
-import java.util.Map;
 
 public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
@@ -39,7 +38,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
         final LazyViewFinder<ImageButton> addButtonFinder;
         final FileListItemContainer fileListItemContainer;
         AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public Promise<Map<String, String>> promisedTextViewUpdate;
+        Promise<?> promisedTextViewUpdate;
         final FileNameTextViewSetter fileNameTextViewSetter;
 
         ViewHolder(final FileListItemContainer fileListItemContainer, FileNameTextViewSetter fileNameTextViewSetter, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> addButtonFinder) {
