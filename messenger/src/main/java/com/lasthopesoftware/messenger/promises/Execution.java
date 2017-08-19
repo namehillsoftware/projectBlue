@@ -3,7 +3,7 @@ package com.lasthopesoftware.messenger.promises;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 final class Execution {
-	
+
 	static final class ExpectedResult<Resolution, Response> extends ResolutionResponseMessenger<Resolution, Response> {
 		private final CarelessOneParameterFunction<Resolution, Response> onFulfilled;
 

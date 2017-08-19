@@ -3,12 +3,14 @@ package com.lasthopesoftware.messenger.promises;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
 import com.lasthopesoftware.messenger.errors.AggregateCancellationException;
-import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
+import com.lasthopesoftware.messenger.promises.propagation.ResolutionProxy;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 final class Resolutions {
 	private static class ResultCollector<TResult> implements CarelessOneParameterFunction<TResult, TResult> {
@@ -116,21 +118,50 @@ final class Resolutions {
 	}
 
 	static final class FirstPromiseResolver<Result> extends SingleMessageBroadcaster<Result> implements
-		Runnable {
+		Runnable,
+		CarelessOneParameterFunction<Throwable, Void> {
 
-		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
 		private final Collection<Promise<Result>> promises;
+		private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
+		private boolean isCancelled;
 
 		FirstPromiseResolver(Collection<Promise<Result>> promises) {
 			this.promises = promises;
-			for (Promise<Result> promise : promises) promiseProxy.proxy(promise);
+			for (Promise<Result> promise : promises) {
+				promise.then(new ResolutionProxy<>(this));
+				promise.excuse(this);
+			}
 			cancellationRequested(this);
 		}
 
 		@Override
 		public void run() {
-			sendRejection(new CancellationException());
+			final Lock writeLock = readWriteLock.writeLock();
+			writeLock.lock();
+			try {
+				isCancelled = true;
+			} finally {
+				writeLock.unlock();
+			}
+
 			for (Promise<Result> promise : promises) promise.cancel();
+			sendRejection(new CancellationException());
+		}
+
+		@Override
+		public Void resultFrom(Throwable throwable) throws Throwable {
+			final Lock readLock = readWriteLock.readLock();
+			readLock.lock();
+			try {
+				if (isCancelled) return null;
+			} finally {
+				readLock.unlock();
+			}
+
+			sendRejection(throwable);
+
+			return null;
 		}
 	}
 
