@@ -7,6 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
@@ -15,15 +16,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WhenCancellingBeforeResolving {
 	private static CancellationException cancellationException;
 	private static String result;
+	private static Collection<Throwable> promiseRejections = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() {
 		final List<Messenger<String>> messengers = new ArrayList<>();
 
-		final Promise<String> firstPromise = new Promise<>(messengers::add);
-		final Promise<String> secondPromise = new Promise<>(messengers::add);
-		final Promise<String> thirdPromise = new Promise<>(messengers::add);
-		final Promise<String> fourthPromise = new Promise<>(messengers::add);
+		final Promise<String> firstPromise = new Promise<>(messenger -> {
+			messengers.add(messenger);
+			messenger.cancellationRequested(() -> messenger.sendRejection(new Exception()));
+		});
+
+		firstPromise.excuse(e -> {
+			promiseRejections.add(e);
+			return null;
+		});
+
+		final Promise<String> secondPromise = new Promise<>(messenger -> {
+			messengers.add(messenger);
+			messenger.cancellationRequested(() -> messenger.sendRejection(new Exception()));
+		});
+
+		secondPromise.excuse(e -> {
+			promiseRejections.add(e);
+			return null;
+		});
+
+		final Promise<String> thirdPromise = new Promise<>(messenger -> {
+			messengers.add(messenger);
+			messenger.cancellationRequested(() -> messenger.sendRejection(new Exception()));
+		});
+
+		thirdPromise.excuse(e -> {
+			promiseRejections.add(e);
+			return null;
+		});
+
+		final Promise<String> fourthPromise = new Promise<>(messenger -> {
+			messengers.add(messenger);
+			messenger.cancellationRequested(() -> messenger.sendRejection(new Exception()));
+		});
+
+		fourthPromise.excuse(e -> {
+			promiseRejections.add(e);
+			return null;
+		});
 
 		final Promise<String> racingPromise = Promise.whenAny(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		racingPromise
@@ -50,5 +87,10 @@ public class WhenCancellingBeforeResolving {
 	@Test
 	public void thenTheResultIsNotReturned() {
 		assertThat(result).isNull();
+	}
+
+	@Test
+	public void thenFourOtherRejectionsAreCaught() {
+		assertThat(promiseRejections).hasSize(4);
 	}
 }

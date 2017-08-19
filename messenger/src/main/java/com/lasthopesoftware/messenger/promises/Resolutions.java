@@ -116,27 +116,21 @@ final class Resolutions {
 	}
 
 	static final class FirstPromiseResolver<Result> extends SingleMessageBroadcaster<Result> implements
-		CarelessOneParameterFunction<Result, Result>,
 		Runnable {
 
 		private final PromiseProxy<Result> promiseProxy = new PromiseProxy<>(this);
+		private final Collection<Promise<Result>> promises;
 
 		FirstPromiseResolver(Collection<Promise<Result>> promises) {
-			cancellationRequested(this);
-
+			this.promises = promises;
 			for (Promise<Result> promise : promises) promiseProxy.proxy(promise);
-		}
-
-		@Override
-		public Result resultFrom(Result result) throws Throwable {
-			sendResolution(result);
-
-			return result;
+			cancellationRequested(this);
 		}
 
 		@Override
 		public void run() {
 			sendRejection(new CancellationException());
+			for (Promise<Result> promise : promises) promise.cancel();
 		}
 	}
 

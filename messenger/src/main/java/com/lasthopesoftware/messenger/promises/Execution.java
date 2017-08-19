@@ -1,38 +1,9 @@
 package com.lasthopesoftware.messenger.promises;
 
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 final class Execution {
-
-	static final class MessengerTunnel<Result> implements Messenger<Result> {
-
-		private final SingleMessageBroadcaster<Result> messenger;
-
-		MessengerTunnel(SingleMessageBroadcaster<Result> messenger) {
-			this.messenger = messenger;
-		}
-
-		@Override
-		public void sendResolution(Result result) {
-			messenger.sendResolution(result);
-		}
-
-		@Override
-		public void sendRejection(Throwable error) {
-			messenger.sendRejection(error);
-		}
-
-		@Override
-		public void cancellationRequested(Runnable response) {
-			messenger.cancellationRequested(response);
-		}
-	}
-
-	/**
-	 * Created by david on 10/8/16.
-	 */
+	
 	static final class ExpectedResult<Resolution, Response> extends ResolutionResponseMessenger<Resolution, Response> {
 		private final CarelessOneParameterFunction<Resolution, Response> onFulfilled;
 
