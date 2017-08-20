@@ -1,20 +1,15 @@
 package com.lasthopesoftware.bluewater.shared.android.view;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.os.Build;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
-/**
- * Created by david on 5/17/15.
- */
-public class ScaledWrapImageView extends ImageView {
+public class ScaledWrapImageView extends AppCompatImageView {
 
-    private boolean mIsLandscape;
-    private Bitmap mBitmap;
+    private boolean isLandscape;
+    private Bitmap bitmap;
 
     public ScaledWrapImageView(Context context) {
         super(context);
@@ -36,18 +31,11 @@ public class ScaledWrapImageView extends ImageView {
 
     @Override
     public void setImageBitmap(Bitmap bm) {
-        mBitmap = bm;
+        bitmap = bm;
         super.setImageBitmap(bm);
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public ScaledWrapImageView(Context context, Bitmap bitmap, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-
-        updateIsLandscape();
-    }
-
-    @Override
+	@Override
     protected void onConfigurationChanged(Configuration newConfig) {
         updateIsLandscape(newConfig);
         super.onConfigurationChanged(newConfig);
@@ -58,12 +46,12 @@ public class ScaledWrapImageView extends ImageView {
     }
 
     private void updateIsLandscape(Configuration configuration) {
-        mIsLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE;
+        isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE;
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (mBitmap == null) {
+        if (bitmap == null) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
@@ -73,8 +61,8 @@ public class ScaledWrapImageView extends ImageView {
         int width = getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec);
         int height = getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec);
 
-        if (mIsLandscape) {
-            final int newHeight = scaleInteger(mBitmap.getHeight(), (double) width / (double)mBitmap.getWidth());
+        if (isLandscape) {
+            final int newHeight = scaleInteger(bitmap.getHeight(), (double) width / (double) bitmap.getWidth());
 
             if (newHeight > height) {
                 width = scaleInteger(width, (double) height / (double) newHeight);
@@ -82,7 +70,7 @@ public class ScaledWrapImageView extends ImageView {
                 height = newHeight;
             }
         } else {
-            final int newWidth = scaleInteger(mBitmap.getWidth(), (double) height / (double)mBitmap.getHeight());
+            final int newWidth = scaleInteger(bitmap.getWidth(), (double) height / (double) bitmap.getHeight());
 
             if (newWidth > width) {
                 height = scaleInteger(height, (double) width / (double) newWidth );

@@ -7,9 +7,6 @@ import android.view.View;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 
-/**
- * Created by david on 6/18/16.
- */
 public class LazyViewFinder<TView extends View> {
 
 	private final ILazy<TView> lazyViewInitializer;
