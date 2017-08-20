@@ -12,16 +12,7 @@ import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
-
 public class LoopedInPromise<Result> extends Promise<Result> {
-
-	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Context context) {
-		return response(task, new Handler(context.getMainLooper()));
-	}
-
-	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Handler handler) {
-		return new OneParameterExecutors.ReducingFunction<>(task, handler);
-	}
 
 	public LoopedInPromise(CarelessFunction<Result> task, Context context) {
 		this(task, new Handler(context.getMainLooper()));
@@ -37,6 +28,14 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 
 	public LoopedInPromise(OneParameterAction<Messenger<Result>> task, Handler handler) {
 		super(new Executors.LoopedInResponse<>(task, handler));
+	}
+
+	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Context context) {
+		return response(task, new Handler(context.getMainLooper()));
+	}
+
+	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Handler handler) {
+		return new OneParameterExecutors.ReducingFunction<>(task, handler);
 	}
 
 	private static class Executors {
