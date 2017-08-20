@@ -25,8 +25,8 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.callables.VoidFunc;
 
@@ -139,7 +139,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(libraryId)
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
+			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(result -> {
 				if (result == null) return;
 
 				library = result;
@@ -192,9 +192,10 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	}
 
 	private void saveLibraryAndFinish() {
-		lazyLibraryProvider.getObject().saveLibrary(library).then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
+		lazyLibraryProvider.getObject().saveLibrary(library).eventually(LoopedInPromise.response(result -> {
 			saveButton.findView().setText(getText(R.string.btn_saved));
 			finish();
-		}), this));
+			return null;
+		}, this));
 	}
 }

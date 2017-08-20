@@ -25,9 +25,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
@@ -64,7 +64,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 
-		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onFileProviderComplete = Dispatch.toContext(this, this);
+		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onFileProviderComplete = LoopedInPromise.response(this, this);
 
 		final String[] parameters = (getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
 

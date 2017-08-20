@@ -49,11 +49,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
@@ -228,7 +227,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				lazyNowPlayingRepository.getObject()
 					.getNowPlaying()
-					.then(Dispatch.toHandler(result -> {
+					.eventually(LoopedInPromise.response(result -> {
 						final boolean isRepeating = !result.isRepeating;
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -294,7 +293,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runCarelessly(np -> {
+			.eventually(LoopedInPromise.response(np -> {
 				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
 
 				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
@@ -304,7 +303,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 						: np.filePosition;
 
 				setView(serviceFile, filePosition);
-			}), messageHandler.getObject()))
+
+				return null;
+			}, messageHandler.getObject()))
 			.excuse(runCarelessly(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
@@ -325,10 +326,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 		setRepeatingIcon(imageButton, false);
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runCarelessly(result -> {
+			.eventually(LoopedInPromise.response(result -> {
 				if (result != null)
 					setRepeatingIcon(imageButton, result.isRepeating);
-			}), messageHandler.getObject()));
+
+				return null;
+			}, messageHandler.getObject()));
 	}
 	
 	private static void setRepeatingIcon(final ImageButton imageButton, boolean isRepeating) {
@@ -356,8 +359,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private void setView(final int playlistPosition) {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(Dispatch.toHandler(runCarelessly(np -> {
-				if (playlistPosition >= np.playlist.size()) return;
+			.eventually(LoopedInPromise.response(np -> {
+				if (playlistPosition >= np.playlist.size()) return null;
 
 				final ServiceFile serviceFile = np.playlist.get(playlistPosition);
 
@@ -367,7 +370,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 						: 0;
 
 				setView(serviceFile, filePosition);
-			}), messageHandler.getObject()))
+
+				return null;
+			}, messageHandler.getObject()))
 			.excuse(runCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
@@ -401,11 +406,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
 		filePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
-			.then(Dispatch.toHandler(runCarelessly(fileProperties -> {
+			.eventually(LoopedInPromise.response(fileProperties -> {
 				localViewStructure.fileProperties = fileProperties;
 				setFileProperties(serviceFile, initialFilePosition, fileProperties);
-			}), messageHandler.getObject()))
-			.excuse(Dispatch.toHandler(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()));
+				return null;
+			}, messageHandler.getObject()))
+			.excuse(LoopedInPromise.response(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()));
 	}
 
 	private void setNowPlayingImage(ViewStructure viewStructure, ServiceFile serviceFile) {

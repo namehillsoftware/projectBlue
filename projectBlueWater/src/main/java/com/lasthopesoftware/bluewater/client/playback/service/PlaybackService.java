@@ -72,7 +72,7 @@ import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLeve
 import com.lasthopesoftware.bluewater.client.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 import com.namehillsoftware.lazyj.Lazy;
@@ -606,7 +606,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.addFile(new ServiceFile(fileKey))
-				.then(Dispatch.toContext(library -> {
+				.eventually(LoopedInPromise.response(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return library;
 				}, this))
@@ -797,7 +797,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
-			.then(Dispatch.toContext(fileProperties -> {
+			.eventually(LoopedInPromise.response(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
@@ -810,7 +810,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 				return null;
 			}, this))
-			.excuse(Dispatch.toContext(exception -> {
+			.excuse(LoopedInPromise.response(exception -> {
 				final Builder builder = new Builder(this);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));

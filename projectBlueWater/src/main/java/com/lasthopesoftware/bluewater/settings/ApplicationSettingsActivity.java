@@ -22,8 +22,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.vedsoft.futures.callables.VoidFunc;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
@@ -62,7 +62,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 		libraryProvider
 			.getAllLibraries()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(libraries -> {
+			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(libraries -> {
 				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
 
 				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();

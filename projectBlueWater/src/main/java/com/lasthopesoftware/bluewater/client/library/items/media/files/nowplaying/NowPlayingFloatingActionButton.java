@@ -12,7 +12,7 @@ import android.widget.RelativeLayout;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.vedsoft.futures.callables.VoidFunc;
 
 /**

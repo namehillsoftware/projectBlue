@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
@@ -52,7 +52,7 @@ public class PlaylistListFragment extends Fragment {
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.then(VoidFunc.runCarelessly(library -> {
 				final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> listResolvedPromise =
-					Dispatch.toContext(
+					LoopedInPromise.response(
 						new OnGetLibraryViewPlaylistResultsComplete(
 							activity,
 							container,
@@ -65,7 +65,7 @@ public class PlaylistListFragment extends Fragment {
 
 				PlaylistsProvider
 					.promisePlaylists(SessionConnection.getSessionConnectionProvider())
-					.then(listResolvedPromise)
+					.eventually(listResolvedPromise)
 					.excuse(new HandleViewIoException(activity, new Runnable() {
 
 						@Override

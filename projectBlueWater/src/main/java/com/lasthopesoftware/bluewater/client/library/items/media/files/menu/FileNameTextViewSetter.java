@@ -38,14 +38,14 @@ public class FileNameTextViewSetter {
 
 	public Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
 		if (currentlyPromisedTextViewUpdate == null) {
-			currentlyPromisedTextViewUpdate = new Promise<>(new LockedTextViewTask(textView, handler, serviceFile));
+			currentlyPromisedTextViewUpdate = new LoopedInPromise<>(new LockedTextViewTask(textView, handler, serviceFile), handler);
 			return currentlyPromisedTextViewUpdate;
 		}
 
 		currentlyPromisedTextViewUpdate.cancel();
 
 		currentlyPromisedTextViewUpdate =
-			currentlyPromisedTextViewUpdate.eventually(o -> new Promise<>(new LockedTextViewTask(textView, handler, serviceFile)));
+			currentlyPromisedTextViewUpdate.eventually(o -> new LoopedInPromise<>(new LockedTextViewTask(textView, handler, serviceFile), handler));
 
 		return currentlyPromisedTextViewUpdate;
 	}
@@ -67,10 +67,7 @@ public class FileNameTextViewSetter {
 			final CancellationProxy cancellationProxy = new CancellationProxy();
 			messenger.cancellationRequested(cancellationProxy);
 
-			if (handler.getLooper().getThread() == Thread.currentThread())
-				textView.setText(R.string.lbl_loading);
-			else
-				handler.postAtFrontOfQueue(() -> textView.setText(R.string.lbl_loading));
+			textView.setText(R.string.lbl_loading);
 
 			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
@@ -85,7 +82,7 @@ public class FileNameTextViewSetter {
 
 			cancellationProxy.doCancel(filePropertiesPromise);
 
-			filePropertiesPromise.eventually(properties -> new LoopedInPromise<>(() -> {
+			filePropertiesPromise.eventually(LoopedInPromise.response(properties -> {
 				final String fileName = properties.get(FilePropertiesProvider.NAME);
 
 				if (fileName != null)

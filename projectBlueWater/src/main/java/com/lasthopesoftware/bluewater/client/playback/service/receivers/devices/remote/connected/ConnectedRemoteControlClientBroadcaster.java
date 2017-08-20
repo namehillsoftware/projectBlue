@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	public void updateNowPlaying(ServiceFile serviceFile) {
 		imageProvider
 			.promiseFileBitmap(serviceFile)
-			.then(Dispatch.toContext(this::updateClientBitmap, context))
+			.then(LoopedInPromise.response(this::updateClientBitmap, context))
 			.excuse(e -> {
 				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
 				return null;
@@ -66,7 +66,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 		cachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
-			.then(Dispatch.toContext(fileProperties -> {
+			.eventually(LoopedInPromise.response(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);

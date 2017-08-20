@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.view;
+package com.lasthopesoftware.bluewater.shared.android.view;
 
 import android.app.Activity;
 import android.support.annotation.IdRes;

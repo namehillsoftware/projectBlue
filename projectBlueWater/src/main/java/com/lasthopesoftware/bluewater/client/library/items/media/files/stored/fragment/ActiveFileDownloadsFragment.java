@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.St
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 
 import java.util.List;
@@ -72,7 +72,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 			.then(runCarelessly(library -> {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library);
 				storedFileAccess.getDownloadingStoredFiles()
-					.then(Dispatch.toContext(runCarelessly(storedFiles -> {
+					.eventually(LoopedInPromise.response(runCarelessly(storedFiles -> {
 						final List<StoredFile> localStoredFiles =
 							Stream.of(storedFiles)
 								.filter(f -> f.getLibraryId() == library.getId())
@@ -93,7 +93,8 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 									final List<ServiceFile> serviceFiles = activeFileDownloadsAdapter.getFiles();
 									for (ServiceFile serviceFile : serviceFiles) {
-										if (serviceFile.getKey() != storedFile.getServiceId()) continue;
+										if (serviceFile.getKey() != storedFile.getServiceId())
+											continue;
 
 										activeFileDownloadsAdapter.remove(serviceFile);
 										serviceFiles.remove(serviceFile);
@@ -122,8 +123,9 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 								storedFileAccess
 									.getStoredFile(storedFileId)
-									.then(Dispatch.toContext(runCarelessly(storedFile -> {
-										if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
+									.eventually(LoopedInPromise.response(runCarelessly(storedFile -> {
+										if (storedFile == null || storedFile.getLibraryId() != library.getId())
+											return;
 
 										localStoredFiles.add(storedFile);
 										activeFileDownloadsAdapter.add(new ServiceFile(storedFile.getServiceId()));

@@ -25,9 +25,9 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
@@ -37,9 +37,6 @@ import com.vedsoft.futures.callables.VoidFunc;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by david on 3/15/15.
- */
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<Item>, Void> {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(ItemListActivity.class);
@@ -80,12 +77,12 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final CarelessOneParameterFunction<List<Item>, Promise<Void>> itemProviderComplete = Dispatch.toContext(this, this);
+		final CarelessOneParameterFunction<List<Item>, Promise<Void>> itemProviderComplete = LoopedInPromise.response(this, this);
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
         itemProvider
 			.promiseItems()
-			.then(itemProviderComplete)
+			.eventually(itemProviderComplete)
 			.excuse(
 				new HandleViewIoException(this,
 					new Runnable() {
@@ -93,7 +90,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 						public void run() {
 							itemProvider
 								.promiseItems()
-								.then(itemProviderComplete)
+								.eventually(itemProviderComplete)
 								.excuse(new HandleViewIoException(ItemListActivity.this, this));
 						}
 					}));
@@ -115,7 +112,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 	private void BuildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
+			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 

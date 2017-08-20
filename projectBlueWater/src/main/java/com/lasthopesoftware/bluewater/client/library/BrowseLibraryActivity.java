@@ -42,9 +42,9 @@ import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStatic
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
@@ -185,7 +185,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(runCarelessly(library -> {
+			.eventually(LoopedInPromise.response(runCarelessly(library -> {
 				// No library, must bail out
 				if (library == null) {
 					finish();
@@ -211,7 +211,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		CarelessOneParameterFunction<List<Item>, Promise<Void>> onCompleteAction =
-			Dispatch.toContext(runCarelessly(items -> {
+			LoopedInPromise.response(runCarelessly(items -> {
 				if (isStopped || items == null) return;
 
 				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
@@ -254,7 +254,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			@Override
 			public void run() {
 				LibraryViewsProvider.provide(SessionConnection.getSessionConnectionProvider())
-					.then(onCompleteAction)
+					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
 			}
 		};
@@ -275,7 +275,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.then(Dispatch.toContext(runCarelessly(library -> {
+			.eventually(LoopedInPromise.response(runCarelessly(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);

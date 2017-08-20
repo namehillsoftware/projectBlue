@@ -26,9 +26,9 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.access.Play
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
@@ -75,7 +75,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 
-		final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> onPlaylistProviderComplete = Dispatch.toContext(result -> {
+		final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> onPlaylistProviderComplete = LoopedInPromise.response(result -> {
 			if (result == null) return null;
 
 			BuildPlaylistView(result);
@@ -88,14 +88,14 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 		PlaylistsProvider
 			.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
-			.then(onPlaylistProviderComplete)
+			.eventually(onPlaylistProviderComplete)
 			.excuse(new HandleViewIoException(PlaylistListActivity.this, new Runnable() {
 
 				@Override
 				public void run() {
 					PlaylistsProvider
 						.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
-						.then(onPlaylistProviderComplete)
+						.eventually(onPlaylistProviderComplete)
 						.excuse(new HandleViewIoException(PlaylistListActivity.this, this));
 				}
 			}));
@@ -110,7 +110,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
-			.then(Dispatch.toContext(library -> {
+			.eventually(LoopedInPromise.response(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 

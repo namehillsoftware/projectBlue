@@ -18,11 +18,11 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
-import com.lasthopesoftware.bluewater.client.servers.selection.IBrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener;
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServerOnClickListener;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.servers.selection.IBrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 
 import java.util.List;
 

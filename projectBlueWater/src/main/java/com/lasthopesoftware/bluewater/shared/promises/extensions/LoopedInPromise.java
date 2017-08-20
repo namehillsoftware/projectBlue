@@ -14,6 +14,15 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 
 
 public class LoopedInPromise<Result> extends Promise<Result> {
+
+	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Context context) {
+		return response(task, new Handler(context.getMainLooper()));
+	}
+
+	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Handler handler) {
+		return new OneParameterExecutors.ReducingFunction<>(task, handler);
+	}
+
 	public LoopedInPromise(CarelessFunction<Result> task, Context context) {
 		this(task, new Handler(context.getMainLooper()));
 	}
@@ -55,6 +64,33 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 			@Override
 			public void run() {
 				task.runWith(resultMessenger);
+			}
+		}
+	}
+
+	private static class OneParameterExecutors {
+
+		static class ReducingFunction<TResult, TNewResult> implements CarelessOneParameterFunction<TResult, Promise<TNewResult>>, CarelessFunction<TNewResult> {
+
+			private final CarelessOneParameterFunction<TResult, TNewResult> callable;
+			private final Handler handler;
+
+			private TResult result;
+
+			ReducingFunction(CarelessOneParameterFunction<TResult, TNewResult> callable, Handler handler) {
+				this.callable = callable;
+				this.handler = handler;
+			}
+
+			@Override
+			public TNewResult result() throws Throwable {
+				return callable.resultFrom(result);
+			}
+
+			@Override
+			public Promise<TNewResult> resultFrom(TResult result) throws Throwable {
+				this.result = result;
+				return new LoopedInPromise<>(this, handler);
 			}
 		}
 	}

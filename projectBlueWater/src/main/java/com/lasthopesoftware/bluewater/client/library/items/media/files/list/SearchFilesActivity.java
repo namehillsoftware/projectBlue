@@ -25,9 +25,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
@@ -77,7 +77,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		pbLoading.findView().setVisibility(View.INVISIBLE);
 
 		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onSearchFilesComplete =
-			Dispatch.toContext(this, this);
+			LoopedInPromise.response(this, this);
 
         new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
 			.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))

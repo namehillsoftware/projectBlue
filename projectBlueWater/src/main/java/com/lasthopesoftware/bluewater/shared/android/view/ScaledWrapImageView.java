@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.view;
+package com.lasthopesoftware.bluewater.shared.android.view;
 
 import android.annotation.TargetApi;
 import android.content.Context;

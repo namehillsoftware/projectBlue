@@ -26,16 +26,13 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;
 
-/**
- * Created by david on 1/5/16.
- */
 public class BrowseLibraryViewsFragment extends Fragment implements IItemListMenuChangeHandler {
 
 	private static final String SAVED_TAB_KEY = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment.class, "SAVED_TAB_KEY");
@@ -79,7 +76,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		final Handler handler = new Handler(getContext().getMainLooper());
 
 		final CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetVisibleViewsCompleteListener =
-			Dispatch.toHandler((result) -> {
+			LoopedInPromise.response((result) -> {
 				if (result == null) return null;
 
 				final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
@@ -100,7 +97,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}, handler);
 
 		getSelectedBrowserLibrary()
-			.then(Dispatch.toHandler(activeLibrary ->
+			.eventually(LoopedInPromise.response(activeLibrary ->
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
 					.then(onGetVisibleViewsCompleteListener)
@@ -167,7 +164,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		if (savedInstanceState == null || viewPager == null) return;
 
 		getSelectedBrowserLibrary()
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(library -> {
+			.then(LoopedInPromise.response(VoidFunc.runCarelessly(library -> {
 				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

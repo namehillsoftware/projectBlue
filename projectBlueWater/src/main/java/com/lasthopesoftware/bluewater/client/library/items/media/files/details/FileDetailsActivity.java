@@ -30,10 +30,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
-import com.lasthopesoftware.bluewater.shared.promises.resolutions.Dispatch;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ScaledWrapImageView;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
@@ -143,7 +143,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 		formattedFilePropertiesProvider
 			.promiseFileProperties(fileKey)
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(fileProperties -> {
+			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -206,7 +206,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				bitmap != null
 					? new Promise<>(bitmap)
 					: defaultImageProvider.getObject().promiseFileBitmap())
-			.then(Dispatch.toContext(VoidFunc.runCarelessly(result -> {
+			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 
 				if (isDestroyed) {
