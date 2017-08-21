@@ -325,6 +325,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
 					.setContentText(artist + " - " + name)
 					.setContentIntent(buildNowPlayingActivityIntent())
+					.setShowWhen(false)
 					.addAction(new NotificationCompat.Action(
 						R.drawable.av_rewind,
 						getString(R.string.btn_previous),
