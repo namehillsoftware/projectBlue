@@ -190,16 +190,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
 			final PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(PlaybackService.this, 0, mediaButtonIntent, 0);
 			// create and register the remote control client
-			final RemoteControlClient remoteControlClient = new RemoteControlClient(mediaPendingIntent);
-			remoteControlClient.setTransportControlFlags(
-				RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-					RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
-					RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
-					RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-					RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
-					RemoteControlClient.FLAG_KEY_MEDIA_STOP);
 
-			return remoteControlClient;
+			return new RemoteControlClient(mediaPendingIntent);
 		}
 	};
 	private final ILazy<MediaSession> lazyMediaSession =

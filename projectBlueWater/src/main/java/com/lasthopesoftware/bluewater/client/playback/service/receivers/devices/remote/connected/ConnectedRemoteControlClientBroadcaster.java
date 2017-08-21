@@ -21,6 +21,12 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	private static final float playbackSpeed = 1.0f;
 
+	private static final int standardControlFlags =
+			RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE |
+			RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+			RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS |
+			RemoteControlClient.FLAG_KEY_MEDIA_STOP;
+
 	private final Context context;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
@@ -35,21 +41,25 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
 		this.remoteControlClient = remoteControlClient;
+		remoteControlClient.setTransportControlFlags(standardControlFlags);
 	}
 
 	@Override
 	public void setPlaying() {
+		remoteControlClient.setTransportControlFlags(standardControlFlags | RemoteControlClient.FLAG_KEY_MEDIA_PAUSE);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PLAYING, trackPosition, playbackSpeed);
 	}
 
 	@Override
 	public void setPaused() {
+		remoteControlClient.setTransportControlFlags(standardControlFlags | RemoteControlClient.FLAG_KEY_MEDIA_PLAY);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PAUSED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
 	}
 
 	@Override
 	public void setStopped() {
+		remoteControlClient.setTransportControlFlags(standardControlFlags | RemoteControlClient.FLAG_KEY_MEDIA_PLAY);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_STOPPED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
 	}
