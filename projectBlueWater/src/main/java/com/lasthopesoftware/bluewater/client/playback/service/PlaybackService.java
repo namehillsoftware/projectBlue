@@ -73,6 +73,7 @@ import com.lasthopesoftware.bluewater.client.settings.volumeleveling.VolumeLevel
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 import com.namehillsoftware.lazyj.Lazy;
@@ -304,6 +305,53 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 		
 		notificationManagerLazy.getObject().notify(notificationId, notification);
+	}
+
+	private Promise<Builder> promiseBuiltNowPlayingNotification() {
+		return positionedPlaybackFile != null
+			? promiseBuiltNowPlayingNotification(positionedPlaybackFile.getServiceFile())
+			: Promise.empty();
+	}
+
+	private Promise<Builder> promiseBuiltNowPlayingNotification(ServiceFile serviceFile) {
+		return cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey())
+			.then(fileProperties -> {
+				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+				final String name = fileProperties.get(FilePropertiesProvider.NAME);
+
+				final Builder builder = new Builder(this);
+				builder
+					.setOngoing(true)
+					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
+					.setContentText(artist + " - " + name)
+					.setContentIntent(buildNowPlayingActivityIntent())
+					.addAction(new NotificationCompat.Action(
+						R.drawable.av_rewind,
+						getString(R.string.btn_previous),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.previous), PendingIntent.FLAG_UPDATE_CURRENT)))
+					.addAction(isPlaying
+						? new NotificationCompat.Action(
+						R.drawable.av_pause,
+						getString(R.string.btn_pause),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.pause), PendingIntent.FLAG_UPDATE_CURRENT))
+						: new NotificationCompat.Action(
+						R.drawable.av_play,
+						getString(R.string.btn_play),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.play), PendingIntent.FLAG_UPDATE_CURRENT)))
+					.addAction(new NotificationCompat.Action(
+						R.drawable.av_fast_forward,
+						getString(R.string.btn_next),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.next), PendingIntent.FLAG_UPDATE_CURRENT)));
+
+				return builder;
+			});
+	}
+
+	private PendingIntent buildNowPlayingActivityIntent() {
+		// Set the notification area
+		final Intent viewIntent = new Intent(this, NowPlayingActivity.class);
+		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		return PendingIntent.getActivity(this, 0, viewIntent, 0);
 	}
 	
 	private void stopNotification() {
@@ -665,7 +713,24 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void pausePlayback(boolean isUserInterrupted) {
 		isPlaying = false;
 
-		stopNotification();
+		promiseBuiltNowPlayingNotification()
+			.eventually(LoopedInPromise.response(notificationBuilder -> {
+				if (notificationBuilder == null) {
+					stopNotification();
+					return null;
+				}
+
+				stopForeground(false);
+				isNotificationForeground = false;
+				notificationBuilder =
+					notificationBuilder
+						.setOngoing(false)
+						.setSmallIcon(R.drawable.clearstream_logo_dark)
+						.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+				notificationManagerLazy.getObject().notify(notificationId, notificationBuilder.build());
+				return null;
+			}, this));
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
@@ -788,38 +853,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
 		
-		// Set the notification area
-		final Intent viewIntent = new Intent(this, NowPlayingActivity.class);
-		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		final PendingIntent pi = PendingIntent.getActivity(this, 0, viewIntent, 0);
-
-		cachedFilePropertiesProvider
-			.promiseFileProperties(positionedPlaybackFile.getServiceFile().getKey())
-			.eventually(LoopedInPromise.response(fileProperties -> {
-				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(FilePropertiesProvider.NAME);
-
-				final Builder builder = new Builder(this);
-				builder
-					.setOngoing(true)
-					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
-					.setContentText(artist + " - " + name)
-					.setContentIntent(pi)
-					.addAction(new NotificationCompat.Action(
-						R.drawable.av_rewind,
-						getString(R.string.btn_previous),
-						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.previous), PendingIntent.FLAG_UPDATE_CURRENT)))
-					.addAction(new NotificationCompat.Action(
-						R.drawable.av_pause,
-						getString(R.string.btn_pause),
-						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.pause), PendingIntent.FLAG_UPDATE_CURRENT)))
-					.addAction(new NotificationCompat.Action(
-						R.drawable.av_fast_forward,
-						getString(R.string.btn_next),
-						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.next), PendingIntent.FLAG_UPDATE_CURRENT)));
-
-				notifyForeground(builder);
-
+		promiseBuiltNowPlayingNotification(positionedPlaybackFile.getServiceFile())
+			.eventually(LoopedInPromise.response(notificationBuilder -> {
+				notifyForeground(notificationBuilder);
 				return null;
 			}, this))
 			.excuse(LoopedInPromise.response(exception -> {
@@ -827,7 +863,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
 				builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
-				builder.setContentIntent(pi);
+				builder.setContentIntent(buildNowPlayingActivityIntent());
 				notifyForeground(builder);
 
 				return null;
