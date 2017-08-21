@@ -291,8 +291,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void notifyForeground(Builder notificationBuilder) {
-		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
-		notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+		notificationBuilder
+			.setSmallIcon(R.drawable.clearstream_logo_dark)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
 		final Notification notification = notificationBuilder.build();
 
 		if (!isNotificationForeground) {
@@ -537,6 +539,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.then(this::observePlaybackFileChanges)
 				.then(lazyPlaybackStartedBroadcaster.getObject())
 				.then(this::handlePlaybackStarted)
+				.then(this::startNowPlayingActivity)
 				.excuse(UnhandledRejectionHandler);
 
 			return;
@@ -617,8 +620,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private Observable<PositionedPlaybackFile> handlePlaybackStarted(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
 		isPlaying = true;
-		NowPlayingActivity.startNowPlayingActivity(this);
+		return positionedPlaybackFileObservable;
+	}
 
+	private Observable<PositionedPlaybackFile> startNowPlayingActivity(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+		NowPlayingActivity.startNowPlayingActivity(this);
 		return positionedPlaybackFileObservable;
 	}
 
@@ -794,10 +800,24 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
 				final Builder builder = new Builder(this);
-				builder.setOngoing(true);
-				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-				builder.setContentText(artist + " - " + name);
-				builder.setContentIntent(pi);
+				builder
+					.setOngoing(true)
+					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
+					.setContentText(artist + " - " + name)
+					.setContentIntent(pi)
+					.addAction(new NotificationCompat.Action(
+						R.drawable.av_rewind,
+						getString(R.string.btn_previous),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.previous), PendingIntent.FLAG_UPDATE_CURRENT)))
+					.addAction(new NotificationCompat.Action(
+						R.drawable.av_pause,
+						getString(R.string.btn_pause),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.pause), PendingIntent.FLAG_UPDATE_CURRENT)))
+					.addAction(new NotificationCompat.Action(
+						R.drawable.av_fast_forward,
+						getString(R.string.btn_next),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.next), PendingIntent.FLAG_UPDATE_CURRENT)));
+
 				notifyForeground(builder);
 
 				return null;
