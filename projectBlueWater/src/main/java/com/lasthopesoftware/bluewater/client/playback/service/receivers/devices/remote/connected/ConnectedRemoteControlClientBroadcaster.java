@@ -46,20 +46,20 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	@Override
 	public void setPlaying() {
-		remoteControlClient.setTransportControlFlags(standardControlFlags | RemoteControlClient.FLAG_KEY_MEDIA_PAUSE);
+		remoteControlClient.setTransportControlFlags(RemoteControlClient.FLAG_KEY_MEDIA_PAUSE | standardControlFlags);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PLAYING, trackPosition, playbackSpeed);
 	}
 
 	@Override
 	public void setPaused() {
-		remoteControlClient.setTransportControlFlags(standardControlFlags | RemoteControlClient.FLAG_KEY_MEDIA_PLAY);
+		remoteControlClient.setTransportControlFlags(RemoteControlClient.FLAG_KEY_MEDIA_PLAY | standardControlFlags);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PAUSED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
 	}
 
 	@Override
 	public void setStopped() {
-		remoteControlClient.setTransportControlFlags(standardControlFlags | RemoteControlClient.FLAG_KEY_MEDIA_PLAY);
+		remoteControlClient.setTransportControlFlags(RemoteControlClient.FLAG_KEY_MEDIA_PLAY | standardControlFlags);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_STOPPED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
 	}
@@ -92,8 +92,6 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 				if (trackNumber != null)
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
 				metaData.apply();
-
-				remoteControlClient.setPlaybackState(playstate);
 
 				return null;
 			}, context));
