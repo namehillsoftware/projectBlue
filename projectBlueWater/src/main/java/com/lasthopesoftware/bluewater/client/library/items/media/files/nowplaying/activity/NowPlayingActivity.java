@@ -556,8 +556,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 	
 	private void resetViewOnReconnect(final ServiceFile serviceFile, final int position) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> {
-			if (viewStructure != null && serviceFile.equals(viewStructure.serviceFile))
-				setView(serviceFile, position);
+			if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
+
+			if (viewStructure.promisedNowPlayingImage != null) {
+				viewStructure.promisedNowPlayingImage.cancel();
+				viewStructure.promisedNowPlayingImage = null;
+			}
+
+			setView(serviceFile, position);
 		});
 		WaitForConnectionDialog.show(this);
 	}
