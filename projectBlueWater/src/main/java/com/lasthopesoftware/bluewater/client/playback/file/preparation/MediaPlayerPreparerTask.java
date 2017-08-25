@@ -66,6 +66,8 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 
 			mediaPlayer.setOnPreparedListener(mediaPlayerPreparationHandler);
 
+			if (mediaPlayerPreparationHandler.isCancelled()) return;
+
 			try {
 				mediaPlayer.prepare();
 			} catch (IllegalStateException | IOException e) {
@@ -131,6 +133,10 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 			mediaPlayer.release();
 
 			messenger.sendRejection(new CancellationException());
+		}
+
+		public boolean isCancelled() {
+			return isCancelled;
 		}
 	}
 }
