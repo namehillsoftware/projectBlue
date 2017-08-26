@@ -9,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.playback.queues.CyclicalFileQueuePr
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerTask;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import junit.framework.Assert;
 
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenAQueueIsCycledThroughManyTimes {
 
-	private static Map<ServiceFile, OneParameterAction<Messenger<IBufferingPlaybackHandler>>> fileActionMap;
+	private static Map<ServiceFile, MessengerTask<IBufferingPlaybackHandler>> fileActionMap;
 	private static int expectedNumberAbsolutePromises;
 	private static int expectedCycles;
 	private static int returnedPromiseCount;
@@ -78,7 +78,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 
 	@Test
 	public void thenEachFileIsPreparedTheAppropriateAmountOfTimes() {
-		Stream.of(fileActionMap).forEach(entry -> verify(entry.getValue(), times(expectedCycles)).runWith(any()));
+		Stream.of(fileActionMap).forEach(entry -> verify(entry.getValue(), times(expectedCycles)).execute(any()));
 	}
 
 	@Test
@@ -86,9 +86,9 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		Assert.assertEquals(expectedNumberAbsolutePromises, returnedPromiseCount);
 	}
 
-	private static class MockResolveAction implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
+	private static class MockResolveAction implements MessengerTask<IBufferingPlaybackHandler> {
 		@Override
-		public void runWith(Messenger<IBufferingPlaybackHandler> messenger) {
+		public void execute(Messenger<IBufferingPlaybackHandler> messenger) {
 			messenger.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}
 	}

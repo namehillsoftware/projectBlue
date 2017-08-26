@@ -13,14 +13,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerTask;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
+import com.lasthopesoftware.messenger.promises.queued.MessageTask;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.vedsoft.futures.callables.CarelessFunction;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -70,7 +70,7 @@ public class ImageProvider {
 		return new Promise<>(new ImageTask(context, connectionProvider, cachedFilePropertiesProvider, serviceFile));
 	}
 
-	private static class ImageTask implements OneParameterAction<Messenger<Bitmap>> {
+	private static class ImageTask implements MessengerTask<Bitmap> {
 
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
@@ -85,7 +85,7 @@ public class ImageProvider {
 		}
 
 		@Override
-		public void runWith(Messenger<Bitmap> messenger) {
+		public void execute(Messenger<Bitmap> messenger) {
 			final Promise<Map<String, String>> promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
 
 			final CancellationProxy cancellationProxy = new CancellationProxy();
@@ -146,7 +146,7 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageMemoryTask implements CarelessOneParameterFunction<CancellationToken, Bitmap> {
+	private static class ImageMemoryTask implements CancellableMessageTask<Bitmap> {
 		private final String uniqueKey;
 
 		ImageMemoryTask(String uniqueKey) {
@@ -155,7 +155,7 @@ public class ImageProvider {
 
 
 		@Override
-		public Bitmap resultFrom(CancellationToken cancellationToken) throws Throwable {
+		public Bitmap prepareMessage(CancellationToken cancellationToken) throws Throwable {
 			if (cancellationToken.isCancelled())
 				throw new CancellationException(cancellationMessage);
 
@@ -176,7 +176,7 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageDiskCacheTask implements CarelessFunction<Bitmap> {
+	private static class ImageDiskCacheTask implements MessageTask<Bitmap> {
 
 		private final String uniqueKey;
 		private final File imageCacheFile;
@@ -188,7 +188,7 @@ public class ImageProvider {
 		}
 
 		@Override
-		public Bitmap result() {
+		public Bitmap prepareMessage() {
 			if (imageCacheFile != null) {
 				final byte[] imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
 				if (imageBytes.length > 0)
@@ -199,7 +199,7 @@ public class ImageProvider {
 		}
 	}
 
-	private static class RemoteImageAccessTask implements CarelessOneParameterFunction<CancellationToken, Bitmap> {
+	private static class RemoteImageAccessTask implements CancellableMessageTask<Bitmap> {
 
 		private final String uniqueKey;
 		private final DiskFileCache imageDiskCache;
@@ -214,7 +214,7 @@ public class ImageProvider {
 		}
 
 		@Override
-		public Bitmap resultFrom(CancellationToken cancellationToken) throws Throwable {
+		public Bitmap prepareMessage(CancellationToken cancellationToken) throws Throwable {
 			try {
 				final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 				try {

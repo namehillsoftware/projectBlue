@@ -24,12 +24,11 @@ import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibrary
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class ItemListFragment extends Fragment {
 
@@ -63,8 +62,8 @@ public class ItemListFragment extends Fragment {
 
     	libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(runCarelessly(activeLibrary -> {
-				final CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetVisibleViewsCompleteListener = LoopedInPromise.response(result -> {
+			.then(perform(activeLibrary -> {
+				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(result -> {
 					if (result == null || result.size() == 0) return null;
 
 					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
@@ -77,14 +76,14 @@ public class ItemListFragment extends Fragment {
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.then(onGetVisibleViewsCompleteListener)
+					.eventually(onGetVisibleViewsCompleteListener)
 					.excuse(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.then(onGetVisibleViewsCompleteListener)
+								.eventually(onGetVisibleViewsCompleteListener)
 								.excuse(new HandleViewIoException(activity, this));
 						}
 					}));
@@ -102,8 +101,8 @@ public class ItemListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(runCarelessly(library -> {
-				CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetLibraryViewItemResultsComplete = LoopedInPromise.response(new OnGetLibraryViewItemResultsComplete(
+			.then(perform(library -> {
+				PromisedResponse<List<Item>, Void> onGetLibraryViewItemResultsComplete = LoopedInPromise.response(new OnGetLibraryViewItemResultsComplete(
 					activity,
 					container,
 					listView,
@@ -115,14 +114,14 @@ public class ItemListFragment extends Fragment {
 
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-					.then(onGetLibraryViewItemResultsComplete)
+					.eventually(onGetLibraryViewItemResultsComplete)
 					.excuse(new HandleViewIoException(activity, new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-								.then(onGetLibraryViewItemResultsComplete)
+								.eventually(onGetLibraryViewItemResultsComplete)
 								.excuse(new HandleViewIoException(activity, this));
 						}
 					}));

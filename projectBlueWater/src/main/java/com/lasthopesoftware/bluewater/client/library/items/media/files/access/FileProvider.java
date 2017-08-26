@@ -5,11 +5,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-public final class FileProvider implements CarelessOneParameterFunction<String, Promise<List<ServiceFile>>> {
+public final class FileProvider implements PromisedResponse<String, List<ServiceFile>> {
 	private final FileStringListProvider fileStringListProvider;
 
 	public FileProvider(FileStringListProvider fileStringListProvider) {
@@ -24,7 +24,7 @@ public final class FileProvider implements CarelessOneParameterFunction<String, 
 	}
 
 	@Override
-	public Promise<List<ServiceFile>> resultFrom(String stringList) throws Throwable {
+	public Promise<List<ServiceFile>> promiseResponse(String stringList) throws Throwable {
 		return FileStringListUtilities.promiseParsedFileStringList(stringList);
 	}
 }

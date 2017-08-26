@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver {
 	private static final Logger logger = LoggerFactory.getLogger(UpdatePlayStatsOnPlaybackCompleteReceiver.class);
@@ -30,6 +30,6 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 		playstatsUpdateSelector
 			.promisePlaystatsUpdater()
 			.eventually(updater -> updater.promisePlaystatsUpdate(new ServiceFile(fileKey)))
-			.excuse(runCarelessly(e -> logger.error("There was an error updating the playstats for the file with key " + fileKey)));
+			.excuse(perform(e -> logger.error("There was an error updating the playstats for the file with key " + fileKey)));
 	}
 }

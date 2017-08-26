@@ -1,21 +1,20 @@
 package com.lasthopesoftware.messenger.promises.queued;
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.vedsoft.futures.callables.CarelessFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.messenger.promises.MessengerTask;
 
-public final class FunctionResponse<Result> implements OneParameterAction<Messenger<Result>> {
+public final class FunctionResponse<Result> implements MessengerTask<Result> {
 
-	private final CarelessFunction<Result> callable;
+	private final MessageTask<Result> task;
 
-	public FunctionResponse(CarelessFunction<Result> callable) {
-		this.callable = callable;
+	public FunctionResponse(MessageTask<Result> task) {
+		this.task = task;
 	}
 
 	@Override
-	public void runWith(Messenger<Result> messenger) {
+	public void execute(Messenger<Result> messenger) {
 		try {
-			messenger.sendResolution(callable.result());
+			messenger.sendResolution(task.prepareMessage());
 		} catch (Throwable rejection) {
 			messenger.sendRejection(rejection);
 		}

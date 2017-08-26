@@ -2,12 +2,11 @@ package com.lasthopesoftware.bluewater.client.connection;
 
 import android.content.Context;
 
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 
-public class HandleViewIoException implements
-	CarelessOneParameterFunction<Throwable, Void> {
+public class HandleViewIoException implements ImmediateResponse<Throwable, Void> {
 	
 	private final Context context;
 	private final Runnable onConnectionRegainedListener;
@@ -18,7 +17,7 @@ public class HandleViewIoException implements
 	}
 
 	@Override
-	public Void resultFrom(Throwable e) {
+	public Void respond(Throwable e) {
 		if (e instanceof IOException)
 			WaitForConnectionActivity.beginWaiting(context, onConnectionRegainedListener);
 

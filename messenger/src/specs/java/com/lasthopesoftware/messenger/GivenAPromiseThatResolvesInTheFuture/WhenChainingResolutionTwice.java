@@ -1,7 +1,7 @@
 package com.lasthopesoftware.messenger.GivenAPromiseThatResolvesInTheFuture;
 
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,14 +14,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-/**
- * Created by david on 10/29/16.
- */
-
 public class WhenChainingResolutionTwice {
 
-	private static CarelessOneParameterFunction<String, ?> firstResultHandler;
-	private static CarelessOneParameterFunction<String, ?> secondResultHandler;
+	private static ImmediateResponse<String, ?> firstResultHandler;
+	private static ImmediateResponse<String, ?> secondResultHandler;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -37,12 +33,12 @@ public class WhenChainingResolutionTwice {
 				latch.countDown();
 			}).start());
 
-		firstResultHandler = mock(CarelessOneParameterFunction.class);
+		firstResultHandler = mock(ImmediateResponse.class);
 
 		rootPromise
 			.then(firstResultHandler);
 
-		secondResultHandler = mock(CarelessOneParameterFunction.class);
+		secondResultHandler = mock(ImmediateResponse.class);
 
 		rootPromise
 			.then(secondResultHandler);
@@ -52,11 +48,11 @@ public class WhenChainingResolutionTwice {
 
 	@Test
 	public void thenTheFirstResolutionIsCalled() throws Throwable {
-		verify(firstResultHandler, times(1)).resultFrom(any());
+		verify(firstResultHandler, times(1)).respond(any());
 	}
 
 	@Test
 	public void thenTheSecondResolutionIsCalled() throws Throwable {
-		verify(secondResultHandler, times(1)).resultFrom(any());
+		verify(secondResultHandler, times(1)).respond(any());
 	}
 }

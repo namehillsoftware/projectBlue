@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.CarelessOneParameterAction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.ResponseAction;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -16,8 +16,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PreparedPlaybackQueue implements
 	IPreparedPlaybackFileQueue,
-	CarelessOneParameterAction<IBufferingPlaybackHandler>,
-	CarelessOneParameterFunction<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
+	ResponseAction<IBufferingPlaybackHandler>,
+	ImmediateResponse<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
 	private static final int bufferingPlaybackQueueSize = 1;
 
@@ -110,14 +110,14 @@ public class PreparedPlaybackQueue implements
 	}
 
 	@Override
-	public PositionedPlaybackFile resultFrom(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
-		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(VoidFunc.runCarelessly(this));
+	public PositionedPlaybackFile respond(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
+		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(ImmediateAction.perform(this));
 
 		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile);
 	}
 
 	@Override
-	public void runWith(IBufferingPlaybackHandler bufferingPlaybackHandler) {
+	public void perform(IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		final ReentrantReadWriteLock.ReadLock readLock = queueUpdateLock.readLock();
 		readLock.lock();
 		try {

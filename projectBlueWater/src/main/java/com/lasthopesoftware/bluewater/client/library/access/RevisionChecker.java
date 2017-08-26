@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.MessageTask;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.vedsoft.futures.callables.CarelessFunction;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RevisionChecker implements CarelessFunction<Integer> {
+public class RevisionChecker implements MessageTask<Integer> {
 	
 	private static final Integer badRevision = -1;
     private static final long checkedExpirationTime = 30000;
@@ -42,7 +42,7 @@ public class RevisionChecker implements CarelessFunction<Integer> {
     }
 
 	@Override
-	public Integer result() throws Throwable {
+	public Integer prepareMessage() throws Throwable {
 		return getRevision();
 	}
 

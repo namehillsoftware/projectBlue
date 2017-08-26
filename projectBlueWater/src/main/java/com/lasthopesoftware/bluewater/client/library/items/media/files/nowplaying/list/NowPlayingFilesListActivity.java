@@ -27,24 +27,23 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.lasthopesoftware.messenger.promises.response.ResponseAction;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.CarelessOneParameterAction;
 
 public class NowPlayingFilesListActivity extends AppCompatActivity implements IItemListViewContainer {
 	
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 	private final LazyViewFinder<ProgressBar> mLoadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingItems);
-	private final ILazy<CarelessOneParameterFunction<NowPlaying, Promise<Void>>> lazyDispatchedLibraryCompleteResolution =
-		new AbstractSynchronousLazy<CarelessOneParameterFunction<NowPlaying, Promise<Void>>>() {
+	private final ILazy<PromisedResponse<NowPlaying, Void>> lazyDispatchedLibraryCompleteResolution =
+		new AbstractSynchronousLazy<PromisedResponse<NowPlaying, Void>>() {
 			@Override
-			protected CarelessOneParameterFunction<NowPlaying, Promise<Void>> initialize() throws Exception {
+			protected PromisedResponse<NowPlaying, Void> initialize() throws Exception {
 				return
 					LoopedInPromise.response(
-						VoidFunc.runCarelessly(
+						ImmediateAction.perform(
 							new OnGetLibraryNowComplete(
 								NowPlayingFilesListActivity.this,
 								fileListView.findView(),
@@ -81,7 +80,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.then(lazyDispatchedLibraryCompleteResolution.getObject());
+			.eventually(lazyDispatchedLibraryCompleteResolution.getObject());
 	}
 	
 	@Override
@@ -104,7 +103,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		if (requestCode != InstantiateSessionConnectionActivity.ACTIVITY_ID) return;
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
-			.then(lazyDispatchedLibraryCompleteResolution.getObject());
+			.eventually(lazyDispatchedLibraryCompleteResolution.getObject());
 	}
 	
 	@Override
@@ -122,7 +121,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		return nowPlayingFloatingActionButton;
 	}
 
-	private static class OnGetLibraryNowComplete implements CarelessOneParameterAction<NowPlaying> {
+	private static class OnGetLibraryNowComplete implements ResponseAction<NowPlaying> {
 		
 		private final NowPlayingFilesListActivity nowPlayingFilesListActivity;
 		private final ListView fileListView;
@@ -135,7 +134,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		}
 		
 		@Override
-		public void runWith(final NowPlaying nowPlaying) {
+		public void perform(final NowPlaying nowPlaying) {
 			if (nowPlaying == null) return;
 
 

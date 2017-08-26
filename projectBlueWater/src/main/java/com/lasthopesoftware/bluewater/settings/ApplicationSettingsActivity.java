@@ -24,7 +24,8 @@ import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySel
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.vedsoft.futures.callables.VoidFunc;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
 	private LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.pbLoadingServerList);
@@ -62,7 +63,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 		libraryProvider
 			.getAllLibraries()
-			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(libraries -> {
+			.eventually(LoopedInPromise.response(perform(libraries -> {
 				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
 
 				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();

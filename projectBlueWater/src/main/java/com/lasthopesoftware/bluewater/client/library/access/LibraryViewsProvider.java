@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractProvider;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.List;
 
-public class LibraryViewsProvider implements CarelessOneParameterFunction<CancellationToken, List<Item>> {
+public class LibraryViewsProvider implements CancellableMessageTask<List<Item>> {
 
     private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
 
@@ -48,7 +48,7 @@ public class LibraryViewsProvider implements CarelessOneParameterFunction<Cancel
 	}
 
 	@Override
-	public List<Item> resultFrom(CancellationToken cancellationToken) throws Throwable {
+	public List<Item> prepareMessage(CancellationToken cancellationToken) throws Throwable {
 		if (cancellationToken.isCancelled()) return null;
 
 		try {

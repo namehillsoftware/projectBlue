@@ -29,10 +29,9 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.util.List;
 
@@ -75,7 +74,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 
-		final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> onPlaylistProviderComplete = LoopedInPromise.response(result -> {
+		final PromisedResponse<List<Playlist>, Void> onPlaylistProviderComplete = LoopedInPromise.response(result -> {
 			if (result == null) return null;
 
 			BuildPlaylistView(result);

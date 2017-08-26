@@ -2,9 +2,9 @@ package com.lasthopesoftware.messenger.promises.propagation;
 
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
-public final class ResolutionProxy<Resolution> implements CarelessOneParameterFunction<Resolution, Void> {
+public final class ResolutionProxy<Resolution> implements ImmediateResponse<Resolution, Void> {
 	private final Messenger<Resolution> resolve;
 
 	public ResolutionProxy(Messenger<Resolution> resolve) {
@@ -12,7 +12,7 @@ public final class ResolutionProxy<Resolution> implements CarelessOneParameterFu
 	}
 
 	@Override
-	public Void resultFrom(Resolution resolution) throws Throwable {
+	public Void respond(Resolution resolution) throws Throwable {
 		resolve.sendResolution(resolution);
 		return null;
 	}

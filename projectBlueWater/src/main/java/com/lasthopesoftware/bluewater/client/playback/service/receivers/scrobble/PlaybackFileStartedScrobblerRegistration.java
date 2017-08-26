@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class PlaybackFileStartedScrobblerRegistration implements IConnectionDependentReceiverRegistration {
 
@@ -58,7 +58,7 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 
 			cachedFilePropertiesProvider
 				.promiseFileProperties(fileKey)
-				.then(runCarelessly(fileProperties -> {
+				.then(perform(fileProperties -> {
 					final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 					final String name = fileProperties.get(FilePropertiesProvider.NAME);
 					final String album = fileProperties.get(FilePropertiesProvider.ALBUM);

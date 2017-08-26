@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-final class PruneFilesTask implements CarelessOneParameterFunction<Collection<StoredFile>, Promise<Collection<Void>>> {
+final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, Collection<Void>> {
 	private static final Logger logger = LoggerFactory.getLogger(PruneFilesTask.class);
 	private static final ExecutorService pruneFilesExecutor = Executors.newSingleThreadExecutor();
 
@@ -32,7 +32,7 @@ final class PruneFilesTask implements CarelessOneParameterFunction<Collection<St
 	}
 
 	@Override
-	public Promise<Collection<Void>> resultFrom(Collection<StoredFile> allStoredFiles) {
+	public Promise<Collection<Void>> promiseResponse(Collection<StoredFile> allStoredFiles) {
 		final Stream<Promise<Void>> pruneFilesPromises =
 			Stream.of(allStoredFiles)
 				.map(storedFile -> new QueuedPromise<Void>(() -> {

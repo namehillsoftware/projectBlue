@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		});
 	}
 
-	private static final class FilePropertiesTask implements CarelessOneParameterFunction<CancellationToken, Map<String, String>> {
+	private static final class FilePropertiesTask implements CancellableMessageTask<Map<String, String>> {
 
 		private final IConnectionProvider connectionProvider;
 		private final Integer fileKey;
@@ -67,7 +67,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		}
 
 		@Override
-		public Map<String, String> resultFrom(CancellationToken cancellationToken) throws Throwable {
+		public Map<String, String> prepareMessage(CancellationToken cancellationToken) throws Throwable {
 			if (cancellationToken.isCancelled())
 				throw new CancellationException();
 

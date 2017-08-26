@@ -1,9 +1,8 @@
 package com.lasthopesoftware.messenger.promises;
 
-import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,9 +11,9 @@ public class Promise<Resolution> {
 
 	private final SingleMessageBroadcaster<Resolution> singleMessageBroadcaster;
 
-	public Promise(OneParameterAction<Messenger<Resolution>> executor) {
+	public Promise(MessengerTask<Resolution> messengerTask) {
 		this();
-		executor.runWith(singleMessageBroadcaster);
+		messengerTask.execute(singleMessageBroadcaster);
 	}
 
 	public Promise(Resolution passThroughResult) {
@@ -40,11 +39,11 @@ public class Promise<Resolution> {
 		return new Promise<>(onFulfilled);
 	}
 
-	public final <TNewResult> Promise<TNewResult> then(final CarelessOneParameterFunction<Resolution, TNewResult> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(final ImmediateResponse<Resolution, TNewResult> onFulfilled) {
 		return then(new Execution.ExpectedResult<>(onFulfilled));
 	}
 
-	public final <TNewResult> Promise<TNewResult> eventually(CarelessOneParameterFunction<Resolution, Promise<TNewResult>> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> eventually(PromisedResponse<Resolution, TNewResult> onFulfilled) {
 		return then(new PromisedResolutionResponseMessenger<>(onFulfilled));
 	}
 
@@ -54,7 +53,7 @@ public class Promise<Resolution> {
 		return new Promise<>(rejectionResponseMessenger);
 	}
 
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> excuse(CarelessOneParameterFunction<Throwable, TNewRejectedResult> onRejected) {
+	public final <TNewRejectedResult> Promise<TNewRejectedResult> excuse(ImmediateResponse<Throwable, TNewRejectedResult> onRejected) {
 		return excuse(new Execution.ErrorResultExecutor<>(onRejected));
 	}
 

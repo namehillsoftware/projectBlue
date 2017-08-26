@@ -32,7 +32,7 @@ import com.lasthopesoftware.bluewater.sync.service.SyncService;
 
 import java.util.List;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class ActiveFileDownloadsFragment extends Fragment {
 
@@ -69,10 +69,10 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		selectedBrowserLibraryProvider
 			.getBrowserLibrary()
-			.then(runCarelessly(library -> {
+			.then(perform(library -> {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library);
 				storedFileAccess.getDownloadingStoredFiles()
-					.eventually(LoopedInPromise.response(runCarelessly(storedFiles -> {
+					.eventually(LoopedInPromise.response(perform(storedFiles -> {
 						final List<StoredFile> localStoredFiles =
 							Stream.of(storedFiles)
 								.filter(f -> f.getLibraryId() == library.getId())
@@ -123,7 +123,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 								storedFileAccess
 									.getStoredFile(storedFileId)
-									.eventually(LoopedInPromise.response(runCarelessly(storedFile -> {
+									.eventually(LoopedInPromise.response(perform(storedFile -> {
 										if (storedFile == null || storedFile.getLibraryId() != library.getId())
 											return;
 

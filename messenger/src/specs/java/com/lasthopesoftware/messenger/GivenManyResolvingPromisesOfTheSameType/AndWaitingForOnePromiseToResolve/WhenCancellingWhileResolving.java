@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenCancellingWhileResolving {
@@ -30,10 +29,12 @@ public class WhenCancellingWhileResolving {
 		final Promise<String> racingPromise = Promise.whenAny(firstPromise, secondPromise, thirdPromise, fourthPromise);
 		racingPromise
 			.then(string -> result = string)
-			.excuse(runCarelessly(e -> {
+			.excuse(e -> {
 				if (e instanceof CancellationException)
 					cancellationException = (AggregateCancellationException) e;
-			}));
+
+				return null;
+			});
 
 		messengers.get(0).sendResolution("resolution_1");
 		messengers.get(1).sendResolution("resolution_2");

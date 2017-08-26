@@ -12,9 +12,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerTask;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,7 @@ public class FileNameTextViewSetter {
 		return currentlyPromisedTextViewUpdate;
 	}
 
-	private static class LockedTextViewTask implements OneParameterAction<Messenger<Void>> {
+	private static class LockedTextViewTask implements MessengerTask<Void> {
 
 		private final TextView textView;
 		private final Handler handler;
@@ -63,7 +63,7 @@ public class FileNameTextViewSetter {
 		}
 
 		@Override
-		public void runWith(Messenger<Void> messenger) {
+		public void execute(Messenger<Void> messenger) {
 			final CancellationProxy cancellationProxy = new CancellationProxy();
 			messenger.cancellationRequested(cancellationProxy);
 

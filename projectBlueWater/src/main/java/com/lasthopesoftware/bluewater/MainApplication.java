@@ -31,7 +31,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.util.StatusPrinter;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class MainApplication extends Application {
 	
@@ -82,7 +83,7 @@ public class MainApplication extends Application {
 
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
-					.then(VoidFunc.runCarelessly(library -> {
+					.then(perform(library -> {
 						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 						if (fileKey == -1) return;

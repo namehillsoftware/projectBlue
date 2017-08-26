@@ -28,12 +28,12 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<ServiceFile>, Void> {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
 	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
@@ -64,27 +64,27 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 
-		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onFileProviderComplete = LoopedInPromise.response(this, this);
+		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
 
 		final String[] parameters = (getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
 
 		getNewFileProvider()
 			.promiseFiles(FileListParameters.Options.None, parameters)
-			.then(onFileProviderComplete)
+			.eventually(onFileProviderComplete)
 			.excuse(new HandleViewIoException(this, new Runnable() {
 
 					@Override
 					public void run() {
 						getNewFileProvider()
 							.promiseFiles(FileListParameters.Options.None, parameters)
-							.then(onFileProviderComplete)
+							.eventually(onFileProviderComplete)
 							.excuse(new HandleViewIoException(FileListActivity.this, this));
 					}
 				}));
 	}
 
 	@Override
-	public Void resultFrom(List<ServiceFile> serviceFiles) throws Throwable {
+	public Void respond(List<ServiceFile> serviceFiles) throws Throwable {
 		if (serviceFiles == null) return null;
 
 		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

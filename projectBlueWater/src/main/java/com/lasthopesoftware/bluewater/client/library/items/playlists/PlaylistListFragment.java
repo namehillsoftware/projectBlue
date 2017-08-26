@@ -23,11 +23,11 @@ import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibrary
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class PlaylistListFragment extends Fragment {
 
@@ -50,8 +50,8 @@ public class PlaylistListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(VoidFunc.runCarelessly(library -> {
-				final CarelessOneParameterFunction<List<Playlist>, Promise<Void>> listResolvedPromise =
+			.then(perform(library -> {
+				final PromisedResponse<List<Playlist>, Void> listResolvedPromise =
 					LoopedInPromise.response(
 						new OnGetLibraryViewPlaylistResultsComplete(
 							activity,
@@ -72,7 +72,7 @@ public class PlaylistListFragment extends Fragment {
 						public void run() {
 							PlaylistsProvider
 								.promisePlaylists(SessionConnection.getSessionConnectionProvider())
-								.then(listResolvedPromise)
+								.eventually(listResolvedPromise)
 								.excuse(new HandleViewIoException(activity, this));
 						}
 					}));

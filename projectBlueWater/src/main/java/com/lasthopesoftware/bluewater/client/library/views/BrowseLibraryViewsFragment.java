@@ -28,10 +28,11 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class BrowseLibraryViewsFragment extends Fragment implements IItemListMenuChangeHandler {
 
@@ -75,7 +76,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		final Handler handler = new Handler(getContext().getMainLooper());
 
-		final CarelessOneParameterFunction<List<Item>, Promise<Void>> onGetVisibleViewsCompleteListener =
+		final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener =
 			LoopedInPromise.response((result) -> {
 				if (result == null) return null;
 
@@ -100,14 +101,14 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			.eventually(LoopedInPromise.response(activeLibrary ->
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.then(onGetVisibleViewsCompleteListener)
+					.eventually(onGetVisibleViewsCompleteListener)
 					.excuse(new HandleViewIoException(getContext(), new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
 								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.then(onGetVisibleViewsCompleteListener)
+								.eventually(onGetVisibleViewsCompleteListener)
 								.excuse(new HandleViewIoException(getContext(), this));
 						}
 					})), handler));
@@ -151,7 +152,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
 
 		getSelectedBrowserLibrary()
-			.then(VoidFunc.runCarelessly(library -> {
+			.then(perform(library -> {
 				if (library != null)
 					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 			}));
@@ -164,7 +165,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		if (savedInstanceState == null || viewPager == null) return;
 
 		getSelectedBrowserLibrary()
-			.then(LoopedInPromise.response(VoidFunc.runCarelessly(library -> {
+			.eventually(LoopedInPromise.response(perform(library -> {
 				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

@@ -2,9 +2,9 @@ package com.lasthopesoftware.messenger.promises.propagation;
 
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
-public final class RejectionProxy implements CarelessOneParameterFunction<Throwable, Void> {
+public final class RejectionProxy implements ImmediateResponse<Throwable, Void> {
 	private final Messenger<?> reject;
 
 	public RejectionProxy(Messenger<?> reject) {
@@ -12,7 +12,7 @@ public final class RejectionProxy implements CarelessOneParameterFunction<Throwa
 	}
 
 	@Override
-	public Void resultFrom(Throwable throwable) throws Throwable {
+	public Void respond(Throwable throwable) throws Throwable {
 		reject.sendRejection(throwable);
 		return null;
 	}

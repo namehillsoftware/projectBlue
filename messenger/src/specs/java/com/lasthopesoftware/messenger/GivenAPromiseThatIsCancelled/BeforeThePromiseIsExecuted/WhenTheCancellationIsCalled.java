@@ -1,8 +1,8 @@
 package com.lasthopesoftware.messenger.GivenAPromiseThatIsCancelled.BeforeThePromiseIsExecuted;
 
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerTask;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,7 +31,7 @@ public class WhenTheCancellationIsCalled {
 		assertThat(caughtException).isNull();
 	}
 
-	private static class ExternallyResolvableTask<TResult> implements OneParameterAction<Messenger<TResult>> {
+	private static class ExternallyResolvableTask<TResult> implements MessengerTask<TResult> {
 
 		private Messenger<TResult> resolve;
 
@@ -41,7 +41,7 @@ public class WhenTheCancellationIsCalled {
 		}
 
 		@Override
-		public void runWith(Messenger<TResult> messenger) {
+		public void execute(Messenger<TResult> messenger) {
 			resolve = messenger;
 		}
 	}

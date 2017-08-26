@@ -8,9 +8,8 @@ import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueue
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerTask;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.VoidFunc;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import junit.framework.Assert;
 
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -65,12 +65,12 @@ public class WhenTheQueueIsStarted {
 	public void thenTheQueueStartsAtTheCorrectPosition() {
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(VoidFunc.runCarelessly(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
+			.then(perform(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 
-	private static class MockResolveAction implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
+	private static class MockResolveAction implements MessengerTask<IBufferingPlaybackHandler> {
 		@Override
-		public void runWith(Messenger<IBufferingPlaybackHandler> resolve) {
+		public void execute(Messenger<IBufferingPlaybackHandler> resolve) {
 			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}
 	}

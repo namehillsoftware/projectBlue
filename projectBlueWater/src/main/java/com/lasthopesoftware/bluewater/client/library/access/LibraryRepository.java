@@ -9,9 +9,9 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.MessageTask;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		return new QueuedPromise<>(new SaveLibraryTask(context, library), RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private static class GetAllLibrariesTask implements CarelessFunction<Collection<Library>> {
+	private static class GetAllLibrariesTask implements MessageTask<Collection<Library>> {
 
 		private Context context;
 
@@ -50,7 +50,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Collection<Library> result() throws Exception {
+		public Collection<Library> prepareMessage() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return
 					repositoryAccessHelper
@@ -60,7 +60,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 	}
 
-	private static class GetLibraryTask implements CarelessFunction<Library> {
+	private static class GetLibraryTask implements MessageTask<Library> {
 
 		private int libraryId;
 		private Context context;
@@ -71,7 +71,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Library result() throws Exception {
+		public Library prepareMessage() throws Exception {
 			if (libraryId < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -84,7 +84,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 	}
 
-	private static class SaveLibraryTask implements CarelessFunction<Library> {
+	private static class SaveLibraryTask implements MessageTask<Library> {
 
 		private static final Logger logger = LoggerFactory.getLogger(SaveLibraryTask.class);
 
@@ -139,7 +139,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Library result() throws Exception {
+		public Library prepareMessage() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;

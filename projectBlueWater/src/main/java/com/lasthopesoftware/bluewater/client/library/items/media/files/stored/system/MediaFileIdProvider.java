@@ -5,8 +5,8 @@ import android.provider.MediaStore;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ import java.io.IOException;
 /**
  * Created by david on 6/13/16.
  */
-public class MediaFileIdProvider implements CarelessOneParameterFunction<Cursor, Integer> {
+public class MediaFileIdProvider implements ImmediateResponse<Cursor, Integer> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaFileIdProvider.class);
 	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
@@ -42,7 +42,7 @@ public class MediaFileIdProvider implements CarelessOneParameterFunction<Cursor,
 	}
 
 	@Override
-	public Integer resultFrom(Cursor cursor) throws Exception {
+	public Integer respond(Cursor cursor) throws Exception {
 		if (cursor == null) return -1;
 
 		try {

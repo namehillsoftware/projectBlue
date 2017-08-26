@@ -8,16 +8,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-/**
- * Created by david on 6/13/16.
- */
-public class MediaQueryCursorProvider implements IMediaQueryCursorProvider, CarelessOneParameterFunction<Map<String, String>, Cursor> {
+public class MediaQueryCursorProvider implements IMediaQueryCursorProvider, ImmediateResponse<Map<String, String>, Cursor> {
 
 	private static final String mediaDataQuery = MediaStore.Audio.Media.DATA + " LIKE '%' || ? || '%' ";
 	private static final String[] mediaQueryProjection = { MediaStore.Audio.Media.DATA };
@@ -42,7 +39,7 @@ public class MediaQueryCursorProvider implements IMediaQueryCursorProvider, Care
 	}
 
 	@Override
-	public Cursor resultFrom(Map<String, String> fileProperties) throws Exception {
+	public Cursor respond(Map<String, String> fileProperties) throws Exception {
 		final String originalFilename = fileProperties.get(FilePropertiesProvider.FILENAME);
 		if (originalFilename == null)
 			throw new IOException("The filename property was not retrieved. A connection needs to be re-established.");

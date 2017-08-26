@@ -66,7 +66,7 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class NowPlayingActivity extends AppCompatActivity {
 
@@ -306,7 +306,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				return null;
 			}, messageHandler.getObject()))
-			.excuse(runCarelessly(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
+			.excuse(perform(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
 
@@ -373,7 +373,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				return null;
 			}, messageHandler.getObject()))
-			.excuse(runCarelessly(e -> logger.error("An error occurred while getting the Now Playing data", e)));
+			.excuse(perform(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
 	private void setView(final ServiceFile serviceFile, final int initialFilePosition) {
@@ -411,7 +411,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 				setFileProperties(serviceFile, initialFilePosition, fileProperties);
 				return null;
 			}, messageHandler.getObject()))
-			.excuse(LoopedInPromise.response(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()));
+			.excuse(e -> LoopedInPromise.<Throwable, Boolean>response(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()).promiseResponse(e));
 	}
 
 	private void setNowPlayingImage(ViewStructure viewStructure, ServiceFile serviceFile) {
@@ -431,7 +431,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		viewStructure.promisedNowPlayingImage
 			.eventually(bitmap -> new LoopedInPromise<>(() -> setNowPlayingImage(bitmap), messageHandler.getObject()))
-			.excuse(runCarelessly(e -> {
+			.excuse(perform(e -> {
 				if (e instanceof CancellationException) {
 					logger.info("Bitmap retrieval cancelled", e);
 					return;
