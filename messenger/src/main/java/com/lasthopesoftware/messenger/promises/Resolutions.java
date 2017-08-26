@@ -13,43 +13,27 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 final class Resolutions {
-	private static class ResultCollector<TResult> implements ImmediateResponse<TResult, TResult> {
+
+	private static final class CollectedResultsResolver<TResult> implements ImmediateResponse<TResult, TResult> {
 		private final Collection<TResult> results;
-
-		ResultCollector(Collection<Promise<TResult>> promises) {
-			this.results = new ArrayList<>(promises.size());
-			for (Promise<TResult> promise : promises)
-				promise.then(this);
-		}
-
-		@Override
-		public TResult respond(TResult result) throws Exception {
-			results.add(result);
-			return result;
-		}
-
-		Collection<TResult> getResults() {
-			return results;
-		}
-	}
-
-	private static final class CollectedResultsResolver<TResult> extends ResultCollector<TResult> {
 		private final int expectedResultSize;
 		private Messenger<Collection<TResult>> collectionMessenger;
 
 		CollectedResultsResolver(Collection<Promise<TResult>> promises) {
-			super(promises);
+			this.results = new ArrayList<>(promises.size());
+			for (Promise<TResult> promise : promises)
+				promise.then(this);
 
 			this.expectedResultSize = promises.size();
 		}
 
 		@Override
 		public TResult respond(TResult result) throws Exception {
-			final TResult resultFrom = super.respond(result);
+			results.add(result);
 
 			attemptResolve();
 
-			return resultFrom;
+			return result;
 		}
 
 		CollectedResultsResolver resolveWith(Messenger<Collection<TResult>> collectionMessenger) {
@@ -67,6 +51,10 @@ final class Resolutions {
 			if (results.size() < expectedResultSize) return;
 
 			collectionMessenger.sendResolution(results);
+		}
+
+		Collection<TResult> getResults() {
+			return results;
 		}
 	}
 
@@ -169,9 +157,9 @@ final class Resolutions {
 
 		private Messenger<Collection<TResult>> collectionMessenger;
 		private final Collection<Promise<TResult>> promises;
-		private final ResultCollector<TResult> resultCollector;
+		private final CollectedResultsResolver<TResult> resultCollector;
 
-		CollectedResultsCanceller(Collection<Promise<TResult>> promises, ResultCollector<TResult> resultCollector) {
+		CollectedResultsCanceller(Collection<Promise<TResult>> promises, CollectedResultsResolver<TResult> resultCollector) {
 			this.promises = promises;
 			this.resultCollector = resultCollector;
 		}

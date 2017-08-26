@@ -39,7 +39,7 @@ public class Promise<Resolution> {
 		return new Promise<>(onFulfilled);
 	}
 
-	public final <TNewResult> Promise<TNewResult> then(final ImmediateResponse<Resolution, TNewResult> onFulfilled) {
+	public final <TNewResult> Promise<TNewResult> then(ImmediateResponse<Resolution, TNewResult> onFulfilled) {
 		return then(new Execution.ExpectedResult<>(onFulfilled));
 	}
 
