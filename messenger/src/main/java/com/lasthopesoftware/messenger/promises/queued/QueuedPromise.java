@@ -3,7 +3,7 @@ package com.lasthopesoftware.messenger.promises.queued;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerTask;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableFunctionResponse;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableImmediateMessage;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
 
 import java.util.concurrent.Executor;
@@ -14,11 +14,11 @@ public class QueuedPromise<Result> extends Promise<Result> {
 	}
 
 	public QueuedPromise(CancellableMessageTask<Result> task, Executor executor) {
-		this(new CancellableFunctionResponse<>(task), executor);
+		this(new CancellableImmediateMessage<>(task), executor);
 	}
 
 	public QueuedPromise(MessageTask<Result> task, Executor executor) {
-		this(new FunctionResponse<>(task), executor);
+		this(new ImmediateMessage<>(task), executor);
 	}
 
 	private static class Execution {

@@ -6,9 +6,9 @@ import android.os.Handler;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerTask;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.FunctionResponse;
+import com.lasthopesoftware.messenger.promises.queued.ImmediateMessage;
 import com.lasthopesoftware.messenger.promises.queued.MessageTask;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableFunctionResponse;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableImmediateMessage;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
 import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
@@ -20,11 +20,11 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 	}
 
 	public LoopedInPromise(MessageTask<Result> task, Handler handler) {
-		super(new Executors.LoopedInResponse<>(new FunctionResponse<>(task), handler));
+		super(new Executors.LoopedInResponse<>(new ImmediateMessage<>(task), handler));
 	}
 
 	public LoopedInPromise(CancellableMessageTask<Result> task, Handler handler) {
-		super(new Executors.LoopedInResponse<>(new CancellableFunctionResponse<>(task), handler));
+		super(new Executors.LoopedInResponse<>(new CancellableImmediateMessage<>(task), handler));
 	}
 
 	public LoopedInPromise(MessengerTask<Result> task, Handler handler) {

@@ -3,10 +3,10 @@ package com.lasthopesoftware.messenger.promises.queued.cancellation;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerTask;
 
-public final class CancellableFunctionResponse<Result> implements MessengerTask<Result> {
+public final class CancellableImmediateMessage<Result> implements MessengerTask<Result> {
 	private final CancellableMessageTask<Result> task;
 
-	public CancellableFunctionResponse(CancellableMessageTask<Result> task) {
+	public CancellableImmediateMessage(CancellableMessageTask<Result> task) {
 		this.task = task;
 	}
 
