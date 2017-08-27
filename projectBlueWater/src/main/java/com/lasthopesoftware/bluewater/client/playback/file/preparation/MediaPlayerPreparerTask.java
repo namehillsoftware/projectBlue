@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlayb
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
@@ -49,6 +50,14 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 
 		@Override
 		public void runWith(Messenger<IBufferingPlaybackHandler> messenger) {
+			final CancellationToken cancellationToken = new CancellationToken();
+			messenger.cancellationRequested(cancellationToken);
+
+			if (cancellationToken.isCancelled()) {
+				messenger.sendRejection(new CancellationException());
+				return;
+			}
+
 			final MediaPlayer mediaPlayer;
 			try {
 				mediaPlayer = playbackInitialization.initializeMediaPlayer(uri);
@@ -57,16 +66,20 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 				return;
 			}
 
-			final MediaPlayerPreparationHandler mediaPlayerPreparationHandler =
-				new MediaPlayerPreparationHandler(mediaPlayer, prepareAt, messenger);
+			if (cancellationToken.isCancelled()) {
+				mediaPlayer.release();
+				messenger.sendRejection(new CancellationException());
+				return;
+			}
 
-			messenger.cancellationRequested(mediaPlayerPreparationHandler);
+			final MediaPlayerPreparationHandler mediaPlayerPreparationHandler =
+				new MediaPlayerPreparationHandler(mediaPlayer, prepareAt, messenger, cancellationToken);
 
 			mediaPlayer.setOnErrorListener(mediaPlayerPreparationHandler);
 
 			mediaPlayer.setOnPreparedListener(mediaPlayerPreparationHandler);
 
-			if (mediaPlayerPreparationHandler.isCancelled()) return;
+			if (cancellationToken.isCancelled()) return;
 
 			try {
 				mediaPlayer.prepare();
@@ -86,13 +99,14 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 		private final MediaPlayer mediaPlayer;
 		private final Messenger<IBufferingPlaybackHandler> messenger;
 		private final int prepareAt;
+		private final CancellationToken cancellationToken;
 
-		private boolean isCancelled;
-
-		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, Messenger<IBufferingPlaybackHandler> messenger) {
+		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, Messenger<IBufferingPlaybackHandler> messenger, CancellationToken cancellationToken) {
 			this.mediaPlayer = mediaPlayer;
 			this.prepareAt = prepareAt;
 			this.messenger = messenger;
+			this.cancellationToken = cancellationToken;
+			messenger.cancellationRequested(this);
 		}
 
 		@Override
@@ -103,7 +117,7 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
-			if (isCancelled) return;
+			if (cancellationToken.isCancelled()) return;
 
 			if (prepareAt > 0) {
 				mediaPlayer.setOnSeekCompleteListener(this);
@@ -116,20 +130,16 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 
 		@Override
 		public void onSeekComplete(MediaPlayer mp) {
-			if (!isCancelled)
+			if (!cancellationToken.isCancelled())
 				messenger.sendResolution(new MediaPlayerPlaybackHandler(mp));
 		}
 
 		@Override
 		public void run() {
-			isCancelled = true;
+			cancellationToken.run();
 			mediaPlayer.release();
 
 			messenger.sendRejection(new CancellationException());
-		}
-
-		public boolean isCancelled() {
-			return isCancelled;
 		}
 	}
 }
