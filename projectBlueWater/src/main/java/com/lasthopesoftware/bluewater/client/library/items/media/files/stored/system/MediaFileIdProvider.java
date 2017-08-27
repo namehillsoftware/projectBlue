@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 import android.database.Cursor;
 import android.provider.MediaStore;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
 import org.slf4j.Logger;
@@ -14,26 +16,33 @@ import java.io.IOException;
 /**
  * Created by david on 6/13/16.
  */
-public class MediaFileIdProvider {
+public class MediaFileIdProvider implements ImmediateResponse<Cursor, Integer> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaFileIdProvider.class);
 	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
 
 	private final IMediaQueryCursorProvider mediaQueryCursorProvider;
-	private final IFile file;
+	private final ServiceFile serviceFile;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 
-	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, IFile file, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
+	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, ServiceFile serviceFile, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
 		this.mediaQueryCursorProvider = mediaQueryCursorProvider;
-		this.file = file;
+		this.serviceFile = serviceFile;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
-	public int getMediaId() throws IOException {
+	public Promise<Integer> getMediaId() throws IOException {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
-			return -1;
+			return new Promise<>(-1);
 
-		final Cursor cursor = mediaQueryCursorProvider.getMediaQueryCursor(file);
+		return
+			mediaQueryCursorProvider
+				.getMediaQueryCursor(serviceFile)
+				.then(this);
+	}
+
+	@Override
+	public Integer respond(Cursor cursor) throws Exception {
 		if (cursor == null) return -1;
 
 		try {

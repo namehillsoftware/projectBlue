@@ -45,7 +45,7 @@ public class PollConnection {
 			@Override
 			protected Void doInBackground(String... params) {
 				// Don't use timeout since if it can't resolve a host it will throw an exception immediately
-				// TODO need a blocking refresh configuration (that throws an error when run on a UI thread) for this one scenario
+				// TODO need a blocking refresh configuration (that throws an error when runWith on a UI thread) for this one scenario
 
 				while (!isCancelled() && !mIsConnectionRestored.get()) {
 					
@@ -69,7 +69,7 @@ public class PollConnection {
 						public void onReceive(Context context, Intent intent) {
 							final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
 
-							if (!SessionConnection.completeConditions.contains(buildStatus)) return;
+							if (!SessionConnection.BuildingSessionConnectionStatus.completeConditions.contains(buildStatus)) return;
 
 							mIsRefreshing.set(false);
 							localBroadcastManager.unregisterReceiver(this);
@@ -152,7 +152,7 @@ public class PollConnection {
 		}
 	}
 
-	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
+	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is runWith
 	 */
 	public void addOnConnectionRegainedListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionRegainedListeners) {
@@ -160,7 +160,7 @@ public class PollConnection {
 		}
 	}
 	
-	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is run
+	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is runWith
 	 */
 	public void addOnPollingCancelledListener(Runnable listener) {
 		synchronized(mUniqueOnCancelListeners) {

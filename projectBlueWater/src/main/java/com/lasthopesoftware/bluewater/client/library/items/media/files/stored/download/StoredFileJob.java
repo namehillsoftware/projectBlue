@@ -3,7 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
@@ -23,24 +24,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-/**
- * Created by david on 7/17/16.
- */
-public class StoredFileJob {
+class StoredFileJob {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
 
 	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
+	@NonNull
+	private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
-	private final IFile serviceFile;
+	private final ServiceFile serviceFile;
 	private final StoredFile storedFile;
 	private boolean isCancelled;
 	private IConnectionProvider connectionProvider;
+	@NonNull
 	private StoredFileAccess storedFileAccess;
 
-	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFile serviceFile, @NonNull StoredFile storedFile) {
+	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
 		this.connectionProvider = connectionProvider;
 		this.storedFileAccess = storedFileAccess;
+		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 		this.serviceFile = serviceFile;
@@ -51,8 +53,8 @@ public class StoredFileJob {
 		isCancelled = true;
 	}
 
-	public StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
-		final java.io.File file = new java.io.File(storedFile.getPath());
+	StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
+		final File file = new File(storedFile.getPath());
 		if (isCancelled) return getCancelledStoredFileJobResult(file);
 
 		if (file.exists()) {
@@ -66,9 +68,9 @@ public class StoredFileJob {
 		if (!fileWritePossibleArbitrator.isFileWritePossible(file))
 			throw new StoredFileWriteException(file, storedFile);
 
-		HttpURLConnection connection;
+		final HttpURLConnection connection;
 		try {
-			connection = connectionProvider.getConnection(serviceFile.getPlaybackParams());
+			connection = connectionProvider.getConnection(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
 		} catch (IOException e) {
 			logger.error("Error getting connection", e);
 			throw new StoredFileJobException(storedFile, e);
@@ -77,7 +79,7 @@ public class StoredFileJob {
 		if (isCancelled) return getCancelledStoredFileJobResult(file);
 
 		try {
-			InputStream is;
+			final InputStream is;
 			try {
 				is = connection.getInputStream();
 			} catch (IOException ioe) {
@@ -87,16 +89,13 @@ public class StoredFileJob {
 
 			if (isCancelled) return getCancelledStoredFileJobResult(file);
 
-			final java.io.File parent = file.getParentFile();
+			final File parent = file.getParentFile();
 			if (!parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
 
 			try {
-				final FileOutputStream fos = new FileOutputStream(file);
-				try {
+				try (FileOutputStream fos = new FileOutputStream(file)) {
 					IOUtils.copy(is, fos);
 					fos.flush();
-				} finally {
-					fos.close();
 				}
 
 				storedFileAccess.markStoredFileAsDownloaded(storedFile);
@@ -106,14 +105,14 @@ public class StoredFileJob {
 				logger.error("Error writing file!", ioe);
 				throw new StoredFileWriteException(file, storedFile, ioe);
 			} finally {
-				if (is != null) {
-					try {
-						is.close();
-					} catch (IOException e) {
-						logger.error("Error closing input stream", e);
-					}
+				try {
+					is.close();
+				} catch (IOException e) {
+					logger.error("Error closing input stream", e);
 				}
 			}
+		} catch (Throwable t) {
+			throw new StoredFileJobException(storedFile, t);
 		} finally {
 			connection.disconnect();
 		}

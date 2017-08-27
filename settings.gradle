@@ -1,3 +1,2 @@
-include ':pagerslidingtabstrip', ':futures', ':objective-droid', ':lazy-j'
-include ':fluenttask'
+include ':pagerslidingtabstrip', ':futures', ':objective-droid', ':messenger'
 include ':projectBlueWater'

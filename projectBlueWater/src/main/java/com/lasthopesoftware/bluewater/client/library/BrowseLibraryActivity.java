@@ -23,7 +23,10 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
@@ -34,18 +37,24 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistListFragment;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
 
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -61,6 +70,21 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private final LazyViewFinder<ListView> specialLibraryItemsListView = new LazyViewFinder<>(this, R.id.specialLibraryItemsListView);
 	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.drawer_layout);
 	private final LazyViewFinder<ProgressBar> loadingViewsProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingViews);
+	private final ILazy<LibraryRepository> lazyLibraryRepository = new AbstractSynchronousLazy<LibraryRepository>() {
+		@Override
+		protected LibraryRepository initialize() throws Exception {
+			return new LibraryRepository(BrowseLibraryActivity.this);
+		}
+	};
+
+	private ILazy<ISelectedBrowserLibraryProvider> lazySelectedBrowserLibraryProvider = new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
+		@Override
+		protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+			return new SelectedBrowserLibraryProvider(
+				new SelectedBrowserLibraryIdentifierProvider(BrowseLibraryActivity.this),
+				lazyLibraryRepository.getObject());
+		}
+	};
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -113,7 +137,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
             public void onDrawerClosed(View view) {
                 super.onDrawerClosed(view);
 				getSupportActionBar().setTitle(oldTitle);
-                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+                invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
             }
 
             /** Called when a drawer has settled in a completely open state. */
@@ -122,7 +146,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
                 super.onDrawerOpened(drawerView);
                 oldTitle = getSupportActionBar().getTitle();
 				getSupportActionBar().setTitle(selectViewTitle);
-                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+                invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
             }
 
 		};
@@ -158,25 +182,26 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
         showProgressBar();
 
-		LibrarySession.GetActiveLibrary(this, library -> {
-			// No library, must bail out
-			if (library == null) {
-				finish();
-				return;
-			}
+		lazySelectedBrowserLibraryProvider.getObject()
+			.getBrowserLibrary()
+			.eventually(LoopedInPromise.response(perform(library -> {
+				// No library, must bail out
+				if (library == null) {
+					finish();
+					return;
+				}
 
-			if (showDownloadsAction.equals(getIntent().getAction())) {
-				library.setSelectedView(0);
-				library.setSelectedViewType(Library.ViewType.DownloadView);
-				LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+				if (showDownloadsAction.equals(getIntent().getAction())) {
+					library.setSelectedView(0);
+					library.setSelectedViewType(Library.ViewType.DownloadView);
+					lazyLibraryRepository.getObject().saveLibrary(library);
 
-				// Clear the action
-				getIntent().setAction(null);
-			}
+					// Clear the action
+					getIntent().setAction(null);
+				}
 
-			displayLibrary(library);
-		});
-
+				displayLibrary(library);
+			}), this));
 	}
 
 	private void displayLibrary(final Library library) {
@@ -184,49 +209,56 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
-		new LibraryViewsProvider(SessionConnection.getSessionConnectionProvider())
-				.onComplete((items) -> {
-					if (isStopped || items == null) return;
+		PromisedResponse<List<Item>, Void> onCompleteAction =
+			LoopedInPromise.response(perform(items -> {
+				if (isStopped || items == null) return;
 
-					LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
 
-					selectViewsListView.findView().setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedViewType, library.getSelectedView()));
-					selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
+				selectViewsListView.findView().setAdapter(new SelectViewAdapter(this, items, selectedViewType, library.getSelectedView()));
+				selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
 
-					hideAllViews();
-					if (!Library.ViewType.serverViewTypes.contains(selectedViewType)) {
-						oldTitle = specialViews.get(0);
-						getSupportActionBar().setTitle(oldTitle);
+				hideAllViews();
+				if (!Library.ViewType.serverViewTypes.contains(selectedViewType)) {
+					oldTitle = specialViews.get(0);
+					getSupportActionBar().setTitle(oldTitle);
 
-						final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
-						swapFragments(activeFileDownloadsFragment);
+					final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
+					swapFragments(activeFileDownloadsFragment);
 
-						return;
-					}
+					return;
+				}
 
-					for (IItem item : items) {
-						if (item.getKey() != library.getSelectedView()) continue;
-						oldTitle = item.getValue();
-						getSupportActionBar().setTitle(oldTitle);
-						break;
-					}
+				for (IItem item : items) {
+					if (item.getKey() != library.getSelectedView()) continue;
+					oldTitle = item.getValue();
+					getSupportActionBar().setTitle(oldTitle);
+					break;
+				}
 
-					if (selectedViewType == Library.ViewType.PlaylistView) {
-						final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
-						playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-						swapFragments(playlistListFragment);
+				if (selectedViewType == Library.ViewType.PlaylistView) {
+					final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+					playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+					swapFragments(playlistListFragment);
 
-						return;
-					}
+					return;
+				}
 
-					final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
-					browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-					swapFragments(browseLibraryViewsFragment);
-				}).onError(new HandleViewIoException<>(this, () -> {
-					// Get a new instance of the file system as the connection provider may have changed
-					displayLibrary(library);
-				}))
-				.execute();
+				final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
+				browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+				swapFragments(browseLibraryViewsFragment);
+			}), this);
+
+		final Runnable getLibraryViewsRunnable = new Runnable() {
+			@Override
+			public void run() {
+				LibraryViewsProvider.provide(SessionConnection.getSessionConnectionProvider())
+					.eventually(onCompleteAction)
+					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
+			}
+		};
+
+		getLibraryViewsRunnable.run();
 	}
 
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
@@ -240,15 +272,17 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		drawerLayout.findView().closeDrawer(GravityCompat.START);
 		drawerToggle.syncState();
 
-		LibrarySession.GetActiveLibrary(this, library -> {
-			if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
+		lazySelectedBrowserLibraryProvider.getObject()
+			.getBrowserLibrary()
+			.eventually(LoopedInPromise.response(perform(library -> {
+				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
-			library.setSelectedView(selectedViewKey);
-			library.setSelectedViewType(selectedViewType);
-			LibrarySession.SaveLibrary(BrowseLibraryActivity.this, library);
+				library.setSelectedView(selectedViewKey);
+				library.setSelectedViewType(selectedViewType);
+				lazyLibraryRepository.getObject().saveLibrary(library);
 
-			displayLibrary(library);
-		});
+				displayLibrary(library);
+			}), this));
 	}
 
 	@Override

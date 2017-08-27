@@ -11,8 +11,12 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.UpdatePlayStatsOnPlaybackCompleteReceiver;
+import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
+import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestNotificationBuilder;
@@ -21,15 +25,19 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
@@ -40,6 +48,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.util.StatusPrinter;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class MainApplication extends Application {
 	
@@ -58,7 +68,7 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
-		// Kick off a file sync if one isn't scheduled on start-up
+		// Kick off a serviceFile sync if one isn't scheduled on start-up
 		if (!SyncService.isSyncScheduled(this)) SyncService.doSync(this);
 	}
 
@@ -67,21 +77,25 @@ public class MainApplication extends Application {
 		localBroadcastManager.registerReceiver(new BroadcastReceiver() {
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
-				LibrarySession.GetActiveLibrary(context, library -> {
-					if (library == null) return;
+				final int libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
+				if (libraryId < 0)
+					return;
 
-					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
-					final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
-					if (fileKey == -1) return;
+				new LibraryRepository(context)
+					.getLibrary(libraryId)
+					.then(perform(library -> {
+						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
+						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
+						if (fileKey == -1) return;
 
-					final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
-					if (mediaFileId == -1) return;
+						final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
+						if (mediaFileId == -1) return;
 
-					final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
-					if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
+						final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
+						if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
-					storedFileAccess.addMediaFile(new com.lasthopesoftware.bluewater.client.library.items.media.files.File(fileKey), mediaFileId, mediaFilePath);
-				});
+						storedFileAccess.addMediaFile(new ServiceFile(fileKey), mediaFileId, mediaFilePath);
+					}));
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));
 
@@ -113,7 +127,16 @@ public class MainApplication extends Application {
 			}
 		}, new IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded));
 
-		localBroadcastManager.registerReceiver(new UpdatePlayStatsOnPlaybackCompleteReceiver(), new IntentFilter(PlaybackService.PlaylistEvents.onFileComplete));
+		final Collection<IConnectionDependentReceiverRegistration> connectionDependentReceiverRegistrations =
+			Arrays.asList(
+				new UpdatePlayStatsOnCompleteRegistration(),
+				new PlaybackFileStartedScrobblerRegistration(),
+				new PlaybackFileStoppedScrobblerRegistration(),
+				new PebbleFileChangedNotificationRegistration());
+
+		localBroadcastManager.registerReceiver(
+			new SessionConnectionRegistrationsMaintainer(localBroadcastManager, connectionDependentReceiverRegistrations),
+			new IntentFilter(SessionConnection.buildSessionBroadcast));
 	}
 
 	private void initializeLogging() {

@@ -17,17 +17,23 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-public class FileListActivity extends AppCompatActivity implements IItemListViewContainer {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
 
 	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
 	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
@@ -36,8 +42,8 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	
 	private int mItemId;
 
-	private ProgressBar pbLoading;
-	private ListView fileListView;
+	private LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -49,50 +55,59 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_items);
 
-		fileListView = (ListView)findViewById(R.id.lvItems);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
-        
-        fileListView.setVisibility(View.INVISIBLE);
-        pbLoading.setVisibility(View.VISIBLE);
+        fileListView.findView().setVisibility(View.INVISIBLE);
+        pbLoading.findView().setVisibility(View.VISIBLE);
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final OneParameterRunnable<List<IFile>> onFileProviderComplete = result -> {
-			if (result == null) return;
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
 
-			final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
 
-			fileListView.setOnItemLongClickListener(longClickViewAnimatorListener);
-			final FileListAdapter fileListAdapter = new FileListAdapter(FileListActivity.this, R.id.tvStandard, result, new ItemListMenuChangeHandler(FileListActivity.this));
-
-			fileListView.setAdapter(fileListAdapter);
-
-			fileListView.setVisibility(View.VISIBLE);
-			pbLoading.setVisibility(View.INVISIBLE);
-		};
+		final String[] parameters = (getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
 
 		getNewFileProvider()
-			.onComplete(onFileProviderComplete)
-			.onError(new HandleViewIoException<>(this, new Runnable() {
+			.promiseFiles(FileListParameters.Options.None, parameters)
+			.eventually(onFileProviderComplete)
+			.excuse(new HandleViewIoException(this, new Runnable() {
 
-						@Override
-						public void run() {
-							getNewFileProvider()
-									.onComplete(onFileProviderComplete)
-									.onError(new HandleViewIoException<>(FileListActivity.this, this))
-									.execute();
-						}
-					})
-			)
-			.execute();
+					@Override
+					public void run() {
+						getNewFileProvider()
+							.promiseFiles(FileListParameters.Options.None, parameters)
+							.eventually(onFileProviderComplete)
+							.excuse(new HandleViewIoException(FileListActivity.this, this));
+					}
+				}));
+	}
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+	@Override
+	public Void respond(List<ServiceFile> serviceFiles) throws Throwable {
+		if (serviceFiles == null) return null;
+
+		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+
+		fileListView.findView().setOnItemLongClickListener(longClickViewAnimatorListener);
+		final FileListAdapter fileListAdapter =
+			new FileListAdapter(
+				this,
+				R.id.tvStandard,
+				serviceFiles,
+				new ItemListMenuChangeHandler(this),
+				NowPlayingFileProvider.fromActiveLibrary(this));
+
+		fileListView.findView().setAdapter(fileListAdapter);
+
+		fileListView.findView().setVisibility(View.VISIBLE);
+		pbLoading.findView().setVisibility(View.INVISIBLE);
+
+		return null;
 	}
 
 	private FileProvider getNewFileProvider() {
-		return new FileProvider(SessionConnection.getSessionConnectionProvider(), getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId));
+		return new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()));
 	}
 	
 	@Override

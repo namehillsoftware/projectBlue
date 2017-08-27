@@ -4,10 +4,8 @@ import android.os.AsyncTask;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,38 +14,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-/**
- * Created by david on 8/10/15.
- */
 public class ConnectionTester {
 
 	private static final int stdTimeoutTime = 30000;
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static void doTest(ConnectionProvider connectionProvider, OneParameterRunnable<Boolean> onTestComplete) {
-		doTest(connectionProvider, stdTimeoutTime, onTestComplete);
-	}
-
-	public static void doTest(final ConnectionProvider connectionProvider, final int timeout, OneParameterRunnable<Boolean> onTestComplete) {
-		final FluentCallable<Boolean> connectionTestTask = new FluentCallable<Boolean>() {
-			@Override
-			protected Boolean executeInBackground() {
-				return doTest(connectionProvider, timeout);
-			}
-		};
-
-		if (onTestComplete != null)
-			connectionTestTask.onComplete(onTestComplete);
-
-		connectionTestTask.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-	}
-
-	public static boolean doTest(final ConnectionProvider connectionProvider) {
+	public static Promise<Boolean> doTest(ConnectionProvider connectionProvider) {
 		return doTest(connectionProvider, stdTimeoutTime);
 	}
 
-	public static boolean doTest(final ConnectionProvider connectionProvider, final int timeout) {
+	public static Promise<Boolean> doTest(final ConnectionProvider connectionProvider, final int timeout) {
+		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
+	}
+
+	private static boolean doTestSynchronously(final ConnectionProvider connectionProvider, final int timeout) {
 		try {
 
 			final HttpURLConnection conn = connectionProvider.getConnection("Alive");

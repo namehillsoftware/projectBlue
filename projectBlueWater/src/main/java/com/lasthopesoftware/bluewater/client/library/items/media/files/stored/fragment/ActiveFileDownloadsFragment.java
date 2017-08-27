@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,21 +17,23 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by david on 6/6/15.
- */
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
 public class ActiveFileDownloadsFragment extends Fragment {
 
 	private BroadcastReceiver onSyncStartedReceiver;
@@ -57,81 +60,91 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		listView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
 
-		LibrarySession.GetActiveLibrary(getActivity(), library -> {
-			final StoredFileAccess storedFileAccess = new StoredFileAccess(getActivity(), library);
-			storedFileAccess.getDownloadingStoredFiles()
-				.onComplete((storedFiles) -> {
-					final ArrayList<StoredFile> localStoredFiles = new ArrayList<>(storedFiles.size());
-					for (StoredFile storedFile : storedFiles) {
-						if (storedFile.getLibraryId() == library.getId())
-							localStoredFiles.add(storedFile);
-					}
+		final FragmentActivity activity = getActivity();
 
-					final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(getActivity(), localStoredFiles);
+		final LibraryRepository libraryRepository = new LibraryRepository(activity);
+		final SelectedBrowserLibraryProvider selectedBrowserLibraryProvider = new SelectedBrowserLibraryProvider(
+			new SelectedBrowserLibraryIdentifierProvider(activity),
+			libraryRepository);
 
-					if (onFileDownloadedReceiver != null)
-						localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
+		selectedBrowserLibraryProvider
+			.getBrowserLibrary()
+			.then(perform(library -> {
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library);
+				storedFileAccess.getDownloadingStoredFiles()
+					.eventually(LoopedInPromise.response(perform(storedFiles -> {
+						final List<StoredFile> localStoredFiles =
+							Stream.of(storedFiles)
+								.filter(f -> f.getLibraryId() == library.getId())
+								.collect(Collectors.toList());
 
-					onFileDownloadedReceiver = new BroadcastReceiver() {
-						@Override
-						public void onReceive(Context context, Intent intent) {
-							final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
+						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(activity, localStoredFiles);
 
-							for (StoredFile storedFile : localStoredFiles) {
-								if (storedFile.getId() != storedFileId) continue;
+						if (onFileDownloadedReceiver != null)
+							localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
 
-								final List<IFile> files = activeFileDownloadsAdapter.getFiles();
-								for (IFile file : files) {
-									if (file.getKey() != storedFile.getServiceId()) continue;
+						onFileDownloadedReceiver = new BroadcastReceiver() {
+							@Override
+							public void onReceive(Context context, Intent intent) {
+								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
 
-									activeFileDownloadsAdapter.remove(file);
-									files.remove(file);
+								for (StoredFile storedFile : localStoredFiles) {
+									if (storedFile.getId() != storedFileId) continue;
+
+									final List<ServiceFile> serviceFiles = activeFileDownloadsAdapter.getFiles();
+									for (ServiceFile serviceFile : serviceFiles) {
+										if (serviceFile.getKey() != storedFile.getServiceId())
+											continue;
+
+										activeFileDownloadsAdapter.remove(serviceFile);
+										serviceFiles.remove(serviceFile);
+										break;
+									}
+
 									break;
 								}
-
-								break;
 							}
-						}
-					};
+						};
 
-					localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
+						localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
 
-					if (onFileQueuedReceiver != null)
-						localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
+						if (onFileQueuedReceiver != null)
+							localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
 
-					onFileQueuedReceiver = new BroadcastReceiver() {
-						@Override
-						public void onReceive(Context context, Intent intent) {
-							final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
-							if (storedFileId == -1) return;
+						onFileQueuedReceiver = new BroadcastReceiver() {
+							@Override
+							public void onReceive(Context context, Intent intent) {
+								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
+								if (storedFileId == -1) return;
 
-							for (StoredFile storedFile : localStoredFiles) {
-								if (storedFile.getId() == storedFileId) return;
-							}
+								for (StoredFile storedFile : localStoredFiles) {
+									if (storedFile.getId() == storedFileId) return;
+								}
 
-							storedFileAccess
+								storedFileAccess
 									.getStoredFile(storedFileId)
-									.onComplete((storedFile) -> {
-										if (storedFile == null || storedFile.getLibraryId() != library.getId()) return;
+									.eventually(LoopedInPromise.response(perform(storedFile -> {
+										if (storedFile == null || storedFile.getLibraryId() != library.getId())
+											return;
 
 										localStoredFiles.add(storedFile);
-										activeFileDownloadsAdapter.add(new File(storedFile.getServiceId()));
-									});
-						}
-					};
+										activeFileDownloadsAdapter.add(new ServiceFile(storedFile.getServiceId()));
+									}), activity));
+							}
+						};
 
-					localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncService.onFileQueuedEvent));
+						localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncService.onFileQueuedEvent));
 
-					listView.setAdapter(activeFileDownloadsAdapter);
+						listView.setAdapter(activeFileDownloadsAdapter);
 
-					progressBar.setVisibility(View.INVISIBLE);
-					listView.setVisibility(View.VISIBLE);
-				});
-		});
+						progressBar.setVisibility(View.INVISIBLE);
+						listView.setVisibility(View.VISIBLE);
+					}), activity));
+		}));
 
 		final Button toggleSyncButton = (Button) viewFileslayout.findViewById(R.id.toggleSyncButton);
-		final CharSequence startSyncLabel = getActivity().getText(R.string.start_sync_button);
-		final CharSequence stopSyncLabel = getActivity().getText(R.string.stop_sync_button);
+		final CharSequence startSyncLabel = activity.getText(R.string.start_sync_button);
+		final CharSequence stopSyncLabel = activity.getText(R.string.stop_sync_button);
 
 		toggleSyncButton.setText(!SyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
 

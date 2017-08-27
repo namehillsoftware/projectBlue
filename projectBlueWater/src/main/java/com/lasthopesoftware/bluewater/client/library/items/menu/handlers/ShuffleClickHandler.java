@@ -3,16 +3,13 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
 
-/**
- * Created by david on 4/3/15.
- */
 public final class ShuffleClickHandler extends AbstractMenuClickHandler {
 
     private final IFileListParameterProvider item;
@@ -24,10 +21,10 @@ public final class ShuffleClickHandler extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(View v) {
-	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider(), item, FileListParameters.Options.Shuffled))
-			    .onComplete(new OnGetFileStringListForClickCompleteListener(v.getContext()))
-			    .onError(new OnGetFileStringListForClickErrorListener(v, this))
-	            .execute();
+	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
+			.promiseFileStringList(FileListParameters.Options.Shuffled, item.getFileListParameters())
+			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
+			.excuse(new OnGetFileStringListForClickErrorListener(v, this));
 
         super.onClick(v);
     }

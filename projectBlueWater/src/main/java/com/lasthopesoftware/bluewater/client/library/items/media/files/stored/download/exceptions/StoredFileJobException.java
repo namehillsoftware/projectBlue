@@ -2,13 +2,10 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 
-/**
- * Created by david on 7/17/16.
- */
 public class StoredFileJobException extends Exception implements IStoredFileJobException {
 	private StoredFile storedFile;
 
-	public StoredFileJobException(StoredFile storedFile, Exception innerException) {
+	public StoredFileJobException(StoredFile storedFile, Throwable innerException) {
 		super(innerException);
 		this.storedFile = storedFile;
 	}

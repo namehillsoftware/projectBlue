@@ -1,11 +1,14 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
-import android.annotation.SuppressLint;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.vedsoft.fluent.FluentSpecifiedTask;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -22,66 +26,85 @@ import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
-public class FilePropertiesProvider extends FluentSpecifiedTask<Integer, Void, Map<String, String>> {
+public class FilePropertiesProvider implements IFilePropertiesProvider {
 
-	private final int fileKey;
 	private final IConnectionProvider connectionProvider;
-	
+	private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
+
 	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
 
 
-	public FilePropertiesProvider(IConnectionProvider connectionProvider, int fileKey) {
-		super(filePropertiesExecutor);
-
+	public FilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
 		this.connectionProvider = connectionProvider;
-		this.fileKey = fileKey;
+		this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 	}
 
-	@SuppressLint("NewApi")
 	@Override
-	protected Map<String, String> executeInBackground(Integer[] params) {
-		if (isCancelled()) return new HashMap<>();
-
-		final Integer revision = RevisionChecker.getRevision(connectionProvider);
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
-
-		if (isCancelled()) return new HashMap<>();
-
-		final FilePropertyCache.FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
-		if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision))
-			return new HashMap<>(filePropertiesContainer.getProperties());
-
-		try {
-			if (isCancelled()) return new HashMap<>();
-
-			final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
-			conn.setReadTimeout(45000);
-			try {
-				if (isCancelled()) return new HashMap<>();
-
-				try (InputStream is = conn.getInputStream()) {
-					if (isCancelled()) return new HashMap<>();
-
-					final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-					final XmlElement parent = xml.get(0);
-
-					final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
-					for (XmlElement el : parent)
-						returnProperties.put(el.getAttribute("Name"), el.getValue());
-
-					FilePropertyCache.getInstance().putFilePropertiesContainer(urlKeyHolder, new FilePropertyCache.FilePropertiesContainer(revision, returnProperties));
-
-					return returnProperties;
-				}
-			} finally {
-				conn.disconnect();
+	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
+		return RevisionChecker.promiseRevision(connectionProvider).eventually(revision -> {
+			final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
+			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
+				return new Promise<>(new HashMap<String, String>(filePropertiesContainer.getProperties()));
 			}
-		} catch (IOException | XmlParseException e) {
-			LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
-			setException(e);
+
+			return new QueuedPromise<>(new FilePropertiesWriter(connectionProvider, filePropertiesContainerProvider, fileKey, revision), filePropertiesExecutor);
+		});
+	}
+
+	private static final class FilePropertiesWriter implements CancellableMessageWriter<Map<String, String>> {
+
+		private final IConnectionProvider connectionProvider;
+		private final Integer fileKey;
+		private final Integer serverRevision;
+		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
+
+		private FilePropertiesWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey, Integer serverRevision) {
+			this.connectionProvider = connectionProvider;
+			this.fileKey = fileKey;
+			this.serverRevision = serverRevision;
+			this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 		}
 
-		return new HashMap<>();
+		@Override
+		public Map<String, String> prepareMessage(CancellationToken cancellationToken) throws Throwable {
+			if (cancellationToken.isCancelled())
+				throw new CancellationException();
+
+			try {
+				if (cancellationToken.isCancelled())
+					throw new CancellationException();
+
+				final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
+				conn.setReadTimeout(45000);
+				try {
+					if (cancellationToken.isCancelled())
+						throw new CancellationException();
+
+					try (InputStream is = conn.getInputStream()) {
+						if (cancellationToken.isCancelled())
+							throw new CancellationException();
+
+						final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
+						final XmlElement parent = xml.get(0);
+
+						final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
+						for (XmlElement el : parent)
+							returnProperties.put(el.getAttribute("Name"), el.getValue());
+
+						final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+						filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
+
+						return returnProperties;
+					}
+				} finally {
+					conn.disconnect();
+				}
+			} catch (IOException | XmlParseException e) {
+				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
+				throw e;
+			}
+		}
 	}
 
 	/* Utility string constants */
@@ -98,10 +121,10 @@ public class FilePropertiesProvider extends FluentSpecifiedTask<Integer, Void, M
 	static final String DATE_CREATED = "Date Created";
 	static final String DATE_IMPORTED = "Date Imported";
 	static final String DATE_MODIFIED = "Date Modified";
-	static final String FILE_SIZE = "File Size";
+	static final String FILE_SIZE = "ServiceFile Size";
 	public static final String AUDIO_ANALYSIS_INFO = "Audio Analysis Info";
 	public static final String GET_COVER_ART_INFO = "Get Cover Art Info";
-	public static final String IMAGE_FILE = "Image File";
+	public static final String IMAGE_FILE = "Image ServiceFile";
 	public static final String KEY = "Key";
 	public static final String STACK_FILES = "Stack Files";
 	public static final String STACK_TOP = "Stack Top";

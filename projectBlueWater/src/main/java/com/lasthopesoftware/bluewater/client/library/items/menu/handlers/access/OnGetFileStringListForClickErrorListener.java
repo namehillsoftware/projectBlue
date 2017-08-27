@@ -4,14 +4,11 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
-import com.vedsoft.futures.callables.OneParameterCallable;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 
-/**
- * Created by david on 4/3/15.
- */
-public class OnGetFileStringListForClickErrorListener implements OneParameterCallable<Exception, Boolean> {
+public final class OnGetFileStringListForClickErrorListener implements ImmediateResponse<Throwable, Boolean> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 
@@ -21,7 +18,7 @@ public class OnGetFileStringListForClickErrorListener implements OneParameterCal
     }
 
     @Override
-    public Boolean call(Exception innerException) {
+    public Boolean respond(Throwable innerException) {
         if (innerException instanceof IOException) {
             PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(() -> mOnClickListener.onClick(mView));
 

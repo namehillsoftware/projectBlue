@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -9,12 +8,13 @@ import java.net.URL;
 
 public class ConnectionProvider implements IConnectionProvider {
 
-	private final MediaServerUrlProvider urlProvider;
+	private final IUrlProvider urlProvider;
 
-	public ConnectionProvider(MediaServerUrlProvider urlProvider) {
+	public ConnectionProvider(IUrlProvider urlProvider) {
 		this.urlProvider = urlProvider;
 	}
 
+	@Override
 	public HttpURLConnection getConnection(String... params) throws IOException {
 		if (urlProvider == null) return null;
 
@@ -34,4 +34,5 @@ public class ConnectionProvider implements IConnectionProvider {
 	public IUrlProvider getUrlProvider() {
 		return urlProvider;
 	}
+
 }

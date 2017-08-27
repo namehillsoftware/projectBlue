@@ -1,28 +1,36 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
+import android.content.Context;
 import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
 import java.util.List;
 
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
 public class FilePlayClickListener extends AbstractMenuClickHandler {
-	private final List<IFile> mFiles;
-	private final int mPosition;
+	private final List<ServiceFile> serviceFiles;
+	private final int position;
 	
-	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<IFile> files) {
+	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<ServiceFile> serviceFiles) {
         super(parent);
 
-		mPosition = position;
-		mFiles = files;
+		this.position = position;
+		this.serviceFiles = serviceFiles;
 	}
 	
 	@Override
 	public void onClick(View v) {
-		PlaybackService.launchMusicService(v.getContext(), mPosition, FileStringListUtilities.serializeFileStringList(mFiles));
+		final Context context = v.getContext();
+
+		FileStringListUtilities
+			.promiseSerializedFileStringList(serviceFiles)
+			.eventually(LoopedInPromise.response(perform(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(serviceFiles))), context));
 
         super.onClick(v);
 	}

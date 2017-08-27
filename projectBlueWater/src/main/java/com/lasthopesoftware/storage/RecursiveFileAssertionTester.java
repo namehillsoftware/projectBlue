@@ -2,7 +2,7 @@ package com.lasthopesoftware.storage;
 
 import android.support.annotation.NonNull;
 
-import com.vedsoft.futures.callables.OneParameterCallable;
+import com.vedsoft.futures.callables.OneParameterFunction;
 
 import java.io.File;
 
@@ -11,11 +11,11 @@ import java.io.File;
  */
 public final class RecursiveFileAssertionTester {
 
-	public static boolean recursivelyTestAssertion(@NonNull File file, OneParameterCallable<File, Boolean> assertion) {
+	public static boolean recursivelyTestAssertion(@NonNull File file, OneParameterFunction<File, Boolean> assertion) {
 		File testFile = file;
 		do {
 			if (testFile.exists())
-				return assertion.call(testFile);
+				return assertion.resultFrom(testFile);
 		} while ((testFile = testFile.getParentFile()) != null);
 
 		return false;

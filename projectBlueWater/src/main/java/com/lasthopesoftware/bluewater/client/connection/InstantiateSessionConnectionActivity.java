@@ -14,9 +14,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.Lazy;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.Lazy;
 
 public class InstantiateSessionConnectionActivity extends Activity {
 	
@@ -74,7 +74,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	}
 	
 	private void handleBuildStatusChange(int status) {
-		if (SessionConnection.completeConditions.contains(status))
+		if (BuildingSessionConnectionStatus.completeConditions.contains(status))
 			localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver);
 
 		final TextView lblConnectionStatusView = lblConnectionStatus.findView();

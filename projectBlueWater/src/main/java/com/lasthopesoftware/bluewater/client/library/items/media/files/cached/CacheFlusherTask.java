@@ -1,47 +1,47 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.cached;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.vedsoft.fluent.FluentSpecifiedTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 /**
  * Flush a given cache until it reaches the given target size
  * @author david
  *
  */
-class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
+class CacheFlusherTask implements Runnable {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 	
 	private final Context context;
 	private final String cacheName;
 	private final long targetSize;
-	
+
+	static Future<?> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
+		return RepositoryAccessHelper.databaseExecutor.submit(new CacheFlusherTask(context, cacheName, targetSize));
+	}
+
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
-	CacheFlusherTask(final Context context, final String cacheName, final long targetSize) {
-		super(RepositoryAccessHelper.databaseExecutor);
-		
+	private CacheFlusherTask(final Context context, final String cacheName, final long targetSize) {
 		this.context = context;
 		this.cacheName = cacheName;
 		this.targetSize = targetSize;
 	}
 
-	@SuppressLint("NewApi")
 	@Override
-	protected Void executeInBackground(Void[] params) {
-		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return null;
+	public void run() {
+		try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return;
 
 			do {
 				final CachedFile cachedFile = getOldestCachedFile(repositoryAccessHelper);
@@ -52,7 +52,7 @@ class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 			// Remove any files in the cache dir but not in the database
 			final File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
 
-			if (cacheDir == null || !cacheDir.exists()) return null;
+			if (cacheDir == null || !cacheDir.exists()) return;
 
 			final File[] filesInCacheDir = cacheDir.listFiles();
 
@@ -60,20 +60,21 @@ class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need
 			// to do additional processing
 			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(repositoryAccessHelper))
-				return null;
+				return;
 
-			for (File fileInCacheDir : filesInCacheDir) {
+			// Remove all files that aren't tracked in the database
+			for (final File fileInCacheDir : filesInCacheDir) {
 				try {
 					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null)
 						continue;
 				} catch (IOException e) {
-					logger.warn("Issue getting canonical file path.");
+					logger.warn("Issue getting canonical serviceFile path.");
 				}
-				fileInCacheDir.delete();
+
+				if (!fileInCacheDir.delete())
+					logger.warn("The cached file `" + fileInCacheDir.getPath() + "` could not be deleted.");
 			}
 		}
-
-		return null;
 	}
 
 	private long getCachedFileSizeFromDatabase(final RepositoryAccessHelper repositoryAccessHelper) {
@@ -97,7 +98,7 @@ class CacheFlusherTask extends FluentSpecifiedTask<Void, Void, Void> {
 //			
 //			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName, String.valueOf(startTime), String.valueOf(endTime));
 //		} catch (SQLException e) {
-//			logger.error("Error getting file size", e);
+//			logger.excuse("Error getting serviceFile size", e);
 //			return -1;
 //		}
 //	}

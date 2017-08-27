@@ -100,7 +100,7 @@
                 android:value="com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity" />
         </activity>
         <activity
-            android:name=".client.library.items.media.files.nowplaying.NowPlayingActivity"
+            android:name=".client.library.items.media.files.nowplaying.activity.NowPlayingActivity"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTask"
             android:theme="@style/NowPlayingTheme" >
@@ -111,15 +111,15 @@
             android:launchMode="singleTask" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingActivity" />
+                android:value="com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity" />
         </activity>
 
-        <receiver android:name=".client.library.items.media.files.playback.service.receivers.AudioBecomingNoisyReceiver" >
+        <receiver android:name=".client.playback.service.receivers.AudioBecomingNoisyReceiver" >
             <intent-filter android:priority="1000" >
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".client.library.items.media.files.playback.service.receivers.RemoteControlReceiver" >
+        <receiver android:name=".client.playback.service.receivers.RemoteControlReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
@@ -131,7 +131,7 @@
         </receiver>
 
         <service
-            android:name=".client.library.items.media.files.playback.service.PlaybackService"
+            android:name=".client.playback.service.PlaybackService"
             android:enabled="true"
             android:exported="false" >
         </service>

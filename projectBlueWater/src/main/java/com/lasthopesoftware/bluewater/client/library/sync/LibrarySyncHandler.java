@@ -1,14 +1,16 @@
 package com.lasthopesoftware.bluewater.client.library.sync;
 
 import android.content.Context;
-import android.os.AsyncTask;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
@@ -21,25 +23,22 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
-import java.util.AbstractMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
-/**
- * Created by david on 8/30/15.
- */
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
 public class LibrarySyncHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
@@ -50,10 +49,9 @@ public class LibrarySyncHandler {
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final StoredFileDownloader storedFileDownloader;
-	private OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted;
+	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
-	private volatile boolean isFaulted;
 
 	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
 		this(
@@ -64,7 +62,7 @@ public class LibrarySyncHandler {
 				new LibraryStorageWritePermissionsRequirementsProvider());
 	}
 
-	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
+	private LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.library = library;
@@ -73,33 +71,33 @@ public class LibrarySyncHandler {
 		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
-	public void setOnFileDownloading(OneParameterRunnable<StoredFile> onFileDownloading) {
+	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
 		storedFileDownloader.setOnFileDownloading(onFileDownloading);
 	}
 
-	public void setOnFileDownloaded(OneParameterRunnable<StoredFileJobResult> onFileDownloaded) {
+	public void setOnFileDownloaded(OneParameterAction<StoredFileJobResult> onFileDownloaded) {
 		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 
-	public void setOnFileQueued(OneParameterRunnable<StoredFile> onFileQueued) {
+	public void setOnFileQueued(OneParameterAction<StoredFile> onFileQueued) {
 		storedFileDownloader.setOnFileQueued(onFileQueued);
 	}
 
-	public void setOnQueueProcessingCompleted(final OneParameterRunnable<LibrarySyncHandler> onQueueProcessingCompleted) {
+	public void setOnQueueProcessingCompleted(final OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted) {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
-	public void setOnFileReadError(TwoParameterRunnable<Library, StoredFile> onFileReadError) {
+	public void setOnFileReadError(TwoParameterAction<Library, StoredFile> onFileReadError) {
 		storedFileDownloader.setOnFileReadError(storedFile -> {
 			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
-				onFileReadError.run(library, storedFile);
+				onFileReadError.runWith(library, storedFile);
 		});
 	}
 
-	public void setOnFileWriteError(TwoParameterRunnable<Library, StoredFile> onFileWriteError) {
+	public void setOnFileWriteError(TwoParameterAction<Library, StoredFile> onFileWriteError) {
 		storedFileDownloader.setOnFileWriteError(storedFile -> {
 			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
-				onFileWriteError.run(library, storedFile);
+				onFileWriteError.runWith(library, storedFile);
 		});
 	}
 
@@ -113,93 +111,106 @@ public class LibrarySyncHandler {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess
 			.getStoredItems()
-			.onComplete((storedItems) -> AsyncTask
-				.THREAD_POOL_EXECUTOR
-				.execute(() -> {
-					if (isCancelled) {
-						handleQueueProcessingCompleted();
-						return;
-					}
+			.then(perform(storedItems -> {
+				if (isCancelled) {
+					handleQueueProcessingCompleted();
+					return;
+				}
 
-					final Set<Integer> allSyncedFileKeys = new HashSet<>();
-					final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
-					final Queue<Map.Entry<IItem, FileProvider>> fileProviders = new LinkedList<>();
-					for (StoredItem storedItem : storedItems) {
+				final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
+					.map(storedItem -> {
 						if (isCancelled) {
 							handleQueueProcessingCompleted();
-							return;
+							return new Promise<>(Collections.emptyList());
 						}
 
 						final int serviceId = storedItem.getServiceId();
-						final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-						final FileProvider fileProvider = new FileProvider(connectionProvider, (IFileListParameterProvider) item);
-						fileProvider.execute();
-						fileProviders.offer(new AbstractMap.SimpleImmutableEntry<>(item, fileProvider));
-					}
+						final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
+						final FileProvider fileProvider = new FileProvider(new FileStringListProvider(connectionProvider));
 
-					Map.Entry<IItem, FileProvider> fileProviderEntry;
-					while ((fileProviderEntry = fileProviders.poll()) != null) {
-						if (isCancelled) {
-							handleQueueProcessingCompleted();
-							return;
-						}
-
-						final IItem item = fileProviderEntry.getKey();
-						final FileProvider fileProvider = fileProviderEntry.getValue();
-
-						try {
-							final List<IFile> files = fileProvider.get();
-							for (final IFile file : files) {
-								allSyncedFileKeys.add(file.getKey());
-
-								if (isCancelled) {
-									handleQueueProcessingCompleted();
-									return;
+						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+						serviceFileListPromise
+							.excuse(perform(e -> {
+								if (e instanceof FileNotFoundException) {
+									final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+									storedItemAccess.toggleSync(item, false);
 								}
+							}));
 
-								final StoredFile storedFile = storedFileAccess.createOrUpdateFile(connectionProvider, file);
-								if (storedFile != null && !storedFile.isDownloadComplete())
-									storedFileDownloader.queueFileForDownload(file, storedFile);
-							}
-						} catch (ExecutionException | InterruptedException e) {
-
-							if (e.getCause() instanceof FileNotFoundException) {
-								logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-								storedItemAccess.toggleSync(item, false);
-								continue;
-							}
-
-							isFaulted = true;
-							logger.warn("There was an error retrieving the files", e);
-
-							if (isCancelled) {
-								handleQueueProcessingCompleted();
-								return;
-							}
-						}
-					}
-
-					storedFileDownloader.setOnQueueProcessingCompleted(() -> {
-						if (!isCancelled && !isFaulted)
-							storedFileAccess.pruneStoredFiles(allSyncedFileKeys);
-
-						handleQueueProcessingCompleted();
+						return serviceFileListPromise;
 					});
 
-					if (isCancelled) {
+				Promise
+					.whenAll(mappedFileDataPromises.toList())
+					.then(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
+					.eventually(allServiceFilesToSync -> {
+						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
+						pruneFilesTask.excuse(perform(e -> logger.warn("There was an error pruning the files", e)));
+
+						return !isCancelled
+							? pruneFilesTask.then(voids -> allServiceFilesToSync)
+							: new Promise<Set<ServiceFile>>(Collections.emptySet());
+					})
+					.eventually(allServiceFilesToSync -> {
+						if (isCancelled)
+							return new Promise<>(Collections.emptySet());
+
+						final List<Promise<StoredFile>> upsertFiles = Stream.of(allServiceFilesToSync)
+							.map(serviceFile -> {
+								if (isCancelled)
+									return new Promise<>((StoredFile) null);
+
+								return storedFileAccess
+									.createOrUpdateFile(connectionProvider, serviceFile)
+									.then(new DownloadGuard(storedFileDownloader, serviceFile));
+							})
+							.toList();
+
+						return Promise.whenAll(upsertFiles);
+					})
+					.then(vs -> {
+						storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
+
+						if (!isCancelled)
+							storedFileDownloader.process();
+						else
+							handleQueueProcessingCompleted();
+
+						return null;
+					})
+					.excuse(e -> {
+						logger.warn("There was an error retrieving the files", e);
+
 						handleQueueProcessingCompleted();
-						return;
-					}
 
-					storedFileDownloader.process();
-				}));
+						return null;
+					});
+			}));
 	}
-
-
 
 	private void handleQueueProcessingCompleted() {
 		if (onQueueProcessingCompleted != null)
-			onQueueProcessingCompleted.run(LibrarySyncHandler.this);
+			onQueueProcessingCompleted.runWith(this);
+	}
+
+	private static class DownloadGuard implements ImmediateResponse<StoredFile, StoredFile> {
+		private final ServiceFile serviceFile;
+		private StoredFileDownloader storedFileDownloader;
+
+		DownloadGuard(StoredFileDownloader storedFileDownloader, ServiceFile serviceFile) {
+			this.storedFileDownloader = storedFileDownloader;
+			this.serviceFile = serviceFile;
+		}
+
+		@Override
+		public StoredFile respond(StoredFile storedFile) {
+			if (storedFile != null && !storedFile.isDownloadComplete())
+				storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
+
+			return storedFile;
+		}
 	}
 }

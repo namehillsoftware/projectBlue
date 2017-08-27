@@ -1,40 +1,56 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.File;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
+import android.support.annotation.NonNull;
+
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-/**
- * Created by david on 11/26/15.
- */
 public class FileStringListUtilities {
 
-	public static ArrayList<IFile> parseFileStringList(String fileList) {
+	private static final Lazy<ExecutorService> fileParsingExecutor = new Lazy<>(Executors::newCachedThreadPool);
+
+	public static Promise<List<ServiceFile>> promiseParsedFileStringList(@NonNull String fileList) {
+		return new QueuedPromise<>(() -> parseFileStringList(fileList), fileParsingExecutor.getObject());
+	}
+
+	private static List<ServiceFile> parseFileStringList(@NonNull String fileList) {
 		final String[] keys = fileList.split(";");
 
+		if (keys.length < 2) return Collections.emptyList();
+
 		final int offset = Integer.parseInt(keys[0]) + 1;
-		final ArrayList<IFile> files = new ArrayList<>(Integer.parseInt(keys[1]));
+		final ArrayList<ServiceFile> serviceFiles = new ArrayList<>(Integer.parseInt(keys[1]));
 
 		for (int i = offset; i < keys.length; i++) {
 			if (keys[i].equals("-1")) continue;
 
-			files.add(new File(Integer.parseInt(keys[i])));
+			serviceFiles.add(new ServiceFile(Integer.parseInt(keys[i])));
 		}
 
-		return files;
+		return serviceFiles;
 	}
 
-	public static String serializeFileStringList(List<IFile> files) {
-		final int fileSize = files.size();
+	public static Promise<String> promiseSerializedFileStringList(List<ServiceFile> serviceFiles) {
+		return new QueuedPromise<>(() -> serializeFileStringList(serviceFiles), fileParsingExecutor.getObject());
+	}
+
+	public static String serializeFileStringList(List<ServiceFile> serviceFiles) {
+		final int fileSize = serviceFiles.size();
 		// Take a guess that most keys will not be greater than 8 characters and add some more
 		// for the first characters
 		final StringBuilder sb = new StringBuilder(fileSize * 9 + 8);
 		sb.append("2;").append(fileSize).append(";-1;");
 
-		for (IFile file : files)
-			sb.append(file.getKey()).append(";");
+		for (ServiceFile serviceFile : serviceFiles)
+			sb.append(serviceFile.getKey()).append(";");
 
 		return sb.toString();
 	}

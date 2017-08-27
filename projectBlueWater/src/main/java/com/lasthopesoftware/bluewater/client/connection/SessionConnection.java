@@ -5,22 +5,27 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
+import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
 
 public class SessionConnection {
 
@@ -29,17 +34,12 @@ public class SessionConnection {
 	public static final String refreshSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
 	public static final String isRefreshSuccessfulStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
-	private static final Set<Integer> runningConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView));
-	public static final Set<Integer> completeConditions = new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete));
-
-	private static final AtomicBoolean isRunning = new AtomicBoolean();
+	private static volatile boolean isRunning;
 	private static volatile int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
 
-	private static ConnectionProvider sessionConnectionProvider;
+	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
 
-	public static HttpURLConnection getSessionConnection(String... params) throws IOException {
-		return sessionConnectionProvider.getConnection(params);
-	}
+	private static ConnectionProvider sessionConnectionProvider;
 
 	public static ConnectionProvider getSessionConnectionProvider() {
 		return sessionConnectionProvider;
@@ -50,51 +50,70 @@ public class SessionConnection {
 	}
 	
 	public static synchronized int build(final Context context) {
-		if (isRunning.get()) return buildingStatus;
+		if (isRunning) return buildingStatus;
 		
 		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		LibrarySession.GetActiveLibrary(context, library -> {
-			if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
-				doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
-				isRunning.set(false);
-				return;
-			}
+		final ISelectedLibraryIdentifierProvider libraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
 
-			doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
-
-			AccessConfigurationBuilder.buildConfiguration(context, library, (result) -> {
-				if (result == null) {
-					doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
-					return;
+		final LibraryRepository libraryRepository = new LibraryRepository(context);
+		libraryRepository
+			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
+			.eventually(library -> {
+				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
+					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
+					isRunning = false;
+					return Promise.empty();
 				}
 
-				sessionConnectionProvider = new ConnectionProvider(result);
+				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 
-				if (library.getSelectedView() >= 0) {
-					doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
-					return;
-				}
+				return
+					AccessConfigurationBuilder
+						.buildConfiguration(context, library)
+						.eventually(urlProvider -> {
+							if (urlProvider == null) {
+								doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+								return Promise.empty();
+							}
 
-				doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+							sessionConnectionProvider = new ConnectionProvider(urlProvider);
 
-				LibraryViewsProvider.provide(sessionConnectionProvider)
-						.onComplete((result1) -> {
-
-							if (result1 == null || result1.size() == 0) {
-								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-								return;
+							if (library.getSelectedView() >= 0) {
+								doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+								return Promise.empty();
 							}
 
 							doStateChange(context, BuildingSessionConnectionStatus.GettingView);
-							final int selectedView = result1.get(0).getKey();
-							library.setSelectedView(selectedView);
-							library.setSelectedViewType(Library.ViewType.StandardServerView);
 
-							LibrarySession.SaveLibrary(context, library, (savedLibrary) -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete));
-						})
-						.execute();
-			});
-		});
+							return LibraryViewsProvider
+								.provide(sessionConnectionProvider)
+								.eventually(libraryViews -> {
+									if (libraryViews == null || libraryViews.size() == 0) {
+										doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+										return Promise.empty();
+									}
+
+									doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+									final int selectedView = libraryViews.get(0).getKey();
+									library.setSelectedView(selectedView);
+									library.setSelectedViewType(Library.ViewType.StandardServerView);
+
+									return
+										libraryRepository
+											.saveLibrary(library)
+											.then(savedLibrary -> {
+												doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+												return null;
+											});
+								});
+							});
+				})
+				.excuse(e -> {
+					logger.error("There was an error building the session connection", e);
+					doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+
+					return null;
+				});
 		
 		return buildingStatus;
 	}
@@ -107,25 +126,27 @@ public class SessionConnection {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final OneParameterRunnable<Boolean> testConnectionCompleteListener = (result) -> {
-			if (!result) build(context);
+		final Promise<Boolean> promisedConnectionTest =
+			timeout > 0
+				? ConnectionTester.doTest(sessionConnectionProvider, timeout)
+				: ConnectionTester.doTest(sessionConnectionProvider);
 
-			final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
-			refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
-			LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
-		};
+		promisedConnectionTest
+			.then(result -> {
+				if (!result) build(context);
 
-		if (timeout > 0)
-			ConnectionTester.doTest(sessionConnectionProvider, timeout, testConnectionCompleteListener);
-		else
-			ConnectionTester.doTest(sessionConnectionProvider, testConnectionCompleteListener);
+				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
+				refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
+				LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
+
+				return null;
+			});
 	}
 	
 	private static void doStateChange(final Context context, final int status) {
 		buildingStatus = status;
 		
-		if (runningConditions.contains(status))
-			isRunning.set(true);
+		if (runningConditions.contains(status)) isRunning = true;
 
 		final Intent broadcastIntent = new Intent(buildSessionBroadcast);
 		broadcastIntent.putExtra(buildSessionBroadcastStatus, status);
@@ -134,7 +155,7 @@ public class SessionConnection {
 		if (status == BuildingSessionConnectionStatus.BuildingSessionComplete)
 			LoggerFactory.getLogger(LibrarySession.class).info("Session started.");
 		
-		if (completeConditions.contains(status)) isRunning.set(false);
+		if (completeConditions.contains(status)) isRunning = false;
 	}
 
 	public static class BuildingSessionConnectionStatus {
@@ -145,5 +166,24 @@ public class SessionConnection {
 		public static final int GettingView = 5;
 		public static final int GettingViewFailed = 6;
 		public static final int BuildingSessionComplete = 7;
+
+		private static final ILazy<Set<Integer>> runningConditionsLazy =
+				new AbstractSynchronousLazy<Set<Integer>>() {
+					@Override
+					protected Set<Integer> initialize() throws Exception {
+						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView)));
+					}
+				};
+
+		private static final ILazy<Set<Integer>> completeConditionsLazy =
+				new AbstractSynchronousLazy<Set<Integer>>() {
+					@Override
+					protected Set<Integer> initialize() throws Exception {
+						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+					}
+				};
+
+		static final Set<Integer> runningConditions = runningConditionsLazy.getObject();
+		public static final Set<Integer> completeConditions = completeConditionsLazy.getObject();
 	}
 }

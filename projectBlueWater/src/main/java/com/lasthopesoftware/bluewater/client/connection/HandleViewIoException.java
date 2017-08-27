@@ -2,27 +2,25 @@ package com.lasthopesoftware.bluewater.client.connection;
 
 import android.content.Context;
 
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.callables.TwoParameterCallable;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 
-public class HandleViewIoException<TParams, TProgress, TResult> implements TwoParameterCallable<IFluentTask<TParams, TProgress, TResult>, Exception, Boolean> {
+public class HandleViewIoException implements ImmediateResponse<Throwable, Void> {
 	
-	private final Context mContext;
-	private final Runnable mOnConnectionRegainedListener;
-	
-	@Override
-	public Boolean call(IFluentTask<TParams, TProgress, TResult> owner, Exception innerException) {
-		if (!(innerException instanceof IOException)) return false;
-		
-		WaitForConnectionActivity.beginWaiting(mContext, mOnConnectionRegainedListener);
+	private final Context context;
+	private final Runnable onConnectionRegainedListener;
 
-		return true;
-	}
-	
 	public HandleViewIoException(final Context context, final Runnable onConnectionRegainedListener) {
-		mContext = context;
-		mOnConnectionRegainedListener = onConnectionRegainedListener;
+		this.context = context;
+		this.onConnectionRegainedListener = onConnectionRegainedListener;
+	}
+
+	@Override
+	public Void respond(Throwable e) {
+		if (e instanceof IOException)
+			WaitForConnectionActivity.beginWaiting(context, onConnectionRegainedListener);
+
+		return null;
 	}
 }

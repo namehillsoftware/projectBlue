@@ -2,58 +2,101 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.providers.AbstractInputStreamProvider;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.providers.AbstractProvider;
 
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
-/**
- * Created by david on 3/5/16.
- */
-public class FilePropertiesStorage extends AbstractInputStreamProvider<Void> {
-	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorage.class);
+public class FilePropertiesStorage {
 
 	private final IConnectionProvider connectionProvider;
-	private final int fileKey;
-	private final String property;
-	private final String value;
+	private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
 
-	public static void storeFileProperty(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
-		new FilePropertiesStorage(connectionProvider, fileKey, property, value).execute();
+	public static void storeFileProperty(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, int fileKey, String property, String value, boolean isFormatted) {
+		AbstractProvider.providerExecutor.execute(() -> new FilePropertiesStorageWriter(connectionProvider, filePropertiesContainerRepository, fileKey, property, value, isFormatted).prepareMessage());
 	}
 
-	private FilePropertiesStorage(IConnectionProvider connectionProvider, int fileKey, String property, String value) {
-		super(
-			connectionProvider,
-			"File/SetInfo",
-			"File=" + String.valueOf(fileKey),
-			"Field=" + property,
-			"Value=" + value,
-			"formatted=0");
-
+	public FilePropertiesStorage(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository) {
 		this.connectionProvider = connectionProvider;
-		this.fileKey = fileKey;
-		this.property = property;
-		this.value = value;
+		this.filePropertiesContainerRepository = filePropertiesContainerRepository;
 	}
 
-	@Override
-	protected Void getData(InputStream inputStream) {
-		final RevisionChecker revisionChecker = new RevisionChecker(connectionProvider);
-		revisionChecker.execute();
+	public Promise<Void> promiseFileUpdate(ServiceFile serviceFile, String property, String value, boolean isFormatted) {
+		return new QueuedPromise<>(
+			new FilePropertiesStorageWriter(
+				connectionProvider,
+				filePropertiesContainerRepository,
+				serviceFile.getKey(),
+				property,
+				value,
+				isFormatted),
+			AbstractProvider.providerExecutor);
+	}
 
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
-		final FilePropertyCache.FilePropertiesContainer filePropertiesContainer = FilePropertyCache.getInstance().getFilePropertiesContainer(urlKeyHolder);
+	private static class FilePropertiesStorageWriter implements MessageWriter<Void> {
 
-		try {
-			if (filePropertiesContainer.revision == revisionChecker.get()) filePropertiesContainer.updateProperty(property, value);
-		} catch (ExecutionException | InterruptedException e) {
-			logger.warn(this.fileKey + "'s property cache item " + this.property + " was not updated with the new value of " + this.value, e);
+		private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorageWriter.class);
+		private final IConnectionProvider connectionProvider;
+		private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
+		private final int fileKey;
+		private final String property;
+		private final String value;
+		private final boolean isFormatted;
+
+		FilePropertiesStorageWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, int fileKey, String property, String value, boolean isFormatted) {
+			this.connectionProvider = connectionProvider;
+			this.filePropertiesContainerRepository = filePropertiesContainerRepository;
+			this.fileKey = fileKey;
+			this.property = property;
+			this.value = value;
+			this.isFormatted = isFormatted;
 		}
 
-		return null;
+		@Override
+		public Void prepareMessage() {
+//		if (cancellation.isCancelled()) return null;
+
+			try {
+				final HttpURLConnection connection = connectionProvider.getConnection(
+					"File/SetInfo",
+					"File=" + String.valueOf(fileKey),
+					"Field=" + property,
+					"Value=" + value,
+					"formatted=" + (isFormatted ? "1" : "0"));
+				try {
+					final int responseCode = connection.getResponseCode();
+					logger.info("api/v1/File/SetInfo responded with a response code of " + responseCode);
+				} finally {
+					connection.disconnect();
+				}
+			} catch (IOException ioe) {
+				logger.error("There was an error opening the connection", ioe);
+			}
+
+			RevisionChecker.promiseRevision(connectionProvider)
+				.then(revision -> {
+					final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+					final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder);
+
+					if (filePropertiesContainer.revision == revision) filePropertiesContainer.updateProperty(property, value);
+
+					return null;
+				})
+				.excuse(e -> {
+					logger.warn(fileKey + "'s property cache item " + property + " was not updated with the new value of " + value, e);
+					return null;
+				});
+
+			return null;
+		}
 	}
 }

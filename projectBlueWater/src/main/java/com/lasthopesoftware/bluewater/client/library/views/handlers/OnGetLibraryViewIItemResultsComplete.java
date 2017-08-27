@@ -13,17 +13,16 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.util.List;
 
-/**
- * Created by david on 11/5/15.
- */
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements OneParameterRunnable<List<T>> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ImmediateResponse<List<T>, Void> {
 
 	private static final String PREFS_KEY = MagicPropertyBuilder.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -35,26 +34,32 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     private final int position;
     private final IItemListMenuChangeHandler itemListMenuChangeHandler;
     private final ViewGroup container;
+    private final StoredItemAccess storedItemAccess;
+    private final Library library;
 
-    OnGetLibraryViewIItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler) {
+    OnGetLibraryViewIItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, StoredItemAccess storedItemAccess, Library library) {
         this.listView = listView;
         this.activity = activity;
         this.loadingView = loadingView;
         this.position = position;
         this.itemListMenuChangeHandler = itemListMenuChangeHandler;
         this.container = container;
+        this.storedItemAccess = storedItemAccess;
+        this.library = library;
     }
 
     @Override
-    public void run(List<T> result) {
-        if (result == null) return;
+    public Void respond(List<T> result) {
+        if (result == null) return null;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-        listView.setAdapter(new ItemListAdapter<T>(activity, R.id.tvStandard, result, itemListMenuChangeHandler));
+        listView.setAdapter(new ItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler, storedItemAccess, library));
         loadingView.setVisibility(View.INVISIBLE);
         listView.setVisibility(View.VISIBLE);
 
         if (position == 0) buildTutorialView(activity, container, listView);
+
+        return null;
     }
 
     private final static boolean DEBUGGING_TUTORIAL = false;

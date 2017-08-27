@@ -7,7 +7,7 @@ import java.util.Map;
  */
 public class FilePropertyHelpers {
 	/*
-	 * Get the duration of the file in milliseconds
+	 * Get the duration of the serviceFile in milliseconds
 	 */
 	public static int parseDurationIntoMilliseconds(Map<String, String> fileProperties) {
 		String durationToParse = fileProperties.get(FilePropertiesProvider.DURATION);

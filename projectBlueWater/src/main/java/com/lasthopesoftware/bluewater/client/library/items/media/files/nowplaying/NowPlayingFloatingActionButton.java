@@ -4,16 +4,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 /**
  * Created by david on 10/11/15.
@@ -24,7 +25,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
 
         final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        layoutParams.addRule(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 ? RelativeLayout.ALIGN_PARENT_END : RelativeLayout.ALIGN_PARENT_RIGHT);
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END);
         final int margin = ViewUtils.dpToPx(container.getContext(), 16);
         layoutParams.setMargins(margin, margin, margin, margin);
 
@@ -52,23 +53,26 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         setVisibility(ViewUtils.getVisibility(false));
         // The user can change the library, so let's check if the state of visibility on the
         // now playing menu item should change
-        LibrarySession.GetActiveLibrary(getContext(), result -> {
-            isNowPlayingFileSet = result != null && result.getNowPlayingId() >= 0;
-            setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
+        NowPlayingFileProvider
+            .fromActiveLibrary(getContext())
+            .getNowPlayingFile()
+            .then(perform(result -> {
+                isNowPlayingFileSet = result != null;
+                setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 
-            if (isNowPlayingFileSet) return;
+                if (isNowPlayingFileSet) return;
 
-            final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
+                final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getContext());
 
-            localBroadcastManager.registerReceiver(new BroadcastReceiver() {
-                @Override
-                public synchronized void onReceive(Context context, Intent intent) {
-                    isNowPlayingFileSet = true;
-                    setVisibility(ViewUtils.getVisibility(true));
-                    localBroadcastManager.unregisterReceiver(this);
-                }
-            }, new IntentFilter(PlaybackService.PlaylistEvents.onPlaylistStart));
-        });
+                localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+                    @Override
+                    public synchronized void onReceive(Context context, Intent intent) {
+                        isNowPlayingFileSet = true;
+                        setVisibility(ViewUtils.getVisibility(true));
+                        localBroadcastManager.unregisterReceiver(this);
+                    }
+                }, new IntentFilter(PlaylistEvents.onPlaylistStart));
+            }));
     }
 
     @Override

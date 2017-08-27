@@ -13,6 +13,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.list.File
 
 import java.util.ArrayList;
 
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
 public class ClickItemListener implements OnItemClickListener {
 
 	private final ArrayList<Item> mItems;
@@ -28,7 +30,7 @@ public class ClickItemListener implements OnItemClickListener {
         final Item item = mItems.get(position);
 
         ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
-            .onComplete(items -> {
+            .then(perform(items -> {
 				if (items == null) return;
 
 				if (items.size() > 0) {
@@ -45,8 +47,7 @@ public class ClickItemListener implements OnItemClickListener {
 				fileListIntent.putExtra(FileListActivity.VALUE, item.getValue());
 				fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
 				mContext.startActivity(fileListIntent);
-			})
-            .execute();
+			}));
 	}
 
 }

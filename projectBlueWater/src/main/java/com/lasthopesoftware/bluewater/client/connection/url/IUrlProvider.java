@@ -6,4 +6,5 @@ package com.lasthopesoftware.bluewater.client.connection.url;
 public interface IUrlProvider {
 	String getUrl(String... params);
 	String getBaseUrl();
+	String getAuthCode();
 }

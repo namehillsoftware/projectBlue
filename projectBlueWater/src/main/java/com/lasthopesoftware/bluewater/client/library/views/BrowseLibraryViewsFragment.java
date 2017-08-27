@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.views;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -15,21 +16,24 @@ import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-/**
- * Created by david on 1/5/16.
- */
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
 public class BrowseLibraryViewsFragment extends Fragment implements IItemListMenuChangeHandler {
 
 	private static final String SAVED_TAB_KEY = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment.class, "SAVED_TAB_KEY");
@@ -70,40 +74,44 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		tabbedLibraryViewsContainer.setVisibility(View.INVISIBLE);
 		loadingView.setVisibility(View.VISIBLE);
 
-		final OneParameterRunnable<List<Item>> onGetVisibleViewsCompleteListener = (result) -> {
-			if (result == null) return;
+		final Handler handler = new Handler(getContext().getMainLooper());
 
-			final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
-			viewChildPagerAdapter.setOnItemListMenuChangeHandler(BrowseLibraryViewsFragment.this);
+		final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener =
+			LoopedInPromise.response((result) -> {
+				if (result == null) return null;
 
-			viewChildPagerAdapter.setLibraryViews(result);
+				final LibraryViewPagerAdapter viewChildPagerAdapter = new LibraryViewPagerAdapter(getChildFragmentManager());
+				viewChildPagerAdapter.setOnItemListMenuChangeHandler(BrowseLibraryViewsFragment.this);
 
-			// Set up the ViewPager with the sections adapter.
-			viewPager.setAdapter(viewChildPagerAdapter);
-			libraryViewsTabs.setViewPager(viewPager);
+				viewChildPagerAdapter.setLibraryViews(result);
 
-			libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
+				// Set up the ViewPager with the sections adapter.
+				viewPager.setAdapter(viewChildPagerAdapter);
+				libraryViewsTabs.setViewPager(viewPager);
 
-			loadingView.setVisibility(View.INVISIBLE);
-			tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
-		};
+				libraryViewsTabs.setVisibility(result.size() <= 1 ? View.GONE : View.VISIBLE);
 
-		LibrarySession.GetActiveLibrary(getContext(), activeLibrary ->
+				loadingView.setVisibility(View.INVISIBLE);
+				tabbedLibraryViewsContainer.setVisibility(View.VISIBLE);
+
+				return null;
+			}, handler);
+
+		getSelectedBrowserLibrary()
+			.eventually(LoopedInPromise.response(activeLibrary ->
 				ItemProvider
 					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.onComplete(onGetVisibleViewsCompleteListener)
-					.onError(new HandleViewIoException<>(getContext(), new Runnable() {
+					.eventually(onGetVisibleViewsCompleteListener)
+					.excuse(new HandleViewIoException(getContext(), new Runnable() {
 
 						@Override
 						public void run() {
 							ItemProvider
-									.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-									.onComplete(onGetVisibleViewsCompleteListener)
-									.onError(new HandleViewIoException<>(getContext(), this))
-									.execute();
+								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
+								.eventually(onGetVisibleViewsCompleteListener)
+								.excuse(new HandleViewIoException(getContext(), this));
 						}
-					}))
-					.execute());
+					})), handler));
 
 
 		return tabbedItemsLayout;
@@ -142,10 +150,12 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		outState.putInt(SAVED_TAB_KEY, viewPager.getCurrentItem());
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
-		LibrarySession.GetActiveLibrary(getContext(), library -> {
-			if (library != null)
-				outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
-		});
+
+		getSelectedBrowserLibrary()
+			.then(perform(library -> {
+				if (library != null)
+					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
+			}));
 	}
 
 	@Override
@@ -154,17 +164,25 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 
 		if (savedInstanceState == null || viewPager == null) return;
 
-		LibrarySession.GetActiveLibrary(getContext(), library -> {
-			final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-			if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
+		getSelectedBrowserLibrary()
+			.eventually(LoopedInPromise.response(perform(library -> {
+				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
+				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 
-			final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-			if (savedTabKey > -1)
-				viewPager.setCurrentItem(savedTabKey);
+				final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
+				if (savedTabKey > -1)
+					viewPager.setCurrentItem(savedTabKey);
 
-			final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-			if (savedScrollPosition > -1)
-				viewPager.setScrollY(savedScrollPosition);
-		});
+				final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
+				if (savedScrollPosition > -1)
+					viewPager.setScrollY(savedScrollPosition);
+			}), getContext()));
+	}
+
+	private Promise<Library> getSelectedBrowserLibrary() {
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
+		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
+
+		return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId());
 	}
 }

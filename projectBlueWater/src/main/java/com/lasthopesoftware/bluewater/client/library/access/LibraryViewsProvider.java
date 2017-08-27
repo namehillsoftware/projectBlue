@@ -3,7 +3,11 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
-import com.lasthopesoftware.providers.AbstractConnectionProvider;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
+import com.lasthopesoftware.providers.AbstractProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +15,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by david on 3/17/15.
- */
-public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>> {
+public class LibraryViewsProvider implements CancellableMessageWriter<List<Item>> {
 
     private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
 
@@ -27,46 +27,53 @@ public class LibraryViewsProvider extends AbstractConnectionProvider<List<Item>>
     private static Integer revision;
 
     private final ConnectionProvider connectionProvider;
+	private final Integer serverRevision;
 
-    public static LibraryViewsProvider provide(ConnectionProvider connectionProvider) {
-        return new LibraryViewsProvider(connectionProvider);
+	public static Promise<List<Item>> provide(ConnectionProvider connectionProvider) {
+		return
+			RevisionChecker.promiseRevision(connectionProvider)
+				.eventually(serverRevision -> {
+					synchronized(browseLibraryParameter) {
+						if (cachedFileSystemItems != null && revision.equals(serverRevision))
+							return new Promise<>(cachedFileSystemItems);
+					}
+
+					return new QueuedPromise<>(new LibraryViewsProvider(connectionProvider, serverRevision), AbstractProvider.providerExecutor);
+				});
     }
 
-    public LibraryViewsProvider(ConnectionProvider connectionProvider) {
-        super(connectionProvider, browseLibraryParameter);
-
+    private LibraryViewsProvider(ConnectionProvider connectionProvider, Integer serverRevision) {
         this.connectionProvider = connectionProvider;
-    }
+		this.serverRevision = serverRevision;
+	}
 
-    @Override
-    protected List<Item> getData(HttpURLConnection connection) {
-        final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
+	@Override
+	public List<Item> prepareMessage(CancellationToken cancellationToken) throws Throwable {
+		if (cancellationToken.isCancelled()) return null;
 
-        synchronized(browseLibraryParameter) {
-            if (cachedFileSystemItems != null && revision.equals(serverRevision))
-                return cachedFileSystemItems;
-        }
+		try {
+			final HttpURLConnection connection = connectionProvider.getConnection(browseLibraryParameter);
+			try {
+				try (final InputStream is = connection.getInputStream()) {
+					final List<Item> items = ItemResponse.GetItems(is);
 
-        if (isCancelled()) return new ArrayList<>();
+					synchronized (browseLibraryParameter) {
+						revision = serverRevision;
+						cachedFileSystemItems = items;
+					}
 
-        try {
-            final InputStream is = connection.getInputStream();
-            try {
-                final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
+					return items;
+				} catch (IOException e) {
+					logger.error("There was an error getting the inputstream", e);
+					throw e;
+				}
+			} finally {
+				connection.disconnect();
+			}
+		} catch (IOException ioe) {
+			logger.error("There was an error opening the connection", ioe);
+		}
 
-                synchronized (browseLibraryParameter) {
-                    revision = serverRevision;
-                    cachedFileSystemItems = items;
-                }
-
-                return items;
-            } finally {
-                is.close();
-            }
-        } catch (IOException e) {
-            logger.error("There was an error getting the inputstream", e);
-            setException(e);
-            return new ArrayList<>();
-        }
-    }
+		return null;
+	}
 }

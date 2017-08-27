@@ -7,7 +7,9 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.providers.AbstractConnectionProvider;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.providers.AbstractProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,17 +20,17 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
+public class ItemProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
 
     private static class ItemHolder {
-        public ItemHolder(Integer revision, List<Item> items) {
+        ItemHolder(Integer revision, List<Item> items) {
             this.revision = revision;
             this.items = items;
         }
 
-        public final Integer revision;
+        final Integer revision;
         public final List<Item> items;
     }
 
@@ -39,51 +41,56 @@ public class ItemProvider extends AbstractConnectionProvider<List<Item>> {
 
 	private final ConnectionProvider connectionProvider;
 
-	public static ItemProvider provide(ConnectionProvider connectionProvider, int itemKey) {
-		return new ItemProvider(connectionProvider, itemKey);
+	public static Promise<List<Item>> provide(ConnectionProvider connectionProvider, int itemKey) {
+		return new ItemProvider(connectionProvider, itemKey).promiseItems();
 	}
 	
 	public ItemProvider(ConnectionProvider connectionProvider, int itemKey) {
-		super(connectionProvider, LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
-
 		this.connectionProvider = connectionProvider;
         this.itemKey = itemKey;
 	}
 
-    @Override
-    protected List<Item> getData(HttpURLConnection connection) {
-        final Integer serverRevision = RevisionChecker.getRevision(connectionProvider);
-        final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
+    public Promise<List<Item>> promiseItems() {
+		return
+			RevisionChecker.promiseRevision(connectionProvider)
+				.eventually(serverRevision -> new QueuedPromise<>((cancellationToken) -> {
+					final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
-        ItemHolder itemHolder;
-        synchronized (itemsCache) {
-            itemHolder = itemsCache.get(boxedItemKey);
-        }
+					final ItemHolder itemHolder;
+					synchronized (itemsCache) {
+						itemHolder = itemsCache.get(boxedItemKey);
+					}
 
-        if (itemHolder != null && itemHolder.revision.equals(serverRevision))
-            return itemHolder.items;
+					if (itemHolder != null && itemHolder.revision.equals(serverRevision)) {
+						return itemHolder.items;
+					}
 
-        if (isCancelled()) return new ArrayList<>();
+					if (cancellationToken.isCancelled()) {
+						return new ArrayList<>();
+					}
 
-        try {
-            final InputStream is = connection.getInputStream();
-            try {
-                final List<Item> items = ItemResponse.GetItems(connectionProvider, is);
+					final HttpURLConnection connection;
+					connection = connectionProvider.getConnection(LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
 
-                itemHolder = new ItemHolder(serverRevision, items);
+					try {
+						try (InputStream is = connection.getInputStream()) {
+							final List<Item> items = ItemResponse.GetItems(is);
 
-                synchronized (itemsCache) {
-                    itemsCache.put(boxedItemKey, itemHolder);
-                }
+							final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
 
-                return items;
-            } finally {
-                is.close();
-            }
-        } catch (IOException e) {
-            logger.error("There was an error getting the inputstream", e);
-            setException(e);
-            return new ArrayList<>();
-        }
+							synchronized (itemsCache) {
+								itemsCache.put(boxedItemKey, newItemHolder);
+							}
+
+							return items;
+						}
+					} catch (IOException e) {
+						logger.error("There was an error getting the inputstream", e);
+						throw e;
+					} finally {
+						if (connection != null)
+							connection.disconnect();
+					}
+				}, AbstractProvider.providerExecutor));
 	}
 }

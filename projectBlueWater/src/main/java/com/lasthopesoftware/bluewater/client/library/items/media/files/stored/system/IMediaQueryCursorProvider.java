@@ -2,13 +2,12 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 
 import android.database.Cursor;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-
-import java.io.IOException;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.messenger.promises.Promise;
 
 /**
  * Created by david on 6/13/16.
  */
 public interface IMediaQueryCursorProvider {
-	Cursor getMediaQueryCursor(IFile file) throws IOException;
+	Promise<Cursor> getMediaQueryCursor(ServiceFile serviceFile);
 }

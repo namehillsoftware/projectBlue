@@ -14,17 +14,24 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.fluent.IFluentTask;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
 
 import java.util.List;
 
@@ -32,12 +39,22 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
 	public static final String KEY = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "key");
 	public static final String VALUE = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "value");
-	private int mPlaylistId;
 
-	private ProgressBar pbLoading;
-	private ListView playlistView;
+	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
+		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
+			@Override
+			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+				return new SelectedBrowserLibraryProvider(
+					new SelectedBrowserLibraryIdentifierProvider(PlaylistListActivity.this),
+					new LibraryRepository(PlaylistListActivity.this));
+			}
+		};
+
+	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final LazyViewFinder<ListView> playlistView = new LazyViewFinder<>(this, R.id.lvItems);
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
+	private int playlistId;
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -45,42 +62,42 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
         setContentView(R.layout.activity_view_items);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        playlistView = (ListView)findViewById(R.id.lvItems);
-        pbLoading = (ProgressBar)findViewById(R.id.pbLoadingItems);
         
-        mPlaylistId = 0;
-        if (savedInstanceState != null) mPlaylistId = savedInstanceState.getInt(KEY);
-        if (mPlaylistId == 0) mPlaylistId = getIntent().getIntExtra(KEY, 0);
+        playlistId = 0;
+        if (savedInstanceState != null) playlistId = savedInstanceState.getInt(KEY);
+        if (playlistId == 0) playlistId = getIntent().getIntExtra(KEY, 0);
         
-        playlistView.setVisibility(View.INVISIBLE);
-    	pbLoading.setVisibility(View.VISIBLE);
+        playlistView.findView().setVisibility(View.INVISIBLE);
+    	pbLoading.findView().setVisibility(View.VISIBLE);
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final OneParameterRunnable<List<Playlist>> onPlaylistProviderComplete = result -> {
-			if (result == null) return;
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+
+		final PromisedResponse<List<Playlist>, Void> onPlaylistProviderComplete = LoopedInPromise.response(result -> {
+			if (result == null) return null;
 
 			BuildPlaylistView(result);
 
-			playlistView.setVisibility(View.VISIBLE);
-			pbLoading.setVisibility(View.INVISIBLE);
-		};
+			playlistView.findView().setVisibility(View.VISIBLE);
+			pbLoading.findView().setVisibility(View.INVISIBLE);
 
-		new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
-		        .onComplete(onPlaylistProviderComplete)
-		        .onError(new HandleViewIoException<>(PlaylistListActivity.this, new Runnable() {
+			return null;
+		}, this);
 
-			        @Override
-			        public void run() {
-				        new PlaylistsProvider(SessionConnection.getSessionConnectionProvider(), mPlaylistId)
-						        .onComplete(onPlaylistProviderComplete)
-						        .onError(new HandleViewIoException<>(PlaylistListActivity.this, this))
-						        .execute();
-			        }
-		        }))
-		        .execute();
+		PlaylistsProvider
+			.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
+			.eventually(onPlaylistProviderComplete)
+			.excuse(new HandleViewIoException(PlaylistListActivity.this, new Runnable() {
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+				@Override
+				public void run() {
+					PlaylistsProvider
+						.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
+						.eventually(onPlaylistProviderComplete)
+						.excuse(new HandleViewIoException(PlaylistListActivity.this, this));
+				}
+			}));
 	}
 	
 	@Override
@@ -91,23 +108,31 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	}
 	
 	private void BuildPlaylistView(List<Playlist> playlist) {
-		final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this));
-        playlistView.setAdapter(itemListAdapter);
-        playlistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
-        final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
-        playlistView.setOnItemLongClickListener(longClickViewAnimatorListener);
+		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
+			.eventually(LoopedInPromise.response(library -> {
+				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
+				final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);
+
+				final ListView localPlaylistView = playlistView.findView();
+				localPlaylistView.setAdapter(itemListAdapter);
+				localPlaylistView.setOnItemClickListener(new ClickPlaylistListener(this, playlist));
+				final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+				localPlaylistView.setOnItemLongClickListener(longClickViewAnimatorListener);
+
+				return null;
+			}, this));
 	}
 	
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		super.onSaveInstanceState(savedInstanceState);
-		savedInstanceState.putInt(KEY, mPlaylistId);
+		savedInstanceState.putInt(KEY, playlistId);
 	}
 	
 	@Override
 	public void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
-		mPlaylistId = savedInstanceState.getInt(KEY);
+		playlistId = savedInstanceState.getInt(KEY);
 	}
 
 	@Override

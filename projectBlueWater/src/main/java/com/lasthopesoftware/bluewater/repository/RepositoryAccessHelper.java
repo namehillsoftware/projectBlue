@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import java.io.Closeable;

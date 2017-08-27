@@ -25,11 +25,15 @@ import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.IScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
@@ -38,29 +42,29 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
-import com.vedsoft.futures.runnables.TwoParameterRunnable;
-import com.vedsoft.lazyj.AbstractSynchronousLazy;
-import com.vedsoft.lazyj.Lazy;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.Lazy;
+import com.vedsoft.futures.runnables.OneParameterAction;
+import com.vedsoft.futures.runnables.TwoParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 
-/**
- * Created by david on 7/26/15.
- */
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
 public class SyncService extends Service {
 
 	public static final String onSyncStartEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncService.class, "onSyncStartEvent");
@@ -118,49 +122,50 @@ public class SyncService extends Service {
 
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
-	private final OneParameterRunnable<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
+	private final OneParameterAction<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
 		librarySyncHandlers.remove(librarySyncHandler);
 
 		if (--librariesProcessing == 0) finishSync();
 	};
 
-	private final OneParameterRunnable<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
+	private final OneParameterAction<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
 
 	private final Lazy<String> downloadingStatusLabel = new Lazy<>(() -> getString(R.string.downloading_status_label));
 
-	private final OneParameterRunnable<StoredFile> storedFileDownloadingAction = storedFile -> {
+	private final ILazy<ILibraryProvider> lazyLibraryProvider = new Lazy<ILibraryProvider>(() -> new LibraryRepository(SyncService.this));
+
+	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
-		LibrarySession.GetLibrary(SyncService.this, storedFile.getLibraryId(),
-			library ->  AccessConfigurationBuilder.buildConfiguration(SyncService.this, library, (urlProvider) -> {
-				if (urlProvider == null) return;
+		lazyLibraryProvider.getObject()
+			.getLibrary(storedFile.getLibraryId())
+			.eventually((library) ->  AccessConfigurationBuilder.buildConfiguration(this, library).eventually(urlProvider -> {
+				final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-				final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, storedFile.getServiceId());
-
-				filePropertiesProvider
-						.onComplete(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME))))
-						.onError(exception -> {
-							setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
-							return true;
-						})
-						.execute();
-			}));
+				return filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
+			}))
+			.eventually(LoopedInPromise.response(perform(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
+			.excuse(e -> LoopedInPromise.response(exception -> {
+				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
+				return true;
+			}, this).promiseResponse(e));
 	};
 
-	private final OneParameterRunnable<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
+	private final OneParameterAction<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
 		sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobResult.storedFile);
 
 		if (storedFileJobResult.storedFileJobResult == StoredFileJobResultOptions.Downloaded)
 			scanMediaFileBroadcasterLazy.getObject().sendScanMediaFileBroadcastForFile(storedFileJobResult.downloadedFile);
 	};
 
-	private final TwoParameterRunnable<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
+	private final TwoParameterAction<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
 		if (!storageReadPermissionArbitratorForOsLazy.getObject().isReadPermissionGranted())
 			storageReadPermissionsRequestedBroadcast.getObject().sendReadPermissionsRequestedBroadcast(library.getId());
 	};
 
-	private final TwoParameterRunnable<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> {
+	private final TwoParameterAction<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> {
 		if (!storageWritePermissionArbitratorForOsLazy.getObject().isWritePermissionGranted())
 			storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
 	};
@@ -231,7 +236,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		LibrarySession.GetLibraries(context, libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().eventually(LoopedInPromise.response(perform(libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {
@@ -243,7 +248,7 @@ public class SyncService extends Service {
 				if (library.isSyncLocalConnectionsOnly())
 					library.setLocalOnly(true);
 
-				AccessConfigurationBuilder.buildConfiguration(context, library, (urlProvider) -> {
+				AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
 					if (urlProvider == null) {
 						if (--librariesProcessing == 0) finishSync();
 						return;
@@ -261,9 +266,9 @@ public class SyncService extends Service {
 					librarySyncHandler.startSync();
 
 					librarySyncHandlers.add(librarySyncHandler);
-				});
+				}));
 			}
-		});
+		}), this));
 
 		return result;
 	}
@@ -319,9 +324,9 @@ public class SyncService extends Service {
 	}
 
 	private void finishSync() {
-		logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
+		logger.info("Finishing sync. Scheduling then sync for " + syncInterval + "ms from now.");
 
-		// Set an alarm for the next time we run this bad boy
+		// Set an alarm for the then time we runWith this bad boy
 		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -9,132 +8,130 @@ import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.vedsoft.fluent.FluentCallable;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Queue;
 
 import xmlwise.XmlElement;
+import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
-/**
- * Created by david on 8/8/15.
- */
 public class AccessConfigurationBuilder {
 
 	private static final int buildConnectionTimeoutTime = 10000;
 	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
-	public static void buildConfiguration(final Context context, final Library library, final OneParameterRunnable<MediaServerUrlProvider> onBuildComplete) {
-		buildConfiguration(context, library, buildConnectionTimeoutTime, onBuildComplete);
+	public static Promise<MediaServerUrlProvider> buildConfiguration(final Context context, final Library library) {
+		return buildConfiguration(context, library, buildConnectionTimeoutTime);
 	}
 
-	private static void buildConfiguration(final Context context, final Library library, int timeout, final OneParameterRunnable<MediaServerUrlProvider> onBuildComplete) throws NullPointerException {
+	private static Promise<MediaServerUrlProvider> buildConfiguration(final Context context, final Library library, int timeout) {
 		if (library == null)
 			throw new NullPointerException("The library cannot be null.");
 
 		if (timeout <= 0) timeout = buildConnectionTimeoutTime;
 
 		final NetworkInfo networkInfo = ConnectionInfo.getActiveNetworkInfo(context);
-		if (networkInfo == null || !networkInfo.isConnected()) {
-			executeReturnNullTask(onBuildComplete);
-			return;
-		}
-
-		buildAccessConfiguration(library, timeout, (urlProvider) -> {
-			if (urlProvider == null) {
-				executeReturnNullTask(onBuildComplete);
-				return;
-			}
-
-			if (onBuildComplete != null)
-				onBuildComplete.run(urlProvider);
-		});
+		return
+			networkInfo != null && networkInfo.isConnected()
+			? buildAccessConfiguration(library, timeout)
+			: Promise.empty();
 	}
 
-	private static void executeReturnNullTask(OneParameterRunnable<MediaServerUrlProvider> onReturnFalseListener) {
-		final FluentCallable<MediaServerUrlProvider> returnFalseTask = new FluentCallable<MediaServerUrlProvider>() {
-			@Override
-			protected MediaServerUrlProvider executeInBackground() {
-				return null;
-			}
-		};
-
-		returnFalseTask
-			.onComplete(onReturnFalseListener)
-			.execute(AsyncTask.THREAD_POOL_EXECUTOR);
-	}
-
-	@SuppressLint("NewApi")
-	private static void buildAccessConfiguration(final Library library, final int timeout, OneParameterRunnable<MediaServerUrlProvider> onGetAccessComplete) throws NullPointerException {
+	private static Promise<MediaServerUrlProvider> buildAccessConfiguration(final Library library, final int timeout) throws NullPointerException {
 		if (library == null)
 			throw new IllegalArgumentException("The library cannot be null");
 
 		if (library.getAccessCode() == null)
 			throw new IllegalArgumentException("The access code cannot be null");
 
-		final FluentCallable<MediaServerUrlProvider> mediaCenterAccessTask = new FluentCallable<MediaServerUrlProvider>() {
-			@Override
-			protected MediaServerUrlProvider executeInBackground() {
-				try {
-					final String authKey = library.getAuthKey();
+		final String authKey = library.getAuthKey();
 
-					String localAccessString = library.getAccessCode();
-					if (localAccessString.contains(".")) {
-						if (!localAccessString.contains(":")) localAccessString += ":80";
-						if (!localAccessString.startsWith("http://")) localAccessString = "http://" + localAccessString;
-					}
+		final String localAccessString = parseAccessCode(library);
 
-					if (UrlValidator.getInstance().isValid(localAccessString)) {
-						final Uri url = Uri.parse(localAccessString);
-						final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, url.getHost(), url.getPort());
-						if (ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout))
-							return urlProvider;
-					}
+		if (UrlValidator.getInstance().isValid(localAccessString)) {
+			final Uri url = Uri.parse(localAccessString);
+			final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, url.getHost(), url.getPort());
 
-					final HttpURLConnection conn = (HttpURLConnection)(new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + localAccessString)).openConnection();
+			return
+				ConnectionTester
+					.doTest(new ConnectionProvider(urlProvider), timeout)
+					.eventually(result -> {
+						if (result) return new Promise<>(urlProvider);
 
-					conn.setConnectTimeout(timeout);
-					try {
-						try (InputStream is = conn.getInputStream()) {
-							final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-							final int port = Integer.parseInt(xml.getUnique("port").getValue());
+						return promiseServerInformation(localAccessString, timeout)
+							.eventually(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
+					});
+		}
 
-							if (!library.isLocalOnly()) {
-								final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, xml.getUnique("ip").getValue(), port);
-								if (ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout))
-									return urlProvider;
-							}
+		return
+			promiseServerInformation(localAccessString, timeout)
+				.eventually(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
+	}
 
-							for (String ipAddress : xml.getUnique("localiplist").getValue().split(",")) {
-								final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, ipAddress, port);
-								if (ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout))
-									return urlProvider;
-							}
-						}
-					} finally {
-						conn.disconnect();
-					}
-				} catch (IOException i) {
-					mLogger.error(i.getMessage());
-				} catch (Exception e) {
-					mLogger.warn(e.toString());
+	private static String parseAccessCode(Library library){
+		String localAccessString = library.getAccessCode();
+		if (localAccessString.contains(".")) {
+			if (!localAccessString.contains(":")) localAccessString += ":80";
+			if (!localAccessString.startsWith("http://"))
+				localAccessString = "http://" + localAccessString;
+		}
+
+		return localAccessString;
+	}
+
+	private static Promise<XmlElement> promiseServerInformation(String localAccessString, int timeout) {
+		return new QueuedPromise<>(() -> {
+			final HttpURLConnection conn = (HttpURLConnection) (new URL("http://webplay.jriver.com/libraryserver/lookup?id=" + localAccessString)).openConnection();
+
+			conn.setConnectTimeout(timeout);
+			try {
+				try (InputStream is = conn.getInputStream()) {
+					return Xmlwise.createXml(IOUtils.toString(is));
 				}
-
-				return null;
+			} finally {
+				conn.disconnect();
 			}
-		};
+		}, AsyncTask.THREAD_POOL_EXECUTOR);
+	}
 
-		mediaCenterAccessTask
-				.onComplete(onGetAccessComplete)
-				.execute(AsyncTask.THREAD_POOL_EXECUTOR);
+	private static Promise<MediaServerUrlProvider> promiseMediaServerUrlFromXml(XmlElement xml, Library library, String authKey, int timeout) throws XmlParseException {
+		final int port = Integer.parseInt(xml.getUnique("port").getValue());
+
+		if (!library.isLocalOnly()) {
+			final MediaServerUrlProvider remoteUrlProvider = new MediaServerUrlProvider(authKey, xml.getUnique("ip").getValue(), port);
+			return ConnectionTester.doTest(new ConnectionProvider(remoteUrlProvider), timeout)
+				.eventually(testResult -> {
+					if (testResult) return new Promise<>(remoteUrlProvider);
+
+					final Collection<String> ipList = Arrays.asList(xml.getUnique("localiplist").getValue().split(","));
+					return testUrls(new ArrayDeque<>(ipList), authKey, port, timeout);
+				});
+		}
+
+		final Collection<String> ipList = Arrays.asList(xml.getUnique("localiplist").getValue().split(","));
+		return testUrls(new ArrayDeque<>(ipList), authKey, port, timeout);
+	}
+
+	private static Promise<MediaServerUrlProvider> testUrls(Queue<String> urls, String authKey, int port, int timeout) {
+		final String ipAddress = urls.poll();
+		if (ipAddress == null) return Promise.empty();
+
+		final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, ipAddress, port);
+		return
+			ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout)
+				.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls, authKey, port, timeout));
 	}
 }

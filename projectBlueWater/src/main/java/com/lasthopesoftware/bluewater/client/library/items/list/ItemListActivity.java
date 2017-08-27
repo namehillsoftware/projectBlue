@@ -14,27 +14,49 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.ILazy;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by david on 3/15/15.
- */
-public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer {
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
-    public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.list.key";
-    public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.list.value";
+public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
+
+	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(ItemListActivity.class);
+
+    public static final String KEY = magicPropertyBuilder.buildProperty("key");
+    public static final String VALUE = magicPropertyBuilder.buildProperty("value");
 
     private final LazyViewFinder<ListView> itemListView = new LazyViewFinder<>(this, R.id.lvItems);
     private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
+		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
+			@Override
+			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+				return new SelectedBrowserLibraryProvider(
+					new SelectedBrowserLibraryIdentifierProvider(ItemListActivity.this),
+					new LibraryRepository(ItemListActivity.this));
+			}
+		};
+
     private ViewAnimator viewAnimator;
     private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
@@ -51,36 +73,55 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = getIntent().getIntExtra(KEY, 0);
 
-	    final ListView localItemListView = itemListView.findView();
-	    localItemListView.setVisibility(View.INVISIBLE);
-
-	    final ProgressBar localLoadingProgressBar = pbLoading.findView();
-	    localLoadingProgressBar.setVisibility(View.VISIBLE);
+	    itemListView.findView().setVisibility(View.INVISIBLE);
+		pbLoading.findView().setVisibility(View.VISIBLE);
 
         setTitle(getIntent().getStringExtra(VALUE));
 
+		final PromisedResponse<List<Item>, Void> itemProviderComplete = LoopedInPromise.response(this, this);
+
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider.onComplete((items) -> {
-            if (items == null) return;
-
-            BuildItemListView(items);
-
-	        localItemListView.setVisibility(View.VISIBLE);
-	        localLoadingProgressBar.setVisibility(View.INVISIBLE);
-        });
-        itemProvider.onError(new HandleViewIoException<>(this, itemProvider::execute));
-        itemProvider.execute();
+        itemProvider
+			.promiseItems()
+			.eventually(itemProviderComplete)
+			.excuse(
+				new HandleViewIoException(this,
+					new Runnable() {
+						@Override
+						public void run() {
+							itemProvider
+								.promiseItems()
+								.eventually(itemProviderComplete)
+								.excuse(new HandleViewIoException(ItemListActivity.this, this));
+						}
+					}));
 
         nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
     }
 
-    private void BuildItemListView(final List<Item> items) {
-        final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this));
+	@Override
+	public Void respond(List<Item> items) throws Throwable {
+		if (items == null) return null;
 
-	    final ListView localItemListView = this.itemListView.findView();
-        localItemListView.setAdapter(itemListAdapter);
-        localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
-        localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+		ItemListActivity.this.BuildItemListView(items);
+
+		itemListView.findView().setVisibility(View.VISIBLE);
+		pbLoading.findView().setVisibility(View.INVISIBLE);
+
+		return null;
+	}
+
+	private void BuildItemListView(final List<Item> items) {
+		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
+			.eventually(LoopedInPromise.response(perform(library -> {
+				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
+				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
+
+				final ListView localItemListView = this.itemListView.findView();
+				localItemListView.setAdapter(itemListAdapter);
+				localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
+				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+			}), this));
     }
 
     @Override

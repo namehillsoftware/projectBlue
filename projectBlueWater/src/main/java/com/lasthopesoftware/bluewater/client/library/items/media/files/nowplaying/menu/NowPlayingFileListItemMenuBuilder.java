@@ -11,61 +11,58 @@ import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.BaseMenuViewHolder;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayClickListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ViewFileDetailsClickListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.details.ViewFileDetailsClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.AbstractFileListItemNowPlayingHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileListItemContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.FileSeekToClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
-import com.lasthopesoftware.bluewater.shared.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.view.ViewUtils;
-import com.vedsoft.futures.runnables.OneParameterRunnable;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.messenger.promises.Promise;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
 
-/**
- * Created by david on 11/7/15.
- */
-public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<IFile> {
+public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
     private static final class ViewHolder extends BaseMenuViewHolder {
 
+        final FileNameTextViewSetter fileNameTextViewSetter;
         private final LazyViewFinder<ImageButton> removeButtonFinder;
 
-        public ViewHolder(final FileListItemContainer fileListItemContainer, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
+        final FileListItemContainer fileListItemContainer;
+        AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
+        public Promise<?> filePropertiesProvider;
+
+        ViewHolder(final FileListItemContainer fileListItemContainer, FileNameTextViewSetter fileNameTextViewSetter, final LazyViewFinder<ImageButton> viewFileDetailsButtonFinder, final LazyViewFinder<ImageButton> playButtonFinder, final LazyViewFinder<ImageButton> removeButtonFinder) {
             super(viewFileDetailsButtonFinder, playButtonFinder);
+            this.fileNameTextViewSetter = fileNameTextViewSetter;
 
             this.removeButtonFinder = removeButtonFinder;
             this.fileListItemContainer = fileListItemContainer;
         }
 
-        public final FileListItemContainer fileListItemContainer;
-        public AbstractFileListItemNowPlayingHandler fileListItemNowPlayingHandler;
-        public CachedFilePropertiesProvider filePropertiesProvider;
-
-	    public final ImageButton getRemoveButton() {
+	    final ImageButton getRemoveButton() {
 		    return removeButtonFinder.findView();
 	    }
     }
 
-    private final List<IFile> files;
     private final int nowPlayingPosition;
 
-    private OneParameterRunnable<Integer> onPlaylistFileRemovedListener;
+    private OneParameterAction<Integer> onPlaylistFileRemovedListener;
 
-    public NowPlayingFileListItemMenuBuilder(final List<IFile> files, final int nowPlayingPosition) {
-        this.files = files;
+    public NowPlayingFileListItemMenuBuilder(final List<ServiceFile> serviceFiles, final int nowPlayingPosition) {
         this.nowPlayingPosition = nowPlayingPosition;
     }
 
     @Override
-    public View getView(final int position, final IFile file, View convertView, ViewGroup parent) {
+    public View getView(final int position, final ServiceFile serviceFile, View convertView, ViewGroup parent) {
         if (convertView == null) {
             final FileListItemContainer fileItemMenu = new FileListItemContainer(parent.getContext());
             final NotifyOnFlipViewAnimator viewFlipper = fileItemMenu.getViewAnimator();
@@ -80,6 +77,7 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
             viewFlipper.setTag(
 		            new ViewHolder(
 				            fileItemMenu,
+                            new FileNameTextViewSetter(fileItemMenu.findTextView()),
 				            new LazyViewFinder<>(fileMenu, R.id.btnViewFileDetails),
 				            new LazyViewFinder<>(fileMenu, R.id.btnPlaySong),
 				            new LazyViewFinder<>(fileMenu, R.id.btnRemoveFromPlaylist)));
@@ -90,36 +88,31 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         final FileListItemContainer fileListItem = viewHolder.fileListItemContainer;
 
-        final TextView textView = fileListItem.getTextViewFinder();
+        final TextView textView = fileListItem.findTextView();
 
-        if (viewHolder.filePropertiesProvider != null) viewHolder.filePropertiesProvider.cancel(false);
-        viewHolder.filePropertiesProvider = FileNameTextViewSetter.startNew(file, textView);
+        viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
 
         textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
-
-        final int currentPlaylistPosition = PlaybackService.getCurrentPlaylistPosition();
-        if (currentPlaylistPosition > -1)
-            textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == currentPlaylistPosition));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
             @Override
             public void onReceive(Context context, Intent intent) {
-                final int playlistPosition = intent.getIntExtra(PlaybackService.PlaylistEvents.PlaylistParameters.playlistPosition, -1);
+                final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
                 textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition));
             }
         };
 
         final NotifyOnFlipViewAnimator viewFlipper = fileListItem.getViewAnimator();
         LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper);
-        viewHolder.getPlayButton().setOnClickListener(new FilePlayClickListener(viewFlipper, position, files));
-        viewHolder.getViewFileDetailsButton().setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, file));
+        viewHolder.getPlayButton().setOnClickListener(new FileSeekToClickListener(viewFlipper, position));
+        viewHolder.getViewFileDetailsButton().setOnClickListener(new ViewFileDetailsClickListener(viewFlipper, serviceFile));
         viewHolder.getRemoveButton().setOnClickListener(new RemovePlaylistFileClickListener(viewFlipper, position, onPlaylistFileRemovedListener));
 
         return viewFlipper;
     }
 
-    public void setOnPlaylistFileRemovedListener(OneParameterRunnable<Integer> onPlaylistFileRemovedListener) {
+    public void setOnPlaylistFileRemovedListener(OneParameterAction<Integer> onPlaylistFileRemovedListener) {
         this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener;
     }
 }

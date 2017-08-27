@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,16 +14,21 @@ import android.widget.RelativeLayout;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
-import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewIItemResultsComplete;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-/**
- * Created by david on 11/29/15.
- */
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
 public class PlaylistListFragment extends Fragment {
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
@@ -37,24 +43,40 @@ public class PlaylistListFragment extends Fragment {
 
 		playlistView.setVisibility(View.INVISIBLE);
 
-		final OnGetLibraryViewIItemResultsComplete<Playlist> onGetLibraryViewPlaylistResultsComplete = new OnGetLibraryViewPlaylistResultsComplete(getActivity(), container, playlistView, loadingView, 0, itemListMenuChangeHandler);
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
+		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
 
-		final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
-		playlistsProvider
-				.onComplete(onGetLibraryViewPlaylistResultsComplete)
-				.onError(new HandleViewIoException<String, Void, List<Playlist>>(getActivity(), new Runnable() {
+		final FragmentActivity activity = getActivity();
 
-					@Override
-					public void run() {
-						final PlaylistsProvider playlistsProvider = new PlaylistsProvider(SessionConnection.getSessionConnectionProvider());
+		libraryProvider
+			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+			.then(perform(library -> {
+				final PromisedResponse<List<Playlist>, Void> listResolvedPromise =
+					LoopedInPromise.response(
+						new OnGetLibraryViewPlaylistResultsComplete(
+							activity,
+							container,
+							playlistView,
+							loadingView,
+							0,
+							itemListMenuChangeHandler,
+							new StoredItemAccess(activity, library),
+							library), activity);
 
-						playlistsProvider
-								.onComplete(onGetLibraryViewPlaylistResultsComplete)
-								.onError(new HandleViewIoException<String, Void, List<Playlist>>(getActivity(), this))
-								.execute();
-					}
-				}))
-				.execute();
+				PlaylistsProvider
+					.promisePlaylists(SessionConnection.getSessionConnectionProvider())
+					.eventually(listResolvedPromise)
+					.excuse(new HandleViewIoException(activity, new Runnable() {
+
+						@Override
+						public void run() {
+							PlaylistsProvider
+								.promisePlaylists(SessionConnection.getSessionConnectionProvider())
+								.eventually(listResolvedPromise)
+								.excuse(new HandleViewIoException(activity, this));
+						}
+					}));
+			}));
 
 		return itemListLayout;
 	}
