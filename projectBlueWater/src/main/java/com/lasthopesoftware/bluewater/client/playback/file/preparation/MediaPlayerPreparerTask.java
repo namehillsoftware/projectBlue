@@ -21,7 +21,7 @@ import java.util.concurrent.Executors;
 
 final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IBufferingPlaybackHandler> {
 
-	private final static ExecutorService mediaPlayerPreparerExecutor = Executors.newSingleThreadExecutor();
+	private final static ExecutorService mediaPlayerPreparerExecutor = Executors.newCachedThreadPool();
 
 	private final int prepareAt;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
@@ -103,10 +103,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IBufferingP
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
-			if (isCancelled) {
-				messenger.sendRejection(new CancellationException());
-				return;
-			}
+			if (isCancelled) return;
 
 			if (prepareAt > 0) {
 				mediaPlayer.setOnSeekCompleteListener(this);
@@ -119,12 +116,8 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IBufferingP
 
 		@Override
 		public void onSeekComplete(MediaPlayer mp) {
-			if (isCancelled) {
-				messenger.sendRejection(new CancellationException());
-				return;
-			}
-
-			messenger.sendResolution(new MediaPlayerPlaybackHandler(mp));
+			if (!isCancelled)
+				messenger.sendResolution(new MediaPlayerPlaybackHandler(mp));
 		}
 
 		@Override
