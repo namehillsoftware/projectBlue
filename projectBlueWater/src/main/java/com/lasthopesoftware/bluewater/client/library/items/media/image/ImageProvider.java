@@ -13,14 +13,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.vedsoft.futures.callables.CarelessFunction;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -67,17 +67,17 @@ public class ImageProvider {
 	}
 
 	public Promise<Bitmap> promiseFileBitmap(ServiceFile serviceFile) {
-		return new Promise<>(new ImageTask(context, connectionProvider, cachedFilePropertiesProvider, serviceFile));
+		return new Promise<>(new ImageOperator(context, connectionProvider, cachedFilePropertiesProvider, serviceFile));
 	}
 
-	private static class ImageTask implements OneParameterAction<Messenger<Bitmap>> {
+	private static class ImageOperator implements MessengerOperator<Bitmap> {
 
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
 		private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 		private final ServiceFile serviceFile;
 
-		ImageTask(Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ServiceFile serviceFile) {
+		ImageOperator(Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ServiceFile serviceFile) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
 			this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
@@ -85,7 +85,7 @@ public class ImageProvider {
 		}
 
 		@Override
-		public void runWith(Messenger<Bitmap> messenger) {
+		public void send(Messenger<Bitmap> messenger) {
 			final Promise<Map<String, String>> promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
 
 			final CancellationProxy cancellationProxy = new CancellationProxy();
@@ -109,7 +109,7 @@ public class ImageProvider {
 						return artist + ":" + albumOrTrackName;
 					})
 					.eventually(uniqueKey -> {
-						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryTask(uniqueKey), imageAccessExecutor);
+						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryWriter(uniqueKey), imageAccessExecutor);
 
 						return memoryTask.eventually(bitmap -> {
 							if (bitmap != null) return new Promise<>(bitmap);
@@ -126,8 +126,8 @@ public class ImageProvider {
 
 										final Promise<Bitmap> cachedSuccessTask =
 											cachedFilePromise
-												.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheTask(uniqueKey, imageFile), imageAccessExecutor))
-												.eventually(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+												.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor))
+												.eventually(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessWriter(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
 										final Promise<Bitmap> cachedErrorTask =
 											cachedFilePromise
@@ -135,7 +135,7 @@ public class ImageProvider {
 													logger.warn("There was an error getting the file from the cache!", e);
 													return e;
 												})
-												.eventually(e -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+												.eventually(e -> new QueuedPromise<>(new RemoteImageAccessWriter(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
 										return Promise.whenAny(cachedSuccessTask, cachedErrorTask);
 									});
@@ -146,16 +146,16 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageMemoryTask implements CarelessOneParameterFunction<CancellationToken, Bitmap> {
+	private static class ImageMemoryWriter implements CancellableMessageWriter<Bitmap> {
 		private final String uniqueKey;
 
-		ImageMemoryTask(String uniqueKey) {
+		ImageMemoryWriter(String uniqueKey) {
 			this.uniqueKey = uniqueKey;
 		}
 
 
 		@Override
-		public Bitmap resultFrom(CancellationToken cancellationToken) throws Throwable {
+		public Bitmap prepareMessage(CancellationToken cancellationToken) throws Throwable {
 			if (cancellationToken.isCancelled())
 				throw new CancellationException(cancellationMessage);
 
@@ -176,19 +176,19 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageDiskCacheTask implements CarelessFunction<Bitmap> {
+	private static class ImageDiskCacheWriter implements MessageWriter<Bitmap> {
 
 		private final String uniqueKey;
 		private final File imageCacheFile;
 
-		ImageDiskCacheTask(String uniqueKey, File imageCacheFile) {
+		ImageDiskCacheWriter(String uniqueKey, File imageCacheFile) {
 			this.uniqueKey = uniqueKey;
 
 			this.imageCacheFile = imageCacheFile;
 		}
 
 		@Override
-		public Bitmap result() {
+		public Bitmap prepareMessage() {
 			if (imageCacheFile != null) {
 				final byte[] imageBytes = putBitmapIntoMemory(uniqueKey, imageCacheFile);
 				if (imageBytes.length > 0)
@@ -199,14 +199,14 @@ public class ImageProvider {
 		}
 	}
 
-	private static class RemoteImageAccessTask implements CarelessOneParameterFunction<CancellationToken, Bitmap> {
+	private static class RemoteImageAccessWriter implements CancellableMessageWriter<Bitmap> {
 
 		private final String uniqueKey;
 		private final DiskFileCache imageDiskCache;
 		private final IConnectionProvider connectionProvider;
 		private final int fileKey;
 
-		private RemoteImageAccessTask(String uniqueKey, DiskFileCache imageDiskCache, IConnectionProvider connectionProvider, int fileKey) {
+		private RemoteImageAccessWriter(String uniqueKey, DiskFileCache imageDiskCache, IConnectionProvider connectionProvider, int fileKey) {
 			this.uniqueKey = uniqueKey;
 			this.imageDiskCache = imageDiskCache;
 			this.connectionProvider = connectionProvider;
@@ -214,7 +214,7 @@ public class ImageProvider {
 		}
 
 		@Override
-		public Bitmap resultFrom(CancellationToken cancellationToken) throws Throwable {
+		public Bitmap prepareMessage(CancellationToken cancellationToken) throws Throwable {
 			try {
 				final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
 				try {

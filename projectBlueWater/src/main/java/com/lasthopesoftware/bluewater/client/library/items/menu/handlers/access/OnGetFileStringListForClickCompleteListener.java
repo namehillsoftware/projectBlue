@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
-public final class OnGetFileStringListForClickCompleteListener implements CarelessOneParameterFunction<String, Void> {
+public final class OnGetFileStringListForClickCompleteListener implements ImmediateResponse<String, Void> {
     private final Context mContext;
 
     public OnGetFileStringListForClickCompleteListener(final Context context) {
@@ -13,7 +13,7 @@ public final class OnGetFileStringListForClickCompleteListener implements Carele
     }
 
     @Override
-    public Void resultFrom(String result) throws Throwable {
+    public Void respond(String result) throws Throwable {
         PlaybackService.launchMusicService(mContext, result);
         return null;
     }

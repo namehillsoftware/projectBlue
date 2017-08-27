@@ -37,7 +37,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class FileDetailsActivity extends AppCompatActivity {
 
@@ -143,7 +144,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 		formattedFilePropertiesProvider
 			.promiseFileProperties(fileKey)
-			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(fileProperties -> {
+			.eventually(LoopedInPromise.response(perform(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -206,7 +207,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				bitmap != null
 					? new Promise<>(bitmap)
 					: defaultImageProvider.getObject().promiseFileBitmap())
-			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(result -> {
+			.eventually(LoopedInPromise.response(perform(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 
 				if (isDestroyed) {

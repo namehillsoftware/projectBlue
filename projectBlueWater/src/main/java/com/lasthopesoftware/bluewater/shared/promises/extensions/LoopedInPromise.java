@@ -4,54 +4,55 @@ import android.content.Context;
 import android.os.Handler;
 
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.FunctionResponse;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableFunctionResponse;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.vedsoft.futures.callables.CarelessFunction;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.PreparedMessengerOperator;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellablePreparedMessengerOperator;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 public class LoopedInPromise<Result> extends Promise<Result> {
 
-	public LoopedInPromise(CarelessFunction<Result> task, Context context) {
+	public LoopedInPromise(MessageWriter<Result> task, Context context) {
 		this(task, new Handler(context.getMainLooper()));
 	}
 
-	public LoopedInPromise(CarelessFunction<Result> task, Handler handler) {
-		super(new Executors.LoopedInResponse<>(new FunctionResponse<>(task), handler));
+	public LoopedInPromise(MessageWriter<Result> task, Handler handler) {
+		super(new Executors.LoopedInResponse<>(new PreparedMessengerOperator<>(task), handler));
 	}
 
-	public LoopedInPromise(CarelessOneParameterFunction<CancellationToken, Result> task, Handler handler) {
-		super(new Executors.LoopedInResponse<>(new CancellableFunctionResponse<>(task), handler));
+	public LoopedInPromise(CancellableMessageWriter<Result> task, Handler handler) {
+		super(new Executors.LoopedInResponse<>(new CancellablePreparedMessengerOperator<>(task), handler));
 	}
 
-	public LoopedInPromise(OneParameterAction<Messenger<Result>> task, Handler handler) {
+	public LoopedInPromise(MessengerOperator<Result> task, Handler handler) {
 		super(new Executors.LoopedInResponse<>(task, handler));
 	}
 
-	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Context context) {
+	public static <TResult, TNewResult> PromisedResponse<TResult, TNewResult> response(ImmediateResponse<TResult, TNewResult> task, Context context) {
 		return response(task, new Handler(context.getMainLooper()));
 	}
 
-	public static <TResult, TNewResult> CarelessOneParameterFunction<TResult, Promise<TNewResult>> response(CarelessOneParameterFunction<TResult, TNewResult> task, Handler handler) {
+	public static <TResult, TNewResult> PromisedResponse<TResult, TNewResult> response(ImmediateResponse<TResult, TNewResult> task, Handler handler) {
 		return new OneParameterExecutors.ReducingFunction<>(task, handler);
 	}
 
 	private static class Executors {
-		static final class LoopedInResponse<Result> implements OneParameterAction<Messenger<Result>>, Runnable {
+		static final class LoopedInResponse<Result> implements MessengerOperator<Result>, Runnable {
 
-			private final OneParameterAction<Messenger<Result>> task;
+			private final MessengerOperator<Result> task;
 			private final Handler handler;
 			private Messenger<Result> resultMessenger;
 
-			LoopedInResponse(OneParameterAction<Messenger<Result>> task, Handler handler) {
+			LoopedInResponse(MessengerOperator<Result> task, Handler handler) {
 				this.task = task;
 				this.handler = handler;
 			}
 
 			@Override
-			public void runWith(Messenger<Result> resultMessenger) {
+			public void send(Messenger<Result> resultMessenger) {
 				this.resultMessenger = resultMessenger;
 
 				if (handler.getLooper().getThread() == Thread.currentThread())
@@ -62,32 +63,32 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 
 			@Override
 			public void run() {
-				task.runWith(resultMessenger);
+				task.send(resultMessenger);
 			}
 		}
 	}
 
 	private static class OneParameterExecutors {
 
-		static class ReducingFunction<TResult, TNewResult> implements CarelessOneParameterFunction<TResult, Promise<TNewResult>>, CarelessFunction<TNewResult> {
+		static class ReducingFunction<TResult, TNewResult> implements PromisedResponse<TResult, TNewResult>, MessageWriter<TNewResult> {
 
-			private final CarelessOneParameterFunction<TResult, TNewResult> callable;
+			private final ImmediateResponse<TResult, TNewResult> callable;
 			private final Handler handler;
 
 			private TResult result;
 
-			ReducingFunction(CarelessOneParameterFunction<TResult, TNewResult> callable, Handler handler) {
+			ReducingFunction(ImmediateResponse<TResult, TNewResult> callable, Handler handler) {
 				this.callable = callable;
 				this.handler = handler;
 			}
 
 			@Override
-			public TNewResult result() throws Throwable {
-				return callable.resultFrom(result);
+			public TNewResult prepareMessage() throws Throwable {
+				return callable.respond(result);
 			}
 
 			@Override
-			public Promise<TNewResult> resultFrom(TResult result) throws Throwable {
+			public Promise<TNewResult> promiseResponse(TResult result) throws Throwable {
 				this.result = result;
 				return new LoopedInPromise<>(this, handler);
 			}

@@ -4,10 +4,10 @@ import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.messenger.Messenger;
-import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 
 final class MediaPlayerPlaybackCompletedPromise implements
-	OneParameterAction<Messenger<IPlaybackHandler>>,
+	MessengerOperator<IPlaybackHandler>,
 	MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
 
 	private final IPlaybackHandler playbackHandler;
@@ -20,7 +20,7 @@ final class MediaPlayerPlaybackCompletedPromise implements
 	}
 
 	@Override
-	public void runWith(Messenger<IPlaybackHandler> playbackHandlerMessenger) {
+	public void send(Messenger<IPlaybackHandler> playbackHandlerMessenger) {
 		this.playbackHandlerMessenger = playbackHandlerMessenger;
 
 		mediaPlayer.setOnCompletionListener(this);

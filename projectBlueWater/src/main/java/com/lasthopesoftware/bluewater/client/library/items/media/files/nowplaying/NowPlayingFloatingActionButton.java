@@ -13,7 +13,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
-import com.vedsoft.futures.callables.VoidFunc;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 /**
  * Created by david on 10/11/15.
@@ -55,7 +56,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         NowPlayingFileProvider
             .fromActiveLibrary(getContext())
             .getNowPlayingFile()
-            .then(VoidFunc.runCarelessly(result -> {
+            .then(perform(result -> {
                 isNowPlayingFileSet = result != null;
                 setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 

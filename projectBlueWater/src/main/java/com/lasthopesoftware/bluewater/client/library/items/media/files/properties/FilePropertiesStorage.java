@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
-import com.vedsoft.futures.callables.CarelessFunction;
 
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,7 @@ public class FilePropertiesStorage {
 	private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
 
 	public static void storeFileProperty(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, int fileKey, String property, String value, boolean isFormatted) {
-		AbstractProvider.providerExecutor.execute(() -> new FilePropertiesStorageTask(connectionProvider, filePropertiesContainerRepository, fileKey, property, value, isFormatted).result());
+		AbstractProvider.providerExecutor.execute(() -> new FilePropertiesStorageWriter(connectionProvider, filePropertiesContainerRepository, fileKey, property, value, isFormatted).prepareMessage());
 	}
 
 	public FilePropertiesStorage(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository) {
@@ -32,7 +32,7 @@ public class FilePropertiesStorage {
 
 	public Promise<Void> promiseFileUpdate(ServiceFile serviceFile, String property, String value, boolean isFormatted) {
 		return new QueuedPromise<>(
-			new FilePropertiesStorageTask(
+			new FilePropertiesStorageWriter(
 				connectionProvider,
 				filePropertiesContainerRepository,
 				serviceFile.getKey(),
@@ -42,9 +42,9 @@ public class FilePropertiesStorage {
 			AbstractProvider.providerExecutor);
 	}
 
-	private static class FilePropertiesStorageTask implements CarelessFunction<Void> {
+	private static class FilePropertiesStorageWriter implements MessageWriter<Void> {
 
-		private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorageTask.class);
+		private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorageWriter.class);
 		private final IConnectionProvider connectionProvider;
 		private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
 		private final int fileKey;
@@ -52,7 +52,7 @@ public class FilePropertiesStorage {
 		private final String value;
 		private final boolean isFormatted;
 
-		FilePropertiesStorageTask(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, int fileKey, String property, String value, boolean isFormatted) {
+		FilePropertiesStorageWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, int fileKey, String property, String value, boolean isFormatted) {
 			this.connectionProvider = connectionProvider;
 			this.filePropertiesContainerRepository = filePropertiesContainerRepository;
 			this.fileKey = fileKey;
@@ -62,7 +62,7 @@ public class FilePropertiesStorage {
 		}
 
 		@Override
-		public Void result() {
+		public Void prepareMessage() {
 //		if (cancellation.isCancelled()) return null;
 
 			try {

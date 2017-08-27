@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -48,18 +48,18 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 				return new Promise<>(new HashMap<String, String>(filePropertiesContainer.getProperties()));
 			}
 
-			return new QueuedPromise<>(new FilePropertiesTask(connectionProvider, filePropertiesContainerProvider, fileKey, revision), filePropertiesExecutor);
+			return new QueuedPromise<>(new FilePropertiesWriter(connectionProvider, filePropertiesContainerProvider, fileKey, revision), filePropertiesExecutor);
 		});
 	}
 
-	private static final class FilePropertiesTask implements CarelessOneParameterFunction<CancellationToken, Map<String, String>> {
+	private static final class FilePropertiesWriter implements CancellableMessageWriter<Map<String, String>> {
 
 		private final IConnectionProvider connectionProvider;
 		private final Integer fileKey;
 		private final Integer serverRevision;
 		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 
-		private FilePropertiesTask(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey, Integer serverRevision) {
+		private FilePropertiesWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey, Integer serverRevision) {
 			this.connectionProvider = connectionProvider;
 			this.fileKey = fileKey;
 			this.serverRevision = serverRevision;
@@ -67,7 +67,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		}
 
 		@Override
-		public Map<String, String> resultFrom(CancellationToken cancellationToken) throws Throwable {
+		public Map<String, String> prepareMessage(CancellationToken cancellationToken) throws Throwable {
 			if (cancellationToken.isCancelled())
 				throw new CancellationException();
 

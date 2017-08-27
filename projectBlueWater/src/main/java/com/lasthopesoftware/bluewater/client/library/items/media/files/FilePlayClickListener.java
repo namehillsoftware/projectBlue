@@ -8,9 +8,10 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipView
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.List;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class FilePlayClickListener extends AbstractMenuClickHandler {
 	private final List<ServiceFile> serviceFiles;
@@ -29,7 +30,7 @@ public class FilePlayClickListener extends AbstractMenuClickHandler {
 
 		FileStringListUtilities
 			.promiseSerializedFileStringList(serviceFiles)
-			.then(LoopedInPromise.response(VoidFunc.runCarelessly(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(serviceFiles))), context));
+			.eventually(LoopedInPromise.response(perform(fileStringList -> PlaybackService.launchMusicService(context, position, FileStringListUtilities.serializeFileStringList(serviceFiles))), context));
 
         super.onClick(v);
 	}

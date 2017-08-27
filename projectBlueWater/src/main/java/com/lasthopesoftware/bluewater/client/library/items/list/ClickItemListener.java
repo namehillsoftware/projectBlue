@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.list.File
 
 import java.util.ArrayList;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class ClickItemListener implements OnItemClickListener {
 
@@ -30,7 +30,7 @@ public class ClickItemListener implements OnItemClickListener {
         final Item item = mItems.get(position);
 
         ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
-            .then(runCarelessly(items -> {
+            .then(perform(items -> {
 				if (items == null) return;
 
 				if (items.size() > 0) {

@@ -68,7 +68,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	public void updateNowPlaying(ServiceFile serviceFile) {
 		imageProvider
 			.promiseFileBitmap(serviceFile)
-			.then(LoopedInPromise.response(this::updateClientBitmap, context))
+			.eventually(LoopedInPromise.response(this::updateClientBitmap, context))
 			.excuse(e -> {
 				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
 				return null;

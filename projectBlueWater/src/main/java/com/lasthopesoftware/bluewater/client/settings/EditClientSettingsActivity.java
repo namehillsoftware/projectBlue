@@ -28,9 +28,10 @@ import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermiss
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.ArrayList;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
@@ -139,7 +140,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(libraryId)
-			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(result -> {
+			.eventually(LoopedInPromise.response(perform(result -> {
 				if (result == null) return;
 
 				library = result;

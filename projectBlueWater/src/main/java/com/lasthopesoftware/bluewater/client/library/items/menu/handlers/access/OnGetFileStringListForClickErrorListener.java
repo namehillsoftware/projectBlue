@@ -4,11 +4,11 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 
-public final class OnGetFileStringListForClickErrorListener implements CarelessOneParameterFunction<Throwable, Boolean> {
+public final class OnGetFileStringListForClickErrorListener implements ImmediateResponse<Throwable, Boolean> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 
@@ -18,7 +18,7 @@ public final class OnGetFileStringListForClickErrorListener implements CarelessO
     }
 
     @Override
-    public Boolean resultFrom(Throwable innerException) {
+    public Boolean respond(Throwable innerException) {
         if (innerException instanceof IOException) {
             PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(() -> mOnClickListener.onClick(mView));
 

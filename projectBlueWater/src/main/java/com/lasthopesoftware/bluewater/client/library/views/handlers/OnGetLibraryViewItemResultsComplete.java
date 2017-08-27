@@ -29,8 +29,8 @@ public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemRe
     }
 
     @Override
-    public Void resultFrom(List<Item> result) {
-        super.resultFrom(result);
+    public Void respond(List<Item> result) {
+        super.respond(result);
         if (result != null)
             listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
 

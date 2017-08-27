@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandl
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,8 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import io.reactivex.ObservableEmitter;
+
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
@@ -91,7 +92,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 			.then(this::changeVolumeManager)
 			.then(this::changePlaybackFile)
 			.eventually(this::startFilePlayback)
-			.excuse(VoidFunc.runCarelessly(this::handlePlaybackException));
+			.excuse(perform(this::handlePlaybackException));
 	}
 
 	private PositionedPlaybackFile changeVolumeManager(PositionedPlaybackFile positionedPlaybackFile) {
@@ -112,7 +113,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 		final Promise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
 
-		promisedPlayback.then(VoidFunc.runCarelessly(this::closeAndStartNextFile));
+		promisedPlayback.then(perform(this::closeAndStartNextFile));
 
 		return promisedPlayback;
 	}

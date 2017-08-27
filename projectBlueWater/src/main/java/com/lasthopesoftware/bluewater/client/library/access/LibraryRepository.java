@@ -9,9 +9,9 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.futures.callables.CarelessFunction;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
@@ -28,29 +28,29 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 
 	@Override
 	public Promise<Library> getLibrary(int libraryId) {
-		return new QueuedPromise<>(new GetLibraryTask(context, libraryId), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	@Override
 	public Promise<Collection<Library>> getAllLibraries() {
-		return new QueuedPromise<>(new GetAllLibrariesTask(context), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(new GetAllLibrariesWriter(context), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	@Override
 	public Promise<Library> saveLibrary(Library library) {
-		return new QueuedPromise<>(new SaveLibraryTask(context, library), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(new SaveLibraryWriter(context, library), RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private static class GetAllLibrariesTask implements CarelessFunction<Collection<Library>> {
+	private static class GetAllLibrariesWriter implements MessageWriter<Collection<Library>> {
 
 		private Context context;
 
-		private GetAllLibrariesTask(Context context) {
+		private GetAllLibrariesWriter(Context context) {
 			this.context = context;
 		}
 
 		@Override
-		public Collection<Library> result() throws Exception {
+		public Collection<Library> prepareMessage() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return
 					repositoryAccessHelper
@@ -60,18 +60,18 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 	}
 
-	private static class GetLibraryTask implements CarelessFunction<Library> {
+	private static class GetLibraryWriter implements MessageWriter<Library> {
 
 		private int libraryId;
 		private Context context;
 
-		private GetLibraryTask(Context context, int libraryId) {
+		private GetLibraryWriter(Context context, int libraryId) {
 			this.libraryId = libraryId;
 			this.context = context;
 		}
 
 		@Override
-		public Library result() throws Exception {
+		public Library prepareMessage() throws Exception {
 			if (libraryId < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -84,9 +84,9 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 	}
 
-	private static class SaveLibraryTask implements CarelessFunction<Library> {
+	private static class SaveLibraryWriter implements MessageWriter<Library> {
 
-		private static final Logger logger = LoggerFactory.getLogger(SaveLibraryTask.class);
+		private static final Logger logger = LoggerFactory.getLogger(SaveLibraryWriter.class);
 
 		private static final Lazy<String> libraryInsertSql
 			= new Lazy<>(() ->
@@ -133,13 +133,13 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		private Context context;
 		private Library library;
 
-		private SaveLibraryTask(Context context, Library library) {
+		private SaveLibraryWriter(Context context, Library library) {
 			this.context = context;
 			this.library = library;
 		}
 
 		@Override
-		public Library result() throws Exception {
+		public Library prepareMessage() throws Exception {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;

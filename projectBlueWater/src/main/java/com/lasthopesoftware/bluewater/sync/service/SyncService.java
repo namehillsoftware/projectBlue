@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class SyncService extends Service {
 
@@ -146,11 +146,11 @@ public class SyncService extends Service {
 
 				return filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
 			}))
-			.eventually(LoopedInPromise.response(runCarelessly(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
-			.excuse(LoopedInPromise.response(exception -> {
+			.eventually(LoopedInPromise.response(perform(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
+			.excuse(e -> LoopedInPromise.response(exception -> {
 				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
 				return true;
-			}, this));
+			}, this).promiseResponse(e));
 	};
 
 	private final OneParameterAction<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
@@ -236,7 +236,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		lazyLibraryProvider.getObject().getAllLibraries().eventually(LoopedInPromise.response(runCarelessly(libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().eventually(LoopedInPromise.response(perform(libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {
@@ -248,7 +248,7 @@ public class SyncService extends Service {
 				if (library.isSyncLocalConnectionsOnly())
 					library.setLocalOnly(true);
 
-				AccessConfigurationBuilder.buildConfiguration(context, library).then(runCarelessly(urlProvider -> {
+				AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
 					if (urlProvider == null) {
 						if (--librariesProcessing == 0) finishSync();
 						return;

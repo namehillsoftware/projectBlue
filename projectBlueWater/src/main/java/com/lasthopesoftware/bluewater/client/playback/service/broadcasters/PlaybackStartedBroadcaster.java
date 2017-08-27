@@ -2,13 +2,13 @@ package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 
-public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<Observable<PositionedPlaybackFile>, Observable<PositionedPlaybackFile>>, Consumer<PositionedPlaybackFile> {
+public class PlaybackStartedBroadcaster implements ImmediateResponse<Observable<PositionedPlaybackFile>, Observable<PositionedPlaybackFile>>, Consumer<PositionedPlaybackFile> {
 
 	private final ISelectedLibraryIdentifierProvider libraryIdentifierProvider;
 	private final IPlaybackBroadcaster playbackBroadcaster;
@@ -20,7 +20,7 @@ public class PlaybackStartedBroadcaster implements CarelessOneParameterFunction<
 	}
 
 	@Override
-	public Observable<PositionedPlaybackFile> resultFrom(Observable<PositionedPlaybackFile> observable) {
+	public Observable<PositionedPlaybackFile> respond(Observable<PositionedPlaybackFile> observable) {
 		if (subscription != null)
 			subscription.dispose();
 

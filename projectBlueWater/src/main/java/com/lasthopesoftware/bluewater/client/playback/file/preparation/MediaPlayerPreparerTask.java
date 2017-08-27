@@ -9,18 +9,20 @@ import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingP
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import com.vedsoft.futures.runnables.OneParameterAction;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri, Promise<IBufferingPlaybackHandler>> {
+final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IBufferingPlaybackHandler> {
 
 	private final static ExecutorService mediaPlayerPreparerExecutor = Executors.newCachedThreadPool();
 
@@ -33,23 +35,23 @@ final class MediaPlayerPreparerTask implements CarelessOneParameterFunction<Uri,
 	}
 
 	@Override
-	public Promise<IBufferingPlaybackHandler> resultFrom(Uri uri) throws Throwable {
-		return new QueuedPromise<>(new MediaPlayerPreparationTask(uri, playbackInitialization, prepareAt), mediaPlayerPreparerExecutor);
+	public Promise<IBufferingPlaybackHandler> promiseResponse(Uri uri) throws Throwable {
+		return new QueuedPromise<>(new MediaPlayerPreparationOperator(uri, playbackInitialization, prepareAt), mediaPlayerPreparerExecutor);
 	}
 
-	private static final class MediaPlayerPreparationTask implements OneParameterAction<Messenger<IBufferingPlaybackHandler>> {
+	private static final class MediaPlayerPreparationOperator implements MessengerOperator<IBufferingPlaybackHandler> {
 		private final Uri uri;
 		private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 		private final int prepareAt;
 
-		MediaPlayerPreparationTask(Uri uri, IPlaybackInitialization<MediaPlayer> playbackInitialization, int prepareAt) {
+		MediaPlayerPreparationOperator(Uri uri, IPlaybackInitialization<MediaPlayer> playbackInitialization, int prepareAt) {
 			this.uri = uri;
 			this.playbackInitialization = playbackInitialization;
 			this.prepareAt = prepareAt;
 		}
 
 		@Override
-		public void runWith(Messenger<IBufferingPlaybackHandler> messenger) {
+		public void send(Messenger<IBufferingPlaybackHandler> messenger) {
 			final CancellationToken cancellationToken = new CancellationToken();
 			messenger.cancellationRequested(cancellationToken);
 

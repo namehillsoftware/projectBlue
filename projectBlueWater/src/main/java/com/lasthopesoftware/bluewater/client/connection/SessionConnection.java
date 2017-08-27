@@ -26,7 +26,6 @@ import java.util.Set;
 
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
 
 public class SessionConnection {
 
@@ -102,7 +101,10 @@ public class SessionConnection {
 									return
 										libraryRepository
 											.saveLibrary(library)
-											.then(runCarelessly(savedLibrary -> doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete)));
+											.then(savedLibrary -> {
+												doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+												return null;
+											});
 								});
 							});
 				})

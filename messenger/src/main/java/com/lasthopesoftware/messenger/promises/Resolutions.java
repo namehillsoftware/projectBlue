@@ -4,7 +4,7 @@ import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.SingleMessageBroadcaster;
 import com.lasthopesoftware.messenger.errors.AggregateCancellationException;
 import com.lasthopesoftware.messenger.promises.propagation.ResolutionProxy;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,43 +13,27 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 final class Resolutions {
-	private static class ResultCollector<TResult> implements CarelessOneParameterFunction<TResult, TResult> {
+
+	private static final class CollectedResultsResolver<TResult> implements ImmediateResponse<TResult, TResult> {
 		private final Collection<TResult> results;
-
-		ResultCollector(Collection<Promise<TResult>> promises) {
-			this.results = new ArrayList<>(promises.size());
-			for (Promise<TResult> promise : promises)
-				promise.then(this);
-		}
-
-		@Override
-		public TResult resultFrom(TResult result) throws Exception {
-			results.add(result);
-			return result;
-		}
-
-		Collection<TResult> getResults() {
-			return results;
-		}
-	}
-
-	private static final class CollectedResultsResolver<TResult> extends ResultCollector<TResult> {
 		private final int expectedResultSize;
 		private Messenger<Collection<TResult>> collectionMessenger;
 
 		CollectedResultsResolver(Collection<Promise<TResult>> promises) {
-			super(promises);
+			this.results = new ArrayList<>(promises.size());
+			for (Promise<TResult> promise : promises)
+				promise.then(this);
 
 			this.expectedResultSize = promises.size();
 		}
 
 		@Override
-		public TResult resultFrom(TResult result) throws Exception {
-			final TResult resultFrom = super.resultFrom(result);
+		public TResult respond(TResult result) throws Exception {
+			results.add(result);
 
 			attemptResolve();
 
-			return resultFrom;
+			return result;
 		}
 
 		CollectedResultsResolver resolveWith(Messenger<Collection<TResult>> collectionMessenger) {
@@ -68,9 +52,13 @@ final class Resolutions {
 
 			collectionMessenger.sendResolution(results);
 		}
+
+		Collection<TResult> getResults() {
+			return results;
+		}
 	}
 
-	private static final class ErrorHandler<TResult> implements CarelessOneParameterFunction<Throwable, Throwable> {
+	private static final class ErrorHandler<TResult> implements ImmediateResponse<Throwable, Throwable> {
 
 		private Messenger<Collection<TResult>> messenger;
 		private Throwable error;
@@ -80,7 +68,7 @@ final class Resolutions {
 		}
 
 		@Override
-		public Throwable resultFrom(Throwable throwable) throws Exception {
+		public Throwable respond(Throwable throwable) throws Exception {
 			this.error = throwable;
 			attemptRejection();
 			return throwable;
@@ -119,7 +107,7 @@ final class Resolutions {
 
 	static final class FirstPromiseResolver<Result> extends SingleMessageBroadcaster<Result> implements
 		Runnable,
-		CarelessOneParameterFunction<Throwable, Void> {
+		ImmediateResponse<Throwable, Void> {
 
 		private final Collection<Promise<Result>> promises;
 		private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -150,7 +138,7 @@ final class Resolutions {
 		}
 
 		@Override
-		public Void resultFrom(Throwable throwable) throws Throwable {
+		public Void respond(Throwable throwable) throws Throwable {
 			final Lock readLock = readWriteLock.readLock();
 			readLock.lock();
 			try {
@@ -169,9 +157,9 @@ final class Resolutions {
 
 		private Messenger<Collection<TResult>> collectionMessenger;
 		private final Collection<Promise<TResult>> promises;
-		private final ResultCollector<TResult> resultCollector;
+		private final CollectedResultsResolver<TResult> resultCollector;
 
-		CollectedResultsCanceller(Collection<Promise<TResult>> promises, ResultCollector<TResult> resultCollector) {
+		CollectedResultsCanceller(Collection<Promise<TResult>> promises, CollectedResultsResolver<TResult> resultCollector) {
 			this.promises = promises;
 			this.resultCollector = resultCollector;
 		}

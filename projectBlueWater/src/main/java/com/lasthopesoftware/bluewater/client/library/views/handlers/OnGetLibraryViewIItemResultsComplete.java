@@ -18,11 +18,11 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.util.List;
 
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements CarelessOneParameterFunction<List<T>, Void> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ImmediateResponse<List<T>, Void> {
 
 	private static final String PREFS_KEY = MagicPropertyBuilder.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -49,7 +49,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     }
 
     @Override
-    public Void resultFrom(List<T> result) {
+    public Void respond(List<T> result) {
         if (result == null) return null;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());

@@ -8,9 +8,9 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractProvider;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-public final class PlaylistsProvider implements CarelessOneParameterFunction<CancellationToken, List<Playlist>> {
+public final class PlaylistsProvider implements CancellableMessageWriter<List<Playlist>> {
 
 	private static Logger logger = LoggerFactory.getLogger(PlaylistsProvider.class);
 
@@ -59,7 +59,7 @@ public final class PlaylistsProvider implements CarelessOneParameterFunction<Can
 	}
 
 	@Override
-	public List<Playlist> resultFrom(CancellationToken cancellationToken) throws Throwable {
+	public List<Playlist> prepareMessage(CancellationToken cancellationToken) throws Throwable {
 		if (cancellationToken.isCancelled())
 			throw new CancellationException("Retrieving the playlist was cancelled");
 

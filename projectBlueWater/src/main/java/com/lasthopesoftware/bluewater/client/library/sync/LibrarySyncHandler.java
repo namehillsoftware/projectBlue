@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class LibrarySyncHandler {
 
@@ -111,7 +111,7 @@ public class LibrarySyncHandler {
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess
 			.getStoredItems()
-			.then(runCarelessly(storedItems -> {
+			.then(perform(storedItems -> {
 				if (isCancelled) {
 					handleQueueProcessingCompleted();
 					return;
@@ -132,7 +132,7 @@ public class LibrarySyncHandler {
 
 						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 						serviceFileListPromise
-							.excuse(runCarelessly(e -> {
+							.excuse(perform(e -> {
 								if (e instanceof FileNotFoundException) {
 									final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
 									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
@@ -148,7 +148,7 @@ public class LibrarySyncHandler {
 					.then(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
 					.eventually(allServiceFilesToSync -> {
 						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
-						pruneFilesTask.excuse(runCarelessly(e -> logger.warn("There was an error pruning the files", e)));
+						pruneFilesTask.excuse(perform(e -> logger.warn("There was an error pruning the files", e)));
 
 						return !isCancelled
 							? pruneFilesTask.then(voids -> allServiceFilesToSync)
@@ -196,7 +196,7 @@ public class LibrarySyncHandler {
 			onQueueProcessingCompleted.runWith(this);
 	}
 
-	private static class DownloadGuard implements CarelessOneParameterFunction<StoredFile, StoredFile> {
+	private static class DownloadGuard implements ImmediateResponse<StoredFile, StoredFile> {
 		private final ServiceFile serviceFile;
 		private StoredFileDownloader storedFileDownloader;
 
@@ -206,7 +206,7 @@ public class LibrarySyncHandler {
 		}
 
 		@Override
-		public StoredFile resultFrom(StoredFile storedFile) {
+		public StoredFile respond(StoredFile storedFile) {
 			if (storedFile != null && !storedFile.isDownloadComplete())
 				storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
 

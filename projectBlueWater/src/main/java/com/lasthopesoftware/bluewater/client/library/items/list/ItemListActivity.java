@@ -28,16 +28,17 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.callables.VoidFunc;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<Item>, Void> {
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+
+public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(ItemListActivity.class);
 
@@ -77,7 +78,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		final CarelessOneParameterFunction<List<Item>, Promise<Void>> itemProviderComplete = LoopedInPromise.response(this, this);
+		final PromisedResponse<List<Item>, Void> itemProviderComplete = LoopedInPromise.response(this, this);
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
         itemProvider
@@ -99,7 +100,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     }
 
 	@Override
-	public Void resultFrom(List<Item> items) throws Throwable {
+	public Void respond(List<Item> items) throws Throwable {
 		if (items == null) return null;
 
 		ItemListActivity.this.BuildItemListView(items);
@@ -112,7 +113,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 	private void BuildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
-			.eventually(LoopedInPromise.response(VoidFunc.runCarelessly(library -> {
+			.eventually(LoopedInPromise.response(perform(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 

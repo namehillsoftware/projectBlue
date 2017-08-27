@@ -28,12 +28,12 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer, CarelessOneParameterFunction<List<ServiceFile>, Void> {
+public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
 
 	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
@@ -76,19 +76,18 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.findView().setVisibility(View.VISIBLE);
 		pbLoading.findView().setVisibility(View.INVISIBLE);
 
-		final CarelessOneParameterFunction<List<ServiceFile>, Promise<Void>> onSearchFilesComplete =
-			LoopedInPromise.response(this, this);
+		final PromisedResponse<List<ServiceFile>, Void> onSearchFilesComplete = LoopedInPromise.response(this, this);
 
         new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
 			.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
-            .then(onSearchFilesComplete)
+            .eventually(onSearchFilesComplete)
             .excuse(new HandleViewIoException(this, new Runnable() {
 
 					@Override
 					public void run() {
 						new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
 							.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
-							.then(onSearchFilesComplete)
+							.eventually(onSearchFilesComplete)
 							.excuse(new HandleViewIoException(SearchFilesActivity.this, this));
 					}
 				})
@@ -96,7 +95,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 	}
 
 	@Override
-	public Void resultFrom(List<ServiceFile> serviceFiles) throws Throwable {
+	public Void respond(List<ServiceFile> serviceFiles) throws Throwable {
 		if (serviceFiles == null) return null;
 
 		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

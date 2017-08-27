@@ -74,10 +74,10 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +92,7 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
-import static com.vedsoft.futures.callables.VoidFunc.runCarelessly;
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class PlaybackService extends Service implements OnAudioFocusChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
@@ -285,7 +285,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	};
 
-	private final CarelessOneParameterFunction<Throwable, Void> UnhandledRejectionHandler = runCarelessly(this::uncaughtExceptionHandler);
+	private final ImmediateResponse<Throwable, Void> UnhandledRejectionHandler = perform(this::uncaughtExceptionHandler);
 
 	public boolean isPlaying() {
 		return isPlaying;
@@ -438,7 +438,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
-				.then(runCarelessly(m -> actOnIntent(intent)))
+				.then(perform(m -> actOnIntent(intent)))
 				.excuse(UnhandledRejectionHandler);
 
 			return START_NOT_STICKY;
@@ -496,7 +496,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 				.then(this::initializePlaybackPlaylistStateManager)
-				.then(runCarelessly(m -> actOnIntent(intentToRun)))
+				.then(perform(m -> actOnIntent(intentToRun)))
 				.excuse(UnhandledRejectionHandler);
 
 			return;
@@ -848,7 +848,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		playbackHandler
 			.promisePlayback()
-			.then(runCarelessly(handler -> {
+			.then(perform(handler -> {
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 				localFilePositionSubscription.dispose();
 			}));
@@ -861,7 +861,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				notifyForeground(notificationBuilder);
 				return null;
 			}, this))
-			.excuse(LoopedInPromise.response(exception -> {
+			.excuse(e -> LoopedInPromise.response(exception -> {
 				final Builder builder = new Builder(this);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
@@ -870,7 +870,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				notifyForeground(builder);
 
 				return null;
-			}, this));
+			}, this).promiseResponse(e));
 	}
 
 	private Void broadcastChangedFile(PositionedFile positionedFile) {
