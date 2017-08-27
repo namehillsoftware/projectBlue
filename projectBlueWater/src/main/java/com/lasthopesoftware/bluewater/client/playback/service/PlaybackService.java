@@ -326,6 +326,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					.setContentText(artist + " - " + name)
 					.setContentIntent(buildNowPlayingActivityIntent())
 					.setShowWhen(false)
+					.setDeleteIntent(PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.killMusicService), PendingIntent.FLAG_UPDATE_CURRENT))
 					.addAction(new NotificationCompat.Action(
 						R.drawable.av_rewind,
 						getString(R.string.btn_previous),
@@ -419,12 +420,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		// Should be modified to save its state locally in the future.
 		PlaybackService.startId = startId;
 
-		if (!Action.validActions.contains(intent.getAction())) {
+		final String action = intent.getAction();
+		if (Action.killMusicService.equals(action) || !Action.validActions.contains(action)) {
 			stopSelf(startId);
 			return START_NOT_STICKY;
 		}
 
-		if ((playlistManager == null || !playlistManager.isPlaying()) && Action.playbackStartingActions.contains(intent.getAction()))
+		if ((playlistManager == null || !playlistManager.isPlaying()) && Action.playbackStartingActions.contains(action))
 			notifyStartingService();
 		
 		if (SessionConnection.isBuilt()) {
@@ -962,6 +964,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		private static final String stopWaitingForConnection = magicPropertyBuilder.buildProperty("stopWaitingForConnection");
 		private static final String addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist");
 		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
+		private static final String killMusicService = magicPropertyBuilder.buildProperty("killMusicService");
 
 		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
 				launchMusicService,
