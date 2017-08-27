@@ -1,5 +1,5 @@
 package com.lasthopesoftware.messenger.promises.queued;
 
-public interface MessageTask<Resolution> {
+public interface MessageWriter<Resolution> {
 	Resolution prepareMessage() throws Throwable;
 }

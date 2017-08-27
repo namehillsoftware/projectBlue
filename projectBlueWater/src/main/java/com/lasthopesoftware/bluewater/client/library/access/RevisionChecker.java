@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.MessageTask;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 
 import java.io.InputStream;
@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RevisionChecker implements MessageTask<Integer> {
+public class RevisionChecker implements MessageWriter<Integer> {
 	
 	private static final Integer badRevision = -1;
     private static final long checkedExpirationTime = 30000;

@@ -17,9 +17,9 @@ import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
-import com.lasthopesoftware.messenger.promises.queued.MessageTask;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 
 import org.apache.commons.io.IOUtils;
@@ -109,7 +109,7 @@ public class ImageProvider {
 						return artist + ":" + albumOrTrackName;
 					})
 					.eventually(uniqueKey -> {
-						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryTask(uniqueKey), imageAccessExecutor);
+						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryWriter(uniqueKey), imageAccessExecutor);
 
 						return memoryTask.eventually(bitmap -> {
 							if (bitmap != null) return new Promise<>(bitmap);
@@ -126,8 +126,8 @@ public class ImageProvider {
 
 										final Promise<Bitmap> cachedSuccessTask =
 											cachedFilePromise
-												.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheTask(uniqueKey, imageFile), imageAccessExecutor))
-												.eventually(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+												.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor))
+												.eventually(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessWriter(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
 										final Promise<Bitmap> cachedErrorTask =
 											cachedFilePromise
@@ -135,7 +135,7 @@ public class ImageProvider {
 													logger.warn("There was an error getting the file from the cache!", e);
 													return e;
 												})
-												.eventually(e -> new QueuedPromise<>(new RemoteImageAccessTask(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
+												.eventually(e -> new QueuedPromise<>(new RemoteImageAccessWriter(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
 
 										return Promise.whenAny(cachedSuccessTask, cachedErrorTask);
 									});
@@ -146,10 +146,10 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageMemoryTask implements CancellableMessageTask<Bitmap> {
+	private static class ImageMemoryWriter implements CancellableMessageWriter<Bitmap> {
 		private final String uniqueKey;
 
-		ImageMemoryTask(String uniqueKey) {
+		ImageMemoryWriter(String uniqueKey) {
 			this.uniqueKey = uniqueKey;
 		}
 
@@ -176,12 +176,12 @@ public class ImageProvider {
 		}
 	}
 
-	private static class ImageDiskCacheTask implements MessageTask<Bitmap> {
+	private static class ImageDiskCacheWriter implements MessageWriter<Bitmap> {
 
 		private final String uniqueKey;
 		private final File imageCacheFile;
 
-		ImageDiskCacheTask(String uniqueKey, File imageCacheFile) {
+		ImageDiskCacheWriter(String uniqueKey, File imageCacheFile) {
 			this.uniqueKey = uniqueKey;
 
 			this.imageCacheFile = imageCacheFile;
@@ -199,14 +199,14 @@ public class ImageProvider {
 		}
 	}
 
-	private static class RemoteImageAccessTask implements CancellableMessageTask<Bitmap> {
+	private static class RemoteImageAccessWriter implements CancellableMessageWriter<Bitmap> {
 
 		private final String uniqueKey;
 		private final DiskFileCache imageDiskCache;
 		private final IConnectionProvider connectionProvider;
 		private final int fileKey;
 
-		private RemoteImageAccessTask(String uniqueKey, DiskFileCache imageDiskCache, IConnectionProvider connectionProvider, int fileKey) {
+		private RemoteImageAccessWriter(String uniqueKey, DiskFileCache imageDiskCache, IConnectionProvider connectionProvider, int fileKey) {
 			this.uniqueKey = uniqueKey;
 			this.imageDiskCache = imageDiskCache;
 			this.connectionProvider = connectionProvider;

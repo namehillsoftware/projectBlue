@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractProvider;
 
@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.List;
 
-public class LibraryViewsProvider implements CancellableMessageTask<List<Item>> {
+public class LibraryViewsProvider implements CancellableMessageWriter<List<Item>> {
 
     private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
 

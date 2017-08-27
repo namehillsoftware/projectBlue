@@ -3,8 +3,8 @@ package com.lasthopesoftware.messenger.promises.queued;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableImmediateMessage;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellablePreparedMessengerOperator;
 
 import java.util.concurrent.Executor;
 
@@ -13,12 +13,12 @@ public class QueuedPromise<Result> extends Promise<Result> {
 		super(new Execution.QueuedMessengerResponse<>(task, executor));
 	}
 
-	public QueuedPromise(CancellableMessageTask<Result> task, Executor executor) {
-		this(new CancellableImmediateMessage<>(task), executor);
+	public QueuedPromise(CancellableMessageWriter<Result> task, Executor executor) {
+		this(new CancellablePreparedMessengerOperator<>(task), executor);
 	}
 
-	public QueuedPromise(MessageTask<Result> task, Executor executor) {
-		this(new ImmediateMessage<>(task), executor);
+	public QueuedPromise(MessageWriter<Result> task, Executor executor) {
+		this(new PreparedMessengerOperator<>(task), executor);
 	}
 
 	private static class Execution {

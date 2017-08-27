@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractProvider;
 
@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-public final class PlaylistsProvider implements CancellableMessageTask<List<Playlist>> {
+public final class PlaylistsProvider implements CancellableMessageWriter<List<Playlist>> {
 
 	private static Logger logger = LoggerFactory.getLogger(PlaylistsProvider.class);
 

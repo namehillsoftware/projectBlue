@@ -3,11 +3,11 @@ package com.lasthopesoftware.messenger.promises.queued.cancellation;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 
-public final class CancellableImmediateMessage<Result> implements MessengerOperator<Result> {
-	private final CancellableMessageTask<Result> task;
+public final class CancellablePreparedMessengerOperator<Result> implements MessengerOperator<Result> {
+	private final CancellableMessageWriter<Result> writer;
 
-	public CancellableImmediateMessage(CancellableMessageTask<Result> task) {
-		this.task = task;
+	public CancellablePreparedMessengerOperator(CancellableMessageWriter<Result> writer) {
+		this.writer = writer;
 	}
 
 	@Override
@@ -16,7 +16,7 @@ public final class CancellableImmediateMessage<Result> implements MessengerOpera
 		messenger.cancellationRequested(cancellationToken);
 
 		try {
-			messenger.sendResolution(task.prepareMessage(cancellationToken));
+			messenger.sendResolution(writer.prepareMessage(cancellationToken));
 		} catch (Throwable throwable) {
 			messenger.sendRejection(throwable);
 		}

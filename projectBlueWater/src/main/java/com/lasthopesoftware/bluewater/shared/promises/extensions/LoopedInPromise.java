@@ -6,25 +6,25 @@ import android.os.Handler;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.ImmediateMessage;
-import com.lasthopesoftware.messenger.promises.queued.MessageTask;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableImmediateMessage;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
+import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.PreparedMessengerOperator;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellablePreparedMessengerOperator;
 import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 public class LoopedInPromise<Result> extends Promise<Result> {
 
-	public LoopedInPromise(MessageTask<Result> task, Context context) {
+	public LoopedInPromise(MessageWriter<Result> task, Context context) {
 		this(task, new Handler(context.getMainLooper()));
 	}
 
-	public LoopedInPromise(MessageTask<Result> task, Handler handler) {
-		super(new Executors.LoopedInResponse<>(new ImmediateMessage<>(task), handler));
+	public LoopedInPromise(MessageWriter<Result> task, Handler handler) {
+		super(new Executors.LoopedInResponse<>(new PreparedMessengerOperator<>(task), handler));
 	}
 
-	public LoopedInPromise(CancellableMessageTask<Result> task, Handler handler) {
-		super(new Executors.LoopedInResponse<>(new CancellableImmediateMessage<>(task), handler));
+	public LoopedInPromise(CancellableMessageWriter<Result> task, Handler handler) {
+		super(new Executors.LoopedInResponse<>(new CancellablePreparedMessengerOperator<>(task), handler));
 	}
 
 	public LoopedInPromise(MessengerOperator<Result> task, Handler handler) {
@@ -70,7 +70,7 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 
 	private static class OneParameterExecutors {
 
-		static class ReducingFunction<TResult, TNewResult> implements PromisedResponse<TResult, TNewResult>, MessageTask<TNewResult> {
+		static class ReducingFunction<TResult, TNewResult> implements PromisedResponse<TResult, TNewResult>, MessageWriter<TNewResult> {
 
 			private final ImmediateResponse<TResult, TNewResult> callable;
 			private final Handler handler;
