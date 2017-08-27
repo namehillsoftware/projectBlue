@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueue
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -76,11 +76,11 @@ public class WhenTheQueueIsConsumed {
 		assertThat(returnedPromiseCount).isEqualTo(expectedNumberOfFiles);
 	}
 
-	private static class MockResolveAction implements MessengerTask<IBufferingPlaybackHandler> {
+	private static class MockResolveAction implements MessengerOperator<IBufferingPlaybackHandler> {
 		private int calls;
 
 		@Override
-		public void execute(Messenger<IBufferingPlaybackHandler> resolve) {
+		public void send(Messenger<IBufferingPlaybackHandler> resolve) {
 			++calls;
 			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}

@@ -11,9 +11,9 @@ public class Promise<Resolution> {
 
 	private final SingleMessageBroadcaster<Resolution> singleMessageBroadcaster;
 
-	public Promise(MessengerTask<Resolution> messengerTask) {
+	public Promise(MessengerOperator<Resolution> messengerOperator) {
 		this();
-		messengerTask.execute(singleMessageBroadcaster);
+		messengerOperator.send(singleMessageBroadcaster);
 	}
 
 	public Promise(Resolution passThroughResult) {

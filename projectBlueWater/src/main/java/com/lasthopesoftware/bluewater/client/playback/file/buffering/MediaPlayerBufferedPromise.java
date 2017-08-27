@@ -3,12 +3,12 @@ package com.lasthopesoftware.bluewater.client.playback.file.buffering;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class MediaPlayerBufferedPromise implements MessengerTask<IBufferingPlaybackHandler>, MediaPlayer.OnBufferingUpdateListener {
+public final class MediaPlayerBufferedPromise implements MessengerOperator<IBufferingPlaybackHandler>, MediaPlayer.OnBufferingUpdateListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerBufferedPromise.class);
 
@@ -27,7 +27,7 @@ public final class MediaPlayerBufferedPromise implements MessengerTask<IBufferin
 	}
 
 	@Override
-	public void execute(Messenger<IBufferingPlaybackHandler> messenger) {
+	public void send(Messenger<IBufferingPlaybackHandler> messenger) {
 		this.messenger = messenger;
 		if (isBuffered())
 			messenger.sendResolution(bufferingPlaybackHandler);

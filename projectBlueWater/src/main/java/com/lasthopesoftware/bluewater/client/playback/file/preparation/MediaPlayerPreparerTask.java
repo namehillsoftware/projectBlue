@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingP
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
@@ -33,22 +33,22 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IBufferingP
 
 	@Override
 	public Promise<IBufferingPlaybackHandler> promiseResponse(Uri uri) throws Throwable {
-		return new QueuedPromise<>(new MediaPlayerPreparationTask(uri, playbackInitialization, prepareAt), mediaPlayerPreparerExecutor);
+		return new QueuedPromise<>(new MediaPlayerPreparationOperator(uri, playbackInitialization, prepareAt), mediaPlayerPreparerExecutor);
 	}
 
-	private static final class MediaPlayerPreparationTask implements MessengerTask<IBufferingPlaybackHandler> {
+	private static final class MediaPlayerPreparationOperator implements MessengerOperator<IBufferingPlaybackHandler> {
 		private final Uri uri;
 		private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 		private final int prepareAt;
 
-		MediaPlayerPreparationTask(Uri uri, IPlaybackInitialization<MediaPlayer> playbackInitialization, int prepareAt) {
+		MediaPlayerPreparationOperator(Uri uri, IPlaybackInitialization<MediaPlayer> playbackInitialization, int prepareAt) {
 			this.uri = uri;
 			this.playbackInitialization = playbackInitialization;
 			this.prepareAt = prepareAt;
 		}
 
 		@Override
-		public void execute(Messenger<IBufferingPlaybackHandler> messenger) {
+		public void send(Messenger<IBufferingPlaybackHandler> messenger) {
 			final MediaPlayer mediaPlayer;
 			try {
 				mediaPlayer = playbackInitialization.initializeMediaPlayer(uri);

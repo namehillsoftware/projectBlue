@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.CyclicalFileQueuePr
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import junit.framework.Assert;
@@ -66,9 +66,9 @@ public class WhenTheQueueIsStarted {
 			.then(perform(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 
-	private static class MockResolveAction implements MessengerTask<IBufferingPlaybackHandler> {
+	private static class MockResolveAction implements MessengerOperator<IBufferingPlaybackHandler> {
 		@Override
-		public void execute(Messenger<IBufferingPlaybackHandler> resolve) {
+		public void send(Messenger<IBufferingPlaybackHandler> resolve) {
 			resolve.sendResolution(mock(IBufferingPlaybackHandler.class));
 		}
 	}

@@ -1,9 +1,9 @@
 package com.lasthopesoftware.messenger.promises.queued.cancellation;
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 
-public final class CancellableImmediateMessage<Result> implements MessengerTask<Result> {
+public final class CancellableImmediateMessage<Result> implements MessengerOperator<Result> {
 	private final CancellableMessageTask<Result> task;
 
 	public CancellableImmediateMessage(CancellableMessageTask<Result> task) {
@@ -11,7 +11,7 @@ public final class CancellableImmediateMessage<Result> implements MessengerTask<
 	}
 
 	@Override
-	public void execute(Messenger<Result> messenger) {
+	public void send(Messenger<Result> messenger) {
 		final CancellationToken cancellationToken = new CancellationToken();
 		messenger.cancellationRequested(cancellationToken);
 

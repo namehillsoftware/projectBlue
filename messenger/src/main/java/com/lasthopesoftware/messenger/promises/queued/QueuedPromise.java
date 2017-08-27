@@ -1,7 +1,7 @@
 package com.lasthopesoftware.messenger.promises.queued;
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableImmediateMessage;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageTask;
@@ -9,7 +9,7 @@ import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMe
 import java.util.concurrent.Executor;
 
 public class QueuedPromise<Result> extends Promise<Result> {
-	public QueuedPromise(MessengerTask<Result> task, Executor executor) {
+	public QueuedPromise(MessengerOperator<Result> task, Executor executor) {
 		super(new Execution.QueuedMessengerResponse<>(task, executor));
 	}
 
@@ -23,27 +23,27 @@ public class QueuedPromise<Result> extends Promise<Result> {
 
 	private static class Execution {
 		static final class QueuedMessengerResponse<Result> implements
-			MessengerTask<Result>,
+			MessengerOperator<Result>,
 			Runnable {
 
-			private final MessengerTask<Result> task;
+			private final MessengerOperator<Result> task;
 			private final Executor executor;
 			private Messenger<Result> resultMessenger;
 
-			QueuedMessengerResponse(MessengerTask<Result> task, Executor executor) {
+			QueuedMessengerResponse(MessengerOperator<Result> task, Executor executor) {
 				this.task = task;
 				this.executor = executor;
 			}
 
 			@Override
-			public void execute(Messenger<Result> resultMessenger) {
+			public void send(Messenger<Result> resultMessenger) {
 				this.resultMessenger = resultMessenger;
 				executor.execute(this);
 			}
 
 			@Override
 			public void run() {
-				task.execute(resultMessenger);
+				task.send(resultMessenger);
 			}
 		}
 	}

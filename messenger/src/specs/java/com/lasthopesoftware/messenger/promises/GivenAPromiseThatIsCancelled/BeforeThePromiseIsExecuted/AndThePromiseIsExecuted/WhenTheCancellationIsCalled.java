@@ -1,7 +1,7 @@
 package com.lasthopesoftware.messenger.promises.GivenAPromiseThatIsCancelled.BeforeThePromiseIsExecuted.AndThePromiseIsExecuted;
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -16,7 +16,7 @@ public class WhenTheCancellationIsCalled {
 
 	@BeforeClass
 	public static void before() {
-		final ExternallyResolvableTask<String> resolvableTask = new ExternallyResolvableTask<>();
+		final ExternallyResolvableOperator<String> resolvableTask = new ExternallyResolvableOperator<>();
 		final Promise<String> promise = new Promise<>(resolvableTask);
 
 		final Promise<Object> cancellablePromise = promise.eventually((result) -> new Promise<>(messenger -> messenger.cancellationRequested(() -> messenger.sendRejection(thrownException))));
@@ -33,7 +33,7 @@ public class WhenTheCancellationIsCalled {
 		assertThat(caughtException).isEqualTo(thrownException);
 	}
 
-	private static class ExternallyResolvableTask<TResult> implements MessengerTask<TResult> {
+	private static class ExternallyResolvableOperator<TResult> implements MessengerOperator<TResult> {
 
 		private Messenger<TResult> resolve;
 
@@ -43,7 +43,7 @@ public class WhenTheCancellationIsCalled {
 		}
 
 		@Override
-		public void execute(Messenger<TResult> messenger) {
+		public void send(Messenger<TResult> messenger) {
 			resolve = messenger;
 		}
 	}

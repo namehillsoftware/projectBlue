@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
@@ -67,17 +67,17 @@ public class ImageProvider {
 	}
 
 	public Promise<Bitmap> promiseFileBitmap(ServiceFile serviceFile) {
-		return new Promise<>(new ImageTask(context, connectionProvider, cachedFilePropertiesProvider, serviceFile));
+		return new Promise<>(new ImageOperator(context, connectionProvider, cachedFilePropertiesProvider, serviceFile));
 	}
 
-	private static class ImageTask implements MessengerTask<Bitmap> {
+	private static class ImageOperator implements MessengerOperator<Bitmap> {
 
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
 		private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 		private final ServiceFile serviceFile;
 
-		ImageTask(Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ServiceFile serviceFile) {
+		ImageOperator(Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ServiceFile serviceFile) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
 			this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
@@ -85,7 +85,7 @@ public class ImageProvider {
 		}
 
 		@Override
-		public void execute(Messenger<Bitmap> messenger) {
+		public void send(Messenger<Bitmap> messenger) {
 			final Promise<Map<String, String>> promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
 
 			final CancellationProxy cancellationProxy = new CancellationProxy();

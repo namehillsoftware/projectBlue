@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.ImmediateMessage;
 import com.lasthopesoftware.messenger.promises.queued.MessageTask;
@@ -27,7 +27,7 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 		super(new Executors.LoopedInResponse<>(new CancellableImmediateMessage<>(task), handler));
 	}
 
-	public LoopedInPromise(MessengerTask<Result> task, Handler handler) {
+	public LoopedInPromise(MessengerOperator<Result> task, Handler handler) {
 		super(new Executors.LoopedInResponse<>(task, handler));
 	}
 
@@ -40,19 +40,19 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 	}
 
 	private static class Executors {
-		static final class LoopedInResponse<Result> implements MessengerTask<Result>, Runnable {
+		static final class LoopedInResponse<Result> implements MessengerOperator<Result>, Runnable {
 
-			private final MessengerTask<Result> task;
+			private final MessengerOperator<Result> task;
 			private final Handler handler;
 			private Messenger<Result> resultMessenger;
 
-			LoopedInResponse(MessengerTask<Result> task, Handler handler) {
+			LoopedInResponse(MessengerOperator<Result> task, Handler handler) {
 				this.task = task;
 				this.handler = handler;
 			}
 
 			@Override
-			public void execute(Messenger<Result> resultMessenger) {
+			public void send(Messenger<Result> resultMessenger) {
 				this.resultMessenger = resultMessenger;
 
 				if (handler.getLooper().getThread() == Thread.currentThread())
@@ -63,7 +63,7 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 
 			@Override
 			public void run() {
-				task.execute(resultMessenger);
+				task.send(resultMessenger);
 			}
 		}
 	}

@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 
@@ -38,32 +38,32 @@ public class FileNameTextViewSetter {
 
 	public Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
 		if (currentlyPromisedTextViewUpdate == null) {
-			currentlyPromisedTextViewUpdate = new LoopedInPromise<>(new LockedTextViewTask(textView, handler, serviceFile), handler);
+			currentlyPromisedTextViewUpdate = new LoopedInPromise<>(new LockedTextViewOperator(textView, handler, serviceFile), handler);
 			return currentlyPromisedTextViewUpdate;
 		}
 
 		currentlyPromisedTextViewUpdate.cancel();
 
 		currentlyPromisedTextViewUpdate =
-			currentlyPromisedTextViewUpdate.eventually(o -> new LoopedInPromise<>(new LockedTextViewTask(textView, handler, serviceFile), handler));
+			currentlyPromisedTextViewUpdate.eventually(o -> new LoopedInPromise<>(new LockedTextViewOperator(textView, handler, serviceFile), handler));
 
 		return currentlyPromisedTextViewUpdate;
 	}
 
-	private static class LockedTextViewTask implements MessengerTask<Void> {
+	private static class LockedTextViewOperator implements MessengerOperator<Void> {
 
 		private final TextView textView;
 		private final Handler handler;
 		private final ServiceFile serviceFile;
 
-		LockedTextViewTask(TextView textView, Handler handler, ServiceFile serviceFile) {
+		LockedTextViewOperator(TextView textView, Handler handler, ServiceFile serviceFile) {
 			this.textView = textView;
 			this.handler = handler;
 			this.serviceFile = serviceFile;
 		}
 
 		@Override
-		public void execute(Messenger<Void> messenger) {
+		public void send(Messenger<Void> messenger) {
 			final CancellationProxy cancellationProxy = new CancellationProxy();
 			messenger.cancellationRequested(cancellationProxy);
 

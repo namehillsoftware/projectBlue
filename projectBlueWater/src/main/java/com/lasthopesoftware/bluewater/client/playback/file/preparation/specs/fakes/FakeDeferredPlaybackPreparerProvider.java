@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlayback
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerTask;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerProvider {
@@ -17,7 +17,7 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		return (file, preparedAt) -> new Promise<>(deferredResolution);
 	}
 
-	public static class DeferredResolution implements MessengerTask<IBufferingPlaybackHandler> {
+	public static class DeferredResolution implements MessengerOperator<IBufferingPlaybackHandler> {
 
 		private Messenger<IBufferingPlaybackHandler> resolve;
 
@@ -29,7 +29,7 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		}
 
 		@Override
-		public void execute(Messenger<IBufferingPlaybackHandler> resolve) {
+		public void send(Messenger<IBufferingPlaybackHandler> resolve) {
 			this.resolve = resolve;
 		}
 	}
