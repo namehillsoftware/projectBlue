@@ -1,13 +1,14 @@
-package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAHaltedPlaylistStateManager.AndPlaybackIsStarted;
+package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAPlayingPlaylistStateManager;
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
@@ -17,29 +18,27 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 3/11/17.
- */
+public class WhenChangingTracks {
 
-public class WhenNotObservingPlayback {
-	private static Library library;
-	private static PlaylistManager playlistManager;
+	private static PositionedFile nextSwitchedFile;
+	private static PositionedPlaybackFile latestFile;
 
 	@BeforeClass
-	public static void context() {
+	public static void before() throws IOException, InterruptedException {
 		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
 
-		library = new Library();
+		final Library library = new Library();
 		library.setId(1);
-		library.setNowPlayingId(5);
 
 		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
 		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));
@@ -47,11 +46,13 @@ public class WhenNotObservingPlayback {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		playlistManager = new PlaylistManager(
+		final PlaylistManager playlistManager = new PlaylistManager(
 			fakePlaybackPreparerProvider,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
+
+		final CountDownLatch countDownLatch = new CountDownLatch(2);
 
 		playlistManager
 			.startPlaylist(
@@ -60,21 +61,32 @@ public class WhenNotObservingPlayback {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)), 0, 0)
+			.then(obs -> obs.subscribe(p -> {
+				latestFile = p;
+				countDownLatch.countDown();
+			}));
 
-		final ResolveablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-		resolveablePlaybackHandler.resolve();
+		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
+
+		playlistManager.changePosition(3, 0).then(p -> {
+			nextSwitchedFile = p;
+			countDownLatch.countDown();
+			return null;
+		});
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		countDownLatch.await();
 	}
 
 	@Test
-	public void thenTheSavedTrackPositionIsZero() {
-		assertThat(library.getNowPlayingId()).isEqualTo(1);
+	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
+		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
 	}
 
 	@Test
-	public void thenTheManagerIsPlaying() {
-		assertThat(playlistManager.isPlaying()).isTrue();
+	public void thenTheLatestObservedFileIsAtTheCorrectTrackPosition() {
+		assertThat(latestFile.getPlaylistPosition()).isEqualTo(3);
 	}
 }

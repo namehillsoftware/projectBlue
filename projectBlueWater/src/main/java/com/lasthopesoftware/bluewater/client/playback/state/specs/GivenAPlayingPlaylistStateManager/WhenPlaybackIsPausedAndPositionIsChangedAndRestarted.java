@@ -32,10 +32,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 3/12/17.
- */
-
 public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 
 	private static PlaylistManager playlistManager;
