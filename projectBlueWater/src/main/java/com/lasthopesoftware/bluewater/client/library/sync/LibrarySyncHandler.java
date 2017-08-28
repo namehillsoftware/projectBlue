@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -43,32 +43,39 @@ public class LibrarySyncHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
-	private final Context context;
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
+	private final FileProvider fileProvider;
 	private final Library library;
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
+	private final StoredItemAccess storedItemAccess;
+	private final StoredFileAccess storedFileAccess;
 	private final StoredFileDownloader storedFileDownloader;
 	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
 
-	public LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library) {
+	public LibrarySyncHandler(Context context, IConnectionProvider connectionProvider, Library library) {
 		this(
-				context,
-				connectionProvider,
-				library,
-				new LibraryStorageReadPermissionsRequirementsProvider(),
-				new LibraryStorageWritePermissionsRequirementsProvider());
+			connectionProvider,
+			library,
+			new StoredItemAccess(context, library),
+			new StoredFileAccess(context, library),
+			new StoredFileDownloader(context, connectionProvider, library),
+			new FileProvider(new FileStringListProvider(connectionProvider)),
+			new LibraryStorageReadPermissionsRequirementsProvider(),
+			new LibraryStorageWritePermissionsRequirementsProvider());
 	}
 
-	private LibrarySyncHandler(Context context, ConnectionProvider connectionProvider, Library library, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
-		this.context = context;
+	private LibrarySyncHandler(IConnectionProvider connectionProvider, Library library, StoredItemAccess storedItemAccess, StoredFileAccess storedFileAccess, StoredFileDownloader storedFileDownloader, FileProvider fileProvider, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.connectionProvider = connectionProvider;
 		this.library = library;
+		this.storedItemAccess = storedItemAccess;
+		this.storedFileAccess = storedFileAccess;
+		this.storedFileDownloader = storedFileDownloader;
+		this.fileProvider = fileProvider;
 		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
 		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
-		this.storedFileDownloader = new StoredFileDownloader(context, connectionProvider, library);
 	}
 
 	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
@@ -108,16 +115,13 @@ public class LibrarySyncHandler {
 	}
 
 	public void startSync() {
-		final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 		storedItemAccess
 			.getStoredItems()
-			.then(perform(storedItems -> {
+			.eventually(storedItems -> {
 				if (isCancelled) {
 					handleQueueProcessingCompleted();
-					return;
+					return Promise.empty();
 				}
-
-				final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
 
 				final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
 					.map(storedItem -> {
@@ -128,7 +132,6 @@ public class LibrarySyncHandler {
 
 						final int serviceId = storedItem.getServiceId();
 						final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
-						final FileProvider fileProvider = new FileProvider(new FileStringListProvider(connectionProvider));
 
 						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 						serviceFileListPromise
@@ -143,8 +146,7 @@ public class LibrarySyncHandler {
 						return serviceFileListPromise;
 					});
 
-				Promise
-					.whenAll(mappedFileDataPromises.toList())
+				return Promise.whenAll(mappedFileDataPromises.toList())
 					.then(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
 					.eventually(allServiceFilesToSync -> {
 						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(Stream.of(allServiceFilesToSync).map(ServiceFile::getKey).collect(Collectors.toSet()));
@@ -180,15 +182,15 @@ public class LibrarySyncHandler {
 							handleQueueProcessingCompleted();
 
 						return null;
-					})
-					.excuse(e -> {
-						logger.warn("There was an error retrieving the files", e);
-
-						handleQueueProcessingCompleted();
-
-						return null;
 					});
-			}));
+			})
+			.excuse(e -> {
+				logger.warn("There was an error retrieving the files", e);
+
+				handleQueueProcessingCompleted();
+
+				return null;
+			});;
 	}
 
 	private void handleQueueProcessingCompleted() {

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -19,7 +18,7 @@ public final class FileStringListProvider {
 	private static final Logger logger = LoggerFactory.getLogger(FileStringListProvider.class);
 	private final IConnectionProvider connectionProvider;
 
-	public FileStringListProvider(ConnectionProvider connectionProvider) {
+	public FileStringListProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
 	}
 
