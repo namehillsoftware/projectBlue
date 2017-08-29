@@ -551,9 +551,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			new PlaybackHandlerVolumeControllerFactory(
 				new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
 
+		final MediaPlayerPlaybackPreparerProvider mediaPlayerPlaybackPreparerProvider = new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library);
+
 		playlistManager =
 			new PlaylistManager(
-				new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library), library),
+				mediaPlayerPlaybackPreparerProvider,
+				mediaPlayerPlaybackPreparerProvider,
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				playlistPlaybackBootstrapper);

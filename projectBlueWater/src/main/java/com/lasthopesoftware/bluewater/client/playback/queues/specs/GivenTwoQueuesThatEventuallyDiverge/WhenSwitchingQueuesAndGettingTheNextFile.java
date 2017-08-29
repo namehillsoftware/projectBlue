@@ -12,25 +12,25 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 1/3/17.
- */
-
 public class WhenSwitchingQueuesAndGettingTheNextFile {
 
-	private static PositionedPlaybackFile positionedPlaybackFile;
-	private static PositionedPlaybackFile expectedPositionedPlaybackFile;
+	private static final List<PositionedPlaybackFile> playedFiles = new ArrayList<>();
+	private static final List<PositionedPlaybackFile> expectedPositionedPlaybackFiles = Arrays.asList(
+		new PositionedPlaybackFile(3, mock(IPlaybackHandler.class), new ServiceFile(3)),
+		new PositionedPlaybackFile(4, mock(IPlaybackHandler.class), new ServiceFile(4)),
+		new PositionedPlaybackFile(5, mock(IPlaybackHandler.class), new ServiceFile(6)),
+		new PositionedPlaybackFile(6, mock(IPlaybackHandler.class), new ServiceFile(7)));
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
-		expectedPositionedPlaybackFile = new PositionedPlaybackFile(3, mock(IPlaybackHandler.class), new ServiceFile(3));
-
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
 			.thenReturn(
@@ -43,6 +43,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
+				() -> 3,
 				(file, preparedAt) -> new Promise<>(new FakeBufferingPlaybackHandler()),
 				positionedFileQueue);
 
@@ -54,26 +55,34 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 			.thenReturn(
 				new PositionedFile(3, new ServiceFile(3)),
 				new PositionedFile(4, new ServiceFile(4)),
-				new PositionedFile(6, new ServiceFile(6)),
+				new PositionedFile(5, new ServiceFile(6)),
+				new PositionedFile(6, new ServiceFile(7)),
 				null);
 
 		queue.updateQueue(newPositionedFileQueue);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(file -> {
-				positionedPlaybackFile = file;
-				countDownLatch.countDown();
-				return null;
+			.eventually(file -> {
+				playedFiles.add(file);
+				return queue.promiseNextPreparedPlaybackFile(0);
+			})
+			.eventually(file -> {
+				playedFiles.add(file);
+				return queue.promiseNextPreparedPlaybackFile(0);
+			})
+			.eventually(file -> {
+				playedFiles.add(file);
+				return queue.promiseNextPreparedPlaybackFile(0);
+			})
+			.eventually(file -> {
+				playedFiles.add(file);
+				return Promise.empty();
 			});
-
-		countDownLatch.await();
 	}
 
 	@Test
-	public void thenTheQueueContinues() {
-		assertThat(positionedPlaybackFile).isEqualTo(expectedPositionedPlaybackFile);
+	public void thenTheQueueContinuesToCompletion() {
+		assertThat(playedFiles).asList().containsExactlyElementsOf(expectedPositionedPlaybackFiles);
 	}
-
 }

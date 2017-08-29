@@ -32,6 +32,7 @@ public class WhenTheQueueIsClosed {
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
+				() -> 1,
 				(file, preparedAt) -> cancelRecordingPromise,
 				bufferingPlaybackQueuesProvider.provideQueue(Collections.singletonList(new ServiceFile(1)), 0));
 

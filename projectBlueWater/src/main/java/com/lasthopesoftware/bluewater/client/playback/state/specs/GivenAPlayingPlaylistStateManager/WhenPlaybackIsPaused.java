@@ -53,6 +53,7 @@ public class WhenPlaybackIsPaused {
 
 		playlistManager = new PlaylistManager(
 			fakePlaybackPreparerProvider,
+			() -> 1,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));

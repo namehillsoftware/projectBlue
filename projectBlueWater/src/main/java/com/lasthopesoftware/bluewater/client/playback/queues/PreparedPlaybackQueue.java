@@ -19,34 +19,36 @@ public class PreparedPlaybackQueue implements
 	ResponseAction<IBufferingPlaybackHandler>,
 	ImmediateResponse<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
-	private static final int bufferingPlaybackQueueSize = 1;
-
 	private final ReentrantReadWriteLock queueUpdateLock = new ReentrantReadWriteLock();
 
+	private final IPreparedPlaybackQueueConfiguration configuration;
 	private final IPlaybackPreparer playbackPreparerTaskFactory;
-	private final Queue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
+	private final Queue<PositionedPreparingFile> bufferingMediaPlayerPromises;
 
 	private IPositionedFileQueue positionedFileQueue;
 
 	private PositionedPreparingFile currentPreparingPlaybackHandlerPromise;
 
-	public PreparedPlaybackQueue(IPlaybackPreparer playbackPreparerTaskFactory, IPositionedFileQueue positionedFileQueue) {
+	public PreparedPlaybackQueue(IPreparedPlaybackQueueConfiguration configuration, IPlaybackPreparer playbackPreparerTaskFactory, IPositionedFileQueue positionedFileQueue) {
+		this.configuration = configuration;
 		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
 		this.positionedFileQueue = positionedFileQueue;
+		bufferingMediaPlayerPromises = new ArrayDeque<>(configuration.getMaxQueueSize());
 	}
 
 	public PreparedPlaybackQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
-			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ArrayDeque<>(bufferingPlaybackQueueSize);
+			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ArrayDeque<>(configuration.getMaxQueueSize());
 
 			PositionedPreparingFile positionedPreparingFile;
 			while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null) {
-				final PositionedFile positionedFile = newPositionedFileQueue.poll();
+				final PositionedFile positionedFile = newPositionedFileQueue.peek();
 
 				if (positionedPreparingFile.positionedFile.equals(positionedFile)) {
 					newPositionedPreparingMediaPlayerPromises.offer(positionedPreparingFile);
+					newPositionedFileQueue.poll();
 					continue;
 				}
 
@@ -57,13 +59,6 @@ public class PreparedPlaybackQueue implements
 
 			while ((positionedPreparingFile = newPositionedPreparingMediaPlayerPromises.poll()) != null)
 				bufferingMediaPlayerPromises.offer(positionedPreparingFile);
-
-//			if (positionedFile != null) {
-//				enqueuePositionedPreparingFile(
-//					new PositionedPreparingFile(
-//						positionedFile,
-//						playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), 0)));
-//			}
 
 			positionedFileQueue = newPositionedFileQueue;
 
@@ -119,7 +114,7 @@ public class PreparedPlaybackQueue implements
 		final ReentrantReadWriteLock.ReadLock readLock = queueUpdateLock.readLock();
 		readLock.lock();
 		try {
-			if (bufferingMediaPlayerPromises.size() >= bufferingPlaybackQueueSize) return;
+			if (bufferingMediaPlayerPromises.size() >= configuration.getMaxQueueSize()) return;
 		} finally {
 			readLock.unlock();
 		}
