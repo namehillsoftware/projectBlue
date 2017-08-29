@@ -12,6 +12,8 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,7 +28,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 	private static PositionedPlaybackFile expectedPositionedPlaybackFile;
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws InterruptedException {
 		expectedPositionedPlaybackFile = new PositionedPlaybackFile(3, mock(IPlaybackHandler.class), new ServiceFile(3));
 
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
@@ -57,9 +59,16 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 
 		queue.updateQueue(newPositionedFileQueue);
 
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(file -> positionedPlaybackFile = file);
+			.then(file -> {
+				positionedPlaybackFile = file;
+				countDownLatch.countDown();
+				return null;
+			});
+
+		countDownLatch.await();
 	}
 
 	@Test
