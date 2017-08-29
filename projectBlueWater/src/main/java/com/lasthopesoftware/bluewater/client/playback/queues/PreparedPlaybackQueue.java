@@ -62,6 +62,8 @@ public class PreparedPlaybackQueue implements
 
 			positionedFileQueue = newPositionedFileQueue;
 
+			beginFillingPreparingQueue();
+
 			return this;
 		} finally {
 			writeLock.unlock();
@@ -111,6 +113,10 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public void perform(IBufferingPlaybackHandler bufferingPlaybackHandler) {
+		beginFillingPreparingQueue();
+	}
+
+	private synchronized void beginFillingPreparingQueue() {
 		final ReentrantReadWriteLock.ReadLock readLock = queueUpdateLock.readLock();
 		readLock.lock();
 		try {
@@ -120,20 +126,17 @@ public class PreparedPlaybackQueue implements
 		}
 
 		final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
-		if (nextPreparingMediaPlayerPromise != null)
-			enqueuePositionedPreparingFile(nextPreparingMediaPlayerPromise);
-	}
+		if (nextPreparingMediaPlayerPromise == null) return;
 
-	private void enqueuePositionedPreparingFile(PositionedPreparingFile positionedPreparingFile) {
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
-			bufferingMediaPlayerPromises.offer(positionedPreparingFile);
+			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise);
 		} finally {
 			writeLock.unlock();
 		}
 
-		positionedPreparingFile.promisePositionedBufferingPlaybackHandler().then(this);
+		nextPreparingMediaPlayerPromise.promisePositionedBufferingPlaybackHandler().then(this);
 	}
 
 	@Override
@@ -144,8 +147,9 @@ public class PreparedPlaybackQueue implements
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
-			while (bufferingMediaPlayerPromises.size() > 0)
-				bufferingMediaPlayerPromises.poll().bufferingPlaybackHandlerPromise.cancel();
+			PositionedPreparingFile positionedPreparingFile;
+			while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null)
+				positionedPreparingFile.bufferingPlaybackHandlerPromise.cancel();
 		} finally {
 			writeLock.unlock();
 		}
