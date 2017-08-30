@@ -116,27 +116,21 @@ public class PreparedPlaybackQueue implements
 		beginFillingPreparingQueue();
 	}
 
-	private synchronized void beginFillingPreparingQueue() {
-		final ReentrantReadWriteLock.ReadLock readLock = queueUpdateLock.readLock();
-		readLock.lock();
-		try {
-			if (bufferingMediaPlayerPromises.size() >= configuration.getMaxQueueSize()) return;
-		} finally {
-			readLock.unlock();
-		}
-
-		final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
-		if (nextPreparingMediaPlayerPromise == null) return;
-
+	private void beginFillingPreparingQueue() {
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
+			if (bufferingMediaPlayerPromises.size() >= configuration.getMaxQueueSize()) return;
+
+			final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
+			if (nextPreparingMediaPlayerPromise == null) return;
+
 			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise);
+
+			nextPreparingMediaPlayerPromise.promisePositionedBufferingPlaybackHandler().then(this);
 		} finally {
 			writeLock.unlock();
 		}
-
-		nextPreparingMediaPlayerPromise.promisePositionedBufferingPlaybackHandler().then(this);
 	}
 
 	@Override
