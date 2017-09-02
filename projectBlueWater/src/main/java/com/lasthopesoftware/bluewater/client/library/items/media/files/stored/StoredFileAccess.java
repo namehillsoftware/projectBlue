@@ -36,10 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by david on 7/14/15.
- */
-public class StoredFileAccess {
+public final class StoredFileAccess {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
@@ -266,8 +263,8 @@ public class StoredFileAccess {
 				}, RepositoryAccessHelper.databaseExecutor));
 	}
 
-	public Promise<Collection<Void>> pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		return promiseAllStoredFilesInLibrary().eventually(new PruneFilesTask(context, library, serviceIdsToKeep));
+	public Promise<Collection<Void>> pruneStoredFiles(final Set<ServiceFile> serviceFilesToKeep) {
+		return promiseAllStoredFilesInLibrary().eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, ServiceFile serviceFile) {

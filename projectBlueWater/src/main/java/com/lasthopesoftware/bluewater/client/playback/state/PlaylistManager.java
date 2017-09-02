@@ -180,9 +180,8 @@ public class PlaylistManager implements IChangePlaylistPosition, AutoCloseable {
 	}
 
 	private Observable<PositionedPlaybackFile> switchObservation(Observable<PositionedPlaybackFile> observable) throws Exception {
-		if (switchableObservableSource == null) {
+		if (switchableObservableSource == null)
 			return startNewObservation(observable);
-		}
 
 		switchableObservableSource.switchSource(observable);
 		return switchableObservable;

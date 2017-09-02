@@ -1,17 +1,13 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
-import android.content.Context;
-
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.io.File;
 import java.util.Collection;
@@ -20,15 +16,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, Collection<Void>> {
-	private static final Logger logger = LoggerFactory.getLogger(PruneFilesTask.class);
 	private static final ExecutorService pruneFilesExecutor = Executors.newSingleThreadExecutor();
 
-	private final Set<Integer> serviceIdsToKeep;
+	private final Lazy<Set<Integer>> lazyServiceIdsToKeep;
 	private final StoredFileAccess storedFileAccess;
 
-	PruneFilesTask(Context context, Library library, Set<Integer> serviceIdsToKeep) {
-		this.serviceIdsToKeep = serviceIdsToKeep;
-		this.storedFileAccess = new StoredFileAccess(context, library);
+	PruneFilesTask(StoredFileAccess storedFileAccess, Collection<ServiceFile> serviceFilesToKeep) {
+		this.lazyServiceIdsToKeep = new Lazy<>(() -> Stream.of(serviceFilesToKeep).map(ServiceFile::getKey).collect(Collectors.toSet()));
+		this.storedFileAccess = storedFileAccess;
 	}
 
 	@Override
@@ -52,7 +47,7 @@ final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, C
 					}
 
 					if (!storedFile.isOwner()) return null;
-					if (serviceIdsToKeep.contains(storedFile.getServiceId())) return null;
+					if (lazyServiceIdsToKeep.getObject().contains(storedFile.getServiceId())) return null;
 
 					storedFileAccess.deleteStoredFile(storedFile);
 					systemFile.delete();
