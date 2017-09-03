@@ -12,7 +12,7 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
 
-import java.util.List;
+import java.util.Collection;
 
 public final class StoredItemAccess implements IStoredItemAccess {
 
@@ -91,7 +91,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
     }
 
     @Override
-	public Promise<List<StoredItem>> getStoredItems() {
+	public Promise<Collection<StoredItem>> promiseStoredItems() {
         return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return

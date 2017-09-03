@@ -120,7 +120,7 @@ public class LibrarySyncHandler {
 
 	public void startSync() {
 		storedItemAccess
-			.getStoredItems()
+			.promiseStoredItems()
 			.eventually(storedItems -> {
 				if (isCancelled) {
 					handleQueueProcessingCompleted();
@@ -144,7 +144,10 @@ public class LibrarySyncHandler {
 									final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
 									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
 									storedItemAccess.toggleSync(item, false);
+									return;
 								}
+
+								throw e;
 							}));
 
 						return serviceFileListPromise;
