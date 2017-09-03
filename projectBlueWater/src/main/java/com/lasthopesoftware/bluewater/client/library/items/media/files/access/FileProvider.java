@@ -9,7 +9,7 @@ import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.util.List;
 
-public final class FileProvider implements PromisedResponse<String, List<ServiceFile>> {
+public final class FileProvider implements IFileProvider, PromisedResponse<String, List<ServiceFile>> {
 	private final FileStringListProvider fileStringListProvider;
 
 	public FileProvider(FileStringListProvider fileStringListProvider) {

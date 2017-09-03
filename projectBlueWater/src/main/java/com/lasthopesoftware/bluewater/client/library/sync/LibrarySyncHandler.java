@@ -9,13 +9,17 @@ import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.IStoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -44,13 +48,13 @@ public class LibrarySyncHandler {
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
 	private final IConnectionProvider connectionProvider;
-	private final FileProvider fileProvider;
+	private final IFileProvider fileProvider;
 	private final Library library;
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
-	private final StoredItemAccess storedItemAccess;
-	private final StoredFileAccess storedFileAccess;
-	private final StoredFileDownloader storedFileDownloader;
+	private final IStoredItemAccess storedItemAccess;
+	private final IStoredFileAccess storedFileAccess;
+	private final IStoredFileDownloader storedFileDownloader;
 	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private volatile boolean isCancelled;
@@ -67,7 +71,7 @@ public class LibrarySyncHandler {
 			new LibraryStorageWritePermissionsRequirementsProvider());
 	}
 
-	private LibrarySyncHandler(IConnectionProvider connectionProvider, Library library, StoredItemAccess storedItemAccess, StoredFileAccess storedFileAccess, StoredFileDownloader storedFileDownloader, FileProvider fileProvider, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
+	public LibrarySyncHandler(IConnectionProvider connectionProvider, Library library, IStoredItemAccess storedItemAccess, IStoredFileAccess storedFileAccess, IStoredFileDownloader storedFileDownloader, IFileProvider fileProvider, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.connectionProvider = connectionProvider;
 		this.library = library;
 		this.storedItemAccess = storedItemAccess;
@@ -200,9 +204,9 @@ public class LibrarySyncHandler {
 
 	private static class DownloadGuard implements ImmediateResponse<StoredFile, StoredFile> {
 		private final ServiceFile serviceFile;
-		private StoredFileDownloader storedFileDownloader;
+		private IStoredFileDownloader storedFileDownloader;
 
-		DownloadGuard(StoredFileDownloader storedFileDownloader, ServiceFile serviceFile) {
+		DownloadGuard(IStoredFileDownloader storedFileDownloader, ServiceFile serviceFile) {
 			this.storedFileDownloader = storedFileDownloader;
 			this.serviceFile = serviceFile;
 		}

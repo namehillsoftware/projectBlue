@@ -30,7 +30,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-public class StoredFileDownloader {
+public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileDownloader.class);
 
@@ -67,6 +67,7 @@ public class StoredFileDownloader {
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 	}
 
+	@Override
 	public void queueFileForDownload(@NonNull final ServiceFile serviceFile, @NonNull final StoredFile storedFile) {
 		if (isProcessing || isCancelled)
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
@@ -79,6 +80,7 @@ public class StoredFileDownloader {
 			onFileQueued.runWith(storedFile);
 	}
 
+	@Override
 	public void cancel() {
 		isCancelled = true;
 
@@ -89,6 +91,7 @@ public class StoredFileDownloader {
 		onQueueProcessingCompleted.run();
 	}
 
+	@Override
 	public void process() {
 		if (isCancelled)
 			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
@@ -132,26 +135,32 @@ public class StoredFileDownloader {
 		});
 	}
 
+	@Override
 	public void setOnFileQueued(@Nullable OneParameterAction<StoredFile> onFileQueued) {
 		this.onFileQueued = onFileQueued;
 	}
 
+	@Override
 	public void setOnFileDownloading(@Nullable OneParameterAction<StoredFile> onFileDownloading) {
 		this.onFileDownloading = onFileDownloading;
 	}
 
+	@Override
 	public void setOnFileDownloaded(@Nullable OneParameterAction<StoredFileJobResult> onFileDownloaded) {
 		this.onFileDownloaded = onFileDownloaded;
 	}
 
+	@Override
 	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
+	@Override
 	public void setOnFileReadError(@Nullable OneParameterAction<StoredFile> onFileReadError) {
 		this.onFileReadError = onFileReadError;
 	}
 
+	@Override
 	public void setOnFileWriteError(@Nullable OneParameterAction<StoredFile> onFileWriteError) {
 		this.onFileWriteError = onFileWriteError;
 	}

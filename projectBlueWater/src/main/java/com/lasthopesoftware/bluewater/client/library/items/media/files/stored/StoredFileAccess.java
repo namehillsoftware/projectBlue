@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public final class StoredFileAccess {
+public final class StoredFileAccess implements IStoredFileAccess {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
@@ -71,6 +71,7 @@ public final class StoredFileAccess {
 		this.library = library;
 	}
 
+	@Override
 	public Promise<StoredFile> getStoredFile(final int storedFileId) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -79,6 +80,7 @@ public final class StoredFileAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
+	@Override
 	public Promise<StoredFile> getStoredFile(final ServiceFile serviceServiceFile) {
 		return getStoredFileTask(serviceServiceFile);
 	}
@@ -102,6 +104,7 @@ public final class StoredFileAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
+	@Override
 	public Promise<List<StoredFile>> getDownloadingStoredFiles() {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -114,6 +117,7 @@ public final class StoredFileAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
+	@Override
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -135,6 +139,7 @@ public final class StoredFileAccess {
 		});
 	}
 
+	@Override
 	public void addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -171,6 +176,7 @@ public final class StoredFileAccess {
 		});
 	}
 
+	@Override
 	public Promise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final ServiceFile serviceFile) {
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
@@ -263,6 +269,7 @@ public final class StoredFileAccess {
 				}, RepositoryAccessHelper.databaseExecutor));
 	}
 
+	@Override
 	public Promise<Collection<Void>> pruneStoredFiles(final Set<ServiceFile> serviceFilesToKeep) {
 		return promiseAllStoredFilesInLibrary().eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}
