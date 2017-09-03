@@ -6,9 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 
 import java.io.File;
 
-/**
- * Created by david on 7/17/16.
- */
 public class StoredFileJobResult {
 	public final File downloadedFile;
 	public final StoredFile storedFile;
