@@ -28,7 +28,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -80,6 +79,7 @@ public class LibrarySyncHandler {
 		this.fileProvider = fileProvider;
 		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
 		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
+		storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
 	}
 
 	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
@@ -172,17 +172,28 @@ public class LibrarySyncHandler {
 								if (isCancelled)
 									return new Promise<>((StoredFile) null);
 
-								return storedFileAccess
+								final Promise<StoredFile> promiseDownloadedStoredFile = storedFileAccess
 									.createOrUpdateFile(connectionProvider, serviceFile)
-									.then(new DownloadGuard(storedFileDownloader, serviceFile));
+									.then(storedFile -> {
+										if (storedFile != null && !storedFile.isDownloadComplete())
+											storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
+
+										return storedFile;
+									});
+
+								promiseDownloadedStoredFile
+									.excuse(r -> {
+										logger.warn("An error occurred creating or updating " + serviceFile, r);
+										return null;
+									});
+
+								return promiseDownloadedStoredFile;
 							})
 							.toList();
 
 						return Promise.whenAll(upsertFiles);
 					})
 					.then(vs -> {
-						storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
-
 						if (!isCancelled)
 							storedFileDownloader.process();
 						else
@@ -203,23 +214,5 @@ public class LibrarySyncHandler {
 	private void handleQueueProcessingCompleted() {
 		if (onQueueProcessingCompleted != null)
 			onQueueProcessingCompleted.runWith(this);
-	}
-
-	private static class DownloadGuard implements ImmediateResponse<StoredFile, StoredFile> {
-		private final ServiceFile serviceFile;
-		private IStoredFileDownloader storedFileDownloader;
-
-		DownloadGuard(IStoredFileDownloader storedFileDownloader, ServiceFile serviceFile) {
-			this.storedFileDownloader = storedFileDownloader;
-			this.serviceFile = serviceFile;
-		}
-
-		@Override
-		public StoredFile respond(StoredFile storedFile) {
-			if (storedFile != null && !storedFile.isDownloadComplete())
-				storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
-
-			return storedFile;
-		}
 	}
 }

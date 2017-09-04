@@ -45,9 +45,10 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		if (mappedResponse == null) return mockConnection;
 
 		try {
-			when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream(mappedResponse.resultFrom(params)));
+			final ByteArrayInputStream inputStream = new ByteArrayInputStream(mappedResponse.resultFrom(params));
+			when(mockConnection.getInputStream()).thenReturn(inputStream);
 		} catch (Throwable throwable) {
-			throw new IOException(throwable);
+			when(mockConnection.getInputStream()).thenThrow(throwable);
 		}
 
 		when(mockConnection.getResponseCode()).thenReturn(200);

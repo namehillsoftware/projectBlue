@@ -54,10 +54,10 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	public StoredFileDownloader(@NonNull Context context, @NonNull IConnectionProvider connectionProvider, @NonNull Library library) {
 		this(
-				connectionProvider,
-				new StoredFileAccess(context, library),
-				new FileReadPossibleArbitrator(),
-				new FileWritePossibleArbitrator());
+			connectionProvider,
+			new StoredFileAccess(context, library),
+			new FileReadPossibleArbitrator(),
+			new FileWritePossibleArbitrator());
 	}
 
 	public StoredFileDownloader(@NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
