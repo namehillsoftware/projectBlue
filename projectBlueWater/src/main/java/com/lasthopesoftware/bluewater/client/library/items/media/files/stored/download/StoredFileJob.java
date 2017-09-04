@@ -29,15 +29,13 @@ class StoredFileJob {
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
 
 	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
-	@NonNull
-	private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
+	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	private final ServiceFile serviceFile;
 	private final StoredFile storedFile;
+	private final IConnectionProvider connectionProvider;
+	@NonNull private final IStoredFileAccess storedFileAccess;
 	private boolean isCancelled;
-	private IConnectionProvider connectionProvider;
-	@NonNull
-	private IStoredFileAccess storedFileAccess;
 
 	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
 		this.connectionProvider = connectionProvider;
@@ -90,7 +88,7 @@ class StoredFileJob {
 			if (isCancelled) return getCancelledStoredFileJobResult(file);
 
 			final File parent = file.getParentFile();
-			if (!parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
+			if (parent != null && !parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
 
 			try {
 				try (FileOutputStream fos = new FileOutputStream(file)) {

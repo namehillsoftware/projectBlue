@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenASetOfStoredItems;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
@@ -26,9 +26,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -44,24 +45,43 @@ public class WhenSyncingTheStoredItems {
 				new StoredItem(1, 14, StoredItem.ItemType.PLAYLIST))));
 
 		final IFileProvider mockFileProvider = mock(IFileProvider.class);
-		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, "Playlist/Files", "Playlist=14" ))
+		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
 				new ServiceFile(2),
 				new ServiceFile(4),
 				new ServiceFile(10))));
 
+		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
+		fakeConnectionProvider.mapResponse(
+			(params) -> "",
+			"File/GetFile",
+			"File=.*",
+			"Quality=medium",
+			"Conversion=Android",
+			"Playback=0");
+
+		final IFileReadPossibleArbitrator readPossibleArbitrator = mock(IFileReadPossibleArbitrator.class);
+		when(readPossibleArbitrator.isFileReadPossible(any())).thenReturn(true);
+
+		final IFileWritePossibleArbitrator writePossibleArbitrator = mock(IFileWritePossibleArbitrator.class);
+		when(writePossibleArbitrator.isFileWritePossible(any())).thenReturn(true);
+
+		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
+		when(storedFileAccess.pruneStoredFiles(anySet())).thenReturn(new Promise<>(Collections.emptyList()));
+		when(storedFileAccess.createOrUpdateFile(any(), any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
+
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			mock(IConnectionProvider.class),
+			fakeConnectionProvider,
 			new Library(),
 			storedItemAccessMock,
-			mock(IStoredFileAccess.class),
+			storedFileAccess,
 			new StoredFileDownloader(
-				mock(IConnectionProvider.class),
+				fakeConnectionProvider,
 				mock(IStoredFileAccess.class),
-				mock(IFileReadPossibleArbitrator.class),
-				mock(IFileWritePossibleArbitrator.class)),
-			mock(IFileProvider.class),
+				readPossibleArbitrator,
+				writePossibleArbitrator),
+			mockFileProvider,
 			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
 			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
 
@@ -70,7 +90,9 @@ public class WhenSyncingTheStoredItems {
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		librarySyncHandler.setOnQueueProcessingCompleted(handler -> countDownLatch.countDown());
 
-		countDownLatch.await(1, TimeUnit.SECONDS);
+		librarySyncHandler.startSync();
+
+		countDownLatch.await();
 	}
 
 	@Test

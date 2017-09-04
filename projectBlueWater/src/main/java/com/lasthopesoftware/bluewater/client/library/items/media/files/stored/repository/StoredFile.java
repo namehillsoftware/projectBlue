@@ -1,5 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
+
 public final class StoredFile {
 
 	private int id;
@@ -12,10 +15,10 @@ public final class StoredFile {
 
 	public StoredFile() {}
 
-	public StoredFile(int libraryId, int storedMediaId, int serviceId, String path, boolean isOwner) {
-		this.libraryId = libraryId;
+	public StoredFile(Library library, int storedMediaId, ServiceFile serviceFile, String path, boolean isOwner) {
+		this.libraryId = library.getId();
 		this.storedMediaId = storedMediaId;
-		this.serviceId = serviceId;
+		this.serviceId = serviceFile.getKey();
 		this.path = path;
 		this.isOwner = isOwner;
 	}

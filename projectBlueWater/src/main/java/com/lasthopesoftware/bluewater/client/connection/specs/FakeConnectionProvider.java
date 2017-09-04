@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.specs;
 
+import com.annimon.stream.Optional;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
@@ -20,7 +22,8 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], String>> mappedResponses = new HashMap<>();
 
 	public final void mapResponse(CarelessOneParameterFunction<String[], String> response, String... params) {
-		mappedResponses.put(new HashSet<>(Arrays.asList(params)), response);
+		final HashSet<String> paramsSet = new HashSet<>(Arrays.asList(params));
+		mappedResponses.put(paramsSet, response);
 	}
 
 	@Override
@@ -28,7 +31,16 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		final HttpURLConnection mockConnection = mock(HttpURLConnection.class);
 		when(mockConnection.getResponseCode()).thenReturn(404);
 
-		final CarelessOneParameterFunction<String[], String> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
+		CarelessOneParameterFunction<String[], String> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
+
+		if (mappedResponse == null) {
+			final Optional<Set<String>> optionalResponse = Stream.of(mappedResponses.keySet())
+				.filter(set -> Stream.of(set).allMatch(sp -> Stream.of(params).anyMatch(p -> p.matches(sp))))
+				.findFirst();
+
+			if (optionalResponse.isPresent())
+				mappedResponse = mappedResponses.get(optionalResponse.get());
+		}
 
 		if (mappedResponse == null) return mockConnection;
 

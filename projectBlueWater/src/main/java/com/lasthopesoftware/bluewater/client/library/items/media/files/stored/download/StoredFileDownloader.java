@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -102,7 +101,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		isProcessing = true;
 
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+		new Thread(() -> {
 			try {
 				StoredFileJob storedFileJob;
 				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
@@ -133,7 +132,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 			} finally {
 				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
 			}
-		});
+		}).start();
 	}
 
 	@Override
