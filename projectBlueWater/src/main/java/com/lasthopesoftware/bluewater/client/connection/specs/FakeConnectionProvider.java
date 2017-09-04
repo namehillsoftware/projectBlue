@@ -19,9 +19,9 @@ import static org.mockito.Mockito.when;
 
 
 public class FakeConnectionProvider implements IConnectionProvider {
-	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], String>> mappedResponses = new HashMap<>();
+	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], byte[]>> mappedResponses = new HashMap<>();
 
-	public final void mapResponse(CarelessOneParameterFunction<String[], String> response, String... params) {
+	public final void mapResponse(CarelessOneParameterFunction<String[], byte[]> response, String... params) {
 		final HashSet<String> paramsSet = new HashSet<>(Arrays.asList(params));
 		mappedResponses.put(paramsSet, response);
 	}
@@ -31,7 +31,7 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		final HttpURLConnection mockConnection = mock(HttpURLConnection.class);
 		when(mockConnection.getResponseCode()).thenReturn(404);
 
-		CarelessOneParameterFunction<String[], String> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
+		CarelessOneParameterFunction<String[], byte[]> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
 
 		if (mappedResponse == null) {
 			final Optional<Set<String>> optionalResponse = Stream.of(mappedResponses.keySet())
@@ -45,7 +45,7 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		if (mappedResponse == null) return mockConnection;
 
 		try {
-			when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream(mappedResponse.resultFrom(params).getBytes()));
+			when(mockConnection.getInputStream()).thenReturn(new ByteArrayInputStream(mappedResponse.resultFrom(params)));
 		} catch (Throwable throwable) {
 			throw new IOException(throwable);
 		}

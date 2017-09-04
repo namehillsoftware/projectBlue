@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenASetOfStoredItems;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
@@ -14,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
@@ -52,14 +52,7 @@ public class WhenSyncingTheStoredItems {
 				new ServiceFile(4),
 				new ServiceFile(10))));
 
-		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
-		fakeConnectionProvider.mapResponse(
-			(params) -> "",
-			"File/GetFile",
-			"File=.*",
-			"Quality=medium",
-			"Conversion=Android",
-			"Playback=0");
+		final FakeFileConnectionProvider fakeConnectionProvider = new FakeFileConnectionProvider();
 
 		final IFileReadPossibleArbitrator readPossibleArbitrator = mock(IFileReadPossibleArbitrator.class);
 		when(readPossibleArbitrator.isFileReadPossible(any())).thenReturn(true);

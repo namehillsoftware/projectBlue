@@ -31,7 +31,7 @@ public class WhenStoringTheUpdatedPlayStats {
 		final long duration = Duration.standardMinutes(5).getMillis();
 
 		connectionProvider.mapResponse((params) ->
-			"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
+			("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
 			"<MPL Version=\"2.0\" Title=\"MCWS - Files - 10936\" PathSeparator=\"\\\">\n" +
 				"<Item>\n" +
 					"<Field Name=\"Key\">23</Field>\n" +
@@ -42,7 +42,7 @@ public class WhenStoringTheUpdatedPlayStats {
 					"<Field Name=\"" + FilePropertiesProvider.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
 					"<Field Name=\"" + FilePropertiesProvider.NUMBER_PLAYS + "\">52</Field>\n" +
 				"</Item>\n" +
-			"</MPL>\n",
+			"</MPL>\n").getBytes(),
 			"File/GetInfo", "File=23");
 
 		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
