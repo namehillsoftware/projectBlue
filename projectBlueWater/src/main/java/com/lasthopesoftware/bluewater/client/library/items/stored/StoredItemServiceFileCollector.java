@@ -12,6 +12,7 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.aggregation.AggregateCancellation;
 import com.lasthopesoftware.messenger.promises.aggregation.CollectedErrorExcuse;
 import com.lasthopesoftware.messenger.promises.aggregation.CollectedResultsResolver;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
@@ -40,28 +42,37 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 		return storedItemAccess
 			.promiseStoredItems()
 			.eventually(storedItems -> {
-				final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
-					.map(storedItem -> {
-						final int serviceId = storedItem.getServiceId();
-						final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
-
-						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
-						serviceFileListPromise
-							.excuse(perform(e -> {
-								if (e instanceof FileNotFoundException) {
-									final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-									storedItemAccess.toggleSync(item, false);
-									return;
-								}
-
-								throw e;
-							}));
-
-						return serviceFileListPromise;
-					});
-
 				final Promise<Collection<List<ServiceFile>>> serviceFilesPromises = new Promise<>(messenger -> {
+					final CancellationToken cancellationToken = new CancellationToken();
+					messenger.cancellationRequested(cancellationToken);
+
+					if (cancellationToken.isCancelled()) {
+						messenger.sendRejection(new CancellationException());
+						return;
+					}
+
+					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
+						.map(storedItem -> {
+							final int serviceId = storedItem.getServiceId();
+							final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
+
+							final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+							serviceFileListPromise
+								.excuse(perform(e -> {
+									if (e instanceof FileNotFoundException) {
+										final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+										logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+										storedItemAccess.toggleSync(item, false);
+										return;
+									}
+
+									throw e;
+								}));
+
+							return serviceFileListPromise;
+						});
+
+
 					final List<Promise<List<ServiceFile>>> promises = mappedFileDataPromises.toList();
 					final CollectedErrorExcuse<List<ServiceFile>> collectedErrorExcuse = new CollectedErrorExcuse<List<ServiceFile>>(messenger, promises) {
 						@Override
