@@ -1,18 +1,21 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored.specs.GivenASetOfStoredItems.AndCollectionIsCancelledAfterStoredItemsAreReturned;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CancellationException;
@@ -32,12 +35,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	@BeforeClass
 	public static void before() throws InterruptedException {
 
-		final IStoredItemAccess storedItemAccess = mock(IStoredItemAccess.class);
-		when(storedItemAccess.promiseStoredItems())
-			.thenReturn(new Promise<>(Arrays.asList(
-				new StoredItem(1, 1, StoredItem.ItemType.ITEM),
-				new StoredItem(1, 2, StoredItem.ItemType.ITEM),
-				new StoredItem(1, 3, StoredItem.ItemType.ITEM))));
+		final DeferredStoredItemAccess storedItemAccess = new DeferredStoredItemAccess();
 
 		final IFileProvider fileProvider = mock(IFileProvider.class);
 		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=1"))
@@ -52,8 +50,8 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			fileProvider);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		serviceFileCollector
-			.promiseServiceFilesToSync()
+		final Promise<Collection<ServiceFile>> serviceFilesPromise = serviceFileCollector.promiseServiceFilesToSync();
+		serviceFilesPromise
 			.then(files -> {
 				countDownLatch.countDown();
 				return null;
@@ -63,6 +61,10 @@ public class WhenCollectingTheAssociatedServiceFiles {
 				countDownLatch.countDown();
 				return null;
 			});
+
+		serviceFilesPromise.cancel();
+
+		storedItemAccess.resolveStoredItems();
 
 		countDownLatch.await();
 	}
@@ -77,5 +79,34 @@ public class WhenCollectingTheAssociatedServiceFiles {
 		final int floor = random.nextInt(10000);
 		final int ceiling = random.nextInt(10000 - floor) + floor;
 		return Stream.range(floor, ceiling).map(ServiceFile::new).toList();
+	}
+
+	private static class DeferredStoredItemAccess implements IStoredItemAccess {
+
+		private Messenger<Collection<StoredItem>> messenger;
+
+		void resolveStoredItems() {
+			if (messenger != null) {
+				messenger.sendResolution(Arrays.asList(
+					new StoredItem(1, 1, StoredItem.ItemType.ITEM),
+					new StoredItem(1, 2, StoredItem.ItemType.ITEM),
+					new StoredItem(1, 3, StoredItem.ItemType.ITEM)));
+			}
+		}
+
+		@Override
+		public void toggleSync(IItem item, boolean enable) {
+
+		}
+
+		@Override
+		public Promise<Boolean> isItemMarkedForSync(IItem item) {
+			return new Promise<>(false);
+		}
+
+		@Override
+		public Promise<Collection<StoredItem>> promiseStoredItems() {
+			return new Promise<>((m -> messenger = m));
+		}
 	}
 }
