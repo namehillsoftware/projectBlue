@@ -45,54 +45,52 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 			final CancellationProxy cancellationProxy = new CancellationProxy();
 			storedItemsMessenger.cancellationRequested(cancellationProxy);
 
-			final Promise<Collection<List<ServiceFile>>> promisedServiceFileLists =
-				storedItemAccess
-					.promiseStoredItems()
-					.eventually(storedItems -> {
-						if (cancellationProxy.isCancelled())
-							return new Promise<>(new CancellationException());
+			final Promise<Collection<StoredItem>> promisedStoredItems = storedItemAccess.promiseStoredItems();
+			cancellationProxy.doCancel(promisedStoredItems);
 
-						final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
-							.map(storedItem -> {
-								final int serviceId = storedItem.getServiceId();
-								final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
+			final Promise<Collection<List<ServiceFile>>> promisedServiceFileLists = promisedStoredItems
+				.eventually(storedItems -> new Promise<>(messenger -> {
+					if (cancellationProxy.isCancelled()) {
+						messenger.sendRejection(new CancellationException());
+						return;
+					}
 
-								final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
-								serviceFileListPromise
-									.excuse(perform(e -> {
-										if (e instanceof FileNotFoundException) {
-											final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-											logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-											storedItemAccess.toggleSync(item, false);
-											return;
-										}
+					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
+						.map(storedItem -> {
+							final int serviceId = storedItem.getServiceId();
+							final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
 
-										throw e;
-									}));
-
-								return serviceFileListPromise;
-							});
-
-						final Promise<Collection<List<ServiceFile>>> serviceFilesPromises = new Promise<>(messenger -> {
-							final List<Promise<List<ServiceFile>>> promises = mappedFileDataPromises.toList();
-							final CollectedErrorExcuse<List<ServiceFile>> collectedErrorExcuse =
-								new CollectedErrorExcuse<List<ServiceFile>>(messenger, promises) {
-									@Override
-									public Throwable respond(Throwable throwable) throws Exception {
-										return (throwable instanceof FileNotFoundException) ? throwable : super.respond(throwable);
+							final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+							serviceFileListPromise
+								.excuse(perform(e -> {
+									if (e instanceof FileNotFoundException) {
+										final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
+										logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+										storedItemAccess.toggleSync(item, false);
+										return;
 									}
-								};
-							if (collectedErrorExcuse.isRejected()) return;
 
-							final CollectedResultsResolver<List<ServiceFile>> collectedResultsResolver = new CollectedResultsResolver<>(messenger, promises);
-							messenger.cancellationRequested(new AggregateCancellation<>(messenger, promises, collectedResultsResolver));
+									throw e;
+								}));
+
+							return serviceFileListPromise;
 						});
 
-						cancellationProxy.doCancel(serviceFilesPromises);
+					final List<Promise<List<ServiceFile>>> promises = mappedFileDataPromises.toList();
+					final CollectedErrorExcuse<List<ServiceFile>> collectedErrorExcuse =
+						new CollectedErrorExcuse<List<ServiceFile>>(messenger, promises) {
+							@Override
+							public Throwable respond(Throwable throwable) throws Exception {
+								return (throwable instanceof FileNotFoundException) ? throwable : super.respond(throwable);
+							}
+						};
+					if (collectedErrorExcuse.isRejected()) return;
 
-						return serviceFilesPromises;
-					});
+					final CollectedResultsResolver<List<ServiceFile>> collectedResultsResolver = new CollectedResultsResolver<>(messenger, promises);
+					messenger.cancellationRequested(new AggregateCancellation<>(messenger, promises, collectedResultsResolver));
+				}));
 
+			cancellationProxy.doCancel(promisedServiceFileLists);
 
 			promisedServiceFileLists
 				.<Collection<ServiceFile>>then(serviceFiles -> Stream.of(serviceFiles).flatMap(Stream::of).toList())
