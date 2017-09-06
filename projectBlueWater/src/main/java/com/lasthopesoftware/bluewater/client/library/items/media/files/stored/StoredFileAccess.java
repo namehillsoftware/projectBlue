@@ -324,20 +324,18 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	void deleteStoredFile(final StoredFile storedFile) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
-			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-			final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
-			try {
-				repositoryAccessHelper
+			try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				try (final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+
+					repositoryAccessHelper
 						.mapSql("DELETE FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
 						.addParameter("id", storedFile.getId())
 						.execute();
 
-				closeableTransaction.setTransactionSuccessful();
-			} catch (SQLException e) {
-				logger.error("There was an error deleting serviceFile " + storedFile.getId(), e);
-			} finally {
-				closeableTransaction.close();
-				repositoryAccessHelper.close();
+					closeableTransaction.setTransactionSuccessful();
+				} catch (SQLException e) {
+					logger.error("There was an error deleting serviceFile " + storedFile.getId(), e);
+				}
 			}
 		});
 	}
