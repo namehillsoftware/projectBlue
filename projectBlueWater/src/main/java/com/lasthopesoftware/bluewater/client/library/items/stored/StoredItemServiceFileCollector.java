@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored;
 
+import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
@@ -93,7 +94,7 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 			cancellationProxy.doCancel(promisedServiceFileLists);
 
 			promisedServiceFileLists
-				.<Collection<ServiceFile>>then(serviceFiles -> Stream.of(serviceFiles).flatMap(Stream::of).toList())
+				.<Collection<ServiceFile>>then(serviceFiles -> Stream.of(serviceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
 				.then(new ResolutionProxy<>(serviceFileMessenger))
 				.excuse(new RejectionProxy(serviceFileMessenger));
 		});

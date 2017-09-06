@@ -115,7 +115,7 @@ public class LibrarySyncHandler {
 
 		promisedServiceFilesToSync
 			.eventually(allServiceFilesToSync -> {
-				final HashSet<ServiceFile> serviceFilesSet = new HashSet<>(allServiceFilesToSync);
+				final HashSet<ServiceFile> serviceFilesSet = allServiceFilesToSync instanceof HashSet ? (HashSet<ServiceFile>)allServiceFilesToSync : new HashSet<>(allServiceFilesToSync);
 				final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(serviceFilesSet);
 				pruneFilesTask.excuse(perform(e -> logger.warn("There was an error pruning the files", e)));
 
