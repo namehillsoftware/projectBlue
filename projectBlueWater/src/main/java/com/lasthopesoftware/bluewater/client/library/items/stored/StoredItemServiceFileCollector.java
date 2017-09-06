@@ -41,17 +41,17 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 
 	@Override
 	public Promise<Collection<ServiceFile>> promiseServiceFilesToSync() {
-		return new Promise<>(storedItemsMessenger -> {
+		return new Promise<>(serviceFileMessenger -> {
 			final CancellationProxy cancellationProxy = new CancellationProxy();
-			storedItemsMessenger.cancellationRequested(cancellationProxy);
+			serviceFileMessenger.cancellationRequested(cancellationProxy);
 
 			final Promise<Collection<StoredItem>> promisedStoredItems = storedItemAccess.promiseStoredItems();
 			cancellationProxy.doCancel(promisedStoredItems);
 
 			final Promise<Collection<List<ServiceFile>>> promisedServiceFileLists = promisedStoredItems
-				.eventually(storedItems -> new Promise<>(messenger -> {
+				.eventually(storedItems -> new Promise<>(storedItemsMessenger -> {
 					if (cancellationProxy.isCancelled()) {
-						messenger.sendRejection(new CancellationException());
+						storedItemsMessenger.sendRejection(new CancellationException());
 						return;
 					}
 
@@ -78,7 +78,7 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 
 					final List<Promise<List<ServiceFile>>> promises = mappedFileDataPromises.toList();
 					final CollectedErrorExcuse<List<ServiceFile>> collectedErrorExcuse =
-						new CollectedErrorExcuse<List<ServiceFile>>(messenger, promises) {
+						new CollectedErrorExcuse<List<ServiceFile>>(storedItemsMessenger, promises) {
 							@Override
 							public Throwable respond(Throwable throwable) throws Exception {
 								return (throwable instanceof FileNotFoundException) ? throwable : super.respond(throwable);
@@ -86,16 +86,16 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 						};
 					if (collectedErrorExcuse.isRejected()) return;
 
-					final CollectedResultsResolver<List<ServiceFile>> collectedResultsResolver = new CollectedResultsResolver<>(messenger, promises);
-					messenger.cancellationRequested(new AggregateCancellation<>(messenger, promises, collectedResultsResolver));
+					final CollectedResultsResolver<List<ServiceFile>> collectedResultsResolver = new CollectedResultsResolver<>(storedItemsMessenger, promises);
+					storedItemsMessenger.cancellationRequested(new AggregateCancellation<>(storedItemsMessenger, promises, collectedResultsResolver));
 				}));
 
 			cancellationProxy.doCancel(promisedServiceFileLists);
 
 			promisedServiceFileLists
 				.<Collection<ServiceFile>>then(serviceFiles -> Stream.of(serviceFiles).flatMap(Stream::of).toList())
-				.then(new ResolutionProxy<>(storedItemsMessenger))
-				.excuse(new RejectionProxy(storedItemsMessenger));
+				.then(new ResolutionProxy<>(serviceFileMessenger))
+				.excuse(new RejectionProxy(serviceFileMessenger));
 		});
 	}
 }
