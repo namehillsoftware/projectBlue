@@ -2,15 +2,10 @@ package com.lasthopesoftware.bluewater.client.library.sync;
 
 import android.content.Context;
 
-import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
@@ -18,10 +13,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
@@ -34,9 +27,9 @@ import com.vedsoft.futures.runnables.TwoParameterAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -47,11 +40,10 @@ public class LibrarySyncHandler {
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
 	private final IConnectionProvider connectionProvider;
-	private final IFileProvider fileProvider;
 	private final Library library;
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
-	private final IStoredItemAccess storedItemAccess;
+	private final IServiceFilesToSyncCollector serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
 	private final IStoredFileDownloader storedFileDownloader;
 	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
@@ -62,21 +54,19 @@ public class LibrarySyncHandler {
 		this(
 			connectionProvider,
 			library,
-			new StoredItemAccess(context, library),
+			new StoredItemServiceFileCollector(new StoredItemAccess(context, library), new FileProvider(new FileStringListProvider(connectionProvider))),
 			new StoredFileAccess(context, library),
 			new StoredFileDownloader(context, connectionProvider, library),
-			new FileProvider(new FileStringListProvider(connectionProvider)),
 			new LibraryStorageReadPermissionsRequirementsProvider(),
 			new LibraryStorageWritePermissionsRequirementsProvider());
 	}
 
-	public LibrarySyncHandler(IConnectionProvider connectionProvider, Library library, IStoredItemAccess storedItemAccess, IStoredFileAccess storedFileAccess, IStoredFileDownloader storedFileDownloader, IFileProvider fileProvider, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
+	public LibrarySyncHandler(IConnectionProvider connectionProvider, Library library, IServiceFilesToSyncCollector serviceFilesToSyncCollector, IStoredFileAccess storedFileAccess, IStoredFileDownloader storedFileDownloader, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.connectionProvider = connectionProvider;
 		this.library = library;
-		this.storedItemAccess = storedItemAccess;
+		this.serviceFilesToSyncCollector = serviceFilesToSyncCollector;
 		this.storedFileAccess = storedFileAccess;
 		this.storedFileDownloader = storedFileDownloader;
-		this.fileProvider = fileProvider;
 		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
 		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
 		storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
@@ -119,88 +109,54 @@ public class LibrarySyncHandler {
 	}
 
 	public void startSync() {
-		storedItemAccess
-			.promiseStoredItems()
-			.eventually(storedItems -> {
-				if (isCancelled) {
-					handleQueueProcessingCompleted();
-					return Promise.empty();
-				}
+		serviceFilesToSyncCollector
+			.promiseServiceFilesToSync()
+			.eventually(allServiceFilesToSync -> {
+				final HashSet<ServiceFile> serviceFilesSet = new HashSet<>(allServiceFilesToSync);
+				final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(serviceFilesSet);
+				pruneFilesTask.excuse(perform(e -> logger.warn("There was an error pruning the files", e)));
 
-				final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
-					.map(storedItem -> {
-						if (isCancelled) {
-							handleQueueProcessingCompleted();
-							return new Promise<>(Collections.emptyList());
-						}
+				return !isCancelled
+					? pruneFilesTask.then(voids -> serviceFilesSet)
+					: new Promise<Set<ServiceFile>>(Collections.emptySet());
+			})
+			.eventually(allServiceFilesToSync -> {
+				if (isCancelled)
+					return new Promise<>(Collections.emptySet());
 
-						final int serviceId = storedItem.getServiceId();
-						final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
-
-						final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
-						serviceFileListPromise
-							.excuse(perform(e -> {
-								if (e instanceof FileNotFoundException) {
-									final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
-									logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-									storedItemAccess.toggleSync(item, false);
-									return;
-								}
-
-								throw e;
-							}));
-
-						return serviceFileListPromise;
-					});
-
-				return Promise.whenAll(mappedFileDataPromises.toList())
-					.then(manyServiceFiles -> Stream.of(manyServiceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
-					.eventually(allServiceFilesToSync -> {
-						final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(allServiceFilesToSync);
-						pruneFilesTask.excuse(perform(e -> logger.warn("There was an error pruning the files", e)));
-
-						return !isCancelled
-							? pruneFilesTask.then(voids -> allServiceFilesToSync)
-							: new Promise<Set<ServiceFile>>(Collections.emptySet());
-					})
-					.eventually(allServiceFilesToSync -> {
+				final List<Promise<StoredFile>> upsertFiles = Stream.of(allServiceFilesToSync)
+					.map(serviceFile -> {
 						if (isCancelled)
-							return new Promise<>(Collections.emptySet());
+							return new Promise<>((StoredFile) null);
 
-						final List<Promise<StoredFile>> upsertFiles = Stream.of(allServiceFilesToSync)
-							.map(serviceFile -> {
-								if (isCancelled)
-									return new Promise<>((StoredFile) null);
+						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileAccess
+							.createOrUpdateFile(connectionProvider, serviceFile)
+							.then(storedFile -> {
+								if (storedFile != null && !storedFile.isDownloadComplete())
+									storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
 
-								final Promise<StoredFile> promiseDownloadedStoredFile = storedFileAccess
-									.createOrUpdateFile(connectionProvider, serviceFile)
-									.then(storedFile -> {
-										if (storedFile != null && !storedFile.isDownloadComplete())
-											storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
+								return storedFile;
+							});
 
-										return storedFile;
-									});
+						promiseDownloadedStoredFile
+							.excuse(r -> {
+								logger.warn("An error occurred creating or updating " + serviceFile, r);
+								return null;
+							});
 
-								promiseDownloadedStoredFile
-									.excuse(r -> {
-										logger.warn("An error occurred creating or updating " + serviceFile, r);
-										return null;
-									});
-
-								return promiseDownloadedStoredFile;
-							})
-							.toList();
-
-						return Promise.whenAll(upsertFiles);
+						return promiseDownloadedStoredFile;
 					})
-					.then(vs -> {
-						if (!isCancelled)
-							storedFileDownloader.process();
-						else
-							handleQueueProcessingCompleted();
+					.toList();
 
-						return null;
-					});
+				return Promise.whenAll(upsertFiles);
+			})
+			.then(vs -> {
+				if (!isCancelled)
+					storedFileDownloader.process();
+				else
+					handleQueueProcessingCompleted();
+
+				return null;
 			})
 			.excuse(e -> {
 				logger.warn("There was an error retrieving the files", e);

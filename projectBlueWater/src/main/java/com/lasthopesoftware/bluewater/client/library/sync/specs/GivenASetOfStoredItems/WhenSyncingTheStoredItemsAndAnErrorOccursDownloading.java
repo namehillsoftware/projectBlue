@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
@@ -75,14 +76,13 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			fakeConnectionProvider,
 			new Library(),
-			storedItemAccessMock,
+			new StoredItemServiceFileCollector(storedItemAccessMock, mockFileProvider),
 			storedFileAccess,
 			new StoredFileDownloader(
 				fakeConnectionProvider,
 				mock(IStoredFileAccess.class),
 				readPossibleArbitrator,
 				writePossibleArbitrator),
-			mockFileProvider,
 			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
 			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
 
