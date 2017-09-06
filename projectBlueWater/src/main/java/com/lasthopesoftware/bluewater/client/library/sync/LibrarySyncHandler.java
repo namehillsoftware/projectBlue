@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -48,7 +49,7 @@ public class LibrarySyncHandler {
 	private final IStoredFileDownloader storedFileDownloader;
 	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
-	private volatile boolean isCancelled;
+	private final CancellationProxy cancellationProxy = new CancellationProxy();
 
 	public LibrarySyncHandler(Context context, IConnectionProvider connectionProvider, Library library) {
 		this(
@@ -103,30 +104,32 @@ public class LibrarySyncHandler {
 	}
 
 	public void cancel() {
-		isCancelled = true;
+		cancellationProxy.run();
 
 		storedFileDownloader.cancel();
 	}
 
 	public void startSync() {
-		serviceFilesToSyncCollector
-			.promiseServiceFilesToSync()
+		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
+		cancellationProxy.doCancel(promisedServiceFilesToSync);
+
+		promisedServiceFilesToSync
 			.eventually(allServiceFilesToSync -> {
 				final HashSet<ServiceFile> serviceFilesSet = new HashSet<>(allServiceFilesToSync);
 				final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(serviceFilesSet);
 				pruneFilesTask.excuse(perform(e -> logger.warn("There was an error pruning the files", e)));
 
-				return !isCancelled
+				return !cancellationProxy.isCancelled()
 					? pruneFilesTask.then(voids -> serviceFilesSet)
 					: new Promise<Set<ServiceFile>>(Collections.emptySet());
 			})
 			.eventually(allServiceFilesToSync -> {
-				if (isCancelled)
+				if (cancellationProxy.isCancelled())
 					return new Promise<>(Collections.emptySet());
 
 				final List<Promise<StoredFile>> upsertFiles = Stream.of(allServiceFilesToSync)
 					.map(serviceFile -> {
-						if (isCancelled)
+						if (cancellationProxy.isCancelled())
 							return new Promise<>((StoredFile) null);
 
 						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileAccess
@@ -151,7 +154,7 @@ public class LibrarySyncHandler {
 				return Promise.whenAll(upsertFiles);
 			})
 			.then(vs -> {
-				if (!isCancelled)
+				if (!cancellationProxy.isCancelled())
 					storedFileDownloader.process();
 				else
 					handleQueueProcessingCompleted();

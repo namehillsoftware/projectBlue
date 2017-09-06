@@ -1,14 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored.specs.GivenASetOfStoredItems.AndCollectionIsCancelledAfterStoredItemsAreReturned;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
-import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.bluewater.client.library.items.stored.specs.FakeDeferredStoredItemAccess;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -35,7 +33,15 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	@BeforeClass
 	public static void before() throws InterruptedException {
 
-		final DeferredStoredItemAccess storedItemAccess = new DeferredStoredItemAccess();
+		final FakeDeferredStoredItemAccess storedItemAccess = new FakeDeferredStoredItemAccess() {
+			@Override
+			protected Collection<StoredItem> getStoredItems() {
+				return Arrays.asList(
+					new StoredItem(1, 1, StoredItem.ItemType.ITEM),
+					new StoredItem(1, 2, StoredItem.ItemType.ITEM),
+					new StoredItem(1, 3, StoredItem.ItemType.ITEM));
+			}
+		};
 
 		final IFileProvider fileProvider = mock(IFileProvider.class);
 		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=1"))
@@ -81,32 +87,4 @@ public class WhenCollectingTheAssociatedServiceFiles {
 		return Stream.range(floor, ceiling).map(ServiceFile::new).toList();
 	}
 
-	private static class DeferredStoredItemAccess implements IStoredItemAccess {
-
-		private Messenger<Collection<StoredItem>> messenger;
-
-		void resolveStoredItems() {
-			if (messenger != null) {
-				messenger.sendResolution(Arrays.asList(
-					new StoredItem(1, 1, StoredItem.ItemType.ITEM),
-					new StoredItem(1, 2, StoredItem.ItemType.ITEM),
-					new StoredItem(1, 3, StoredItem.ItemType.ITEM)));
-			}
-		}
-
-		@Override
-		public void toggleSync(IItem item, boolean enable) {
-
-		}
-
-		@Override
-		public Promise<Boolean> isItemMarkedForSync(IItem item) {
-			return new Promise<>(false);
-		}
-
-		@Override
-		public Promise<Collection<StoredItem>> promiseStoredItems() {
-			return new Promise<>((m -> messenger = m));
-		}
-	}
 }
