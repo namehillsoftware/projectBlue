@@ -71,10 +71,9 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(anySet())).thenReturn(new Promise<>(Collections.emptyList()));
-		when(storedFileAccess.createOrUpdateFile(any(), any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
+		when(storedFileAccess.createOrUpdateFile(any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			fakeConnectionProvider,
 			new Library(),
 			new StoredItemServiceFileCollector(storedItemAccessMock, mockFileProvider),
 			storedFileAccess,

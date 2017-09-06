@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -20,7 +19,7 @@ public interface IStoredFileAccess {
 
 	void addMediaFile(ServiceFile serviceFile, int mediaFileId, String filePath);
 
-	Promise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, ServiceFile serviceFile);
+	Promise<StoredFile> createOrUpdateFile(ServiceFile serviceFile);
 
 	Promise<Collection<Void>> pruneStoredFiles(Set<ServiceFile> serviceFilesToKeep);
 }

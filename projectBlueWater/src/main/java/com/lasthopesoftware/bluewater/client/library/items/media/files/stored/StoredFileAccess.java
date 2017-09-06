@@ -4,12 +4,9 @@ import android.content.Context;
 import android.database.SQLException;
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
@@ -42,6 +39,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	private final Context context;
 	private final Library library;
+	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
 	private static final String selectFromStoredFiles = "SELECT * FROM " + StoredFileEntityInformation.tableName;
 
@@ -66,9 +64,10 @@ public final class StoredFileAccess implements IStoredFileAccess {
 							.setFilter("WHERE id = @id")
 							.buildQuery());
 
-	public StoredFileAccess(Context context, Library library) {
+	public StoredFileAccess(Context context, Library library, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
 		this.context = context;
 		this.library = library;
+		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
 	@Override
@@ -177,9 +176,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final ServiceFile serviceFile) {
-		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
+	public Promise<StoredFile> createOrUpdateFile(final ServiceFile serviceFile) {
 		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
 		final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
 

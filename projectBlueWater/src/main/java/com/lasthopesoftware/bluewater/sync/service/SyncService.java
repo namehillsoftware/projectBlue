@@ -256,7 +256,11 @@ public class SyncService extends Service {
 
 					final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 
-					final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library);
+					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+					final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+					final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
+
+					final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library, cachedFilePropertiesProvider);
 					librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
 					librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
 					librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);

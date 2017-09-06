@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.IStoredFileDownloader;
@@ -22,6 +23,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.writ
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
+import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
+import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -40,7 +43,6 @@ public class LibrarySyncHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
-	private final IConnectionProvider connectionProvider;
 	private final Library library;
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
@@ -51,19 +53,17 @@ public class LibrarySyncHandler {
 
 	private final CancellationProxy cancellationProxy = new CancellationProxy();
 
-	public LibrarySyncHandler(Context context, IConnectionProvider connectionProvider, Library library) {
+	public LibrarySyncHandler(Context context, IConnectionProvider connectionProvider, Library library, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
 		this(
-			connectionProvider,
 			library,
 			new StoredItemServiceFileCollector(new StoredItemAccess(context, library), new FileProvider(new FileStringListProvider(connectionProvider))),
-			new StoredFileAccess(context, library),
-			new StoredFileDownloader(context, connectionProvider, library),
+			new StoredFileAccess(context, library, cachedFilePropertiesProvider),
+			new StoredFileDownloader(connectionProvider, new StoredFileAccess(context, library, cachedFilePropertiesProvider), new FileReadPossibleArbitrator(), new FileWritePossibleArbitrator()),
 			new LibraryStorageReadPermissionsRequirementsProvider(),
 			new LibraryStorageWritePermissionsRequirementsProvider());
 	}
 
-	public LibrarySyncHandler(IConnectionProvider connectionProvider, Library library, IServiceFilesToSyncCollector serviceFilesToSyncCollector, IStoredFileAccess storedFileAccess, IStoredFileDownloader storedFileDownloader, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
-		this.connectionProvider = connectionProvider;
+	public LibrarySyncHandler(Library library, IServiceFilesToSyncCollector serviceFilesToSyncCollector, IStoredFileAccess storedFileAccess, IStoredFileDownloader storedFileDownloader, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.library = library;
 		this.serviceFilesToSyncCollector = serviceFilesToSyncCollector;
 		this.storedFileAccess = storedFileAccess;
@@ -133,7 +133,7 @@ public class LibrarySyncHandler {
 							return new Promise<>((StoredFile) null);
 
 						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileAccess
-							.createOrUpdateFile(connectionProvider, serviceFile)
+							.createOrUpdateFile(serviceFile)
 							.then(storedFile -> {
 								if (storedFile != null && !storedFile.isDownloadComplete())
 									storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
