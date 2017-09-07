@@ -78,6 +78,8 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+
 		final PromisedResponse<List<Item>, Void> itemProviderComplete = LoopedInPromise.response(this, this);
 
         final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
@@ -95,8 +97,6 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 								.excuse(new HandleViewIoException(ItemListActivity.this, this));
 						}
 					}));
-
-        nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
     }
 
 	@Override

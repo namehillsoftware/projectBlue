@@ -62,6 +62,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
@@ -116,6 +118,8 @@ public class SyncService extends Service {
 
 	private final Lazy<IScanMediaFileBroadcaster> scanMediaFileBroadcasterLazy = new Lazy<>(() -> new ScanMediaFileBroadcaster(this));
 
+	private final Map<Integer, IConnectionProvider> libraryConnectionProviders = new ConcurrentHashMap<>();
+
 	private PowerManager.WakeLock wakeLock;
 
 	private volatile int librariesProcessing;
@@ -137,15 +141,13 @@ public class SyncService extends Service {
 	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
-		lazyLibraryProvider.getObject()
-			.getLibrary(storedFile.getLibraryId())
-			.eventually((library) ->  AccessConfigurationBuilder.buildConfiguration(this, library).eventually(urlProvider -> {
-				final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+		final IConnectionProvider connectionProvider = libraryConnectionProviders.get(storedFile.getLibraryId());
+		if (connectionProvider == null) return;
 
-				return filePropertiesProvider.promiseFileProperties(storedFile.getServiceId());
-			}))
+		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+
+		filePropertiesProvider.promiseFileProperties(storedFile.getServiceId())
 			.eventually(LoopedInPromise.response(perform(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
 			.excuse(e -> LoopedInPromise.response(exception -> {
 				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
@@ -236,7 +238,7 @@ public class SyncService extends Service {
 		startForeground(notificationId, buildSyncNotification(null));
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		lazyLibraryProvider.getObject().getAllLibraries().eventually(LoopedInPromise.response(perform(libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().then(perform(libraries -> {
 			librariesProcessing += libraries.size();
 
 			if (librariesProcessing == 0) {
@@ -248,31 +250,38 @@ public class SyncService extends Service {
 				if (library.isSyncLocalConnectionsOnly())
 					library.setLocalOnly(true);
 
-				AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
-					if (urlProvider == null) {
+				AccessConfigurationBuilder.buildConfiguration(context, library)
+					.then(perform(urlProvider -> {
+						if (urlProvider == null) {
+							if (--librariesProcessing == 0) finishSync();
+							return;
+						}
+
+						final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+						libraryConnectionProviders.put(library.getId(), connectionProvider);
+
+						final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+						final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+						final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
+
+						final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library, cachedFilePropertiesProvider);
+						librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
+						librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
+						librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
+						librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
+						librarySyncHandler.setOnFileReadError(storedFileReadErrorAction);
+						librarySyncHandler.setOnFileWriteError(storedFileWriteErrorAction);
+						librarySyncHandler.startSync();
+
+						librarySyncHandlers.add(librarySyncHandler);
+					}))
+					.excuse(e -> {
+						logger.error("There was an error getting the URL for library ID " + library.getId());
 						if (--librariesProcessing == 0) finishSync();
-						return;
-					}
-
-					final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-
-					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-					final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
-					final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
-
-					final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(context, connectionProvider, library, cachedFilePropertiesProvider);
-					librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
-					librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
-					librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
-					librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
-					librarySyncHandler.setOnFileReadError(storedFileReadErrorAction);
-					librarySyncHandler.setOnFileWriteError(storedFileWriteErrorAction);
-					librarySyncHandler.startSync();
-
-					librarySyncHandlers.add(librarySyncHandler);
-				}));
+						return null;
+					});
 			}
-		}), this));
+		}));
 
 		return result;
 	}

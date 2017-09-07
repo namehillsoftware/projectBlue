@@ -13,8 +13,6 @@ import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -31,7 +29,6 @@ import xmlwise.Xmlwise;
 public class AccessConfigurationBuilder {
 
 	private static final int buildConnectionTimeoutTime = 10000;
-	private static final Logger mLogger = LoggerFactory.getLogger(AccessConfigurationBuilder.class);
 
 	public static Promise<MediaServerUrlProvider> buildConfiguration(final Context context, final Library library) {
 		return buildConfiguration(context, library, buildConnectionTimeoutTime);
@@ -68,12 +65,10 @@ public class AccessConfigurationBuilder {
 			return
 				ConnectionTester
 					.doTest(new ConnectionProvider(urlProvider), timeout)
-					.eventually(result -> {
-						if (result) return new Promise<>(urlProvider);
-
-						return promiseServerInformation(localAccessString, timeout)
-							.eventually(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
-					});
+					.eventually(result -> result
+						? new Promise<>(urlProvider)
+						: promiseServerInformation(localAccessString, timeout)
+							.eventually(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout)));
 		}
 
 		return
