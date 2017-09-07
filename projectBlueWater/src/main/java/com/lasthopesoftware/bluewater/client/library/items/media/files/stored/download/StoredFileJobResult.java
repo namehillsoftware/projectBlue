@@ -16,4 +16,22 @@ public class StoredFileJobResult {
 		this.storedFile = storedFile;
 		this.storedFileJobResult = storedFileJobResult;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		StoredFileJobResult that = (StoredFileJobResult) o;
+
+		return storedFile.equals(that.storedFile) && storedFileJobResult == that.storedFileJobResult;
+
+	}
+
+	@Override
+	public int hashCode() {
+		int result = storedFile.hashCode();
+		result = 31 * result + storedFileJobResult.hashCode();
+		return result;
+	}
 }

@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
@@ -62,7 +63,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 		final int fileKey = serviceFile.getKey();
 		if (!queuedFileKeys.add(fileKey)) return;
 
-		storedFileJobQueue.add(new StoredFileJob(connectionProvider, storedFileAccess, ServiceFileUriQueryParamsProvider.getInstance(), fileReadPossibleArbitrator, fileWritePossibleArbitrator, serviceFile, storedFile));
+		storedFileJobQueue.add(new StoredFileJob(new StoredFileFileProvider(), connectionProvider, storedFileAccess, ServiceFileUriQueryParamsProvider.getInstance(), fileReadPossibleArbitrator, fileWritePossibleArbitrator, serviceFile, storedFile));
 		if (onFileQueued != null)
 			onFileQueued.runWith(storedFile);
 	}

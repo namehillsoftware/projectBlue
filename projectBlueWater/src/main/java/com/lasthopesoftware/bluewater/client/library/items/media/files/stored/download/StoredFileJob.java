@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
@@ -24,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-class StoredFileJob {
+public class StoredFileJob {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
 
@@ -33,11 +34,14 @@ class StoredFileJob {
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	private final ServiceFile serviceFile;
 	private final StoredFile storedFile;
+	@NonNull
+	private final IStoredFileFileProvider storedFileFileProvider;
 	private final IConnectionProvider connectionProvider;
 	@NonNull private final IStoredFileAccess storedFileAccess;
 	private boolean isCancelled;
 
-	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
+	public StoredFileJob(@NonNull IStoredFileFileProvider storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
+		this.storedFileFileProvider = storedFileFileProvider;
 		this.connectionProvider = connectionProvider;
 		this.storedFileAccess = storedFileAccess;
 		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
@@ -51,8 +55,8 @@ class StoredFileJob {
 		isCancelled = true;
 	}
 
-	StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
-		final File file = new File(storedFile.getPath());
+	public StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
+		final File file = storedFileFileProvider.getFile(storedFile);
 		if (isCancelled) return getCancelledStoredFileJobResult(file);
 
 		if (file.exists()) {
