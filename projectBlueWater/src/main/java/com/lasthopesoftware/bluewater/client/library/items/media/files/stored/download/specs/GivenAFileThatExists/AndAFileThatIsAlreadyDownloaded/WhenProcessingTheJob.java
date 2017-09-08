@@ -30,8 +30,11 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() throws StoredFileJobException, StorageCreatePathException, StoredFileWriteException, StoredFileReadException {
+		final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+		storedFile.setIsDownloadComplete(true);
+
 		final StoredFileJob storedFileJob = new StoredFileJob(
-			storedFile -> {
+			$ -> {
 				final File mockFile = mock(File.class);
 				when(mockFile.exists()).thenReturn(true);
 				return mockFile;
@@ -42,7 +45,7 @@ public class WhenProcessingTheJob {
 			f -> true,
 			mock(IFileWritePossibleArbitrator.class),
 			new ServiceFile(1),
-			new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true));
+			storedFile);
 
 		storedFileJobResult = storedFileJob.processJob();
 	}
