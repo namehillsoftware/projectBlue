@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.stored.specs.GivenAnUnfoundCollectionOFServiceFiles;
+package com.lasthopesoftware.bluewater.client.library.items.stored.specs.GivenAnUnfoundCollectionOfServiceFiles;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
