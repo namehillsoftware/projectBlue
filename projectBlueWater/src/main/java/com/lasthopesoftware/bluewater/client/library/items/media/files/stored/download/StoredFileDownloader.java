@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
@@ -46,7 +47,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	private OneParameterAction<StoredFile> onFileWriteError;
 	private Runnable onQueueProcessingCompleted;
 
-	private volatile boolean isCancelled;
+	private final CancellationToken cancellationToken = new CancellationToken();
 
 	public StoredFileDownloader(@NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
 		this.connectionProvider = connectionProvider;
@@ -57,7 +58,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	@Override
 	public void queueFileForDownload(@NonNull final ServiceFile serviceFile, @NonNull final StoredFile storedFile) {
-		if (isProcessing || isCancelled)
+		if (isProcessing || cancellationToken.isCancelled())
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 
 		final int fileKey = serviceFile.getKey();
@@ -70,7 +71,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	@Override
 	public void cancel() {
-		isCancelled = true;
+		cancellationToken.run();
 
 		Stream.of(storedFileJobQueue).forEach(StoredFileJob::cancel);
 
@@ -81,7 +82,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	@Override
 	public void process() {
-		if (isCancelled)
+		if (cancellationToken.isCancelled())
 			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
 
 		if (isProcessing)
@@ -93,7 +94,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 			try {
 				StoredFileJob storedFileJob;
 				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
-					if (isCancelled) return;
+					if (cancellationToken.isCancelled()) return;
 
 					final StoredFile storedFile = storedFileJob.getStoredFile();
 

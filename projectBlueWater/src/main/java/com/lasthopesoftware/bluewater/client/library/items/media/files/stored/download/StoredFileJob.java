@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
@@ -38,7 +39,7 @@ public class StoredFileJob {
 	private final IStoredFileFileProvider storedFileFileProvider;
 	private final IConnectionProvider connectionProvider;
 	@NonNull private final IStoredFileAccess storedFileAccess;
-	private boolean isCancelled;
+	private final CancellationToken cancellationToken = new CancellationToken();
 
 	public StoredFileJob(@NonNull IStoredFileFileProvider storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
 		this.storedFileFileProvider = storedFileFileProvider;
@@ -52,12 +53,12 @@ public class StoredFileJob {
 	}
 
 	public void cancel() {
-		isCancelled = true;
+		cancellationToken.run();
 	}
 
 	public StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
 		final File file = storedFileFileProvider.getFile(storedFile);
-		if (isCancelled) return getCancelledStoredFileJobResult(file);
+		if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 		if (file.exists()) {
 			if (!fileReadPossibleArbitrator.isFileReadPossible(file))
@@ -78,7 +79,7 @@ public class StoredFileJob {
 			throw new StoredFileJobException(storedFile, e);
 		}
 
-		if (isCancelled) return getCancelledStoredFileJobResult(file);
+		if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 		try {
 			final InputStream is;
@@ -89,7 +90,7 @@ public class StoredFileJob {
 				throw new StoredFileJobException(storedFile, ioe);
 			}
 
-			if (isCancelled) return getCancelledStoredFileJobResult(file);
+			if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 			final File parent = file.getParentFile();
 			if (parent != null && !parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
