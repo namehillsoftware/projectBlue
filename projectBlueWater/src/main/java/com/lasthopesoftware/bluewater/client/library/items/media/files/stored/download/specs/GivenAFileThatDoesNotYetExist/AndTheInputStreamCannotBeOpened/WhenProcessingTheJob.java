@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatDoesNotYetExist.AndAConnectionCannotBeOpened;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatDoesNotYetExist.AndTheInputStreamCannotBeOpened;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,8 +28,11 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() throws StoredFileJobException, IOException {
+		final HttpURLConnection connection = mock(HttpURLConnection.class);
+		when(connection.getInputStream()).thenThrow(IOException.class);
+
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-		when(fakeConnectionProvider.getConnection(any())).thenThrow(IOException.class);
+		when(fakeConnectionProvider.getConnection(any())).thenReturn(connection);
 
 		final StoredFileJob storedFileJob = new StoredFileJob(
 			$ -> mock(File.class),

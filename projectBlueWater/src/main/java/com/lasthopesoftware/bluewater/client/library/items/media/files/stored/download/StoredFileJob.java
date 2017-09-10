@@ -93,7 +93,8 @@ public class StoredFileJob {
 			if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 			final File parent = file.getParentFile();
-			if (parent != null && !parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
+			if (parent != null && !parent.exists() && !parent.mkdirs())
+				throw new StorageCreatePathException(parent);
 
 			try {
 				try (FileOutputStream fos = new FileOutputStream(file)) {
@@ -114,6 +115,8 @@ public class StoredFileJob {
 					logger.error("Error closing input stream", e);
 				}
 			}
+		} catch (StoredFileJobException je) {
+			throw je;
 		} catch (Throwable t) {
 			throw new StoredFileJobException(storedFile, t);
 		} finally {
