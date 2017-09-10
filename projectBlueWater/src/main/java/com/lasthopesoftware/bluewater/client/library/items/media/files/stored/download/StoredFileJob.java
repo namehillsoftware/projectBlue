@@ -71,6 +71,10 @@ public class StoredFileJob {
 		if (!fileWritePossibleArbitrator.isFileWritePossible(file))
 			throw new StoredFileWriteException(file, storedFile);
 
+		final File parent = file.getParentFile();
+		if (parent != null && !parent.exists() && !parent.mkdirs())
+			throw new StorageCreatePathException(parent);
+
 		final HttpURLConnection connection;
 		try {
 			connection = connectionProvider.getConnection(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
@@ -91,10 +95,6 @@ public class StoredFileJob {
 			}
 
 			if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
-
-			final File parent = file.getParentFile();
-			if (parent != null && !parent.exists() && !parent.mkdirs())
-				throw new StorageCreatePathException(parent);
 
 			try {
 				try (FileOutputStream fos = new FileOutputStream(file)) {

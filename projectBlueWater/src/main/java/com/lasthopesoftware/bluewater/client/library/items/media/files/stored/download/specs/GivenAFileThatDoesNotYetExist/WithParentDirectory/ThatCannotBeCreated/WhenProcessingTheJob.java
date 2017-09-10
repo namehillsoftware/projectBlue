@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatDoesNotYetExist.AndAConnectionCannotBeOpened;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatDoesNotYetExist.WithParentDirectory.ThatCannotBeCreated;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,25 +17,23 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static StoredFileJobException storedFileJobException;
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+	private static StorageCreatePathException storageCreatePathException;
 
 	@BeforeClass
 	public static void before() throws StoredFileJobException, IOException {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-		when(fakeConnectionProvider.getConnection(any())).thenThrow(IOException.class);
 
 		final StoredFileJob storedFileJob = new StoredFileJob(
 			$ -> {
 				final File file = mock(File.class);
 				final File parentFile = mock(File.class);
-				when(parentFile.mkdirs()).thenReturn(true);
+				when(parentFile.mkdirs()).thenReturn(false);
 				when(file.getParentFile()).thenReturn(parentFile);
 
 				return file;
@@ -49,23 +48,13 @@ public class WhenProcessingTheJob {
 
 		try {
 			storedFileJob.processJob();
-		} catch (StoredFileJobException je) {
-			storedFileJobException = je;
+		} catch (StorageCreatePathException e) {
+			storageCreatePathException = e;
 		}
 	}
 
 	@Test
-	public void thenAStoredFileJobExceptionIsThrown() {
-		assertThat(storedFileJobException).isNotNull();
-	}
-
-	@Test
-	public void thenTheInnerExceptionIsAnIoException() {
-		assertThat(storedFileJobException.getCause()).isInstanceOf(IOException.class);
-	}
-
-	@Test
-	public void thenTheStoredFileIsAssociatedWithTheException() {
-		assertThat(storedFileJobException.getStoredFile()).isEqualTo(storedFile);
+	public void thenAStorageCreatePathExceptionIsThrown() {
+		assertThat(storageCreatePathException).isNotNull();
 	}
 }

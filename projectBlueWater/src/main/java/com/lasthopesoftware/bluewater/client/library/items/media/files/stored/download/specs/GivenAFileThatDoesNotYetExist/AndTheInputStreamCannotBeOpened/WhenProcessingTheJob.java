@@ -35,7 +35,14 @@ public class WhenProcessingTheJob {
 		when(fakeConnectionProvider.getConnection(any())).thenReturn(connection);
 
 		final StoredFileJob storedFileJob = new StoredFileJob(
-			$ -> mock(File.class),
+			$ -> {
+				final File file = mock(File.class);
+				final File parentFile = mock(File.class);
+				when(parentFile.mkdirs()).thenReturn(true);
+				when(file.getParentFile()).thenReturn(parentFile);
+
+				return file;
+			},
 			fakeConnectionProvider,
 			mock(IStoredFileAccess.class),
 			mock(IServiceFileUriQueryParamsProvider.class),
