@@ -4,6 +4,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 
 import java.io.File;
 
-public interface IStoredFileFileProvider {
+public interface IStoredFileSystemFileProducer {
 	File getFile(StoredFile storedFile);
 }

@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
@@ -34,13 +34,13 @@ public class StoredFileJob {
 	@NonNull private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	@NonNull private final ServiceFile serviceFile;
 	@NonNull private final StoredFile storedFile;
-	@NonNull private final IStoredFileFileProvider storedFileFileProvider;
+	@NonNull private final IStoredFileSystemFileProducer storedFileFileProvider;
 	@NonNull private final IConnectionProvider connectionProvider;
 	@NonNull private final IFileStreamWriter fileStreamWriter;
 	@NonNull private final IStoredFileAccess storedFileAccess;
 	@NonNull private final CancellationToken cancellationToken = new CancellationToken();
 
-	public StoredFileJob(@NonNull IStoredFileFileProvider storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
+	public StoredFileJob(@NonNull IStoredFileSystemFileProducer storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
 		this.storedFileFileProvider = storedFileFileProvider;
 		this.connectionProvider = connectionProvider;
 		this.fileStreamWriter = fileStreamWriter;
