@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenASetOfStor
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
@@ -70,8 +72,10 @@ public class WhenSyncingTheStoredItems {
 			new StoredItemServiceFileCollector(storedItemAccessMock, mockFileProvider),
 			storedFileAccess,
 			new StoredFileDownloader(
+				StoredFileSystemFileProducer.getInstance(),
 				fakeConnectionProvider,
 				storedFileAccess,
+				ServiceFileUriQueryParamsProvider.getInstance(),
 				readPossibleArbitrator,
 				writePossibleArbitrator,
 				(i, f) -> {}),
