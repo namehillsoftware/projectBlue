@@ -2,10 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
 import com.namehillsoftware.lazyj.Lazy;
 
-/**
- * Created by david on 3/26/17.
- */
-
 public final class ServiceFileUriQueryParamsProvider implements IServiceFileUriQueryParamsProvider {
 
 	private static final Lazy<ServiceFileUriQueryParamsProvider> instance = new Lazy<>(ServiceFileUriQueryParamsProvider::new);

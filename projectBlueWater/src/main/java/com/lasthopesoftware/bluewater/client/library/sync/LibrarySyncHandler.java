@@ -1,33 +1,16 @@
 package com.lasthopesoftware.bluewater.client.library.sync;
 
-import android.content.Context;
-
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.IStoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
-import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
-import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -55,23 +38,6 @@ public class LibrarySyncHandler {
 	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private final CancellationProxy cancellationProxy = new CancellationProxy();
-
-	public LibrarySyncHandler(Context context, IConnectionProvider connectionProvider, Library library, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
-		this(
-			library,
-			new StoredItemServiceFileCollector(new StoredItemAccess(context, library), new FileProvider(new FileStringListProvider(connectionProvider))),
-			new StoredFileAccess(context, library, cachedFilePropertiesProvider),
-			new StoredFileDownloader(
-				StoredFileSystemFileProducer.getInstance(),
-				connectionProvider,
-				new StoredFileAccess(context, library, cachedFilePropertiesProvider),
-				ServiceFileUriQueryParamsProvider.getInstance(),
-				new FileReadPossibleArbitrator(),
-				new FileWritePossibleArbitrator(),
-				FileStreamWriter.getInstance()),
-			new LibraryStorageReadPermissionsRequirementsProvider(),
-			new LibraryStorageWritePermissionsRequirementsProvider());
-	}
 
 	public LibrarySyncHandler(Library library, IServiceFilesToSyncCollector serviceFilesToSyncCollector, IStoredFileAccess storedFileAccess, IStoredFileDownloader storedFileDownloader, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.library = library;

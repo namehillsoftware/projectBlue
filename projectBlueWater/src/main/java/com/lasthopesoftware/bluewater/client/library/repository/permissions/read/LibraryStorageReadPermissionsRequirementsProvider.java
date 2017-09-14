@@ -3,14 +3,20 @@ package com.lasthopesoftware.bluewater.client.library.repository.permissions.rea
 import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.namehillsoftware.lazyj.Lazy;
 
-/**
- * Created by david on 7/3/16.
- */
-public class LibraryStorageReadPermissionsRequirementsProvider implements ILibraryStorageReadPermissionsRequirementsProvider {
+public final class LibraryStorageReadPermissionsRequirementsProvider implements ILibraryStorageReadPermissionsRequirementsProvider {
 
-		@Override
+	private static final Lazy<LibraryStorageReadPermissionsRequirementsProvider> lazyInstance = new Lazy<>(LibraryStorageReadPermissionsRequirementsProvider::new);
+
+	private LibraryStorageReadPermissionsRequirementsProvider() {}
+
+	@Override
 	public boolean isReadPermissionsRequiredForLibrary(@NonNull Library library) {
 		return library.isUsingExistingFiles() || Library.SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(library.getSyncedFileLocation());
+	}
+
+	public static LibraryStorageReadPermissionsRequirementsProvider getInstance() {
+		return lazyInstance.getObject();
 	}
 }

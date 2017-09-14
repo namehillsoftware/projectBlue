@@ -7,7 +7,7 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import java.io.File;
 
-public class StoredFileSystemFileProducer implements IStoredFileSystemFileProducer {
+public final class StoredFileSystemFileProducer implements IStoredFileSystemFileProducer {
 
 	private static final Lazy<StoredFileSystemFileProducer> lazyInstance = new Lazy<>(StoredFileSystemFileProducer::new);
 

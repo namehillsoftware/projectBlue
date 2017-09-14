@@ -26,7 +26,7 @@ public class GivenALibraryUsingAnInternalLocation {
 			when(libraryRequiringExistingFiles.getSyncedFileLocation()).thenReturn(Library.SyncedFileLocation.INTERNAL);
 
 			final LibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider =
-					new LibraryStorageWritePermissionsRequirementsProvider();
+					LibraryStorageWritePermissionsRequirementsProvider.getInstance();
 
 			isWritePermissionsRequired = libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(libraryRequiringExistingFiles);
 		}

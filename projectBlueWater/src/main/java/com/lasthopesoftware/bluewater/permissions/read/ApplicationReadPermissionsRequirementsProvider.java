@@ -9,16 +9,13 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 
-/**
- * Created by david on 7/3/16.
- */
-public class ApplicationReadPermissionsRequirementsProvider implements IApplicationReadPermissionsRequirementsProvider {
+public final class ApplicationReadPermissionsRequirementsProvider implements IApplicationReadPermissionsRequirementsProvider {
 
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final IStorageReadPermissionArbitratorForOs storageReadPermissionArbitratorForOs;
 
 	public ApplicationReadPermissionsRequirementsProvider(@NonNull Context context) {
-		this(new LibraryStorageReadPermissionsRequirementsProvider(), new ExternalStorageReadPermissionsArbitratorForOs(context));
+		this(LibraryStorageReadPermissionsRequirementsProvider.getInstance(), new ExternalStorageReadPermissionsArbitratorForOs(context));
 	}
 
 	public ApplicationReadPermissionsRequirementsProvider(@NonNull ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider,

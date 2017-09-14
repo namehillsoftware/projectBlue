@@ -27,7 +27,7 @@ public class GivenALibraryUsingAnExternalLocation {
 			when(libraryRequiringExistingFiles.getSyncedFileLocation()).thenReturn(Library.SyncedFileLocation.EXTERNAL);
 
 			final LibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider =
-					new LibraryStorageWritePermissionsRequirementsProvider();
+					LibraryStorageWritePermissionsRequirementsProvider.getInstance();
 
 			isWritePermissionsRequired = libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(libraryRequiringExistingFiles);
 		}

@@ -23,7 +23,7 @@ public class GivenAFileThatCanBeRead {
 
 		@Before
 		public void before() {
-			final FileReadPossibleArbitrator fileReadPossibleArbitrator = new FileReadPossibleArbitrator();
+			final FileReadPossibleArbitrator fileReadPossibleArbitrator = FileReadPossibleArbitrator.getInstance();
 			final File file = mock(File.class);
 			when(file.exists()).thenReturn(true);
 			when(file.canRead()).thenReturn(true);

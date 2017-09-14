@@ -23,7 +23,7 @@ public class GivenAFileThatCanBeWritten {
 
 		@Before
 		public void before() {
-			final FileWritePossibleArbitrator fileWritePossibleArbitrator = new FileWritePossibleArbitrator();
+			final FileWritePossibleArbitrator fileWritePossibleArbitrator = FileWritePossibleArbitrator.getInstance();
 			final File file = mock(File.class);
 			when(file.exists()).thenReturn(true);
 			when(file.canWrite()).thenReturn(true);

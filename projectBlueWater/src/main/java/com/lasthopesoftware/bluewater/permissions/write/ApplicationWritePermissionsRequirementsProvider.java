@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.permissions.write;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
@@ -8,16 +9,13 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.writ
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 
-/**
- * Created by david on 7/3/16.
- */
-public class ApplicationWritePermissionsRequirementsProvider implements IApplicationWritePermissionsRequirementsProvider {
+public final class ApplicationWritePermissionsRequirementsProvider implements IApplicationWritePermissionsRequirementsProvider {
 
 	private final ILibraryStorageWritePermissionsRequirementsProvider storageWritePermissionsRequirementsProvider;
 	private final IStorageWritePermissionArbitratorForOs storageWritePermissionArbitratorForOs;
 
 	public ApplicationWritePermissionsRequirementsProvider(Context context) {
-		this(new LibraryStorageWritePermissionsRequirementsProvider(), new ExternalStorageWritePermissionsArbitratorForOs(context));
+		this(LibraryStorageWritePermissionsRequirementsProvider.getInstance(), new ExternalStorageWritePermissionsArbitratorForOs(context));
 	}
 
 	public ApplicationWritePermissionsRequirementsProvider(
@@ -29,7 +27,7 @@ public class ApplicationWritePermissionsRequirementsProvider implements IApplica
 	}
 
 	@Override
-	public boolean isWritePermissionsRequiredForLibrary(Library library) {
+	public boolean isWritePermissionsRequiredForLibrary(@NonNull Library library) {
 		return storageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library) && !storageWritePermissionArbitratorForOs.isWritePermissionGranted();
 	}
 }

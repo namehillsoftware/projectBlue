@@ -9,7 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class FileStreamWriter implements IFileStreamWriter {
+public final class FileStreamWriter implements IFileStreamWriter {
 
 	private static final Lazy<FileStreamWriter> instance = new Lazy<>(FileStreamWriter::new);
 

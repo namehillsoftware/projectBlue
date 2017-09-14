@@ -22,7 +22,7 @@ public class GivenAFileThatCannotBeRead {
 
 		@Before
 		public void before() {
-			final FileReadPossibleArbitrator fileReadPossibleArbitrator = new FileReadPossibleArbitrator();
+			final FileReadPossibleArbitrator fileReadPossibleArbitrator = FileReadPossibleArbitrator.getInstance();
 			final File file = mock(File.class);
 			when(file.canRead()).thenReturn(false);
 			when(file.getParentFile()).thenReturn(null);
