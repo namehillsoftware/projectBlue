@@ -78,7 +78,8 @@ public class WhenSyncingTheStoredItems {
 				fakeConnectionProvider,
 				mock(IStoredFileAccess.class),
 				readPossibleArbitrator,
-				writePossibleArbitrator),
+				writePossibleArbitrator,
+				(i, f) -> {}),
 			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
 			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
 

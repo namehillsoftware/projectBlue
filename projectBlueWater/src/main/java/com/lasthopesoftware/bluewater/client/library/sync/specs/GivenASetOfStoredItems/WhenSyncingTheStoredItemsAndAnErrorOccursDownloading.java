@@ -81,7 +81,8 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				fakeConnectionProvider,
 				storedFileAccess,
 				readPossibleArbitrator,
-				writePossibleArbitrator),
+				writePossibleArbitrator,
+				(i, f) -> {}),
 			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
 			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
 

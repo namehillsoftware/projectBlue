@@ -7,7 +7,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
@@ -37,6 +37,8 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	private final IStoredFileAccess storedFileAccess;
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
+	@NonNull
+	private final IFileStreamWriter fileStreamWriter;
 	private final IConnectionProvider connectionProvider;
 	private final Set<Integer> queuedFileKeys = new HashSet<>();
 	private final Queue<StoredFileJob> storedFileJobQueue = new LinkedList<>();
@@ -50,11 +52,12 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	private final CancellationToken cancellationToken = new CancellationToken();
 
-	public StoredFileDownloader(@NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
+	public StoredFileDownloader(@NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
 		this.connectionProvider = connectionProvider;
 		this.storedFileAccess = storedFileAccess;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
+		this.fileStreamWriter = fileStreamWriter;
 	}
 
 	@Override
@@ -65,7 +68,18 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 		final int fileKey = serviceFile.getKey();
 		if (!queuedFileKeys.add(fileKey)) return;
 
-		storedFileJobQueue.add(new StoredFileJob(new StoredFileFileProvider(), connectionProvider, storedFileAccess, ServiceFileUriQueryParamsProvider.getInstance(), fileReadPossibleArbitrator, fileWritePossibleArbitrator, FileStreamWriter.getInstance(), serviceFile, storedFile));
+		storedFileJobQueue.add(
+			new StoredFileJob(
+				new StoredFileFileProvider(),
+				connectionProvider,
+				storedFileAccess,
+				ServiceFileUriQueryParamsProvider.getInstance(),
+				fileReadPossibleArbitrator,
+				fileWritePossibleArbitrator,
+				fileStreamWriter,
+				serviceFile,
+				storedFile));
+
 		if (onFileQueued != null)
 			onFileQueued.runWith(storedFile);
 	}
