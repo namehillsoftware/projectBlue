@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
@@ -16,12 +17,10 @@ import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -30,20 +29,21 @@ public class StoredFileJob {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
 
-	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
+	@NonNull private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
 	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
-	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
-	private final ServiceFile serviceFile;
-	private final StoredFile storedFile;
-	@NonNull
-	private final IStoredFileFileProvider storedFileFileProvider;
-	private final IConnectionProvider connectionProvider;
+	@NonNull private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
+	@NonNull private final ServiceFile serviceFile;
+	@NonNull private final StoredFile storedFile;
+	@NonNull private final IStoredFileFileProvider storedFileFileProvider;
+	@NonNull private final IConnectionProvider connectionProvider;
+	@NonNull private final IFileStreamWriter fileStreamWriter;
 	@NonNull private final IStoredFileAccess storedFileAccess;
-	private final CancellationToken cancellationToken = new CancellationToken();
+	@NonNull private final CancellationToken cancellationToken = new CancellationToken();
 
-	public StoredFileJob(@NonNull IStoredFileFileProvider storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
+	public StoredFileJob(@NonNull IStoredFileFileProvider storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
 		this.storedFileFileProvider = storedFileFileProvider;
 		this.connectionProvider = connectionProvider;
+		this.fileStreamWriter = fileStreamWriter;
 		this.storedFileAccess = storedFileAccess;
 		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
@@ -97,10 +97,7 @@ public class StoredFileJob {
 			if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 			try {
-				try (FileOutputStream fos = new FileOutputStream(file)) {
-					IOUtils.copy(is, fos);
-					fos.flush();
-				}
+				this.fileStreamWriter.writeStreamToFile(is, file);
 
 				storedFileAccess.markStoredFileAsDownloaded(storedFile);
 

@@ -44,6 +44,7 @@ public class WhenProcessingTheJob {
 			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> true,
 			mock(IFileWritePossibleArbitrator.class),
+			(is, f) -> {},
 			new ServiceFile(1),
 			storedFile);
 

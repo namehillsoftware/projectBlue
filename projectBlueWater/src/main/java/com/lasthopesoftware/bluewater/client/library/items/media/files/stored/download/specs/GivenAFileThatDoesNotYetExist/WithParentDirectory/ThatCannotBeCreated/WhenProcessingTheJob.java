@@ -43,6 +43,7 @@ public class WhenProcessingTheJob {
 			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> false,
 			f -> true,
+			(is, f) -> {},
 			new ServiceFile(1),
 			storedFile);
 

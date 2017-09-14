@@ -40,6 +40,7 @@ public class WhenProcessingTheJob {
 			mock(IServiceFileUriQueryParamsProvider.class),
 			mock(IFileReadPossibleArbitrator.class),
 			mock(IFileWritePossibleArbitrator.class),
+			(is, f) -> {},
 			new ServiceFile(1),
 			new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true));
 
