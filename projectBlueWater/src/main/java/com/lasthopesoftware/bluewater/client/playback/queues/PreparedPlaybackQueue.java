@@ -12,6 +12,7 @@ import com.lasthopesoftware.messenger.promises.response.ResponseAction;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PreparedPlaybackQueue implements
@@ -72,17 +73,20 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
-		currentPreparingPlaybackHandlerPromise =
-			bufferingMediaPlayerPromises.size() > 0
-				? bufferingMediaPlayerPromises.poll()
-				: getNextPreparingMediaPlayerPromise(preparedAt);
+		currentPreparingPlaybackHandlerPromise = bufferingMediaPlayerPromises.poll();
+		if (currentPreparingPlaybackHandlerPromise == null) {
+			currentPreparingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
+			return currentPreparingPlaybackHandlerPromise != null
+				? currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler().then(this)
+				: null;
+		}
 
 		return
-			currentPreparingPlaybackHandlerPromise != null
-				? currentPreparingPlaybackHandlerPromise
+			Promise.whenAny(
+				currentPreparingPlaybackHandlerPromise
 					.promisePositionedBufferingPlaybackHandler()
-					.then(this)
-				: null;
+					.then(this),
+				new Promise<>(new TimeoutException("The media player could not be prepared in time.")));
 	}
 
 	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {
