@@ -9,8 +9,8 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 3000
-        versionName "1.6.0.0-beta-1"
+        versionCode 3001
+        versionName "1.6.0.0-beta-2"
     }
 
     compileOptions {
