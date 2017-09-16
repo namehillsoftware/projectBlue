@@ -77,10 +77,10 @@ public class WhenSyncingTheStoredItems {
 			new StoredItemServiceFileCollector(deferredStoredItemAccess, mockFileProvider),
 			storedFileAccess,
 			new StoredFileDownloader(
-				StoredFileSystemFileProducer.getInstance(),
+				new StoredFileSystemFileProducer(),
 				fakeConnectionProvider,
 				storedFileAccess,
-				ServiceFileUriQueryParamsProvider.getInstance(),
+				new ServiceFileUriQueryParamsProvider(),
 				readPossibleArbitrator,
 				writePossibleArbitrator,
 				(i, f) -> {}),

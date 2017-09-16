@@ -41,7 +41,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
 		mediaFileUriProvider = new MediaFileUriProvider(context, new MediaQueryCursorProvider(context, cachedFilePropertiesProvider), externalStorageReadPermissionsArbitrator, library);
 
-		remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider.getInstance());
+		remoteFileUriProvider = new RemoteFileUriProvider(connectionProvider, new ServiceFileUriQueryParamsProvider());
 	}
 
 	@Override

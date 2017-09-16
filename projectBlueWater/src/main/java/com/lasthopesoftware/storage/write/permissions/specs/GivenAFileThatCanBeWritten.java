@@ -12,9 +12,6 @@ import java.io.File;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 7/17/16.
- */
 public class GivenAFileThatCanBeWritten {
 
 	public static class WhenCheckingForPermissions {
@@ -23,7 +20,7 @@ public class GivenAFileThatCanBeWritten {
 
 		@Before
 		public void before() {
-			final FileWritePossibleArbitrator fileWritePossibleArbitrator = FileWritePossibleArbitrator.getInstance();
+			final FileWritePossibleArbitrator fileWritePossibleArbitrator = new FileWritePossibleArbitrator();
 			final File file = mock(File.class);
 			when(file.exists()).thenReturn(true);
 			when(file.canWrite()).thenReturn(true);

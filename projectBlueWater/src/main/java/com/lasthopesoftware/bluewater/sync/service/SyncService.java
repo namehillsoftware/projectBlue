@@ -29,15 +29,18 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.IScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
@@ -51,7 +54,9 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
@@ -61,9 +66,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
+import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
+import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
@@ -132,6 +139,14 @@ public class SyncService extends Service {
 	private final Lazy<IScanMediaFileBroadcaster> scanMediaFileBroadcasterLazy = new Lazy<>(() -> new ScanMediaFileBroadcaster(this));
 
 	private final Map<Integer, IConnectionProvider> libraryConnectionProviders = new ConcurrentHashMap<>();
+
+	private final Lazy<IStoredFileSystemFileProducer> lazyStoredFileSystemFileProducer = new Lazy<>(StoredFileSystemFileProducer::new);
+	private final Lazy<IServiceFileUriQueryParamsProvider> lazyServiceFileUriQueryParamsProvider = new Lazy<>(ServiceFileUriQueryParamsProvider::new);
+	private final Lazy<IFileReadPossibleArbitrator> lazyFileReadPossibleArbitrator = new Lazy<>(FileReadPossibleArbitrator::new);
+	private final Lazy<IFileWritePossibleArbitrator> lazyFileWritePossibleArbitrator = new Lazy<>(FileWritePossibleArbitrator::new);
+	private final Lazy<IFileStreamWriter> lazyFileStreamWriter = new Lazy<>(FileStreamWriter::new);
+	private final Lazy<ILibraryStorageReadPermissionsRequirementsProvider> lazyLibraryStorageReadPermissionsRequirementsProvider = new Lazy<>(LibraryStorageReadPermissionsRequirementsProvider::new);
+	private final Lazy<ILibraryStorageWritePermissionsRequirementsProvider> lazyLibraryStorageWritePermissionsRequirementsProvider = new Lazy<>(LibraryStorageWritePermissionsRequirementsProvider::new);
 
 	private PowerManager.WakeLock wakeLock;
 
@@ -284,15 +299,15 @@ public class SyncService extends Service {
 								new StoredItemServiceFileCollector(new StoredItemAccess(context, library), new FileProvider(new FileStringListProvider(connectionProvider))),
 								storedFileAccess,
 								new StoredFileDownloader(
-									StoredFileSystemFileProducer.getInstance(),
+									lazyStoredFileSystemFileProducer.getObject(),
 									connectionProvider,
 									storedFileAccess,
-									ServiceFileUriQueryParamsProvider.getInstance(),
-									FileReadPossibleArbitrator.getInstance(),
-									FileWritePossibleArbitrator.getInstance(),
-									FileStreamWriter.getInstance()),
-								LibraryStorageReadPermissionsRequirementsProvider.getInstance(),
-								LibraryStorageWritePermissionsRequirementsProvider.getInstance());
+									lazyServiceFileUriQueryParamsProvider.getObject(),
+									lazyFileReadPossibleArbitrator.getObject(),
+									lazyFileWritePossibleArbitrator.getObject(),
+									lazyFileStreamWriter.getObject()),
+								lazyLibraryStorageReadPermissionsRequirementsProvider.getObject(),
+								lazyLibraryStorageWritePermissionsRequirementsProvider.getObject());
 
 						librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
 						librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);

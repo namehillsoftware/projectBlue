@@ -23,7 +23,7 @@ public class GivenAFileThatCannotBeWritten {
 
 			@Before
 			public void before() {
-				final FileWritePossibleArbitrator fileWritePossibleArbitrator = FileWritePossibleArbitrator.getInstance();
+				final FileWritePossibleArbitrator fileWritePossibleArbitrator = new FileWritePossibleArbitrator();
 				final File file = mock(File.class);
 				when(file.canWrite()).thenReturn(false);
 				when(file.getParentFile()).thenReturn(null);
@@ -46,7 +46,7 @@ public class GivenAFileThatCannotBeWritten {
 
 				@Before
 				public void before() {
-					final FileWritePossibleArbitrator fileWritePossibleArbitrator = FileWritePossibleArbitrator.getInstance();
+					final FileWritePossibleArbitrator fileWritePossibleArbitrator = new FileWritePossibleArbitrator();
 					final File file = mock(File.class);
 					when(file.canWrite()).thenReturn(false);
 
@@ -74,7 +74,7 @@ public class GivenAFileThatCannotBeWritten {
 
 				@Before
 				public void before() {
-					final FileWritePossibleArbitrator fileWritePossibleArbitrator = FileWritePossibleArbitrator.getInstance();
+					final FileWritePossibleArbitrator fileWritePossibleArbitrator = new FileWritePossibleArbitrator();
 					final File file = mock(File.class);
 					when(file.canWrite()).thenReturn(false);
 					when(file.getParentFile()).thenReturn(null);

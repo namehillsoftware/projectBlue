@@ -15,7 +15,7 @@ public final class ApplicationWritePermissionsRequirementsProvider implements IA
 	private final IStorageWritePermissionArbitratorForOs storageWritePermissionArbitratorForOs;
 
 	public ApplicationWritePermissionsRequirementsProvider(Context context) {
-		this(LibraryStorageWritePermissionsRequirementsProvider.getInstance(), new ExternalStorageWritePermissionsArbitratorForOs(context));
+		this(new LibraryStorageWritePermissionsRequirementsProvider(), new ExternalStorageWritePermissionsArbitratorForOs(context));
 	}
 
 	public ApplicationWritePermissionsRequirementsProvider(

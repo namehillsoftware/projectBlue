@@ -15,7 +15,7 @@ public final class ApplicationReadPermissionsRequirementsProvider implements IAp
 	private final IStorageReadPermissionArbitratorForOs storageReadPermissionArbitratorForOs;
 
 	public ApplicationReadPermissionsRequirementsProvider(@NonNull Context context) {
-		this(LibraryStorageReadPermissionsRequirementsProvider.getInstance(), new ExternalStorageReadPermissionsArbitratorForOs(context));
+		this(new LibraryStorageReadPermissionsRequirementsProvider(), new ExternalStorageReadPermissionsArbitratorForOs(context));
 	}
 
 	public ApplicationReadPermissionsRequirementsProvider(@NonNull ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider,

@@ -12,9 +12,6 @@ import java.io.File;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 7/17/16.
- */
 public class GivenAFileThatCannotBeRead {
 	public static class WhenCheckingForPermissions {
 
@@ -22,7 +19,7 @@ public class GivenAFileThatCannotBeRead {
 
 		@Before
 		public void before() {
-			final FileReadPossibleArbitrator fileReadPossibleArbitrator = FileReadPossibleArbitrator.getInstance();
+			final FileReadPossibleArbitrator fileReadPossibleArbitrator = new FileReadPossibleArbitrator();
 			final File file = mock(File.class);
 			when(file.canRead()).thenReturn(false);
 			when(file.getParentFile()).thenReturn(null);
