@@ -67,8 +67,9 @@ public class WhenPlaybackIsPaused {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
+		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		final ResolveablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		playingPlaybackHandler.resolve();
 
 		resolveablePlaybackHandler.setCurrentPosition(30);
 
