@@ -50,6 +50,7 @@ public class WhenObservingPlayback {
 
 		final PlaylistManager playlistManager = new PlaylistManager(
 			fakePlaybackPreparerProvider,
+			() -> 1,
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));

@@ -11,12 +11,17 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
+import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestNotificationBuilder;
@@ -83,19 +88,27 @@ public class MainApplication extends Application {
 
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
-					.then(perform(library -> {
-						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library);
-						final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
-						if (fileKey == -1) return;
+					.eventually(library ->
+						AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
+							if (urlProvider == null) return;
 
-						final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
-						if (mediaFileId == -1) return;
+							ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+							final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+							final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
-						final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
-						if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
+							final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, cachedFilePropertiesProvider);
+							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
+							if (fileKey == -1) return;
 
-						storedFileAccess.addMediaFile(new ServiceFile(fileKey), mediaFileId, mediaFilePath);
-					}));
+							final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
+							if (mediaFileId == -1) return;
+
+							final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
+							if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
+
+							storedFileAccess.addMediaFile(new ServiceFile(fileKey), mediaFileId, mediaFilePath);
+					})));
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));
 

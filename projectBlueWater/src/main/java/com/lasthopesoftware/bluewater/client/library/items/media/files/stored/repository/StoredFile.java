@@ -1,20 +1,27 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository;
 
-public class StoredFile {
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
+
+public final class StoredFile {
 
 	private int id;
-	
 	private int libraryId;
-	
 	private int storedMediaId;
-
 	private int serviceId;
-
 	private boolean isDownloadComplete;
-
 	private String path;
-
 	private boolean isOwner;
+
+	public StoredFile() {}
+
+	public StoredFile(Library library, int storedMediaId, ServiceFile serviceFile, String path, boolean isOwner) {
+		this.libraryId = library.getId();
+		this.storedMediaId = storedMediaId;
+		this.serviceId = serviceFile.getKey();
+		this.path = path;
+		this.isOwner = isOwner;
+	}
 
 	public void setId(int id) { this.id = id; }
 

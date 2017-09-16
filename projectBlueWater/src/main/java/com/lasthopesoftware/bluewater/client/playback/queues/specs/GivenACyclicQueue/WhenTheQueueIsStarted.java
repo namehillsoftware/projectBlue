@@ -55,6 +55,7 @@ public class WhenTheQueueIsStarted {
 
 		queue =
 			new PreparedPlaybackQueue(
+				() -> 1,
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
 				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition));
 	}

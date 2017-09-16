@@ -29,7 +29,7 @@ public class GivenALibraryUsingExistingFiles {
 				when(libraryRequiringExistingFiles.isUsingExistingFiles()).thenReturn(true);
 				when(libraryRequiringExistingFiles.getSyncedFileLocation()).thenReturn(Library.SyncedFileLocation.INTERNAL);
 				final LibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider =
-						new LibraryStorageReadPermissionsRequirementsProvider();
+					new LibraryStorageReadPermissionsRequirementsProvider();
 
 				isReadPermissionsRequired = libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(libraryRequiringExistingFiles);
 			}

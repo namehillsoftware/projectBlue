@@ -5,12 +5,9 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.MediaPlayerInitializer;
+import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackQueueConfiguration;
 
-/**
- * Created by david on 3/5/17.
- */
-
-public class MediaPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider {
+public class MediaPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider, IPreparedPlaybackQueueConfiguration {
 
 	private final IFileUriProvider fileUriProvider;
 	private final Context context;
@@ -27,5 +24,10 @@ public class MediaPlayerPlaybackPreparerProvider implements IPlaybackPreparerPro
 		return new MediaPlayerPlaybackPreparer(
 			fileUriProvider,
 			new MediaPlayerInitializer(context, library));
+	}
+
+	@Override
+	public int getMaxQueueSize() {
+		return 1;
 	}
 }

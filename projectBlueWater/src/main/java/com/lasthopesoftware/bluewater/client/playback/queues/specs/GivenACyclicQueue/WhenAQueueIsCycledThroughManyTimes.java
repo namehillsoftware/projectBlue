@@ -60,6 +60,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 
 		final IPreparedPlaybackFileQueue queue =
 			new PreparedPlaybackQueue(
+				() -> 1,
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
 				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0));
 

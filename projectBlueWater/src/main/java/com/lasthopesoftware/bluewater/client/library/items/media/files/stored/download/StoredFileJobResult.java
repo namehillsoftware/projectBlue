@@ -6,9 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 
 import java.io.File;
 
-/**
- * Created by david on 7/17/16.
- */
 public class StoredFileJobResult {
 	public final File downloadedFile;
 	public final StoredFile storedFile;
@@ -18,5 +15,23 @@ public class StoredFileJobResult {
 		this.downloadedFile = downloadedFile;
 		this.storedFile = storedFile;
 		this.storedFileJobResult = storedFileJobResult;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		StoredFileJobResult that = (StoredFileJobResult) o;
+
+		return storedFile.equals(that.storedFile) && storedFileJobResult == that.storedFileJobResult;
+
+	}
+
+	@Override
+	public int hashCode() {
+		int result = storedFile.hashCode();
+		result = 31 * result + storedFileJobResult.hashCode();
+		return result;
 	}
 }

@@ -20,9 +20,14 @@ import android.widget.RelativeLayout;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
@@ -70,7 +75,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		selectedBrowserLibraryProvider
 			.getBrowserLibrary()
 			.then(perform(library -> {
-				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library);
+				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+				final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
+
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library, cachedFilePropertiesProvider);
 				storedFileAccess.getDownloadingStoredFiles()
 					.eventually(LoopedInPromise.response(perform(storedFiles -> {
 						final List<StoredFile> localStoredFiles =

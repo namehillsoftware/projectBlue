@@ -32,7 +32,7 @@ public class WhenTheQueueIsConsumed {
 	public static void before() {
 
 		final Random random = new Random(System.currentTimeMillis());
-		expectedNumberOfFiles = random.nextInt(500);
+		expectedNumberOfFiles = random.nextInt(499) + 1;
 
 		final List<ServiceFile> serviceFiles =
 			Stream
@@ -50,10 +50,11 @@ public class WhenTheQueueIsConsumed {
 
 		final IPreparedPlaybackFileQueue queue =
 			new PreparedPlaybackQueue(
+				() -> 1,
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
 				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0));
 
-		final int expectedCycles = random.nextInt(100);
+		final int expectedCycles = random.nextInt(99) + 1;
 
 		final int expectedNumberAbsolutePromises = expectedCycles * expectedNumberOfFiles;
 

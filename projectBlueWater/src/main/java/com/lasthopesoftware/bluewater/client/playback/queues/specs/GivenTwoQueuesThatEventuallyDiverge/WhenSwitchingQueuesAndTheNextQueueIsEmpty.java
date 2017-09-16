@@ -36,6 +36,7 @@ public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
+				() -> 1,
 				(file, preparedAt) -> new Promise<>(new FakeBufferingPlaybackHandler()),
 				positionedFileQueue);
 

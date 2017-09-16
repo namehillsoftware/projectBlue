@@ -33,7 +33,6 @@ public final class PositionedFile implements Comparable<PositionedFile> {
 		return playlistComparison != 0
 			? playlistComparison
 			: serviceFile.compareTo(other.serviceFile);
-
 	}
 
 	@Override

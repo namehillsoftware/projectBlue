@@ -29,6 +29,11 @@ public class Promise<Resolution> {
 		this.singleMessageBroadcaster = singleMessageBroadcaster;
 	}
 
+	public Promise(Throwable rejection) {
+		this();
+		singleMessageBroadcaster.sendRejection(rejection);
+	}
+
 	public final void cancel() {
 		singleMessageBroadcaster.cancel();
 	}

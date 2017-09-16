@@ -5,42 +5,45 @@ import android.support.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-class StoredFileJob {
+public class StoredFileJob {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
 
-	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
-	@NonNull
-	private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
-	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
-	private final ServiceFile serviceFile;
-	private final StoredFile storedFile;
-	private boolean isCancelled;
-	private IConnectionProvider connectionProvider;
-	@NonNull
-	private StoredFileAccess storedFileAccess;
+	@NonNull private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
+	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
+	@NonNull private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
+	@NonNull private final ServiceFile serviceFile;
+	@NonNull private final StoredFile storedFile;
+	@NonNull private final IStoredFileSystemFileProducer storedFileFileProvider;
+	@NonNull private final IConnectionProvider connectionProvider;
+	@NonNull private final IFileStreamWriter fileStreamWriter;
+	@NonNull private final IStoredFileAccess storedFileAccess;
+	@NonNull private final CancellationToken cancellationToken = new CancellationToken();
 
-	StoredFileJob(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
+	public StoredFileJob(@NonNull IStoredFileSystemFileProducer storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter, @NonNull ServiceFile serviceFile, @NonNull StoredFile storedFile) {
+		this.storedFileFileProvider = storedFileFileProvider;
 		this.connectionProvider = connectionProvider;
+		this.fileStreamWriter = fileStreamWriter;
 		this.storedFileAccess = storedFileAccess;
 		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
@@ -50,12 +53,12 @@ class StoredFileJob {
 	}
 
 	public void cancel() {
-		isCancelled = true;
+		cancellationToken.run();
 	}
 
-	StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
-		final File file = new File(storedFile.getPath());
-		if (isCancelled) return getCancelledStoredFileJobResult(file);
+	public StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
+		final File file = storedFileFileProvider.getFile(storedFile);
+		if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 		if (file.exists()) {
 			if (!fileReadPossibleArbitrator.isFileReadPossible(file))
@@ -68,6 +71,10 @@ class StoredFileJob {
 		if (!fileWritePossibleArbitrator.isFileWritePossible(file))
 			throw new StoredFileWriteException(file, storedFile);
 
+		final File parent = file.getParentFile();
+		if (parent != null && !parent.exists() && !parent.mkdirs())
+			throw new StorageCreatePathException(parent);
+
 		final HttpURLConnection connection;
 		try {
 			connection = connectionProvider.getConnection(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
@@ -76,7 +83,7 @@ class StoredFileJob {
 			throw new StoredFileJobException(storedFile, e);
 		}
 
-		if (isCancelled) return getCancelledStoredFileJobResult(file);
+		if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 		try {
 			final InputStream is;
@@ -87,16 +94,10 @@ class StoredFileJob {
 				throw new StoredFileJobException(storedFile, ioe);
 			}
 
-			if (isCancelled) return getCancelledStoredFileJobResult(file);
-
-			final File parent = file.getParentFile();
-			if (!parent.exists() && !parent.mkdirs()) throw new StorageCreatePathException(parent);
+			if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 			try {
-				try (FileOutputStream fos = new FileOutputStream(file)) {
-					IOUtils.copy(is, fos);
-					fos.flush();
-				}
+				this.fileStreamWriter.writeStreamToFile(is, file);
 
 				storedFileAccess.markStoredFileAsDownloaded(storedFile);
 
@@ -111,6 +112,8 @@ class StoredFileJob {
 					logger.error("Error closing input stream", e);
 				}
 			}
+		} catch (StoredFileJobException je) {
+			throw je;
 		} catch (Throwable t) {
 			throw new StoredFileJobException(storedFile, t);
 		} finally {

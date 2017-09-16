@@ -54,6 +54,7 @@ public class WhenTheQueueIsStarted {
 
 		queue =
 			new PreparedPlaybackQueue(
+				() -> 1,
 				(file, preparedAt) -> {
 					final MockResolveAction mockResolveAction = fileActionMap.get(file);
 					return new Promise<>(mockResolveAction);
