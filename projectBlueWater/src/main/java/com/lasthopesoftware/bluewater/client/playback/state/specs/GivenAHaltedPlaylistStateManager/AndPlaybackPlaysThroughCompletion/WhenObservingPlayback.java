@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
+import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
@@ -69,11 +70,13 @@ public class WhenObservingPlayback {
 				countDownLatch.countDown();
 			}));
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
-		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
-		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
-		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
-		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
+		ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		for (int i = 0; i < 4; i ++) {
+			final ResolveablePlaybackHandler newPlayingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+			playingPlaybackHandler.resolve();
+			playingPlaybackHandler = newPlayingPlaybackHandler;
+		}
+		playingPlaybackHandler.resolve();
 
 		countDownLatch.await(1, TimeUnit.SECONDS);
 
