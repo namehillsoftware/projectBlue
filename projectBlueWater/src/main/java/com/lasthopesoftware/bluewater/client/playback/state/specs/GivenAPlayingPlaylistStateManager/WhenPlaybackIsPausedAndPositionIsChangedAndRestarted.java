@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -62,14 +63,14 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
 		playlistManager
+			.setOnPlayingFileChanged(f -> positionedFiles.add(f))
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0)
-			.then(obs -> obs.subscribe(f -> positionedFiles.add(f)));
+					new ServiceFile(5)), 0, 0);
 
 		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
@@ -82,7 +83,7 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 		playlistManager
 			.skipToNext()
 			.eventually(p -> playlistManager.skipToNext())
-			.eventually(p -> playlistManager.resume())
+			.then(perform(p -> playlistManager.resume()))
 			.then(obs -> fakePlaybackPreparerProvider.deferredResolution.resolve())
 			.eventually(res -> nowPlayingRepository.getNowPlaying())
 			.then(np -> {

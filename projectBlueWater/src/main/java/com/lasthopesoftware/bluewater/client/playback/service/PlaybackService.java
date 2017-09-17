@@ -252,7 +252,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					return;
 				}
 
-				playlistManager.resume().then(observable -> observePlaybackFileChanges(observable));
+				playlistManager.resume();
 			};
 		}
 	};
@@ -563,6 +563,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				playlistPlaybackBootstrapper);
 
+		playlistManager
+			.setOnPlaylistStarted(this::handlePlaybackStarted)
+			.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
+			.setOnPlaylistError(this::uncaughtExceptionHandler);
+
 		return playlistManager;
 	}
 	
@@ -591,12 +596,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.eventually(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0))
-				.then(this::observePlaybackFileChanges)
-				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(this::handlePlaybackStarted)
-				.then(this::startNowPlayingActivity)
-				.excuse(UnhandledRejectionHandler);
+				.then(perform(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0)));
 
 			return;
         }
@@ -606,12 +606,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (action.equals(Action.play)) {
 			isPlaying = true;
-        	playlistManager
-				.resume()
-				.then(this::restartObservable)
-				.then(lazyPlaybackStartedBroadcaster.getObject())
-				.then(this::handlePlaybackStarted)
-				.excuse(UnhandledRejectionHandler);
+        	playlistManager.resume();
 
         	return;
         }
@@ -674,9 +669,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	}
 
-	private Observable<PositionedPlaybackFile> handlePlaybackStarted(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
+	private void handlePlaybackStarted(PositionedPlaybackFile positionedPlaybackFile) {
 		isPlaying = true;
-		return positionedPlaybackFileObservable;
+		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted(positionedPlaybackFile.asPositionedFile());
 	}
 
 	private Observable<PositionedPlaybackFile> startNowPlayingActivity(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
@@ -803,13 +798,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (lazyPlaylistVolumeManager.isInitialized())
 				lazyPlaylistVolumeManager.getObject().setVolume(1.0f);
 
-			if (!playlistManager.isPlaying())
-				playlistManager
-					.resume()
-					.then(this::restartObservable)
-					.then(lazyPlaybackStartedBroadcaster.getObject())
-					.then(this::handlePlaybackStarted)
-					.excuse(UnhandledRejectionHandler);
+			if (playlistManager != null && !playlistManager.isPlaying())
+				playlistManager.resume();
 
 			return;
 		}

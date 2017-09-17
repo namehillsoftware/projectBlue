@@ -59,14 +59,14 @@ public class WhenPlaybackCompletes {
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
 		playlistManager
+			.setOnPlayingFileChanged(f -> observedPlaybackFile = f)
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0)
-			.then(obs -> obs.subscribe(f -> observedPlaybackFile = f));
+					new ServiceFile(5)), 0, 0);
 
 		ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		for (int i = 0; i < 4; i ++) {

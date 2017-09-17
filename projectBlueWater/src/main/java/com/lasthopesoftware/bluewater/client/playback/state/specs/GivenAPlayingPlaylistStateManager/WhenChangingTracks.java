@@ -57,17 +57,17 @@ public class WhenChangingTracks {
 		final CountDownLatch countDownLatch = new CountDownLatch(2);
 
 		playlistManager
+			.setOnPlayingFileChanged(p -> {
+				latestFile = p;
+				countDownLatch.countDown();
+			})
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0)
-			.then(obs -> obs.subscribe(p -> {
-				latestFile = p;
-				countDownLatch.countDown();
-			}));
+					new ServiceFile(5)), 0, 0);
 
 		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 
