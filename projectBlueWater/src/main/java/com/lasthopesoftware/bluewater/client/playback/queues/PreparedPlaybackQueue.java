@@ -5,8 +5,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.propagation.RejectionProxy;
-import com.lasthopesoftware.messenger.promises.propagation.ResolutionProxy;
 import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
 import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.lasthopesoftware.messenger.promises.response.ResponseAction;
@@ -87,32 +85,25 @@ public class PreparedPlaybackQueue implements
 				: null;
 		}
 
-		final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise = new Promise<>(messenger -> {
-			final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromiseRace = Promise.whenAny(
+		return
+			Promise.whenAny(
 				currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler(),
-				new Promise<>(PositionedBufferingPlaybackHandler.emptyHandler(currentPreparingPlaybackHandlerPromise.positionedFile)));
+				new Promise<>(PositionedBufferingPlaybackHandler.emptyHandler(currentPreparingPlaybackHandlerPromise.positionedFile)))
+			.eventually(positionedBufferingPlaybackHandler -> {
+				if (!positionedBufferingPlaybackHandler.isEmpty())
+					return new Promise<>(positionedBufferingPlaybackHandler);
 
-			final Promise<PositionedBufferingPlaybackHandler> playbackHandlerPromise = positionedBufferingPlaybackHandlerPromiseRace
-				.eventually(positionedBufferingPlaybackHandler -> {
-					if (!positionedBufferingPlaybackHandler.isEmpty())
-						return new Promise<>(positionedBufferingPlaybackHandler);
+				final PositionedFile positionedFile = currentPreparingPlaybackHandlerPromise.positionedFile;
+				logger.warn(positionedFile + " failed to prepare in time. Cancelling and preparing again.");
 
-					final PositionedFile positionedFile = currentPreparingPlaybackHandlerPromise.positionedFile;
-					logger.warn(positionedFile + " failed to prepare in time. Cancelling and preparing again.");
+				currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
+				currentPreparingPlaybackHandlerPromise = new PositionedPreparingFile(
+					positionedFile,
+					playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), 0));
 
-					currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
-					currentPreparingPlaybackHandlerPromise = new PositionedPreparingFile(
-						positionedFile,
-						playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), preparedAt));
-
-					return currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler();
-				});
-
-			playbackHandlerPromise.then(new ResolutionProxy<>(messenger));
-			playbackHandlerPromise.excuse(new RejectionProxy(messenger));
-		});
-
-		return positionedBufferingPlaybackHandlerPromise.then(this);
+				return currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler();
+			})
+			.then(this);
 	}
 
 	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {
