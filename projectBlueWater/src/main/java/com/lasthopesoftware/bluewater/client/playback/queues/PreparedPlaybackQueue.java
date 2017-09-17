@@ -51,9 +51,7 @@ public class PreparedPlaybackQueue implements
 
 			PositionedPreparingFile positionedPreparingFile;
 			while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null) {
-				final PositionedFile positionedFile = newPositionedFileQueue.peek();
-
-				if (positionedPreparingFile.positionedFile.equals(positionedFile)) {
+				if (positionedPreparingFile.positionedFile.equals(newPositionedFileQueue.peek())) {
 					newPositionedPreparingMediaPlayerPromises.offer(positionedPreparingFile);
 					newPositionedFileQueue.poll();
 					continue;
@@ -187,7 +185,6 @@ public class PreparedPlaybackQueue implements
 		Promise<PositionedBufferingPlaybackHandler> promisePositionedBufferingPlaybackHandler() {
 			return bufferingPlaybackHandlerPromise.then(this);
 		}
-
 
 		@Override
 		public PositionedBufferingPlaybackHandler respond(IBufferingPlaybackHandler handler) throws Throwable {
