@@ -81,14 +81,16 @@ public class PreparedPlaybackQueue implements
 				: null;
 		}
 
-//		return currentPreparingPlaybackHandlerPromise
-//			.promisePositionedBufferingPlaybackHandler()
-//			.then(this);
-		return
-			Promise.whenAny(
-				currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler(),
-				new Promise<>(new TimeoutException("The media player could not be prepared in time.")))
-			.then(this);
+		currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
+
+		final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise = Promise.whenAny(
+			currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler(),
+			new Promise<>(messenger -> {
+				currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
+				messenger.sendRejection(new TimeoutException("The media player could not be prepared in time."));
+			}));
+
+		return positionedBufferingPlaybackHandlerPromise.then(this);
 	}
 
 	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 public class WhenTheQueueIsStarted {
 
 	private static TimeoutException timeoutException;
+	private static boolean firstPromiseCancelled;
 
 	@BeforeClass
 	public static void before() {
@@ -39,7 +40,7 @@ public class WhenTheQueueIsStarted {
 		final IPlaybackPreparer playbackPreparer = mock(IPlaybackPreparer.class);
 		when(playbackPreparer.promisePreparedPlaybackHandler(any(), anyInt()))
 			.thenReturn(new Promise<>(new FakeBufferingPlaybackHandler()))
-			.thenReturn(new Promise<>(messenger -> {}));
+			.thenReturn(new Promise<>(messenger -> messenger.cancellationRequested(() -> firstPromiseCancelled = true)));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CompletingFileQueueProvider();
@@ -64,5 +65,10 @@ public class WhenTheQueueIsStarted {
 	@Test
 	public void thenATimeoutExceptionIsThrown() {
 		assertThat(timeoutException).isNotNull();
+	}
+
+	@Test
+	public void thenTheFirstPromiseIsCancelled() {
+		assertThat(firstPromiseCancelled).isTrue();
 	}
 }
