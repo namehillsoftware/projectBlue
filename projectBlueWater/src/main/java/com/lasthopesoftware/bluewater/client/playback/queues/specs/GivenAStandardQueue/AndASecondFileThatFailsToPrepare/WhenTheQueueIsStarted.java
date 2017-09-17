@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.queues.specs.GivenAStanda
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
@@ -13,34 +14,33 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class WhenTheQueueIsStarted {
 
-	private static TimeoutException timeoutException;
+	private static final FakeBufferingPlaybackHandler expectedPlaybackHandler = new FakeBufferingPlaybackHandler();
 	private static boolean firstPromiseCancelled;
+	private static IPlaybackHandler returnedPlaybackHandler;
 
 	@BeforeClass
 	public static void before() {
-		final Random random = new Random(System.currentTimeMillis());
 
 		final List<ServiceFile> serviceFiles =
 			Stream
 				.range(0, 2)
-				.map(i -> new ServiceFile(random.nextInt()))
+				.map(ServiceFile::new)
 				.collect(Collectors.toList());
 
 		final IPlaybackPreparer playbackPreparer = mock(IPlaybackPreparer.class);
-		when(playbackPreparer.promisePreparedPlaybackHandler(any(), anyInt()))
-			.thenReturn(new Promise<>(new FakeBufferingPlaybackHandler()))
-			.thenReturn(new Promise<>(messenger -> messenger.cancellationRequested(() -> firstPromiseCancelled = true)));
+		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(0), 0))
+			.thenReturn(new Promise<>(new FakeBufferingPlaybackHandler()));
+
+		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(1), 0))
+			.thenReturn(new Promise<>(messenger -> messenger.cancellationRequested(() -> firstPromiseCancelled = true)))
+			.thenReturn(new Promise<>(expectedPlaybackHandler));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CompletingFileQueueProvider();
@@ -54,17 +54,12 @@ public class WhenTheQueueIsStarted {
 
 		queue.promiseNextPreparedPlaybackFile(0)
 			.eventually(p -> queue.promiseNextPreparedPlaybackFile(0))
-			.excuse(e -> {
-				if (e instanceof TimeoutException)
-					timeoutException = (TimeoutException)e;
-
-				return null;
-			});
+			.then(pf -> returnedPlaybackHandler = pf.getPlaybackHandler());
 	}
 
 	@Test
-	public void thenATimeoutExceptionIsThrown() {
-		assertThat(timeoutException).isNotNull();
+	public void thenTheExpectedPlaybackHandlerIsReturned() {
+		assertThat(returnedPlaybackHandler).isEqualTo(expectedPlaybackHandler);
 	}
 
 	@Test

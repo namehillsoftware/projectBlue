@@ -5,14 +5,19 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.messenger.promises.Promise;
+import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
+import com.lasthopesoftware.messenger.promises.propagation.RejectionProxy;
+import com.lasthopesoftware.messenger.promises.propagation.ResolutionProxy;
 import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
 import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 import com.lasthopesoftware.messenger.promises.response.ResponseAction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PreparedPlaybackQueue implements
@@ -20,6 +25,8 @@ public class PreparedPlaybackQueue implements
 	ResponseAction<IBufferingPlaybackHandler>,
 	ImmediateResponse<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>
 {
+	private static final Logger logger = LoggerFactory.getLogger(PreparedPlaybackQueue.class);
+
 	private final ReentrantReadWriteLock queueUpdateLock = new ReentrantReadWriteLock();
 
 	private final IPreparedPlaybackQueueConfiguration configuration;
@@ -63,7 +70,7 @@ public class PreparedPlaybackQueue implements
 
 			positionedFileQueue = newPositionedFileQueue;
 
-			beginFillingPreparingQueue();
+			beginQueueingPreparingPlayers();
 
 			return this;
 		} finally {
@@ -83,12 +90,35 @@ public class PreparedPlaybackQueue implements
 
 		currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
 
-		final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise = Promise.whenAny(
-			currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler(),
-			new Promise<>(messenger -> {
-				currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
-				messenger.sendRejection(new TimeoutException("The media player could not be prepared in time."));
-			}));
+		final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise = new Promise<>(messenger -> {
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+
+			final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromiseRace = Promise.whenAny(
+				currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler(),
+				new Promise<>(PositionedBufferingPlaybackHandler.emptyHandler(currentPreparingPlaybackHandlerPromise.positionedFile)));
+
+			cancellationProxy.doCancel(positionedBufferingPlaybackHandlerPromiseRace);
+
+			final Promise<PositionedBufferingPlaybackHandler> playbackHandlerPromise = positionedBufferingPlaybackHandlerPromiseRace
+				.eventually(positionedBufferingPlaybackHandler -> {
+					if (!positionedBufferingPlaybackHandler.isEmpty())
+						return new Promise<>(positionedBufferingPlaybackHandler);
+
+					final PositionedFile positionedFile = currentPreparingPlaybackHandlerPromise.positionedFile;
+					logger.warn(positionedFile + " failed to prepare in time. Cancelling and preparing again.");
+
+					currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
+					currentPreparingPlaybackHandlerPromise = new PositionedPreparingFile(
+						positionedFile,
+						playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), preparedAt));
+
+					return currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler();
+				});
+
+			cancellationProxy.doCancel(playbackHandlerPromise);
+			playbackHandlerPromise.then(new ResolutionProxy<>(messenger));
+			playbackHandlerPromise.excuse(new RejectionProxy(messenger));
+		});
 
 		return positionedBufferingPlaybackHandlerPromise.then(this);
 	}
@@ -121,10 +151,10 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public void perform(IBufferingPlaybackHandler bufferingPlaybackHandler) {
-		beginFillingPreparingQueue();
+		beginQueueingPreparingPlayers();
 	}
 
-	private void beginFillingPreparingQueue() {
+	private void beginQueueingPreparingPlayers() {
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
