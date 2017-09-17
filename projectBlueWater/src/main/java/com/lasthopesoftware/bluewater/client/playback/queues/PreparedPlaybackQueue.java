@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
 import com.lasthopesoftware.messenger.promises.propagation.RejectionProxy;
 import com.lasthopesoftware.messenger.promises.propagation.ResolutionProxy;
 import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
@@ -88,16 +87,10 @@ public class PreparedPlaybackQueue implements
 				: null;
 		}
 
-		currentPreparingPlaybackHandlerPromise.bufferingPlaybackHandlerPromise.cancel();
-
 		final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromise = new Promise<>(messenger -> {
-			final CancellationProxy cancellationProxy = new CancellationProxy();
-
 			final Promise<PositionedBufferingPlaybackHandler> positionedBufferingPlaybackHandlerPromiseRace = Promise.whenAny(
 				currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler(),
 				new Promise<>(PositionedBufferingPlaybackHandler.emptyHandler(currentPreparingPlaybackHandlerPromise.positionedFile)));
-
-			cancellationProxy.doCancel(positionedBufferingPlaybackHandlerPromiseRace);
 
 			final Promise<PositionedBufferingPlaybackHandler> playbackHandlerPromise = positionedBufferingPlaybackHandlerPromiseRace
 				.eventually(positionedBufferingPlaybackHandler -> {
@@ -115,7 +108,6 @@ public class PreparedPlaybackQueue implements
 					return currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler();
 				});
 
-			cancellationProxy.doCancel(playbackHandlerPromise);
 			playbackHandlerPromise.then(new ResolutionProxy<>(messenger));
 			playbackHandlerPromise.excuse(new RejectionProxy(messenger));
 		});
