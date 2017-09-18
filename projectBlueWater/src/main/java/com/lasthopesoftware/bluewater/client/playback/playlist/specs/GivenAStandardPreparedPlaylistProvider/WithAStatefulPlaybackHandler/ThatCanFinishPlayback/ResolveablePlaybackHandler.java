@@ -7,7 +7,12 @@ import com.lasthopesoftware.messenger.promises.Promise;
 
 public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 
+	private final Promise<IPlaybackHandler> promise;
 	private Messenger<IPlaybackHandler> resolve;
+
+	public ResolveablePlaybackHandler() {
+		promise = new Promise<>((messenger) -> this.resolve = messenger);
+	}
 
 	public void resolve() {
 		if (this.resolve != null)
@@ -19,6 +24,6 @@ public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 	@Override
 	public Promise<IPlaybackHandler> promisePlayback() {
 		super.promisePlayback();
-		return new Promise<>((messenger) -> this.resolve = messenger);
+		return promise;
 	}
 }

@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
@@ -117,10 +116,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 				final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 				try {
 					final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
-					final Observable<PositionedPlaybackFile> playbackFileObservable =
-						startPlayback(preparedPlaybackQueue, filePosition);
-
-					playbackFileObservable
+					startPlayback(preparedPlaybackQueue, filePosition)
 						.firstElement()
 						.subscribe(playbackFile -> messenger.sendResolution(playbackFile.asPositionedFile()));
 				} catch (Exception e) {

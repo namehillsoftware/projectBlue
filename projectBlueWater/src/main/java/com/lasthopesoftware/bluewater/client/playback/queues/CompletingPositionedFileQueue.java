@@ -6,9 +6,6 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 
-/**
- * Created by david on 9/26/16.
- */
 class CompletingPositionedFileQueue implements IPositionedFileQueue {
 	private final Queue<PositionedFile> playlist;
 
@@ -18,11 +15,11 @@ class CompletingPositionedFileQueue implements IPositionedFileQueue {
 
 	@Override
 	public PositionedFile poll() {
-		return playlist.size() > 0 ? playlist.poll() : null;
+		return playlist.poll();
 	}
 
 	@Override
 	public PositionedFile peek() {
-		return playlist.size() > 0 ? playlist.peek() : null;
+		return playlist.peek();
 	}
 }
