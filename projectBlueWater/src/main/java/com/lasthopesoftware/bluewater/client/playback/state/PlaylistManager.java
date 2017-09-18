@@ -48,6 +48,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 
 	private Disposable playbackSubscription;
 	private IActivePlayer activePlayer;
+
 	private OnPlayingFileChanged onPlayingFileChanged;
 	private OneParameterAction<Throwable> onPlaylistError;
 	private OnPlaybackStarted onPlaybackStarted;
@@ -342,6 +343,10 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 	@Override
 	public void close() throws Exception {
 		isPlaying = false;
+
+		onPlaybackStarted = null;
+		onPlayingFileChanged = null;
+		onPlaylistError = null;
 
 		preparedPlaybackQueueResourceManagement.close();
 	}

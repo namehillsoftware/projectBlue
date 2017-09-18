@@ -91,7 +91,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.observables.ConnectableObservable;
 
 import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
@@ -237,9 +236,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private boolean isPlaying;
-	private Disposable playbackFileChangedSubscription;
 	private Disposable filePositionSubscription;
-	private Disposable playbackFileChangesConnection;
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
 	private RemoteControlProxy remoteControlProxy;
 
@@ -674,45 +671,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted(positionedPlaybackFile.asPositionedFile());
 	}
 
-	private Observable<PositionedPlaybackFile> startNowPlayingActivity(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
-		NowPlayingActivity.startNowPlayingActivity(this);
-		return positionedPlaybackFileObservable;
-	}
-
-	private Observable<PositionedPlaybackFile> restartObservable(Observable<PositionedPlaybackFile> positionedPlaybackFileObservable) {
-		if (positionedPlaybackFile != null) {
-			positionedPlaybackFileObservable =
-				Observable
-					.just(positionedPlaybackFile)
-					.concatWith(positionedPlaybackFileObservable);
-		}
-
-		return observePlaybackFileChanges(positionedPlaybackFileObservable);
-	}
-
-	private Observable<PositionedPlaybackFile> observePlaybackFileChanges(Observable<PositionedPlaybackFile> observable) {
-		if (playbackFileChangedSubscription != null)
-			playbackFileChangedSubscription.dispose();
-
-		if (playbackFileChangesConnection != null)
-			playbackFileChangesConnection.dispose();
-
-		final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesPublisher = observable.publish();
-
-		final ConnectableObservable<PositionedPlaybackFile> playbackFileChangesReplayer = playbackFileChangesPublisher.replay(1);
-
-		playbackFileChangedSubscription =
-			playbackFileChangesPublisher.subscribe(
-				this::changePositionedPlaybackFile,
-				this::uncaughtExceptionHandler,
-				this::onPlaylistPlaybackComplete);
-
-		playbackFileChangesReplayer.connect();
-		playbackFileChangesConnection = playbackFileChangesPublisher.connect();
-
-		return playbackFileChangesReplayer;
-	}
-
 	private void pausePlayback(boolean isUserInterrupted) {
 		isPlaying = false;
 
@@ -922,9 +880,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			remoteClientBitmap.recycle();
 			remoteClientBitmap = null;
 		}
-
-		if (playbackFileChangedSubscription != null)
-			playbackFileChangedSubscription.dispose();
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
