@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackQu
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.IStartPlayback;
+import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlayingFileChanged;
-import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaylistStarted;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
@@ -50,7 +50,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 	private IActivePlayer activePlayer;
 	private OnPlayingFileChanged onPlayingFileChanged;
 	private OneParameterAction<Throwable> onPlaylistError;
-	private OnPlaylistStarted onPlaylistStarted;
+	private OnPlaybackStarted onPlaybackStarted;
 
 	public PlaylistManager(IPlaybackPreparerProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration configuration, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
 		this.nowPlayingRepository = nowPlayingRepository;
@@ -177,8 +177,8 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 	}
 
 	@Override
-	public IPlaylistStateBroadcaster setOnPlaylistStarted(OnPlaylistStarted onPlaylistStarted) {
-		this.onPlaylistStarted = onPlaylistStarted;
+	public PlaylistManager setOnPlaybackStarted(OnPlaybackStarted onPlaybackStarted) {
+		this.onPlaybackStarted = onPlaybackStarted;
 		return this;
 	}
 
@@ -228,6 +228,14 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 
 					return null;
 				}));
+
+		observable.firstElement()
+			.subscribe(
+				p -> {
+					if (onPlaybackStarted != null)
+						onPlaybackStarted.onPlaybackStarted(p);
+				},
+				e -> {});
 
 		return observable;
 	}

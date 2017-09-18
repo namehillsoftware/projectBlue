@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProv
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
@@ -28,13 +29,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 3/11/17.
- */
-
 public class WhenObservingPlayback {
 
 	private static boolean isPlaying;
+	private static PositionedPlaybackFile firstPlayingFile;
 
 	@BeforeClass
 	public static void context() throws IOException, InterruptedException {
@@ -59,6 +57,7 @@ public class WhenObservingPlayback {
 		final CountDownLatch countDownLatch = new CountDownLatch(5);
 
 		playlistManager
+			.setOnPlaybackStarted(p -> firstPlayingFile = p)
 			.setOnPlayingFileChanged(p -> countDownLatch.countDown())
 			.startPlaylist(
 				Arrays.asList(
@@ -79,6 +78,11 @@ public class WhenObservingPlayback {
 		countDownLatch.await(1, TimeUnit.SECONDS);
 
 		isPlaying = playlistManager.isPlaying();
+	}
+
+	@Test
+	public void thenTheFirstPlayingFileIsTheFirstServiceFile() {
+		assertThat(firstPlayingFile.getServiceFile()).isEqualTo(new ServiceFile(1));
 	}
 
 	@Test

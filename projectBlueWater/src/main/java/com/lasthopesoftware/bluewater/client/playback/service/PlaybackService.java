@@ -564,7 +564,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				playlistPlaybackBootstrapper);
 
 		playlistManager
-			.setOnPlaylistStarted(this::handlePlaybackStarted)
+			.setOnPlaybackStarted(this::handlePlaybackStarted)
 			.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
 			.setOnPlaylistError(this::uncaughtExceptionHandler);
 
