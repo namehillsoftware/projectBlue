@@ -118,7 +118,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 					final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
 					startPlayback(preparedPlaybackQueue, filePosition)
 						.firstElement()
-						.subscribe(playbackFile -> messenger.sendResolution(playbackFile.asPositionedFile()));
+						.subscribe(playbackFile -> messenger.sendResolution(playbackFile.asPositionedFile()), messenger::sendRejection);
 				} catch (Exception e) {
 					messenger.sendRejection(e);
 				}
