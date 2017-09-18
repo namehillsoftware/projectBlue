@@ -214,21 +214,18 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 				if (onPlaylistError != null)
 					onPlaylistError.runWith(e);
 			},
-			() -> positionedPlaybackFile
-				.getPlaybackHandler()
-				.promisePlayback()
-				.eventually(handler -> {
-					isPlaying = false;
-					return changePosition(0, 0);
-				})
-				.then(positionedFile -> {
-					if (onPlayingFileChanged != null)
-						onPlayingFileChanged.onPlayingFileChanged(new PositionedPlaybackFile(
-							new EmptyPlaybackHandler(0),
-							positionedFile));
+			() -> {
+				isPlaying = false;
+				changePosition(0, 0)
+					.then(positionedFile -> {
+						if (onPlayingFileChanged != null)
+							onPlayingFileChanged.onPlayingFileChanged(new PositionedPlaybackFile(
+								new EmptyPlaybackHandler(0),
+								positionedFile));
 
-					return null;
-				}));
+						return null;
+					});
+			});
 
 		observable.firstElement()
 			.subscribe(
