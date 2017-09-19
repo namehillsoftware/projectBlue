@@ -563,7 +563,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		playlistManager
 			.setOnPlaybackStarted(this::handlePlaybackStarted)
 			.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
-			.setOnPlaylistError(this::uncaughtExceptionHandler);
+			.setOnPlaylistError(this::uncaughtExceptionHandler)
+			.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete);
 
 		return playlistManager;
 	}

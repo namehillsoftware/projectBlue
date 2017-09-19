@@ -33,6 +33,7 @@ public class WhenObservingPlayback {
 
 	private static boolean isPlaying;
 	private static PositionedPlaybackFile firstPlayingFile;
+	private static boolean isCompleted;
 
 	@BeforeClass
 	public static void context() throws IOException, InterruptedException {
@@ -59,6 +60,7 @@ public class WhenObservingPlayback {
 		playlistManager
 			.setOnPlaybackStarted(p -> firstPlayingFile = p)
 			.setOnPlayingFileChanged(p -> countDownLatch.countDown())
+			.setOnPlaybackCompleted(() -> isCompleted = true)
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -88,5 +90,10 @@ public class WhenObservingPlayback {
 	@Test
 	public void thenThePlaylistIsNotPlaying() {
 		assertThat(isPlaying).isFalse();
+	}
+
+	@Test
+	public void thenThePlaybackIsCompleted() {
+		assertThat(isCompleted).isTrue();
 	}
 }

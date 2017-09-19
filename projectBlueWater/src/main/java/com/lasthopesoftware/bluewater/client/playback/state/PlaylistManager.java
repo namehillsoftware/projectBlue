@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackQu
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.IStartPlayback;
+import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaybackCompleted;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlayingFileChanged;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -52,6 +53,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 	private OnPlayingFileChanged onPlayingFileChanged;
 	private OneParameterAction<Throwable> onPlaylistError;
 	private OnPlaybackStarted onPlaybackStarted;
+	private OnPlaybackCompleted onPlaybackCompleted;
 
 	public PlaylistManager(IPlaybackPreparerProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration configuration, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
 		this.nowPlayingRepository = nowPlayingRepository;
@@ -183,6 +185,12 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 		return this;
 	}
 
+	@Override
+	public PlaylistManager setOnPlaybackCompleted(OnPlaybackCompleted onPlaybackCompleted) {
+		this.onPlaybackCompleted = onPlaybackCompleted;
+		return this;
+	}
+
 	private void startPlaybackFromNowPlaying(NowPlaying nowPlaying) throws IOException {
 		final IPositionedFileQueueProvider positionedFileQueueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 
@@ -222,6 +230,9 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 							onPlayingFileChanged.onPlayingFileChanged(new PositionedPlaybackFile(
 								new EmptyPlaybackHandler(0),
 								positionedFile));
+
+						if (onPlaybackCompleted != null)
+							onPlaybackCompleted.onPlaybackCompleted();
 
 						return null;
 					});
