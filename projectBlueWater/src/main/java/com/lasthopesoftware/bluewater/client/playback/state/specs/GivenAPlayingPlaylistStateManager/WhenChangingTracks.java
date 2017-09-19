@@ -20,8 +20,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +35,8 @@ public class WhenChangingTracks {
 
 	private static PositionedFile nextSwitchedFile;
 	private static PositionedPlaybackFile latestFile;
+
+	private static List<PositionedPlaybackFile> startedFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws IOException, InterruptedException {
@@ -57,6 +61,7 @@ public class WhenChangingTracks {
 		final CountDownLatch countDownLatch = new CountDownLatch(2);
 
 		playlistManager
+			.setOnPlaybackStarted(p -> startedFiles.add(p))
 			.setOnPlayingFileChanged(p -> {
 				latestFile = p;
 				countDownLatch.countDown();
@@ -91,5 +96,20 @@ public class WhenChangingTracks {
 	@Test
 	public void thenTheLatestObservedFileIsAtTheCorrectTrackPosition() {
 		assertThat(latestFile.getPlaylistPosition()).isEqualTo(3);
+	}
+
+	@Test
+	public void thenTheFirstStartedFileIsCorrect() {
+		assertThat(startedFiles.get(0).asPositionedFile()).isEqualTo(new PositionedFile(0, new ServiceFile(1)));
+	}
+
+	@Test
+	public void thenTheChangedStartedFileIsCorrect() {
+		assertThat(startedFiles.get(1).asPositionedFile()).isEqualTo(new PositionedFile(3, new ServiceFile(4)));
+	}
+
+	@Test
+	public void thenThePlaylistIsStartedTwice() {
+		assertThat(startedFiles).hasSize(2);
 	}
 }
