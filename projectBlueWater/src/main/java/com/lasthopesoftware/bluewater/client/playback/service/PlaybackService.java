@@ -786,12 +786,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		broadcastChangedFile(positionedPlaybackFile.asPositionedFile());
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
-		if (playbackHandler instanceof EmptyPlaybackHandler) return;
-
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
+
+		if (playbackHandler instanceof EmptyPlaybackHandler) return;
+
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		final Disposable localFilePositionSubscription = filePositionSubscription =
 			Observable
@@ -815,7 +816,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				notifyForeground(notificationBuilder);
 				return null;
 			}, this))
-			.excuse(e -> LoopedInPromise.response(exception -> {
+			.excuse(e -> e)
+			.eventually(LoopedInPromise.response(exception -> {
 				final Builder builder = new Builder(this);
 				builder.setOngoing(true);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
@@ -824,7 +826,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				notifyForeground(builder);
 
 				return null;
-			}, this).promiseResponse(e));
+			}, this));
 	}
 
 	private Void broadcastChangedFile(PositionedFile positionedFile) {

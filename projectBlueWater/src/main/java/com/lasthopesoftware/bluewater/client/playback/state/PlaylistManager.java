@@ -67,7 +67,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 
 		this.playlist = playlist;
 
-		updateLibraryPlaylistPositions(playlistPosition, filePosition).then(perform(this::startPlaybackFromNowPlaying));
+		updateLibraryPlaylistPositions(playlistPosition, filePosition).then(perform(this::resumePlaybackFromNowPlaying));
 	}
 
 	public Promise<PositionedFile> skipToNext() {
@@ -148,7 +148,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 		}
 
 		restorePlaylistFromStorage().then(np -> {
-			startPlaybackFromNowPlaying(np);
+			resumePlaybackFromNowPlaying(np);
 			return null;
 		});
 	}
@@ -191,7 +191,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 		return this;
 	}
 
-	private void startPlaybackFromNowPlaying(NowPlaying nowPlaying) throws IOException {
+	private void resumePlaybackFromNowPlaying(NowPlaying nowPlaying) throws IOException {
 		final IPositionedFileQueueProvider positionedFileQueueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 
 		final IPositionedFileQueue fileQueue = positionedFileQueueProvider.provideQueue(nowPlaying.playlist, nowPlaying.playlistPosition);
@@ -224,6 +224,9 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 			},
 			() -> {
 				isPlaying = false;
+				positionedPlaybackFile = null;
+				activePlayer = null;
+
 				changePosition(0, 0)
 					.then(positionedFile -> {
 						if (onPlayingFileChanged != null)
@@ -355,6 +358,14 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 		onPlaybackStarted = null;
 		onPlayingFileChanged = null;
 		onPlaylistError = null;
+
+		if (playbackSubscription != null)
+			playbackSubscription.dispose();
+
+		activePlayer = null;
+
+		positionedPlaybackFile = null;
+		playlist = null;
 
 		preparedPlaybackQueueResourceManagement.close();
 	}
