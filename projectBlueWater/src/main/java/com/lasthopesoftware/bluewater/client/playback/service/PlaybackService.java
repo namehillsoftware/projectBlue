@@ -10,7 +10,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.RemoteControlClient;
@@ -115,9 +114,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	public static void seekTo(final Context context, int filePos) {
-		final Intent svcIntent = getNewSelfIntent(context, Action.seekTo);
-		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
-		context.startService(svcIntent);
+		seekTo(context, filePos, 0);
 	}
 
 	public static void seekTo(final Context context, int filePos, int fileProgress) {
@@ -178,7 +175,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
 
-	private WifiLock wifiLock = null;
 	private final ILazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
 	private final ILazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
 	private final ILazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
@@ -225,7 +221,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final ILazy<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 	private final ILazy<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
 
-	private Bitmap remoteClientBitmap = null;
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
 
@@ -239,6 +234,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private Disposable filePositionSubscription;
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
 	private RemoteControlProxy remoteControlProxy;
+
+	private WifiLock wifiLock = null;
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -877,11 +874,6 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isInitialized()) {
 			lazyMediaSession.getObject().setActive(false);
 			lazyMediaSession.getObject().release();
-		}
-
-		if (remoteClientBitmap != null) {
-			remoteClientBitmap.recycle();
-			remoteClientBitmap = null;
 		}
 
 		if (filePositionSubscription != null)
