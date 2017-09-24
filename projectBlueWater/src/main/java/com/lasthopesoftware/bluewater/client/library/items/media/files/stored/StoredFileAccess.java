@@ -4,12 +4,9 @@ import android.content.Context;
 import android.database.SQLException;
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
@@ -36,15 +33,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by david on 7/14/15.
- */
-public class StoredFileAccess {
+public final class StoredFileAccess implements IStoredFileAccess {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
 	private final Context context;
 	private final Library library;
+	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
 	private static final String selectFromStoredFiles = "SELECT * FROM " + StoredFileEntityInformation.tableName;
 
@@ -69,11 +64,13 @@ public class StoredFileAccess {
 							.setFilter("WHERE id = @id")
 							.buildQuery());
 
-	public StoredFileAccess(Context context, Library library) {
+	public StoredFileAccess(Context context, Library library, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
 		this.context = context;
 		this.library = library;
+		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
+	@Override
 	public Promise<StoredFile> getStoredFile(final int storedFileId) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -82,6 +79,7 @@ public class StoredFileAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
+	@Override
 	public Promise<StoredFile> getStoredFile(final ServiceFile serviceServiceFile) {
 		return getStoredFileTask(serviceServiceFile);
 	}
@@ -105,6 +103,7 @@ public class StoredFileAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
+	@Override
 	public Promise<List<StoredFile>> getDownloadingStoredFiles() {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -117,6 +116,7 @@ public class StoredFileAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
+	@Override
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -138,6 +138,7 @@ public class StoredFileAccess {
 		});
 	}
 
+	@Override
 	public void addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -174,9 +175,8 @@ public class StoredFileAccess {
 		});
 	}
 
-	public Promise<StoredFile> createOrUpdateFile(IConnectionProvider connectionProvider, final ServiceFile serviceFile) {
-		final IFilePropertiesContainerRepository filePropertiesContainerRepository = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertiesContainerRepository, new FilePropertiesProvider(connectionProvider, filePropertiesContainerRepository));
+	@Override
+	public Promise<StoredFile> createOrUpdateFile(final ServiceFile serviceFile) {
 		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
 		final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
 
@@ -266,8 +266,9 @@ public class StoredFileAccess {
 				}, RepositoryAccessHelper.databaseExecutor));
 	}
 
-	public Promise<Collection<Void>> pruneStoredFiles(final Set<Integer> serviceIdsToKeep) {
-		return promiseAllStoredFilesInLibrary().eventually(new PruneFilesTask(context, library, serviceIdsToKeep));
+	@Override
+	public Promise<Collection<Void>> pruneStoredFiles(final Set<ServiceFile> serviceFilesToKeep) {
+		return promiseAllStoredFilesInLibrary().eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, ServiceFile serviceFile) {
@@ -323,20 +324,18 @@ public class StoredFileAccess {
 
 	void deleteStoredFile(final StoredFile storedFile) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
-			final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context);
-			final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction();
-			try {
-				repositoryAccessHelper
+			try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+				try (final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
+
+					repositoryAccessHelper
 						.mapSql("DELETE FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
 						.addParameter("id", storedFile.getId())
 						.execute();
 
-				closeableTransaction.setTransactionSuccessful();
-			} catch (SQLException e) {
-				logger.error("There was an error deleting serviceFile " + storedFile.getId(), e);
-			} finally {
-				closeableTransaction.close();
-				repositoryAccessHelper.close();
+					closeableTransaction.setTransactionSuccessful();
+				} catch (SQLException e) {
+					logger.error("There was an error deleting serviceFile " + storedFile.getId(), e);
+				}
 			}
 		});
 	}

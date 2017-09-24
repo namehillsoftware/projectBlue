@@ -12,9 +12,9 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
 
-import java.util.List;
+import java.util.Collection;
 
-public class StoredItemAccess {
+public final class StoredItemAccess implements IStoredItemAccess {
 
 	private static final Lazy<String> storedItemInsertSql = new Lazy<>(
 			() -> InsertBuilder
@@ -32,14 +32,16 @@ public class StoredItemAccess {
 	    this.library = library;
     }
 
-    public void toggleSync(IItem item, boolean enable) {
+    @Override
+	public void toggleSync(IItem item, boolean enable) {
 	    if (enable)
             enableItemSync(item, getListType(item));
 	    else
 		    disableItemSync(item, getListType(item));
     }
 
-    public Promise<Boolean> isItemMarkedForSync(final IItem item) {
+    @Override
+	public Promise<Boolean> isItemMarkedForSync(final IItem item) {
         return new QueuedPromise<>(() -> {
 	           try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 		            return isItemMarkedForSync(repositoryAccessHelper, library, item, getListType(item));
@@ -88,7 +90,8 @@ public class StoredItemAccess {
         });
     }
 
-    public Promise<List<StoredItem>> getStoredItems() {
+    @Override
+	public Promise<Collection<StoredItem>> promiseStoredItems() {
         return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return

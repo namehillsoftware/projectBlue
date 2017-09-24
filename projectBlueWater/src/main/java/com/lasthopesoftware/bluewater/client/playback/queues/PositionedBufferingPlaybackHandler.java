@@ -3,9 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.queues;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 
-/**
- * Created by david on 11/6/16.
- */
 class PositionedBufferingPlaybackHandler {
 	final PositionedFile positionedFile;
 	final IBufferingPlaybackHandler bufferingPlaybackHandler;
@@ -13,5 +10,13 @@ class PositionedBufferingPlaybackHandler {
 	PositionedBufferingPlaybackHandler(PositionedFile positionedFile, IBufferingPlaybackHandler bufferingPlaybackHandler) {
 		this.positionedFile = positionedFile;
 		this.bufferingPlaybackHandler = bufferingPlaybackHandler;
+	}
+
+	boolean isEmpty() {
+		return bufferingPlaybackHandler == null;
+	}
+
+	public static PositionedBufferingPlaybackHandler emptyHandler(PositionedFile positionedFile) {
+		return new PositionedBufferingPlaybackHandler(positionedFile, null);
 	}
 }

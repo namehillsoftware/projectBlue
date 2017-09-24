@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
+import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
@@ -70,8 +71,9 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 					new ServiceFile(5)), 0, 0)
 			.then(obs -> obs.subscribe(f -> positionedFiles.add(f)));
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve().resolve();
+		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
+		playingPlaybackHandler.resolve();
 
 		playlistManager.pause();
 

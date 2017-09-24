@@ -13,13 +13,19 @@ public class StoredItem implements IEntityCreator, IEntityUpdater {
 	public static final String itemTypeColumnName = "itemType";
 
 	private int id;
-	
 	private int libraryId;
-
 	// unique with library id
 	private int serviceId;
-	
 	private ItemType itemType;
+
+	@SuppressWarnings("unused")
+	public StoredItem() {}
+
+	public StoredItem(int libraryId, int serviceId, ItemType itemType) {
+		this.libraryId = libraryId;
+		this.serviceId = serviceId;
+		this.itemType = itemType;
+	}
 	
 	public int getLibraryId() {
 		return libraryId;

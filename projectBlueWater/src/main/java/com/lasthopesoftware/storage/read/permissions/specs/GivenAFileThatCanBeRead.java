@@ -12,9 +12,6 @@ import java.io.File;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 7/17/16.
- */
 public class GivenAFileThatCanBeRead {
 
 	public static class WhenCheckingForPermissions {

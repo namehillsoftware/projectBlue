@@ -4,10 +4,7 @@ import com.lasthopesoftware.storage.RecursiveFileAssertionTester;
 
 import java.io.File;
 
-/**
- * Created by david on 7/17/16.
- */
-public class FileReadPossibleArbitrator implements IFileReadPossibleArbitrator {
+public final class FileReadPossibleArbitrator implements IFileReadPossibleArbitrator {
 
 	@Override
 	public boolean isFileReadPossible(File file) {

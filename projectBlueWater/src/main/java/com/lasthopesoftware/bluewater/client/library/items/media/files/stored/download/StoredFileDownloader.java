@@ -1,24 +1,22 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download;
 
-import android.content.Context;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
+import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
-import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
@@ -30,18 +28,21 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-public class StoredFileDownloader {
+public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileDownloader.class);
 
 	private boolean isProcessing;
 
-	private final StoredFileAccess storedFileAccess;
-	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
-	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
-	private final IConnectionProvider connectionProvider;
-	private final Set<Integer> queuedFileKeys = new HashSet<>();
-	private final Queue<StoredFileJob> storedFileJobQueue = new LinkedList<>();
+	@NonNull private final IStoredFileAccess storedFileAccess;
+	@NonNull private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
+	@NonNull private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
+	@NonNull private final IFileStreamWriter fileStreamWriter;
+	@NonNull private final IConnectionProvider connectionProvider;
+	@NonNull private final Set<Integer> queuedFileKeys = new HashSet<>();
+	@NonNull private final Queue<StoredFileJob> storedFileJobQueue = new LinkedList<>();
+	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileQueryUriParamsProvider;
+	@NonNull private final IStoredFileSystemFileProducer storedFileSystemFileProducer;
 
 	private OneParameterAction<StoredFile> onFileDownloading;
 	private OneParameterAction<StoredFileJobResult> onFileDownloaded;
@@ -50,37 +51,45 @@ public class StoredFileDownloader {
 	private OneParameterAction<StoredFile> onFileWriteError;
 	private Runnable onQueueProcessingCompleted;
 
-	private volatile boolean isCancelled;
+	private final CancellationToken cancellationToken = new CancellationToken();
 
-	public StoredFileDownloader(@NonNull Context context, @NonNull IConnectionProvider connectionProvider, @NonNull Library library) {
-		this(
-				connectionProvider,
-				new StoredFileAccess(context, library),
-				new FileReadPossibleArbitrator(),
-				new FileWritePossibleArbitrator());
-	}
-
-	public StoredFileDownloader(@NonNull IConnectionProvider connectionProvider, @NonNull StoredFileAccess storedFileAccess, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator) {
+	public StoredFileDownloader(@NonNull IStoredFileSystemFileProducer storedFileSystemFileProducer, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileQueryUriParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
+		this.storedFileSystemFileProducer = storedFileSystemFileProducer;
 		this.connectionProvider = connectionProvider;
 		this.storedFileAccess = storedFileAccess;
+		this.serviceFileQueryUriParamsProvider = serviceFileQueryUriParamsProvider;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
+		this.fileStreamWriter = fileStreamWriter;
 	}
 
+	@Override
 	public void queueFileForDownload(@NonNull final ServiceFile serviceFile, @NonNull final StoredFile storedFile) {
-		if (isProcessing || isCancelled)
+		if (isProcessing || cancellationToken.isCancelled())
 			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
 
 		final int fileKey = serviceFile.getKey();
 		if (!queuedFileKeys.add(fileKey)) return;
 
-		storedFileJobQueue.add(new StoredFileJob(connectionProvider, storedFileAccess, ServiceFileUriQueryParamsProvider.getInstance(), fileReadPossibleArbitrator, fileWritePossibleArbitrator, serviceFile, storedFile));
+		storedFileJobQueue.add(
+			new StoredFileJob(
+				storedFileSystemFileProducer,
+				connectionProvider,
+				storedFileAccess,
+				serviceFileQueryUriParamsProvider,
+				fileReadPossibleArbitrator,
+				fileWritePossibleArbitrator,
+				fileStreamWriter,
+				serviceFile,
+				storedFile));
+
 		if (onFileQueued != null)
 			onFileQueued.runWith(storedFile);
 	}
 
+	@Override
 	public void cancel() {
-		isCancelled = true;
+		cancellationToken.run();
 
 		Stream.of(storedFileJobQueue).forEach(StoredFileJob::cancel);
 
@@ -89,8 +98,9 @@ public class StoredFileDownloader {
 		onQueueProcessingCompleted.run();
 	}
 
+	@Override
 	public void process() {
-		if (isCancelled)
+		if (cancellationToken.isCancelled())
 			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
 
 		if (isProcessing)
@@ -98,11 +108,11 @@ public class StoredFileDownloader {
 
 		isProcessing = true;
 
-		AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+		new Thread(() -> {
 			try {
 				StoredFileJob storedFileJob;
 				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
-					if (isCancelled) return;
+					if (cancellationToken.isCancelled()) return;
 
 					final StoredFile storedFile = storedFileJob.getStoredFile();
 
@@ -129,29 +139,35 @@ public class StoredFileDownloader {
 			} finally {
 				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
 			}
-		});
+		}).start();
 	}
 
+	@Override
 	public void setOnFileQueued(@Nullable OneParameterAction<StoredFile> onFileQueued) {
 		this.onFileQueued = onFileQueued;
 	}
 
+	@Override
 	public void setOnFileDownloading(@Nullable OneParameterAction<StoredFile> onFileDownloading) {
 		this.onFileDownloading = onFileDownloading;
 	}
 
+	@Override
 	public void setOnFileDownloaded(@Nullable OneParameterAction<StoredFileJobResult> onFileDownloaded) {
 		this.onFileDownloaded = onFileDownloaded;
 	}
 
+	@Override
 	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
+	@Override
 	public void setOnFileReadError(@Nullable OneParameterAction<StoredFile> onFileReadError) {
 		this.onFileReadError = onFileReadError;
 	}
 
+	@Override
 	public void setOnFileWriteError(@Nullable OneParameterAction<StoredFile> onFileWriteError) {
 		this.onFileWriteError = onFileWriteError;
 	}

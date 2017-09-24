@@ -64,9 +64,10 @@ public class WhenNotObservingPlayback {
 					new ServiceFile(5)), 0, 0);
 
 		final ResolveablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-		resolveablePlaybackHandler.resolve();
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		resolveablePlaybackHandler.resolve();
 	}
 
 	@Test
