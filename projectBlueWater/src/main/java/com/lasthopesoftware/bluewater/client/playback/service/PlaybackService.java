@@ -591,7 +591,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.then(perform(playlist -> playlistManager.startPlaylist(playlist, playlistPosition, 0)));
+				.then(playlist -> {
+					playlistManager.startPlaylist(playlist, playlistPosition, 0);
+					NowPlayingActivity.startNowPlayingActivity(this);
+
+					return null;
+				});
 
 			return;
         }
