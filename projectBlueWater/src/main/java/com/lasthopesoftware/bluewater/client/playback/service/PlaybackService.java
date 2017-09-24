@@ -48,7 +48,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
@@ -705,15 +705,15 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
-		if (exception instanceof MediaPlayerException) {
-			handleMediaPlayerException((MediaPlayerException)exception);
+		if (exception instanceof MediaPlayerErrorException) {
+			handleMediaPlayerException((MediaPlayerErrorException)exception);
 			return;
 		}
 
 		logger.error("An uncaught error has occurred!", exception);
 	}
 
-	private void handleMediaPlayerException(MediaPlayerException exception) {
+	private void handleMediaPlayerException(MediaPlayerErrorException exception) {
 		final long currentErrorTime = System.currentTimeMillis();
 		// Stop handling errors if more than the max errors has occurred
 		if (++numberOfErrors > maxErrors) {

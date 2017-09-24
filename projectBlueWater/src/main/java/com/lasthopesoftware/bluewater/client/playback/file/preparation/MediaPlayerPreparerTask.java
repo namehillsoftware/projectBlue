@@ -6,15 +6,13 @@ import android.net.Uri;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import com.vedsoft.futures.runnables.OneParameterAction;
 import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
 import java.io.IOException;
@@ -113,7 +111,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IBufferingP
 
 		@Override
 		public boolean onError(MediaPlayer mp, int what, int extra) {
-			messenger.sendRejection(new MediaPlayerException(new EmptyPlaybackHandler(0), mp, what, extra));
+			messenger.sendRejection(new MediaPlayerErrorException(new EmptyPlaybackHandler(0), mp, what, extra));
 			return true;
 		}
 
