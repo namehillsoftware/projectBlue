@@ -16,6 +16,7 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 
 	private final MediaPlayer mediaPlayer;
 	private final Promise<IBufferingPlaybackHandler> bufferingPromise;
+	private final MediaPlayerPlaybackCompletedTask mediaPlayerTask;
 	private float volume;
 	private final Promise<IPlaybackHandler> playbackPromise;
 
@@ -23,17 +24,14 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
-		playbackPromise = new Promise<>(new MediaPlayerPlaybackCompletedPromise(this, mediaPlayer));
+		mediaPlayerTask = new MediaPlayerPlaybackCompletedTask(this, mediaPlayer);
+		playbackPromise = new Promise<>(mediaPlayerTask);
 		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
 	}
 
 	@Override
 	public boolean isPlaying() {
-		try {
-			return mediaPlayer.isPlaying();
-		} catch (IllegalStateException e) {
-			return false;
-		}
+		return mediaPlayerTask.isPlaying();
 	}
 
 	@Override
@@ -70,13 +68,7 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 
 	@Override
 	public synchronized Promise<IPlaybackHandler> promisePlayback() {
-		if (!isPlaying()) {
-			try {
-				mediaPlayer.start();
-			} catch (IllegalStateException e) {
-				mediaPlayer.release();
-			}
-		}
+		mediaPlayerTask.play();
 
 		return playbackPromise;
 	}

@@ -54,14 +54,14 @@ public class WhenObservingPlayback {
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
 		playlistManager
+			.setOnPlayingFileChanged(p -> firstSwitchedFile = p)
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0)
-			.then(obs -> obs.subscribe(p -> firstSwitchedFile = p));
+					new ServiceFile(5)), 0, 0);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}

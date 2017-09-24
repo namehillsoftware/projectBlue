@@ -1,28 +1,26 @@
-package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAHaltedPlaylistStateManager.AndPlaybackPlaysThroughCompletion;
+package com.lasthopesoftware.bluewater.client.playback.state.specs.GivenAPlayingPlaylistStateManager.AndAnErrorOccurs;
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,13 +29,13 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingPlayback {
 
-	private static boolean isPlaying;
-	private static PositionedPlaybackFile firstPlayingFile;
-	private static boolean isCompleted;
+	private static Throwable error;
 
 	@BeforeClass
-	public static void context() throws IOException, InterruptedException {
-		final FakeDeferredPlaybackPreparerProvider fakePlaybackPreparerProvider = new FakeDeferredPlaybackPreparerProvider();
+	public static void context() {
+		final DeferredErrorPlaybackPreparer deferredErrorPlaybackPreparer = new DeferredErrorPlaybackPreparer();
+
+		final IPlaybackPreparerProvider fakePlaybackPreparerProvider = () -> deferredErrorPlaybackPreparer;
 
 		final Library library = new Library();
 		library.setId(1);
@@ -55,12 +53,8 @@ public class WhenObservingPlayback {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
-		final CountDownLatch countDownLatch = new CountDownLatch(5);
-
 		playlistManager
-			.setOnPlaybackStarted(p -> firstPlayingFile = p)
-			.setOnPlayingFileChanged(p -> countDownLatch.countDown())
-			.setOnPlaybackCompleted(() -> isCompleted = true)
+			.setOnPlaylistError(e -> error = e)
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -69,31 +63,26 @@ public class WhenObservingPlayback {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-		for (int i = 0; i < 4; i ++) {
-			final ResolveablePlaybackHandler newPlayingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-			playingPlaybackHandler.resolve();
-			playingPlaybackHandler = newPlayingPlaybackHandler;
+		deferredErrorPlaybackPreparer.resolve();
+	}
+
+	@Test
+	public void thenTheErrorIsBroadcast() {
+		assertThat(error).isNotNull();
+	}
+
+	private static class DeferredErrorPlaybackPreparer implements IPlaybackPreparer {
+
+		private Messenger<IBufferingPlaybackHandler> reject;
+
+		void resolve() {
+			if (reject != null)
+				reject.sendRejection(new Exception());
 		}
-		playingPlaybackHandler.resolve();
 
-		countDownLatch.await(1, TimeUnit.SECONDS);
-
-		isPlaying = playlistManager.isPlaying();
-	}
-
-	@Test
-	public void thenTheFirstPlayingFileIsTheFirstServiceFile() {
-		assertThat(firstPlayingFile.getServiceFile()).isEqualTo(new ServiceFile(1));
-	}
-
-	@Test
-	public void thenThePlaylistIsNotPlaying() {
-		assertThat(isPlaying).isFalse();
-	}
-
-	@Test
-	public void thenThePlaybackIsCompleted() {
-		assertThat(isCompleted).isTrue();
+		@Override
+		public Promise<IBufferingPlaybackHandler> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
+			return new Promise<>(messenger -> reject = messenger);
+		}
 	}
 }

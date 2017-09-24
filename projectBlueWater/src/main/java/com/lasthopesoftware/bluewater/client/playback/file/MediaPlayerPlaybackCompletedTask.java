@@ -2,11 +2,12 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 
 import android.media.MediaPlayer;
 
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 
-final class MediaPlayerPlaybackCompletedPromise implements
+final class MediaPlayerPlaybackCompletedTask implements
 	MessengerOperator<IPlaybackHandler>,
 	MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
 
@@ -14,9 +15,28 @@ final class MediaPlayerPlaybackCompletedPromise implements
 	private final MediaPlayer mediaPlayer;
 	private Messenger<IPlaybackHandler> playbackHandlerMessenger;
 
-	MediaPlayerPlaybackCompletedPromise(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer) {
+	MediaPlayerPlaybackCompletedTask(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer) {
 		this.playbackHandler = playbackHandler;
 		this.mediaPlayer = mediaPlayer;
+	}
+
+	void play() {
+		if (playbackHandlerMessenger == null || isPlaying()) return;
+
+		try {
+			mediaPlayer.start();
+		} catch (IllegalStateException e) {
+			mediaPlayer.release();
+			playbackHandlerMessenger.sendRejection(new MediaPlayerException(playbackHandler, mediaPlayer, e));
+		}
+	}
+
+	boolean isPlaying() {
+		try {
+			return mediaPlayer.isPlaying();
+		} catch (IllegalStateException e) {
+			return false;
+		}
 	}
 
 	@Override
@@ -34,7 +54,7 @@ final class MediaPlayerPlaybackCompletedPromise implements
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		playbackHandlerMessenger.sendRejection(new MediaPlayerException(playbackHandler, mp, what, extra));
+		playbackHandlerMessenger.sendRejection(new MediaPlayerErrorException(playbackHandler, mp, what, extra));
 		return true;
 	}
 }
