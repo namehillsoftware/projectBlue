@@ -2,19 +2,22 @@ package com.lasthopesoftware.bluewater.client.playback.file.preparation;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingMediaPlayerFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 
-public class PreparedMediaPlayer implements IPreparedPlaybackFile {
+class PreparedMediaPlayer implements IPreparedPlaybackFile {
 
 	private final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler;
+	private final BufferingMediaPlayerFile bufferingMediaPlayerFile;
 
-	public PreparedMediaPlayer(MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler) {
+	PreparedMediaPlayer(MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler, BufferingMediaPlayerFile bufferingMediaPlayerFile) {
 		this.mediaPlayerPlaybackHandler = mediaPlayerPlaybackHandler;
+		this.bufferingMediaPlayerFile = bufferingMediaPlayerFile;
 	}
 
 	@Override
 	public IBufferingPlaybackFile getBufferingPlaybackFile() {
-		return mediaPlayerPlaybackHandler;
+		return bufferingMediaPlayerFile;
 	}
 
 	@Override

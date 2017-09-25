@@ -5,6 +5,7 @@ import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingMediaPlayerFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.messenger.Messenger;
@@ -124,13 +125,13 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 				return;
 			}
 
-			messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mp)));
+			messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
 		}
 
 		@Override
 		public void onSeekComplete(MediaPlayer mp) {
 			if (!cancellationToken.isCancelled())
-				messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mp)));
+				messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
 		}
 
 		@Override
