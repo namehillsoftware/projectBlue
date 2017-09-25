@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
+import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
@@ -711,20 +712,60 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private void uncaughtExceptionHandler(Throwable exception) {
 		if (exception instanceof MediaPlayerErrorException) {
-			handleMediaPlayerException((MediaPlayerErrorException)exception);
+			handleMediaPlayerErrorException((MediaPlayerErrorException)exception);
 			return;
 		}
 
-		logger.error("An uncaught error has occurred!", exception);
+		if (exception instanceof IOException) {
+			handleIoException((IOException)exception);
+			return;
+		}
+
+		if (exception instanceof PlaybackException) {
+			handlePlaybackException((PlaybackException)exception);
+			return;
+		}
+
+		logger.error("An unexpected error has occurred!", exception);
 	}
 
-	private void handleMediaPlayerException(MediaPlayerErrorException exception) {
+	private void handlePlaybackException(PlaybackException exception) {
+		if (exception.getCause() instanceof IllegalStateException) {
+			logger.error("The player ended up in an illegal state - closing and restarting the player", exception);
+			closeAndRestartPlaylistManager();
+
+			return;
+		}
+
+		if (exception.getCause() instanceof IOException) {
+			handleIoException((IOException)exception.getCause());
+			return;
+		}
+
+		logger.error("An unexpected playback exception occurred", exception);
+	}
+
+	private void handleIoException(IOException exception) {
+		logger.error("An IO exception occurred during playback", exception);
+		handleDisconnection();
+	}
+
+	private void handleMediaPlayerErrorException(MediaPlayerErrorException exception) {
+		logger.error("A media player error occurred - what: " + exception.what + ", extra: " + exception.extra, exception);
+		handleDisconnection();
+	}
+
+	private void handleDisconnection() {
 		final long currentErrorTime = System.currentTimeMillis();
 		// Stop handling errors if more than the max errors has occurred
 		if (++numberOfErrors > maxErrors) {
 			// and the last error time is less than the error count reset duration
-			if (currentErrorTime <= lastErrorTime + errorCountResetDuration)
+			if (currentErrorTime <= lastErrorTime + errorCountResetDuration) {
+				logger.warn("Number of errors has not surpassed " + maxErrors + " in less than " + errorCountResetDuration + "ms. Closing and restarting playlist manager.");
+
+				closeAndRestartPlaylistManager();
 				return;
+			}
 
 			// reset the error count if enough time has elapsed to reset the error count
 			numberOfErrors = 1;
@@ -750,6 +791,26 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
 		
 		checkConnection.startPolling();
+	}
+
+	private void closeAndRestartPlaylistManager() {
+		try {
+			playlistManager.close();
+		} catch (Exception e) {
+			uncaughtExceptionHandler(e);
+			return;
+		}
+
+		lazyLibraryRepository.getObject()
+			.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
+			.then(perform(this::initializePlaybackPlaylistStateManager))
+			.then(v -> {
+				if (isPlaying)
+					playlistManager.resume();
+
+				return null;
+			})
+			.excuse(perform(this::uncaughtExceptionHandler));
 	}
 
 	@Override
