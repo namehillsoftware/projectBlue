@@ -281,7 +281,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	};
 
-	private final ImmediateResponse<Throwable, Void> UnhandledRejectionHandler = perform(this::uncaughtExceptionHandler);
+	private final ImmediateResponse<Throwable, Void> UnhandledRejectionHandler = (e) -> {
+		uncaughtExceptionHandler(e);
+		return null;
+	};
 
 	public boolean isPlaying() {
 		return isPlaying;
@@ -810,7 +813,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 				return null;
 			})
-			.excuse(perform(this::uncaughtExceptionHandler));
+			.excuse(UnhandledRejectionHandler);
 	}
 
 	@Override
