@@ -9,17 +9,19 @@ import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
+import java.util.concurrent.CancellationException;
 
 public final class MediaPlayerPlaybackHandler
 implements
 	IPlaybackHandler,
 	MessengerOperator<IPlaybackHandler>,
 	MediaPlayer.OnCompletionListener,
-	MediaPlayer.OnErrorListener{
+	MediaPlayer.OnErrorListener,
+	Runnable {
 
 	private final MediaPlayer mediaPlayer;
 	private float volume;
-	private final Promise<IPlaybackHandler> playbackPromise = new Promise<>((MessengerOperator<IPlaybackHandler>) this);
+	private final Promise<IPlaybackHandler> playbackPromise;
 
 	private Messenger<IPlaybackHandler> playbackHandlerMessenger;
 
@@ -27,6 +29,7 @@ implements
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
+		playbackPromise = new Promise<>((MessengerOperator<IPlaybackHandler>) this);
 	}
 
 	@Override
@@ -88,6 +91,7 @@ implements
 	public void send(Messenger<IPlaybackHandler> playbackHandlerMessenger) {
 		this.playbackHandlerMessenger = playbackHandlerMessenger;
 
+		playbackHandlerMessenger.cancellationRequested(this);
 		mediaPlayer.setOnCompletionListener(this);
 		mediaPlayer.setOnErrorListener(this);
 	}
@@ -105,7 +109,16 @@ implements
 
 	@Override
 	public void close() throws IOException {
-		playbackPromise.cancel();
 		mediaPlayer.release();
+	}
+
+	@Override
+	public void run() {
+		try {
+			close();
+			playbackHandlerMessenger.sendRejection(new CancellationException());
+		} catch (IOException e) {
+			playbackHandlerMessenger.sendRejection(e);
+		}
 	}
 }
