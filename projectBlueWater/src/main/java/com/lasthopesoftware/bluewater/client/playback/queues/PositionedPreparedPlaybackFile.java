@@ -5,11 +5,11 @@ import android.support.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
 
-class PositionedBufferingPlaybackHandler {
+class PositionedPreparedPlaybackFile {
 	final PositionedFile positionedFile;
 	final IPreparedPlaybackFile preparedPlaybackFile;
 
-	PositionedBufferingPlaybackHandler(@NonNull PositionedFile positionedFile, IPreparedPlaybackFile preparedPlaybackFile) {
+	PositionedPreparedPlaybackFile(@NonNull PositionedFile positionedFile, IPreparedPlaybackFile preparedPlaybackFile) {
 		this.positionedFile = positionedFile;
 		this.preparedPlaybackFile = preparedPlaybackFile;
 	}
@@ -18,7 +18,7 @@ class PositionedBufferingPlaybackHandler {
 		return preparedPlaybackFile == null;
 	}
 
-	static PositionedBufferingPlaybackHandler emptyHandler(PositionedFile positionedFile) {
-		return new PositionedBufferingPlaybackHandler(positionedFile, null);
+	static PositionedPreparedPlaybackFile emptyHandler(PositionedFile positionedFile) {
+		return new PositionedPreparedPlaybackFile(positionedFile, null);
 	}
 }
