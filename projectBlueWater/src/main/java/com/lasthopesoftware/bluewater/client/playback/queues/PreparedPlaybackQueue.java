@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.queues;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
 import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
@@ -20,7 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PreparedPlaybackQueue implements
 	IPreparedPlaybackFileQueue,
-	ResponseAction<IBufferingPlaybackHandler>,
+	ResponseAction<IBufferingPlaybackFile>,
 	ImmediateResponse<PositionedBufferingPlaybackHandler, PositionedPlaybackFile>,
 	PromisedResponse<PositionedBufferingPlaybackHandler, PositionedBufferingPlaybackHandler>
 {
@@ -147,13 +148,13 @@ public class PreparedPlaybackQueue implements
 
 	@Override
 	public PositionedPlaybackFile respond(PositionedBufferingPlaybackHandler positionedBufferingPlaybackHandler) {
-		positionedBufferingPlaybackHandler.bufferingPlaybackHandler.bufferPlaybackFile().then(ImmediateAction.perform(this));
+		positionedBufferingPlaybackHandler.preparedPlaybackFile.getBufferingPlaybackFile().promiseBufferedPlaybackFile().then(ImmediateAction.perform(this));
 
-		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.bufferingPlaybackHandler, positionedBufferingPlaybackHandler.positionedFile);
+		return new PositionedPlaybackFile(positionedBufferingPlaybackHandler.preparedPlaybackFile.getPlaybackHandler(), positionedBufferingPlaybackHandler.positionedFile);
 	}
 
 	@Override
-	public void perform(IBufferingPlaybackHandler bufferingPlaybackHandler) {
+	public void perform(IBufferingPlaybackFile bufferingPlaybackHandler) {
 		beginQueueingPreparingPlayers();
 	}
 
@@ -173,11 +174,11 @@ public class PreparedPlaybackQueue implements
 		return currentPreparingPlaybackHandlerPromise.promisePositionedBufferingPlaybackHandler();
 	}
 
-	private static class PositionedPreparingFile implements ImmediateResponse<IBufferingPlaybackHandler, PositionedBufferingPlaybackHandler> {
+	private static class PositionedPreparingFile implements ImmediateResponse<IPreparedPlaybackFile, PositionedBufferingPlaybackHandler> {
 		final PositionedFile positionedFile;
-		final Promise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise;
+		final Promise<IPreparedPlaybackFile> bufferingPlaybackHandlerPromise;
 
-		private PositionedPreparingFile(PositionedFile positionedFile, Promise<IBufferingPlaybackHandler> bufferingPlaybackHandlerPromise) {
+		private PositionedPreparingFile(PositionedFile positionedFile, Promise<IPreparedPlaybackFile> bufferingPlaybackHandlerPromise) {
 			this.positionedFile = positionedFile;
 			this.bufferingPlaybackHandlerPromise = bufferingPlaybackHandlerPromise;
 		}
@@ -187,7 +188,7 @@ public class PreparedPlaybackQueue implements
 		}
 
 		@Override
-		public PositionedBufferingPlaybackHandler respond(IBufferingPlaybackHandler handler) throws Throwable {
+		public PositionedBufferingPlaybackHandler respond(IPreparedPlaybackFile handler) throws Throwable {
 			return new PositionedBufferingPlaybackHandler(positionedFile, handler);
 		}
 	}

@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.MediaPlayerBufferedPromise;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingMediaPlayerTask;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
@@ -12,10 +12,11 @@ import java.io.IOException;
  * Created by david on 9/20/16.
  */
 
-public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
+public final class MediaPlayerPlaybackHandler
+implements IBufferingPlaybackFile, IPlaybackHandler {
 
 	private final MediaPlayer mediaPlayer;
-	private final Promise<IBufferingPlaybackHandler> bufferingPromise;
+	private final Promise<IBufferingPlaybackFile> bufferingPromise;
 	private final MediaPlayerPlaybackCompletedTask mediaPlayerTask;
 	private float volume;
 	private final Promise<IPlaybackHandler> playbackPromise;
@@ -26,7 +27,7 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 		this.mediaPlayer = mediaPlayer;
 		mediaPlayerTask = new MediaPlayerPlaybackCompletedTask(this, mediaPlayer);
 		playbackPromise = new Promise<>(mediaPlayerTask);
-		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
+		bufferingPromise = new Promise<>(new BufferingMediaPlayerTask(this, mediaPlayer));
 	}
 
 	@Override
@@ -80,7 +81,7 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 	}
 
 	@Override
-	public Promise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+	public Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile() {
 		return bufferingPromise;
 	}
 }

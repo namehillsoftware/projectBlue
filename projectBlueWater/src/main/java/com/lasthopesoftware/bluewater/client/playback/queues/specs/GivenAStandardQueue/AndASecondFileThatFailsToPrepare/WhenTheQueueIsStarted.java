@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenTheQueueIsStarted {
 
-	private static final FakeBufferingPlaybackHandler expectedPlaybackHandler = new FakeBufferingPlaybackHandler();
+	private static final FakePreparedPlaybackFile<FakeBufferingPlaybackHandler> expectedPlaybackHandler = new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler());
 	private static boolean firstPromiseCancelled;
 	private static IPlaybackHandler returnedPlaybackHandler;
 
@@ -36,7 +37,7 @@ public class WhenTheQueueIsStarted {
 
 		final IPlaybackPreparer playbackPreparer = mock(IPlaybackPreparer.class);
 		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(0), 0))
-			.thenReturn(new Promise<>(new FakeBufferingPlaybackHandler()));
+			.thenReturn(new Promise<>(new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler())));
 
 		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(1), 0))
 			.thenReturn(new Promise<>(messenger -> messenger.cancellationRequested(() -> firstPromiseCancelled = true)))

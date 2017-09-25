@@ -1,11 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
 
-public class EmptyPlaybackHandler implements IBufferingPlaybackHandler {
+public class EmptyPlaybackHandler
+implements IBufferingPlaybackFile, IPlaybackHandler {
 
 	private final int duration;
 	private float volume;
@@ -55,7 +56,7 @@ public class EmptyPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public Promise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+	public Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile() {
 		return new Promise<>(this);
 	}
 }

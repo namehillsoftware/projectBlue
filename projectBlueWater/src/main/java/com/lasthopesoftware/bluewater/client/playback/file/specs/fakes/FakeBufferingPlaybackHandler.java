@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
@@ -10,7 +10,8 @@ import java.io.IOException;
  * Created by david on 3/8/17.
  */
 
-public class FakeBufferingPlaybackHandler implements IBufferingPlaybackHandler {
+public class FakeBufferingPlaybackHandler
+implements IBufferingPlaybackFile, IPlaybackHandler {
 	private boolean isPlaying;
 	private float volume;
 	private int currentPosition;
@@ -61,7 +62,7 @@ public class FakeBufferingPlaybackHandler implements IBufferingPlaybackHandler {
 	}
 
 	@Override
-	public Promise<IBufferingPlaybackHandler> bufferPlaybackFile() {
+	public Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile() {
 		return new Promise<>(this);
 	}
 }
