@@ -2,33 +2,40 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 
 import android.media.MediaPlayer;
 
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 import java.io.IOException;
 
-/**
- * Created by david on 9/20/16.
- */
-
 public final class MediaPlayerPlaybackHandler
-implements IPlaybackHandler {
+implements
+	IPlaybackHandler,
+	MessengerOperator<IPlaybackHandler>,
+	MediaPlayer.OnCompletionListener,
+	MediaPlayer.OnErrorListener{
 
 	private final MediaPlayer mediaPlayer;
-	private final MediaPlayerPlaybackCompletedTask mediaPlayerTask;
 	private float volume;
-	private final Promise<IPlaybackHandler> playbackPromise;
+	private final Promise<IPlaybackHandler> playbackPromise = new Promise<>((MessengerOperator<IPlaybackHandler>) this);
+
+	private Messenger<IPlaybackHandler> playbackHandlerMessenger;
 
 	private int previousMediaPlayerPosition;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
-		mediaPlayerTask = new MediaPlayerPlaybackCompletedTask(this, mediaPlayer);
-		playbackPromise = new Promise<>(mediaPlayerTask);
 	}
 
 	@Override
 	public boolean isPlaying() {
-		return mediaPlayerTask.isPlaying();
+		try {
+			return mediaPlayer.isPlaying();
+		} catch (IllegalStateException e) {
+			return false;
+		}
 	}
 
 	@Override
@@ -65,9 +72,35 @@ implements IPlaybackHandler {
 
 	@Override
 	public synchronized Promise<IPlaybackHandler> promisePlayback() {
-		mediaPlayerTask.play();
+		if (isPlaying()) return playbackPromise;
+
+		try {
+			mediaPlayer.start();
+		} catch (IllegalStateException e) {
+			mediaPlayer.release();
+			playbackHandlerMessenger.sendRejection(new MediaPlayerException(this, mediaPlayer, e));
+		}
 
 		return playbackPromise;
+	}
+
+	@Override
+	public void send(Messenger<IPlaybackHandler> playbackHandlerMessenger) {
+		this.playbackHandlerMessenger = playbackHandlerMessenger;
+
+		mediaPlayer.setOnCompletionListener(this);
+		mediaPlayer.setOnErrorListener(this);
+	}
+
+	@Override
+	public void onCompletion(MediaPlayer mp) {
+		playbackHandlerMessenger.sendResolution(this);
+	}
+
+	@Override
+	public boolean onError(MediaPlayer mp, int what, int extra) {
+		playbackHandlerMessenger.sendRejection(new MediaPlayerErrorException(this, mp, what, extra));
+		return true;
 	}
 
 	@Override

@@ -8,7 +8,7 @@ import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class BufferingMediaPlayerTask implements MessengerOperator<IBufferingPlaybackFile>, MediaPlayer.OnBufferingUpdateListener {
+final class BufferingMediaPlayerTask implements MessengerOperator<IBufferingPlaybackFile>, MediaPlayer.OnBufferingUpdateListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(BufferingMediaPlayerTask.class);
 
@@ -21,7 +21,7 @@ public final class BufferingMediaPlayerTask implements MessengerOperator<IBuffer
 	private int bufferPercentage;
 	private int lastBufferPercentage;
 
-	public BufferingMediaPlayerTask(IBufferingPlaybackFile bufferingPlaybackHandler, MediaPlayer mediaPlayer) {
+	BufferingMediaPlayerTask(IBufferingPlaybackFile bufferingPlaybackHandler, MediaPlayer mediaPlayer) {
 		this.bufferingPlaybackHandler = bufferingPlaybackHandler;
 		mediaPlayer.setOnBufferingUpdateListener(this);
 	}
