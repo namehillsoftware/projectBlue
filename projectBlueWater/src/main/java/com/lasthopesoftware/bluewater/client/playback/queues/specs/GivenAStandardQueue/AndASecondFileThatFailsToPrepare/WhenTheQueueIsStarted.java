@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenTheQueueIsStarted {
 
-	private static final FakePreparedPlaybackFile<FakeBufferingPlaybackHandler> expectedPlaybackHandler = new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler());
+	private static final FakeBufferingPlaybackHandler expectedPlaybackHandler = new FakeBufferingPlaybackHandler();
 	private static boolean firstPromiseCancelled;
 	private static IPlaybackHandler returnedPlaybackHandler;
 
@@ -41,7 +41,7 @@ public class WhenTheQueueIsStarted {
 
 		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(1), 0))
 			.thenReturn(new Promise<>(messenger -> messenger.cancellationRequested(() -> firstPromiseCancelled = true)))
-			.thenReturn(new Promise<>(expectedPlaybackHandler));
+			.thenReturn(new Promise<>(new FakePreparedPlaybackFile<>(expectedPlaybackHandler)));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CompletingFileQueueProvider();
