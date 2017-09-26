@@ -8,6 +8,9 @@ import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
@@ -17,7 +20,10 @@ implements
 	MessengerOperator<IPlaybackHandler>,
 	MediaPlayer.OnCompletionListener,
 	MediaPlayer.OnErrorListener,
+	MediaPlayer.OnInfoListener,
 	Runnable {
+
+	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerPlaybackHandler.class);
 
 	private final MediaPlayer mediaPlayer;
 	private float volume;
@@ -104,6 +110,12 @@ implements
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		playbackHandlerMessenger.sendRejection(new MediaPlayerErrorException(this, mp, what, extra));
+		return true;
+	}
+
+	@Override
+	public boolean onInfo(MediaPlayer mp, int what, int extra) {
+		logger.warn("The media player reported the following - " + what + " - " + extra);
 		return true;
 	}
 

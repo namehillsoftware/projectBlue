@@ -59,9 +59,8 @@ implements
 					continue;
 				}
 
-				while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null) {
+				while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null)
 					positionedPreparingFile.preparedPlaybackFilePromise.cancel();
-				}
 			}
 
 			while ((positionedPreparingFile = newPositionedPreparingMediaPlayerPromises.poll()) != null)
