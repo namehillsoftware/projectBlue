@@ -77,8 +77,6 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 
 			mediaPlayer.setOnErrorListener(mediaPlayerPreparationHandler);
 
-			mediaPlayer.setOnPreparedListener(mediaPlayerPreparationHandler);
-
 			if (cancellationToken.isCancelled()) return;
 
 			try {
@@ -86,13 +84,26 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 			} catch (IllegalStateException | IOException e) {
 				messenger.sendRejection(e);
 			}
+
+			if (cancellationToken.isCancelled()) {
+				mediaPlayer.release();
+				messenger.sendRejection(new CancellationException());
+				return;
+			}
+
+			if (prepareAt > 0) {
+				mediaPlayer.setOnSeekCompleteListener(mediaPlayerPreparationHandler);
+				mediaPlayer.seekTo(prepareAt);
+				return;
+			}
+
+			messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mediaPlayer), new BufferingMediaPlayerFile(mediaPlayer)));
 		}
 	}
 
 	private static final class MediaPlayerPreparationHandler
 		implements
 			MediaPlayer.OnErrorListener,
-			MediaPlayer.OnPreparedListener,
 			MediaPlayer.OnSeekCompleteListener,
 			Runnable
 	{
@@ -113,19 +124,6 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 		public boolean onError(MediaPlayer mp, int what, int extra) {
 			messenger.sendRejection(new MediaPlayerErrorException(new EmptyPlaybackHandler(0), mp, what, extra));
 			return true;
-		}
-
-		@Override
-		public void onPrepared(MediaPlayer mp) {
-			if (cancellationToken.isCancelled()) return;
-
-			if (prepareAt > 0) {
-				mediaPlayer.setOnSeekCompleteListener(this);
-				mediaPlayer.seekTo(prepareAt);
-				return;
-			}
-
-			messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
 		}
 
 		@Override

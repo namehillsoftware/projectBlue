@@ -121,6 +121,10 @@ implements
 
 	@Override
 	public void close() throws IOException {
+		logger.info("Closing the media player");
+		if (isPlaying())
+			mediaPlayer.stop();
+		mediaPlayer.reset();
 		mediaPlayer.release();
 	}
 
