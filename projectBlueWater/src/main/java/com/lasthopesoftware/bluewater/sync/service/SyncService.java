@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.sync.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -128,7 +127,6 @@ public class SyncService extends Service {
 	}
 
 	private final Lazy<LocalBroadcastManager> localBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
-	private final Lazy<NotificationManager> notificationMgr = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
 
 	private final Lazy<IStorageReadPermissionsRequestedBroadcast> storageReadPermissionsRequestedBroadcast = new Lazy<>(() -> new StorageReadPermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
 	private final Lazy<IStorageWritePermissionsRequestedBroadcaster> storageWritePermissionsRequestedBroadcast = new Lazy<>(() -> new StorageWritePermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
@@ -367,7 +365,7 @@ public class SyncService extends Service {
 	}
 
 	private void setSyncNotificationText(@Nullable String syncNotification) {
-		notificationMgr.getObject().notify(notificationId, buildSyncNotification(syncNotification));
+		startForeground(notificationId, buildSyncNotification(syncNotification));
 	}
 
 	private void sendStoredFileBroadcast(@NonNull String action, @NonNull StoredFile storedFile) {
@@ -389,7 +387,6 @@ public class SyncService extends Service {
 		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
 
 		stopForeground(true);
-		notificationMgr.getObject().cancel(notificationId);
 		stopSelf();
 
 		isSyncRunning = false;
