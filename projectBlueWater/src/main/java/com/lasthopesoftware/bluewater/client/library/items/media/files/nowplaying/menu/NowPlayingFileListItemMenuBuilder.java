@@ -18,16 +18,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.File
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.FileSeekToClickListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
-
-import java.util.List;
 
 public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
@@ -53,12 +53,12 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 	    }
     }
 
-    private final int nowPlayingPosition;
+    private final INowPlayingRepository nowPlayingRepository;
 
     private OneParameterAction<Integer> onPlaylistFileRemovedListener;
 
-    public NowPlayingFileListItemMenuBuilder(final List<ServiceFile> serviceFiles, final int nowPlayingPosition) {
-        this.nowPlayingPosition = nowPlayingPosition;
+    public NowPlayingFileListItemMenuBuilder(final INowPlayingRepository nowPlayingRepository) {
+        this.nowPlayingRepository = nowPlayingRepository;
     }
 
     @Override
@@ -92,7 +92,12 @@ public class NowPlayingFileListItemMenuBuilder extends AbstractListItemMenuBuild
 
         viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
 
-        textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == nowPlayingPosition));
+		nowPlayingRepository
+			.getNowPlaying()
+			.eventually(LoopedInPromise.response(np -> {
+				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np.playlistPosition));
+				return null;
+			}, textView.getContext()));
 
         if (viewHolder.fileListItemNowPlayingHandler != null) viewHolder.fileListItemNowPlayingHandler.release();
         viewHolder.fileListItemNowPlayingHandler = new AbstractFileListItemNowPlayingHandler(fileListItem) {
