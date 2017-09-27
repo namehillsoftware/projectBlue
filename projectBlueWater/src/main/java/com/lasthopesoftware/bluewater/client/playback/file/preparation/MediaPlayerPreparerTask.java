@@ -73,7 +73,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 			}
 
 			final MediaPlayerPreparationHandler mediaPlayerPreparationHandler =
-				new MediaPlayerPreparationHandler(mediaPlayer, prepareAt, messenger, cancellationToken);
+				new MediaPlayerPreparationHandler(mediaPlayer, messenger, cancellationToken);
 
 			mediaPlayer.setOnErrorListener(mediaPlayerPreparationHandler);
 
@@ -109,12 +109,10 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 	{
 		private final MediaPlayer mediaPlayer;
 		private final Messenger<IPreparedPlaybackFile> messenger;
-		private final int prepareAt;
 		private final CancellationToken cancellationToken;
 
-		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, Messenger<IPreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
+		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, Messenger<IPreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
 			this.mediaPlayer = mediaPlayer;
-			this.prepareAt = prepareAt;
 			this.messenger = messenger;
 			this.cancellationToken = cancellationToken;
 			messenger.cancellationRequested(this);
