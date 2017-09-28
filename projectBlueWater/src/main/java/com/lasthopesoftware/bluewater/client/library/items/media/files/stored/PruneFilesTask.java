@@ -11,6 +11,7 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,6 +55,7 @@ final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, C
 					return null;
 				}, pruneFilesExecutor));
 
-		return Promise.whenAll(pruneFilesPromises.collect(Collectors.toList()));
+		final Collection<Promise<Void>> collectedPromises = pruneFilesPromises.toList();
+		return collectedPromises.size() > 0 ? Promise.whenAll(collectedPromises) : new Promise<>(Collections.emptyList());
 	}
 }
