@@ -8,26 +8,26 @@ import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class MediaPlayerBufferedPromise implements MessengerOperator<IBufferingPlaybackHandler>, MediaPlayer.OnBufferingUpdateListener {
+final class BufferingMediaPlayerTask implements MessengerOperator<IBufferingPlaybackFile>, MediaPlayer.OnBufferingUpdateListener {
 
-	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerBufferedPromise.class);
+	private static final Logger logger = LoggerFactory.getLogger(BufferingMediaPlayerTask.class);
 
 	private static final int bufferMax = 100;
 
-	private final IBufferingPlaybackHandler bufferingPlaybackHandler;
+	private final IBufferingPlaybackFile bufferingPlaybackHandler;
 
-	private volatile Messenger<IBufferingPlaybackHandler> messenger;
+	private volatile Messenger<IBufferingPlaybackFile> messenger;
 
 	private int bufferPercentage;
 	private int lastBufferPercentage;
 
-	public MediaPlayerBufferedPromise(IBufferingPlaybackHandler bufferingPlaybackHandler, MediaPlayer mediaPlayer) {
+	BufferingMediaPlayerTask(IBufferingPlaybackFile bufferingPlaybackHandler, MediaPlayer mediaPlayer) {
 		this.bufferingPlaybackHandler = bufferingPlaybackHandler;
 		mediaPlayer.setOnBufferingUpdateListener(this);
 	}
 
 	@Override
-	public void send(Messenger<IBufferingPlaybackHandler> messenger) {
+	public void send(Messenger<IBufferingPlaybackFile> messenger) {
 		this.messenger = messenger;
 		if (isBuffered())
 			messenger.sendResolution(bufferingPlaybackHandler);

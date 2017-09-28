@@ -2,36 +2,49 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.MediaPlayerBufferedPromise;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.messenger.Messenger;
+import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
+import java.util.concurrent.CancellationException;
 
-/**
- * Created by david on 9/20/16.
- */
+public final class MediaPlayerPlaybackHandler
+implements
+	IPlaybackHandler,
+	MessengerOperator<IPlaybackHandler>,
+	MediaPlayer.OnCompletionListener,
+	MediaPlayer.OnErrorListener,
+	MediaPlayer.OnInfoListener,
+	Runnable {
 
-public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandler {
+	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerPlaybackHandler.class);
 
 	private final MediaPlayer mediaPlayer;
-	private final Promise<IBufferingPlaybackHandler> bufferingPromise;
-	private final MediaPlayerPlaybackCompletedTask mediaPlayerTask;
 	private float volume;
 	private final Promise<IPlaybackHandler> playbackPromise;
+
+	private Messenger<IPlaybackHandler> playbackHandlerMessenger;
 
 	private int previousMediaPlayerPosition;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
-		mediaPlayerTask = new MediaPlayerPlaybackCompletedTask(this, mediaPlayer);
-		playbackPromise = new Promise<>(mediaPlayerTask);
-		bufferingPromise = new Promise<>(new MediaPlayerBufferedPromise(this, mediaPlayer));
+		playbackPromise = new Promise<>((MessengerOperator<IPlaybackHandler>) this);
 	}
 
 	@Override
 	public boolean isPlaying() {
-		return mediaPlayerTask.isPlaying();
+		try {
+			return mediaPlayer.isPlaying();
+		} catch (IllegalStateException e) {
+			return false;
+		}
 	}
 
 	@Override
@@ -68,19 +81,60 @@ public final class MediaPlayerPlaybackHandler implements IBufferingPlaybackHandl
 
 	@Override
 	public synchronized Promise<IPlaybackHandler> promisePlayback() {
-		mediaPlayerTask.play();
+		if (isPlaying()) return playbackPromise;
+
+		try {
+			mediaPlayer.start();
+		} catch (IllegalStateException e) {
+			mediaPlayer.release();
+			playbackHandlerMessenger.sendRejection(new MediaPlayerException(this, mediaPlayer, e));
+		}
 
 		return playbackPromise;
 	}
 
 	@Override
+	public void send(Messenger<IPlaybackHandler> playbackHandlerMessenger) {
+		this.playbackHandlerMessenger = playbackHandlerMessenger;
+
+		playbackHandlerMessenger.cancellationRequested(this);
+		mediaPlayer.setOnCompletionListener(this);
+		mediaPlayer.setOnErrorListener(this);
+	}
+
+	@Override
+	public void onCompletion(MediaPlayer mp) {
+		playbackHandlerMessenger.sendResolution(this);
+	}
+
+	@Override
+	public boolean onError(MediaPlayer mp, int what, int extra) {
+		playbackHandlerMessenger.sendRejection(new MediaPlayerErrorException(this, mp, what, extra));
+		return true;
+	}
+
+	@Override
+	public boolean onInfo(MediaPlayer mp, int what, int extra) {
+		logger.warn("The media player reported the following - " + what + " - " + extra);
+		return true;
+	}
+
+	@Override
 	public void close() throws IOException {
-		playbackPromise.cancel();
+		logger.info("Closing the media player");
+		if (isPlaying())
+			mediaPlayer.stop();
+		mediaPlayer.reset();
 		mediaPlayer.release();
 	}
 
 	@Override
-	public Promise<IBufferingPlaybackHandler> bufferPlaybackFile() {
-		return bufferingPromise;
+	public void run() {
+		try {
+			close();
+			playbackHandlerMessenger.sendRejection(new CancellationException());
+		} catch (IOException e) {
+			playbackHandlerMessenger.sendRejection(e);
+		}
 	}
 }

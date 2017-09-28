@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes;
 
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
@@ -17,19 +18,19 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		return (file, preparedAt) -> new Promise<>(deferredResolution);
 	}
 
-	public static class DeferredResolution implements MessengerOperator<IBufferingPlaybackHandler> {
+	public static class DeferredResolution implements MessengerOperator<IPreparedPlaybackFile> {
 
-		private Messenger<IBufferingPlaybackHandler> resolve;
+		private Messenger<IPreparedPlaybackFile> resolve;
 
 		public ResolveablePlaybackHandler resolve() {
 			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
 			if (resolve != null)
-				resolve.sendResolution(playbackHandler);
+				resolve.sendResolution(new FakePreparedPlaybackFile<>(playbackHandler));
 			return playbackHandler;
 		}
 
 		@Override
-		public void send(Messenger<IBufferingPlaybackHandler> resolve) {
+		public void send(Messenger<IPreparedPlaybackFile> resolve) {
 			this.resolve = resolve;
 		}
 	}
