@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'com.cinnober.gradle.semver-git'
 
 android {
     compileSdkVersion 25
@@ -9,8 +10,8 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 3002
-        versionName "1.6.0.0-beta-3"
+        versionCode 3003
+        versionName "1.6.0.0"
     }
 
     compileOptions {
