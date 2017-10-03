@@ -77,7 +77,7 @@ def getCustomVersionCode() {
 
     // should result in the same value as running
     // git rev-list <checked out branch name> | wc -l
-    def initialVersionCode = 1000 // use this to skirt around version code issue
+    def initialVersionCode = 1000 // use this to skirt around generated version code starting below custom version code
     def numOfCommits = ext.repo.log().size()
     return numOfCommits + initialVersionCode
 }
