@@ -14,7 +14,7 @@ android {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode getCustomVersionCode()
+        versionCode getGeneratedVersionCode()
         versionName project.version
     }
 
@@ -65,7 +65,7 @@ android {
 
 project.ext.set("archivesBaseName", "music-canoe-" + project.version);
 
-def getCustomVersionCode() {
+def getGeneratedVersionCode() {
 
     if (project.versionCodeManualOverride != null) {
         return project.versionCodeManualOverride
