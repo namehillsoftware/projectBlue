@@ -11,7 +11,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 3003
-        versionName "1.6.0.0"
+        versionName project.version
     }
 
     compileOptions {
@@ -58,6 +58,8 @@ android {
         }
     }
 }
+
+project.ext.set("archivesBaseName", "music-canoe-" + project.version);
 
 repositories {
     mavenCentral()

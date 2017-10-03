@@ -86,7 +86,11 @@ implements
 		try {
 			mediaPlayer.start();
 		} catch (IllegalStateException e) {
-			mediaPlayer.release();
+			try {
+				close();
+			} catch (IOException ignored) {
+			}
+
 			playbackHandlerMessenger.sendRejection(new MediaPlayerException(this, mediaPlayer, e));
 		}
 

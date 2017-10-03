@@ -132,6 +132,8 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 		@Override
 		public void run() {
 			cancellationToken.run();
+
+			mediaPlayer.reset();
 			mediaPlayer.release();
 
 			messenger.sendRejection(new CancellationException());
