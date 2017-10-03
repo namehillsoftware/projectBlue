@@ -1,3 +1,5 @@
+import org.ajoberstar.grgit.Grgit
+
 apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'com.cinnober.gradle.semver-git'
@@ -6,11 +8,13 @@ android {
     compileSdkVersion 25
     buildToolsVersion '25.0.2'
 
+    project.ext.set("versionCodeManualOverride", null)
+
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 3003
+        versionCode getCustomVersionCode()
         versionName project.version
     }
 
@@ -60,6 +64,22 @@ android {
 }
 
 project.ext.set("archivesBaseName", "music-canoe-" + project.version);
+
+def getCustomVersionCode() {
+
+    if (project.versionCodeManualOverride != null) {
+        return project.versionCodeManualOverride
+    }
+
+    // current dir is <your proj>/app, so it's likely that all your git repo files are in the dir
+    // above.
+    ext.repo = Grgit.open(project.file('..'))
+
+    // should result in the same value as running
+    // git rev-list <checked out branch name> | wc -l
+    def numOfCommits = ext.repo.log().size()
+    return numOfCommits
+}
 
 repositories {
     mavenCentral()
