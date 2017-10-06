@@ -43,6 +43,7 @@ implements
 		try {
 			return mediaPlayer.isPlaying();
 		} catch (IllegalStateException e) {
+			logger.warn("There was an error getting `isPlaying` from the media player", e);
 			return false;
 		}
 	}
@@ -65,9 +66,14 @@ implements
 
 	@Override
 	public int getCurrentPosition() {
-		return isPlaying()
-			? previousMediaPlayerPosition = mediaPlayer.getCurrentPosition()
-			: previousMediaPlayerPosition;
+		try {
+			return isPlaying()
+				? previousMediaPlayerPosition = mediaPlayer.getCurrentPosition()
+				: previousMediaPlayerPosition;
+		} catch (IllegalStateException e) {
+			logger.warn("An error occurred getting track position", e);
+			return previousMediaPlayerPosition;
+		}
 	}
 
 	@Override
@@ -75,6 +81,7 @@ implements
 		try {
 			return mediaPlayer.getDuration();
 		} catch (IllegalStateException e) {
+			logger.warn("An error occurred getting track duration", e);
 			return 0;
 		}
 	}
@@ -88,7 +95,8 @@ implements
 		} catch (IllegalStateException e) {
 			try {
 				close();
-			} catch (IOException ignored) {
+			} catch (IOException io) {
+				logger.warn("There was an error closing the media player when handling the `IllegalStateException` - ignoring and continuing with rejection", io);
 			}
 
 			playbackHandlerMessenger.sendRejection(new MediaPlayerException(this, mediaPlayer, e));
