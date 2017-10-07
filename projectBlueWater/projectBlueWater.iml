@@ -103,6 +103,7 @@
     <orderEntry type="library" exported="" name="logback-android-core-1.1.1-3" level="project" />
     <orderEntry type="library" exported="" name="design-25.3.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-agent-1.7.4" level="project" />
+    <orderEntry type="library" exported="" name="support-core-ui-25.4.0" level="project" />
     <orderEntry type="library" exported="" name="support-core-ui-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="library-5.0.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="mockito-core-2.10.0" level="project" />
@@ -110,6 +111,8 @@
     <orderEntry type="library" exported="" scope="TEST" name="objenesis-2.6" level="project" />
     <orderEntry type="library" exported="" name="slf4j-api-1.7.6" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-1.7.4" level="project" />
+    <orderEntry type="library" exported="" name="support-core-utils-25.4.0" level="project" />
+    <orderEntry type="library" exported="" name="support-fragment-25.4.0" level="project" />
     <orderEntry type="library" exported="" name="support-core-utils-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="support-fragment-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="commons-digester-1.8" level="project" />
@@ -117,6 +120,8 @@
     <orderEntry type="library" exported="" name="apktool-lib-1.4.4-3" level="project" />
     <orderEntry type="library" exported="" name="joda-time-2.4" level="project" />
     <orderEntry type="library" exported="" name="lazy-j-660f29234d585fa1bc81115fb81ff1b1e273687e" level="project" />
+    <orderEntry type="library" exported="" name="support-v4-25.4.0" level="project" />
+    <orderEntry type="library" exported="" name="support-media-compat-25.4.0" level="project" />
     <orderEntry type="library" exported="" name="support-v4-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="support-media-compat-25.3.1" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="hamcrest-core-1.3" level="project" />
@@ -127,8 +132,10 @@
     <orderEntry type="library" exported="" scope="TEST" name="assertj-core-2.8.0" level="project" />
     <orderEntry type="library" exported="" name="recyclerview-v7-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="exoplayer-core-r2.5.3" level="project" />
+    <orderEntry type="library" exported="" name="support-annotations-25.4.0" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="support-vector-drawable-25.3.1" level="project" />
+    <orderEntry type="library" exported="" name="support-compat-25.4.0" level="project" />
     <orderEntry type="library" exported="" name="support-compat-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="animated-vector-drawable-25.3.1" level="project" />
     <orderEntry type="library" exported="" name="exoplayer-ui-r2.5.3" level="project" />
@@ -137,5 +144,6 @@
     <orderEntry type="module" module-name="objective-droid" exported="" />
     <orderEntry type="module" module-name="futures" exported="" />
     <orderEntry type="module" module-name="pagerslidingtabstrip" exported="" />
+    <orderEntry type="library" exported="" name="support-annotations-25.3.1" level="project" />
   </component>
 </module>
