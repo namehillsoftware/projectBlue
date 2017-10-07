@@ -37,6 +37,18 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 	private final LazyViewFinder<ProgressBar> mLoadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+
+	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository =
+		new AbstractSynchronousLazy<INowPlayingRepository>() {
+			@Override
+			protected INowPlayingRepository initialize() throws Exception {
+				final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingFilesListActivity.this);
+				final SelectedBrowserLibraryIdentifierProvider selectedBrowserLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingFilesListActivity.this);
+				final ISpecificLibraryProvider specificLibraryProvider = new SpecificLibraryProvider(selectedBrowserLibraryIdentifierProvider.getSelectedLibraryId(), libraryRepository);
+				return new NowPlayingRepository(specificLibraryProvider, libraryRepository);
+			}
+		};
+
 	private final ILazy<PromisedResponse<NowPlaying, Void>> lazyDispatchedLibraryCompleteResolution =
 		new AbstractSynchronousLazy<PromisedResponse<NowPlaying, Void>>() {
 			@Override
@@ -47,18 +59,9 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 							new OnGetLibraryNowComplete(
 								NowPlayingFilesListActivity.this,
 								fileListView.findView(),
-								mLoadingProgressBar.findView())),
+								mLoadingProgressBar.findView(),
+								lazyNowPlayingRepository.getObject())),
 						NowPlayingFilesListActivity.this);
-			}
-		};
-	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository =
-		new AbstractSynchronousLazy<INowPlayingRepository>() {
-			@Override
-			protected INowPlayingRepository initialize() throws Exception {
-				final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingFilesListActivity.this);
-				final SelectedBrowserLibraryIdentifierProvider selectedBrowserLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingFilesListActivity.this);
-				final ISpecificLibraryProvider specificLibraryProvider = new SpecificLibraryProvider(selectedBrowserLibraryIdentifierProvider.getSelectedLibraryId(), libraryRepository);
-				return new NowPlayingRepository(specificLibraryProvider, libraryRepository);
 			}
 		};
 
@@ -126,11 +129,13 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 		private final NowPlayingFilesListActivity nowPlayingFilesListActivity;
 		private final ListView fileListView;
 		private final ProgressBar loadingProgressBar;
-		
-		OnGetLibraryNowComplete(NowPlayingFilesListActivity nowPlayingFilesListActivity, ListView fileListView, ProgressBar loadingProgressBar) {
+		private final INowPlayingRepository nowPlayingRepository;
+
+		OnGetLibraryNowComplete(NowPlayingFilesListActivity nowPlayingFilesListActivity, ListView fileListView, ProgressBar loadingProgressBar, INowPlayingRepository nowPlayingRepository) {
             this.nowPlayingFilesListActivity = nowPlayingFilesListActivity;
 			this.fileListView = fileListView;
 			this.loadingProgressBar = loadingProgressBar;
+			this.nowPlayingRepository = nowPlayingRepository;
 		}
 		
 		@Override
@@ -138,7 +143,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 			if (nowPlaying == null) return;
 
 
-			final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(nowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(nowPlayingFilesListActivity), nowPlaying.playlist, nowPlaying.playlistPosition);
+			final NowPlayingFileListAdapter nowPlayingFilesListAdapter = new NowPlayingFileListAdapter(nowPlayingFilesListActivity, R.id.tvStandard, new ItemListMenuChangeHandler(nowPlayingFilesListActivity), nowPlaying.playlist, nowPlayingRepository);
 			fileListView.setAdapter(nowPlayingFilesListAdapter);
 
 			final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

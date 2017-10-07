@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -37,7 +38,7 @@ public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
 				() -> 1,
-				(file, preparedAt) -> new Promise<>(new FakeBufferingPlaybackHandler()),
+				(file, preparedAt) -> new Promise<>(new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler())),
 				positionedFileQueue);
 
 		queue.promiseNextPreparedPlaybackFile(0);

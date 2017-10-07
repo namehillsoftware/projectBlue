@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackHandler;
 import com.lasthopesoftware.messenger.promises.Promise;
 
 /**
@@ -9,5 +8,5 @@ import com.lasthopesoftware.messenger.promises.Promise;
  */
 
 public interface IPlaybackPreparer {
-	Promise<IBufferingPlaybackHandler> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt);
+	Promise<IPreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt);
 }

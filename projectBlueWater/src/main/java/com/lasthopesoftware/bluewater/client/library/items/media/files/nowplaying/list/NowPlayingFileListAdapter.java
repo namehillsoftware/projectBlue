@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.ha
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
@@ -18,7 +19,7 @@ class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OnePa
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
-	NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<ServiceFile> serviceFiles, int nowPlayingFilePos) {
+	NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<ServiceFile> serviceFiles, INowPlayingRepository nowPlayingRepository) {
 		super(context, resource, serviceFiles);
 
         final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
@@ -26,7 +27,7 @@ class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OnePa
         viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler);
         viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler);
 
-        nowPlayingFileListItemMenuBuilder = new NowPlayingFileListItemMenuBuilder(serviceFiles, nowPlayingFilePos);
+        nowPlayingFileListItemMenuBuilder = new NowPlayingFileListItemMenuBuilder(nowPlayingRepository);
         nowPlayingFileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler);
         nowPlayingFileListItemMenuBuilder.setOnPlaylistFileRemovedListener(this);
 	}

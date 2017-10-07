@@ -8,6 +8,7 @@ import com.lasthopesoftware.messenger.promises.propagation.ResolutionProxy;
 import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -17,6 +18,11 @@ final class Resolutions {
 	static final class AggregatePromiseResolver<TResult> extends SingleMessageBroadcaster<Collection<TResult>> {
 
 		AggregatePromiseResolver(Collection<Promise<TResult>> promises) {
+			if (promises.isEmpty()) {
+				sendResolution(Collections.emptyList());
+				return;
+			}
+
 			final CollectedErrorExcuse<TResult> errorHandler = new CollectedErrorExcuse<>(this, promises);
 			if (errorHandler.isRejected()) return;
 

@@ -5,9 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import java.io.Closeable;
 import java.io.IOException;
 
-/**
- * Created by david on 8/24/16.
- */
 public class CloseableNonExclusiveTransaction implements Closeable, ITransactionSuccessSetter {
 
     private final SQLiteDatabase sqLiteDatabase;

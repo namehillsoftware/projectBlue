@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.repository;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
+import android.support.annotation.Keep;
 
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+@Keep
 public class Library implements IEntityCreator, IEntityUpdater {
 
 	public static final String tableName = "LIBRARIES";

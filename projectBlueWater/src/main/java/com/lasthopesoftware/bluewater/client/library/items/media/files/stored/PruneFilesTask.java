@@ -53,7 +53,7 @@ final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, C
 					systemFile.delete();
 					return null;
 				}, pruneFilesExecutor));
-
-		return Promise.whenAll(pruneFilesPromises.collect(Collectors.toList()));
+		
+		return Promise.whenAll(pruneFilesPromises.toList());
 	}
 }
