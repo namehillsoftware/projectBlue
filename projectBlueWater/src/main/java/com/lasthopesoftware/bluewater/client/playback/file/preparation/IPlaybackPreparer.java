@@ -8,5 +8,5 @@ import com.lasthopesoftware.messenger.promises.Promise;
  */
 
 public interface IPlaybackPreparer {
-	Promise<IPreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt);
+	Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt);
 }

@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
@@ -73,7 +73,7 @@ public class WhenObservingPlayback {
 
 	private static class DeferredErrorPlaybackPreparer implements IPlaybackPreparer {
 
-		private Messenger<IPreparedPlaybackFile> reject;
+		private Messenger<PreparedPlaybackFile> reject;
 
 		void resolve() {
 			if (reject != null)
@@ -81,7 +81,7 @@ public class WhenObservingPlayback {
 		}
 
 		@Override
-		public Promise<IPreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
+		public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
 			return new Promise<>(messenger -> reject = messenger);
 		}
 	}

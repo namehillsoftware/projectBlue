@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer;
 
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHa
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingMediaPlayerFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -17,7 +18,7 @@ import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
-final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPlaybackFile> {
+final class MediaPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaybackFile> {
 
 	private final int prepareAt;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
@@ -28,11 +29,11 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 	}
 
 	@Override
-	public Promise<IPreparedPlaybackFile> promiseResponse(Uri uri) throws Throwable {
+	public Promise<PreparedPlaybackFile> promiseResponse(Uri uri) throws Throwable {
 		return new Promise<>(new MediaPlayerPreparationOperator(uri, playbackInitialization, prepareAt));
 	}
 
-	private static final class MediaPlayerPreparationOperator implements MessengerOperator<IPreparedPlaybackFile> {
+	private static final class MediaPlayerPreparationOperator implements MessengerOperator<PreparedPlaybackFile> {
 		private final Uri uri;
 		private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 		private final int prepareAt;
@@ -44,7 +45,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 		}
 
 		@Override
-		public void send(Messenger<IPreparedPlaybackFile> messenger) {
+		public void send(Messenger<PreparedPlaybackFile> messenger) {
 			final CancellationToken cancellationToken = new CancellationToken();
 			messenger.cancellationRequested(cancellationToken);
 
@@ -92,11 +93,11 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 			Runnable
 	{
 		private final MediaPlayer mediaPlayer;
-		private final Messenger<IPreparedPlaybackFile> messenger;
+		private final Messenger<PreparedPlaybackFile> messenger;
 		private final int prepareAt;
 		private final CancellationToken cancellationToken;
 
-		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, Messenger<IPreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
+		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
 			this.mediaPlayer = mediaPlayer;
 			this.prepareAt = prepareAt;
 			this.messenger = messenger;
@@ -120,13 +121,13 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 				return;
 			}
 
-			messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
+			messenger.sendResolution(new PreparedPlaybackFile(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
 		}
 
 		@Override
 		public void onSeekComplete(MediaPlayer mp) {
 			if (!cancellationToken.isCancelled())
-				messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
+				messenger.sendResolution(new PreparedPlaybackFile(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
 		}
 
 		@Override

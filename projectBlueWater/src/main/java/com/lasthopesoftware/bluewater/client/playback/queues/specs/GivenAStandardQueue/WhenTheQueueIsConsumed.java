@@ -4,7 +4,7 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
@@ -77,13 +77,13 @@ public class WhenTheQueueIsConsumed {
 		assertThat(returnedPromiseCount).isEqualTo(expectedNumberOfFiles);
 	}
 
-	private static class MockResolveAction implements MessengerOperator<IPreparedPlaybackFile> {
+	private static class MockResolveAction implements MessengerOperator<PreparedPlaybackFile> {
 		private int calls;
 
 		@Override
-		public void send(Messenger<IPreparedPlaybackFile> resolve) {
+		public void send(Messenger<PreparedPlaybackFile> resolve) {
 			++calls;
-			resolve.sendResolution(mock(IPreparedPlaybackFile.class));
+			resolve.sendResolution(mock(PreparedPlaybackFile.class));
 		}
 	}
 }

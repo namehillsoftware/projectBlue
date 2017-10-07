@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
 import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
@@ -174,11 +174,11 @@ implements
 		return currentPreparingPlaybackHandlerPromise.promisePositionedPreparedPlaybackFile();
 	}
 
-	private static class PositionedPreparingFile implements ImmediateResponse<IPreparedPlaybackFile, PositionedPreparedPlaybackFile> {
+	private static class PositionedPreparingFile implements ImmediateResponse<PreparedPlaybackFile, PositionedPreparedPlaybackFile> {
 		final PositionedFile positionedFile;
-		final Promise<IPreparedPlaybackFile> preparedPlaybackFilePromise;
+		final Promise<PreparedPlaybackFile> preparedPlaybackFilePromise;
 
-		private PositionedPreparingFile(PositionedFile positionedFile, Promise<IPreparedPlaybackFile> preparedPlaybackFilePromise) {
+		private PositionedPreparingFile(PositionedFile positionedFile, Promise<PreparedPlaybackFile> preparedPlaybackFilePromise) {
 			this.positionedFile = positionedFile;
 			this.preparedPlaybackFilePromise = preparedPlaybackFilePromise;
 		}
@@ -188,7 +188,7 @@ implements
 		}
 
 		@Override
-		public PositionedPreparedPlaybackFile respond(IPreparedPlaybackFile handler) throws Throwable {
+		public PositionedPreparedPlaybackFile respond(PreparedPlaybackFile handler) throws Throwable {
 			return new PositionedPreparedPlaybackFile(positionedFile, handler);
 		}
 	}
