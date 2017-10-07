@@ -29,6 +29,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile project(':futures')
-    compile 'com.android.support:appcompat-v7:26.+'
-    compile 'com.github.danrien:lazy-j:master-SNAPSHOT'
+    compile 'com.android.support:appcompat-v7:26.0.1'
+    compile 'com.github.danrien:lazy-j:660f29234d585fa1bc81115fb81ff1b1e273687e'
 }
