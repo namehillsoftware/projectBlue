@@ -9,11 +9,12 @@ public interface IPlaybackHandler extends Closeable {
 	void pause();
 
 	void setVolume(float volume);
+
 	float getVolume();
 
-	int getCurrentPosition();
+	long getCurrentPosition();
 
-	int getDuration();
+	long getDuration();
 
 	Promise<IPlaybackHandler> promisePlayback();
 }

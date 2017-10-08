@@ -33,13 +33,13 @@ public class ExoPlayerPlaybackHandler implements IPlaybackHandler {
 	}
 
 	@Override
-	public int getCurrentPosition() {
-		return (int) exoPlayer.getCurrentPosition();
+	public long getCurrentPosition() {
+		return exoPlayer.getCurrentPosition();
 	}
 
 	@Override
-	public int getDuration() {
-		return 0;
+	public long getDuration() {
+		return exoPlayer.getDuration();
 	}
 
 	@Override
