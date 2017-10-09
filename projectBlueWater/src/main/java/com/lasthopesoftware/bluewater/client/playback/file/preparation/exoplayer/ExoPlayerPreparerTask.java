@@ -160,7 +160,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 			if (playbackState != Player.STATE_READY) return;
 
-			if (prepareAt > 0 && exoPlayer.getCurrentPosition() != prepareAt) {
+			if (exoPlayer.getCurrentPosition() < prepareAt) {
 				exoPlayer.seekTo(prepareAt);
 				return;
 			}
