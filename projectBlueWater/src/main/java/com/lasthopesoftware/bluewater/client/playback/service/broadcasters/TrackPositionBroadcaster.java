@@ -11,7 +11,7 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import io.reactivex.functions.Consumer;
 
-public class TrackPositionBroadcaster implements Consumer<Integer> {
+public class TrackPositionBroadcaster implements Consumer<Long> {
 	private ILazy<LocalBroadcastManager> lazyLocalBroadcastManager;
 	private final IPlaybackHandler playbackHandler;
 
@@ -21,7 +21,7 @@ public class TrackPositionBroadcaster implements Consumer<Integer> {
 	}
 
 	@Override
-	public void accept(Integer newPosition) throws Exception {
+	public void accept(Long newPosition) throws Exception {
 		final Intent trackPositionChangedIntent = new Intent(trackPositionUpdate);
 		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, newPosition);
 		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, playbackHandler.getDuration());

@@ -67,6 +67,10 @@ public class DiskFileCache {
 		}
 	};
 
+	public DiskFileCache(final Context context, final Library library, final String cacheName, final long maxSize) {
+		this(context, library, cacheName, -1, maxSize);
+	}
+
 	public DiskFileCache(final Context context, final Library library, final String cacheName, final int expirationDays, final long maxSize) {
 		this.context = context;
 		this.cacheName = cacheName;
@@ -204,7 +208,7 @@ public class DiskFileCache {
 				}
 
 				// Remove the serviceFile and return null if it's past its expired time
-				if (cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
+				if (expirationTime > -1 && cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
 					logger.info("Cached serviceFile " + uniqueKey + " expired. Deleting.");
 					if (!returnFile.delete())
 						throw new IOException("Unable to delete serviceFile " + returnFile.getAbsolutePath());

@@ -50,7 +50,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer.MediaPlayerPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.ExoPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
@@ -551,12 +551,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(this, library, cachedFilePropertiesProvider);
-		final MediaPlayerPlaybackPreparerProvider mediaPlayerPlaybackPreparerProvider = new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess), library);
+		final ExoPlayerPlaybackPreparerProvider exoPlayerPlaybackPreparerProvider = new ExoPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess), library);
 
 		playlistManager =
 			new PlaylistManager(
-				mediaPlayerPlaybackPreparerProvider,
-				mediaPlayerPlaybackPreparerProvider,
+				exoPlayerPlaybackPreparerProvider,
+				exoPlayerPlaybackPreparerProvider,
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				playlistPlaybackBootstrapper);

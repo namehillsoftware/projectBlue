@@ -17,7 +17,7 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 	private final ServiceFile serviceFile;
 	private final DiskFileCache diskFileCache;
 
-	public DiskFileCacheDataSourceFactory(Context context, TransferListener<? super DataSource> transferListener, Library library, ServiceFile serviceFile, DiskFileCache diskFileCache) {
+	public DiskFileCacheDataSourceFactory(Context context, DiskFileCache diskFileCache, TransferListener<? super DataSource> transferListener, Library library, ServiceFile serviceFile) {
 		this.serviceFile = serviceFile;
 		this.diskFileCache = diskFileCache;
 		httpDataSourceFactory = new DefaultHttpDataSourceFactory(
