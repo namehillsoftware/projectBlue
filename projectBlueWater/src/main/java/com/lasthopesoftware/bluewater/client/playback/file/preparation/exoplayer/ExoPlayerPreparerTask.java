@@ -5,10 +5,10 @@ import android.net.Uri;
 import android.os.Handler;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
@@ -73,8 +73,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 			final DefaultTrackSelector trackSelector = new DefaultTrackSelector();
 
-			final ExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
-
+			final SimpleExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
 			if (cancellationToken.isCancelled()) {
 				exoPlayer.release();
 				messenger.sendRejection(new CancellationException());
@@ -113,13 +112,13 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		ExtractorMediaSource.EventListener,
 		Runnable
 	{
-		private final ExoPlayer exoPlayer;
+		private final SimpleExoPlayer exoPlayer;
 		private final Messenger<PreparedPlaybackFile> messenger;
 		private final TransferringExoPlayer<? super DataSource> transferringExoPlayer;
 		private final int prepareAt;
 		private final CancellationToken cancellationToken;
 
-		private ExoPlayerPreparationHandler(ExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, int prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
+		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, int prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
 			this.exoPlayer = exoPlayer;
 			this.transferringExoPlayer = transferringExoPlayer;
 			this.prepareAt = prepareAt;
