@@ -31,6 +31,6 @@ final class ExoPlayerPlaybackPreparer implements IPlaybackPreparer {
 			.eventually(file -> file != null
 				? new Promise<>(Uri.fromFile(file))
 				: fileUriProvider.getFileUri(serviceFile))
-			.eventually(new ExoPlayerPreparerTask(context, dataSourceFactoryProvider, preparedAt));
+			.eventually(new ExoPlayerPreparerTask(context, dataSourceFactoryProvider, serviceFile, preparedAt));
 	}
 }

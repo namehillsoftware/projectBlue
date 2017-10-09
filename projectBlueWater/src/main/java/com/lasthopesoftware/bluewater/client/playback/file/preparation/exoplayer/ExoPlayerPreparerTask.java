@@ -18,6 +18,7 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.TransferringExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
@@ -36,16 +37,18 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 	private final Context context;
 	private final DataSourceFactoryProvider dataSourceFactoryProvider;
 	private final int prepareAt;
+	private final ServiceFile serviceFile;
 
-	ExoPlayerPreparerTask(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, int prepareAt) {
+	ExoPlayerPreparerTask(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, int prepareAt) {
 		this.context = context;
 		this.dataSourceFactoryProvider = dataSourceFactoryProvider;
+		this.serviceFile = serviceFile;
 		this.prepareAt = prepareAt;
 	}
 
 	@Override
 	public Promise<PreparedPlaybackFile> promiseResponse(Uri uri) throws Throwable {
-		return new Promise<>(new ExoPlayerPreparationOperator(context, dataSourceFactoryProvider, uri, prepareAt));
+		return new Promise<>(new ExoPlayerPreparationOperator(context, dataSourceFactoryProvider, serviceFile, uri, prepareAt));
 	}
 
 	private static final class ExoPlayerPreparationOperator implements MessengerOperator<PreparedPlaybackFile> {
@@ -53,10 +56,12 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		private final DataSourceFactoryProvider dataSourceFactoryProvider;
 		private final Uri uri;
 		private final int prepareAt;
+		private final ServiceFile serviceFile;
 
-		ExoPlayerPreparationOperator(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, Uri uri, int prepareAt) {
+		ExoPlayerPreparationOperator(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, Uri uri, int prepareAt) {
 			this.context = context;
 			this.dataSourceFactoryProvider = dataSourceFactoryProvider;
+			this.serviceFile = serviceFile;
 			this.uri = uri;
 			this.prepareAt = prepareAt;
 		}
@@ -93,7 +98,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 			final Handler mainHandler = new Handler(context.getMainLooper());
 			final MediaSource mediaSource = new ExtractorMediaSource(
 				uri,
-				dataSourceFactoryProvider.getFactory(uri, transferringExoPlayer),
+				dataSourceFactoryProvider.getFactory(uri, serviceFile, transferringExoPlayer),
 				extractorsFactory,
 				mainHandler,
 				exoPlayerPreparationHandler);
