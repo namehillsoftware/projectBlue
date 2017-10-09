@@ -77,7 +77,7 @@ implements
 	}
 
 	@Override
-	public Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
+	public Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(long preparedAt) {
 		currentPreparingPlaybackHandlerPromise = bufferingMediaPlayerPromises.poll();
 		if (currentPreparingPlaybackHandlerPromise == null) {
 			currentPreparingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
@@ -94,7 +94,7 @@ implements
 			.then(this);
 	}
 
-	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {
+	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(long preparedAt) {
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 

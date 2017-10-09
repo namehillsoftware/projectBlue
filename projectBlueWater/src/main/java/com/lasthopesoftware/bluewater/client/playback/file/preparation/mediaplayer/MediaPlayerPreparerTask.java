@@ -20,10 +20,10 @@ import java.util.concurrent.CancellationException;
 
 final class MediaPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaybackFile> {
 
-	private final int prepareAt;
+	private final long prepareAt;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
 
-	MediaPlayerPreparerTask(int prepareAt, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
+	MediaPlayerPreparerTask(long prepareAt, IPlaybackInitialization<MediaPlayer> playbackInitialization) {
 		this.prepareAt = prepareAt;
 		this.playbackInitialization = playbackInitialization;
 	}
@@ -36,9 +36,9 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, PreparedPla
 	private static final class MediaPlayerPreparationOperator implements MessengerOperator<PreparedPlaybackFile> {
 		private final Uri uri;
 		private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
-		private final int prepareAt;
+		private final long prepareAt;
 
-		MediaPlayerPreparationOperator(Uri uri, IPlaybackInitialization<MediaPlayer> playbackInitialization, int prepareAt) {
+		MediaPlayerPreparationOperator(Uri uri, IPlaybackInitialization<MediaPlayer> playbackInitialization, long prepareAt) {
 			this.uri = uri;
 			this.playbackInitialization = playbackInitialization;
 			this.prepareAt = prepareAt;
@@ -94,10 +94,10 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, PreparedPla
 	{
 		private final MediaPlayer mediaPlayer;
 		private final Messenger<PreparedPlaybackFile> messenger;
-		private final int prepareAt;
+		private final long prepareAt;
 		private final CancellationToken cancellationToken;
 
-		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, int prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
+		private MediaPlayerPreparationHandler(MediaPlayer mediaPlayer, long prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
 			this.mediaPlayer = mediaPlayer;
 			this.prepareAt = prepareAt;
 			this.messenger = messenger;
@@ -117,7 +117,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, PreparedPla
 
 			if (prepareAt > 0) {
 				mediaPlayer.setOnSeekCompleteListener(this);
-				mediaPlayer.seekTo(prepareAt);
+				mediaPlayer.seekTo((int)prepareAt);
 				return;
 			}
 

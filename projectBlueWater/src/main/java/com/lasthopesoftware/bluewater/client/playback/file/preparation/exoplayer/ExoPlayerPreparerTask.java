@@ -36,10 +36,10 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 	private final Context context;
 	private final DataSourceFactoryProvider dataSourceFactoryProvider;
-	private final int prepareAt;
+	private final long prepareAt;
 	private final ServiceFile serviceFile;
 
-	ExoPlayerPreparerTask(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, int prepareAt) {
+	ExoPlayerPreparerTask(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, long prepareAt) {
 		this.context = context;
 		this.dataSourceFactoryProvider = dataSourceFactoryProvider;
 		this.serviceFile = serviceFile;
@@ -55,10 +55,10 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		private final Context context;
 		private final DataSourceFactoryProvider dataSourceFactoryProvider;
 		private final Uri uri;
-		private final int prepareAt;
+		private final long prepareAt;
 		private final ServiceFile serviceFile;
 
-		ExoPlayerPreparationOperator(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, Uri uri, int prepareAt) {
+		ExoPlayerPreparationOperator(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, Uri uri, long prepareAt) {
 			this.context = context;
 			this.dataSourceFactoryProvider = dataSourceFactoryProvider;
 			this.serviceFile = serviceFile;
@@ -120,10 +120,10 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		private final SimpleExoPlayer exoPlayer;
 		private final Messenger<PreparedPlaybackFile> messenger;
 		private final TransferringExoPlayer<? super DataSource> transferringExoPlayer;
-		private final int prepareAt;
+		private final long prepareAt;
 		private final CancellationToken cancellationToken;
 
-		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, int prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
+		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, long prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
 			this.exoPlayer = exoPlayer;
 			this.transferringExoPlayer = transferringExoPlayer;
 			this.prepareAt = prepareAt;

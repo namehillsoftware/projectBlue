@@ -10,5 +10,5 @@ import java.io.IOException;
  */
 
 public interface IStartPlayback {
-	IActivePlayer startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) throws IOException;
+	IActivePlayer startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final long filePosition) throws IOException;
 }

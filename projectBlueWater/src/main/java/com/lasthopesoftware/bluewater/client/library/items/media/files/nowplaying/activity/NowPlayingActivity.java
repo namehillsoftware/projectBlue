@@ -297,7 +297,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
 
 				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-				final int filePosition =
+				final long filePosition =
 					connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 						? viewStructure.filePosition
 						: np.filePosition;
@@ -364,7 +364,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				final ServiceFile serviceFile = np.playlist.get(playlistPosition);
 
-				final int filePosition =
+				final long filePosition =
 					viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 						? viewStructure.filePosition
 						: 0;
@@ -376,7 +376,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.excuse(perform(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
-	private void setView(final ServiceFile serviceFile, final int initialFilePosition) {
+	private void setView(final ServiceFile serviceFile, final long initialFilePosition) {
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey());
 
 		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
@@ -451,7 +451,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		return null;
 	}
 
-	private void setFileProperties(final ServiceFile serviceFile, final int initialFilePosition, Map<String, String> fileProperties) {
+	private void setFileProperties(final ServiceFile serviceFile, final long initialFilePosition, Map<String, String> fileProperties) {
 		final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 		nowPlayingArtist.findView().setText(artist);
 
@@ -499,8 +499,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 			viewStructure.fileDuration = duration;
 	}
 
-	private void setTrackProgress(int progress) {
-		songProgressBar.findView().setProgress(progress);
+	private void setTrackProgress(long progress) {
+		songProgressBar.findView().setProgress((int)progress);
 
 		if (viewStructure != null)
 			viewStructure.filePosition = progress;
@@ -512,7 +512,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		return true;
 	}
 	
-	private boolean handleIoException(ServiceFile serviceFile, int position, Throwable exception) {
+	private boolean handleIoException(ServiceFile serviceFile, long position, Throwable exception) {
 		if (exception instanceof FileNotFoundException)
 			return handleFileNotFoundException(serviceFile, (FileNotFoundException)exception);
 
@@ -554,7 +554,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		messageHandler.getObject().postDelayed(timerTask, 5000);
 	}
 	
-	private void resetViewOnReconnect(final ServiceFile serviceFile, final int position) {
+	private void resetViewOnReconnect(final ServiceFile serviceFile, final long position) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> {
 			if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
 
@@ -601,7 +601,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final ServiceFile serviceFile;
 		Map<String, String> fileProperties;
 		Promise<Bitmap> promisedNowPlayingImage;
-		int filePosition;
+		long filePosition;
 		int fileDuration;
 
 		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, ServiceFile serviceFile) {

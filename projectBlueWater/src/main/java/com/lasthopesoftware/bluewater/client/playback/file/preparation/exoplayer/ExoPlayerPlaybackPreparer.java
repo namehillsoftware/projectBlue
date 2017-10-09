@@ -26,7 +26,7 @@ final class ExoPlayerPlaybackPreparer implements IPlaybackPreparer {
 	}
 
 	@Override
-	public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
+	public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, long preparedAt) {
 		return diskFileCache.promiseCachedFile(String.valueOf(serviceFile.getKey()))
 			.eventually(file -> file != null
 				? new Promise<>(Uri.fromFile(file))

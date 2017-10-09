@@ -10,5 +10,5 @@ import java.io.Closeable;
  */
 
 public interface IPreparedPlaybackFileQueue extends Closeable {
-	Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt);
+	Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(long preparedAt);
 }

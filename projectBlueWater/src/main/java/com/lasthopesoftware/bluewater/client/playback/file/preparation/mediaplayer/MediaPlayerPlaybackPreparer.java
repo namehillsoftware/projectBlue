@@ -20,7 +20,7 @@ final class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
 	}
 
 	@Override
-	public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
+	public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, long preparedAt) {
 		return
 			fileUriProvider
 				.getFileUri(serviceFile)

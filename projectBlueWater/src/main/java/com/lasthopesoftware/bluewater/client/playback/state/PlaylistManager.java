@@ -199,7 +199,7 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 		startPlayback(preparedPlaybackQueue, nowPlaying.filePosition);
 	}
 
-	private ConnectableObservable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final int filePosition) throws IOException {
+	private ConnectableObservable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final long filePosition) throws IOException {
 		if (playbackSubscription != null)
 			playbackSubscription.dispose();
 
