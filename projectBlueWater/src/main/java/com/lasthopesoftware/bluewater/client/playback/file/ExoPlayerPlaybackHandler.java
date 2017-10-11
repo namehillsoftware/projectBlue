@@ -23,6 +23,7 @@ implements
 	private final SimpleExoPlayer exoPlayer;
 	private final Promise<IPlaybackHandler> playbackHandlerPromise;
 	private Messenger<IPlaybackHandler> playbackHandlerMessenger;
+	private boolean isPlaying;
 
 	public ExoPlayerPlaybackHandler(SimpleExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
@@ -33,12 +34,13 @@ implements
 
 	@Override
 	public boolean isPlaying() {
-		return false;
+		return isPlaying;
 	}
 
 	@Override
 	public void pause() {
 		exoPlayer.stop();
+		isPlaying = false;
 	}
 
 	@Override
@@ -64,11 +66,13 @@ implements
 	@Override
 	public Promise<IPlaybackHandler> promisePlayback() {
 		exoPlayer.setPlayWhenReady(true);
+		isPlaying = true;
 		return playbackHandlerPromise;
 	}
 
 	@Override
 	public void close() throws IOException {
+		isPlaying = false;
 		exoPlayer.release();
 	}
 
@@ -98,6 +102,8 @@ implements
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
 		if (playbackState != Player.STATE_ENDED) return;
 
+		isPlaying = false;
+
 		playbackHandlerMessenger.sendResolution(this);
 		exoPlayer.removeListener(this);
 	}
@@ -125,6 +131,9 @@ implements
 	@Override
 	public void run() {
 		exoPlayer.setPlayWhenReady(false);
+		exoPlayer.stop();
 		exoPlayer.release();
+
+		isPlaying = false;
 	}
 }
