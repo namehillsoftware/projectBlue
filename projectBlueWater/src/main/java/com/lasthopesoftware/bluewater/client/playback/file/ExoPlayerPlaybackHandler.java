@@ -100,7 +100,6 @@ implements
 
 		playbackHandlerMessenger.sendResolution(this);
 		exoPlayer.removeListener(this);
-		exoPlayer.release();
 	}
 
 	@Override
@@ -110,7 +109,6 @@ implements
 
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
-		exoPlayer.release();
 		playbackHandlerMessenger.sendRejection(error);
 	}
 
