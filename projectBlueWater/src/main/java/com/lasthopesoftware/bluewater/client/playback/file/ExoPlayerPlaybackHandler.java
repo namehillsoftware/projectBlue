@@ -38,7 +38,7 @@ implements
 
 	@Override
 	public void pause() {
-		exoPlayer.setPlayWhenReady(false);
+		exoPlayer.stop();
 	}
 
 	@Override
@@ -100,6 +100,7 @@ implements
 
 		playbackHandlerMessenger.sendResolution(this);
 		exoPlayer.removeListener(this);
+		exoPlayer.release();
 	}
 
 	@Override
@@ -109,6 +110,7 @@ implements
 
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
+		exoPlayer.release();
 		playbackHandlerMessenger.sendRejection(error);
 	}
 
