@@ -79,9 +79,9 @@ def getGeneratedVersionCode() {
 
     // should result in the same value as running
     // git rev-list <checked out branch name> | wc -l
-    def initialVersionCode = 1000 // use this to skirt around generated version code starting below custom version code
-    def numOfCommits = ext.repo.log().size()
-    return numOfCommits + initialVersionCode
+    def initialVersionCode = 3761 // the initial version code before tags were used to increment version code cod
+    def numberOfReleases = ext.repo.tag.list().size()
+    return numberOfReleases + initialVersionCode
 }
 
 repositories {
