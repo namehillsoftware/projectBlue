@@ -36,10 +36,12 @@ class DiskFileCacheDataSource implements DataSource {
 	public int read(byte[] buffer, int offset, int readLength) throws IOException {
 		final int result = defaultHttpDataSource.read(buffer, offset, readLength);
 
+		final byte[] copiedBuffer = Arrays.copyOf(buffer, buffer.length);
+
 		synchronized (promiseFileSync) {
 			promiseFileAppend =
 				promiseFileAppend
-					.eventually(v -> diskFileCache.putOrAppend(serviceFileKey, Arrays.copyOf(buffer, buffer.length)));
+					.eventually(v -> diskFileCache.putOrAppend(serviceFileKey, copiedBuffer));
 		}
 
 		return result;
