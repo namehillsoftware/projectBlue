@@ -10,9 +10,15 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.annotations.NonNull;
 
 
 class DiskFileCacheDataSource implements DataSource {
@@ -22,7 +28,7 @@ class DiskFileCacheDataSource implements DataSource {
 	private final HttpDataSource defaultHttpDataSource;
 	private final ServiceFile serviceFile;
 	private final DiskFileCache diskFileCache;
-	private final ArrayList<Byte> cachedData = new ArrayList<>();
+	private final ByteSink byteSink = new ByteSink();
 
 	DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, DiskFileCache diskFileCache) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
@@ -32,26 +38,18 @@ class DiskFileCacheDataSource implements DataSource {
 
 	@Override
 	public long open(DataSpec dataSpec) throws IOException {
+		diskFileCache.putEventually(String.valueOf(serviceFile.getKey()), Observable.create(byteSink));
 		return defaultHttpDataSource.open(dataSpec);
 	}
 
 	@Override
 	public int read(byte[] buffer, int offset, int readLength) throws IOException {
 		final int result = defaultHttpDataSource.read(buffer, offset, readLength);
-		memoryCacheExecutorService.execute(() -> {
-			for (final byte b : buffer)
-				cachedData.add(b);
-		});
+		memoryCacheExecutorService.execute(() -> byteSink.publish(buffer));
 
 		if (result != C.RESULT_END_OF_INPUT) return result;
 
-		memoryCacheExecutorService.execute(() -> {
-			final byte[] cachedDataArray = new byte[cachedData.size()];
-			for (int i = 0; i < cachedData.size(); i++)
-				cachedDataArray[i] = cachedData.get(i);
-
-			diskFileCache.put(String.valueOf(serviceFile.getKey()), cachedDataArray);
-		});
+		memoryCacheExecutorService.execute(byteSink::closeSink);
 
 		return result;
 	}
@@ -64,5 +62,36 @@ class DiskFileCacheDataSource implements DataSource {
 	@Override
 	public void close() throws IOException {
 		defaultHttpDataSource.close();
+	}
+
+	private static class ByteSink implements ObservableOnSubscribe<byte[]> {
+
+		private final Queue<byte[]> cachedData = new ConcurrentLinkedQueue<>();
+		private ObservableEmitter<byte[]> emitter;
+
+		void publish(byte[] chunk) {
+			cachedData.offer(chunk);
+			drainBytes();
+		}
+
+		@Override
+		public void subscribe(@NonNull ObservableEmitter<byte[]> e) throws Exception {
+			emitter = e;
+
+			drainBytes();
+		}
+
+		private synchronized void drainBytes() {
+			if (emitter == null) return;
+
+			byte[] b;
+			while ((b = cachedData.poll()) != null)
+				emitter.onNext(b);
+		}
+
+		void closeSink() {
+			if (emitter != null)
+				emitter.onComplete();
+		}
 	}
 }

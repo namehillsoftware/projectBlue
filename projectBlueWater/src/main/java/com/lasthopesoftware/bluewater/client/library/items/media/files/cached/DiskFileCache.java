@@ -22,10 +22,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLDataException;
 import java.util.Date;
+
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
 
 public class DiskFileCache {
 	
@@ -83,17 +89,7 @@ public class DiskFileCache {
 		// Just execute this on the thread pool executor as it doesn't write to the database
 		final QueuedPromise<Void> putPromise =
 			new QueuedPromise<>(() -> {
-				final String suffix = ".cache";
-				final String uniqueKeyHashCode = String.valueOf(uniqueKey.hashCode());
-				final File diskCacheDir = lazyDiskCacheDir.getObject();
-				File file = new File(diskCacheDir, uniqueKeyHashCode + suffix);
-
-				if (file.exists()) {
-					int collisionNumber = 0;
-					do {
-						file = new File(diskCacheDir, uniqueKeyHashCode + "-" + collisionNumber++ + suffix);
-					} while (file.exists());
-				}
+				final File file = generateCacheName(uniqueKey);
 
 				do {
 					try {
@@ -120,6 +116,88 @@ public class DiskFileCache {
 
 				return null;
 			}, AsyncTask.THREAD_POOL_EXECUTOR);
+
+		putPromise.excuse(e -> {
+			if (e instanceof IOException) throw e;
+
+			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
+
+			return null;
+		});
+
+		return putPromise;
+	}
+
+	public Promise<Void> putEventually(final String uniqueKey, final Observable<byte[]> fileData) {
+// Just execute this on the thread pool executor as it doesn't write to the database
+		final Promise<Void> putPromise =
+			new Promise<>((messenger) -> {
+				final File file = generateCacheName(uniqueKey);
+
+				final long fileLength = file.length();
+
+				final FileOutputStream fos;
+				try {
+					fos = new FileOutputStream(file);
+				} catch (FileNotFoundException e) {
+					messenger.sendRejection(e);
+					return;
+				}
+
+				fileData.subscribe(
+					new Observer<byte[]>() {
+						@Override
+						public void onSubscribe(@NonNull Disposable d) {
+
+						}
+
+						@Override
+						public void onNext(@NonNull byte[] aByte) {
+							try {
+								fos.write(aByte);
+							} catch (IOException e) {
+								logger.error("Unable to write to serviceFile!", e);
+
+								// Check if free space is too low and then attempt to free up enough space
+								// to store image
+								final long freeDiskSpace = getFreeDiskSpace(context);
+								if (freeDiskSpace > maxSize) return;
+
+								CacheFlusherTask.futureCacheFlushing(context, cacheName, freeDiskSpace + fileLength);
+							}
+						}
+
+						@Override
+						public void onError(@NonNull Throwable e) {
+							logger.error("Unable to write to serviceFile!", e);
+
+							// Check if free space is too low and then attempt to free up enough space
+							// to store image
+							final long freeDiskSpace = getFreeDiskSpace(context);
+							if (freeDiskSpace > maxSize) return;
+
+							CacheFlusherTask.futureCacheFlushing(context, cacheName, freeDiskSpace + fileLength);
+						}
+
+						@Override
+						public void onComplete() {
+							try {
+								fos.flush();
+								fos.close();
+
+								putIntoDatabase(uniqueKey, file);
+							} catch (IOException e) {
+								logger.warn("There was an error closing the output stream for cache file with key " + uniqueKey, e);
+
+								final long freeDiskSpace = getFreeDiskSpace(context);
+								if (freeDiskSpace <= maxSize)
+									CacheFlusherTask.futureCacheFlushing(context, cacheName, freeDiskSpace + file.length());
+							}
+
+							messenger.sendResolution(null);
+						}
+					});
+			});
 
 		putPromise.excuse(e -> {
 			if (e instanceof IOException) throw e;
@@ -321,6 +399,22 @@ public class DiskFileCache {
 		}
 
 		return -1;
+	}
+
+	private File generateCacheName(String uniqueKey) {
+		final String suffix = ".cache";
+		final String uniqueKeyHashCode = String.valueOf(uniqueKey.hashCode());
+		final File diskCacheDir = lazyDiskCacheDir.getObject();
+		File file = new File(diskCacheDir, uniqueKeyHashCode + suffix);
+
+		if (file.exists()) {
+			int collisionNumber = 0;
+			do {
+				file = new File(diskCacheDir, uniqueKeyHashCode + "-" + collisionNumber++ + suffix);
+			} while (file.exists());
+		}
+
+		return file;
 	}
 
 	private static long getTotalCachedFileCount(RepositoryAccessHelper repositoryAccessHelper) {
