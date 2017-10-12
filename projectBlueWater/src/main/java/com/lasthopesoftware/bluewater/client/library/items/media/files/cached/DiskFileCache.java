@@ -89,7 +89,7 @@ public class DiskFileCache {
 		// Just execute this on the thread pool executor as it doesn't write to the database
 		final QueuedPromise<Void> putPromise =
 			new QueuedPromise<>(() -> {
-				final File file = generateCacheName(uniqueKey);
+				final File file = generateCacheFile(uniqueKey);
 
 				do {
 					try {
@@ -128,11 +128,54 @@ public class DiskFileCache {
 		return putPromise;
 	}
 
+	public Promise<Void> putOrAppend(final String uniqueKey, byte[] fileData) {
+		// Just execute this on the thread pool executor as it doesn't write to the database
+		final Promise<Void> putPromise = promiseCachedFile(uniqueKey)
+			.eventually(promisedFile -> new QueuedPromise<>(() -> {
+				final File file = promisedFile != null ? promisedFile : generateCacheFile(uniqueKey);
+
+				do {
+					try {
+						try (FileOutputStream fos = new FileOutputStream(file, true)) {
+							fos.write(fileData);
+							fos.flush();
+						}
+
+						putIntoDatabase(uniqueKey, file);
+						return null;
+					} catch (IOException e) {
+						logger.error("Unable to write to serviceFile!", e);
+
+						// Check if free space is too low and then attempt to free up enough space
+						// to store image
+						final long freeDiskSpace = getFreeDiskSpace(context);
+						if (freeDiskSpace > maxSize) {
+							return null;
+						}
+
+						CacheFlusherTask.futureCacheFlushing(context, cacheName, freeDiskSpace + file.length()).get();
+					}
+				} while (getFreeDiskSpace(context) >= file.length());
+
+				return null;
+			}, AsyncTask.THREAD_POOL_EXECUTOR));
+
+		putPromise.excuse(e -> {
+			if (e instanceof IOException) throw e;
+
+			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
+
+			return null;
+		});
+
+		return putPromise;
+	}
+
 	public Promise<Void> putEventually(final String uniqueKey, final Observable<byte[]> fileData) {
 // Just execute this on the thread pool executor as it doesn't write to the database
 		final Promise<Void> putPromise =
 			new Promise<>((messenger) -> {
-				final File file = generateCacheName(uniqueKey);
+				final File file = generateCacheFile(uniqueKey);
 
 				final long fileLength = file.length();
 
@@ -152,9 +195,9 @@ public class DiskFileCache {
 						}
 
 						@Override
-						public void onNext(@NonNull byte[] aByte) {
+						public void onNext(@NonNull byte[] bytes) {
 							try {
-								fos.write(aByte);
+								fos.write(bytes);
 							} catch (IOException e) {
 								logger.error("Unable to write to serviceFile!", e);
 
@@ -170,6 +213,12 @@ public class DiskFileCache {
 						@Override
 						public void onError(@NonNull Throwable e) {
 							logger.error("Unable to write to serviceFile!", e);
+
+							try {
+								fos.close();
+							} catch (IOException e1) {
+								logger.warn("There was an error closing the output stream for cache file with key " + uniqueKey, e);
+							}
 
 							// Check if free space is too low and then attempt to free up enough space
 							// to store image
@@ -401,7 +450,7 @@ public class DiskFileCache {
 		return -1;
 	}
 
-	private File generateCacheName(String uniqueKey) {
+	private File generateCacheFile(String uniqueKey) {
 		final String suffix = ".cache";
 		final String uniqueKeyHashCode = String.valueOf(uniqueKey.hashCode());
 		final File diskCacheDir = lazyDiskCacheDir.getObject();
