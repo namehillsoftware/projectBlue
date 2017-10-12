@@ -154,10 +154,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onTrackPositionChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			final int fileDuration = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
+			final long fileDuration = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
 			if (fileDuration > -1) setTrackDuration(fileDuration);
 
-			final int filePosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
+			final long filePosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
 			if (filePosition > -1) setTrackProgress(filePosition);
 		}
 	};
@@ -492,8 +492,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		songRatingBar.setEnabled(true);
 	}
 
-	private void setTrackDuration(int duration) {
-		songProgressBar.findView().setMax(duration);
+	private void setTrackDuration(long duration) {
+		songProgressBar.findView().setMax((int) duration);
 
 		if (viewStructure != null)
 			viewStructure.fileDuration = duration;
@@ -602,7 +602,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		Map<String, String> fileProperties;
 		Promise<Bitmap> promisedNowPlayingImage;
 		long filePosition;
-		int fileDuration;
+		long fileDuration;
 
 		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, ServiceFile serviceFile) {
 			this.urlKeyHolder = urlKeyHolder;
