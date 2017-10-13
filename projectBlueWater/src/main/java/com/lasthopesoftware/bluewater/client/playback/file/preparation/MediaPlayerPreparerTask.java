@@ -4,6 +4,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerCloser;
 import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingMediaPlayerFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
@@ -62,7 +63,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 			}
 
 			if (cancellationToken.isCancelled()) {
-				mediaPlayer.release();
+				MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 				messenger.sendRejection(new CancellationException());
 				return;
 			}
@@ -133,8 +134,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 		public void run() {
 			cancellationToken.run();
 
-			mediaPlayer.reset();
-			mediaPlayer.release();
+			MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 
 			messenger.sendRejection(new CancellationException());
 		}
