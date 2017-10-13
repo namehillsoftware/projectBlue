@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.audio;
 
 import android.net.Uri;
 
-import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
@@ -37,8 +36,13 @@ class DiskFileCacheDataSource implements DataSource {
 	public int read(byte[] buffer, int offset, int readLength) throws IOException {
 		final int result = defaultHttpDataSource.read(buffer, offset, readLength);
 
-		if (result == C.RESULT_END_OF_INPUT)
-			diskFileCache.put(serviceFileKey, Arrays.copyOf(buffer, buffer.length));
+		final byte[] copiedBuffer = Arrays.copyOfRange(buffer, offset, offset + readLength);
+
+		synchronized (promiseFileSync) {
+			promiseFileAppend =
+				promiseFileAppend
+					.eventually(v -> diskFileCache.putOrAppend(serviceFileKey, copiedBuffer, 0, copiedBuffer.length));
+		}
 
 		return result;
 	}
