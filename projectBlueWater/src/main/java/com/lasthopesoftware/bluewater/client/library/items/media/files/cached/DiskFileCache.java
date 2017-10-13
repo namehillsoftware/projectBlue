@@ -32,6 +32,7 @@ import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class DiskFileCache {
 	
@@ -98,7 +99,7 @@ public class DiskFileCache {
 							fos.flush();
 						}
 
-						putIntoDatabase(uniqueKey, file);
+						putIntoDatabase(uniqueKey, file, true);
 						return null;
 					} catch (IOException e) {
 						logger.error("Unable to write to serviceFile!", e);
@@ -128,20 +129,20 @@ public class DiskFileCache {
 		return putPromise;
 	}
 
-	public Promise<Void> putOrAppend(final String uniqueKey, byte[] fileData) {
+	public Promise<Void> putOrAppend(final String uniqueKey, byte[] fileData, int offset, int readLength) {
 		// Just execute this on the thread pool executor as it doesn't write to the database
-		final Promise<Void> putPromise = promiseCachedFile(uniqueKey)
-			.eventually(promisedFile -> new QueuedPromise<>(() -> {
-				final File file = promisedFile != null ? promisedFile : generateCacheFile(uniqueKey);
+		final Promise<Void> putPromise =new QueuedPromise<>(() -> getCachedFile(uniqueKey), RepositoryAccessHelper.databaseExecutor)
+			.eventually(cachedFile -> new QueuedPromise<>(() -> {
+				final File file = cachedFile != null ? new File(cachedFile.getFileName()) : generateCacheFile(uniqueKey);
 
 				do {
 					try {
 						try (FileOutputStream fos = new FileOutputStream(file, true)) {
-							fos.write(fileData);
+							fos.write(fileData, offset, readLength);
 							fos.flush();
 						}
 
-						putIntoDatabase(uniqueKey, file);
+						putIntoDatabase(uniqueKey, file, false);
 						return null;
 					} catch (IOException e) {
 						logger.error("Unable to write to serviceFile!", e);
@@ -187,7 +188,7 @@ public class DiskFileCache {
 					return;
 				}
 
-				fileData.subscribe(
+				fileData.observeOn(Schedulers.single()).subscribe(
 					new Observer<byte[]>() {
 						@Override
 						public void onSubscribe(@NonNull Disposable d) {
@@ -196,6 +197,7 @@ public class DiskFileCache {
 
 						@Override
 						public void onNext(@NonNull byte[] bytes) {
+
 							try {
 								fos.write(bytes);
 							} catch (IOException e) {
@@ -234,7 +236,7 @@ public class DiskFileCache {
 								fos.flush();
 								fos.close();
 
-								putIntoDatabase(uniqueKey, file);
+								putIntoDatabase(uniqueKey, file, true);
 							} catch (IOException e) {
 								logger.warn("There was an error closing the output stream for cache file with key " + uniqueKey, e);
 
@@ -259,7 +261,7 @@ public class DiskFileCache {
 		return putPromise;
 	}
 
-	private void putIntoDatabase(final String uniqueKey, final File file) {
+	private void putIntoDatabase(final String uniqueKey, final File file, boolean verbose) {
 		RepositoryAccessHelper.databaseExecutor.execute(() -> {
 			final String canonicalFilePath;
 			try {
@@ -286,7 +288,7 @@ public class DiskFileCache {
 					}
 				}
 
-				doFileAccessedUpdate(cachedFile.getId());
+				doFileAccessedUpdate(cachedFile.getId(), verbose);
 				return;
 			}
 
@@ -346,7 +348,7 @@ public class DiskFileCache {
 					return null;
 				}
 
-				doFileAccessedUpdate(cachedFile.getId());
+				doFileAccessedUpdate(cachedFile.getId(), true);
 
 				logger.info("Returning cached serviceFile " + uniqueKey);
 				return returnFile;
@@ -380,9 +382,11 @@ public class DiskFileCache {
 		}
 	}
 
-	private void doFileAccessedUpdate(final long cachedFileId) {
+	private void doFileAccessedUpdate(final long cachedFileId, boolean verbose) {
 		final long updateTime = System.currentTimeMillis();
-		logger.info("Updating accessed time on cached serviceFile with ID " + cachedFileId + " to " + new Date(updateTime));
+
+		if (verbose)
+			logger.info("Updating accessed time on cached serviceFile with ID " + cachedFileId + " to " + new Date(updateTime));
 
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {

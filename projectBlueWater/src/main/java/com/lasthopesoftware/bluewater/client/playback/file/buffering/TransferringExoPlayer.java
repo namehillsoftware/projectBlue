@@ -33,9 +33,8 @@ implements
 
 	@Override
 	public void send(Messenger<IBufferingPlaybackFile> messenger) {
-		if (!isTransferComplete)
-			this.messenger = messenger;
-		else
+		this.messenger = messenger;
+		if (isTransferComplete)
 			messenger.sendResolution(this);
 	}
 
