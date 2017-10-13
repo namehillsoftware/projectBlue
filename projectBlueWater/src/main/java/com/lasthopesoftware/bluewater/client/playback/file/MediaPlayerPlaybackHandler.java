@@ -4,6 +4,7 @@ import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerIllegalStateReporter;
 import com.lasthopesoftware.messenger.Messenger;
 import com.lasthopesoftware.messenger.promises.MessengerOperator;
 import com.lasthopesoftware.messenger.promises.Promise;
@@ -24,6 +25,7 @@ implements
 	Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerPlaybackHandler.class);
+	private static final MediaPlayerIllegalStateReporter mediaPlayerIllegalStateReporter = new MediaPlayerIllegalStateReporter(MediaPlayerPlaybackHandler.class);
 
 	private final MediaPlayer mediaPlayer;
 	private float volume;
@@ -43,7 +45,7 @@ implements
 		try {
 			return mediaPlayer.isPlaying();
 		} catch (IllegalStateException e) {
-			logger.warn("There was an error getting `isPlaying` from the media player", e);
+			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting `isPlaying`");
 			return false;
 		}
 	}
@@ -71,7 +73,7 @@ implements
 				? previousMediaPlayerPosition = mediaPlayer.getCurrentPosition()
 				: previousMediaPlayerPosition;
 		} catch (IllegalStateException e) {
-			logger.warn("An error occurred getting track position", e);
+			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track position");
 			return previousMediaPlayerPosition;
 		}
 	}
@@ -81,7 +83,7 @@ implements
 		try {
 			return mediaPlayer.getDuration();
 		} catch (IllegalStateException e) {
-			logger.warn("An error occurred getting track duration", e);
+			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
 			return 0;
 		}
 	}
@@ -134,10 +136,15 @@ implements
 	@Override
 	public void close() throws IOException {
 		logger.info("Closing the media player");
-		if (isPlaying())
-			mediaPlayer.stop();
-		mediaPlayer.reset();
-		mediaPlayer.release();
+
+		try {
+			if (isPlaying())
+				mediaPlayer.stop();
+		} catch (IllegalStateException se) {
+			mediaPlayerIllegalStateReporter.reportIllegalStateException(se, "stopping");
+		}
+
+		MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 	}
 
 	@Override
