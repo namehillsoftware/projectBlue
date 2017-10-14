@@ -6,6 +6,7 @@ import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public class CollectedResultsResolver<TResult> implements ImmediateResponse<TResult, TResult> {
 	private final Collection<TResult> results;
@@ -19,6 +20,9 @@ public class CollectedResultsResolver<TResult> implements ImmediateResponse<TRes
 			promise.then(this);
 
 		this.expectedResultSize = promises.size();
+
+		if (promises.isEmpty())
+			collectionMessenger.sendResolution(Collections.emptyList());
 	}
 
 	@Override
