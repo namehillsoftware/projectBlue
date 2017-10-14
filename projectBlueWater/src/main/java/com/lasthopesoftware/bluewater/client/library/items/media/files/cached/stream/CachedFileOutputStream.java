@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.IDiskFileCachePersistence;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -40,7 +41,7 @@ public class CachedFileOutputStream implements Closeable {
 		}, cachedFileWriteExecutor);
 	}
 
-	public Promise<Void> commitToCache() {
+	public Promise<CachedFile> commitToCache() {
 		return diskFileCachePersistence.putIntoDatabase(uniqueKey, file);
 	}
 
