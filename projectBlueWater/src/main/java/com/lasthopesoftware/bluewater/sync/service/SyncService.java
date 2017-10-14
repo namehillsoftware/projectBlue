@@ -261,7 +261,7 @@ public class SyncService extends Service {
 		logger.info("Starting sync.");
 
 		isSyncRunning = true;
-		startForeground(notificationId, buildSyncNotification(null));
+		setSyncNotificationText(null);
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
 		lazyLibraryProvider.getObject().getAllLibraries().then(perform(libraries -> {
@@ -379,7 +379,7 @@ public class SyncService extends Service {
 	}
 
 	private void finishSync() {
-		logger.info("Finishing sync. Scheduling then sync for " + syncInterval + "ms from now.");
+		logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
 
 		// Set an alarm for the then time we runWith this bad boy
 		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);

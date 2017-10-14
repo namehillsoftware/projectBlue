@@ -8,8 +8,6 @@ android {
     compileSdkVersion 26
     buildToolsVersion '26.0.1'
 
-    project.ext.set("versionCodeManualOverride", null)
-
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
@@ -68,18 +66,13 @@ android {
 project.ext.set("archivesBaseName", "music-canoe-" + project.version);
 
 def getGeneratedVersionCode() {
-
-    if (project.versionCodeManualOverride != null) {
-        return project.versionCodeManualOverride
-    }
-
     // current dir is <your proj>/app, so it's likely that all your git repo files are in the dir
     // above.
     ext.repo = Grgit.open(project.file('..'))
 
     // should result in the same value as running
     // git rev-list <checked out branch name> | wc -l
-    def initialVersionCode = 3761 // the initial version code before tags were used to increment version code cod
+    def initialVersionCode = 3761 // the initial version code before tags were used to increment version code
     def numberOfReleases = ext.repo.tag.list().size()
     return numberOfReleases + initialVersionCode
 }
