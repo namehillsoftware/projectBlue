@@ -154,10 +154,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onTrackPositionChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			final long fileDuration = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
+			final long fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
 			if (fileDuration > -1) setTrackDuration(fileDuration);
 
-			final long filePosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
+			final long filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
 			if (filePosition > -1) setTrackProgress(filePosition);
 		}
 	};

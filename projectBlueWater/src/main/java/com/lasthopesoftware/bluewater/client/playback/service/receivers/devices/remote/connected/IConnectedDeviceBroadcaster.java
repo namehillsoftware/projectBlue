@@ -7,5 +7,5 @@ public interface IConnectedDeviceBroadcaster {
 	void setPaused();
 	void setStopped();
 	void updateNowPlaying(ServiceFile serviceFile);
-	void updateTrackPosition(int trackPosition);
+	void updateTrackPosition(long trackPosition);
 }
