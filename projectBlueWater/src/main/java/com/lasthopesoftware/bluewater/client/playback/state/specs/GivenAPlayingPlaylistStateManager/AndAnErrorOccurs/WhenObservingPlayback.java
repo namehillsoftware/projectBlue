@@ -81,7 +81,7 @@ public class WhenObservingPlayback {
 		}
 
 		@Override
-		public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, int preparedAt) {
+		public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, long preparedAt) {
 			return new Promise<>(messenger -> reject = messenger);
 		}
 	}

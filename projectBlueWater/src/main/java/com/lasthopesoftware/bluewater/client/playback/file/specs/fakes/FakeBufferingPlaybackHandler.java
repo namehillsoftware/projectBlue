@@ -37,7 +37,7 @@ implements IBufferingPlaybackFile, IPlaybackHandler {
 	}
 
 	@Override
-	public int getCurrentPosition() {
+	public long getCurrentPosition() {
 		return this.currentPosition;
 	}
 
@@ -46,7 +46,7 @@ implements IBufferingPlaybackFile, IPlaybackHandler {
 	}
 
 	@Override
-	public int getDuration() {
+	public long getDuration() {
 		return 0;
 	}
 

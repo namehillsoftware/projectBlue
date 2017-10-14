@@ -17,7 +17,7 @@ import java.util.concurrent.Future;
  * @author david
  *
  */
-class CacheFlusherTask implements Runnable {
+public class CacheFlusherTask implements Runnable {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 	
@@ -25,7 +25,7 @@ class CacheFlusherTask implements Runnable {
 	private final String cacheName;
 	private final long targetSize;
 
-	static Future<?> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
+	public static Future<?> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
 		return RepositoryAccessHelper.databaseExecutor.submit(new CacheFlusherTask(context, cacheName, targetSize));
 	}
 
