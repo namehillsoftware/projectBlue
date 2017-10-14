@@ -92,13 +92,13 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 				return;
 			}
 
-			if (prepareAt > 0) {
-				mediaPlayer.setOnSeekCompleteListener(mediaPlayerPreparationHandler);
-				mediaPlayer.seekTo(prepareAt);
+			if (prepareAt <= 0) {
+				messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mediaPlayer), new BufferingMediaPlayerFile(mediaPlayer)));
 				return;
 			}
 
-			messenger.sendResolution(new PreparedMediaPlayer(new MediaPlayerPlaybackHandler(mediaPlayer), new BufferingMediaPlayerFile(mediaPlayer)));
+			mediaPlayer.setOnSeekCompleteListener(mediaPlayerPreparationHandler);
+			mediaPlayer.seekTo(prepareAt);
 		}
 	}
 
