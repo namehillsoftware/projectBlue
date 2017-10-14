@@ -34,7 +34,7 @@ public class WhenWritingTheFile {
 		cachedFileOutputStream.write(bytes, 0, bytes.length)
 			.then(w -> {
 				try (final FileInputStream fis = new FileInputStream(file)) {
-					fis.read(bytesWritten, 0, w.intValue());
+					fis.read(bytesWritten, 0, bytes.length);
 				}
 				countDownLatch.countDown();
 				return null;
