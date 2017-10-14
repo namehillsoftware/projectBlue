@@ -87,7 +87,7 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, IPreparedPl
 			}
 
 			if (cancellationToken.isCancelled()) {
-				mediaPlayer.release();
+				MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 				messenger.sendRejection(new CancellationException());
 				return;
 			}
