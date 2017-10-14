@@ -37,7 +37,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 	private final MediaSession mediaSession;
 
 	private volatile int playbackState = PlaybackState.STATE_STOPPED;
-	private volatile int trackPosition = -1;
+	private volatile long trackPosition = -1;
 	private volatile MediaMetadata mediaMetadata = (new MediaMetadata.Builder()).build();
 	@Actions private volatile long capabilities = standardCapabilities;
 	private Bitmap remoteClientBitmap;
@@ -124,7 +124,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 	}
 
 	@Override
-	public void updateTrackPosition(int trackPosition) {
+	public void updateTrackPosition(long trackPosition) {
 		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		builder.setActions(capabilities);
 		builder.setState(

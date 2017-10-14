@@ -51,7 +51,7 @@ public class RemoteControlProxy extends BroadcastReceiver {
 	}
 
 	private void onTrackPositionUpdate(Intent intent) {
-		final int trackPosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
+		final long trackPosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
 		if (trackPosition >= 0)
 			connectedDeviceBroadcaster.updateTrackPosition(trackPosition);
 	}
