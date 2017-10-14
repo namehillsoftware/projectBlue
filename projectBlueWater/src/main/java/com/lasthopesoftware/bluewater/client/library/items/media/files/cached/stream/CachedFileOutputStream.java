@@ -34,10 +34,11 @@ public class CachedFileOutputStream implements Closeable {
 		this.diskFileCachePersistence = diskFileCachePersistence;
 	}
 
-	public Promise<Long> write(byte[] buffer, int offset, int length) {
+	public Promise<CachedFileOutputStream> write(byte[] buffer, int offset, int length) {
 		return new QueuedPromise<>(() -> {
 			lazyFileOutputStream.getObject().write(buffer, offset, length);
-			return (long) length;
+			lazyFileOutputStream.getObject().flush();
+			return this;
 		}, cachedFileWriteExecutor);
 	}
 
