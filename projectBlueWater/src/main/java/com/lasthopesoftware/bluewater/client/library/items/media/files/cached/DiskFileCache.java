@@ -51,7 +51,7 @@ public class DiskFileCache {
 		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
 
 		expirationTime = diskFileCacheConfiguration.getCacheExpirationDays() != null
-			? diskFileCacheConfiguration.getCacheExpirationDays().toPeriod().getMillis()
+			? diskFileCacheConfiguration.getCacheExpirationDays().toStandardDuration().getMillis()
 			: -1;
 
 		this.diskFileCachePersistence = diskFileCachePersistence;
@@ -75,6 +75,7 @@ public class DiskFileCache {
 	private Promise<CachedFile> writeCachedFileWithRetries(CachedFileOutputStream cachedFileOutputStream, byte[] fileData) {
 		final Promise<CachedFile> cachedFileWritePromise = cachedFileOutputStream
 			.write(fileData, 0, fileData.length)
+			.eventually(CachedFileOutputStream::flush)
 			.eventually(fos -> {
 				fos.close();
 				return fos.commitToCache();

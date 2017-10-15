@@ -61,12 +61,14 @@ class DiskFileCacheDataSource implements DataSource {
 					});
 		}
 
-		if (result == C.RESULT_END_OF_INPUT) return result;
+		if (result != C.RESULT_END_OF_INPUT) return result;
 
-		promisedOutputStream.eventually(cachedFileOutputStream -> {
-			cachedFileOutputStream.close();
-			return cachedFileOutputStream.commitToCache();
-		});
+		promisedOutputStream
+			.eventually(CachedFileOutputStream::flush)
+			.eventually(cachedFileOutputStream -> {
+				cachedFileOutputStream.close();
+				return cachedFileOutputStream.commitToCache();
+			});
 
 		return result;
 	}
@@ -79,5 +81,12 @@ class DiskFileCacheDataSource implements DataSource {
 	@Override
 	public void close() throws IOException {
 		defaultHttpDataSource.close();
+
+		if (promisedOutputStream == null) return;
+
+		promisedOutputStream.then(cachedFileOutputStream -> {
+			cachedFileOutputStream.close();
+			return null;
+		});
 	}
 }
