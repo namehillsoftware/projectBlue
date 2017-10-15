@@ -6,17 +6,18 @@ import android.os.Handler;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.ExoPlayerPlaybackHandler;
@@ -36,31 +37,63 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 	private final Context context;
 	private final DataSourceFactoryProvider dataSourceFactoryProvider;
+	private final TrackSelector trackSelector;
+	private final LoadControl loadControl;
+	private final RenderersFactory rendersFactory;
+	private final ExtractorsFactory extractorsFactory;
+	private final Handler handler;
 	private final long prepareAt;
 	private final ServiceFile serviceFile;
 
-	ExoPlayerPreparerTask(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, long prepareAt) {
+	ExoPlayerPreparerTask(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, TrackSelector trackSelector, LoadControl loadControl, RenderersFactory rendersFactory, ExtractorsFactory extractorsFactory, Handler handler, ServiceFile serviceFile, long prepareAt) {
 		this.context = context;
 		this.dataSourceFactoryProvider = dataSourceFactoryProvider;
+		this.trackSelector = trackSelector;
+		this.loadControl = loadControl;
+		this.rendersFactory = rendersFactory;
+		this.extractorsFactory = extractorsFactory;
+		this.handler = handler;
 		this.serviceFile = serviceFile;
 		this.prepareAt = prepareAt;
 	}
 
 	@Override
 	public Promise<PreparedPlaybackFile> promiseResponse(Uri uri) throws Throwable {
-		return new Promise<>(new ExoPlayerPreparationOperator(context, dataSourceFactoryProvider, serviceFile, uri, prepareAt));
+		return new Promise<>(
+			new ExoPlayerPreparationOperator(
+				context,
+				dataSourceFactoryProvider,
+				trackSelector,
+				loadControl,
+				rendersFactory,
+				extractorsFactory,
+				handler,
+				serviceFile,
+				uri,
+				prepareAt));
 	}
 
 	private static final class ExoPlayerPreparationOperator implements MessengerOperator<PreparedPlaybackFile> {
+
 		private final Context context;
 		private final DataSourceFactoryProvider dataSourceFactoryProvider;
+		private final TrackSelector trackSelector;
+		private final LoadControl loadControl;
+		private final RenderersFactory rendersFactory;
+		private final ExtractorsFactory extractorsFactory;
+		private final Handler handler;
 		private final Uri uri;
 		private final long prepareAt;
 		private final ServiceFile serviceFile;
 
-		ExoPlayerPreparationOperator(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, ServiceFile serviceFile, Uri uri, long prepareAt) {
+		ExoPlayerPreparationOperator(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, TrackSelector trackSelector, LoadControl loadControl, RenderersFactory rendersFactory, ExtractorsFactory extractorsFactory, Handler handler, ServiceFile serviceFile, Uri uri, long prepareAt) {
 			this.context = context;
 			this.dataSourceFactoryProvider = dataSourceFactoryProvider;
+			this.trackSelector = trackSelector;
+			this.loadControl = loadControl;
+			this.rendersFactory = rendersFactory;
+			this.extractorsFactory = extractorsFactory;
+			this.handler = handler;
 			this.serviceFile = serviceFile;
 			this.uri = uri;
 			this.prepareAt = prepareAt;
@@ -76,9 +109,10 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 				return;
 			}
 
-			final DefaultTrackSelector trackSelector = new DefaultTrackSelector();
-
-			final SimpleExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+			final SimpleExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(
+				rendersFactory,
+				trackSelector,
+				loadControl);
 			if (cancellationToken.isCancelled()) {
 				exoPlayer.release();
 				messenger.sendRejection(new CancellationException());
@@ -94,13 +128,11 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 			if (cancellationToken.isCancelled()) return;
 
-			final ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-			final Handler mainHandler = new Handler(context.getMainLooper());
 			final MediaSource mediaSource = new ExtractorMediaSource(
 				uri,
 				dataSourceFactoryProvider.getFactory(uri, serviceFile, transferringExoPlayer),
 				extractorsFactory,
-				mainHandler,
+				handler,
 				exoPlayerPreparationHandler);
 
 			try {
