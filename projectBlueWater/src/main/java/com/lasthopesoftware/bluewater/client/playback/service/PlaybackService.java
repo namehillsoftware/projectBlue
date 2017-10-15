@@ -12,12 +12,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
 import android.media.session.MediaSession;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -237,6 +239,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private RemoteControlProxy remoteControlProxy;
 
 	private WifiLock wifiLock = null;
+	private PowerManager.WakeLock wakeLock = null;
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -374,8 +377,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				
 		wifiLock = ((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, wifiLockSvcName);
         wifiLock.acquire();
-		
-        registerRemoteClientControl();
+
+		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
+		wakeLock.setReferenceCounted(false);
+		wakeLock.acquire();
+
+		registerRemoteClientControl();
         
 		areListenersRegistered = true;
 	}
@@ -398,6 +405,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (wifiLock.isHeld()) wifiLock.release();
 			wifiLock = null;
 		}
+
+		if (wakeLock != null) {
+			if (wakeLock.isHeld()) wakeLock.release();
+			wakeLock = null;
+		}
+
 		final PollConnection pollConnection = PollConnection.Instance.get(this);
 		if (connectionRegainedListener.isInitialized())
 			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
