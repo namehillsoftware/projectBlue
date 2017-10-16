@@ -7,8 +7,8 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.RenderersFactory;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
+import com.google.android.exoplayer2.extractor.mp3.Mp3Extractor;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
@@ -45,7 +45,7 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 			);
 		}
 	};
-	private static final Lazy<ExtractorsFactory> extractorsFactory = new Lazy<>(DefaultExtractorsFactory::new);
+	private static final Lazy<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
 	private final Context context;
 	private final IFileUriProvider fileUriProvider;
