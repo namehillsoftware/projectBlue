@@ -100,6 +100,9 @@ implements
 
 	@Override
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+		if (isPlaying && playbackState == Player.STATE_IDLE)
+			exoPlayer.setPlayWhenReady(true);
+
 		if (playbackState != Player.STATE_ENDED) return;
 
 		isPlaying = false;
