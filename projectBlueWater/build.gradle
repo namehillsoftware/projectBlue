@@ -104,6 +104,5 @@ dependencies {
     compile 'io.reactivex.rxjava2:rxjava:2.1.5'
     compile 'com.github.danrien:lazy-j:660f29234d585fa1bc81115fb81ff1b1e273687e'
     compile 'com.google.android.exoplayer:exoplayer-core:r2.+'
-    compile 'com.google.android.exoplayer:exoplayer-dash:r2.+'
-    compile 'com.google.android.exoplayer:exoplayer-ui:r2.+'
+    compile 'com.google.android.exoplayer:extension-okhttp:r2.+'
 }
