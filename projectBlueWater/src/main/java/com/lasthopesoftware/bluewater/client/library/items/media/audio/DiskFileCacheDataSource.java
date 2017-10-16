@@ -44,31 +44,32 @@ class DiskFileCacheDataSource implements DataSource {
 	public int read(byte[] buffer, int offset, int readLength) throws IOException {
 		final int result = defaultHttpDataSource.read(buffer, offset, readLength);
 
-		final byte[] copiedBuffer = Arrays.copyOfRange(buffer, offset, offset + readLength);
+		if (result == C.RESULT_END_OF_INPUT) {
+			promisedOutputStream
+				.eventually(CachedFileOutputStream::flush)
+				.eventually(cachedFileOutputStream -> {
+					cachedFileOutputStream.close();
+					return cachedFileOutputStream.commitToCache();
+				});
 
-		synchronized (promiseFileSync) {
-			promisedOutputStream =
-				promisedOutputStream
-					.eventually(cachedFileOutputStream -> {
-						final Promise<CachedFileOutputStream> promisedWrite = cachedFileOutputStream.write(copiedBuffer, 0, copiedBuffer.length);
-						promisedWrite.excuse(e -> {
-							logger.warn("An error occurred storing the audio file", e);
-							cachedFileOutputStream.close();
-							return null;
-						});
-
-						return promisedWrite;
-					});
+			return result;
 		}
 
-		if (result != C.RESULT_END_OF_INPUT) return result;
+		final byte[] copiedBuffer = Arrays.copyOfRange(buffer, offset, offset + result);
 
-		promisedOutputStream
-			.eventually(CachedFileOutputStream::flush)
-			.eventually(cachedFileOutputStream -> {
-				cachedFileOutputStream.close();
-				return cachedFileOutputStream.commitToCache();
-			});
+		synchronized (promiseFileSync) {
+			promisedOutputStream = promisedOutputStream
+				.eventually(cachedFileOutputStream -> {
+					final Promise<CachedFileOutputStream> promisedWrite = cachedFileOutputStream.promiseWrite(copiedBuffer, 0, copiedBuffer.length);
+					promisedWrite.excuse(e -> {
+						logger.warn("An error occurred storing the audio file", e);
+						cachedFileOutputStream.close();
+						return null;
+					});
+
+					return promisedWrite;
+				});
+		}
 
 		return result;
 	}

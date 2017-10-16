@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLDataException;
-import java.util.Date;
 
 public class DiskFileCache {
 
@@ -74,7 +73,7 @@ public class DiskFileCache {
 
 	private Promise<CachedFile> writeCachedFileWithRetries(CachedFileOutputStream cachedFileOutputStream, byte[] fileData) {
 		final Promise<CachedFile> cachedFileWritePromise = cachedFileOutputStream
-			.write(fileData, 0, fileData.length)
+			.promiseWrite(fileData, 0, fileData.length)
 			.eventually(CachedFileOutputStream::flush)
 			.eventually(fos -> {
 				fos.close();
@@ -83,7 +82,7 @@ public class DiskFileCache {
 
 		final Promise<CachedFile> retryWritePromise = cachedFileWritePromise
 			.excuse(e -> {
-				logger.error("Unable to write to serviceFile!", e);
+				logger.error("Unable to promiseWrite to serviceFile!", e);
 
 				cachedFileOutputStream.close();
 				return e;
@@ -156,28 +155,6 @@ public class DiskFileCache {
 
 	public Promise<Boolean> containsKey(final String uniqueKey) throws IOException {
 		return promiseCachedFile(uniqueKey).then(file -> file != null);
-	}
-
-	private void doFileAccessedUpdate(final long cachedFileId, boolean verbose) {
-		final long updateTime = System.currentTimeMillis();
-
-		if (verbose)
-			logger.info("Updating accessed time on cached serviceFile with ID " + cachedFileId + " to " + new Date(updateTime));
-
-		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-				repositoryAccessHelper
-						.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
-						.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
-						.addParameter("id", cachedFileId)
-						.execute();
-
-				closeableTransaction.setTransactionSuccessful();
-			} catch (SQLException sqlException) {
-				logger.error("There was an error trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
-				throw sqlException;
-			}
-		}
 	}
 
 	private long deleteCachedFile(final long cachedFileId) {

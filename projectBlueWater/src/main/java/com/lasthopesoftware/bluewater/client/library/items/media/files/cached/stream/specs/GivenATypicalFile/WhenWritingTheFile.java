@@ -31,7 +31,7 @@ public class WhenWritingTheFile {
 		final CachedFileOutputStream cachedFileOutputStream = new CachedFileOutputStream("unique-test", file, mock(IDiskFileCachePersistence.class));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		cachedFileOutputStream.write(bytes, 0, bytes.length)
+		cachedFileOutputStream.promiseWrite(bytes, 0, bytes.length)
 			.then(w -> {
 				try (final FileInputStream fis = new FileInputStream(file)) {
 					fis.read(bytesWritten, 0, bytes.length);
