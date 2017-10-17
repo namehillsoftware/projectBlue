@@ -27,7 +27,6 @@ class DiskFileCacheDataSource implements DataSource {
 	private final DiskFileCache diskFileCache;
 	private final Object promiseFileSync = new Object();
 	private Promise<CachedFileOutputStream> promisedOutputStream;
-	private boolean isClosed;
 
 	DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, DiskFileCache diskFileCache) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
@@ -61,12 +60,9 @@ class DiskFileCacheDataSource implements DataSource {
 		synchronized (promiseFileSync) {
 			promisedOutputStream = promisedOutputStream
 				.eventually(cachedFileOutputStream -> {
-					if (isClosed) return new Promise<>(cachedFileOutputStream);
-
 					final Promise<CachedFileOutputStream> promisedWrite = cachedFileOutputStream.promiseWrite(copiedBuffer, 0, copiedBuffer.length);
 					promisedWrite.excuse(e -> {
 						logger.warn("An error occurred storing the audio file", e);
-						isClosed = true;
 						cachedFileOutputStream.close();
 						return null;
 					});
@@ -85,7 +81,6 @@ class DiskFileCacheDataSource implements DataSource {
 
 	@Override
 	public void close() throws IOException {
-		isClosed = true;
 		defaultHttpDataSource.close();
 
 		if (promisedOutputStream == null) return;
