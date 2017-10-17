@@ -100,7 +100,7 @@ implements
 
 	@Override
 	public void onLoadingChanged(boolean isLoading) {
-		logger.debug("Loading changed");
+		logger.debug("Loading changed to " + isLoading);
 	}
 
 	@Override

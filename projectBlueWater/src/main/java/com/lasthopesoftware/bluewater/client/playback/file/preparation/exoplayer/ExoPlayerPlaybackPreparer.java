@@ -48,7 +48,6 @@ final class ExoPlayerPlaybackPreparer implements IPlaybackPreparer {
 				: fileUriProvider.getFileUri(serviceFile))
 			.eventually(
 				new ExoPlayerPreparerTask(
-					context,
 					dataSourceFactoryProvider,
 					trackSelector,
 					loadControl,
