@@ -66,6 +66,7 @@ class DiskFileCacheDataSource implements DataSource {
 					final Promise<CachedFileOutputStream> promisedWrite = cachedFileOutputStream.promiseWrite(copiedBuffer, 0, copiedBuffer.length);
 					promisedWrite.excuse(e -> {
 						logger.warn("An error occurred storing the audio file", e);
+						isClosed = true;
 						cachedFileOutputStream.close();
 						return null;
 					});
