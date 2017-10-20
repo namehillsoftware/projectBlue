@@ -129,8 +129,11 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 				uri,
 				dataSourceFactoryProvider.getFactory(uri, serviceFile, transferringExoPlayer),
 				extractorsFactory,
+				ExtractorMediaSource.DEFAULT_MIN_LOADABLE_RETRY_COUNT_LIVE,
 				handler,
-				exoPlayerPreparationHandler);
+				exoPlayerPreparationHandler,
+				null,
+				ExtractorMediaSource.DEFAULT_LOADING_CHECK_INTERVAL_BYTES);
 
 			try {
 				exoPlayer.prepare(mediaSource);

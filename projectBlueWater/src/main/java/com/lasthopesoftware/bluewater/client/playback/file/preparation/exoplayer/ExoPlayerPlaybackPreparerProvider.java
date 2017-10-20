@@ -37,7 +37,6 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 	private static final ILazy<LoadControl> loadControl = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewLoadControl);
 	private static final Lazy<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
-	private final Context context;
 	private final IFileUriProvider fileUriProvider;
 	private final DataSourceFactoryProvider dataSourceFactoryProvder;
 	private final DiskFileCache diskFileCache;
@@ -45,7 +44,6 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 	private final Handler handler;
 
 	public ExoPlayerPlaybackPreparerProvider(Context context, IFileUriProvider fileUriProvider, Library library) {
-		this.context = context;
 		this.fileUriProvider = fileUriProvider;
 
 		final AudioCacheConfiguration audioCacheConfiguration = new AudioCacheConfiguration(library);
@@ -77,7 +75,6 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 	@Override
 	public IPlaybackPreparer providePlaybackPreparer() {
 		return new ExoPlayerPlaybackPreparer(
-			context,
 			dataSourceFactoryProvder,
 			getNewTrackSelector(),
 			getNewLoadControl(),

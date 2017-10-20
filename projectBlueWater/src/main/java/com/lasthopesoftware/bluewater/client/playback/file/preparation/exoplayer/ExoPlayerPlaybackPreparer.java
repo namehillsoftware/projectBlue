@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 
@@ -18,7 +17,6 @@ import com.lasthopesoftware.messenger.promises.Promise;
 
 final class ExoPlayerPlaybackPreparer implements IPlaybackPreparer {
 
-	private final Context context;
 	private final DataSourceFactoryProvider dataSourceFactoryProvider;
 	private final TrackSelector trackSelector;
 	private final LoadControl loadControl;
@@ -28,8 +26,7 @@ final class ExoPlayerPlaybackPreparer implements IPlaybackPreparer {
 	private final DiskFileCache diskFileCache;
 	private final IFileUriProvider fileUriProvider;
 
-	ExoPlayerPlaybackPreparer(Context context, DataSourceFactoryProvider dataSourceFactoryProvider, TrackSelector trackSelector, LoadControl loadControl, RenderersFactory rendersFactory, ExtractorsFactory extractorsFactory, Handler handler, DiskFileCache diskFileCache, IFileUriProvider fileUriProvider) {
-		this.context = context;
+	ExoPlayerPlaybackPreparer(DataSourceFactoryProvider dataSourceFactoryProvider, TrackSelector trackSelector, LoadControl loadControl, RenderersFactory rendersFactory, ExtractorsFactory extractorsFactory, Handler handler, DiskFileCache diskFileCache, IFileUriProvider fileUriProvider) {
 		this.trackSelector = trackSelector;
 		this.loadControl = loadControl;
 		this.rendersFactory = rendersFactory;
