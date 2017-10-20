@@ -29,6 +29,9 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
@@ -74,18 +77,18 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		private final DataSourceFactoryProvider dataSourceFactoryProvider;
 		private final TrackSelector trackSelector;
 		private final LoadControl loadControl;
-		private final RenderersFactory rendersFactory;
+		private final RenderersFactory renderersFactory;
 		private final ExtractorsFactory extractorsFactory;
 		private final Handler handler;
 		private final Uri uri;
 		private final long prepareAt;
 		private final ServiceFile serviceFile;
 
-		ExoPlayerPreparationOperator(DataSourceFactoryProvider dataSourceFactoryProvider, TrackSelector trackSelector, LoadControl loadControl, RenderersFactory rendersFactory, ExtractorsFactory extractorsFactory, Handler handler, ServiceFile serviceFile, Uri uri, long prepareAt) {
+		ExoPlayerPreparationOperator(DataSourceFactoryProvider dataSourceFactoryProvider, TrackSelector trackSelector, LoadControl loadControl, RenderersFactory renderersFactory, ExtractorsFactory extractorsFactory, Handler handler, ServiceFile serviceFile, Uri uri, long prepareAt) {
 			this.dataSourceFactoryProvider = dataSourceFactoryProvider;
 			this.trackSelector = trackSelector;
 			this.loadControl = loadControl;
-			this.rendersFactory = rendersFactory;
+			this.renderersFactory = renderersFactory;
 			this.extractorsFactory = extractorsFactory;
 			this.handler = handler;
 			this.serviceFile = serviceFile;
@@ -104,7 +107,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 			}
 
 			final SimpleExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(
-				rendersFactory,
+				renderersFactory,
 				trackSelector,
 				loadControl);
 			if (cancellationToken.isCancelled()) {
@@ -143,6 +146,8 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		ExtractorMediaSource.EventListener,
 		Runnable
 	{
+		private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
+
 		private final SimpleExoPlayer exoPlayer;
 		private final Messenger<PreparedPlaybackFile> messenger;
 		private final TransferringExoPlayer<? super DataSource> transferringExoPlayer;
@@ -203,6 +208,9 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 		@Override
 		public void onPlayerError(ExoPlaybackException error) {
+			logger.error("An error occurred while preparing the exo player!", error);
+
+			exoPlayer.stop();
 			exoPlayer.release();
 			messenger.sendRejection(error);
 		}

@@ -77,8 +77,7 @@ implements
 
 	@Override
 	public void close() throws IOException {
-		isPlaying = false;
-		exoPlayer.release();
+		run();
 	}
 
 	@Override
@@ -144,10 +143,10 @@ implements
 
 	@Override
 	public void run() {
+		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
 		exoPlayer.release();
 
-		isPlaying = false;
 	}
 }
