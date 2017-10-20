@@ -69,7 +69,7 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 
 	@Override
 	public int getMaxQueueSize() {
-		return 5;
+		return 1;
 	}
 
 	@Override

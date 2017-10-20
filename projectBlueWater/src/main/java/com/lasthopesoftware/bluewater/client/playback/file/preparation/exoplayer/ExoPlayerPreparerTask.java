@@ -211,7 +211,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 		@Override
 		public void onPlayerError(ExoPlaybackException error) {
-			logger.error("An error occurred while preparing the exo player!", error);
+			logger.error("An error occurred while preparing the exo player! Retrying initialization.", error);
 
 			exoPlayer.stop();
 			exoPlayer.release();
