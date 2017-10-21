@@ -9,7 +9,7 @@ import org.joda.time.Days;
 public class AudioCacheConfiguration implements IDiskFileCacheConfiguration {
 	private final Library library;
 	private static final String musicCacheName = "music";
-	private static final long maxFileCacheSize = 5368709000L; // 5GB
+	private static final long maxFileCacheSize = 2L * 1024L * 1024L * 1024L; // 2GB
 
 	public AudioCacheConfiguration(Library library) {
 		this.library = library;
