@@ -72,7 +72,8 @@ def getGeneratedVersionCode() {
 
     // should result in the same value as running
     // git rev-list <checked out branch name> | wc -l
-    def initialVersionCode = 3761 // the initial version code before tags were used to increment version code
+    def initialVersionCode = 3761
+    // the initial version code before tags were used to increment version code
     def numberOfReleases = ext.repo.tag.list().size()
     return numberOfReleases + initialVersionCode
 }
@@ -86,9 +87,7 @@ dependencies {
     compile project(':futures')
     compile project(':objective-droid')
     compile files('libs/xmlwise-debug-1_2.jar')
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.+'
-    testCompile 'org.assertj:assertj-core:2.+'
+    compile project(path: ':messenger')
     compile 'com.android.support:appcompat-v7:26.0.1'
     compile 'com.android.support:design:26.0.1'
     compile 'joda-time:joda-time:2.4'
@@ -100,7 +99,10 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.6'
     compile 'com.android.support:support-v4:26.0.1'
     compile 'com.annimon:stream:1.1.9'
-    compile project(path: ':messenger')
     compile 'io.reactivex.rxjava2:rxjava:2.1.5'
     compile 'com.github.danrien:lazy-j:660f29234d585fa1bc81115fb81ff1b1e273687e'
+    compile 'com.android.support.constraint:constraint-layout:+'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.+'
+    testCompile 'org.assertj:assertj-core:2.+'
 }
