@@ -76,8 +76,8 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 	public IPlaybackPreparer providePlaybackPreparer() {
 		return new ExoPlayerPlaybackPreparer(
 			dataSourceFactoryProvder,
-			getNewTrackSelector(),
-			getNewLoadControl(),
+			trackSelector.getObject(),
+			loadControl.getObject(),
 			renderersFactory,
 			extractorsFactory.getObject(),
 			handler,
@@ -91,7 +91,7 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 
 	private static LoadControl getNewLoadControl() {
 		return new DefaultLoadControl(
-			new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE),
+			new DefaultAllocator(false, C.DEFAULT_BUFFER_SEGMENT_SIZE, 1),
 			DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
 			maxBufferMs.getObject(),
 			DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
