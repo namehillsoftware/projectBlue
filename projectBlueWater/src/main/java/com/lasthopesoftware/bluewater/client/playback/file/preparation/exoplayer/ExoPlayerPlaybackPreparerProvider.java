@@ -91,7 +91,7 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 
 	private static LoadControl getNewLoadControl() {
 		return new DefaultLoadControl(
-			new DefaultAllocator(false, C.DEFAULT_BUFFER_SEGMENT_SIZE, 1),
+			new DefaultAllocator(false, C.DEFAULT_BUFFER_SEGMENT_SIZE),
 			DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
 			maxBufferMs.getObject(),
 			DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
