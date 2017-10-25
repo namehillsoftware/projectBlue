@@ -25,7 +25,6 @@ class DiskFileCacheDataSource implements DataSource {
 	private final HttpDataSource defaultHttpDataSource;
 	private final String serviceFileKey;
 	private final DiskFileCache diskFileCache;
-	private final Object promiseFileSync = new Object();
 	private Promise<CachedFileOutputStream> promisedOutputStream;
 
 	DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, DiskFileCache diskFileCache) {
@@ -36,13 +35,17 @@ class DiskFileCacheDataSource implements DataSource {
 
 	@Override
 	public long open(DataSpec dataSpec) throws IOException {
-		promisedOutputStream = diskFileCache.promiseCachedFileOutputStream(serviceFileKey);
+		if (dataSpec.position == 0)
+			promisedOutputStream = diskFileCache.promiseCachedFileOutputStream(serviceFileKey);
+
 		return defaultHttpDataSource.open(dataSpec);
 	}
 
 	@Override
 	public int read(byte[] buffer, int offset, int readLength) throws IOException {
 		final int result = defaultHttpDataSource.read(buffer, offset, readLength);
+
+		if (promisedOutputStream == null) return result;
 
 		if (result == C.RESULT_END_OF_INPUT) {
 			promisedOutputStream
@@ -57,19 +60,17 @@ class DiskFileCacheDataSource implements DataSource {
 
 		final byte[] copiedBuffer = Arrays.copyOfRange(buffer, offset, offset + result);
 
-		synchronized (promiseFileSync) {
-			promisedOutputStream = promisedOutputStream
-				.eventually(cachedFileOutputStream -> {
-					final Promise<CachedFileOutputStream> promisedWrite = cachedFileOutputStream.promiseWrite(copiedBuffer, 0, copiedBuffer.length);
-					promisedWrite.excuse(e -> {
-						logger.warn("An error occurred storing the audio file", e);
-						cachedFileOutputStream.close();
-						return null;
-					});
-
-					return promisedWrite;
+		promisedOutputStream = promisedOutputStream
+			.eventually(cachedFileOutputStream -> {
+				final Promise<CachedFileOutputStream> promisedWrite = cachedFileOutputStream.promiseWrite(copiedBuffer, 0, copiedBuffer.length);
+				promisedWrite.excuse(e -> {
+					logger.warn("An error occurred storing the audio file", e);
+					cachedFileOutputStream.close();
+					return null;
 				});
-		}
+
+				return promisedWrite;
+			});
 
 		return result;
 	}
