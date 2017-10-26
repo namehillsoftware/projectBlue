@@ -1,22 +1,21 @@
-package com.lasthopesoftware.bluewater;
+package com.lasthopesoftware.bluewater.about;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.widget.TextView;
 
-import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.R;
 
 public class AboutActivity extends AppCompatActivity {
-
-	private final LazyViewFinder<Toolbar> lazyToolbar = new LazyViewFinder<>(this, R.id.toolbar);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_about);
-		setSupportActionBar(lazyToolbar.findView());
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-	}
 
+		final TextView textView = findViewById(R.id.aboutDescription);
+		textView.setText(R.string.aboutAppText);
+	}
 }

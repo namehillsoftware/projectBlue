@@ -85,5 +85,6 @@
     <string name="permissions_must_be_granted_for_settings">In order for the library settings to be changed, the requested permissions must be granted!</string>
     <string name="permissions_needed">Permissions needed</string>
     <string name="permissions_needed_launch_settings">Permissions are needed to read or write from the disk. Please set these permissions from the settings page.</string>
-    <string name="title_activity_about">About</string>
+    <string name="title_activity_about">About %1$s</string>
+    <string name="aboutAppText">%1$s\n\nVersion: %2$s\n\n\n\nCopyright © %3$s %4$s</string>
 </resources>
