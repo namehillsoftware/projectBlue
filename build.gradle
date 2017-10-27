@@ -1,0 +1,26 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+group = "com.namehillsoftware"
+archivesBaseName = "lazy-j"
+version = "1.0.1"
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    test {
+        java {
+            srcDir 'src/specs/java'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'org.mockito:mockito-core:2.+'
+    testCompile 'junit:junit:4.+'
+    testCompile 'org.assertj:assertj-core:2.+'
+}
