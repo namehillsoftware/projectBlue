@@ -14,6 +14,7 @@ android {
         targetSdkVersion 26
         versionCode getGeneratedVersionCode()
         versionName project.version
+        multiDexEnabled true
     }
 
     compileOptions {
@@ -23,20 +24,16 @@ android {
 
     buildTypes {
         release {
-//            minifyEnabled true
-//            shrinkResources true
-//            zipAlignEnabled true
-//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/NOTICE.txt'
     }
 
     lintOptions {
@@ -106,4 +103,5 @@ dependencies {
     compile 'io.reactivex.rxjava2:rxjava:2.1.5'
     compile 'com.github.danrien:lazy-j:1.1'
     compile 'com.github.danrien:xmlwise:master-SNAPSHOT'
+    compile 'com.android.support:multidex:1.0.2'
 }
