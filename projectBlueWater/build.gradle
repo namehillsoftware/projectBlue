@@ -1,7 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 
 apply plugin: 'com.android.application'
-apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'com.cinnober.gradle.semver-git'
 
 android {
@@ -24,9 +23,9 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
-            zipAlignEnabled false
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
