@@ -8,7 +8,6 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
@@ -50,7 +49,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         fileListView.findView().setVisibility(View.INVISIBLE);
         pbLoading.findView().setVisibility(View.VISIBLE);
 
-        nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+        nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
         handleIntent(getIntent());
 	}
 	
