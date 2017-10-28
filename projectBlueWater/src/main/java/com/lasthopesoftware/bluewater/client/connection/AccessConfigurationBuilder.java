@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.util.Patterns;
 
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
@@ -12,7 +13,6 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.validator.routines.UrlValidator;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -58,7 +58,7 @@ public class AccessConfigurationBuilder {
 
 		final String localAccessString = parseAccessCode(library);
 
-		if (UrlValidator.getInstance().isValid(localAccessString)) {
+		if (Patterns.WEB_URL.matcher(localAccessString).matches()) {
 			final Uri url = Uri.parse(localAccessString);
 			final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, url.getHost(), url.getPort());
 

@@ -114,7 +114,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		setContentView(R.layout.activity_browse_library);
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.browseLibraryRelativeLayout));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout));
 
 		setTitle(R.string.title_activity_library);
 
