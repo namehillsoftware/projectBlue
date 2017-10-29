@@ -60,14 +60,13 @@ public class FileDetailsActivity extends AppCompatActivity {
 	private Bitmap mFileImage;
 
 	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-															new String[] {
-																FilePropertiesProvider.AUDIO_ANALYSIS_INFO,
-																FilePropertiesProvider.GET_COVER_ART_INFO,
-																FilePropertiesProvider.IMAGE_FILE,
-																FilePropertiesProvider.KEY,
-																FilePropertiesProvider.STACK_FILES,
-																FilePropertiesProvider.STACK_TOP,
-																FilePropertiesProvider.STACK_VIEW })));
+		FilePropertiesProvider.AUDIO_ANALYSIS_INFO,
+		FilePropertiesProvider.GET_COVER_ART_INFO,
+		FilePropertiesProvider.IMAGE_FILE,
+		FilePropertiesProvider.KEY,
+		FilePropertiesProvider.STACK_FILES,
+		FilePropertiesProvider.STACK_TOP,
+		FilePropertiesProvider.STACK_VIEW)));
 
 	private static final AbstractSynchronousLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
 			new AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
@@ -87,7 +86,7 @@ public class FileDetailsActivity extends AppCompatActivity {
     private final AbstractSynchronousLazy<ScaledWrapImageView> imgFileThumbnailBuilder = new AbstractSynchronousLazy<ScaledWrapImageView>() {
 	    @Override
 	    protected final ScaledWrapImageView initialize() throws Exception {
-		    final RelativeLayout rlFileThumbnailContainer = (RelativeLayout) findViewById(R.id.rlFileThumbnailContainer);
+		    final RelativeLayout rlFileThumbnailContainer = findViewById(R.id.rlFileThumbnailContainer);
 		    if (rlFileThumbnailContainer == null) return null;
 
 		    final ScaledWrapImageView imgFileThumbnail = new ScaledWrapImageView(FileDetailsActivity.this);
@@ -122,7 +121,7 @@ public class FileDetailsActivity extends AppCompatActivity {
         fileKey = getIntent().getIntExtra(FILE_KEY, -1);
 
         setView(fileKey);
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.viewFileDetailsRelativeLayout));
+		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.viewFileDetailsRelativeLayout));
 	}
 
 	private void setView(final int fileKey) {
