@@ -290,16 +290,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return isPlaying;
 	}
 
-	private void notify(Builder notificationBuilder) {
-		final Notification notification = notificationBuilder
-			.setSmallIcon(R.drawable.clearstream_logo_dark)
-			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-			.build();
-
-		if (isPlaying) {
-			notifyForeground(notification);
-			return;
-		}
+	private void notifyBackground(Builder notificationBuilder) {
+		final Notification notification =
+			addNotificationAccoutrements(notificationBuilder).build();
 
 		if (isNotificationForeground)
 			stopForeground(false);
@@ -309,7 +302,10 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		notificationManagerLazy.getObject().notify(notificationId, notification);
 	}
 
-	private void notifyForeground(Notification notification) {
+	private void notifyForeground(Builder notificationBuilder) {
+		final Notification notification =
+			addNotificationAccoutrements(notificationBuilder).build();
+
 		if (isNotificationForeground) {
 			notificationManagerLazy.getObject().notify(notificationId, notification);
 			return;
@@ -317,6 +313,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		startForeground(notificationId, notification);
 		isNotificationForeground = true;
+	}
+
+	private static Builder addNotificationAccoutrements(Builder notificationBuilder) {
+		return notificationBuilder
+			.setSmallIcon(R.drawable.clearstream_logo_dark)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 	}
 
 	private Promise<Builder> promiseBuiltNowPlayingNotification() {
@@ -379,7 +381,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		builder.setOngoing(true);
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
 
-		notify(builder);
+		notifyForeground(builder);
 	}
 	
 	private void registerListeners() {
@@ -513,7 +515,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return;
 		}
-		notify(notifyBuilder);
+		notifyBackground(notifyBuilder);
 	}
 
 	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws Exception {
@@ -642,19 +644,25 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.changePosition(playlistPosition, filePosition)
-				.then(this::broadcastChangedFile)
+				.then(this::broadcastChangedFileBackground)
 				.excuse(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playlistManager.skipToPrevious().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
+			playlistManager
+				.skipToPrevious()
+				.then(this::broadcastChangedFileBackground)
+				.excuse(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playlistManager.skipToNext().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
+			playlistManager
+				.skipToNext()
+				.then(this::broadcastChangedFileBackground)
+				.excuse(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -699,7 +707,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				if (notificationBuilder == null)
 					stopNotification();
 				else
-					notify(notificationBuilder);
+					notifyBackground(notificationBuilder);
 
 				return null;
 			}, this));
@@ -790,7 +798,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		builder.setContentTitle(getText(R.string.lbl_waiting_for_connection));
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
-		notify(builder);
+		notifyBackground(builder);
 
 		final PollConnection checkConnection = PollConnection.Instance.get(this);
 
@@ -853,7 +861,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		broadcastChangedFile(positionedPlaybackFile.asPositionedFile());
+		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -882,27 +890,46 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		registerRemoteClientControl();
 	}
 
-	private Void broadcastChangedFile(PositionedFile positionedFile) {
+	private PositionedFile broadcastChangedFileBackground(PositionedFile positionedFile) {
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
 
 		promiseBuiltNowPlayingNotification(positionedFile.getServiceFile())
 			.eventually(LoopedInPromise.response(notificationBuilder -> {
-				notify(notificationBuilder);
+				notifyBackground(notificationBuilder);
 				return null;
 			}, this))
 			.excuse(e -> e)
 			.eventually(LoopedInPromise.response(exception -> {
-				final Builder builder = new Builder(this);
-				builder.setOngoing(isPlaying);
-				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-				builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
-				builder.setContentIntent(buildNowPlayingActivityIntent());
-				notify(builder);
-
+				notifyBackground(buildFilePropertiesErrorNotification());
 				return null;
 			}, this));
 
-		return null;
+		return positionedFile;
+	}
+
+	private PositionedFile broadcastChangedFileForeground(PositionedFile positionedFile) {
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+
+		promiseBuiltNowPlayingNotification(positionedFile.getServiceFile())
+			.eventually(LoopedInPromise.response(notificationBuilder -> {
+				notifyForeground(notificationBuilder);
+				return null;
+			}, this))
+			.excuse(e -> e)
+			.eventually(LoopedInPromise.response(exception -> {
+				notifyForeground(buildFilePropertiesErrorNotification());
+				return null;
+			}, this));
+
+		return positionedFile;
+	}
+
+	private Builder buildFilePropertiesErrorNotification() {
+		return new Builder(this)
+			.setOngoing(isPlaying)
+			.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
+			.setContentText(getText(R.string.lbl_error_getting_file_properties))
+			.setContentIntent(buildNowPlayingActivityIntent());
 	}
 
 	private void onPlaylistPlaybackComplete() {
