@@ -1,2 +1,2 @@
-include ':pagerslidingtabstrip', ':futures', ':objective-droid', ':messenger'
+include ':pagerslidingtabstrip', ':futures', ':objective-droid'
 include ':projectBlueWater'
