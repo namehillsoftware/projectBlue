@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public final class CancellationProxy extends CancellationToken {
-	private final Queue<Promise<?>> cancellablePromises = new ConcurrentLinkedQueue<>();
+	private final Queue<Promise<?>> cancellablePromises = new ConcurrentLinkedQueue<Promise<?>>();
 
 	public Runnable doCancel(Promise<?> promise) {
 		cancellablePromises.offer(promise);

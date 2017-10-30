@@ -15,35 +15,35 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 final class Resolutions {
 
-	static final class AggregatePromiseResolver<TResult> extends SingleMessageBroadcaster<Collection<TResult>> {
+	static final class AggregatePromiseResolver<Resolution> extends SingleMessageBroadcaster<Collection<Resolution>> {
 
-		AggregatePromiseResolver(Collection<Promise<TResult>> promises) {
+		AggregatePromiseResolver(Collection<Promise<Resolution>> promises) {
 			if (promises.isEmpty()) {
-				sendResolution(Collections.emptyList());
+				sendResolution(Collections.<Resolution>emptyList());
 				return;
 			}
 
-			final CollectedErrorExcuse<TResult> errorHandler = new CollectedErrorExcuse<>(this, promises);
+			final CollectedErrorExcuse<Resolution> errorHandler = new CollectedErrorExcuse<Resolution>(this, promises);
 			if (errorHandler.isRejected()) return;
 
-			final CollectedResultsResolver<TResult> resolver = new CollectedResultsResolver<>(this, promises);
-			cancellationRequested(new AggregateCancellation<>(this, promises, resolver));
+			final CollectedResultsResolver<Resolution> resolver = new CollectedResultsResolver<Resolution>(this, promises);
+			cancellationRequested(new AggregateCancellation<Resolution>(this, promises, resolver));
 		}
 	}
 
-	static final class FirstPromiseResolver<Result> extends SingleMessageBroadcaster<Result> implements
+	static final class FirstPromiseResolver<Resolution> extends SingleMessageBroadcaster<Resolution> implements
 		Runnable,
 		ImmediateResponse<Throwable, Void> {
 
-		private final Collection<Promise<Result>> promises;
+		private final Collection<Promise<Resolution>> promises;
 		private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
 		private boolean isCancelled;
 
-		FirstPromiseResolver(Collection<Promise<Result>> promises) {
+		FirstPromiseResolver(Collection<Promise<Resolution>> promises) {
 			this.promises = promises;
-			for (Promise<Result> promise : promises) {
-				promise.then(new ResolutionProxy<>(this));
+			for (Promise<Resolution> promise : promises) {
+				promise.then(new ResolutionProxy<Resolution>(this));
 				promise.excuse(this);
 			}
 			cancellationRequested(this);
@@ -59,7 +59,7 @@ final class Resolutions {
 				writeLock.unlock();
 			}
 
-			for (Promise<Result> promise : promises) promise.cancel();
+			for (Promise<Resolution> promise : promises) promise.cancel();
 			sendRejection(new CancellationException());
 		}
 

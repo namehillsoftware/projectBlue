@@ -23,6 +23,6 @@ public class AggregateCancellation<TResult> implements Runnable {
 	public void run() {
 		for (Promise<?> promise : promises) promise.cancel();
 
-		collectionMessenger.sendRejection(new AggregateCancellationException(new ArrayList<>(resultCollector.getResults())));
+		collectionMessenger.sendRejection(new AggregateCancellationException(new ArrayList<TResult>(resultCollector.getResults())));
 	}
 }

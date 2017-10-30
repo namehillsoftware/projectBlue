@@ -2,7 +2,7 @@ package com.lasthopesoftware.messenger.promises.response;
 
 public class ImmediateAction {
 	public static <Resolution> ImmediateResponse<Resolution, Void> perform(ResponseAction<Resolution> responseAction) {
-		return new VoidImmediateResponse<>(responseAction);
+		return new VoidImmediateResponse<Resolution>(responseAction);
 	}
 
 	private static class VoidImmediateResponse<Resolution> implements ImmediateResponse<Resolution, Void> {

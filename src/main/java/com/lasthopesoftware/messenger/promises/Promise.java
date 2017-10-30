@@ -22,7 +22,7 @@ public class Promise<Resolution> {
 	}
 
 	private Promise() {
-		this(new SingleMessageBroadcaster<>());
+		this(new SingleMessageBroadcaster<Resolution>());
 	}
 
 	private Promise(SingleMessageBroadcaster<Resolution> singleMessageBroadcaster) {
@@ -41,46 +41,44 @@ public class Promise<Resolution> {
 	private <NewResolution> Promise<NewResolution> then(ResolutionResponseMessenger<Resolution, NewResolution> onFulfilled) {
 		singleMessageBroadcaster.awaitResolution(onFulfilled);
 
-		return new Promise<>(onFulfilled);
+		return new Promise<NewResolution>(onFulfilled);
 	}
 
-	public final <TNewResult> Promise<TNewResult> then(ImmediateResponse<Resolution, TNewResult> onFulfilled) {
-		return then(new Execution.ExpectedResult<>(onFulfilled));
+	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled) {
+		return then(new Execution.ExpectedResult<Resolution, NewResolution>(onFulfilled));
 	}
 
-	public final <TNewResult> Promise<TNewResult> eventually(PromisedResponse<Resolution, TNewResult> onFulfilled) {
-		return then(new PromisedResolutionResponseMessenger<>(onFulfilled));
+	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled) {
+		return then(new PromisedResolutionResponseMessenger<Resolution, NewResolution>(onFulfilled));
 	}
 
-	private <TNewRejectedResult> Promise<TNewRejectedResult> excuse(RejectionResponseMessenger<Resolution, TNewRejectedResult> rejectionResponseMessenger) {
+	private <NewRejection> Promise<NewRejection> excuse(RejectionResponseMessenger<Resolution, NewRejection> rejectionResponseMessenger) {
 		singleMessageBroadcaster.awaitResolution(rejectionResponseMessenger);
 
-		return new Promise<>(rejectionResponseMessenger);
+		return new Promise<NewRejection>(rejectionResponseMessenger);
 	}
 
-	public final <TNewRejectedResult> Promise<TNewRejectedResult> excuse(ImmediateResponse<Throwable, TNewRejectedResult> onRejected) {
-		return excuse(new Execution.ErrorResultExecutor<>(onRejected));
+	public final <NewRejection> Promise<NewRejection> excuse(ImmediateResponse<Throwable, NewRejection> onRejected) {
+		return excuse(new Execution.ErrorResultExecutor<Resolution, NewRejection>(onRejected));
 	}
 
-	public static <TResult> Promise<TResult> empty() {
-		return new Promise<>((TResult)null);
+	public static <Resolution> Promise<Resolution> empty() {
+		return new Promise<Resolution>((Resolution)null);
 	}
 
-	@SafeVarargs
-	public static <TResult> Promise<Collection<TResult>> whenAll(Promise<TResult>... promises) {
+	public static <Resolution> Promise<Collection<Resolution>> whenAll(Promise<Resolution>... promises) {
 		return whenAll(Arrays.asList(promises));
 	}
 
-	public static <TResult> Promise<Collection<TResult>> whenAll(Collection<Promise<TResult>> promises) {
-		return new Promise<>(new Resolutions.AggregatePromiseResolver<>(promises));
+	public static <Resolution> Promise<Collection<Resolution>> whenAll(Collection<Promise<Resolution>> promises) {
+		return new Promise<Collection<Resolution>>(new Resolutions.AggregatePromiseResolver<Resolution>(promises));
 	}
 
-	@SafeVarargs
-	public static <TResult> Promise<TResult> whenAny(Promise<TResult>... promises) {
+	public static <Resolution> Promise<Resolution> whenAny(Promise<Resolution>... promises) {
 		return whenAny(Arrays.asList(promises));
 	}
 
-	public static <TResult> Promise<TResult> whenAny(Collection<Promise<TResult>> promises) {
-		return new Promise<>(new Resolutions.FirstPromiseResolver<>(promises));
+	public static <Resolution> Promise<Resolution> whenAny(Collection<Promise<Resolution>> promises) {
+		return new Promise<Resolution>(new Resolutions.FirstPromiseResolver<Resolution>(promises));
 	}
 }
