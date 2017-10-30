@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -291,28 +290,26 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void notifyBackground(Builder notificationBuilder) {
-		final Notification notification =
-			addNotificationAccoutrements(notificationBuilder).build();
-
 		if (isNotificationForeground)
 			stopForeground(false);
 
 		isNotificationForeground = false;
 
-		notificationManagerLazy.getObject().notify(notificationId, notification);
+		notifyNotificationManager(notificationBuilder);
 	}
 
 	private void notifyForeground(Builder notificationBuilder) {
-		final Notification notification =
-			addNotificationAccoutrements(notificationBuilder).build();
-
 		if (isNotificationForeground) {
-			notificationManagerLazy.getObject().notify(notificationId, notification);
+			notifyNotificationManager(notificationBuilder);
 			return;
 		}
 
-		startForeground(notificationId, notification);
+		startForeground(notificationId, addNotificationAccoutrements(notificationBuilder).build());
 		isNotificationForeground = true;
+	}
+
+	private void notifyNotificationManager(Builder notificationBuilder) {
+		notificationManagerLazy.getObject().notify(notificationId, addNotificationAccoutrements(notificationBuilder).build());
 	}
 
 	private static Builder addNotificationAccoutrements(Builder notificationBuilder) {
@@ -515,7 +512,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return;
 		}
-		notifyBackground(notifyBuilder);
+		notifyNotificationManager(notifyBuilder);
 	}
 
 	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws Exception {
@@ -1013,26 +1010,22 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
 		private static final String killMusicService = magicPropertyBuilder.buildProperty("killMusicService");
 
-		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
-				launchMusicService,
-				play,
-				pause,
-				togglePlayPause,
-				previous,
-				next,
-				seekTo,
-				repeating,
-				completing,
-				stopWaitingForConnection,
-				addFileToPlaylist,
-				removeFileAtPositionFromPlaylist
-		}));
-
-		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(new String[]{
-			launchMusicService,
+		private static final Set<String> validActions = new HashSet<>(Arrays.asList(launchMusicService,
 			play,
-			togglePlayPause
-		}));
+			pause,
+			togglePlayPause,
+			previous,
+			next,
+			seekTo,
+			repeating,
+			completing,
+			stopWaitingForConnection,
+			addFileToPlaylist,
+			removeFileAtPositionFromPlaylist));
+
+		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(launchMusicService,
+			play,
+			togglePlayPause));
 
 		private static class Bag {
 			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Bag.class);
