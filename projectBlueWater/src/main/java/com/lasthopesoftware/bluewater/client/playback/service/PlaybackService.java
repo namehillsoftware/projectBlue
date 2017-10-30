@@ -696,12 +696,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		promiseBuiltNowPlayingNotification()
 			.eventually(LoopedInPromise.response(notificationBuilder -> {
-				if (notificationBuilder == null) {
+				if (notificationBuilder == null)
 					stopNotification();
-					return null;
-				}
+				else
+					notify(notificationBuilder);
 
-				notify(notificationBuilder);
 				return null;
 			}, this));
 
@@ -894,7 +893,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			.excuse(e -> e)
 			.eventually(LoopedInPromise.response(exception -> {
 				final Builder builder = new Builder(this);
-				builder.setOngoing(true);
+				builder.setOngoing(isPlaying);
 				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
 				builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
 				builder.setContentIntent(buildNowPlayingActivityIntent());
