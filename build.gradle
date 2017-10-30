@@ -1,14 +1,33 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '2.2.0'
+    }
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    classpath 'com.cinnober.gradle:semver-git:2.2.0'
+    classpath 'org.ajoberstar:grgit:1.5.0'
+}
+
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
 group = "com.namehillsoftware"
-archivesBaseName = "lazy-j"
-version = "1.0.1"
+archivesBaseName = "messenger"
+version = project.version
 
-repositories {
-    mavenCentral()
-}
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
 
 sourceSets {
     test {
@@ -23,4 +42,13 @@ dependencies {
     testCompile 'org.mockito:mockito-core:2.+'
     testCompile 'junit:junit:4.+'
     testCompile 'org.assertj:assertj-core:2.+'
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
 }
