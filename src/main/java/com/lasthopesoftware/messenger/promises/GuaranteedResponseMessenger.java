@@ -22,7 +22,7 @@ public class GuaranteedResponseMessenger<Resolution, Response> extends SingleMes
 				? onFulfilled.respond(message.resolution)
 				: onRejected.respond(message.rejection));
 		} catch (Throwable error) {
-//			sendRejection(error);
+			sendRejection(error);
 		}
 	}
 }
