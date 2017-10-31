@@ -48,8 +48,20 @@ public class Promise<Resolution> {
 		return then(new Execution.ExpectedResult<Resolution, NewResolution>(onFulfilled));
 	}
 
+	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled, ImmediateResponse<Throwable, NewResolution> onRejected) {
+		final GuaranteedResponseMessenger<Resolution, NewResolution> guaranteedResponse = new GuaranteedResponseMessenger<Resolution, NewResolution>(onFulfilled, onRejected);
+		singleMessageBroadcaster.awaitResolution(guaranteedResponse);
+		return new Promise<NewResolution>(guaranteedResponse);
+	}
+
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled) {
 		return then(new PromisedResolutionResponseMessenger<Resolution, NewResolution>(onFulfilled));
+	}
+
+	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled, PromisedResponse<Throwable, NewResolution> onRejected) {
+		final PromisedGuaranteedResponseMessenger<Resolution, NewResolution> promisedGuaranteedResponse = new PromisedGuaranteedResponseMessenger<>(onFulfilled, onRejected);
+		singleMessageBroadcaster.awaitResolution(promisedGuaranteedResponse);
+		return new Promise<NewResolution>(promisedGuaranteedResponse);
 	}
 
 	private <NewRejection> Promise<NewRejection> excuse(RejectionResponseMessenger<Resolution, NewRejection> rejectionResponseMessenger) {
