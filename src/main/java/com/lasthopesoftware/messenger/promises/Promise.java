@@ -58,6 +58,12 @@ public class Promise<Resolution> {
 		return then(new PromisedResolutionResponseMessenger<Resolution, NewResolution>(onFulfilled));
 	}
 
+	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled, PromisedResponse<Throwable, NewResolution> onRejected) {
+		final PromisedGuaranteedResponseMessenger<Resolution, NewResolution> promisedGuaranteedResponse = new PromisedGuaranteedResponseMessenger<>(onFulfilled, onRejected);
+		singleMessageBroadcaster.awaitResolution(promisedGuaranteedResponse);
+		return new Promise<NewResolution>(promisedGuaranteedResponse);
+	}
+
 	private <NewRejection> Promise<NewRejection> excuse(RejectionResponseMessenger<Resolution, NewRejection> rejectionResponseMessenger) {
 		singleMessageBroadcaster.awaitResolution(rejectionResponseMessenger);
 

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.messenger.promises.GivenAPromiseThatResolves.AndTheRejectionThrowsAnError;
+package com.lasthopesoftware.messenger.promises.GivenAPromiseThatResolves.AndContinuingWithResponseAndRejection.AndTheRejectionThrowsAnError;
 
 import com.lasthopesoftware.messenger.promises.Promise;
 import org.junit.Before;
