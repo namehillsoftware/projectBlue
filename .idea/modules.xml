@@ -5,6 +5,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/messenger.iml" filepath="$PROJECT_DIR$/.idea/modules/messenger.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/messenger_main.iml" filepath="$PROJECT_DIR$/.idea/modules/messenger_main.iml" group="messenger" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/messenger_test.iml" filepath="$PROJECT_DIR$/.idea/modules/messenger_test.iml" group="messenger" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/workspaces-messenger.iml" filepath="$PROJECT_DIR$/.idea/modules/workspaces-messenger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/workspaces-messenger_main.iml" filepath="$PROJECT_DIR$/.idea/modules/workspaces-messenger_main.iml" group="messenger" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/workspaces-messenger_test.iml" filepath="$PROJECT_DIR$/.idea/modules/workspaces-messenger_test.iml" group="messenger" />
     </modules>
   </component>
 </project>
