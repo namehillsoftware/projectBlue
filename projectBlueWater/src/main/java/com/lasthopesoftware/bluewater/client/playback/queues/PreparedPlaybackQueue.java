@@ -184,7 +184,14 @@ implements
 		}
 
 		Promise<PositionedPreparedPlaybackFile> promisePositionedPreparedPlaybackFile() {
-			return preparedPlaybackFilePromise.then(this);
+			return preparedPlaybackFilePromise.then(
+				handler -> new PositionedPreparedPlaybackFile(positionedFile, handler),
+				error -> {
+					if (error instanceof IOException)
+						throw new PositionedFilePreparationException(positionedFile, (IOException)error);
+
+					throw error;
+				});
 		}
 
 		@Override
