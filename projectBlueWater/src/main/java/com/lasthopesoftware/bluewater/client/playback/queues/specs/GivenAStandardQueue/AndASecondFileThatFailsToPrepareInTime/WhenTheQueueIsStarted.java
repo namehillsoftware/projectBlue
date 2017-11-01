@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.queues.specs.GivenAStandardQueue.AndASecondFileThatFailsToPrepare;
+package com.lasthopesoftware.bluewater.client.playback.queues.specs.GivenAStandardQueue.AndASecondFileThatFailsToPrepareInTime;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
