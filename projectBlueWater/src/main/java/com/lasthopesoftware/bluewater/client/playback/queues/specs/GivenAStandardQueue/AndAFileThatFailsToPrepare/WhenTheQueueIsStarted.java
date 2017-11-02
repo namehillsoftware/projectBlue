@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlayback
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.queues.PositionedFilePreparationException;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.messenger.promises.Promise;
 
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 public class WhenTheQueueIsStarted {
 
 	private static final Exception expectedException = new Exception();
-	private static PositionedFilePreparationException caughtException;
+	private static PreparationException caughtException;
 	private static IPlaybackHandler returnedPlaybackHandler;
 
 	@BeforeClass
@@ -58,8 +58,8 @@ public class WhenTheQueueIsStarted {
 			.eventually(p -> queue.promiseNextPreparedPlaybackFile(0))
 			.then(pf -> returnedPlaybackHandler = pf.getPlaybackHandler())
 			.excuse(err -> {
-				if (err instanceof PositionedFilePreparationException)
-					caughtException = (PositionedFilePreparationException)err;
+				if (err instanceof PreparationException)
+					caughtException = (PreparationException)err;
 
 				return null;
 			});

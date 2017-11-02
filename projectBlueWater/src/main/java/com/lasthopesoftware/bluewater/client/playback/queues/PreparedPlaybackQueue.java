@@ -187,7 +187,7 @@ implements
 			return preparedPlaybackFilePromise.then(
 				handler -> new PositionedPreparedPlaybackFile(positionedFile, handler),
 				error -> {
-					throw new PositionedFilePreparationException(positionedFile, error);
+					throw new PreparationException(positionedFile, error);
 				});
 		}
 	}

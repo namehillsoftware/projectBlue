@@ -5,10 +5,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import java.io.IOException;
 
 
-public class PositionedFilePreparationException extends IOException {
+public class PreparationException extends IOException {
 	private final PositionedFile positionedFile;
 
-	public PositionedFilePreparationException(PositionedFile positionedFile, Throwable cause) {
+	public PreparationException(PositionedFile positionedFile, Throwable cause) {
 		super(cause);
 		this.positionedFile = positionedFile;
 	}

@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePrepa
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.queues.PositionedFilePreparationException;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingPlayback {
 
-	private static PositionedFilePreparationException error;
+	private static PreparationException error;
 	private static NowPlaying nowPlaying;
 
 	@BeforeClass
@@ -62,8 +62,8 @@ public class WhenObservingPlayback {
 
 		playlistManager
 			.setOnPlaylistError(e -> {
-				if (e instanceof PositionedFilePreparationException)
-					error = (PositionedFilePreparationException)e;
+				if (e instanceof PreparationException)
+					error = (PreparationException)e;
 			})
 			.startPlaylist(
 				Arrays.asList(

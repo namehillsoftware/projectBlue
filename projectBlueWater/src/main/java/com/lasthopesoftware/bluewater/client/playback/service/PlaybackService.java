@@ -52,7 +52,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.queues.PositionedFilePreparationException;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
@@ -724,8 +724,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
-		if (exception instanceof PositionedFilePreparationException) {
-			handlePreparationException((PositionedFilePreparationException)exception);
+		if (exception instanceof PreparationException) {
+			handlePreparationException((PreparationException)exception);
 			return;
 		}
 
@@ -747,7 +747,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		logger.error("An unexpected error has occurred!", exception);
 	}
 
-	private void handlePreparationException(PositionedFilePreparationException preparationException) {
+	private void handlePreparationException(PreparationException preparationException) {
 		logger.error("An error occurred during file preparation for file " + preparationException.getPositionedFile().getServiceFile(), preparationException);
 		uncaughtExceptionHandler(preparationException.getCause());
 	}
