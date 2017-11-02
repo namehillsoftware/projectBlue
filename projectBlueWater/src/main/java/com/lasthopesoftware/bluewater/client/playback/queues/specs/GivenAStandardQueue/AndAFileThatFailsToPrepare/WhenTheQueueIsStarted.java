@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.queues.specs.GivenAStandardQueue.AndAFileThatFailsToPrepareForAnIOReason;
+package com.lasthopesoftware.bluewater.client.playback.queues.specs.GivenAStandardQueue.AndAFileThatFailsToPrepare;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -16,7 +16,6 @@ import com.lasthopesoftware.messenger.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenTheQueueIsStarted {
 
-	private static final IOException expectedException = new IOException();
+	private static final Exception expectedException = new Exception();
 	private static PositionedFilePreparationException caughtException;
 	private static IPlaybackHandler returnedPlaybackHandler;
 
