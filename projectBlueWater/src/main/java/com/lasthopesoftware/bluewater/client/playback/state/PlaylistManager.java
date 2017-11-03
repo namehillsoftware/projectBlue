@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlayback
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackQueueConfiguration;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.IStartPlayback;
@@ -219,6 +220,16 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 				saveStateToLibrary(p);
 			},
 			e -> {
+				if (e instanceof PreparationException) {
+					final PreparationException preparationException =
+						(PreparationException)e;
+
+					saveStateToLibrary(
+						new PositionedPlaybackFile(
+							new EmptyPlaybackHandler(0),
+							preparationException.getPositionedFile()));
+				}
+
 				if (onPlaylistError != null)
 					onPlaylistError.runWith(e);
 			},
