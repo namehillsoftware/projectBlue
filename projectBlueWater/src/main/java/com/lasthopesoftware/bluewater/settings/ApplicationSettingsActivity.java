@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -27,8 +29,9 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
-	private LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.pbLoadingServerList);
-	private LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.lvServerList);
+	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.pbLoadingServerList);
+	private final LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.lvServerList);
+	private final SettingsMenu settingsMenu = new SettingsMenu(this);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -46,10 +49,20 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		return settingsMenu.buildSettingsMenu(menu);
+	}
+
+	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
 		updateServerList();
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		return settingsMenu.handleSettingsMenuClicks(item);
 	}
 
 	private void updateServerList() {
