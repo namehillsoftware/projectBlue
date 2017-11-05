@@ -16,8 +16,6 @@ public class AboutActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_about);
 
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
 		setTitle(aboutTitleBuilder.buildTitle());
 
 		final TextView textView = findViewById(R.id.aboutDescription);

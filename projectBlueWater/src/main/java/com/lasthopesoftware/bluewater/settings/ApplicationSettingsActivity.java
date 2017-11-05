@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.settings;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -67,8 +66,6 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 	}
 
 	private void updateServerList() {
-		final Activity activity = this;
-
 		serverListView.findView().setVisibility(View.INVISIBLE);
 		progressBar.findView().setVisibility(View.VISIBLE);
 
@@ -83,7 +80,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 				serverListView.findView().setAdapter(
 					new ServerListAdapter(
-						activity,
+						this,
 						Stream.of(libraries).sortBy(Library::getId).collect(Collectors.toList()),
 						selectedBrowserLibrary.isPresent() ? selectedBrowserLibrary.get() : null,
 						new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
