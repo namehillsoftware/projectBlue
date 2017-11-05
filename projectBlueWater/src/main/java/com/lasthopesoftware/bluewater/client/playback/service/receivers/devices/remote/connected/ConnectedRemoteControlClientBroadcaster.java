@@ -34,6 +34,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	private volatile int playstate = RemoteControlClient.PLAYSTATE_STOPPED;
 	private volatile int trackPosition = -1;
+	private volatile boolean isPlaying;
 	private Bitmap remoteClientBitmap;
 
 	public ConnectedRemoteControlClientBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
@@ -46,12 +47,14 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	@Override
 	public void setPlaying() {
+		isPlaying = true;
 		remoteControlClient.setTransportControlFlags(RemoteControlClient.FLAG_KEY_MEDIA_PAUSE | standardControlFlags);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PLAYING, trackPosition, playbackSpeed);
 	}
 
 	@Override
 	public void setPaused() {
+		isPlaying = false;
 		remoteControlClient.setTransportControlFlags(RemoteControlClient.FLAG_KEY_MEDIA_PLAY | standardControlFlags);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_PAUSED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
@@ -59,6 +62,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	@Override
 	public void setStopped() {
+		isPlaying = false;
 		remoteControlClient.setTransportControlFlags(RemoteControlClient.FLAG_KEY_MEDIA_PLAY | standardControlFlags);
 		remoteControlClient.setPlaybackState(playstate = RemoteControlClient.PLAYSTATE_STOPPED, trackPosition, playbackSpeed);
 		updateClientBitmap(null);
@@ -66,14 +70,6 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
-		imageProvider
-			.promiseFileBitmap(serviceFile)
-			.eventually(LoopedInPromise.response(this::updateClientBitmap, context))
-			.excuse(e -> {
-				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
-				return null;
-			});
-
 		cachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
 			.eventually(LoopedInPromise.response(fileProperties -> {
@@ -89,12 +85,26 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, name);
 				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
-				if (trackNumber != null)
+				if (trackNumber != null) {
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
+				}
 				metaData.apply();
 
 				return null;
 			}, context));
+
+		if (!isPlaying) {
+			updateClientBitmap(null);
+			return;
+		}
+
+		imageProvider
+			.promiseFileBitmap(serviceFile)
+			.eventually(LoopedInPromise.response(this::updateClientBitmap, context))
+			.excuse(e -> {
+				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
+				return null;
+			});
 	}
 
 	@Override

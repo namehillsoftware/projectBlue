@@ -174,7 +174,7 @@ implements
 		return currentPreparingPlaybackHandlerPromise.promisePositionedPreparedPlaybackFile();
 	}
 
-	private static class PositionedPreparingFile implements ImmediateResponse<IPreparedPlaybackFile, PositionedPreparedPlaybackFile> {
+	private static class PositionedPreparingFile {
 		final PositionedFile positionedFile;
 		final Promise<IPreparedPlaybackFile> preparedPlaybackFilePromise;
 
@@ -184,12 +184,11 @@ implements
 		}
 
 		Promise<PositionedPreparedPlaybackFile> promisePositionedPreparedPlaybackFile() {
-			return preparedPlaybackFilePromise.then(this);
-		}
-
-		@Override
-		public PositionedPreparedPlaybackFile respond(IPreparedPlaybackFile handler) throws Throwable {
-			return new PositionedPreparedPlaybackFile(positionedFile, handler);
+			return preparedPlaybackFilePromise.then(
+				handler -> new PositionedPreparedPlaybackFile(positionedFile, handler),
+				error -> {
+					throw new PreparationException(positionedFile, error);
+				});
 		}
 	}
 }

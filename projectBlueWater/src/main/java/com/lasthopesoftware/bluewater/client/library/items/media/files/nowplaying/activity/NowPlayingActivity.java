@@ -204,7 +204,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			pauseButton.findView().setVisibility(View.INVISIBLE);
 		});
 
-		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
+		final ImageButton next = findViewById(R.id.btnNext);
 		if (next != null) {
 			next.setOnClickListener(v -> {
 				if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
@@ -212,7 +212,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			});
 		}
 
-		final ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
+		final ImageButton previous = findViewById(R.id.btnPrevious);
 		if (previous != null) {
 			previous.setOnClickListener(v -> {
 				if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
@@ -220,7 +220,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			});
 		}
 
-		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.repeatButton);
+		final ImageButton shuffleButton = findViewById(R.id.repeatButton);
 		setRepeatingIcon(shuffleButton);
 
 		if (shuffleButton != null) {
@@ -240,7 +240,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					}, messageHandler.getObject())));
 		}
 
-		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
+		final ImageButton viewNowPlayingListButton = findViewById(R.id.viewNowPlayingListButton);
 		if (viewNowPlayingListButton != null)
 			viewNowPlayingListButton.setOnClickListener(v -> startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class)));
 

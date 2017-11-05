@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -53,6 +52,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
@@ -290,20 +290,33 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return isPlaying;
 	}
 
+	private void notifyBackground(Builder notificationBuilder) {
+		if (isNotificationForeground)
+			stopForeground(false);
+
+		isNotificationForeground = false;
+
+		notifyNotificationManager(notificationBuilder);
+	}
+
 	private void notifyForeground(Builder notificationBuilder) {
-		notificationBuilder
-			.setSmallIcon(R.drawable.clearstream_logo_dark)
-			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-
-		final Notification notification = notificationBuilder.build();
-
-		if (!isNotificationForeground) {
-			startForeground(notificationId, notification);
-			isNotificationForeground = true;
+		if (isNotificationForeground) {
+			notifyNotificationManager(notificationBuilder);
 			return;
 		}
-		
-		notificationManagerLazy.getObject().notify(notificationId, notification);
+
+		startForeground(notificationId, addNotificationAccoutrements(notificationBuilder).build());
+		isNotificationForeground = true;
+	}
+
+	private void notifyNotificationManager(Builder notificationBuilder) {
+		notificationManagerLazy.getObject().notify(notificationId, addNotificationAccoutrements(notificationBuilder).build());
+	}
+
+	private static Builder addNotificationAccoutrements(Builder notificationBuilder) {
+		return notificationBuilder
+			.setSmallIcon(R.drawable.clearstream_logo_dark)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 	}
 
 	private Promise<Builder> promiseBuiltNowPlayingNotification() {
@@ -320,7 +333,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 				final Builder builder = new Builder(this);
 				builder
-					.setOngoing(true)
+					.setOngoing(isPlaying)
 					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
 					.setContentText(artist + " - " + name)
 					.setContentIntent(buildNowPlayingActivityIntent())
@@ -500,7 +513,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return;
 		}
-		notifyForeground(notifyBuilder);
+		notifyNotificationManager(notifyBuilder);
 	}
 
 	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws Exception {
@@ -629,19 +642,25 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.changePosition(playlistPosition, filePosition)
-				.then(this::broadcastChangedFile)
+				.then(this::broadcastChangedFileBackground)
 				.excuse(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playlistManager.skipToPrevious().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
+			playlistManager
+				.skipToPrevious()
+				.then(this::broadcastChangedFileBackground)
+				.excuse(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playlistManager.skipToNext().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
+			playlistManager
+				.skipToNext()
+				.then(this::broadcastChangedFileBackground)
+				.excuse(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -683,20 +702,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		promiseBuiltNowPlayingNotification()
 			.eventually(LoopedInPromise.response(notificationBuilder -> {
-				if (notificationBuilder == null) {
+				if (notificationBuilder == null)
 					stopNotification();
-					return null;
-				}
+				else
+					notifyBackground(notificationBuilder);
 
-				stopForeground(false);
-				isNotificationForeground = false;
-				notificationBuilder =
-					notificationBuilder
-						.setOngoing(false)
-						.setSmallIcon(R.drawable.clearstream_logo_dark)
-						.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-
-				notificationManagerLazy.getObject().notify(notificationId, notificationBuilder.build());
 				return null;
 			}, this));
 
@@ -714,6 +724,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
+		if (exception instanceof PreparationException) {
+			handlePreparationException((PreparationException)exception);
+			return;
+		}
+
 		if (exception instanceof MediaPlayerErrorException) {
 			handleMediaPlayerErrorException((MediaPlayerErrorException)exception);
 			return;
@@ -730,6 +745,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
+	}
+
+	private void handlePreparationException(PreparationException preparationException) {
+		logger.error("An error occurred during file preparation for file " + preparationException.getPositionedFile().getServiceFile(), preparationException);
+		uncaughtExceptionHandler(preparationException.getCause());
 	}
 
 	private void handlePlaybackException(PlaybackException exception) {
@@ -786,8 +806,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		builder.setContentTitle(getText(R.string.lbl_waiting_for_connection));
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
-		notifyForeground(builder);
-		
+		notifyBackground(builder);
+
 		final PollConnection checkConnection = PollConnection.Instance.get(this);
 
 		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
@@ -849,7 +869,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		broadcastChangedFile(positionedPlaybackFile.asPositionedFile());
+		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -873,31 +893,51 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 				localFilePositionSubscription.dispose();
 			}));
-		
+
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
-		
-		promiseBuiltNowPlayingNotification(positionedPlaybackFile.getServiceFile())
+	}
+
+	private PositionedFile broadcastChangedFileBackground(PositionedFile positionedFile) {
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+
+		promiseBuiltNowPlayingNotification(positionedFile.getServiceFile())
+			.eventually(LoopedInPromise.response(notificationBuilder -> {
+				notifyBackground(notificationBuilder);
+				return null;
+			}, this))
+			.excuse(e -> e)
+			.eventually(LoopedInPromise.response(exception -> {
+				notifyBackground(buildFilePropertiesErrorNotification());
+				return null;
+			}, this));
+
+		return positionedFile;
+	}
+
+	private PositionedFile broadcastChangedFileForeground(PositionedFile positionedFile) {
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+
+		promiseBuiltNowPlayingNotification(positionedFile.getServiceFile())
 			.eventually(LoopedInPromise.response(notificationBuilder -> {
 				notifyForeground(notificationBuilder);
 				return null;
 			}, this))
 			.excuse(e -> e)
 			.eventually(LoopedInPromise.response(exception -> {
-				final Builder builder = new Builder(this);
-				builder.setOngoing(true);
-				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-				builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
-				builder.setContentIntent(buildNowPlayingActivityIntent());
-				notifyForeground(builder);
-
+				notifyForeground(buildFilePropertiesErrorNotification());
 				return null;
 			}, this));
+
+		return positionedFile;
 	}
 
-	private Void broadcastChangedFile(PositionedFile positionedFile) {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
-		return null;
+	private Builder buildFilePropertiesErrorNotification() {
+		return new Builder(this)
+			.setOngoing(isPlaying)
+			.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
+			.setContentText(getText(R.string.lbl_error_getting_file_properties))
+			.setContentIntent(buildNowPlayingActivityIntent());
 	}
 
 	private void onPlaylistPlaybackComplete() {
@@ -981,26 +1021,22 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
 		private static final String killMusicService = magicPropertyBuilder.buildProperty("killMusicService");
 
-		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
-				launchMusicService,
-				play,
-				pause,
-				togglePlayPause,
-				previous,
-				next,
-				seekTo,
-				repeating,
-				completing,
-				stopWaitingForConnection,
-				addFileToPlaylist,
-				removeFileAtPositionFromPlaylist
-		}));
-
-		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(new String[]{
-			launchMusicService,
+		private static final Set<String> validActions = new HashSet<>(Arrays.asList(launchMusicService,
 			play,
-			togglePlayPause
-		}));
+			pause,
+			togglePlayPause,
+			previous,
+			next,
+			seekTo,
+			repeating,
+			completing,
+			stopWaitingForConnection,
+			addFileToPlaylist,
+			removeFileAtPositionFromPlaylist));
+
+		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(launchMusicService,
+			play,
+			togglePlayPause));
 
 		private static class Bag {
 			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Bag.class);
