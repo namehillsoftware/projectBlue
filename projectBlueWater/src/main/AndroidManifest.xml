@@ -37,6 +37,10 @@
             android:label="@string/layout_settings">
         </activity>
         <activity
+            android:name=".about.AboutActivity"
+            android:label="@string/title_activity_about">
+        </activity>
+        <activity
             android:name=".client.settings.EditClientSettingsActivity"
             android:label="@string/title_activity_set_up_connection">
             <meta-data

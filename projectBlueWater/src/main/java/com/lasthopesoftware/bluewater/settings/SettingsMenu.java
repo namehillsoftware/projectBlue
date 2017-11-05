@@ -18,6 +18,11 @@ public class SettingsMenu {
 
 	public boolean buildSettingsMenu(Menu menu) {
 		activity.getMenuInflater().inflate(R.menu.menu_settings, menu);
+		final MenuItem menuItem = menu.findItem(R.id.menu_about_app);
+		menuItem.setTitle(
+			String.format(
+				activity.getString(R.string.title_activity_about),
+				activity.getString(R.string.app_name)));
 
 		return true;
 	}

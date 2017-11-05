@@ -2,7 +2,7 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
     
     <item android:id="@+id/menu_about_app"
-        android:title="About"
+        android:title="@string/title_activity_about"
         android:orderInCategory="100"
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_help" />
