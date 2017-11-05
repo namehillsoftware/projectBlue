@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
@@ -54,7 +55,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 
 	private final Lazy<LibraryRepository> lazyLibraryProvider = new Lazy<>(() -> new LibraryRepository(EditClientSettingsActivity.this));
 
-	private final SettingsMenu settingsMenu = new SettingsMenu(this);
+	private final SettingsMenu settingsMenu = new SettingsMenu(this, new AboutTitleBuilder(this));
 
 	private static final int permissionsRequestInteger = 1;
 

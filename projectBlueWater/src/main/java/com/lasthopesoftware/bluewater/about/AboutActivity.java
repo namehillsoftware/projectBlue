@@ -9,12 +9,16 @@ import com.lasthopesoftware.bluewater.R;
 
 public class AboutActivity extends AppCompatActivity {
 
+	private final BuildAboutTitle aboutTitleBuilder = new AboutTitleBuilder(this);
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_about);
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		setTitle(aboutTitleBuilder.buildTitle());
 
 		final TextView textView = findViewById(R.id.aboutDescription);
 		textView.setText(

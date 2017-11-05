@@ -17,6 +17,7 @@ import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -31,7 +32,7 @@ import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.p
 public class ApplicationSettingsActivity extends AppCompatActivity {
 	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.pbLoadingServerList);
 	private final LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.lvServerList);
-	private final SettingsMenu settingsMenu = new SettingsMenu(this);
+	private final SettingsMenu settingsMenu = new SettingsMenu(this, new AboutTitleBuilder(this));
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

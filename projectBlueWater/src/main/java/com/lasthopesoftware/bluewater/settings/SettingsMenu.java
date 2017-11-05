@@ -7,22 +7,22 @@ import android.view.MenuItem;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.about.AboutActivity;
+import com.lasthopesoftware.bluewater.about.BuildAboutTitle;
 
 public class SettingsMenu {
 
 	private final Activity activity;
+	private final BuildAboutTitle aboutTitleBuilder;
 
-	public SettingsMenu(Activity activity) {
+	public SettingsMenu(Activity activity, BuildAboutTitle aboutTitleBuilder) {
 		this.activity = activity;
+		this.aboutTitleBuilder = aboutTitleBuilder;
 	}
 
 	public boolean buildSettingsMenu(Menu menu) {
 		activity.getMenuInflater().inflate(R.menu.menu_settings, menu);
 		final MenuItem menuItem = menu.findItem(R.id.menu_about_app);
-		menuItem.setTitle(
-			String.format(
-				activity.getString(R.string.title_activity_about),
-				activity.getString(R.string.app_name)));
+		menuItem.setTitle(aboutTitleBuilder.buildTitle());
 
 		return true;
 	}
