@@ -6,7 +6,7 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
 final class PromisedResolutionResponseMessenger<Resolution, Response> extends ResolutionResponseMessenger<Resolution, Response> {
 	private final PromisedResponse<Resolution, Response> onFulfilled;
-	private final PromiseProxy<Response> promiseProxy = new PromiseProxy<Response>(this);
+	private final PromiseProxy<Response> promiseProxy = new PromiseProxy<>(this);
 
 	PromisedResolutionResponseMessenger(PromisedResponse<Resolution, Response> onFulfilled) {
 		this.onFulfilled = onFulfilled;

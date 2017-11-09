@@ -15,14 +15,14 @@ public class CollectedResultsResolver<TResult> implements ImmediateResponse<TRes
 
 	public CollectedResultsResolver(Messenger<Collection<TResult>> collectionMessenger, Collection<Promise<TResult>> promises) {
 		this.collectionMessenger = collectionMessenger;
-		this.results = new ArrayList<TResult>(promises.size());
+		this.results = new ArrayList<>(promises.size());
 		for (Promise<TResult> promise : promises)
 			promise.then(this);
 
 		this.expectedResultSize = promises.size();
 
 		if (promises.isEmpty())
-			collectionMessenger.sendResolution(Collections.<TResult>emptyList());
+			collectionMessenger.sendResolution(Collections.emptyList());
 	}
 
 	@Override

@@ -56,7 +56,7 @@ public class SingleMessageBroadcaster<Resolution> implements Messenger<Resolutio
 		try {
 			if (message != null) return;
 
-			message = new Message<Resolution>(resolution, rejection);
+			message = new Message<>(resolution, rejection);
 		} finally {
 			resolveSync.writeLock().unlock();
 		}
