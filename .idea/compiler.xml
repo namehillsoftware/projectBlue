@@ -4,6 +4,8 @@
     <bytecodeTargetLevel>
       <module name="messenger_main" target="1.8" />
       <module name="messenger_test" target="1.8" />
+      <module name="sandbox-messenger_main" target="1.8" />
+      <module name="sandbox-messenger_test" target="1.8" />
       <module name="workspaces-messenger_main" target="1.8" />
       <module name="workspaces-messenger_test" target="1.8" />
     </bytecodeTargetLevel>

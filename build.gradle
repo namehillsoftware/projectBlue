@@ -19,7 +19,7 @@ apply plugin: 'signing'
 apply plugin: 'com.cinnober.gradle.semver-git'
 
 group = "com.namehillsoftware"
-archivesBaseName = "messenger"
+archivesBaseName = "handoff"
 version = project.version
 
 sourceCompatibility = JavaVersion.VERSION_1_6
