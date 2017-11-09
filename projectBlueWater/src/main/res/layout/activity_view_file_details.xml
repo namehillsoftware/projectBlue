@@ -39,8 +39,6 @@
                 android:fadingEdge="horizontal"
                 android:scrollHorizontally="true"
                 android:singleLine="true"
-                android:lines="1"
-                android:maxLines="1"
                 android:textAppearance="?android:attr/textAppearanceLarge"/>
 
 
