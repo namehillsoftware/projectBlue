@@ -2,6 +2,8 @@
 <resources>
 
     <string name="app_name">Music Canoe</string>
+    <string name="company_name">Name Hill Software</string>
+    <string name="copyright_year">2015</string>
     <string name="layout_settings">Settings</string>
     <string name="title_activity_set_up_connection">Connection Settings</string>
     <string name="title_activity_library">Library</string>
@@ -77,7 +79,7 @@
     <string name="app_only_sync_ext_power">Only sync on external power</string>
     <string name="start_sync_button">Start Sync</string>
     <string name="stop_sync_button">Stop Sync</string>
-	<string name="downloading_status_label">Downloading %1$s</string>
+    <string name="downloading_status_label">Downloading %1$s</string>
     <string name="unknown_file">unknown file</string>
     <string name="lbl_connect">Connect</string>
     <string name="app_audio_settings">Audio Settings:</string>
@@ -85,4 +87,6 @@
     <string name="permissions_must_be_granted_for_settings">In order for the library settings to be changed, the requested permissions must be granted!</string>
     <string name="permissions_needed">Permissions needed</string>
     <string name="permissions_needed_launch_settings">Permissions are needed to read or write from the disk. Please set these permissions from the settings page.</string>
+    <string name="title_activity_about">About %1$s</string>
+    <string name="aboutAppText">%1$s\n\nVersion: %2$s (%3$s)\n\n\n\nCopyright © %4$s %5$s</string>
 </resources>

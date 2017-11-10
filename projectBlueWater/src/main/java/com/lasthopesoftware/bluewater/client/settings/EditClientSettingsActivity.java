@@ -10,6 +10,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -19,12 +21,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermissionsRequirementsProvider;
+import com.lasthopesoftware.bluewater.settings.SettingsMenu;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.lazyj.Lazy;
@@ -50,6 +54,8 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	private final Lazy<IApplicationReadPermissionsRequirementsProvider> applicationReadPermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationReadPermissionsRequirementsProvider(this));
 
 	private final Lazy<LibraryRepository> lazyLibraryProvider = new Lazy<>(() -> new LibraryRepository(EditClientSettingsActivity.this));
+
+	private final SettingsMenu settingsMenu = new SettingsMenu(this, new AboutTitleBuilder(this));
 
 	private static final int permissionsRequestInteger = 1;
 
@@ -111,6 +117,11 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		return settingsMenu.buildSettingsMenu(menu);
+	}
+
+	@Override
 	protected void onStart() {
 		super.onStart();
 
@@ -122,6 +133,11 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		super.onNewIntent(intent);
 
 		initializeLibrary(intent);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		return settingsMenu.handleSettingsMenuClicks(item);
 	}
 
 	private void initializeLibrary(Intent intent) {
