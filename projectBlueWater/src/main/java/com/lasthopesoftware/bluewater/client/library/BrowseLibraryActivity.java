@@ -45,7 +45,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 
@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 

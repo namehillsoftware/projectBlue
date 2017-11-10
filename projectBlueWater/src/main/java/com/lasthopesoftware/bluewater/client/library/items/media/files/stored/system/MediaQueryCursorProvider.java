@@ -7,8 +7,8 @@ import android.provider.MediaStore;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;

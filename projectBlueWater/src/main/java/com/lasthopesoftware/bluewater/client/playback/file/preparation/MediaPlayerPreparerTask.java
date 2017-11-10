@@ -9,12 +9,12 @@ import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHa
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingMediaPlayerFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
 import java.io.IOException;
 import java.util.concurrent.CancellationException;

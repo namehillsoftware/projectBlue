@@ -4,9 +4,9 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.io.File;

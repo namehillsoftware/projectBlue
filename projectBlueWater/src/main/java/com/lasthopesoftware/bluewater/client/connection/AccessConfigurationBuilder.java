@@ -9,8 +9,8 @@ import android.util.Patterns;
 import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import org.apache.commons.io.IOUtils;
 

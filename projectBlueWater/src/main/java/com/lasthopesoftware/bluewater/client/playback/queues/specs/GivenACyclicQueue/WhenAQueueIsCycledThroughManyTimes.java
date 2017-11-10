@@ -8,9 +8,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPrepared
 import com.lasthopesoftware.bluewater.client.playback.queues.CyclicalFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import junit.framework.Assert;
 

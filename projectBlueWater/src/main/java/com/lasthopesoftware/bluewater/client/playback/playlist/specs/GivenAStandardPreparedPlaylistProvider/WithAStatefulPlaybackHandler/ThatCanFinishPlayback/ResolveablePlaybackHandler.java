@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.Promise;
 
 public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 

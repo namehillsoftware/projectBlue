@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueue
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;

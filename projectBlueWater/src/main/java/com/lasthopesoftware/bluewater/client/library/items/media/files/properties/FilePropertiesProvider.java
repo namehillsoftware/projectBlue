@@ -5,10 +5,10 @@ import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;

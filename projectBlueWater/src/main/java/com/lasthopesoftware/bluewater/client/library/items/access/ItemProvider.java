@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackFileStartedScrobblerRegistration implements IConnectionDependentReceiverRegistration {
 

@@ -28,15 +28,15 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
 

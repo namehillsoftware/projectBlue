@@ -9,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class LibrarySyncHandler {
 

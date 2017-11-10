@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
 import java.util.List;
 

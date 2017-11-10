@@ -6,11 +6,11 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.providers.AbstractProvider;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

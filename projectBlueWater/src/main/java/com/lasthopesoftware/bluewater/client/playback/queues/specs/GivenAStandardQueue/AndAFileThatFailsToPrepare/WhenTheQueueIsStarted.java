@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePrepa
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

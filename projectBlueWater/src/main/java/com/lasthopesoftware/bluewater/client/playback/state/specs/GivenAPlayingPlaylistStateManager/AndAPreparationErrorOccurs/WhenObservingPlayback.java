@@ -17,8 +17,8 @@ import com.lasthopesoftware.bluewater.client.playback.queues.PreparationExceptio
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

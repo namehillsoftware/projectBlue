@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.IFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.IPlaystatsUpdate;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

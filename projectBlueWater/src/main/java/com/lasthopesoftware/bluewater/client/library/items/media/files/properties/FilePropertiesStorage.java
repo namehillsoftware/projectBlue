@@ -6,10 +6,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.MessageWriter;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import org.slf4j.LoggerFactory;
 

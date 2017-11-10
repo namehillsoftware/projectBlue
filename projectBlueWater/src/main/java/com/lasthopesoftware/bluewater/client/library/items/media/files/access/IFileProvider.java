@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.List;
 

@@ -5,7 +5,7 @@ import android.media.MediaPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 final class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
 

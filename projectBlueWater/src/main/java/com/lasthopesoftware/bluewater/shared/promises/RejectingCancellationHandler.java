@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.promises;
 
-import com.lasthopesoftware.messenger.Messenger;
+import com.namehillsoftware.handoff.Messenger;
 
 import java.util.concurrent.CancellationException;
 

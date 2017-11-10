@@ -53,7 +53,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 import com.namehillsoftware.lazyj.Lazy;
@@ -66,7 +66,7 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class NowPlayingActivity extends AppCompatActivity {
 

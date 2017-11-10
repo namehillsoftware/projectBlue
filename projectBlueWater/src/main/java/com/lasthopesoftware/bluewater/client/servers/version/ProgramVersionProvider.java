@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.servers.version;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.IOException;
 import java.io.InputStream;
