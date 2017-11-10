@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage;
 
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 public interface INowPlayingRepository {
 	Promise<NowPlaying> getNowPlaying();

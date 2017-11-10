@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access.s
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;

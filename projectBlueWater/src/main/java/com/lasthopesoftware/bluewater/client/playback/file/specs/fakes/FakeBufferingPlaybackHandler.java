@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.IOException;
 

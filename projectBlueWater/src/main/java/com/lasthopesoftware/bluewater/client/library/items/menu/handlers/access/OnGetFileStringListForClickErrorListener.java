@@ -4,7 +4,7 @@ import android.view.View;
 
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 

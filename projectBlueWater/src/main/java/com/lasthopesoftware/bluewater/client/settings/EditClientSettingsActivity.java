@@ -35,7 +35,7 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.ArrayList;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";

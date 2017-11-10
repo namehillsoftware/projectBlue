@@ -5,11 +5,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
-import com.lasthopesoftware.messenger.promises.response.ResponseAction;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.ImmediateAction;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.ResponseAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

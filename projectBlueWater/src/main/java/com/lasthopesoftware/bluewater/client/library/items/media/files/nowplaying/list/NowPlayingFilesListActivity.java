@@ -27,9 +27,9 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
-import com.lasthopesoftware.messenger.promises.response.ResponseAction;
+import com.namehillsoftware.handoff.promises.response.ImmediateAction;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 

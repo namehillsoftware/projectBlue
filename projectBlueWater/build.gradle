@@ -100,7 +100,7 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.12'
     compile 'com.android.support:support-v4:26.1.0'
     compile 'com.annimon:stream:1.1.9'
-    compile 'com.github.danrien:handoff:0.2.0'
+    compile 'com.github.danrien:handoff:0.3.0'
     compile 'io.reactivex.rxjava2:rxjava:2.1.5'
     compile 'com.github.danrien:lazy-j:1.1'
     compile 'com.github.danrien:xmlwise:master-SNAPSHOT'

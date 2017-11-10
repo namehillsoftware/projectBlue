@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.util.List;
 

@@ -5,9 +5,9 @@ import android.media.MediaPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerIllegalStateReporter;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

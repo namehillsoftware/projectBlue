@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored;
 
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.Collection;
 

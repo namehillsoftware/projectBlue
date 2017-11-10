@@ -15,9 +15,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.sy
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
+import com.namehillsoftware.handoff.promises.Promise;
 
 /**
  * Created by david on 7/24/15.

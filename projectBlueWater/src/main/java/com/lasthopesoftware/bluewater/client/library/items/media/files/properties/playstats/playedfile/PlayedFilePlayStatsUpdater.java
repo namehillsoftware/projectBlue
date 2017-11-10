@@ -4,9 +4,9 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.IPlaystatsUpdate;
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
 import com.lasthopesoftware.providers.AbstractProvider;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

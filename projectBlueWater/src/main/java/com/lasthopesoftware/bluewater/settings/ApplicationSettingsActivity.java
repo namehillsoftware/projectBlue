@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
 	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.pbLoadingServerList);

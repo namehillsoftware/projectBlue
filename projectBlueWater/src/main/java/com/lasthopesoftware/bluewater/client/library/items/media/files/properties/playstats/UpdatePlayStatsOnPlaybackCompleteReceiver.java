@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver {
 	private static final Logger logger = LoggerFactory.getLogger(UpdatePlayStatsOnPlaybackCompleteReceiver.class);

@@ -74,8 +74,8 @@ import com.lasthopesoftware.bluewater.client.settings.volumeleveling.VolumeLevel
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.ILazy;
 import com.namehillsoftware.lazyj.Lazy;
@@ -92,7 +92,7 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackService extends Service implements OnAudioFocusChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);

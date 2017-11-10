@@ -16,9 +16,9 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
-import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

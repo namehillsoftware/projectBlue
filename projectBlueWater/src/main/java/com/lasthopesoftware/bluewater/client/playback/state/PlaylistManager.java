@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.IStartPlay
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaybackCompleted;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlayingFileChanged;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ import java.util.Map;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateBroadcaster, AutoCloseable {
 

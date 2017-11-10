@@ -6,8 +6,8 @@ import android.os.Environment;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.messenger.promises.Promise;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 

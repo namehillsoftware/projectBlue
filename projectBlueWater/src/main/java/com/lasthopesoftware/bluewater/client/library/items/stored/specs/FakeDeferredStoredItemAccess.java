@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.items.stored.specs;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.Collection;
 

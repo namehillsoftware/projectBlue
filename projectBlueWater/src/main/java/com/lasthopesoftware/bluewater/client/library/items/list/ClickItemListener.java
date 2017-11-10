@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.list.File
 
 import java.util.ArrayList;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ClickItemListener implements OnItemClickListener {
 

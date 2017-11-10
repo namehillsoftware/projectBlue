@@ -11,10 +11,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

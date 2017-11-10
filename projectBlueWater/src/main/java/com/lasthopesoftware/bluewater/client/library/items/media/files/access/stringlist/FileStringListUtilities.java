@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access.s
 import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.ArrayList;

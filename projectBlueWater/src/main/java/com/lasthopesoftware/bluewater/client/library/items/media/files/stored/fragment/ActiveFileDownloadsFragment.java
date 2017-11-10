@@ -37,7 +37,7 @@ import com.lasthopesoftware.bluewater.sync.service.SyncService;
 
 import java.util.List;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ActiveFileDownloadsFragment extends Fragment {
 

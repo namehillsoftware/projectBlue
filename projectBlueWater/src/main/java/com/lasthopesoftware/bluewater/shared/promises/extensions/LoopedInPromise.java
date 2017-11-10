@@ -3,15 +3,15 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 import android.content.Context;
 import android.os.Handler;
 
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
-import com.lasthopesoftware.messenger.promises.queued.PreparedMessengerOperator;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellablePreparedMessengerOperator;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.MessageWriter;
+import com.namehillsoftware.handoff.promises.queued.PreparedMessengerOperator;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellablePreparedMessengerOperator;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
 public class LoopedInPromise<Result> extends Promise<Result> {
 

@@ -12,10 +12,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
