@@ -9,16 +9,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 public class PlaystatsUpdateSelector {
 
-	private final ILazy<Promise<IPlaystatsUpdate>> lazyPlaystatsUpdate;
+	private final CreateAndHold<Promise<IPlaystatsUpdate>> lazyPlaystatsUpdate;
 
 	public PlaystatsUpdateSelector(IConnectionProvider connectionProvider, IFilePropertiesProvider filePropertiesProvider, FilePropertiesStorage filePropertiesStorage, IProgramVersionProvider programVersionProvider) {
 		lazyPlaystatsUpdate = new AbstractSynchronousLazy<Promise<IPlaystatsUpdate>>() {
 			@Override
-			protected Promise<IPlaystatsUpdate> initialize() throws Exception {
+			protected Promise<IPlaystatsUpdate> create() throws Exception {
 				return programVersionProvider.promiseServerVersion()
 					.then(programVersion -> programVersion != null && programVersion.major >= 22
 						? new PlayedFilePlayStatsUpdater(connectionProvider)

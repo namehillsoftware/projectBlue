@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.objective.droid.ObjectiveDroid;
 
@@ -57,9 +57,9 @@ public class DiskFileCache {
 
 	private final long expirationTime;
 
-	private final ILazy<File> lazyDiskCacheDir = new AbstractSynchronousLazy<File>() {
+	private final CreateAndHold<File> lazyDiskCacheDir = new AbstractSynchronousLazy<File>() {
 		@Override
-		protected File initialize() throws Exception {
+		protected File create() throws Exception {
 			final java.io.File cacheDir = new File(DiskFileCache.getDiskCacheDir(context, cacheName), String.valueOf(library.getId()));
 			if (!cacheDir.exists() && !cacheDir.mkdirs()) return null;
 

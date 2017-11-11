@@ -72,7 +72,7 @@ import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrato
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
@@ -162,7 +162,7 @@ public class SyncService extends Service {
 
 	private final Lazy<String> downloadingStatusLabel = new Lazy<>(() -> getString(R.string.downloading_status_label));
 
-	private final ILazy<ILibraryProvider> lazyLibraryProvider = new Lazy<ILibraryProvider>(() -> new LibraryRepository(SyncService.this));
+	private final CreateAndHold<ILibraryProvider> lazyLibraryProvider = new Lazy<ILibraryProvider>(() -> new LibraryRepository(SyncService.this));
 
 	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
@@ -200,7 +200,7 @@ public class SyncService extends Service {
 
 	private final AbstractSynchronousLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
 		@Override
-		protected final BroadcastReceiver initialize() {
+		protected final BroadcastReceiver create() {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
@@ -212,7 +212,7 @@ public class SyncService extends Service {
 
 	private final AbstractSynchronousLazy<BroadcastReceiver> onPowerDisconnectedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
 		@Override
-		public final BroadcastReceiver initialize() {
+		public final BroadcastReceiver create() {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
@@ -224,7 +224,7 @@ public class SyncService extends Service {
 
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
-		protected final Intent initialize() {
+		protected final Intent create() {
 			final Intent browseLibraryIntent = new Intent(SyncService.this, BrowseLibraryActivity.class);
 			browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
 			browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -397,10 +397,10 @@ public class SyncService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 
-		if (onWifiStateChangedReceiver.isInitialized())
+		if (onWifiStateChangedReceiver.isCreated())
 			unregisterReceiver(onWifiStateChangedReceiver.getObject());
 
-		if (onPowerDisconnectedReceiver.isInitialized())
+		if (onPowerDisconnectedReceiver.isCreated())
 			unregisterReceiver(onPowerDisconnectedReceiver.getObject());
 
 		wakeLock.release();

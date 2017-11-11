@@ -6,13 +6,13 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import io.reactivex.functions.Consumer;
 
 public class TrackPositionBroadcaster implements Consumer<Integer> {
-	private ILazy<LocalBroadcastManager> lazyLocalBroadcastManager;
+	private CreateAndHold<LocalBroadcastManager> lazyLocalBroadcastManager;
 	private final IPlaybackHandler playbackHandler;
 
 	public TrackPositionBroadcaster(Context context, IPlaybackHandler playbackHandler) {

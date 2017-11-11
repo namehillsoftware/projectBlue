@@ -77,7 +77,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -176,13 +176,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
 
-	private final ILazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
-	private final ILazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
-	private final ILazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
-	private final ILazy<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
-	private final ILazy<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
+	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
+	private final CreateAndHold<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
+	private final CreateAndHold<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
+	private final CreateAndHold<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
+	private final CreateAndHold<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
 		@Override
-		protected RemoteControlClient initialize() throws Exception {
+		protected RemoteControlClient create() throws Exception {
 			// build the PendingIntent for the remote control client
 			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
 			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
@@ -192,11 +192,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return new RemoteControlClient(mediaPendingIntent);
 		}
 	};
-	private final ILazy<MediaSession> lazyMediaSession =
+	private final CreateAndHold<MediaSession> lazyMediaSession =
 		new AbstractSynchronousLazy<MediaSession>() {
 			@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 			@Override
-			protected MediaSession initialize() throws Exception {
+			protected MediaSession create() throws Exception {
 				final MediaSession newMediaSession = new MediaSession(
 					PlaybackService.this,
 					mediaSessionTag);
@@ -215,12 +215,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				return newMediaSession;
 			}
 		};
-	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(this));
-	private final ILazy<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
-	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
-	private final ILazy<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
-	private final ILazy<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
-	private final ILazy<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
+	private final CreateAndHold<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(this));
+	private final CreateAndHold<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
+	private final CreateAndHold<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
+	private final CreateAndHold<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
+	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
+	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
 
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
@@ -240,7 +240,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
-		protected final Runnable initialize() throws Exception {
+		protected final Runnable create() throws Exception {
 			return () -> {
 				if (playlistManager == null) {
 					stopSelf(startId);
@@ -254,7 +254,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private final AbstractSynchronousLazy<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
-		protected final Runnable initialize() throws Exception {
+		protected final Runnable create() throws Exception {
 			return () -> {
 				unregisterListeners();
 				stopSelf(startId);
@@ -412,9 +412,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			wifiLock = null;
 		}
 		final PollConnection pollConnection = PollConnection.Instance.get(this);
-		if (connectionRegainedListener.isInitialized())
+		if (connectionRegainedListener.isCreated())
 			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
-		if (onPollingCancelledListener.isInitialized())
+		if (onPollingCancelledListener.isCreated())
 			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
 		
 		areListenersRegistered = false;
@@ -840,7 +840,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-			if (lazyPlaylistVolumeManager.isInitialized())
+			if (lazyPlaylistVolumeManager.isCreated())
 				lazyPlaylistVolumeManager.getObject().setVolume(1.0f);
 
 			if (playlistManager != null && !playlistManager.isPlaying())
@@ -861,7 +861,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 				// Lost focus for a short time, but it's ok to keep playing
 				// at an attenuated level
-				if (lazyPlaylistVolumeManager.isInitialized())
+				if (lazyPlaylistVolumeManager.isCreated())
 					lazyPlaylistVolumeManager.getObject().setVolume(0.2f);
 	    }
 	}
@@ -975,13 +975,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
-		if (remoteControlReceiver.isInitialized())
+		if (remoteControlReceiver.isCreated())
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
 
-		if (remoteControlClient.isInitialized())
+		if (remoteControlClient.isCreated())
 			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isInitialized()) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated()) {
 			lazyMediaSession.getObject().setActive(false);
 			lazyMediaSession.getObject().release();
 		}
