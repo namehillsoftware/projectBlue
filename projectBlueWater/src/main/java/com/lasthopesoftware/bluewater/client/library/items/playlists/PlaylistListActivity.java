@@ -30,7 +30,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.List;
 
@@ -39,10 +39,10 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	public static final String KEY = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "key");
 	public static final String VALUE = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "value");
 
-	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
+	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
 		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
-			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+			protected ISelectedBrowserLibraryProvider create() throws Exception {
 				return new SelectedBrowserLibraryProvider(
 					new SelectedBrowserLibraryIdentifierProvider(PlaylistListActivity.this),
 					new LibraryRepository(PlaylistListActivity.this));

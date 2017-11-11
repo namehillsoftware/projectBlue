@@ -5,11 +5,11 @@ import android.support.annotation.IdRes;
 import android.view.View;
 
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 public class LazyViewFinder<TView extends View> {
 
-	private final ILazy<TView> lazyViewInitializer;
+	private final CreateAndHold<TView> lazyViewInitializer;
 
 	public LazyViewFinder(Activity activity, @IdRes int viewId) {
 		this(new LazyActivityViewFinder<>(activity, viewId));
@@ -19,7 +19,7 @@ public class LazyViewFinder<TView extends View> {
 		this(new LazyViewBasedViewFinder<>(view, viewId));
 	}
 
-	private LazyViewFinder(ILazy<TView> lazyViewInitializer) {
+	private LazyViewFinder(CreateAndHold<TView> lazyViewInitializer) {
 		this.lazyViewInitializer = lazyViewInitializer;
 	}
 
@@ -38,7 +38,7 @@ public class LazyViewFinder<TView extends View> {
 		}
 
 		@Override
-		protected T initialize() throws Exception {
+		protected T create() throws Exception {
 			return activity.findViewById(viewId);
 		}
 	}
@@ -54,7 +54,7 @@ public class LazyViewFinder<TView extends View> {
 		}
 
 		@Override
-		protected T initialize() throws Exception {
+		protected T create() throws Exception {
 			return view.findViewById(viewId);
 		}
 	}

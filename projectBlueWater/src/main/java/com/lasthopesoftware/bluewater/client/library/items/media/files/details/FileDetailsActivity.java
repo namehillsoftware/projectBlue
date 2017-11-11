@@ -71,7 +71,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	private static final AbstractSynchronousLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
 			new AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
 				@Override
-				protected RelativeLayout.LayoutParams initialize() throws Exception {
+				protected RelativeLayout.LayoutParams create() throws Exception {
 					final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 					layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
 
@@ -85,7 +85,7 @@ public class FileDetailsActivity extends AppCompatActivity {
     private final LazyViewFinder<ProgressBar> pbLoadingFileDetails = new LazyViewFinder<>(this, R.id.pbLoadingFileDetails);
     private final AbstractSynchronousLazy<ScaledWrapImageView> imgFileThumbnailBuilder = new AbstractSynchronousLazy<ScaledWrapImageView>() {
 	    @Override
-	    protected final ScaledWrapImageView initialize() throws Exception {
+	    protected final ScaledWrapImageView create() throws Exception {
 		    final RelativeLayout rlFileThumbnailContainer = findViewById(R.id.rlFileThumbnailContainer);
 		    if (rlFileThumbnailContainer == null) return null;
 

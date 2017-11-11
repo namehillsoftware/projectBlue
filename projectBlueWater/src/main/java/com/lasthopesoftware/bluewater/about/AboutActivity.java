@@ -11,15 +11,15 @@ import com.lasthopesoftware.bluewater.BuildConfig;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 public class AboutActivity extends AppCompatActivity {
 
 	private final BuildAboutTitle aboutTitleBuilder = new AboutTitleBuilder(this);
 
-	private final ILazy<Bitmap> lazyLogoBitmap = new AbstractSynchronousLazy<Bitmap>() {
+	private final CreateAndHold<Bitmap> lazyLogoBitmap = new AbstractSynchronousLazy<Bitmap>() {
 		@Override
-		protected Bitmap initialize() throws Exception {
+		protected Bitmap create() throws Exception {
 			return BitmapFactory.decodeResource(getResources(), R.drawable.music_canoe_hi_res_logo);
 		}
 	};
@@ -51,7 +51,7 @@ public class AboutActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
-		if (lazyLogoBitmap.isInitialized())
+		if (lazyLogoBitmap.isCreated())
 			lazyLogoBitmap.getObject().recycle();
 
 		super.onDestroy();

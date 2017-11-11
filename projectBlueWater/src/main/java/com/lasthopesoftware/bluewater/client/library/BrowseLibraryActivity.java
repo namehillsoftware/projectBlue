@@ -47,7 +47,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import org.slf4j.LoggerFactory;
 
@@ -70,16 +70,16 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private final LazyViewFinder<ListView> specialLibraryItemsListView = new LazyViewFinder<>(this, R.id.specialLibraryItemsListView);
 	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.drawer_layout);
 	private final LazyViewFinder<ProgressBar> loadingViewsProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingViews);
-	private final ILazy<LibraryRepository> lazyLibraryRepository = new AbstractSynchronousLazy<LibraryRepository>() {
+	private final CreateAndHold<LibraryRepository> lazyLibraryRepository = new AbstractSynchronousLazy<LibraryRepository>() {
 		@Override
-		protected LibraryRepository initialize() throws Exception {
+		protected LibraryRepository create() throws Exception {
 			return new LibraryRepository(BrowseLibraryActivity.this);
 		}
 	};
 
-	private ILazy<ISelectedBrowserLibraryProvider> lazySelectedBrowserLibraryProvider = new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
+	private CreateAndHold<ISelectedBrowserLibraryProvider> lazySelectedBrowserLibraryProvider = new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 		@Override
-		protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+		protected ISelectedBrowserLibraryProvider create() throws Exception {
 			return new SelectedBrowserLibraryProvider(
 				new SelectedBrowserLibraryIdentifierProvider(BrowseLibraryActivity.this),
 				lazyLibraryRepository.getObject());

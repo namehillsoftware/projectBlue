@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +47,10 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
     private final LazyViewFinder<ListView> itemListView = new LazyViewFinder<>(this, R.id.lvItems);
     private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
-	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
+	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
 		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
-			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+			protected ISelectedBrowserLibraryProvider create() throws Exception {
 				return new SelectedBrowserLibraryProvider(
 					new SelectedBrowserLibraryIdentifierProvider(ItemListActivity.this),
 					new LibraryRepository(ItemListActivity.this));

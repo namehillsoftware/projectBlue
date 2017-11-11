@@ -59,7 +59,7 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper implements Closeabl
 	public void close() {
 		super.close();
 
-		if (sqliteDb.isInitialized())
+		if (sqliteDb.isCreated())
 			sqliteDb.getObject().close();
 	}
 }
