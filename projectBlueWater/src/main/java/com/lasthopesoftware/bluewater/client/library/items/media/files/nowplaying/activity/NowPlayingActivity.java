@@ -53,9 +53,9 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,7 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class NowPlayingActivity extends AppCompatActivity {
 
@@ -87,7 +87,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private static Bitmap nowPlayingBackgroundBitmap;
 
-	private final ILazy<Handler> messageHandler = new Lazy<>(() -> new Handler(getMainLooper()));
+	private final CreateAndHold<Handler> messageHandler = new Lazy<>(() -> new Handler(getMainLooper()));
 
 	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
 	private final LazyViewFinder<ImageButton> pauseButton = new LazyViewFinder<>(this, R.id.btnPause);
@@ -100,15 +100,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
 	private final LazyViewFinder<ImageView> nowPlayingImageLoading = new LazyViewFinder<>(this, R.id.imgNowPlayingLoading);
 	private final LazyViewFinder<ProgressBar> loadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingImg);
-	private final ILazy<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
+	private final CreateAndHold<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
-		protected NowPlayingToggledVisibilityControls initialize() throws Exception {
+		protected NowPlayingToggledVisibilityControls create() throws Exception {
 			return new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(NowPlayingActivity.this, R.id.llNpButtons), new LazyViewFinder<>(NowPlayingActivity.this, R.id.menuControlsLinearLayout), songRating);
 		}
 	};
-	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository = new AbstractSynchronousLazy<INowPlayingRepository>() {
+	private final CreateAndHold<INowPlayingRepository> lazyNowPlayingRepository = new AbstractSynchronousLazy<INowPlayingRepository>() {
 		@Override
-		protected INowPlayingRepository initialize() throws Exception {
+		protected INowPlayingRepository create() throws Exception {
 			final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingActivity.this);
 
 			return
@@ -204,7 +204,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			pauseButton.findView().setVisibility(View.INVISIBLE);
 		});
 
-		final ImageButton next = (ImageButton) findViewById(R.id.btnNext);
+		final ImageButton next = findViewById(R.id.btnNext);
 		if (next != null) {
 			next.setOnClickListener(v -> {
 				if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
@@ -212,7 +212,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			});
 		}
 
-		final ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
+		final ImageButton previous = findViewById(R.id.btnPrevious);
 		if (previous != null) {
 			previous.setOnClickListener(v -> {
 				if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
@@ -220,7 +220,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			});
 		}
 
-		final ImageButton shuffleButton = (ImageButton) findViewById(R.id.repeatButton);
+		final ImageButton shuffleButton = findViewById(R.id.repeatButton);
 		setRepeatingIcon(shuffleButton);
 
 		if (shuffleButton != null) {
@@ -240,7 +240,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					}, messageHandler.getObject())));
 		}
 
-		final ImageButton viewNowPlayingListButton = (ImageButton) findViewById(R.id.viewNowPlayingListButton);
+		final ImageButton viewNowPlayingListButton = findViewById(R.id.viewNowPlayingListButton);
 		if (viewNowPlayingListButton != null)
 			viewNowPlayingListButton.setOnClickListener(v -> startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class)));
 

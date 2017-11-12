@@ -15,15 +15,15 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.pe
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
-import com.lasthopesoftware.messenger.promises.propagation.PromiseProxy;
-import com.lasthopesoftware.messenger.promises.queued.MessageWriter;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellableMessageWriter;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.propagation.PromiseProxy;
+import com.namehillsoftware.handoff.promises.queued.MessageWriter;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;

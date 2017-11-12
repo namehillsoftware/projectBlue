@@ -12,9 +12,9 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,18 +167,18 @@ public class SessionConnection {
 		public static final int GettingViewFailed = 6;
 		public static final int BuildingSessionComplete = 7;
 
-		private static final ILazy<Set<Integer>> runningConditionsLazy =
+		private static final CreateAndHold<Set<Integer>> runningConditionsLazy =
 				new AbstractSynchronousLazy<Set<Integer>>() {
 					@Override
-					protected Set<Integer> initialize() throws Exception {
+					protected Set<Integer> create() throws Exception {
 						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView)));
 					}
 				};
 
-		private static final ILazy<Set<Integer>> completeConditionsLazy =
+		private static final CreateAndHold<Set<Integer>> completeConditionsLazy =
 				new AbstractSynchronousLazy<Set<Integer>>() {
 					@Override
-					protected Set<Integer> initialize() throws Exception {
+					protected Set<Integer> create() throws Exception {
 						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 					}
 				};

@@ -5,11 +5,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFil
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
-import com.lasthopesoftware.messenger.promises.response.ResponseAction;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.ImmediateAction;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.ResponseAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,7 +174,7 @@ implements
 		return currentPreparingPlaybackHandlerPromise.promisePositionedPreparedPlaybackFile();
 	}
 
-	private static class PositionedPreparingFile implements ImmediateResponse<PreparedPlaybackFile, PositionedPreparedPlaybackFile> {
+	private static class PositionedPreparingFile {
 		final PositionedFile positionedFile;
 		final Promise<PreparedPlaybackFile> preparedPlaybackFilePromise;
 
@@ -184,12 +184,11 @@ implements
 		}
 
 		Promise<PositionedPreparedPlaybackFile> promisePositionedPreparedPlaybackFile() {
-			return preparedPlaybackFilePromise.then(this);
-		}
-
-		@Override
-		public PositionedPreparedPlaybackFile respond(PreparedPlaybackFile handler) throws Throwable {
-			return new PositionedPreparedPlaybackFile(positionedFile, handler);
+			return preparedPlaybackFilePromise.then(
+				handler -> new PositionedPreparedPlaybackFile(positionedFile, handler),
+				error -> {
+					throw new PreparationException(positionedFile, error);
+				});
 		}
 	}
 }

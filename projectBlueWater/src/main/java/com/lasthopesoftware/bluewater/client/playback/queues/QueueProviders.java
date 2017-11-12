@@ -2,14 +2,14 @@ package com.lasthopesoftware.bluewater.client.playback.queues;
 
 
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.Arrays;
 
 public class QueueProviders {
-	private static final ILazy<Iterable<IPositionedFileQueueProvider>> lazyProviders = new AbstractSynchronousLazy<Iterable<IPositionedFileQueueProvider>>() {
+	private static final CreateAndHold<Iterable<IPositionedFileQueueProvider>> lazyProviders = new AbstractSynchronousLazy<Iterable<IPositionedFileQueueProvider>>() {
 		@Override
-		protected Iterable<IPositionedFileQueueProvider> initialize() throws Exception {
+		protected Iterable<IPositionedFileQueueProvider> create() throws Exception {
 			return Arrays.asList(new CompletingFileQueueProvider(), new CyclicalFileQueueProvider());
 		}
 	};

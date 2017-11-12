@@ -27,21 +27,21 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateAction;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
-import com.lasthopesoftware.messenger.promises.response.ResponseAction;
+import com.namehillsoftware.handoff.promises.response.ImmediateAction;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 public class NowPlayingFilesListActivity extends AppCompatActivity implements IItemListViewContainer {
 	
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 	private final LazyViewFinder<ProgressBar> mLoadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 
-	private final ILazy<INowPlayingRepository> lazyNowPlayingRepository =
+	private final CreateAndHold<INowPlayingRepository> lazyNowPlayingRepository =
 		new AbstractSynchronousLazy<INowPlayingRepository>() {
 			@Override
-			protected INowPlayingRepository initialize() throws Exception {
+			protected INowPlayingRepository create() throws Exception {
 				final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingFilesListActivity.this);
 				final SelectedBrowserLibraryIdentifierProvider selectedBrowserLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingFilesListActivity.this);
 				final ISpecificLibraryProvider specificLibraryProvider = new SpecificLibraryProvider(selectedBrowserLibraryIdentifierProvider.getSelectedLibraryId(), libraryRepository);
@@ -49,10 +49,10 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 			}
 		};
 
-	private final ILazy<PromisedResponse<NowPlaying, Void>> lazyDispatchedLibraryCompleteResolution =
+	private final CreateAndHold<PromisedResponse<NowPlaying, Void>> lazyDispatchedLibraryCompleteResolution =
 		new AbstractSynchronousLazy<PromisedResponse<NowPlaying, Void>>() {
 			@Override
-			protected PromisedResponse<NowPlaying, Void> initialize() throws Exception {
+			protected PromisedResponse<NowPlaying, Void> create() throws Exception {
 				return
 					LoopedInPromise.response(
 						ImmediateAction.perform(

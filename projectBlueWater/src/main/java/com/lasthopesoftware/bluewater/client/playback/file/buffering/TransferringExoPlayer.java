@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.playback.file.buffering;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 public class TransferringExoPlayer<S extends DataSource>
 implements
@@ -16,9 +16,9 @@ implements
 	TransferListener<S>
 {
 
-	private final ILazy<Promise<IBufferingPlaybackFile>> bufferingPlaybackFilePromise = new AbstractSynchronousLazy<Promise<IBufferingPlaybackFile>>() {
+	private final CreateAndHold<Promise<IBufferingPlaybackFile>> bufferingPlaybackFilePromise = new AbstractSynchronousLazy<Promise<IBufferingPlaybackFile>>() {
 		@Override
-		protected Promise<IBufferingPlaybackFile> initialize() throws Exception {
+		protected Promise<IBufferingPlaybackFile> create() throws Exception {
 			return new Promise<>((MessengerOperator<IBufferingPlaybackFile>) TransferringExoPlayer.this);
 		}
 	};

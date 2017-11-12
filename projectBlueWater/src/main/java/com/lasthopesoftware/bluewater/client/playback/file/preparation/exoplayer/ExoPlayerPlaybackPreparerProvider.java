@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlayback
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackQueueConfiguration;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Minutes;
@@ -32,10 +32,10 @@ import org.joda.time.Minutes;
 
 public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider, IPreparedPlaybackQueueConfiguration {
 
-	private static final Lazy<Integer> maxBufferMs = new Lazy<>(() -> (int) Minutes.minutes(5).toStandardDuration().getMillis());
-	private static final Lazy<TrackSelector> trackSelector = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewTrackSelector);
-	private static final ILazy<LoadControl> loadControl = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewLoadControl);
-	private static final Lazy<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
+	private static final CreateAndHold<Integer> maxBufferMs = new Lazy<>(() -> (int) Minutes.minutes(5).toStandardDuration().getMillis());
+	private static final CreateAndHold<TrackSelector> trackSelector = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewTrackSelector);
+	private static final CreateAndHold<LoadControl> loadControl = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewLoadControl);
+	private static final CreateAndHold<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
 	private final IFileUriProvider fileUriProvider;
 	private final DataSourceFactoryProvider dataSourceFactoryProvder;

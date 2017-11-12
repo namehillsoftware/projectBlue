@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.f
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 public class ActiveFileDownloadsViewHolder {
 

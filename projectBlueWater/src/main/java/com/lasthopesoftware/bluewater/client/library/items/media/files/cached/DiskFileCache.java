@@ -12,9 +12,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.re
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +35,9 @@ public class DiskFileCache {
 
 	private final long expirationTime;
 
-	private final ILazy<File> lazyDiskCacheDir = new AbstractSynchronousLazy<File>() {
+	private final CreateAndHold<File> lazyDiskCacheDir = new AbstractSynchronousLazy<File>() {
 		@Override
-		protected File initialize() throws Exception {
+		protected File create() throws Exception {
 			final java.io.File cacheDir = new File(DiskFileCache.getDiskCacheDir(context, diskFileCacheConfiguration.getCacheName()), String.valueOf(diskFileCacheConfiguration.getLibrary().getId()));
 			if (!cacheDir.exists() && !cacheDir.mkdirs()) return null;
 

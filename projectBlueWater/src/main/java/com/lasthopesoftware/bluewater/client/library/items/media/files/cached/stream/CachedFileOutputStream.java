@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.s
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.IDiskFileCachePersistence;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.io.Closeable;
 import java.io.File;
@@ -21,9 +21,9 @@ public class CachedFileOutputStream implements Closeable {
 	private final String uniqueKey;
 	private final File file;
 	private final IDiskFileCachePersistence diskFileCachePersistence;
-	private final ILazy<FileOutputStream> lazyFileOutputStream = new AbstractSynchronousLazy<FileOutputStream>() {
+	private final CreateAndHold<FileOutputStream> lazyFileOutputStream = new AbstractSynchronousLazy<FileOutputStream>() {
 		@Override
-		protected FileOutputStream initialize() throws Exception {
+		protected FileOutputStream create() throws Exception {
 			return new FileOutputStream(file);
 		}
 	};
@@ -43,7 +43,7 @@ public class CachedFileOutputStream implements Closeable {
 
 	public Promise<CachedFileOutputStream> flush() {
 		return new QueuedPromise<>(() -> {
-			if (lazyFileOutputStream.isInitialized())
+			if (lazyFileOutputStream.isCreated())
 				lazyFileOutputStream.getObject().flush();
 
 			return this;
@@ -56,7 +56,7 @@ public class CachedFileOutputStream implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		if (lazyFileOutputStream.isInitialized())
+		if (lazyFileOutputStream.isCreated())
 			lazyFileOutputStream.getObject().close();
 	}
 }

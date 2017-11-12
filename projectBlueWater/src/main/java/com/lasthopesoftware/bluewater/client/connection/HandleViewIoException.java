@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection;
 
 import android.content.Context;
 
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.io.IOException;
 

@@ -9,13 +9,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.sync.IServiceFilesToSyncCollector;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.aggregation.AggregateCancellation;
-import com.lasthopesoftware.messenger.promises.aggregation.CollectedErrorExcuse;
-import com.lasthopesoftware.messenger.promises.aggregation.CollectedResultsResolver;
-import com.lasthopesoftware.messenger.promises.propagation.CancellationProxy;
-import com.lasthopesoftware.messenger.promises.propagation.RejectionProxy;
-import com.lasthopesoftware.messenger.promises.propagation.ResolutionProxy;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.aggregation.AggregateCancellation;
+import com.namehillsoftware.handoff.promises.aggregation.CollectedErrorExcuse;
+import com.namehillsoftware.handoff.promises.aggregation.CollectedResultsResolver;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
+import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 
 public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollector {

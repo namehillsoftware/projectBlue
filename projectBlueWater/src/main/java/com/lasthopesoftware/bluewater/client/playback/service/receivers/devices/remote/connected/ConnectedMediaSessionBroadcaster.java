@@ -41,6 +41,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 	private volatile MediaMetadata mediaMetadata = (new MediaMetadata.Builder()).build();
 	@Actions private volatile long capabilities = standardCapabilities;
 	private Bitmap remoteClientBitmap;
+	private volatile boolean isPlaying;
 
 	public ConnectedMediaSessionBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, MediaSession mediaSession) {
 		this.context = context;
@@ -51,6 +52,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 
 	@Override
 	public void setPlaying() {
+		isPlaying = true;
 		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		capabilities = PlaybackState.ACTION_PAUSE | standardCapabilities;
 		builder.setActions(capabilities);
@@ -64,6 +66,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 
 	@Override
 	public void setPaused() {
+		isPlaying = false;
 		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		capabilities = PlaybackState.ACTION_PLAY | standardCapabilities;
 		builder.setActions(capabilities);
@@ -78,6 +81,7 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 
 	@Override
 	public void setStopped() {
+		isPlaying = false;
 		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		capabilities = PlaybackState.ACTION_PLAY | standardCapabilities;
 		builder.setActions(capabilities);
@@ -92,14 +96,6 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
-		imageProvider
-			.promiseFileBitmap(serviceFile)
-			.eventually(LoopedInPromise.response(this::updateClientBitmap, context))
-			.excuse(e -> {
-				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
-				return null;
-			});
-
 		cachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile.getKey())
 			.eventually(LoopedInPromise.response(fileProperties -> {
@@ -115,12 +111,26 @@ public class ConnectedMediaSessionBroadcaster implements IConnectedDeviceBroadca
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM, album);
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, name);
 				metadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
-				if (trackNumber != null)
+				if (trackNumber != null) {
 					metadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, trackNumber.longValue());
+				}
 				mediaSession.setMetadata(mediaMetadata = metadataBuilder.build());
 
 				return null;
 			}, context));
+
+		if (!isPlaying) {
+			updateClientBitmap(null);
+			return;
+		}
+
+		imageProvider
+			.promiseFileBitmap(serviceFile)
+			.eventually(LoopedInPromise.response(this::updateClientBitmap, context))
+			.excuse(e -> {
+				logger.warn("There was an error getting the image for the file with id `" + serviceFile.getKey() + "`", e);
+				return null;
+			});
 	}
 
 	@Override

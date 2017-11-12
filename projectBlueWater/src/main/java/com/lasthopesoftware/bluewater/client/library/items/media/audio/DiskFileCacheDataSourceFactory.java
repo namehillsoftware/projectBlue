@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.concurrent.TimeUnit;
 
@@ -19,10 +19,10 @@ import okhttp3.OkHttpClient;
 
 public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 
-	private static final ILazy<OkHttpClient> okHttpClient = new AbstractSynchronousLazy<OkHttpClient>() {
+	private static final CreateAndHold<OkHttpClient> okHttpClient = new AbstractSynchronousLazy<OkHttpClient>() {
 
 		@Override
-		protected OkHttpClient initialize() throws Exception {
+		protected OkHttpClient create() throws Exception {
 			return new OkHttpClient.Builder()
 				.readTimeout(1, TimeUnit.MINUTES)
 				.build();

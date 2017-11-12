@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -55,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.ExoPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
@@ -76,10 +76,10 @@ import com.lasthopesoftware.bluewater.client.settings.volumeleveling.VolumeLevel
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -94,7 +94,7 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackService extends Service implements OnAudioFocusChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
@@ -178,13 +178,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
 
-	private final ILazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
-	private final ILazy<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
-	private final ILazy<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
-	private final ILazy<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
-	private final ILazy<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
+	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
+	private final CreateAndHold<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
+	private final CreateAndHold<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
+	private final CreateAndHold<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
+	private final CreateAndHold<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
 		@Override
-		protected RemoteControlClient initialize() throws Exception {
+		protected RemoteControlClient create() throws Exception {
 			// build the PendingIntent for the remote control client
 			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
 			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
@@ -194,11 +194,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return new RemoteControlClient(mediaPendingIntent);
 		}
 	};
-	private final ILazy<MediaSession> lazyMediaSession =
+	private final CreateAndHold<MediaSession> lazyMediaSession =
 		new AbstractSynchronousLazy<MediaSession>() {
 			@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 			@Override
-			protected MediaSession initialize() throws Exception {
+			protected MediaSession create() throws Exception {
 				final MediaSession newMediaSession = new MediaSession(
 					PlaybackService.this,
 					mediaSessionTag);
@@ -217,12 +217,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				return newMediaSession;
 			}
 		};
-	private final ILazy<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(this));
-	private final ILazy<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
-	private final ILazy<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
-	private final ILazy<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
-	private final ILazy<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
-	private final ILazy<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
+	private final CreateAndHold<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(this));
+	private final CreateAndHold<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
+	private final CreateAndHold<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
+	private final CreateAndHold<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
+	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
+	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
 
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
@@ -243,7 +243,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
-		protected final Runnable initialize() throws Exception {
+		protected final Runnable create() throws Exception {
 			return () -> {
 				if (playlistManager == null) {
 					stopSelf(startId);
@@ -257,7 +257,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private final AbstractSynchronousLazy<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
-		protected final Runnable initialize() throws Exception {
+		protected final Runnable create() throws Exception {
 			return () -> {
 				unregisterListeners();
 				stopSelf(startId);
@@ -293,20 +293,33 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		return isPlaying;
 	}
 
+	private void notifyBackground(Builder notificationBuilder) {
+		if (isNotificationForeground)
+			stopForeground(false);
+
+		isNotificationForeground = false;
+
+		notifyNotificationManager(notificationBuilder);
+	}
+
 	private void notifyForeground(Builder notificationBuilder) {
-		notificationBuilder
-			.setSmallIcon(R.drawable.clearstream_logo_dark)
-			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-
-		final Notification notification = notificationBuilder.build();
-
-		if (!isNotificationForeground) {
-			startForeground(notificationId, notification);
-			isNotificationForeground = true;
+		if (isNotificationForeground) {
+			notifyNotificationManager(notificationBuilder);
 			return;
 		}
-		
-		notificationManagerLazy.getObject().notify(notificationId, notification);
+
+		startForeground(notificationId, addNotificationAccoutrements(notificationBuilder).build());
+		isNotificationForeground = true;
+	}
+
+	private void notifyNotificationManager(Builder notificationBuilder) {
+		notificationManagerLazy.getObject().notify(notificationId, addNotificationAccoutrements(notificationBuilder).build());
+	}
+
+	private static Builder addNotificationAccoutrements(Builder notificationBuilder) {
+		return notificationBuilder
+			.setSmallIcon(R.drawable.clearstream_logo_dark)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 	}
 
 	private Promise<Builder> promiseBuiltNowPlayingNotification() {
@@ -323,7 +336,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 				final Builder builder = new Builder(this);
 				builder
-					.setOngoing(true)
+					.setOngoing(isPlaying)
 					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
 					.setContentText(artist + " - " + name)
 					.setContentIntent(buildNowPlayingActivityIntent())
@@ -412,9 +425,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		final PollConnection pollConnection = PollConnection.Instance.get(this);
-		if (connectionRegainedListener.isInitialized())
+		if (connectionRegainedListener.isCreated())
 			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
-		if (onPollingCancelledListener.isInitialized())
+		if (onPollingCancelledListener.isCreated())
 			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
 		
 		areListenersRegistered = false;
@@ -513,7 +526,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			return;
 		}
-		notifyForeground(notifyBuilder);
+		notifyNotificationManager(notifyBuilder);
 	}
 
 	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws Exception {
@@ -642,19 +655,25 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 			playlistManager
 				.changePosition(playlistPosition, filePosition)
-				.then(this::broadcastChangedFile)
+				.then(this::broadcastChangedFileBackground)
 				.excuse(UnhandledRejectionHandler);
 
 			return;
 		}
 
 		if (action.equals(Action.previous)) {
-			playlistManager.skipToPrevious().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
+			playlistManager
+				.skipToPrevious()
+				.then(this::broadcastChangedFileBackground)
+				.excuse(UnhandledRejectionHandler);
 			return;
 		}
 
 		if (action.equals(Action.next)) {
-			playlistManager.skipToNext().then(this::broadcastChangedFile).excuse(UnhandledRejectionHandler);
+			playlistManager
+				.skipToNext()
+				.then(this::broadcastChangedFileBackground)
+				.excuse(UnhandledRejectionHandler);
 			return;
 		}
 
@@ -696,20 +715,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		promiseBuiltNowPlayingNotification()
 			.eventually(LoopedInPromise.response(notificationBuilder -> {
-				if (notificationBuilder == null) {
+				if (notificationBuilder == null)
 					stopNotification();
-					return null;
-				}
+				else
+					notifyBackground(notificationBuilder);
 
-				stopForeground(false);
-				isNotificationForeground = false;
-				notificationBuilder =
-					notificationBuilder
-						.setOngoing(false)
-						.setSmallIcon(R.drawable.clearstream_logo_dark)
-						.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-
-				notificationManagerLazy.getObject().notify(notificationId, notificationBuilder.build());
 				return null;
 			}, this));
 
@@ -727,6 +737,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
+		if (exception instanceof PreparationException) {
+			handlePreparationException((PreparationException)exception);
+			return;
+		}
+
 		if (exception instanceof MediaPlayerErrorException) {
 			handleMediaPlayerErrorException((MediaPlayerErrorException)exception);
 			return;
@@ -743,6 +758,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
+	}
+
+	private void handlePreparationException(PreparationException preparationException) {
+		logger.error("An error occurred during file preparation for file " + preparationException.getPositionedFile().getServiceFile(), preparationException);
+		uncaughtExceptionHandler(preparationException.getCause());
 	}
 
 	private void handlePlaybackException(PlaybackException exception) {
@@ -799,8 +819,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		builder.setContentTitle(getText(R.string.lbl_waiting_for_connection));
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
-		notifyForeground(builder);
-		
+		notifyBackground(builder);
+
 		final PollConnection checkConnection = PollConnection.Instance.get(this);
 
 		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
@@ -833,7 +853,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-			if (lazyPlaylistVolumeManager.isInitialized())
+			if (lazyPlaylistVolumeManager.isCreated())
 				lazyPlaylistVolumeManager.getObject().setVolume(1.0f);
 
 			if (playlistManager != null && !playlistManager.isPlaying())
@@ -854,7 +874,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
 				// Lost focus for a short time, but it's ok to keep playing
 				// at an attenuated level
-				if (lazyPlaylistVolumeManager.isInitialized())
+				if (lazyPlaylistVolumeManager.isCreated())
 					lazyPlaylistVolumeManager.getObject().setVolume(0.2f);
 	    }
 	}
@@ -862,7 +882,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		broadcastChangedFile(positionedPlaybackFile.asPositionedFile());
+		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
 
 		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
@@ -886,31 +906,51 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 				localFilePositionSubscription.dispose();
 			}));
-		
+
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
-		
-		promiseBuiltNowPlayingNotification(positionedPlaybackFile.getServiceFile())
+	}
+
+	private PositionedFile broadcastChangedFileBackground(PositionedFile positionedFile) {
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+
+		promiseBuiltNowPlayingNotification(positionedFile.getServiceFile())
+			.eventually(LoopedInPromise.response(notificationBuilder -> {
+				notifyBackground(notificationBuilder);
+				return null;
+			}, this))
+			.excuse(e -> e)
+			.eventually(LoopedInPromise.response(exception -> {
+				notifyBackground(buildFilePropertiesErrorNotification());
+				return null;
+			}, this));
+
+		return positionedFile;
+	}
+
+	private PositionedFile broadcastChangedFileForeground(PositionedFile positionedFile) {
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+
+		promiseBuiltNowPlayingNotification(positionedFile.getServiceFile())
 			.eventually(LoopedInPromise.response(notificationBuilder -> {
 				notifyForeground(notificationBuilder);
 				return null;
 			}, this))
 			.excuse(e -> e)
 			.eventually(LoopedInPromise.response(exception -> {
-				final Builder builder = new Builder(this);
-				builder.setOngoing(true);
-				builder.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)));
-				builder.setContentText(getText(R.string.lbl_error_getting_file_properties));
-				builder.setContentIntent(buildNowPlayingActivityIntent());
-				notifyForeground(builder);
-
+				notifyForeground(buildFilePropertiesErrorNotification());
 				return null;
 			}, this));
+
+		return positionedFile;
 	}
 
-	private Void broadcastChangedFile(PositionedFile positionedFile) {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
-		return null;
+	private Builder buildFilePropertiesErrorNotification() {
+		return new Builder(this)
+			.setOngoing(isPlaying)
+			.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
+			.setContentText(getText(R.string.lbl_error_getting_file_properties))
+			.setContentIntent(buildNowPlayingActivityIntent());
 	}
 
 	private void onPlaylistPlaybackComplete() {
@@ -948,13 +988,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
-		if (remoteControlReceiver.isInitialized())
+		if (remoteControlReceiver.isCreated())
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
 
-		if (remoteControlClient.isInitialized())
+		if (remoteControlClient.isCreated())
 			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isInitialized()) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated()) {
 			lazyMediaSession.getObject().setActive(false);
 			lazyMediaSession.getObject().release();
 		}
@@ -994,26 +1034,22 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
 		private static final String killMusicService = magicPropertyBuilder.buildProperty("killMusicService");
 
-		private static final Set<String> validActions = new HashSet<>(Arrays.asList(new String[]{
-				launchMusicService,
-				play,
-				pause,
-				togglePlayPause,
-				previous,
-				next,
-				seekTo,
-				repeating,
-				completing,
-				stopWaitingForConnection,
-				addFileToPlaylist,
-				removeFileAtPositionFromPlaylist
-		}));
-
-		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(new String[]{
-			launchMusicService,
+		private static final Set<String> validActions = new HashSet<>(Arrays.asList(launchMusicService,
 			play,
-			togglePlayPause
-		}));
+			pause,
+			togglePlayPause,
+			previous,
+			next,
+			seekTo,
+			repeating,
+			completing,
+			stopWaitingForConnection,
+			addFileToPlaylist,
+			removeFileAtPositionFromPlaylist));
+
+		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(launchMusicService,
+			play,
+			togglePlayPause));
 
 		private static class Bag {
 			private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(Bag.class);

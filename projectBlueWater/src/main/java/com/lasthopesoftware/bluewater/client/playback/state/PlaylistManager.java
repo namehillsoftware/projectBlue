@@ -12,13 +12,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlayback
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackQueueConfiguration;
+import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.IStartPlayback;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaybackCompleted;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.state.events.OnPlayingFileChanged;
-import com.lasthopesoftware.messenger.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ import java.util.Map;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateBroadcaster, AutoCloseable {
 
@@ -219,6 +220,16 @@ public class PlaylistManager implements IChangePlaylistPosition, IPlaylistStateB
 				saveStateToLibrary(p);
 			},
 			e -> {
+				if (e instanceof PreparationException) {
+					final PreparationException preparationException =
+						(PreparationException)e;
+
+					saveStateToLibrary(
+						new PositionedPlaybackFile(
+							new EmptyPlaybackHandler(0),
+							preparationException.getPositionedFile()));
+				}
+
 				if (onPlaylistError != null)
 					onPlaylistError.runWith(e);
 			},

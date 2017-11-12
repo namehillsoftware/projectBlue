@@ -7,7 +7,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
@@ -29,9 +28,9 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.ILazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.List;
 
@@ -40,10 +39,10 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	public static final String KEY = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "key");
 	public static final String VALUE = MagicPropertyBuilder.buildMagicPropertyName(PlaylistListActivity.class, "value");
 
-	private final ILazy<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
+	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
 		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
-			protected ISelectedBrowserLibraryProvider initialize() throws Exception {
+			protected ISelectedBrowserLibraryProvider create() throws Exception {
 				return new SelectedBrowserLibraryProvider(
 					new SelectedBrowserLibraryIdentifierProvider(PlaylistListActivity.this),
 					new LibraryRepository(PlaylistListActivity.this));
@@ -72,7 +71,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
 
 		final PromisedResponse<List<Playlist>, Void> onPlaylistProviderComplete = LoopedInPromise.response(result -> {
 			if (result == null) return null;

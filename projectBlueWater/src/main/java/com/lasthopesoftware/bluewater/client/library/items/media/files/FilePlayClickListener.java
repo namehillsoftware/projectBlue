@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 import java.util.List;
 
-import static com.lasthopesoftware.messenger.promises.response.ImmediateAction.perform;
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class FilePlayClickListener extends AbstractMenuClickHandler {
 	private final List<ServiceFile> serviceFiles;

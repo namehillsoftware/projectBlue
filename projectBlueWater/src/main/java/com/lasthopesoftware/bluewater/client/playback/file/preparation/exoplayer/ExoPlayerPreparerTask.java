@@ -23,11 +23,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.ExoPlayerPlaybackHand
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.TransferringExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
-import com.lasthopesoftware.messenger.Messenger;
-import com.lasthopesoftware.messenger.promises.MessengerOperator;
-import com.lasthopesoftware.messenger.promises.Promise;
-import com.lasthopesoftware.messenger.promises.queued.cancellation.CancellationToken;
-import com.lasthopesoftware.messenger.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
