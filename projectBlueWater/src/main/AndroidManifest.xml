@@ -33,6 +33,15 @@
             android:noHistory="true">
         </activity>
         <activity
+            android:name=".client.settings.EditClientSettingsActivity"
+            android:label="@string/title_activity_set_up_connection">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".settings.ApplicationSettingsActivity"/>
+        </activity>
+        <!-- End Connection intents -->
+
+        <activity
             android:name=".settings.ApplicationSettingsActivity"
             android:label="@string/layout_settings">
         </activity>
@@ -41,13 +50,9 @@
             android:label="@string/title_activity_about">
         </activity>
         <activity
-            android:name=".client.settings.EditClientSettingsActivity"
-            android:label="@string/title_activity_set_up_connection">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".settings.ApplicationSettingsActivity"/>
+            android:name=".settings.hidden.HiddenSettingsActivity"
+            android:label="@string/layout_settings">
         </activity>
-        <!-- End Connection intents -->
 
         <activity
             android:name=".client.library.BrowseLibraryActivity"
@@ -145,15 +150,6 @@
             android:exported="false">
         </service>
 
-        <activity
-            android:name=".AboutActivity"
-            android:label="@string/title_activity_about"
-            android:parentActivityName=".settings.ApplicationSettingsActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity"/>
-        </activity>
     </application>
 
 </manifest>

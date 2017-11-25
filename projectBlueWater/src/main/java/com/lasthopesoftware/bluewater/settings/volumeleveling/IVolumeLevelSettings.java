@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.settings.volumeleveling;
+package com.lasthopesoftware.bluewater.settings.volumeleveling;
 
 
 public interface IVolumeLevelSettings {
