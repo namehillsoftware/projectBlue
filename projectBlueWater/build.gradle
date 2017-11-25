@@ -39,10 +39,6 @@ android {
         abortOnError false
     }
 
-    testOptions {
-//        unitTests.returnDefaultValues = true
-    }
-
     defaultConfig {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
