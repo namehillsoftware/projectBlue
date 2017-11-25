@@ -29,14 +29,14 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
-	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.pbLoadingServerList);
-	private final LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.lvServerList);
+	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.listLoadingProgress);
+	private final LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.loadedListView);
 	private final SettingsMenu settingsMenu = new SettingsMenu(this, new AboutTitleBuilder(this));
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_select_server);
+		setContentView(R.layout.asynchronous_list_view);
 
 		final RelativeLayout editAppSettingsView = (RelativeLayout) getLayoutInflater().inflate(R.layout.layout_edit_app_settings, serverListView.findView(), false);
 		serverListView.findView().addHeaderView(editAppSettingsView);

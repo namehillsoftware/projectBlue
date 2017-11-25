@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLevelSettings;
+import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;

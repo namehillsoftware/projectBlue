@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandle
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
-import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLevelSettings;
+import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
 
