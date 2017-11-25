@@ -39,10 +39,6 @@ android {
         abortOnError false
     }
 
-    testOptions {
-        unitTests.returnDefaultValues = true
-    }
-
     defaultConfig {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -84,9 +80,6 @@ dependencies {
     compile project(':pagerslidingtabstrip')
     compile project(':futures')
     compile project(':objective-droid')
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.+'
-    testCompile 'org.assertj:assertj-core:3.+'
     compile 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.android.support:design:26.1.0'
     compile 'joda-time:joda-time:2.9.9'
@@ -102,9 +95,12 @@ dependencies {
     compile 'com.annimon:stream:1.1.9'
     compile 'com.github.danrien:handoff:0.3.0'
     compile 'io.reactivex.rxjava2:rxjava:2.1.5'
-    compile 'com.github.danrien:lazy-j:0.8.0'
+    compile 'com.namehillsoftware:lazy-j:0.9.0'
     compile 'com.github.danrien:xmlwise:master-SNAPSHOT'
     compile 'com.android.support:multidex:1.0.2'
     compile 'com.google.android.exoplayer:exoplayer-core:r2.5.4'
     compile 'com.google.android.exoplayer:extension-okhttp:r2.5.4'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.+'
+    testCompile 'org.assertj:assertj-core:3.+'
 }

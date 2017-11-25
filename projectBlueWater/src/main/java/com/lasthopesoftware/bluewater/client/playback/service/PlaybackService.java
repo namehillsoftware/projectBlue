@@ -71,8 +71,8 @@ import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPl
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.settings.volumeleveling.IVolumeLevelSettings;
-import com.lasthopesoftware.bluewater.client.settings.volumeleveling.VolumeLevelSettings;
+import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
+import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -241,7 +241,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
 
-	private final AbstractSynchronousLazy<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
+	private final CreateAndHold<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
 		protected final Runnable create() throws Exception {
 			return () -> {
@@ -255,7 +255,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 	};
 
-	private final AbstractSynchronousLazy<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
+	private final CreateAndHold<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
 		protected final Runnable create() throws Exception {
 			return () -> {
