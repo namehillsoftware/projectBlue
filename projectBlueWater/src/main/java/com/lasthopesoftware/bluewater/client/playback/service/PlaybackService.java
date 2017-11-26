@@ -45,13 +45,15 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngineBuilder;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.ExoPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
@@ -577,12 +579,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(this, library, cachedFilePropertiesProvider);
-		final ExoPlayerPlaybackPreparerProvider exoPlayerPlaybackPreparerProvider = new ExoPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess), library);
+
+		final PlaybackEngineBuilder playbackEngineBuilder =
+			new PlaybackEngineBuilder(
+				this,
+				new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess),
+				new SelectedPlaybackEngineTypeAccess(this));
+
+		final PlaybackEngine playbackEngine = playbackEngineBuilder.build(library);
 
 		playlistManager =
 			new PlaylistManager(
-				exoPlayerPlaybackPreparerProvider,
-				exoPlayerPlaybackPreparerProvider,
+				playbackEngine,
+				playbackEngine,
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				playlistPlaybackBootstrapper);

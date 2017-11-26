@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine;
 
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackQueueConfiguration;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 public interface BuildPlaybackEngines {
-	<Engine extends IPlaybackPreparerProvider & IPreparedPlaybackQueueConfiguration> Engine build();
+	PlaybackEngine build(Library library);
 }
