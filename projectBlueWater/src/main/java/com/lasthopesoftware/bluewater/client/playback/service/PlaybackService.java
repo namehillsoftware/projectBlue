@@ -44,10 +44,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.St
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngineBuilder;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
@@ -71,7 +71,9 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
@@ -270,10 +272,26 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
+			final int chosenLibrary = intent.getIntExtra(LibrarySelectionKey.chosenLibraryKey, -1);
+			if (chosenLibrary < 0) return;
+
 			pausePlayback(true);
 
-			final int chosenLibrary = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1);
-			if (chosenLibrary < 0) return;
+			try {
+				playlistManager.close();
+			} catch (Exception e) {
+				logger.error("There was an error closing the playbackPlaylistStateManager", e);
+			}
+
+			playlistManager = null;
+			cachedFilePropertiesProvider = null;
+		}
+	};
+
+	private final BroadcastReceiver onPlaybackEngineChanged = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			pausePlayback(true);
 
 			try {
 				playlistManager.close();
@@ -440,6 +458,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	@Override
 	public final void onCreate() {
 		registerRemoteClientControl();
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(onPlaybackEngineChanged, new IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged));
 	}
 
 	@Override
@@ -525,6 +545,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.then(this::initializePlaybackPlaylistStateManager)
 				.then(perform(m -> actOnIntent(intentToRun)))
 				.excuse(UnhandledRejectionHandler);
+
+			localBroadcastManagerLazy.getObject().registerReceiver(onLibraryChanged, new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
 
 			return;
 		}
@@ -975,6 +997,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		stopNotification();
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
+		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
 
 		if (playlistPlaybackBootstrapper != null) {
 			try {

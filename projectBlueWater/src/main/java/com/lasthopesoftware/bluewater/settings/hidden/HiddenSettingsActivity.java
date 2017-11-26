@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineTypeSelection;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.view.PlaybackEngineTypeSelectionView;
 
 
@@ -20,7 +21,10 @@ public class HiddenSettingsActivity extends AppCompatActivity {
 
 		setContentView(R.layout.activity_hidden_settings);
 
-		final PlaybackEngineTypeSelection selection = new PlaybackEngineTypeSelection(this);
+		final PlaybackEngineTypeSelection selection = new PlaybackEngineTypeSelection(
+			this,
+			new PlaybackEngineTypeChangedBroadcaster(this));
+
 		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
 			new SelectedPlaybackEngineTypeAccess(this);
 
