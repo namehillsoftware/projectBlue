@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.queues.specs.GivenAStandardQueue;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -26,7 +26,7 @@ public class WhenTheQueueIsClosed {
 	public static void before() throws IOException {
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider = new CompletingFileQueueProvider();
 
-		final Promise<IPreparedPlaybackFile> cancelRecordingPromise = new Promise<>((messenger) -> {
+		final Promise<PreparedPlaybackFile> cancelRecordingPromise = new Promise<>((messenger) -> {
 			messenger.cancellationRequested(() -> isCancelled = true);
 		});
 

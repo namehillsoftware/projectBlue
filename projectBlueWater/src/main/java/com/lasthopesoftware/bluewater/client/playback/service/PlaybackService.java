@@ -11,12 +11,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
 import android.media.session.MediaSession;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -42,14 +44,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.St
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngineBuilder;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.MediaPlayerPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
@@ -67,13 +71,16 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -237,6 +244,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private RemoteControlProxy remoteControlProxy;
 
 	private WifiLock wifiLock = null;
+	private PowerManager.WakeLock wakeLock = null;
 
 	private final CreateAndHold<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -265,19 +273,19 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private final BroadcastReceiver onLibraryChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			pausePlayback(true);
-
-			final int chosenLibrary = intent.getIntExtra(LibrarySession.chosenLibraryInt, -1);
+			final int chosenLibrary = intent.getIntExtra(LibrarySelectionKey.chosenLibraryKey, -1);
 			if (chosenLibrary < 0) return;
 
-			try {
-				playlistManager.close();
-			} catch (Exception e) {
-				logger.error("There was an error closing the playbackPlaylistStateManager", e);
-			}
+			pausePlayback(true);
+			stopSelf(startId);
+		}
+	};
 
-			playlistManager = null;
-			cachedFilePropertiesProvider = null;
+	private final BroadcastReceiver onPlaybackEngineChanged = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			pausePlayback(true);
+			stopSelf(startId);
 		}
 	};
 
@@ -387,8 +395,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				
 		wifiLock = ((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, wifiLockSvcName);
         wifiLock.acquire();
-		
-        registerRemoteClientControl();
+
+		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
+		wakeLock.setReferenceCounted(false);
+		wakeLock.acquire();
+
+		registerRemoteClientControl();
         
 		areListenersRegistered = true;
 	}
@@ -411,6 +423,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (wifiLock.isHeld()) wifiLock.release();
 			wifiLock = null;
 		}
+
+		if (wakeLock != null) {
+			if (wakeLock.isHeld()) wakeLock.release();
+			wakeLock = null;
+		}
+
 		final PollConnection pollConnection = PollConnection.Instance.get(this);
 		if (connectionRegainedListener.isCreated())
 			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
@@ -425,6 +443,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	@Override
 	public final void onCreate() {
 		registerRemoteClientControl();
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(onPlaybackEngineChanged, new IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged));
 	}
 
 	@Override
@@ -511,6 +531,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				.then(perform(m -> actOnIntent(intentToRun)))
 				.excuse(UnhandledRejectionHandler);
 
+			localBroadcastManagerLazy.getObject().registerReceiver(onLibraryChanged, new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
+
 			return;
 		}
 		notifyNotificationManager(notifyBuilder);
@@ -564,12 +586,20 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(this, library, cachedFilePropertiesProvider);
-		final MediaPlayerPlaybackPreparerProvider mediaPlayerPlaybackPreparerProvider = new MediaPlayerPlaybackPreparerProvider(this, new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess), library);
+
+		final PlaybackEngineBuilder playbackEngineBuilder =
+			new PlaybackEngineBuilder(
+				this,
+				new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess),
+				new SelectedPlaybackEngineTypeAccess(this),
+				DebugFlag.getInstance());
+
+		final PlaybackEngine playbackEngine = playbackEngineBuilder.build(library);
 
 		playlistManager =
 			new PlaylistManager(
-				mediaPlayerPlaybackPreparerProvider,
-				mediaPlayerPlaybackPreparerProvider,
+				playbackEngine,
+				playbackEngine,
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				playlistPlaybackBootstrapper);
@@ -953,6 +983,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		stopNotification();
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
+		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
 
 		if (playlistPlaybackBootstrapper != null) {
 			try {

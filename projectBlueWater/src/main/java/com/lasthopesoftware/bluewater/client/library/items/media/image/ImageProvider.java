@@ -9,6 +9,9 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileAccessTimeUpdater;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
@@ -47,10 +50,7 @@ public class ImageProvider {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ImageProvider.class);
 
-	private static final int MAX_DISK_CACHE_SIZE = 50 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
 	private static final int MAX_MEMORY_CACHE_SIZE = 10;
-	private static final int MAX_DAYS_IN_CACHE = 30;
-	private static final String IMAGES_CACHE_NAME = "images";
 
 	private static final LruCache<String, Byte[]> imageMemoryCache = new LruCache<>(MAX_MEMORY_CACHE_SIZE);
 
@@ -121,7 +121,21 @@ public class ImageProvider {
 								libraryProvider
 									.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 									.eventually(library -> {
-										final DiskFileCache imageDiskCache = new DiskFileCache(context, library, IMAGES_CACHE_NAME, MAX_DAYS_IN_CACHE, MAX_DISK_CACHE_SIZE);
+										final ImageCacheConfiguration imageCacheConfiguration = new ImageCacheConfiguration(library);
+										final CachedFilesProvider cachedFilesProvider = new CachedFilesProvider(context, imageCacheConfiguration);
+										final DiskFileAccessTimeUpdater diskFileAccessTimeUpdater = new DiskFileAccessTimeUpdater(context);
+										final DiskFileCache imageDiskCache =
+											new DiskFileCache(
+												context,
+												imageCacheConfiguration,
+												new DiskFileCachePersistence(
+													context,
+													imageCacheConfiguration,
+													cachedFilesProvider,
+													diskFileAccessTimeUpdater),
+												cachedFilesProvider,
+												diskFileAccessTimeUpdater);
+
 										final Promise<File> cachedFilePromise = imageDiskCache.promiseCachedFile(uniqueKey);
 
 										final Promise<Bitmap> cachedSuccessTask =

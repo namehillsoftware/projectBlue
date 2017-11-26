@@ -36,12 +36,12 @@ implements IBufferingPlaybackFile, IPlaybackHandler {
 	}
 
 	@Override
-	public int getCurrentPosition() {
+	public long getCurrentPosition() {
 		return 0;
 	}
 
 	@Override
-	public int getDuration() {
+	public long getDuration() {
 		return duration;
 	}
 

@@ -42,7 +42,7 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	private boolean isLocalOnly = false;
 	private boolean isRepeating = false;
 	private int nowPlayingId = -1;
-	private int nowPlayingProgress = -1;
+	private long nowPlayingProgress = -1;
 	private ViewType selectedViewType;
 	private int selectedView = -1;
 	private String savedTracksString;
@@ -105,13 +105,13 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @return the nowPlayingProgress
 	 */
-	public int getNowPlayingProgress() {
+	public long getNowPlayingProgress() {
 		return nowPlayingProgress;
 	}
 	/**
 	 * @param nowPlayingProgress the nowPlayingProgress to set
 	 */
-	public void setNowPlayingProgress(int nowPlayingProgress) {
+	public void setNowPlayingProgress(long nowPlayingProgress) {
 		this.nowPlayingProgress = nowPlayingProgress;
 	}
 		

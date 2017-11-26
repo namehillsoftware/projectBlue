@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateAction;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -77,7 +77,7 @@ implements
 	}
 
 	@Override
-	public Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(int preparedAt) {
+	public Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(long preparedAt) {
 		currentPreparingPlaybackHandlerPromise = bufferingMediaPlayerPromises.poll();
 		if (currentPreparingPlaybackHandlerPromise == null) {
 			currentPreparingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
@@ -94,7 +94,7 @@ implements
 			.then(this);
 	}
 
-	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(int preparedAt) {
+	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(long preparedAt) {
 		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 
@@ -176,9 +176,9 @@ implements
 
 	private static class PositionedPreparingFile {
 		final PositionedFile positionedFile;
-		final Promise<IPreparedPlaybackFile> preparedPlaybackFilePromise;
+		final Promise<PreparedPlaybackFile> preparedPlaybackFilePromise;
 
-		private PositionedPreparingFile(PositionedFile positionedFile, Promise<IPreparedPlaybackFile> preparedPlaybackFilePromise) {
+		private PositionedPreparingFile(PositionedFile positionedFile, Promise<PreparedPlaybackFile> preparedPlaybackFilePromise) {
 			this.positionedFile = positionedFile;
 			this.preparedPlaybackFilePromise = preparedPlaybackFilePromise;
 		}

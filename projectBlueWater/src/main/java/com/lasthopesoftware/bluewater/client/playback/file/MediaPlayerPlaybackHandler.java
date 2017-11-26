@@ -67,7 +67,7 @@ implements
 	}
 
 	@Override
-	public int getCurrentPosition() {
+	public long getCurrentPosition() {
 		try {
 			return isPlaying()
 				? previousMediaPlayerPosition = mediaPlayer.getCurrentPosition()
@@ -79,7 +79,7 @@ implements
 	}
 
 	@Override
-	public int getDuration() {
+	public long getDuration() {
 		try {
 			return mediaPlayer.getDuration();
 		} catch (IllegalStateException e) {

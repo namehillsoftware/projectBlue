@@ -12,16 +12,16 @@ import java.util.List;
 public class NowPlaying {
 	public List<ServiceFile> playlist = new ArrayList<>();
 	public int playlistPosition;
-	public int filePosition;
+	public long filePosition;
 	public boolean isRepeating;
 
-	NowPlaying(List<ServiceFile> playlist, int playlistPosition, int filePosition, boolean isRepeating) {
+	NowPlaying(List<ServiceFile> playlist, int playlistPosition, long filePosition, boolean isRepeating) {
 		this(playlistPosition, filePosition, isRepeating);
 
 		this.playlist = playlist;
 	}
 
-	NowPlaying(int playlistPosition, int filePosition, boolean isRepeating) {
+	NowPlaying(int playlistPosition, long filePosition, boolean isRepeating) {
 		this.playlistPosition = playlistPosition;
 		this.filePosition = filePosition;
 		this.isRepeating = isRepeating;

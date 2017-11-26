@@ -35,6 +35,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -58,8 +59,6 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 
 public class MainApplication extends Application {
 	
-	private static final boolean DEBUG_MODE = com.lasthopesoftware.bluewater.BuildConfig.DEBUG;
-
 	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
 	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
@@ -224,7 +223,7 @@ public class MainApplication extends Application {
 		final Logger logger = LoggerFactory.getLogger(getClass());
 		logger.info("Uncaught exceptions logging to custom uncaught exception handler.");
 
-		if (!DEBUG_MODE) return;
+		if (!DebugFlag.getInstance().isDebugCompilation()) return;
 
 		rootLogger.setLevel(Level.DEBUG);
 
@@ -237,9 +236,7 @@ public class MainApplication extends Application {
 				.build());
 		StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
 				.detectLeakedSqlLiteObjects()
-				.detectLeakedClosableObjects()
 				.penaltyLog()
-						//	                 .penaltyDeath()
 				.build());
 	}
 }

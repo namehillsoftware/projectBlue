@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.vedsoft.futures.callables.CarelessFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +20,7 @@ import java.util.concurrent.Future;
  * @author david
  *
  */
-class CacheFlusherTask implements Runnable {
+public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 	
@@ -25,8 +28,12 @@ class CacheFlusherTask implements Runnable {
 	private final String cacheName;
 	private final long targetSize;
 
-	static Future<?> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
+	public static Future<?> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
 		return RepositoryAccessHelper.databaseExecutor.submit(new CacheFlusherTask(context, cacheName, targetSize));
+	}
+
+	public static Promise<?> promisedCacheFlushing(final Context context, final String cacheName, final long targetSize) {
+		return new QueuedPromise<>(() -> new CacheFlusherTask(context, cacheName, targetSize), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	/*
@@ -39,7 +46,17 @@ class CacheFlusherTask implements Runnable {
 	}
 
 	@Override
+	public Void result() throws Throwable {
+		flushCache();
+		return null;
+	}
+
+	@Override
 	public void run() {
+		flushCache();
+	}
+
+	private void flushCache() {
 		try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return;
 

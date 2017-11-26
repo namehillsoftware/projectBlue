@@ -33,7 +33,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	private final RemoteControlClient remoteControlClient;
 
 	private volatile int playstate = RemoteControlClient.PLAYSTATE_STOPPED;
-	private volatile int trackPosition = -1;
+	private volatile long trackPosition = -1;
 	private volatile boolean isPlaying;
 	private Bitmap remoteClientBitmap;
 
@@ -85,9 +85,8 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, album);
 				metaData.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, name);
 				metaData.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration);
-				if (trackNumber != null) {
+				if (trackNumber != null)
 					metaData.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, trackNumber.longValue());
-				}
 				metaData.apply();
 
 				return null;
@@ -108,7 +107,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	}
 
 	@Override
-	public void updateTrackPosition(int trackPosition) {
+	public void updateTrackPosition(long trackPosition) {
 		remoteControlClient.setPlaybackState(playstate, this.trackPosition = trackPosition, playbackSpeed);
 	}
 

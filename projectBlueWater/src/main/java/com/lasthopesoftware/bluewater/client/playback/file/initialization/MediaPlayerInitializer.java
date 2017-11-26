@@ -4,7 +4,6 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.PowerManager;
 import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -29,7 +28,6 @@ public final class MediaPlayerInitializer implements IPlaybackInitialization<Med
 	@Override
 	public MediaPlayer initializeMediaPlayer(@NonNull Uri uri) throws IOException {
 		final MediaPlayer mediaPlayer = new MediaPlayer(); // initialize it here
-		mediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
 		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
 		final Map<String, String> headers = new HashMap<>();

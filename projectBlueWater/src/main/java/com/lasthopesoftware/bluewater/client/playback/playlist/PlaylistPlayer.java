@@ -22,7 +22,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
 	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
 	private final IPlaybackHandlerVolumeControllerFactory volumeControllerFactory;
-	private final int preparedPosition;
+	private final long preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private float volume;
 
@@ -30,7 +30,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
 	private IVolumeManagement volumeManager;
 
-	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, int preparedPosition) {
+	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, long preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
 		this.volumeControllerFactory = volumeControllerFactory;
 		this.preparedPosition = preparedPosition;
@@ -78,7 +78,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		setupNextPreparedFile(0);
 	}
 
-	private void setupNextPreparedFile(int preparedPosition) {
+	private void setupNextPreparedFile(long preparedPosition) {
 		final Promise<PositionedPlaybackFile> preparingPlaybackFile =
 			preparedPlaybackFileProvider
 				.promiseNextPreparedPlaybackFile(preparedPosition);

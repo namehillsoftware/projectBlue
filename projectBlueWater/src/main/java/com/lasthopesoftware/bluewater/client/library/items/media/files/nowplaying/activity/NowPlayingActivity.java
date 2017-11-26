@@ -154,10 +154,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final BroadcastReceiver onTrackPositionChanged = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			final int fileDuration = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
+			final long fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
 			if (fileDuration > -1) setTrackDuration(fileDuration);
 
-			final int filePosition = intent.getIntExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
+			final long filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
 			if (filePosition > -1) setTrackProgress(filePosition);
 		}
 	};
@@ -297,7 +297,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
 
 				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-				final int filePosition =
+				final long filePosition =
 					connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 						? viewStructure.filePosition
 						: np.filePosition;
@@ -364,7 +364,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				final ServiceFile serviceFile = np.playlist.get(playlistPosition);
 
-				final int filePosition =
+				final long filePosition =
 					viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 						? viewStructure.filePosition
 						: 0;
@@ -376,7 +376,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			.excuse(perform(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
-	private void setView(final ServiceFile serviceFile, final int initialFilePosition) {
+	private void setView(final ServiceFile serviceFile, final long initialFilePosition) {
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey());
 
 		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
@@ -451,7 +451,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		return null;
 	}
 
-	private void setFileProperties(final ServiceFile serviceFile, final int initialFilePosition, Map<String, String> fileProperties) {
+	private void setFileProperties(final ServiceFile serviceFile, final long initialFilePosition, Map<String, String> fileProperties) {
 		final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 		nowPlayingArtist.findView().setText(artist);
 
@@ -492,15 +492,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 		songRatingBar.setEnabled(true);
 	}
 
-	private void setTrackDuration(int duration) {
-		songProgressBar.findView().setMax(duration);
+	private void setTrackDuration(long duration) {
+		songProgressBar.findView().setMax((int) duration);
 
 		if (viewStructure != null)
 			viewStructure.fileDuration = duration;
 	}
 
-	private void setTrackProgress(int progress) {
-		songProgressBar.findView().setProgress(progress);
+	private void setTrackProgress(long progress) {
+		songProgressBar.findView().setProgress((int)progress);
 
 		if (viewStructure != null)
 			viewStructure.filePosition = progress;
@@ -512,7 +512,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		return true;
 	}
 	
-	private boolean handleIoException(ServiceFile serviceFile, int position, Throwable exception) {
+	private boolean handleIoException(ServiceFile serviceFile, long position, Throwable exception) {
 		if (exception instanceof FileNotFoundException)
 			return handleFileNotFoundException(serviceFile, (FileNotFoundException)exception);
 
@@ -554,7 +554,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		messageHandler.getObject().postDelayed(timerTask, 5000);
 	}
 	
-	private void resetViewOnReconnect(final ServiceFile serviceFile, final int position) {
+	private void resetViewOnReconnect(final ServiceFile serviceFile, final long position) {
 		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> {
 			if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
 
@@ -601,8 +601,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		final ServiceFile serviceFile;
 		Map<String, String> fileProperties;
 		Promise<Bitmap> promisedNowPlayingImage;
-		int filePosition;
-		int fileDuration;
+		long filePosition;
+		long fileDuration;
 
 		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, ServiceFile serviceFile) {
 			this.urlKeyHolder = urlKeyHolder;

@@ -4,7 +4,7 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.queues.CyclicalFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenAQueueIsCycledThroughManyTimes {
 
-	private static Map<ServiceFile, MessengerOperator<IPreparedPlaybackFile>> fileActionMap;
+	private static Map<ServiceFile, MessengerOperator<PreparedPlaybackFile>> fileActionMap;
 	private static int expectedNumberAbsolutePromises;
 	private static int expectedCycles;
 	private static int returnedPromiseCount;
@@ -87,10 +87,10 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		Assert.assertEquals(expectedNumberAbsolutePromises, returnedPromiseCount);
 	}
 
-	private static class MockResolveAction implements MessengerOperator<IPreparedPlaybackFile> {
+	private static class MockResolveAction implements MessengerOperator<PreparedPlaybackFile> {
 		@Override
-		public void send(Messenger<IPreparedPlaybackFile> messenger) {
-			messenger.sendResolution(mock(IPreparedPlaybackFile.class));
+		public void send(Messenger<PreparedPlaybackFile> messenger) {
+			messenger.sendResolution(mock(PreparedPlaybackFile.class));
 		}
 	}
 }

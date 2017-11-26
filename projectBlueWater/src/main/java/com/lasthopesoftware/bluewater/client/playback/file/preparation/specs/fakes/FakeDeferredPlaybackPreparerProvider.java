@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fa
 
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.namehillsoftware.handoff.Messenger;
@@ -18,9 +18,9 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		return (file, preparedAt) -> new Promise<>(deferredResolution);
 	}
 
-	public static class DeferredResolution implements MessengerOperator<IPreparedPlaybackFile> {
+	public static class DeferredResolution implements MessengerOperator<PreparedPlaybackFile> {
 
-		private Messenger<IPreparedPlaybackFile> resolve;
+		private Messenger<PreparedPlaybackFile> resolve;
 
 		public ResolveablePlaybackHandler resolve() {
 			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
@@ -30,7 +30,7 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 		}
 
 		@Override
-		public void send(Messenger<IPreparedPlaybackFile> resolve) {
+		public void send(Messenger<PreparedPlaybackFile> resolve) {
 			this.resolve = resolve;
 		}
 	}

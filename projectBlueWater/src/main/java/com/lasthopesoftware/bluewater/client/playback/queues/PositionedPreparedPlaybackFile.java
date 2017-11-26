@@ -3,13 +3,13 @@ package com.lasthopesoftware.bluewater.client.playback.queues;
 import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 
 class PositionedPreparedPlaybackFile {
 	final PositionedFile positionedFile;
-	final IPreparedPlaybackFile preparedPlaybackFile;
+	final PreparedPlaybackFile preparedPlaybackFile;
 
-	PositionedPreparedPlaybackFile(@NonNull PositionedFile positionedFile, IPreparedPlaybackFile preparedPlaybackFile) {
+	PositionedPreparedPlaybackFile(@NonNull PositionedFile positionedFile, PreparedPlaybackFile preparedPlaybackFile) {
 		this.positionedFile = positionedFile;
 		this.preparedPlaybackFile = preparedPlaybackFile;
 	}
