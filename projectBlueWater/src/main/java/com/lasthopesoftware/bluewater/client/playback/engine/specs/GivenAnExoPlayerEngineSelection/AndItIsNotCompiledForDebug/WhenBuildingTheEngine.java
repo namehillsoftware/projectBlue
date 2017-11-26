@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAnExoPlayerEngineSelection;
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAnExoPlayerEngineSelection.AndItIsNotCompiledForDebug;
 
 import android.content.Context;
 
@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngineBuilder;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.ExoPlayerPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer.MediaPlayerPlaybackPreparerProvider;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -32,13 +32,13 @@ public class WhenBuildingTheEngine {
 				mock(Context.class),
 				mock(IFileUriProvider.class),
 				lookupSelectedPlaybackEngineType,
-				() -> true);
+				() -> false);
 
 		engine = playbackEngineBuilder.build(new Library());
 	}
 
 	@Test
 	public void thenAMediaPlayerEngineIsBuilt() {
-		assertThat(engine).isInstanceOf(ExoPlayerPlaybackPreparerProvider.class);
+		assertThat(engine).isInstanceOf(MediaPlayerPlaybackPreparerProvider.class);
 	}
 }

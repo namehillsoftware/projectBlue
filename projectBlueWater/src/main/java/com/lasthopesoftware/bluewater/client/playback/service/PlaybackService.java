@@ -80,6 +80,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -590,7 +591,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			new PlaybackEngineBuilder(
 				this,
 				new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess),
-				new SelectedPlaybackEngineTypeAccess(this));
+				new SelectedPlaybackEngineTypeAccess(this),
+				DebugFlag.getInstance());
 
 		final PlaybackEngine playbackEngine = playbackEngineBuilder.build(library);
 

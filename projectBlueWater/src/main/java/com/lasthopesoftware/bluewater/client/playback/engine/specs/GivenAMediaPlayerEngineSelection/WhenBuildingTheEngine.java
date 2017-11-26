@@ -31,7 +31,8 @@ public class WhenBuildingTheEngine {
 			new PlaybackEngineBuilder(
 				mock(Context.class),
 				mock(IFileUriProvider.class),
-				lookupSelectedPlaybackEngineType);
+				lookupSelectedPlaybackEngineType,
+				() -> true);
 
 		engine = playbackEngineBuilder.build(new Library());
 	}
