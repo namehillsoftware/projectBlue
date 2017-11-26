@@ -32,14 +32,16 @@ public class PlaybackEngineTypeSelectionView {
 	private RadioButton buildPlaybackEngineButton(PlaybackEngineType playbackEngineType) {
 		final RadioButton radioButton = new RadioButton(context);
 
-		radioButton.setSelected(selectedPlaybackEngineTypeLookup.getSelectedPlaybackEngineType() == playbackEngineType);
+		radioButton.setChecked(selectedPlaybackEngineTypeLookup.getSelectedPlaybackEngineType() == playbackEngineType);
 		radioButton.setLayoutParams(
 			new LinearLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT,
 				ViewGroup.LayoutParams.WRAP_CONTENT));
 		radioButton.setText(playbackEngineType.name());
-		radioButton.setOnClickListener(v ->
-			playbackEngineTypeSelection.selectPlaybackEngine(playbackEngineType));
+		radioButton.setOnCheckedChangeListener((v, isChecked) -> {
+			if (isChecked)
+				playbackEngineTypeSelection.selectPlaybackEngine(playbackEngineType);
+		});
 
 		return radioButton;
 	}
