@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.RadioGroup;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineTypeSelection;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.view.PlaybackEngineTypeSelectionView;
@@ -19,14 +20,18 @@ public class HiddenSettingsActivity extends AppCompatActivity {
 
 		setContentView(R.layout.activity_hidden_settings);
 
+		final PlaybackEngineTypeSelection selection = new PlaybackEngineTypeSelection(this);
+		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
+			new SelectedPlaybackEngineTypeAccess(this);
+
 		final PlaybackEngineTypeSelectionView playbackEngineTypeSelectionView =
-			new PlaybackEngineTypeSelectionView(
-				this,
-				new SelectedPlaybackEngineTypeAccess(this),
-				new PlaybackEngineTypeSelection(this));
+			new PlaybackEngineTypeSelectionView(this);
 
 		final RadioGroup playbackEngineOptions = findViewById(R.id.playbackEngineOptions);
 		playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections()
 			.forEach(playbackEngineOptions::addView);
+		playbackEngineOptions.check(selectedPlaybackEngineTypeAccess.getSelectedPlaybackEngineType().ordinal());
+		playbackEngineOptions
+			.setOnCheckedChangeListener((group, checkedId) -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]));
 	}
 }
