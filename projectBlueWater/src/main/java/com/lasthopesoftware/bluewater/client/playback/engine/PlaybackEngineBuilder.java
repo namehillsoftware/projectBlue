@@ -27,13 +27,13 @@ public class PlaybackEngineBuilder implements BuildPlaybackEngines {
 	@Override
 	public PlaybackEngine build(Library library) {
 		switch (playbackEngineTypeLookup.getSelectedPlaybackEngineType()) {
-			case MediaPlayer:
-				return new MediaPlayerPlaybackPreparerProvider(
+			case ExoPlayer:
+				return new ExoPlayerPlaybackPreparerProvider(
 					context,
 					fileUriProvider,
 					library);
-			case ExoPlayer:
-				return new ExoPlayerPlaybackPreparerProvider(
+			case MediaPlayer:
+				return new MediaPlayerPlaybackPreparerProvider(
 					context,
 					fileUriProvider,
 					library);

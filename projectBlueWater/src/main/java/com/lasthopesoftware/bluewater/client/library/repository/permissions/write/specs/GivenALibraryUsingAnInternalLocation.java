@@ -8,9 +8,6 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * Created by david on 7/11/16.
  */
@@ -22,8 +19,8 @@ public class GivenALibraryUsingAnInternalLocation {
 
 		@Before
 		public void setUp() {
-			final Library libraryRequiringExistingFiles = mock(Library.class);
-			when(libraryRequiringExistingFiles.getSyncedFileLocation()).thenReturn(Library.SyncedFileLocation.INTERNAL);
+			final Library libraryRequiringExistingFiles = new Library();
+			libraryRequiringExistingFiles.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL);
 
 			final LibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider =
 				new LibraryStorageWritePermissionsRequirementsProvider();

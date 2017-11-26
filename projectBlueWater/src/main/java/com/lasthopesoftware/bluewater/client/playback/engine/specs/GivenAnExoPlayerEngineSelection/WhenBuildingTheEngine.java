@@ -31,10 +31,9 @@ public class WhenBuildingTheEngine {
 			new PlaybackEngineBuilder(
 				mock(Context.class),
 				mock(IFileUriProvider.class),
-				new Library(),
 				lookupSelectedPlaybackEngineType);
 
-		engine = playbackEngineBuilder.build();
+		engine = playbackEngineBuilder.build(new Library());
 	}
 
 	@Test
