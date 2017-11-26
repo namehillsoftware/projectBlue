@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.view;
+package com.lasthopesoftware.bluewater.client.playback.engine.preferences.view;
 
 import android.content.Context;
 import android.view.ViewGroup;
@@ -6,9 +6,9 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.playback.engine.LookupSelectedPlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.SelectPlaybackEngineType;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectPlaybackEngineType;
 
 public class PlaybackEngineTypeSelectionView {
 

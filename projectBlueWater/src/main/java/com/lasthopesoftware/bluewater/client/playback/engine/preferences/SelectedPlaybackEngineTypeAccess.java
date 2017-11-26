@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine;
+package com.lasthopesoftware.bluewater.client.playback.engine.preferences;
 
 import android.content.Context;
 import android.preference.PreferenceManager;

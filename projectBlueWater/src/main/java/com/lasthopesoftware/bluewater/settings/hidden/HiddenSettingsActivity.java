@@ -6,9 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.RadioGroup;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngineTypeSelection;
-import com.lasthopesoftware.bluewater.client.playback.engine.SelectedPlaybackEngineTypeAccess;
-import com.lasthopesoftware.bluewater.client.playback.engine.view.PlaybackEngineTypeSelectionView;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineTypeSelection;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.view.PlaybackEngineTypeSelectionView;
 
 
 public class HiddenSettingsActivity extends AppCompatActivity {
