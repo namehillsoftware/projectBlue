@@ -4,40 +4,39 @@ import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity;
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder;
+import com.lasthopesoftware.resources.intents.IntentFactory;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by david on 7/10/16.
- */
 public class GivenALibraryId {
 
+	@RunWith(RobolectricTestRunner.class)
 	public static class WhenBuildingTheEditClientSettingsActivityIntent {
-		private static Intent mockIntent;
 		private static Intent returnedIntent;
 
-		@BeforeClass
-		public static void setUp() {
-			mockIntent = mock(Intent.class);
+		@Before
+		public void before() {
 			final EditClientSettingsActivityIntentBuilder editClientSettingsActivityIntentBuilder =
-					new EditClientSettingsActivityIntentBuilder(cls -> mockIntent);
+				new EditClientSettingsActivityIntentBuilder(
+					new IntentFactory(RuntimeEnvironment.application));
 
 			returnedIntent = editClientSettingsActivityIntentBuilder.buildIntent(13);
 		}
 
 		@Test
 		public void thenTheIdInTheIntentIsSetToTheLibraryId() {
-			verify(mockIntent).putExtra(EditClientSettingsActivity.serverIdExtra, 13);
+			assertThat(returnedIntent.getIntExtra(EditClientSettingsActivity.serverIdExtra, -1)).isEqualTo(13);
 		}
 
 		@Test
-		public void thenTheReturnedIntentIsTheMockIntent() {
-			Assert.assertEquals(mockIntent, returnedIntent);
+		public void thenTheReturnedIntentIsEditClientSettingsActivity() {
+			assertThat(returnedIntent.getComponent().getClassName()).isEqualTo(EditClientSettingsActivity.class.getName());
 		}
 	}
 }
