@@ -276,15 +276,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (chosenLibrary < 0) return;
 
 			pausePlayback(true);
-
-			try {
-				playlistManager.close();
-			} catch (Exception e) {
-				logger.error("There was an error closing the playbackPlaylistStateManager", e);
-			}
-
-			playlistManager = null;
-			cachedFilePropertiesProvider = null;
+			stopSelf(startId);
 		}
 	};
 
@@ -292,15 +284,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			pausePlayback(true);
-
-			try {
-				playlistManager.close();
-			} catch (Exception e) {
-				logger.error("There was an error closing the playbackPlaylistStateManager", e);
-			}
-
-			playlistManager = null;
-			cachedFilePropertiesProvider = null;
+			stopSelf(startId);
 		}
 	};
 
