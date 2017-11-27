@@ -48,7 +48,7 @@ class DiskFileCacheDataSource implements DataSource {
 		if (bufferedSink == null) return result;
 
 		if (result != C.RESULT_END_OF_INPUT) {
-			bufferedSink.write(buffer, offset, readLength);
+			bufferedSink.write(buffer, offset, result);
 			return result;
 		}
 
