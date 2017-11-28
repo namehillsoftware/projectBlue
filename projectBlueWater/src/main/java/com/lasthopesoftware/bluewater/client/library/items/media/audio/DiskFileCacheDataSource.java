@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 import okio.Buffer;
-import okio.BufferedSink;
 
 
 class DiskFileCacheDataSource implements DataSource {
@@ -25,7 +24,7 @@ class DiskFileCacheDataSource implements DataSource {
 	private final HttpDataSource defaultHttpDataSource;
 	private final String serviceFileKey;
 	private final DiskFileCache diskFileCache;
-	private BufferedSink bufferedSink;
+	private Buffer buffer;
 
 	DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, DiskFileCache diskFileCache) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
@@ -36,24 +35,24 @@ class DiskFileCacheDataSource implements DataSource {
 	@Override
 	public long open(DataSpec dataSpec) throws IOException {
 		if (dataSpec.position == 0)
-			 bufferedSink = new Buffer();
+			 buffer = new Buffer();
 
 		return defaultHttpDataSource.open(dataSpec);
 	}
 
 	@Override
-	public int read(byte[] buffer, int offset, int readLength) throws IOException {
-		final int result = defaultHttpDataSource.read(buffer, offset, readLength);
+	public int read(byte[] bytes, int offset, int readLength) throws IOException {
+		final int result = defaultHttpDataSource.read(bytes, offset, readLength);
 
-		if (bufferedSink == null) return result;
+		if (buffer == null) return result;
 
 		if (result != C.RESULT_END_OF_INPUT) {
-			bufferedSink.write(buffer, offset, result);
+			buffer.write(bytes, offset, result);
 			return result;
 		}
 
 		diskFileCache
-			.put(serviceFileKey, bufferedSink.buffer().readByteArray())
+			.put(serviceFileKey, buffer.readByteArray())
 			.excuse(e -> {
 				logger.warn("An error occurred storing the audio file", e);
 				return null;
@@ -71,7 +70,7 @@ class DiskFileCacheDataSource implements DataSource {
 	public void close() throws IOException {
 		defaultHttpDataSource.close();
 
-		if (bufferedSink != null)
-			bufferedSink.close();
+		if (buffer != null)
+			buffer.close();
 	}
 }

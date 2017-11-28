@@ -57,7 +57,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
-import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
+import com.lasthopesoftware.bluewater.client.playback.queues.providers.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;

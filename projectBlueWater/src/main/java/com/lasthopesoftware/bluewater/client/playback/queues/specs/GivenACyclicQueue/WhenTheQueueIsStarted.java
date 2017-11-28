@@ -4,9 +4,9 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.queues.CyclicalFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.queues.providers.CyclicalFileQueueProvider;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -23,10 +23,6 @@ import java.util.Random;
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-
-/**
- * Created by david on 11/13/16.
- */
 
 public class WhenTheQueueIsStarted {
 	private static IPreparedPlaybackFileQueue queue;
