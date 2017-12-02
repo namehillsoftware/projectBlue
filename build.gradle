@@ -22,8 +22,8 @@ group = "com.namehillsoftware"
 archivesBaseName = "handoff"
 version = project.version
 
-sourceCompatibility = JavaVersion.VERSION_1_6
-targetCompatibility = JavaVersion.VERSION_1_6
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
 
 sourceSets {
     test {

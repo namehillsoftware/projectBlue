@@ -8,7 +8,7 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
 public class PromisedGuaranteedResponseMessenger<Resolution, Response> extends SingleMessageBroadcaster<Response> implements RespondingMessenger<Resolution> {
 
-	private final PromiseProxy<Response> promiseProxy = new PromiseProxy<Response>(this);
+	private final PromiseProxy<Response> promiseProxy = new PromiseProxy<>(this);
 	private final PromisedResponse<Resolution, Response> onFulfilled;
 	private final PromisedResponse<Throwable, Response> onRejected;
 

@@ -10,15 +10,15 @@ import java.util.concurrent.Executor;
 
 public class QueuedPromise<Resolution> extends Promise<Resolution> {
 	public QueuedPromise(MessengerOperator<Resolution> task, Executor executor) {
-		super(new Execution.QueuedMessengerResponse<Resolution>(task, executor));
+		super(new Execution.QueuedMessengerResponse<>(task, executor));
 	}
 
 	public QueuedPromise(CancellableMessageWriter<Resolution> task, Executor executor) {
-		this(new CancellablePreparedMessengerOperator<Resolution>(task), executor);
+		this(new CancellablePreparedMessengerOperator<>(task), executor);
 	}
 
 	public QueuedPromise(MessageWriter<Resolution> task, Executor executor) {
-		this(new PreparedMessengerOperator<Resolution>(task), executor);
+		this(new PreparedMessengerOperator<>(task), executor);
 	}
 
 	private static class Execution {

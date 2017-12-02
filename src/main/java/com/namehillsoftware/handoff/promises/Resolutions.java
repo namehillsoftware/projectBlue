@@ -19,15 +19,15 @@ final class Resolutions {
 
 		AggregatePromiseResolver(Collection<Promise<Resolution>> promises) {
 			if (promises.isEmpty()) {
-				sendResolution(Collections.<Resolution>emptyList());
+				sendResolution(Collections.emptyList());
 				return;
 			}
 
-			final CollectedErrorExcuse<Resolution> errorHandler = new CollectedErrorExcuse<Resolution>(this, promises);
+			final CollectedErrorExcuse<Resolution> errorHandler = new CollectedErrorExcuse<>(this, promises);
 			if (errorHandler.isRejected()) return;
 
-			final CollectedResultsResolver<Resolution> resolver = new CollectedResultsResolver<Resolution>(this, promises);
-			cancellationRequested(new AggregateCancellation<Resolution>(this, promises, resolver));
+			final CollectedResultsResolver<Resolution> resolver = new CollectedResultsResolver<>(this, promises);
+			cancellationRequested(new AggregateCancellation<>(this, promises, resolver));
 		}
 	}
 
@@ -43,7 +43,7 @@ final class Resolutions {
 		FirstPromiseResolver(Collection<Promise<Resolution>> promises) {
 			this.promises = promises;
 			for (Promise<Resolution> promise : promises) {
-				promise.then(new ResolutionProxy<Resolution>(this));
+				promise.then(new ResolutionProxy<>(this));
 				promise.excuse(this);
 			}
 			cancellationRequested(this);
