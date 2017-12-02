@@ -157,6 +157,7 @@
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-model:2.2.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.robolectric:shadowapi:3.5.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="net.bytebuddy:byte-buddy:1.7.9@jar" level="project" />
+    <orderEntry type="library" name="com.github.danrien:handoff:0.4.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="junit:junit:4.12@jar" level="project" />
     <orderEntry type="library" name="com.android.support:support-fragment-26.1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="backport-util-concurrent:backport-util-concurrent:3.1@jar" level="project" />
@@ -195,7 +196,6 @@
     <orderEntry type="library" scope="TEST" name="classworlds:classworlds:1.1-alpha-2@jar" level="project" />
     <orderEntry type="library" name="com.github.tony19:apktool-lib:1.4.4-3@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-plugin-registry:2.2.1@jar" level="project" />
-    <orderEntry type="library" name="com.github.danrien:handoff:0.3.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-settings:2.2.1@jar" level="project" />
     <orderEntry type="module" module-name="futures" />
     <orderEntry type="module" module-name="objective-droid" />

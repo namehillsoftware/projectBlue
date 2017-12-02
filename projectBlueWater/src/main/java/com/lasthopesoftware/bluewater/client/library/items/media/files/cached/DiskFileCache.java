@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLDataException;
 
+import okio.Buffer;
+
 public class DiskFileCache {
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCache.class);
@@ -72,22 +74,17 @@ public class DiskFileCache {
 	}
 
 	private Promise<CachedFile> writeCachedFileWithRetries(CachedFileOutputStream cachedFileOutputStream, byte[] fileData) {
-		final Promise<CachedFile> cachedFileWritePromise = cachedFileOutputStream
+		return cachedFileOutputStream
 			.promiseWrite(fileData, 0, fileData.length)
 			.eventually(CachedFileOutputStream::flush)
 			.eventually(fos -> {
 				fos.close();
 				return fos.commitToCache();
-			});
-
-		final Promise<CachedFile> retryWritePromise = cachedFileWritePromise
-			.excuse(e -> {
-				logger.error("Unable to promiseWrite to serviceFile!", e);
+			}, e -> {
+				logger.error("Unable to write to file!", e);
 
 				cachedFileOutputStream.close();
-				return e;
-			})
-			.eventually(e -> {
+
 				if (!(e instanceof IOException)) return Promise.empty();
 
 				// Check if free space is too low and then attempt to free up enough space
@@ -99,8 +96,54 @@ public class DiskFileCache {
 					.promisedCacheFlushing(context, diskFileCacheConfiguration.getCacheName(), freeDiskSpace + fileData.length)
 					.eventually(v -> writeCachedFileWithRetries(cachedFileOutputStream, fileData));
 			});
+	}
 
-		return Promise.whenAny(cachedFileWritePromise, retryWritePromise);
+	public Promise<CachedFile> put(final String uniqueKey, final Buffer buffer) {
+		final Promise<CachedFile> putPromise = promiseCachedFileOutputStream(uniqueKey)
+			.eventually(cachedFileOutputStream -> writeCachedFileWithRetries(cachedFileOutputStream, buffer));
+
+		putPromise.excuse(e -> {
+			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
+
+			return null;
+		});
+
+		return putPromise;
+	}
+
+	private Promise<CachedFile> writeCachedFileWithRetries(CachedFileOutputStream cachedFileOutputStream, Buffer buffer) {
+		final Buffer backupBuffer = buffer.clone();
+
+		return cachedFileOutputStream
+			.promiseWrite(buffer)
+			.eventually(CachedFileOutputStream::flush)
+			.eventually(fos -> {
+				backupBuffer.close();
+				fos.close();
+				return fos.commitToCache();
+			}, e -> {
+				logger.error("Unable to write to file!", e);
+
+				cachedFileOutputStream.close();
+
+				if (!(e instanceof IOException)) {
+					backupBuffer.close();
+					return Promise.empty();
+				}
+
+				// Check if free space is too low and then attempt to free up enough space
+				// to store image
+				final long freeDiskSpace = getFreeDiskSpace(context);
+				if (freeDiskSpace > diskFileCacheConfiguration.getMaxSize()) {
+					backupBuffer.close();
+					return Promise.empty();
+				}
+
+				buffer.close();
+				return CacheFlusherTask
+					.promisedCacheFlushing(context, diskFileCacheConfiguration.getCacheName(), freeDiskSpace + backupBuffer.size())
+					.eventually(v -> writeCachedFileWithRetries(cachedFileOutputStream, backupBuffer));
+			});
 	}
 
 	public Promise<CachedFileOutputStream> promiseCachedFileOutputStream(final String uniqueKey) {

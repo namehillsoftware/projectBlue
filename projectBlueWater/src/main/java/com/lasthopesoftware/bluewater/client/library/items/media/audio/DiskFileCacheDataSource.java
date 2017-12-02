@@ -52,7 +52,7 @@ class DiskFileCacheDataSource implements DataSource {
 		}
 
 		diskFileCache
-			.put(serviceFileKey, buffer.readByteArray())
+			.put(serviceFileKey, buffer)
 			.excuse(e -> {
 				logger.warn("An error occurred storing the audio file", e);
 				return null;
