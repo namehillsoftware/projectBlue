@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class SingleMessageBroadcaster<Resolution> implements Messenger<Resolution> {
 
 	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
-	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<RespondingMessenger<Resolution>>();
+	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
 	private final Cancellation cancellation = new Cancellation();
 
 	private Message<Resolution> message;

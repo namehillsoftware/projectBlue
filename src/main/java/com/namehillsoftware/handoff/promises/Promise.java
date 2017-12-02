@@ -22,7 +22,7 @@ public class Promise<Resolution> {
 	}
 
 	private Promise() {
-		this(new SingleMessageBroadcaster<Resolution>());
+		this(new SingleMessageBroadcaster<>());
 	}
 
 	private Promise(SingleMessageBroadcaster<Resolution> singleMessageBroadcaster) {
@@ -41,7 +41,7 @@ public class Promise<Resolution> {
 	private <NewResolution> Promise<NewResolution> then(ResolutionResponseMessenger<Resolution, NewResolution> onFulfilled) {
 		singleMessageBroadcaster.awaitResolution(onFulfilled);
 
-		return new Promise<NewResolution>(onFulfilled);
+		return new Promise<>(onFulfilled);
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled) {
