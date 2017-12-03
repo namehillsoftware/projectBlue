@@ -62,7 +62,7 @@ public class DiskFileCache {
 
 	public Promise<CachedFile> put(final String uniqueKey, final byte[] fileData) {
 		final Promise<CachedFile> putPromise = promiseCachedFileOutputStream(uniqueKey)
-			.eventually(cachedFileOutputStream -> writeCachedFileWithRetries(cachedFileOutputStream, fileData));
+			.eventually(cachedFileOutputStream -> writeCachedFileWithRetries(uniqueKey, cachedFileOutputStream, fileData));
 
 		putPromise.excuse(e -> {
 			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
@@ -73,7 +73,7 @@ public class DiskFileCache {
 		return putPromise;
 	}
 
-	private Promise<CachedFile> writeCachedFileWithRetries(CachedFileOutputStream cachedFileOutputStream, byte[] fileData) {
+	private Promise<CachedFile> writeCachedFileWithRetries(final String uniqueKey, CachedFileOutputStream cachedFileOutputStream, byte[] fileData) {
 		return cachedFileOutputStream
 			.promiseWrite(fileData, 0, fileData.length)
 			.eventually(CachedFileOutputStream::flush)
@@ -94,7 +94,7 @@ public class DiskFileCache {
 
 				return CacheFlusherTask
 					.promisedCacheFlushing(context, diskFileCacheConfiguration.getCacheName(), freeDiskSpace + fileData.length)
-					.eventually(v -> writeCachedFileWithRetries(cachedFileOutputStream, fileData));
+					.eventually(v -> put(uniqueKey, fileData));
 			});
 	}
 
@@ -112,37 +112,28 @@ public class DiskFileCache {
 	}
 
 	private Promise<CachedFile> writeCachedFileWithRetries(CachedFileOutputStream cachedFileOutputStream, Buffer buffer) {
-		final Buffer backupBuffer = buffer.clone();
+		final long bufferSize = buffer.size();
 
 		return cachedFileOutputStream
 			.promiseWrite(buffer)
 			.eventually(CachedFileOutputStream::flush)
 			.eventually(fos -> {
-				backupBuffer.close();
 				fos.close();
 				return fos.commitToCache();
 			}, e -> {
 				logger.error("Unable to write to file!", e);
 
-				cachedFileOutputStream.close();
-
-				if (!(e instanceof IOException)) {
-					backupBuffer.close();
-					return Promise.empty();
-				}
+				if (!(e instanceof IOException)) return Promise.empty();
 
 				// Check if free space is too low and then attempt to free up enough space
 				// to store image
 				final long freeDiskSpace = getFreeDiskSpace(context);
-				if (freeDiskSpace > diskFileCacheConfiguration.getMaxSize()) {
-					backupBuffer.close();
-					return Promise.empty();
-				}
+				if (freeDiskSpace > diskFileCacheConfiguration.getMaxSize()) return Promise.empty();
 
 				buffer.close();
 				return CacheFlusherTask
-					.promisedCacheFlushing(context, diskFileCacheConfiguration.getCacheName(), freeDiskSpace + backupBuffer.size())
-					.eventually(v -> writeCachedFileWithRetries(cachedFileOutputStream, backupBuffer));
+					.promisedCacheFlushing(context, diskFileCacheConfiguration.getCacheName(), freeDiskSpace + bufferSize)
+					.eventually(v -> writeCachedFileWithRetries(cachedFileOutputStream, buffer));
 			});
 	}
 

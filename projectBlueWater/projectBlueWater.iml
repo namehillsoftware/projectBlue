@@ -135,6 +135,7 @@
     <orderEntry type="library" name="org.reactivestreams:reactive-streams:1.0.1@jar" level="project" />
     <orderEntry type="library" name="com.android.support:support-core-ui-26.1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-project:2.2.1@jar" level="project" />
+    <orderEntry type="library" name="com.github.danrien:handoff:feature~remove-queue-drain-synchronization-SNAPSHOT@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.mockito:mockito-core:2.12.0@jar" level="project" />
     <orderEntry type="library" name="org.slf4j:slf4j-api:1.7.12@jar" level="project" />
     <orderEntry type="library" name="com.android.support:support-compat-26.1.0" level="project" />
@@ -157,7 +158,6 @@
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-model:2.2.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.robolectric:shadowapi:3.5.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="net.bytebuddy:byte-buddy:1.7.9@jar" level="project" />
-    <orderEntry type="library" name="com.github.danrien:handoff:0.4.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="junit:junit:4.12@jar" level="project" />
     <orderEntry type="library" name="com.android.support:support-fragment-26.1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="backport-util-concurrent:backport-util-concurrent:3.1@jar" level="project" />
