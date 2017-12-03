@@ -13,6 +13,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,7 +48,9 @@ public class CachedFileOutputStream implements Closeable {
 
 	public Promise<CachedFileOutputStream> promiseWrite(BufferedSource bufferedSource) {
 		return new QueuedPromise<>(() -> {
-			IOUtils.copy(bufferedSource.inputStream(), lazyFileOutputStream.getObject());
+			try (final InputStream is = bufferedSource.inputStream()) {
+				IOUtils.copy(is, lazyFileOutputStream.getObject());
+			}
 			return this;
 		}, cachedFileWriteExecutor);
 	}
