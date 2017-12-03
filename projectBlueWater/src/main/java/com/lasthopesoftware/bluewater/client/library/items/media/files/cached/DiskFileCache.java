@@ -130,7 +130,6 @@ public class DiskFileCache {
 				final long freeDiskSpace = getFreeDiskSpace(context);
 				if (freeDiskSpace > diskFileCacheConfiguration.getMaxSize()) return Promise.empty();
 
-				buffer.close();
 				return CacheFlusherTask
 					.promisedCacheFlushing(context, diskFileCacheConfiguration.getCacheName(), freeDiskSpace + bufferSize)
 					.eventually(v -> writeCachedFileWithRetries(cachedFileOutputStream, buffer));
