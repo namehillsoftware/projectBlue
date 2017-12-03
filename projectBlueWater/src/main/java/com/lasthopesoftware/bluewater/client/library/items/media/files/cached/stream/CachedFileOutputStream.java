@@ -47,7 +47,7 @@ public class CachedFileOutputStream implements Closeable {
 
 	public Promise<CachedFileOutputStream> promiseWrite(BufferedSource bufferedSource) {
 		return new QueuedPromise<>(() -> {
-			try (final Sink sink = Okio.appendingSink(file)) {
+			try (final Sink sink = Okio.sink(lazyFileOutputStream.getObject())) {
 				bufferedSource.readAll(sink);
 			}
 			return this;
