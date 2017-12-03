@@ -7,17 +7,16 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import org.apache.commons.io.IOUtils;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import okio.BufferedSource;
+import okio.Okio;
+import okio.Sink;
 
 public class CachedFileOutputStream implements Closeable {
 
@@ -48,8 +47,8 @@ public class CachedFileOutputStream implements Closeable {
 
 	public Promise<CachedFileOutputStream> promiseWrite(BufferedSource bufferedSource) {
 		return new QueuedPromise<>(() -> {
-			try (final InputStream is = bufferedSource.inputStream()) {
-				IOUtils.copy(is, lazyFileOutputStream.getObject());
+			try (final Sink sink = Okio.appendingSink(file)) {
+				bufferedSource.readAll(sink);
 			}
 			return this;
 		}, cachedFileWriteExecutor);
