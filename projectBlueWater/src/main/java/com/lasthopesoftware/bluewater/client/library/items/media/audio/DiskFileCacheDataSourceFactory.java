@@ -25,6 +25,7 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 		protected OkHttpClient create() throws Exception {
 			return new OkHttpClient.Builder()
 				.readTimeout(1, TimeUnit.MINUTES)
+				.retryOnConnectionFailure(true)
 				.build();
 		}
 	};
