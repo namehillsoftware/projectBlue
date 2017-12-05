@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
@@ -18,12 +19,21 @@ import static org.mockito.Mockito.mock;
 
 public class WhenWritingTheFile {
 
-	private static final File file = new File("test");
+	private static final File file;
 	private static final byte[] bytes = new byte[2000000];
 
 	private static final byte[] bytesWritten = new byte[2000000];
 
 	static {
+		File file1;
+		try {
+			file1 = File.createTempFile("temp", ".txt");
+		} catch (IOException e) {
+			e.printStackTrace();
+			file1 = new File("test");
+		}
+
+		file = file1;
 		file.deleteOnExit();
 		new Random().nextBytes(bytes);
 	}
