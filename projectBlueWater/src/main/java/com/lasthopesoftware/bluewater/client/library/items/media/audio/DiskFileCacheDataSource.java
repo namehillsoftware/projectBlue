@@ -8,6 +8,8 @@ import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +22,13 @@ import okio.Buffer;
 class DiskFileCacheDataSource implements DataSource {
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCacheDataSource.class);
+	private static final long maxBufferSize = 5 * 1024 * 1024; // 5MB
 
 	private final HttpDataSource defaultHttpDataSource;
 	private final String serviceFileKey;
 	private final DiskFileCache diskFileCache;
 	private Buffer buffer;
+	private Promise<CachedFileOutputStream> promisedOutputStream;
 
 	DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, DiskFileCache diskFileCache) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
@@ -34,8 +38,10 @@ class DiskFileCacheDataSource implements DataSource {
 
 	@Override
 	public long open(DataSpec dataSpec) throws IOException {
-		if (dataSpec.position == 0)
-			 buffer = new Buffer();
+		if (dataSpec.position == 0) {
+			buffer = new Buffer();
+			promisedOutputStream = diskFileCache.promiseCachedFileOutputStream(serviceFileKey);
+		}
 
 		return defaultHttpDataSource.open(dataSpec);
 	}
@@ -46,16 +52,74 @@ class DiskFileCacheDataSource implements DataSource {
 
 		if (buffer == null) return result;
 
-		if (result != C.RESULT_END_OF_INPUT) {
-			buffer.write(bytes, offset, result);
+		if (result == C.RESULT_END_OF_INPUT) {
+			Promise<CachedFileOutputStream> outputStream = promisedOutputStream;
+
+			if (buffer.size() > 0) {
+				outputStream = promisedOutputStream
+					.eventually(cachedFileOutputStream -> {
+						final Promise<CachedFileOutputStream> promisedWrite =
+							cachedFileOutputStream.promiseWrite(buffer);
+
+						promisedWrite.then(os -> {
+								buffer.close();
+								return null;
+							},
+							e -> {
+								logger.warn("An error occurred storing the audio file", e);
+								buffer.close();
+								cachedFileOutputStream.close();
+								return null;
+							});
+
+						return promisedWrite;
+					});
+			}
+
+			outputStream
+				.eventually(cachedFileOutputStream ->
+					cachedFileOutputStream
+						.flush()
+						.eventually(
+							os -> {
+								os.close();
+								buffer.close();
+								return os.commitToCache();
+							},
+							e -> {
+								logger.warn("An error occurred flushing the output stream", e);
+								cachedFileOutputStream.close();
+								buffer.close();
+								return Promise.empty();
+							}));
+
 			return result;
 		}
 
-		diskFileCache
-			.put(serviceFileKey, buffer)
-			.excuse(e -> {
-				logger.warn("An error occurred storing the audio file", e);
-				return null;
+		buffer.write(bytes, offset, result);
+
+		if (buffer.size() <= maxBufferSize) return result;
+
+		final Buffer bufferToWrite = buffer;
+		buffer = new Buffer();
+
+		promisedOutputStream = promisedOutputStream
+			.eventually(cachedFileOutputStream -> {
+				final Promise<CachedFileOutputStream> promisedWrite =
+					cachedFileOutputStream.promiseWrite(bufferToWrite);
+
+				promisedWrite.then(os -> {
+						bufferToWrite.close();
+						return null;
+					},
+					e -> {
+						logger.warn("An error occurred storing the audio file", e);
+						bufferToWrite.close();
+						cachedFileOutputStream.close();
+						return null;
+					});
+
+				return promisedWrite;
 			});
 
 		return result;
@@ -69,8 +133,5 @@ class DiskFileCacheDataSource implements DataSource {
 	@Override
 	public void close() throws IOException {
 		defaultHttpDataSource.close();
-
-		if (buffer != null)
-			buffer.close();
 	}
 }
