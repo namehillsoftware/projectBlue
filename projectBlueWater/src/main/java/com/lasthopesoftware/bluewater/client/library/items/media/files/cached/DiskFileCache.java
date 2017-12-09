@@ -109,7 +109,7 @@ public class DiskFileCache implements ICache {
 		final long bufferSize = buffer.size();
 
 		return cachedFileOutputStream
-			.promiseWrite(buffer)
+			.promiseTransfer(buffer)
 			.eventually(CachedFileOutputStream::flush)
 			.eventually(fos -> {
 				fos.close();

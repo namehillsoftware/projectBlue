@@ -45,7 +45,7 @@ public class WhenWritingTheFile {
 		buffer.write(bytes);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		cachedFileOutputStream.promiseWrite(buffer)
+		cachedFileOutputStream.promiseTransfer(buffer)
 			.then(w -> {
 				try (final FileInputStream fis = new FileInputStream(file)) {
 					fis.read(bytesWritten, 0, bytesWritten.length);

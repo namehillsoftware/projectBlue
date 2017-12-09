@@ -7,7 +7,6 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -60,7 +59,7 @@ class DiskFileCacheDataSource implements DataSource {
 				outputStream = promisedOutputStream
 					.eventually(cachedFileOutputStream -> {
 						final Promise<CachedFileOutputStream> promisedWrite =
-							cachedFileOutputStream.promiseWrite(buffer);
+							cachedFileOutputStream.promiseTransfer(buffer);
 
 						promisedWrite.then(
 							os -> {
@@ -107,7 +106,7 @@ class DiskFileCacheDataSource implements DataSource {
 		promisedOutputStream = promisedOutputStream
 			.eventually(cachedFileOutputStream -> {
 				final Promise<CachedFileOutputStream> promisedWrite =
-					cachedFileOutputStream.promiseWrite(bufferToWrite);
+					cachedFileOutputStream.promiseTransfer(bufferToWrite);
 
 				promisedWrite.then(
 					os -> {
