@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.co
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.IDiskFileAccessTimeUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
@@ -65,10 +66,10 @@ public class DiskFileCache implements ICache {
 		return putPromise;
 	}
 
-	private Promise<CachedFile> writeCachedFileWithRetries(final String uniqueKey, CachedFileOutputStream cachedFileOutputStream, byte[] fileData) {
+	private Promise<CachedFile> writeCachedFileWithRetries(final String uniqueKey, CacheOutputStream cachedFileOutputStream, byte[] fileData) {
 		return cachedFileOutputStream
 			.promiseWrite(fileData, 0, fileData.length)
-			.eventually(CachedFileOutputStream::flush)
+			.eventually(CacheOutputStream::flush)
 			.eventually(fos -> {
 				fos.close();
 				return fos.commitToCache();
@@ -105,12 +106,12 @@ public class DiskFileCache implements ICache {
 		return putPromise;
 	}
 
-	private Promise<CachedFile> writeCachedFileWithRetries(CachedFileOutputStream cachedFileOutputStream, Buffer buffer) {
+	private Promise<CachedFile> writeCachedFileWithRetries(CacheOutputStream cachedFileOutputStream, Buffer buffer) {
 		final long bufferSize = buffer.size();
 
 		return cachedFileOutputStream
 			.promiseTransfer(buffer)
-			.eventually(CachedFileOutputStream::flush)
+			.eventually(CacheOutputStream::flush)
 			.eventually(fos -> {
 				fos.close();
 				return fos.commitToCache();

@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -19,7 +20,7 @@ import java.io.IOException;
 import okio.Buffer;
 
 
-class DiskFileCacheDataSource implements DataSource {
+public class DiskFileCacheDataSource implements DataSource {
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCacheDataSource.class);
 	private static final long maxBufferSize = 5 * 1024 * 1024; // 5MB
@@ -28,9 +29,9 @@ class DiskFileCacheDataSource implements DataSource {
 	private final String serviceFileKey;
 	private final ICacheStreamSupplier cacheStreamSupplier;
 	private Buffer buffer;
-	private Promise<CachedFileOutputStream> promisedOutputStream;
+	private Promise<CacheOutputStream> promisedOutputStream;
 
-	DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, ICacheStreamSupplier cacheStreamSupplier) {
+	public DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, ICacheStreamSupplier cacheStreamSupplier) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
 		serviceFileKey = String.valueOf(serviceFile.getKey());
 		this.cacheStreamSupplier = cacheStreamSupplier;
@@ -53,12 +54,12 @@ class DiskFileCacheDataSource implements DataSource {
 		if (buffer == null) return result;
 
 		if (result == C.RESULT_END_OF_INPUT) {
-			Promise<CachedFileOutputStream> outputStream = promisedOutputStream;
+			Promise<CacheOutputStream> outputStream = promisedOutputStream;
 
 			if (buffer.size() > 0) {
 				outputStream = promisedOutputStream
 					.eventually(cachedFileOutputStream -> {
-						final Promise<CachedFileOutputStream> promisedWrite =
+						final Promise<CacheOutputStream> promisedWrite =
 							cachedFileOutputStream.promiseTransfer(buffer);
 
 						promisedWrite.then(
@@ -105,7 +106,7 @@ class DiskFileCacheDataSource implements DataSource {
 
 		promisedOutputStream = promisedOutputStream
 			.eventually(cachedFileOutputStream -> {
-				final Promise<CachedFileOutputStream> promisedWrite =
+				final Promise<CacheOutputStream> promisedWrite =
 					cachedFileOutputStream.promiseTransfer(bufferToWrite);
 
 				promisedWrite.then(

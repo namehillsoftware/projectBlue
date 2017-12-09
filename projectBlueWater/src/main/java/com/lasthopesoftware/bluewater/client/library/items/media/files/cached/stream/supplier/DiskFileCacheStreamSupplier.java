@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.ac
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.IDiskFileCachePersistence;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -23,7 +24,7 @@ public class DiskFileCacheStreamSupplier implements ICacheStreamSupplier {
 		this.cachedFilesProvider = cachedFilesProvider;
 	}
 
-	public Promise<CachedFileOutputStream> promiseCachedFileOutputStream(final String uniqueKey) {
+	public Promise<CacheOutputStream> promiseCachedFileOutputStream(final String uniqueKey) {
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
 			.then(cachedFile -> {

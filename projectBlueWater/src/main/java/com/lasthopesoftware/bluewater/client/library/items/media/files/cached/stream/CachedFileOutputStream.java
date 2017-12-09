@@ -18,7 +18,7 @@ import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
 
-public class CachedFileOutputStream implements Closeable {
+public class CachedFileOutputStream implements CacheOutputStream {
 
 	private static final ExecutorService cachedFileWriteExecutor = Executors.newCachedThreadPool();
 
@@ -38,14 +38,14 @@ public class CachedFileOutputStream implements Closeable {
 		this.diskFileCachePersistence = diskFileCachePersistence;
 	}
 
-	public Promise<CachedFileOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
+	public Promise<CacheOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
 		return new QueuedPromise<>(() -> {
 			lazyFileOutputStream.getObject().write(buffer, offset, length);
 			return this;
 		}, cachedFileWriteExecutor);
 	}
 
-	public Promise<CachedFileOutputStream> promiseTransfer(BufferedSource bufferedSource) {
+	public Promise<CacheOutputStream> promiseTransfer(BufferedSource bufferedSource) {
 		return new QueuedPromise<>(() -> {
 			try (final Sink sink = Okio.sink(lazyFileOutputStream.getObject())) {
 				bufferedSource.readAll(sink);
@@ -54,7 +54,7 @@ public class CachedFileOutputStream implements Closeable {
 		}, cachedFileWriteExecutor);
 	}
 
-	public Promise<CachedFileOutputStream> flush() {
+	public Promise<CacheOutputStream> flush() {
 		return new QueuedPromise<>(() -> {
 			if (lazyFileOutputStream.isCreated())
 				lazyFileOutputStream.getObject().flush();
