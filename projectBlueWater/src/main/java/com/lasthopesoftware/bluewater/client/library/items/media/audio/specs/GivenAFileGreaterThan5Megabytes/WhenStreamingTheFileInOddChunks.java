@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenALargeFile;
+package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenAFileGreaterThan5Megabytes;
 
 import android.net.Uri;
 
