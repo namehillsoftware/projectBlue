@@ -16,8 +16,11 @@ import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileAccessTimeUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
@@ -37,10 +40,10 @@ public class ExoPlayerPlaybackPreparerProvider implements PlaybackEngine {
 	private static final CreateAndHold<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
 	private final IFileUriProvider fileUriProvider;
-	private final DataSourceFactoryProvider dataSourceFactoryProvder;
-	private final DiskFileCache diskFileCache;
+	private final DataSourceFactoryProvider dataSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
 	private final Handler handler;
+	private final DiskFileCache diskFileCache;
 
 	public ExoPlayerPlaybackPreparerProvider(Context context, IFileUriProvider fileUriProvider, Library library) {
 		this.fileUriProvider = fileUriProvider;
@@ -48,18 +51,29 @@ public class ExoPlayerPlaybackPreparerProvider implements PlaybackEngine {
 		final AudioCacheConfiguration audioCacheConfiguration = new AudioCacheConfiguration(library);
 		final CachedFilesProvider cachedFilesProvider = new CachedFilesProvider(context, audioCacheConfiguration);
 		final DiskFileAccessTimeUpdater diskFileAccessTimeUpdater = new DiskFileAccessTimeUpdater(context);
-		diskFileCache = new DiskFileCache(
-			context,
+		final IDiskCacheDirectoryProvider diskCacheDirectoryProvider = new AndroidDiskCacheDirectoryProvider(context);
+		final DiskFileCacheStreamSupplier diskFileCacheStream = new DiskFileCacheStreamSupplier(
+			diskCacheDirectoryProvider,
 			audioCacheConfiguration,
 			new DiskFileCachePersistence(
 				context,
+				diskCacheDirectoryProvider,
 				audioCacheConfiguration,
 				cachedFilesProvider,
 				diskFileAccessTimeUpdater),
-			cachedFilesProvider,
-			diskFileAccessTimeUpdater);
+			cachedFilesProvider);
 
-		dataSourceFactoryProvder = new DataSourceFactoryProvider(context, library, diskFileCache);
+		dataSourceFactoryProvider = new DataSourceFactoryProvider(context, library, diskFileCacheStream);
+
+
+		diskFileCache =
+			new DiskFileCache(
+				context,
+				diskCacheDirectoryProvider,
+				audioCacheConfiguration,
+				diskFileCacheStream,
+				cachedFilesProvider,
+				diskFileAccessTimeUpdater);
 
 		renderersFactory = new DefaultRenderersFactory(context);
 
@@ -74,7 +88,7 @@ public class ExoPlayerPlaybackPreparerProvider implements PlaybackEngine {
 	@Override
 	public IPlaybackPreparer providePlaybackPreparer() {
 		return new ExoPlayerPlaybackPreparer(
-			dataSourceFactoryProvder,
+			dataSourceFactoryProvider,
 			trackSelector.getObject(),
 			loadControl.getObject(),
 			renderersFactory,

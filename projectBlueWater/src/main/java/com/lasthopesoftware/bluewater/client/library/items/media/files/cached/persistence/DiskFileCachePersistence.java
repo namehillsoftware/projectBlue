@@ -6,6 +6,7 @@ import android.database.SQLException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.CacheFlusherTask;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.ICachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
@@ -40,11 +41,13 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 	private final Context context;
 	private final ICachedFilesProvider cachedFilesProvider;
 	private final IDiskFileAccessTimeUpdater diskFileAccessTimeUpdater;
+	private final IDiskCacheDirectoryProvider diskCacheDirectoryProvider;
 	private final IDiskFileCacheConfiguration diskFileCacheConfiguration;
 
-	public DiskFileCachePersistence(Context context, IDiskFileCacheConfiguration diskFileCacheConfiguration, ICachedFilesProvider cachedFilesProvider, IDiskFileAccessTimeUpdater diskFileAccessTimeUpdater) {
-		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
+	public DiskFileCachePersistence(Context context, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, IDiskFileCacheConfiguration diskFileCacheConfiguration, ICachedFilesProvider cachedFilesProvider, IDiskFileAccessTimeUpdater diskFileAccessTimeUpdater) {
 		this.context = context;
+		this.diskCacheDirectoryProvider = diskCacheDirectoryProvider;
+		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
 		this.cachedFilesProvider = cachedFilesProvider;
 		this.diskFileAccessTimeUpdater = diskFileAccessTimeUpdater;
 	}
@@ -91,7 +94,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 							logger.warn("There was an error inserting the cached serviceFile with the unique key " + uniqueKey, sqlException);
 						}
 					} finally {
-						CacheFlusherTask.futureCacheFlushing(context, diskFileCacheConfiguration.getCacheName(), diskFileCacheConfiguration.getMaxSize());
+						CacheFlusherTask.promisedCacheFlushing(context, diskCacheDirectoryProvider, diskFileCacheConfiguration, diskFileCacheConfiguration.getMaxSize());
 					}
 
 					return cachedFile;

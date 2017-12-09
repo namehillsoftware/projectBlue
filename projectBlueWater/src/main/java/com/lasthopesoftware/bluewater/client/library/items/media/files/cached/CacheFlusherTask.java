@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached;
 
 import android.content.Context;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -13,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Future;
 
 /**
  * Flush a given cache until it reaches the given target size
@@ -23,25 +24,23 @@ import java.util.concurrent.Future;
 public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
-	
+
 	private final Context context;
-	private final String cacheName;
+	private final IDiskCacheDirectoryProvider diskCacheDirectory;
+	private final IDiskFileCacheConfiguration diskFileCacheConfiguration;
 	private final long targetSize;
 
-	public static Future<?> futureCacheFlushing(final Context context, final String cacheName, final long targetSize) {
-		return RepositoryAccessHelper.databaseExecutor.submit(new CacheFlusherTask(context, cacheName, targetSize));
-	}
-
-	public static Promise<?> promisedCacheFlushing(final Context context, final String cacheName, final long targetSize) {
-		return new QueuedPromise<>(() -> new CacheFlusherTask(context, cacheName, targetSize), RepositoryAccessHelper.databaseExecutor);
+	public static Promise<?> promisedCacheFlushing(final Context context, final IDiskCacheDirectoryProvider diskCacheDirectory, final IDiskFileCacheConfiguration diskFileCacheConfiguration, final long targetSize) {
+		return new QueuedPromise<>(() -> new CacheFlusherTask(context, diskCacheDirectory, diskFileCacheConfiguration, targetSize), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	/*
 	 * Flush a given cache until it reaches the given target size
 	 */
-	private CacheFlusherTask(final Context context, final String cacheName, final long targetSize) {
+	private CacheFlusherTask(final Context context, final IDiskCacheDirectoryProvider diskCacheDirectory, final IDiskFileCacheConfiguration diskFileCacheConfiguration, final long targetSize) {
 		this.context = context;
-		this.cacheName = cacheName;
+		this.diskCacheDirectory = diskCacheDirectory;
+		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
 		this.targetSize = targetSize;
 	}
 
@@ -67,7 +66,7 @@ public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
 			} while (getCachedFileSizeFromDatabase(repositoryAccessHelper) > targetSize);
 
 			// Remove any files in the cache dir but not in the database
-			final File cacheDir = DiskFileCache.getDiskCacheDir(context, cacheName);
+			final File cacheDir = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration);
 
 			if (cacheDir == null || !cacheDir.exists()) return;
 
@@ -97,7 +96,7 @@ public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
 	private long getCachedFileSizeFromDatabase(final RepositoryAccessHelper repositoryAccessHelper) {
 		return repositoryAccessHelper
 				.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
-				.addParameter(CachedFile.CACHE_NAME, cacheName)
+				.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
 				.execute();
 	}
 	
@@ -123,14 +122,14 @@ public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
 	private CachedFile getOldestCachedFile(final RepositoryAccessHelper repositoryAccessHelper) {
 		return repositoryAccessHelper
 				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME + " ORDER BY " + CachedFile.LAST_ACCESSED_TIME + " ASC")
-				.addParameter(CachedFile.CACHE_NAME, cacheName)
+				.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
 				.fetchFirst(CachedFile.class);
 	}
 	
 	private long getCachedFileCount(final RepositoryAccessHelper repositoryAccessHelper) {
 		return repositoryAccessHelper
 				.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
-				.addParameter(CachedFile.CACHE_NAME, cacheName)
+				.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
 				.execute();
 	}
 	

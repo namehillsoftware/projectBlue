@@ -10,8 +10,11 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileAccessTimeUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
@@ -58,28 +61,32 @@ public class ImageProvider {
 
 	private final Context context;
 	private final IConnectionProvider connectionProvider;
+	private final IDiskCacheDirectoryProvider diskCacheDirectoryProvider;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
-	public ImageProvider(final Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+	public ImageProvider(final Context context, IConnectionProvider connectionProvider, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
+		this.diskCacheDirectoryProvider = diskCacheDirectoryProvider;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
 	public Promise<Bitmap> promiseFileBitmap(ServiceFile serviceFile) {
-		return new Promise<>(new ImageOperator(context, connectionProvider, cachedFilePropertiesProvider, serviceFile));
+		return new Promise<>(new ImageOperator(context, connectionProvider, diskCacheDirectoryProvider, cachedFilePropertiesProvider, serviceFile));
 	}
 
 	private static class ImageOperator implements MessengerOperator<Bitmap> {
 
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
+		private final IDiskCacheDirectoryProvider diskCacheDirectoryProvider;
 		private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 		private final ServiceFile serviceFile;
 
-		ImageOperator(Context context, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ServiceFile serviceFile) {
+		ImageOperator(Context context, IConnectionProvider connectionProvider, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ServiceFile serviceFile) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
+			this.diskCacheDirectoryProvider = diskCacheDirectoryProvider;
 			this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 			this.serviceFile = serviceFile;
 		}
@@ -127,12 +134,19 @@ public class ImageProvider {
 										final DiskFileCache imageDiskCache =
 											new DiskFileCache(
 												context,
+												diskCacheDirectoryProvider,
 												imageCacheConfiguration,
-												new DiskFileCachePersistence(
-													context,
+												new DiskFileCacheStreamSupplier(
+													diskCacheDirectoryProvider,
 													imageCacheConfiguration,
-													cachedFilesProvider,
-													diskFileAccessTimeUpdater),
+													new DiskFileCachePersistence(
+														context,
+														diskCacheDirectoryProvider,
+														imageCacheConfiguration,
+														cachedFilesProvider,
+														diskFileAccessTimeUpdater),
+													cachedFilesProvider
+												),
 												cachedFilesProvider,
 												diskFileAccessTimeUpdater);
 
