@@ -7,10 +7,10 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,8 +39,9 @@ public class CachedFileOutputStream implements CacheOutputStream {
 	}
 
 	public Promise<CacheOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
+		final byte[] copiedBuffer = Arrays.copyOfRange(buffer, offset, offset + length);
 		return new QueuedPromise<>(() -> {
-			lazyFileOutputStream.getObject().write(buffer, offset, length);
+			lazyFileOutputStream.getObject().write(copiedBuffer);
 			return this;
 		}, cachedFileWriteExecutor);
 	}
