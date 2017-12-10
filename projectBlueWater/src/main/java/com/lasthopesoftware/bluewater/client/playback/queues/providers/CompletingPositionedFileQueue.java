@@ -1,12 +1,13 @@
-package com.lasthopesoftware.bluewater.client.playback.queues;
+package com.lasthopesoftware.bluewater.client.playback.queues.providers;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueue;
 
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 
-class CompletingPositionedFileQueue implements IPositionedFileQueue {
+final class CompletingPositionedFileQueue implements IPositionedFileQueue {
 	private final Queue<PositionedFile> playlist;
 
 	CompletingPositionedFileQueue(List<PositionedFile> playlist) {

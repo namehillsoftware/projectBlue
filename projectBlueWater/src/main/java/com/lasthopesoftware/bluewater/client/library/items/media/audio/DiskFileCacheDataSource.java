@@ -7,70 +7,120 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
+
+import okio.Buffer;
 
 
-class DiskFileCacheDataSource implements DataSource {
+public class DiskFileCacheDataSource implements DataSource {
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCacheDataSource.class);
+	private static final long maxBufferSize = 5 * 1024 * 1024; // 5MB
 
 	private final HttpDataSource defaultHttpDataSource;
 	private final String serviceFileKey;
-	private final DiskFileCache diskFileCache;
-	private Promise<CachedFileOutputStream> promisedOutputStream;
+	private final ICacheStreamSupplier cacheStreamSupplier;
+	private Buffer buffer;
+	private Promise<CacheOutputStream> promisedOutputStream;
 
-	DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, DiskFileCache diskFileCache) {
+	public DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, ICacheStreamSupplier cacheStreamSupplier) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
 		serviceFileKey = String.valueOf(serviceFile.getKey());
-		this.diskFileCache = diskFileCache;
+		this.cacheStreamSupplier = cacheStreamSupplier;
 	}
 
 	@Override
 	public long open(DataSpec dataSpec) throws IOException {
-		if (dataSpec.position == 0)
-			promisedOutputStream = diskFileCache.promiseCachedFileOutputStream(serviceFileKey);
+		if (dataSpec.position == 0) {
+			buffer = new Buffer();
+			promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(serviceFileKey);
+		}
 
 		return defaultHttpDataSource.open(dataSpec);
 	}
 
 	@Override
-	public int read(byte[] buffer, int offset, int readLength) throws IOException {
-		final int result = defaultHttpDataSource.read(buffer, offset, readLength);
+	public int read(byte[] bytes, int offset, int readLength) throws IOException {
+		final int result = defaultHttpDataSource.read(bytes, offset, readLength);
 
-		if (promisedOutputStream == null) return result;
+		if (buffer == null) return result;
 
-		if (result == C.RESULT_END_OF_INPUT) {
-			promisedOutputStream
-				.eventually(CachedFileOutputStream::flush)
+		if (result != C.RESULT_END_OF_INPUT) {
+
+			buffer.write(bytes, offset, result);
+
+			if (buffer.size() <= maxBufferSize) return result;
+
+			final Buffer bufferToWrite = buffer;
+			buffer = new Buffer();
+
+			promisedOutputStream = promisedOutputStream
 				.eventually(cachedFileOutputStream -> {
-					cachedFileOutputStream.close();
-					return cachedFileOutputStream.commitToCache();
+					final Promise<CacheOutputStream> promisedWrite =
+						cachedFileOutputStream.promiseTransfer(bufferToWrite);
+
+					promisedWrite.then(
+						os -> {
+							bufferToWrite.close();
+							return null;
+						},
+						e -> {
+							logger.warn("An error occurred storing the audio file", e);
+							bufferToWrite.close();
+							cachedFileOutputStream.close();
+							return null;
+						});
+
+					return promisedWrite;
 				});
 
 			return result;
 		}
 
-		final byte[] copiedBuffer = Arrays.copyOfRange(buffer, offset, offset + result);
+		final Promise<CacheOutputStream> outputStream = buffer.size() == 0
+			? promisedOutputStream
+			: promisedOutputStream
+				.eventually(cachedFileOutputStream -> {
+					final Promise<CacheOutputStream> promisedWrite =
+						cachedFileOutputStream.promiseTransfer(buffer);
 
-		promisedOutputStream = promisedOutputStream
-			.eventually(cachedFileOutputStream -> {
-				final Promise<CachedFileOutputStream> promisedWrite = cachedFileOutputStream.promiseWrite(copiedBuffer, 0, copiedBuffer.length);
-				promisedWrite.excuse(e -> {
-					logger.warn("An error occurred storing the audio file", e);
-					cachedFileOutputStream.close();
-					return null;
+					promisedWrite.then(
+						os -> {
+							buffer.close();
+							return null;
+						},
+						e -> {
+							logger.warn("An error occurred storing the audio file", e);
+							buffer.close();
+							cachedFileOutputStream.close();
+							return null;
+						});
+
+					return promisedWrite;
 				});
 
-				return promisedWrite;
-			});
+		outputStream.eventually(cachedFileOutputStream ->
+			cachedFileOutputStream
+				.flush()
+				.eventually(
+					os -> {
+						os.close();
+						buffer.close();
+						return os.commitToCache();
+					},
+					e -> {
+						logger.warn("An error occurred flushing the output stream", e);
+						cachedFileOutputStream.close();
+						buffer.close();
+						return Promise.empty();
+					}));
 
 		return result;
 	}
@@ -83,12 +133,5 @@ class DiskFileCacheDataSource implements DataSource {
 	@Override
 	public void close() throws IOException {
 		defaultHttpDataSource.close();
-
-		if (promisedOutputStream == null) return;
-
-		promisedOutputStream.then(cachedFileOutputStream -> {
-			cachedFileOutputStream.close();
-			return null;
-		});
 	}
 }

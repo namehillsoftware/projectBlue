@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.queues;
+package com.lasthopesoftware.bluewater.client.playback.queues.providers;
 
 
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;

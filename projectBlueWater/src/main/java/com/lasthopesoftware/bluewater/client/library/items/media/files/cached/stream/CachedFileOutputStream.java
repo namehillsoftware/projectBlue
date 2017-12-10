@@ -7,14 +7,17 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class CachedFileOutputStream implements Closeable {
+import okio.BufferedSource;
+import okio.Okio;
+import okio.Sink;
+
+public class CachedFileOutputStream implements CacheOutputStream {
 
 	private static final ExecutorService cachedFileWriteExecutor = Executors.newCachedThreadPool();
 
@@ -34,14 +37,23 @@ public class CachedFileOutputStream implements Closeable {
 		this.diskFileCachePersistence = diskFileCachePersistence;
 	}
 
-	public Promise<CachedFileOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
+	public Promise<CacheOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
 		return new QueuedPromise<>(() -> {
 			lazyFileOutputStream.getObject().write(buffer, offset, length);
 			return this;
 		}, cachedFileWriteExecutor);
 	}
 
-	public Promise<CachedFileOutputStream> flush() {
+	public Promise<CacheOutputStream> promiseTransfer(BufferedSource bufferedSource) {
+		return new QueuedPromise<>(() -> {
+			try (final Sink sink = Okio.sink(lazyFileOutputStream.getObject())) {
+				bufferedSource.readAll(sink);
+			}
+			return this;
+		}, cachedFileWriteExecutor);
+	}
+
+	public Promise<CacheOutputStream> flush() {
 		return new QueuedPromise<>(() -> {
 			if (lazyFileOutputStream.isCreated())
 				lazyFileOutputStream.getObject().flush();

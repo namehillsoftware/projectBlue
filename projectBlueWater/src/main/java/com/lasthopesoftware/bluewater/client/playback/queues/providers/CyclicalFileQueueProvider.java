@@ -1,8 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.queues;
+package com.lasthopesoftware.bluewater.client.playback.queues.providers;
 
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.queues.IPositionedFileQueue;
 
 import java.util.List;
 

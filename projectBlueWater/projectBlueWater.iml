@@ -88,20 +88,27 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/blame" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/check-manifest" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/classes" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/classes-jar" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/javaPrecompile" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/jniLibs" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/lint" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/manifests" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/merged-not-compiled-resources" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/multi-dex" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/prebuild" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/proguard-rules" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/res" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/res_stripped" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/rs" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/shaders" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/splits-support" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/symbols" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/transforms" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/unitTestConfig" />
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
+      <excludeFolder url="file://$MODULE_DIR$/build/reports" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
     </content>
     <orderEntry type="jdk" jdkName="Android API 26 Platform" jdkType="Android SDK" />
@@ -130,6 +137,7 @@
     <orderEntry type="library" name="org.reactivestreams:reactive-streams:1.0.1@jar" level="project" />
     <orderEntry type="library" name="com.android.support:support-core-ui-26.1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-project:2.2.1@jar" level="project" />
+    <orderEntry type="library" name="com.github.danrien:handoff:feature~remove-queue-drain-synchronization-SNAPSHOT@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.mockito:mockito-core:2.12.0@jar" level="project" />
     <orderEntry type="library" name="org.slf4j:slf4j-api:1.7.12@jar" level="project" />
     <orderEntry type="library" name="com.android.support:support-compat-26.1.0" level="project" />
@@ -190,7 +198,6 @@
     <orderEntry type="library" scope="TEST" name="classworlds:classworlds:1.1-alpha-2@jar" level="project" />
     <orderEntry type="library" name="com.github.tony19:apktool-lib:1.4.4-3@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-plugin-registry:2.2.1@jar" level="project" />
-    <orderEntry type="library" name="com.github.danrien:handoff:0.3.0@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-settings:2.2.1@jar" level="project" />
     <orderEntry type="module" module-name="futures" />
     <orderEntry type="module" module-name="objective-droid" />

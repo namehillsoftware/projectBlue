@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.queues.providers.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;

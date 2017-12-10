@@ -9,6 +9,7 @@ import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -25,17 +26,18 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 		protected OkHttpClient create() throws Exception {
 			return new OkHttpClient.Builder()
 				.readTimeout(1, TimeUnit.MINUTES)
+				.retryOnConnectionFailure(true)
 				.build();
 		}
 	};
 
 	private final OkHttpDataSourceFactory httpDataSourceFactory;
+	private final ICacheStreamSupplier cacheStreamSupplier;
 	private final ServiceFile serviceFile;
-	private final DiskFileCache diskFileCache;
 
-	public DiskFileCacheDataSourceFactory(Context context, DiskFileCache diskFileCache, TransferListener<? super DataSource> transferListener, Library library, ServiceFile serviceFile) {
+	public DiskFileCacheDataSourceFactory(Context context, ICacheStreamSupplier cacheStreamSupplier, TransferListener<? super DataSource> transferListener, Library library, ServiceFile serviceFile) {
+		this.cacheStreamSupplier = cacheStreamSupplier;
 		this.serviceFile = serviceFile;
-		this.diskFileCache = diskFileCache;
 		httpDataSourceFactory = new OkHttpDataSourceFactory(
 			okHttpClient.getObject(),
 			Util.getUserAgent(context, context.getString(R.string.app_name)),
@@ -49,6 +51,6 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 
 	@Override
 	public DataSource createDataSource() {
-		return new DiskFileCacheDataSource(httpDataSourceFactory.createDataSource(), serviceFile, diskFileCache);
+		return new DiskFileCacheDataSource(httpDataSourceFactory.createDataSource(), serviceFile, cacheStreamSupplier);
 	}
 }

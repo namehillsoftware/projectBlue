@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlayback
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.queues.CompletingFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.playback.queues.providers.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
 import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;

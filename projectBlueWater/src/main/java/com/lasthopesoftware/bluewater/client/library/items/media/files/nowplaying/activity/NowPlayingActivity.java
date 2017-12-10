@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -159,6 +160,20 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 			final long filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
 			if (filePosition > -1) setTrackProgress(filePosition);
+		}
+	};
+
+	private final CreateAndHold<ImageProvider> lazyImageProvider = new AbstractSynchronousLazy<ImageProvider>() {
+		@Override
+		protected ImageProvider create() throws Throwable {
+			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+
+			return new ImageProvider(
+				NowPlayingActivity.this,
+				connectionProvider,
+				new AndroidDiskCacheDirectoryProvider(NowPlayingActivity.this),
+				new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)));
 		}
 	};
 
@@ -421,12 +436,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		nowPlayingImage.setVisibility(View.INVISIBLE);
 
 		if (viewStructure.promisedNowPlayingImage == null) {
-			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-
 			viewStructure.promisedNowPlayingImage =
-				new ImageProvider(this, connectionProvider, new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)))
-					.promiseFileBitmap(serviceFile);
+				lazyImageProvider.getObject().promiseFileBitmap(serviceFile);
 		}
 
 		viewStructure.promisedNowPlayingImage

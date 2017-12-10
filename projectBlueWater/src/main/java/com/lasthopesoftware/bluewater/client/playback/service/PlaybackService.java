@@ -35,6 +35,7 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -57,7 +58,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
-import com.lasthopesoftware.bluewater.client.playback.queues.QueueProviders;
+import com.lasthopesoftware.bluewater.client.playback.queues.providers.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
@@ -553,7 +554,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
-		final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, cachedFilePropertiesProvider);
+		final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
 		remoteControlProxy =
 			new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
 				new ConnectedMediaSessionBroadcaster(
