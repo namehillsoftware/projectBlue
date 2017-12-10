@@ -2,13 +2,10 @@ package com.namehillsoftware.handoff;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class SingleMessageBroadcaster<Resolution> implements Messenger<Resolution> {
 
-	private final ReadWriteLock resolveSync = new ReentrantReadWriteLock();
+	private final Object resolveSync = new Object();
 	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
 	private final Cancellation cancellation = new Cancellation();
 
@@ -42,29 +39,22 @@ public class SingleMessageBroadcaster<Resolution> implements Messenger<Resolutio
 	}
 
 	private boolean isResolvedSynchronously() {
-		final Lock readLock = resolveSync.readLock();
-		readLock.lock();
-		try {
+		synchronized (resolveSync) {
 			return message != null;
-		} finally {
-			readLock.unlock();
 		}
 	}
 
 	private void resolve(Resolution resolution, Throwable rejection) {
-		resolveSync.writeLock().lock();
-		try {
+		synchronized (resolveSync) {
 			if (message != null) return;
 
 			message = new Message<>(resolution, rejection);
-		} finally {
-			resolveSync.writeLock().unlock();
 		}
 
 		dispatchMessage(message);
 	}
 
-	private synchronized void dispatchMessage(Message<Resolution> message) {
+	private void dispatchMessage(Message<Resolution> message) {
 		RespondingMessenger<Resolution> r;
 		while ((r = recipients.poll()) != null)
 			r.respond(message);
