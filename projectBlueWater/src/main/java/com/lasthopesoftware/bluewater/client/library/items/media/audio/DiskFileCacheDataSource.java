@@ -8,7 +8,6 @@ import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -53,76 +52,75 @@ public class DiskFileCacheDataSource implements DataSource {
 
 		if (buffer == null) return result;
 
-		if (result == C.RESULT_END_OF_INPUT) {
-			Promise<CacheOutputStream> outputStream = promisedOutputStream;
+		if (result != C.RESULT_END_OF_INPUT) {
 
-			if (buffer.size() > 0) {
-				outputStream = promisedOutputStream
-					.eventually(cachedFileOutputStream -> {
-						final Promise<CacheOutputStream> promisedWrite =
-							cachedFileOutputStream.promiseTransfer(buffer);
+			buffer.write(bytes, offset, result);
 
-						promisedWrite.then(
-							os -> {
-								buffer.close();
-								return null;
-							},
-							e -> {
-								logger.warn("An error occurred storing the audio file", e);
-								buffer.close();
-								cachedFileOutputStream.close();
-								return null;
-							});
+			if (buffer.size() <= maxBufferSize) return result;
 
-						return promisedWrite;
-					});
-			}
+			final Buffer bufferToWrite = buffer;
+			buffer = new Buffer();
 
-			outputStream.eventually(cachedFileOutputStream ->
-				cachedFileOutputStream
-					.flush()
-					.eventually(
+			promisedOutputStream = promisedOutputStream
+				.eventually(cachedFileOutputStream -> {
+					final Promise<CacheOutputStream> promisedWrite =
+						cachedFileOutputStream.promiseTransfer(bufferToWrite);
+
+					promisedWrite.then(
 						os -> {
-							os.close();
-							buffer.close();
-							return os.commitToCache();
+							bufferToWrite.close();
+							return null;
 						},
 						e -> {
-							logger.warn("An error occurred flushing the output stream", e);
+							logger.warn("An error occurred storing the audio file", e);
+							bufferToWrite.close();
 							cachedFileOutputStream.close();
-							buffer.close();
-							return Promise.empty();
-						}));
+							return null;
+						});
+
+					return promisedWrite;
+				});
 
 			return result;
 		}
 
-		buffer.write(bytes, offset, result);
+		final Promise<CacheOutputStream> outputStream = buffer.size() == 0
+			? promisedOutputStream
+			: promisedOutputStream
+				.eventually(cachedFileOutputStream -> {
+					final Promise<CacheOutputStream> promisedWrite =
+						cachedFileOutputStream.promiseTransfer(buffer);
 
-		if (buffer.size() <= maxBufferSize) return result;
+					promisedWrite.then(
+						os -> {
+							buffer.close();
+							return null;
+						},
+						e -> {
+							logger.warn("An error occurred storing the audio file", e);
+							buffer.close();
+							cachedFileOutputStream.close();
+							return null;
+						});
 
-		final Buffer bufferToWrite = buffer;
-		buffer = new Buffer();
+					return promisedWrite;
+				});
 
-		promisedOutputStream = promisedOutputStream
-			.eventually(cachedFileOutputStream -> {
-				final Promise<CacheOutputStream> promisedWrite =
-					cachedFileOutputStream.promiseTransfer(bufferToWrite);
-
-				promisedWrite.then(
+		outputStream.eventually(cachedFileOutputStream ->
+			cachedFileOutputStream
+				.flush()
+				.eventually(
 					os -> {
-						bufferToWrite.close();
-						return null;
+						os.close();
+						buffer.close();
+						return os.commitToCache();
 					},
 					e -> {
-						logger.warn("An error occurred storing the audio file", e);
-						bufferToWrite.close();
+						logger.warn("An error occurred flushing the output stream", e);
 						cachedFileOutputStream.close();
-						return null;
-					});
-
-				return promisedWrite;
-			});
+						buffer.close();
+						return Promise.empty();
+					}));
 
 		return result;
 	}
