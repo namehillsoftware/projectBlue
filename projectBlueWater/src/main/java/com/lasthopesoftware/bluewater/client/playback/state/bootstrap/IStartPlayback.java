@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.state.bootstrap;
 
-import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.state.IActivePlayer;
 
 import java.io.IOException;

@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist;
 
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.namehillsoftware.handoff.promises.Promise;
 

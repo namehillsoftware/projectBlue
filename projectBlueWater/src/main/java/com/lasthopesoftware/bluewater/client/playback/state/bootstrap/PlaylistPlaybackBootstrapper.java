@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.state.bootstrap;
 
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.playback.queues.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.state.ActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.state.IActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
