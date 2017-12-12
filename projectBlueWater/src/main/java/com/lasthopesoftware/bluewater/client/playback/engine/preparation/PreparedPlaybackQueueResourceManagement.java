@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 
 import java.io.Closeable;
 import java.io.IOException;

@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
