@@ -112,7 +112,7 @@ implements
 		return
 			new PositionedPreparingFile(
 				positionedFile,
-				playbackPreparer.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), preparedAt));
+				playbackPreparer.promisePreparedPlaybackFile(positionedFile.getServiceFile(), preparedAt));
 	}
 
 	private void beginQueueingPreparingPlayers() {
@@ -137,7 +137,7 @@ implements
 		if (currentPreparingPlaybackHandlerPromise != null)
 			currentPreparingPlaybackHandlerPromise.preparedPlaybackFilePromise.cancel();
 
-		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
 			PositionedPreparingFile positionedPreparingFile;
@@ -171,7 +171,7 @@ implements
 		currentPreparingPlaybackHandlerPromise.preparedPlaybackFilePromise.cancel();
 		currentPreparingPlaybackHandlerPromise = new PositionedPreparingFile(
 			positionedFile,
-			playbackPreparer.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), 0));
+			playbackPreparer.promisePreparedPlaybackFile(positionedFile.getServiceFile(), 0));
 
 		return currentPreparingPlaybackHandlerPromise.promisePositionedPreparedPlaybackFile();
 	}

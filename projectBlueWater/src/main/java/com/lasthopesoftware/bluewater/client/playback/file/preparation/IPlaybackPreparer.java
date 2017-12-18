@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.namehillsoftware.handoff.promises.Promise;
 
 public interface IPlaybackPreparer {
-	Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, long preparedAt);
+	Promise<PreparedPlaybackFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt);
 }

@@ -38,7 +38,7 @@ public class WhenTheQueueIsStarted {
 				.collect(Collectors.toList());
 
 		final IPlaybackPreparer playbackPreparer = mock(IPlaybackPreparer.class);
-		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(0), 0))
+		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(0), 0))
 			.thenReturn(new Promise<>(new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler() {
 				@Override
 				public Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile() {
@@ -46,7 +46,7 @@ public class WhenTheQueueIsStarted {
 				}
 			})));
 
-		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(1), 0))
+		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(1), 0))
 			.thenReturn(new Promise<>(new FakePreparedPlaybackFile<>(expectedPlaybackHandler)));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider

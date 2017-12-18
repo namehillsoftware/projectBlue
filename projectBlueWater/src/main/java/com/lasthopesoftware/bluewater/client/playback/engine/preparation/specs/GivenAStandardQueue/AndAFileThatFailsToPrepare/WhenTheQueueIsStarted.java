@@ -38,10 +38,10 @@ public class WhenTheQueueIsStarted {
 				.collect(Collectors.toList());
 
 		final IPlaybackPreparer playbackPreparer = mock(IPlaybackPreparer.class);
-		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(0), 0))
+		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(0), 0))
 			.thenReturn(new Promise<>(expectedException));
 
-		when(playbackPreparer.promisePreparedPlaybackHandler(new ServiceFile(1), 0))
+		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(1), 0))
 			.thenReturn(new Promise<>(new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler())));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
