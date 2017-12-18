@@ -3,10 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -48,8 +47,8 @@ public class WhenTheQueueIsConsumed {
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CompletingFileQueueProvider();
 
-		final IPreparedPlaybackQueue queue =
-			new PreparedPlaybackQueue(
+		final PreparedPlayableFileQueue queue =
+			new PreparedPlayableFileQueue(
 				() -> 1,
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
 				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0));
@@ -77,13 +76,13 @@ public class WhenTheQueueIsConsumed {
 		assertThat(returnedPromiseCount).isEqualTo(expectedNumberOfFiles);
 	}
 
-	private static class MockResolveAction implements MessengerOperator<PreparedPlaybackFile> {
+	private static class MockResolveAction implements MessengerOperator<PreparedPlayableFile> {
 		private int calls;
 
 		@Override
-		public void send(Messenger<PreparedPlaybackFile> resolve) {
+		public void send(Messenger<PreparedPlayableFile> resolve) {
 			++calls;
-			resolve.sendResolution(mock(PreparedPlaybackFile.class));
+			resolve.sendResolution(mock(PreparedPlayableFile.class));
 		}
 	}
 }

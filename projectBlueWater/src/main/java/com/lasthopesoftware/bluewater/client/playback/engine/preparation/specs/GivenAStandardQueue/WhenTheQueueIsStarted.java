@@ -3,9 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -23,12 +22,8 @@ import java.util.Random;
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 import static org.mockito.Mockito.mock;
 
-/**
- * Created by david on 11/13/16.
- */
-
 public class WhenTheQueueIsStarted {
-	private static IPreparedPlaybackQueue queue;
+	private static PreparedPlayableFileQueue queue;
 	private static int startPosition;
 
 	@BeforeClass
@@ -53,7 +48,7 @@ public class WhenTheQueueIsStarted {
 		startPosition = random.nextInt(numberOfFiles);
 
 		queue =
-			new PreparedPlaybackQueue(
+			new PreparedPlayableFileQueue(
 				() -> 1,
 				(file, preparedAt) -> {
 					final MockResolveAction mockResolveAction = fileActionMap.get(file);
@@ -69,10 +64,10 @@ public class WhenTheQueueIsStarted {
 			.then(perform(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 
-	private static class MockResolveAction implements MessengerOperator<PreparedPlaybackFile> {
+	private static class MockResolveAction implements MessengerOperator<PreparedPlayableFile> {
 		@Override
-		public void send(Messenger<PreparedPlaybackFile> resolve) {
-			resolve.sendResolution(mock(PreparedPlaybackFile.class));
+		public void send(Messenger<PreparedPlayableFile> resolve) {
+			resolve.sendResolution(mock(PreparedPlayableFile.class));
 		}
 	}
 }

@@ -49,11 +49,11 @@ import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
@@ -595,7 +595,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new SelectedPlaybackEngineTypeAccess(this),
 				DebugFlag.getInstance());
 
-		final IPlaybackPreparerProvider playbackEngine = playbackEngineBuilder.build(library);
+		final IPlayableFilePreparationSourceProvider playbackEngine = playbackEngineBuilder.build(library);
 
 		this.playbackEngine =
 			new PlaybackEngine(
@@ -902,7 +902,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
 
-		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();

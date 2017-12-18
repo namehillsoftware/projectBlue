@@ -4,7 +4,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.Closeable;
 
-public interface IPlaybackHandler extends Closeable {
+public interface PlayableFile extends Closeable {
 	boolean isPlaying();
 	void pause();
 
@@ -16,5 +16,5 @@ public interface IPlaybackHandler extends Closeable {
 
 	long getDuration();
 
-	Promise<IPlaybackHandler> promisePlayback();
+	Promise<PlayableFile> promisePlayback();
 }

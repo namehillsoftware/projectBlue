@@ -6,7 +6,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import java.io.IOException;
 
 public class EmptyPlaybackHandler
-implements IBufferingPlaybackFile, IPlaybackHandler {
+implements IBufferingPlaybackFile, PlayableFile {
 
 	private final int duration;
 	private float volume;
@@ -46,7 +46,7 @@ implements IBufferingPlaybackFile, IPlaybackHandler {
 	}
 
 	@Override
-	public Promise<IPlaybackHandler> promisePlayback() {
+	public Promise<PlayableFile> promisePlayback() {
 		return new Promise<>(this);
 	}
 

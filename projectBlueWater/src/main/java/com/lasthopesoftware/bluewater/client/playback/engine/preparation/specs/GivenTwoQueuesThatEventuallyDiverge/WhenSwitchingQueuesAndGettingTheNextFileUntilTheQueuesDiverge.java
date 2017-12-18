@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenTwoQueuesThatEventuallyDiverge;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -17,10 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by david on 1/3/17.
- */
-
 public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
 	private static PositionedPlaybackFile positionedPlaybackFile;
@@ -28,7 +24,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
 	@BeforeClass
 	public static void before() {
-		expectedPositionedPlaybackFile = new PositionedPlaybackFile(6, mock(IPlaybackHandler.class), new ServiceFile(6));
+		expectedPositionedPlaybackFile = new PositionedPlaybackFile(6, mock(PlayableFile.class), new ServiceFile(6));
 
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
@@ -40,10 +36,10 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 				new PositionedFile(5, new ServiceFile(5)),
 				null);
 
-		final PreparedPlaybackQueue queue =
-			new PreparedPlaybackQueue(
+		final PreparedPlayableFileQueue queue =
+			new PreparedPlayableFileQueue(
 				() -> 1,
-				(file, preparedAt) -> new Promise<>(new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler())),
+				(file, preparedAt) -> new Promise<>(new FakePreparedPlayableFile<>(new FakeBufferingPlaybackHandler())),
 				positionedFileQueue);
 
 		queue.promiseNextPreparedPlaybackFile(0);

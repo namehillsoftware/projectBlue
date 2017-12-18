@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.bootstrap;
 
 import com.lasthopesoftware.bluewater.client.playback.engine.ActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.IActivePlayer;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
@@ -24,7 +24,7 @@ public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Close
 	}
 
 	@Override
-	public IActivePlayer startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final long filePosition) throws IOException {
+	public IActivePlayer startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException {
 		close();
 
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, volumeControllerFactory, filePosition);

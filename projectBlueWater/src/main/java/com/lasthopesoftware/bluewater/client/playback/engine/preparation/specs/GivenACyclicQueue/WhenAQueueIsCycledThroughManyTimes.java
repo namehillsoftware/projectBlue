@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 
 public class WhenAQueueIsCycledThroughManyTimes {
 
-	private static Map<ServiceFile, MessengerOperator<PreparedPlaybackFile>> fileActionMap;
+	private static Map<ServiceFile, MessengerOperator<PreparedPlayableFile>> fileActionMap;
 	private static int expectedNumberAbsolutePromises;
 	private static int expectedCycles;
 	private static int returnedPromiseCount;
@@ -53,8 +53,8 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		final CyclicalFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CyclicalFileQueueProvider();
 
-		final PreparedPlaybackQueue queue =
-			new PreparedPlaybackQueue(
+		final PreparedPlayableFileQueue queue =
+			new PreparedPlayableFileQueue(
 				() -> 1,
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),
 				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0));
@@ -82,10 +82,10 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		Assert.assertEquals(expectedNumberAbsolutePromises, returnedPromiseCount);
 	}
 
-	private static class MockResolveAction implements MessengerOperator<PreparedPlaybackFile> {
+	private static class MockResolveAction implements MessengerOperator<PreparedPlayableFile> {
 		@Override
-		public void send(Messenger<PreparedPlaybackFile> messenger) {
-			messenger.sendResolution(mock(PreparedPlaybackFile.class));
+		public void send(Messenger<PreparedPlayableFile> messenger) {
+			messenger.sendResolution(mock(PreparedPlayableFile.class));
 		}
 	}
 }

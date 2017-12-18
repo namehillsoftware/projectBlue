@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation;
 
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 
-public class PreparedPlaybackFile {
+public class PreparedPlayableFile {
 
-	private final IPlaybackHandler playbackHandler;
+	private final PlayableFile playbackHandler;
 	private final IBufferingPlaybackFile bufferingPlaybackFile;
 
-	public PreparedPlaybackFile(IPlaybackHandler playbackHandler, IBufferingPlaybackFile bufferingPlaybackFile) {
+	public PreparedPlayableFile(PlayableFile playbackHandler, IBufferingPlaybackFile bufferingPlaybackFile) {
 		this.playbackHandler = playbackHandler;
 		this.bufferingPlaybackFile = bufferingPlaybackFile;
 	}
@@ -17,7 +17,7 @@ public class PreparedPlaybackFile {
 		return bufferingPlaybackFile;
 	}
 
-	public IPlaybackHandler getPlaybackHandler() {
+	public PlayableFile getPlaybackHandler() {
 		return playbackHandler;
 	}
 }

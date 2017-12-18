@@ -5,8 +5,8 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.ExoPlayerPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer.MediaPlayerPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.ExoPlayerPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer.MediaPlayerPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.compilation.FlagCompilationForDebugging;
 
 public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlaybackQueueFeeder {
@@ -29,16 +29,16 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 	}
 
 	@Override
-	public IPlaybackPreparerProvider build(Library library) {
+	public IPlayableFilePreparationSourceProvider build(Library library) {
 		switch (playbackEngineTypeLookup.getSelectedPlaybackEngineType()) {
 			case ExoPlayer:
 				if (flagCompilationForDebugging.isDebugCompilation())
-					return new ExoPlayerPlaybackPreparerProvider(
+					return new ExoPlayerPlayableFilePreparationSourceProvider(
 						context,
 						fileUriProvider,
 						library);
 			case MediaPlayer:
-				return new MediaPlayerPlaybackPreparerProvider(
+				return new MediaPlayerPlayableFilePreparationSourceProvider(
 					context,
 					fileUriProvider,
 					library);

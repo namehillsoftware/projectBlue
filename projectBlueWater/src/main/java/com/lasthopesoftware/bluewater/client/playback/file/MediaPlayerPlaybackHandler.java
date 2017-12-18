@@ -17,8 +17,8 @@ import java.util.concurrent.CancellationException;
 
 public final class MediaPlayerPlaybackHandler
 implements
-	IPlaybackHandler,
-	MessengerOperator<IPlaybackHandler>,
+	PlayableFile,
+	MessengerOperator<PlayableFile>,
 	MediaPlayer.OnCompletionListener,
 	MediaPlayer.OnErrorListener,
 	MediaPlayer.OnInfoListener,
@@ -29,15 +29,15 @@ implements
 
 	private final MediaPlayer mediaPlayer;
 	private float volume;
-	private final Promise<IPlaybackHandler> playbackPromise;
+	private final Promise<PlayableFile> playbackPromise;
 
-	private Messenger<IPlaybackHandler> playbackHandlerMessenger;
+	private Messenger<PlayableFile> playbackHandlerMessenger;
 
 	private int previousMediaPlayerPosition;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
-		playbackPromise = new Promise<>((MessengerOperator<IPlaybackHandler>) this);
+		playbackPromise = new Promise<>((MessengerOperator<PlayableFile>) this);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ implements
 	}
 
 	@Override
-	public synchronized Promise<IPlaybackHandler> promisePlayback() {
+	public synchronized Promise<PlayableFile> promisePlayback() {
 		if (isPlaying()) return playbackPromise;
 
 		try {
@@ -108,7 +108,7 @@ implements
 	}
 
 	@Override
-	public void send(Messenger<IPlaybackHandler> playbackHandlerMessenger) {
+	public void send(Messenger<PlayableFile> playbackHandlerMessenger) {
 		this.playbackHandlerMessenger = playbackHandlerMessenger;
 
 		playbackHandlerMessenger.cancellationRequested(this);

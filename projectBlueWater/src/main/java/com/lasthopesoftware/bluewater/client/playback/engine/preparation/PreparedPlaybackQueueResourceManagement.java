@@ -7,23 +7,23 @@ import java.io.Closeable;
 import java.io.IOException;
 
 public class PreparedPlaybackQueueResourceManagement implements Closeable {
-	private final IPlaybackPreparerProvider playbackPreparerProvider;
+	private final IPlayableFilePreparationSourceProvider playbackPreparerProvider;
 	private final IPreparedPlaybackQueueConfiguration preparedPlaybackQueueConfiguration;
 
-	private PreparedPlaybackQueue preparedPlaybackQueue;
+	private PreparedPlayableFileQueue preparedPlaybackQueue;
 
-	public PreparedPlaybackQueueResourceManagement(IPlaybackPreparerProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration preparedPlaybackQueueConfiguration) {
+	public PreparedPlaybackQueueResourceManagement(IPlayableFilePreparationSourceProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration preparedPlaybackQueueConfiguration) {
 		this.playbackPreparerProvider = playbackPreparerProvider;
 		this.preparedPlaybackQueueConfiguration = preparedPlaybackQueueConfiguration;
 	}
 
-	public PreparedPlaybackQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) throws IOException {
+	public PreparedPlayableFileQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) throws IOException {
 		close();
 
 		return preparedPlaybackQueue =
-			new PreparedPlaybackQueue(
+			new PreparedPlayableFileQueue(
 				preparedPlaybackQueueConfiguration,
-				this.playbackPreparerProvider.providePlaybackPreparer(),
+				this.playbackPreparerProvider.providePlayableFilePreparationSource(),
 				positionedFileQueue);
 	}
 

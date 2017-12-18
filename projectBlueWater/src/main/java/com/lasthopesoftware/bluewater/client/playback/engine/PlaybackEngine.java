@@ -9,10 +9,10 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPla
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlaybackPreparerProvider;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueueConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
@@ -56,7 +56,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaylistStateBr
 	private OnPlaybackStarted onPlaybackStarted;
 	private OnPlaybackCompleted onPlaybackCompleted;
 
-	public PlaybackEngine(IPlaybackPreparerProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration configuration, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
+	public PlaybackEngine(IPlayableFilePreparationSourceProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration configuration, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
 		preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(playbackPreparerProvider, configuration);
@@ -119,7 +119,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaylistStateBr
 			.eventually((nowPlaying) -> new Promise<>(messenger -> {
 				final IPositionedFileQueueProvider queueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 				try {
-					final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
+					final PreparedPlayableFileQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition));
 					startPlayback(preparedPlaybackQueue, filePosition)
 						.firstElement()
 						.subscribe(playbackFile -> messenger.sendResolution(playbackFile.asPositionedFile()), messenger::sendRejection);
@@ -196,11 +196,11 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaylistStateBr
 		final IPositionedFileQueueProvider positionedFileQueueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 
 		final IPositionedFileQueue fileQueue = positionedFileQueueProvider.provideQueue(nowPlaying.playlist, nowPlaying.playlistPosition);
-		final PreparedPlaybackQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(fileQueue);
+		final PreparedPlayableFileQueue preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(fileQueue);
 		startPlayback(preparedPlaybackQueue, nowPlaying.filePosition);
 	}
 
-	private ConnectableObservable<PositionedPlaybackFile> startPlayback(PreparedPlaybackQueue preparedPlaybackQueue, final long filePosition) throws IOException {
+	private ConnectableObservable<PositionedPlaybackFile> startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException {
 		if (playbackSubscription != null)
 			playbackSubscription.dispose();
 

@@ -5,11 +5,11 @@ import android.media.MediaPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
-final class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
+final class MediaPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
 	private final IFileUriProvider fileUriProvider;
 	private final IPlaybackInitialization<MediaPlayer> playbackInitialization;
@@ -20,7 +20,7 @@ final class MediaPlayerPlaybackPreparer implements IPlaybackPreparer {
 	}
 
 	@Override
-	public Promise<PreparedPlaybackFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
+	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return
 			fileUriProvider
 				.getFileUri(serviceFile)

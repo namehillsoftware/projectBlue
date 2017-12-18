@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenATypicalMaxVolume;
 
 
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 
@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.offset;
 
 public class WhenSettingTheVolumeToSeventyPercent {
 
-	private static IPlaybackHandler playbackHandler;
+	private static PlayableFile playbackHandler;
 	private static float returnedVolume;
 
 	@BeforeClass

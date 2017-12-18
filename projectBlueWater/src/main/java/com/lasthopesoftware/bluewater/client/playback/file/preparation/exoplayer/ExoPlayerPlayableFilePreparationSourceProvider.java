@@ -23,8 +23,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.pe
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -32,11 +32,11 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.joda.time.Minutes;
 
 
-public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider {
+public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayableFilePreparationSourceProvider {
 
 	private static final CreateAndHold<Integer> maxBufferMs = new Lazy<>(() -> (int) Minutes.minutes(5).toStandardDuration().getMillis());
-	private static final CreateAndHold<TrackSelector> trackSelector = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewTrackSelector);
-	private static final CreateAndHold<LoadControl> loadControl = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewLoadControl);
+	private static final CreateAndHold<TrackSelector> trackSelector = new Lazy<>(ExoPlayerPlayableFilePreparationSourceProvider::getNewTrackSelector);
+	private static final CreateAndHold<LoadControl> loadControl = new Lazy<>(ExoPlayerPlayableFilePreparationSourceProvider::getNewLoadControl);
 	private static final CreateAndHold<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
 	private final IFileUriProvider fileUriProvider;
@@ -45,7 +45,7 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 	private final Handler handler;
 	private final DiskFileCache diskFileCache;
 
-	public ExoPlayerPlaybackPreparerProvider(Context context, IFileUriProvider fileUriProvider, Library library) {
+	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, IFileUriProvider fileUriProvider, Library library) {
 		this.fileUriProvider = fileUriProvider;
 
 		final AudioCacheConfiguration audioCacheConfiguration = new AudioCacheConfiguration(library);
@@ -86,7 +86,7 @@ public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvi
 	}
 
 	@Override
-	public IPlaybackPreparer providePlaybackPreparer() {
+	public PlayableFilePreparationSource providePlayableFilePreparationSource() {
 		return new ExoPlayerPlaybackPreparer(
 			dataSourceFactoryProvider,
 			trackSelector.getObject(),

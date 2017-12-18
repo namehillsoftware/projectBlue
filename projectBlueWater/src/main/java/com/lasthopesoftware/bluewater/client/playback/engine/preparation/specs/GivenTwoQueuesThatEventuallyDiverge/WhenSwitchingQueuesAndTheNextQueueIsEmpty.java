@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenTwoQueuesThatEventuallyDiverge;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -15,10 +15,6 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-/**
- * Created by david on 1/4/17.
- */
 
 public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 	private static Promise<PositionedPlaybackFile> nextPreparedPlaybackFilePromise;
@@ -35,10 +31,10 @@ public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 				new PositionedFile(5, new ServiceFile(5)),
 				null);
 
-		final PreparedPlaybackQueue queue =
-			new PreparedPlaybackQueue(
+		final PreparedPlayableFileQueue queue =
+			new PreparedPlayableFileQueue(
 				() -> 1,
-				(file, preparedAt) -> new Promise<>(new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler())),
+				(file, preparedAt) -> new Promise<>(new FakePreparedPlayableFile<>(new FakeBufferingPlaybackHandler())),
 				positionedFileQueue);
 
 		queue.promiseNextPreparedPlaybackFile(0);

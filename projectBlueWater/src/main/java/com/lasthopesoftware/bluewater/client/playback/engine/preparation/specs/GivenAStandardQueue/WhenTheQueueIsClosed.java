@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenAStandardQueue;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -14,10 +14,6 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by david on 3/2/17.
- */
-
 public class WhenTheQueueIsClosed {
 
 	private static boolean isCancelled;
@@ -26,12 +22,10 @@ public class WhenTheQueueIsClosed {
 	public static void before() throws IOException {
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider = new CompletingFileQueueProvider();
 
-		final Promise<PreparedPlaybackFile> cancelRecordingPromise = new Promise<>((messenger) -> {
-			messenger.cancellationRequested(() -> isCancelled = true);
-		});
+		final Promise<PreparedPlayableFile> cancelRecordingPromise = new Promise<>((messenger) -> messenger.cancellationRequested(() -> isCancelled = true));
 
-		final PreparedPlaybackQueue queue =
-			new PreparedPlaybackQueue(
+		final PreparedPlayableFileQueue queue =
+			new PreparedPlayableFileQueue(
 				() -> 1,
 				(file, preparedAt) -> cancelRecordingPromise,
 				bufferingPlaybackQueuesProvider.provideQueue(Collections.singletonList(new ServiceFile(1)), 0));

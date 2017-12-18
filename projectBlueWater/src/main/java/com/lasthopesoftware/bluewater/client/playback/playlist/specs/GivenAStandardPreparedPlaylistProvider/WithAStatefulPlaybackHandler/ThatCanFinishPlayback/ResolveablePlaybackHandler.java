@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback;
 
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 
-	private final Promise<IPlaybackHandler> promise;
-	private Messenger<IPlaybackHandler> resolve;
+	private final Promise<PlayableFile> promise;
+	private Messenger<PlayableFile> resolve;
 
 	public ResolveablePlaybackHandler() {
 		promise = new Promise<>((messenger) -> this.resolve = messenger);
@@ -22,7 +22,7 @@ public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 	}
 
 	@Override
-	public Promise<IPlaybackHandler> promisePlayback() {
+	public Promise<PlayableFile> promisePlayback() {
 		super.promisePlayback();
 		return promise;
 	}

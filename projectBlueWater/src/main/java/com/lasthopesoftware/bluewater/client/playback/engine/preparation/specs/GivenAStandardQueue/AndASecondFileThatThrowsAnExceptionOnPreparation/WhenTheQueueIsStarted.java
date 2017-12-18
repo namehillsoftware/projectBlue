@@ -3,12 +3,12 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 public class WhenTheQueueIsStarted {
 
 	private static final FakeBufferingPlaybackHandler expectedPlaybackHandler = new FakeBufferingPlaybackHandler();
-	private static IPlaybackHandler returnedPlaybackHandler;
+	private static PlayableFile returnedPlaybackHandler;
 	private static Throwable error;
 
 	@BeforeClass
@@ -35,20 +35,20 @@ public class WhenTheQueueIsStarted {
 				.map(ServiceFile::new)
 				.collect(Collectors.toList());
 
-		final IPlaybackPreparer playbackPreparer = mock(IPlaybackPreparer.class);
+		final PlayableFilePreparationSource playbackPreparer = mock(PlayableFilePreparationSource.class);
 		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(0), 0))
-			.thenReturn(new Promise<>(new FakePreparedPlaybackFile<>(new FakeBufferingPlaybackHandler())));
+			.thenReturn(new Promise<>(new FakePreparedPlayableFile<>(new FakeBufferingPlaybackHandler())));
 
 		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(1), 0))
 			.thenReturn(new Promise<>(new Exception()))
-			.thenReturn(new Promise<>(new FakePreparedPlaybackFile<>(expectedPlaybackHandler)));
+			.thenReturn(new Promise<>(new FakePreparedPlayableFile<>(expectedPlaybackHandler)));
 
 		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CompletingFileQueueProvider();
 
 		final int startPosition = 0;
 
-		final PreparedPlaybackQueue queue = new PreparedPlaybackQueue(
+		final PreparedPlayableFileQueue queue = new PreparedPlayableFileQueue(
 			() -> 2,
 			playbackPreparer,
 			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition));
