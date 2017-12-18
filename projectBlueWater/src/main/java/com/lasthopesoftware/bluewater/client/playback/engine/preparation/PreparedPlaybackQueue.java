@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PreparedPlaybackQueue
@@ -47,7 +48,7 @@ implements
 	}
 
 	public PreparedPlaybackQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
-		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
 			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ArrayDeque<>(configuration.getMaxQueueSize());
@@ -96,7 +97,7 @@ implements
 	}
 
 	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(long preparedAt) {
-		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 
 		final PositionedFile positionedFile;
@@ -115,7 +116,7 @@ implements
 	}
 
 	private void beginQueueingPreparingPlayers() {
-		final ReentrantReadWriteLock.WriteLock writeLock = queueUpdateLock.writeLock();
+		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
 			if (bufferingMediaPlayerPromises.size() >= configuration.getMaxQueueSize()) return;

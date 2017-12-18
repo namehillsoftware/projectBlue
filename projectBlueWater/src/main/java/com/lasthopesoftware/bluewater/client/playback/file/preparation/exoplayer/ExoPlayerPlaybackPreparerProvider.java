@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueueConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -33,7 +32,7 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.joda.time.Minutes;
 
 
-public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider, IPreparedPlaybackQueueConfiguration {
+public class ExoPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider {
 
 	private static final CreateAndHold<Integer> maxBufferMs = new Lazy<>(() -> (int) Minutes.minutes(5).toStandardDuration().getMillis());
 	private static final CreateAndHold<TrackSelector> trackSelector = new Lazy<>(ExoPlayerPlaybackPreparerProvider::getNewTrackSelector);

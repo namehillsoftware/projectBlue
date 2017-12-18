@@ -5,11 +5,10 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlaybackPreparerProvider;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueueConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.MediaPlayerInitializer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
 
-public class MediaPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider, IPreparedPlaybackQueueConfiguration {
+public class MediaPlayerPlaybackPreparerProvider implements IPlaybackPreparerProvider {
 
 	private final IFileUriProvider fileUriProvider;
 	private final Context context;
