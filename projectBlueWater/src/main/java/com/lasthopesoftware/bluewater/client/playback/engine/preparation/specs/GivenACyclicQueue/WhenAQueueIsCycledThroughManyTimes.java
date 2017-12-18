@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
@@ -26,10 +25,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-
-/**
- * Created by david on 11/13/16.
- */
 
 public class WhenAQueueIsCycledThroughManyTimes {
 
@@ -58,7 +53,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 		final CyclicalFileQueueProvider bufferingPlaybackQueuesProvider
 			= new CyclicalFileQueueProvider();
 
-		final IPreparedPlaybackFileQueue queue =
+		final PreparedPlaybackQueue queue =
 			new PreparedPlaybackQueue(
 				() -> 1,
 				(file, preparedAt) -> new Promise<>(fileActionMap.get(file)),

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist;
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
@@ -20,7 +20,7 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
-	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
+	private final IPreparedPlaybackQueue preparedPlaybackFileProvider;
 	private final IPlaybackHandlerVolumeControllerFactory volumeControllerFactory;
 	private final long preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
@@ -30,7 +30,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
 	private IVolumeManagement volumeManager;
 
-	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, long preparedPosition) {
+	public PlaylistPlayer(IPreparedPlaybackQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, long preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
 		this.volumeControllerFactory = volumeControllerFactory;
 		this.preparedPosition = preparedPosition;

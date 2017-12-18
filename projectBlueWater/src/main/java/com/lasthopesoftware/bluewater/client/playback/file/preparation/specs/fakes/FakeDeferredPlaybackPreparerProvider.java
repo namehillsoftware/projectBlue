@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes;
 
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
@@ -16,6 +16,11 @@ public class FakeDeferredPlaybackPreparerProvider implements IPlaybackPreparerPr
 	@Override
 	public IPlaybackPreparer providePlaybackPreparer() {
 		return (file, preparedAt) -> new Promise<>(deferredResolution);
+	}
+
+	@Override
+	public int getMaxQueueSize() {
+		return 1;
 	}
 
 	public static class DeferredResolution implements MessengerOperator<PreparedPlaybackFile> {

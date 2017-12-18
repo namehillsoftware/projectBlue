@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
 
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparerProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 
 import java.io.Closeable;
@@ -21,12 +20,11 @@ public class PreparedPlaybackQueueResourceManagement implements Closeable {
 	public PreparedPlaybackQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) throws IOException {
 		close();
 
-		return
-			preparedPlaybackQueue =
-				new PreparedPlaybackQueue(
-					preparedPlaybackQueueConfiguration,
-					this.playbackPreparerProvider.providePlaybackPreparer(),
-					positionedFileQueue);
+		return preparedPlaybackQueue =
+			new PreparedPlaybackQueue(
+				preparedPlaybackQueueConfiguration,
+				this.playbackPreparerProvider.providePlaybackPreparer(),
+				positionedFileQueue);
 	}
 
 	public boolean tryUpdateQueue(IPositionedFileQueue positionedFileQueue) {

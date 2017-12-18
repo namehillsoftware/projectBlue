@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 public class WhenTheQueueIsStarted {
-	private static IPreparedPlaybackFileQueue queue;
+	private static IPreparedPlaybackQueue queue;
 	private static int startPosition;
 
 	@BeforeClass

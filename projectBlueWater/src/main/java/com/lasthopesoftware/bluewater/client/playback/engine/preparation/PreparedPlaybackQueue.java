@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PreparedPlaybackQueue
 implements
-	IPreparedPlaybackFileQueue,
+	IPreparedPlaybackQueue,
 	ResponseAction<IBufferingPlaybackFile>,
 	ImmediateResponse<PositionedPreparedPlaybackFile, PositionedPlaybackFile>,
 	PromisedResponse<PositionedPreparedPlaybackFile, PositionedPreparedPlaybackFile>
@@ -32,16 +32,16 @@ implements
 	private final ReentrantReadWriteLock queueUpdateLock = new ReentrantReadWriteLock();
 
 	private final IPreparedPlaybackQueueConfiguration configuration;
-	private final IPlaybackPreparer playbackPreparerTaskFactory;
+	private final IPlaybackPreparer playbackPreparer;
 	private final Queue<PositionedPreparingFile> bufferingMediaPlayerPromises;
 
 	private IPositionedFileQueue positionedFileQueue;
 
 	private PositionedPreparingFile currentPreparingPlaybackHandlerPromise;
 
-	public PreparedPlaybackQueue(IPreparedPlaybackQueueConfiguration configuration, IPlaybackPreparer playbackPreparerTaskFactory, IPositionedFileQueue positionedFileQueue) {
+	public PreparedPlaybackQueue(IPreparedPlaybackQueueConfiguration configuration, IPlaybackPreparer playbackPreparer, IPositionedFileQueue positionedFileQueue) {
 		this.configuration = configuration;
-		this.playbackPreparerTaskFactory = playbackPreparerTaskFactory;
+		this.playbackPreparer = playbackPreparer;
 		this.positionedFileQueue = positionedFileQueue;
 		bufferingMediaPlayerPromises = new ArrayDeque<>(configuration.getMaxQueueSize());
 	}
@@ -111,7 +111,7 @@ implements
 		return
 			new PositionedPreparingFile(
 				positionedFile,
-				playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), preparedAt));
+				playbackPreparer.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), preparedAt));
 	}
 
 	private void beginQueueingPreparingPlayers() {
@@ -170,7 +170,7 @@ implements
 		currentPreparingPlaybackHandlerPromise.preparedPlaybackFilePromise.cancel();
 		currentPreparingPlaybackHandlerPromise = new PositionedPreparingFile(
 			positionedFile,
-			playbackPreparerTaskFactory.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), 0));
+			playbackPreparer.promisePreparedPlaybackHandler(positionedFile.getServiceFile(), 0));
 
 		return currentPreparingPlaybackHandlerPromise.promisePositionedPreparedPlaybackFile();
 	}
