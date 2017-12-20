@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.error;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
@@ -10,10 +10,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-/**
- * Created by david on 9/21/16.
- */
 
 public class MediaPlayerErrorException extends PlaybackException {
 	private static final CreateAndHold<Set<Integer>> mediaErrorExtrasLazy = new AbstractSynchronousLazy<Set<Integer>>() {
@@ -31,7 +27,7 @@ public class MediaPlayerErrorException extends PlaybackException {
 	public final int what;
 	public final int extra;
 
-	public MediaPlayerErrorException(IPlaybackHandler playbackHandler, MediaPlayer mediaPlayer, int what, int extra) {
+	public MediaPlayerErrorException(PlayableFile playbackHandler, MediaPlayer mediaPlayer, int what, int extra) {
 		super(playbackHandler);
 
 		this.mediaPlayer = mediaPlayer;

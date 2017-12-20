@@ -5,14 +5,14 @@ import android.support.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
 public final class PositionedPlaybackFile implements Comparable<PositionedPlaybackFile> {
-	private final IPlaybackHandler playbackHandler;
+	private final PlayableFile playbackHandler;
 	private final PositionedFile positionedFile;
 
-	public PositionedPlaybackFile(int playlistPosition, IPlaybackHandler playbackHandler, ServiceFile serviceFile) {
+	public PositionedPlaybackFile(int playlistPosition, PlayableFile playbackHandler, ServiceFile serviceFile) {
 		this(playbackHandler, new PositionedFile(playlistPosition, serviceFile));
 	}
 
-	public PositionedPlaybackFile(IPlaybackHandler playbackHandler, PositionedFile positionedFile) {
+	public PositionedPlaybackFile(PlayableFile playbackHandler, PositionedFile positionedFile) {
 		this.positionedFile = positionedFile;
 		this.playbackHandler = playbackHandler;
 	}
@@ -25,7 +25,7 @@ public final class PositionedPlaybackFile implements Comparable<PositionedPlayba
 		return positionedFile.getServiceFile();
 	}
 
-	public IPlaybackHandler getPlaybackHandler() {
+	public PlayableFile getPlaybackHandler() {
 		return playbackHandler;
 	}
 

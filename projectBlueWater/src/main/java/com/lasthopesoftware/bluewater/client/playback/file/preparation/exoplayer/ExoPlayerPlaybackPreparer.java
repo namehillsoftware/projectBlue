@@ -10,12 +10,12 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.IPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
-final class ExoPlayerPlaybackPreparer implements IPlaybackPreparer {
+final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
 	private final DataSourceFactoryProvider dataSourceFactoryProvider;
 	private final TrackSelector trackSelector;
@@ -38,7 +38,7 @@ final class ExoPlayerPlaybackPreparer implements IPlaybackPreparer {
 	}
 
 	@Override
-	public Promise<PreparedPlaybackFile> promisePreparedPlaybackHandler(ServiceFile serviceFile, long preparedAt) {
+	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return diskFileCache.promiseCachedFile(String.valueOf(serviceFile.getKey()))
 			.eventually(file -> file != null
 				? new Promise<>(Uri.fromFile(file))

@@ -46,19 +46,21 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngineBuilder;
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.queues.PreparationException;
-import com.lasthopesoftware.bluewater.client.playback.queues.providers.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
@@ -69,8 +71,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteCo
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedMediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedRemoteControlClientBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.state.PlaylistManager;
-import com.lasthopesoftware.bluewater.client.playback.state.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -236,7 +236,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private boolean areListenersRegistered = false;
 	private boolean isNotificationForeground = false;
 
-	private PlaylistManager playlistManager;
+	private PlaybackEngine playbackEngine;
 	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private PositionedPlaybackFile positionedPlaybackFile;
 	private boolean isPlaying;
@@ -251,12 +251,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		@Override
 		protected final Runnable create() throws Exception {
 			return () -> {
-				if (playlistManager == null) {
+				if (playbackEngine == null) {
 					stopSelf(startId);
 					return;
 				}
 
-				playlistManager.resume();
+				playbackEngine.resume();
 			};
 		}
 	};
@@ -459,11 +459,11 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			return START_NOT_STICKY;
 		}
 
-		if ((playlistManager == null || !playlistManager.isPlaying()) && Action.playbackStartingActions.contains(action))
+		if ((playbackEngine == null || !playbackEngine.isPlaying()) && Action.playbackStartingActions.contains(action))
 			notifyStartingService();
 		
 		if (SessionConnection.isBuilt()) {
-			if (playlistManager != null) {
+			if (playbackEngine != null) {
 				actOnIntent(intent);
 				return START_NOT_STICKY;
 			}
@@ -539,9 +539,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		notifyNotificationManager(notifyBuilder);
 	}
 
-	private PlaylistManager initializePlaybackPlaylistStateManager(Library library) throws Exception {
-		if (playlistManager != null)
-			playlistManager.close();
+	private PlaybackEngine initializePlaybackPlaylistStateManager(Library library) throws Exception {
+		if (playbackEngine != null)
+			playbackEngine.close();
 
 		final SpecificLibraryProvider libraryProvider =
 			new SpecificLibraryProvider(
@@ -588,30 +588,30 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(this, library, cachedFilePropertiesProvider);
 
-		final PlaybackEngineBuilder playbackEngineBuilder =
-			new PlaybackEngineBuilder(
+		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
+			new PreparedPlaybackQueueFeederBuilder(
 				this,
 				new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess),
 				new SelectedPlaybackEngineTypeAccess(this),
 				DebugFlag.getInstance());
 
-		final PlaybackEngine playbackEngine = playbackEngineBuilder.build(library);
+		final IPlayableFilePreparationSourceProvider playbackEngine = playbackEngineBuilder.build(library);
 
-		playlistManager =
-			new PlaylistManager(
+		this.playbackEngine =
+			new PlaybackEngine(
 				playbackEngine,
 				playbackEngine,
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				playlistPlaybackBootstrapper);
 
-		playlistManager
+		this.playbackEngine
 			.setOnPlaybackStarted(this::handlePlaybackStarted)
 			.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
 			.setOnPlaylistError(this::uncaughtExceptionHandler)
 			.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete);
 
-		return playlistManager;
+		return this.playbackEngine;
 	}
 	
 	private void actOnIntent(final Intent intent) {
@@ -624,12 +624,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		if (action == null) return;
 
 		if (action.equals(Action.repeating)) {
-			playlistManager.playRepeatedly();
+			playbackEngine.playRepeatedly();
 			return;
 		}
 
 		if (action.equals(Action.completing)) {
-			playlistManager.playToCompletion();
+			playbackEngine.playToCompletion();
 			return;
 		}
 
@@ -640,7 +640,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			FileStringListUtilities
 				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
 				.then(playlist -> {
-					playlistManager.startPlaylist(playlist, playlistPosition, 0);
+					playbackEngine.startPlaylist(playlist, playlistPosition, 0);
 					NowPlayingActivity.startNowPlayingActivity(this);
 
 					return null;
@@ -654,7 +654,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (action.equals(Action.play)) {
 			isPlaying = true;
-        	playlistManager.resume();
+        	playbackEngine.resume();
 
         	return;
         }
@@ -671,7 +671,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
 			if (filePosition < 0) return;
 
-			playlistManager
+			playbackEngine
 				.changePosition(playlistPosition, filePosition)
 				.then(this::broadcastChangedFileBackground)
 				.excuse(UnhandledRejectionHandler);
@@ -680,7 +680,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		if (action.equals(Action.previous)) {
-			playlistManager
+			playbackEngine
 				.skipToPrevious()
 				.then(this::broadcastChangedFileBackground)
 				.excuse(UnhandledRejectionHandler);
@@ -688,7 +688,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 		}
 
 		if (action.equals(Action.next)) {
-			playlistManager
+			playbackEngine
 				.skipToNext()
 				.then(this::broadcastChangedFileBackground)
 				.excuse(UnhandledRejectionHandler);
@@ -704,7 +704,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (fileKey < 0) return;
 
-			playlistManager
+			playbackEngine
 				.addFile(new ServiceFile(fileKey))
 				.eventually(LoopedInPromise.response(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
@@ -719,7 +719,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return;
 
-			playlistManager.removeFileAtPosition(filePosition).excuse(UnhandledRejectionHandler);
+			playbackEngine.removeFileAtPosition(filePosition).excuse(UnhandledRejectionHandler);
 		}
 	}
 
@@ -743,9 +743,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
-		if (playlistManager == null) return;
+		if (playbackEngine == null) return;
 
-		playlistManager.pause();
+		playbackEngine.pause();
 
 		if (positionedPlaybackFile != null)
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
@@ -849,7 +849,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 	private void closeAndRestartPlaylistManager() {
 		try {
-			playlistManager.close();
+			playbackEngine.close();
 		} catch (Exception e) {
 			uncaughtExceptionHandler(e);
 			return;
@@ -860,7 +860,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			.then(perform(this::initializePlaybackPlaylistStateManager))
 			.then(v -> {
 				if (isPlaying)
-					playlistManager.resume();
+					playbackEngine.resume();
 
 				return null;
 			})
@@ -874,13 +874,13 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			if (lazyPlaylistVolumeManager.isCreated())
 				lazyPlaylistVolumeManager.getObject().setVolume(1.0f);
 
-			if (playlistManager != null && !playlistManager.isPlaying())
-				playlistManager.resume();
+			if (playbackEngine != null && !playbackEngine.isPlaying())
+				playbackEngine.resume();
 
 			return;
 		}
 		
-		if (playlistManager == null || !playlistManager.isPlaying()) return;
+		if (playbackEngine == null || !playbackEngine.isPlaying()) return;
 
 	    switch (focusChange) {
 	        case AudioManager.AUDIOFOCUS_LOSS:
@@ -902,7 +902,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
 
-		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
@@ -994,9 +994,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			}
 		}
 
-		if (playlistManager != null) {
+		if (playbackEngine != null) {
 			try {
-				playlistManager.close();
+				playbackEngine.close();
 			} catch (Exception e) {
 				logger.warn("There was an error closing the prepared playback queue", e);
 			}

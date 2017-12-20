@@ -21,7 +21,7 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.TransferringExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
-final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaybackFile> {
+final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayableFile> {
 
 	private final DataSourceFactoryProvider dataSourceFactoryProvider;
 	private final TrackSelector trackSelector;
@@ -58,7 +58,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 	}
 
 	@Override
-	public Promise<PreparedPlaybackFile> promiseResponse(Uri uri) throws Throwable {
+	public Promise<PreparedPlayableFile> promiseResponse(Uri uri) throws Throwable {
 		return new Promise<>(
 			new ExoPlayerPreparationOperator(
 				dataSourceFactoryProvider,
@@ -72,7 +72,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 				prepareAt));
 	}
 
-	private static final class ExoPlayerPreparationOperator implements MessengerOperator<PreparedPlaybackFile> {
+	private static final class ExoPlayerPreparationOperator implements MessengerOperator<PreparedPlayableFile> {
 
 		private final DataSourceFactoryProvider dataSourceFactoryProvider;
 		private final TrackSelector trackSelector;
@@ -97,7 +97,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		}
 
 		@Override
-		public void send(Messenger<PreparedPlaybackFile> messenger) {
+		public void send(Messenger<PreparedPlayableFile> messenger) {
 			final CancellationToken cancellationToken = new CancellationToken();
 			messenger.cancellationRequested(cancellationToken);
 
@@ -152,12 +152,12 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 		private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 		private final SimpleExoPlayer exoPlayer;
-		private final Messenger<PreparedPlaybackFile> messenger;
+		private final Messenger<PreparedPlayableFile> messenger;
 		private final TransferringExoPlayer<? super DataSource> transferringExoPlayer;
 		private final long prepareAt;
 		private final CancellationToken cancellationToken;
 
-		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, long prepareAt, Messenger<PreparedPlaybackFile> messenger, CancellationToken cancellationToken) {
+		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
 			this.exoPlayer = exoPlayer;
 			this.transferringExoPlayer = transferringExoPlayer;
 			this.prepareAt = prepareAt;
@@ -201,7 +201,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayb
 
 			exoPlayer.removeListener(this);
 
-			messenger.sendResolution(new PreparedPlaybackFile(new ExoPlayerPlaybackHandler(exoPlayer), transferringExoPlayer));
+			messenger.sendResolution(new PreparedPlayableFile(new ExoPlayerPlaybackHandler(exoPlayer), transferringExoPlayer));
 		}
 
 		@Override

@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist;
 
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.queues.IPreparedPlaybackFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -20,7 +20,7 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
-	private final IPreparedPlaybackFileQueue preparedPlaybackFileProvider;
+	private final PreparedPlayableFileQueue preparedPlaybackFileProvider;
 	private final IPlaybackHandlerVolumeControllerFactory volumeControllerFactory;
 	private final long preparedPosition;
 	private PositionedPlaybackFile positionedPlaybackFile;
@@ -30,7 +30,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private ObservableEmitter<PositionedPlaybackFile> emitter;
 	private IVolumeManagement volumeManager;
 
-	public PlaylistPlayer(IPreparedPlaybackFileQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, long preparedPosition) {
+	public PlaylistPlayer(PreparedPlayableFileQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, long preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
 		this.volumeControllerFactory = volumeControllerFactory;
 		this.preparedPosition = preparedPosition;
@@ -49,7 +49,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	public void pause() {
 		if (positionedPlaybackFile == null) return;
 
-		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
 	}
@@ -108,17 +108,17 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		return positionedPlaybackFile;
 	}
 
-	private Promise<IPlaybackHandler> startFilePlayback(PositionedPlaybackFile positionedPlaybackFile) {
-		final IPlaybackHandler playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+	private Promise<PlayableFile> startFilePlayback(PositionedPlaybackFile positionedPlaybackFile) {
+		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
-		final Promise<IPlaybackHandler> promisedPlayback = playbackHandler.promisePlayback();
+		final Promise<PlayableFile> promisedPlayback = playbackHandler.promisePlayback();
 
 		promisedPlayback.then(perform(this::closeAndStartNextFile));
 
 		return promisedPlayback;
 	}
 
-	private void closeAndStartNextFile(IPlaybackHandler playbackHandler) {
+	private void closeAndStartNextFile(PlayableFile playbackHandler) {
 		try {
 			playbackHandler.close();
 		} catch (IOException e) {

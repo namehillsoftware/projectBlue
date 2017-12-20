@@ -18,23 +18,23 @@ import java.io.IOException;
 
 public class ExoPlayerPlaybackHandler
 implements
-	IPlaybackHandler,
+	PlayableFile,
 	Player.EventListener,
-	MessengerOperator<IPlaybackHandler>,
+	MessengerOperator<PlayableFile>,
 	Runnable
 {
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final SimpleExoPlayer exoPlayer;
-	private final Promise<IPlaybackHandler> playbackHandlerPromise;
-	private Messenger<IPlaybackHandler> playbackHandlerMessenger;
+	private final Promise<PlayableFile> playbackHandlerPromise;
+	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
 
 	public ExoPlayerPlaybackHandler(SimpleExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
 		exoPlayer.addListener(this);
 
-		this.playbackHandlerPromise = new Promise<>((MessengerOperator<IPlaybackHandler>) this);
+		this.playbackHandlerPromise = new Promise<>((MessengerOperator<PlayableFile>) this);
 	}
 
 	@Override
@@ -69,7 +69,7 @@ implements
 	}
 
 	@Override
-	public Promise<IPlaybackHandler> promisePlayback() {
+	public Promise<PlayableFile> promisePlayback() {
 		exoPlayer.setPlayWhenReady(true);
 		isPlaying = true;
 		return playbackHandlerPromise;
@@ -81,7 +81,7 @@ implements
 	}
 
 	@Override
-	public void send(Messenger<IPlaybackHandler> playbackHandlerMessenger) {
+	public void send(Messenger<PlayableFile> playbackHandlerMessenger) {
 		this.playbackHandlerMessenger = playbackHandlerMessenger;
 
 		playbackHandlerMessenger.cancellationRequested(this);

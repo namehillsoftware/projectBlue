@@ -1,19 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.file.error;
 
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
-
-/**
- * Created by david on 11/4/16.
- */
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 
 public class PlaybackException extends Exception {
-	public final IPlaybackHandler playbackHandler;
+	public final PlayableFile playbackHandler;
 
-	public PlaybackException(IPlaybackHandler playbackHandler) {
+	public PlaybackException(PlayableFile playbackHandler) {
 		this(playbackHandler, null);
 	}
 
-	public PlaybackException(IPlaybackHandler playbackHandler, Throwable cause) {
+	public PlaybackException(PlayableFile playbackHandler, Throwable cause) {
 		super(cause);
 		this.playbackHandler = playbackHandler;
 	}

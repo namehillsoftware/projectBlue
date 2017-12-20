@@ -1,16 +1,16 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume;
 
-import com.lasthopesoftware.bluewater.client.playback.file.IPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 
 
 public class PlaybackHandlerMaxVolumeModifier implements IVolumeManagement {
 
-	private final IPlaybackHandler playbackHandler;
+	private final PlayableFile playbackHandler;
 	private float unadjustedVolume;
 	private float maxFileVolume = 1;
 
-	public PlaybackHandlerMaxVolumeModifier(IPlaybackHandler playbackHandler, float initialHandlerVolume) {
+	public PlaybackHandlerMaxVolumeModifier(PlayableFile playbackHandler, float initialHandlerVolume) {
 		this.playbackHandler = playbackHandler;
 		this.unadjustedVolume = initialHandlerVolume;
 
