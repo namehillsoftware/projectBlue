@@ -595,23 +595,23 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 				new SelectedPlaybackEngineTypeAccess(this),
 				DebugFlag.getInstance());
 
-		final IPlayableFilePreparationSourceProvider playbackEngine = playbackEngineBuilder.build(library);
+		final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
 
-		this.playbackEngine =
+		playbackEngine =
 			new PlaybackEngine(
-				playbackEngine,
-				playbackEngine,
+				preparationSourceProvider,
+				preparationSourceProvider,
 				QueueProviders.providers(),
 				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 				playlistPlaybackBootstrapper);
 
-		this.playbackEngine
+		playbackEngine
 			.setOnPlaybackStarted(this::handlePlaybackStarted)
 			.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
 			.setOnPlaylistError(this::uncaughtExceptionHandler)
 			.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete);
 
-		return this.playbackEngine;
+		return playbackEngine;
 	}
 	
 	private void actOnIntent(final Intent intent) {
@@ -900,15 +900,21 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
-
 		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
 
-		if (playbackHandler instanceof EmptyPlaybackHandler) return;
+		if (playbackHandler instanceof EmptyPlaybackHandler) {
+			lazyPlaybackBroadcaster.getObject()
+				.sendPlaybackBroadcast(
+					PlaylistEvents.onPlaylistChange,
+					lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
+					positionedPlaybackFile.asPositionedFile());
+			return;
+		}
 
+		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
 		final Disposable localFilePositionSubscription = filePositionSubscription =

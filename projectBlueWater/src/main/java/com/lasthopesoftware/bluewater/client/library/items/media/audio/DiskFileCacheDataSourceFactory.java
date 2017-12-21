@@ -8,7 +8,6 @@ import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -25,8 +24,8 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 		@Override
 		protected OkHttpClient create() throws Exception {
 			return new OkHttpClient.Builder()
-				.readTimeout(1, TimeUnit.MINUTES)
-				.retryOnConnectionFailure(true)
+				.readTimeout(45, TimeUnit.SECONDS)
+				.retryOnConnectionFailure(false)
 				.build();
 		}
 	};
