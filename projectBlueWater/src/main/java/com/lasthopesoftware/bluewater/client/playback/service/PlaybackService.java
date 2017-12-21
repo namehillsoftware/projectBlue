@@ -978,11 +978,9 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	}
 
 	private void onPlaylistPlaybackComplete() {
-		isPlaying = false;
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
 
-		stopNotification();
-		if (areListenersRegistered) unregisterListeners();
+		stopSelf(startId);
 	}
 		
 	@Override
