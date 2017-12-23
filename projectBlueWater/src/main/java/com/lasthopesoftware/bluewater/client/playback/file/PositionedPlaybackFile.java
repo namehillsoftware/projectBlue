@@ -25,7 +25,7 @@ public final class PositionedPlaybackFile implements Comparable<PositionedPlayba
 		return positionedFile.getServiceFile();
 	}
 
-	public PlayableFile getPlaybackHandler() {
+	public PlayableFile getPlayableFile() {
 		return playbackHandler;
 	}
 

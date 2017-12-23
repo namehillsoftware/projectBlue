@@ -35,6 +35,7 @@ public class WhenPlaybackCompletes {
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
 	private static PositionedPlaybackFile observedPlaybackFile;
+	private static PositionedFile resetPositionedFile;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -60,6 +61,7 @@ public class WhenPlaybackCompletes {
 
 		playbackEngine
 			.setOnPlayingFileChanged(f -> observedPlaybackFile = f)
+			.setOnPlaylistReset(f -> resetPositionedFile = f)
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -95,7 +97,12 @@ public class WhenPlaybackCompletes {
 
 	@Test
 	public void thenTheObservedFilePositionIsCorrect() {
-		assertThat(observedPlaybackFile.asPositionedFile()).isEqualTo(new PositionedFile(0, new ServiceFile(1)));
+		assertThat(observedPlaybackFile.asPositionedFile()).isEqualTo(new PositionedFile(4, new ServiceFile(5)));
+	}
+
+	@Test
+	public void thenTheResetFilePositionIsZero() {
+		assertThat(resetPositionedFile).isEqualTo(new PositionedFile(0, new ServiceFile(1)));
 	}
 
 	@Test

@@ -56,7 +56,7 @@ public class WhenTheQueueIsStarted {
 
 		queue.promiseNextPreparedPlaybackFile(0)
 			.eventually(p -> queue.promiseNextPreparedPlaybackFile(0))
-			.then(pf -> returnedPlaybackHandler = pf.getPlaybackHandler())
+			.then(pf -> returnedPlaybackHandler = pf.getPlayableFile())
 			.excuse(err -> {
 				if (err instanceof PreparationException)
 					caughtException = (PreparationException)err;

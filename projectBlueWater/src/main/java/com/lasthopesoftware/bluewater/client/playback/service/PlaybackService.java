@@ -609,7 +609,8 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 			.setOnPlaybackStarted(this::handlePlaybackStarted)
 			.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
 			.setOnPlaylistError(this::uncaughtExceptionHandler)
-			.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete);
+			.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
+			.setOnPlaylistReset(this::broadcastResetPlaylist);
 
 		return playbackEngine;
 	}
@@ -900,19 +901,12 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private void changePositionedPlaybackFile(PositionedPlaybackFile positionedPlaybackFile) {
 		this.positionedPlaybackFile = positionedPlaybackFile;
 
-		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+		final PlayableFile playbackHandler = positionedPlaybackFile.getPlayableFile();
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
 
-		if (playbackHandler instanceof EmptyPlaybackHandler) {
-			lazyPlaybackBroadcaster.getObject()
-				.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistChange,
-					lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
-					positionedPlaybackFile.asPositionedFile());
-			return;
-		}
+		if (playbackHandler instanceof EmptyPlaybackHandler) return;
 
 		broadcastChangedFileForeground(positionedPlaybackFile.asPositionedFile());
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlaybackFile.asPositionedFile());
@@ -933,6 +927,14 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
+	}
+
+	private void broadcastResetPlaylist(PositionedFile positionedFile) {
+		lazyPlaybackBroadcaster.getObject()
+			.sendPlaybackBroadcast(
+				PlaylistEvents.onPlaylistChange,
+				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
+				positionedFile);
 	}
 
 	private PositionedFile broadcastChangedFileBackground(PositionedFile positionedFile) {

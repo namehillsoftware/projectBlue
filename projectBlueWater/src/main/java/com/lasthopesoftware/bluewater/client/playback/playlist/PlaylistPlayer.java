@@ -49,7 +49,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	public void pause() {
 		if (positionedPlaybackFile == null) return;
 
-		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+		final PlayableFile playbackHandler = positionedPlaybackFile.getPlayableFile();
 
 		if (playbackHandler.isPlaying()) playbackHandler.pause();
 	}
@@ -57,12 +57,12 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	@Override
 	public void resume() {
 		if (positionedPlaybackFile != null)
-			positionedPlaybackFile.getPlaybackHandler().promisePlayback();
+			positionedPlaybackFile.getPlayableFile().promisePlayback();
 	}
 
 	@Override
 	public boolean isPlaying() {
-		return positionedPlaybackFile != null && positionedPlaybackFile.getPlaybackHandler().isPlaying();
+		return positionedPlaybackFile != null && positionedPlaybackFile.getPlayableFile().isPlaying();
 	}
 
 	@Override
@@ -109,7 +109,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private Promise<PlayableFile> startFilePlayback(PositionedPlaybackFile positionedPlaybackFile) {
-		final PlayableFile playbackHandler = positionedPlaybackFile.getPlaybackHandler();
+		final PlayableFile playbackHandler = positionedPlaybackFile.getPlayableFile();
 
 		final Promise<PlayableFile> promisedPlayback = playbackHandler.promisePlayback();
 
@@ -133,7 +133,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private void haltPlayback() {
 		try {
 			if (positionedPlaybackFile != null)
-				positionedPlaybackFile.getPlaybackHandler().close();
+				positionedPlaybackFile.getPlayableFile().close();
 
 			doCompletion();
 		} catch (IOException e) {
