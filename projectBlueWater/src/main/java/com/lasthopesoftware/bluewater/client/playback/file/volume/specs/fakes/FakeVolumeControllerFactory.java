@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManage
 public class FakeVolumeControllerFactory implements IPlaybackHandlerVolumeControllerFactory {
 	@Override
 	public IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile, float initialVolume) {
-		positionedPlaybackFile.getPlaybackHandler().setVolume(initialVolume);
+		positionedPlaybackFile.getPlayableFile().setVolume(initialVolume);
 		return new FakeVolumeManager(positionedPlaybackFile);
 	}
 
@@ -22,8 +22,8 @@ public class FakeVolumeControllerFactory implements IPlaybackHandlerVolumeContro
 
 		@Override
 		public float setVolume(float volume) {
-			positionedPlaybackFile.getPlaybackHandler().setVolume(volume);
-			return positionedPlaybackFile.getPlaybackHandler().getVolume();
+			positionedPlaybackFile.getPlayableFile().setVolume(volume);
+			return positionedPlaybackFile.getPlayableFile().getVolume();
 		}
 	}
 }
