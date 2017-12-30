@@ -71,6 +71,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteCo
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedMediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedRemoteControlClientBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.IConnectedDeviceBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -97,6 +98,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import edu.emory.mathcs.backport.java.util.Collections;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 
@@ -556,7 +558,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
 		remoteControlProxy =
-			new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
+			new RemoteControlProxy(Collections.<IConnectedDeviceBroadcaster>singleton(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
 				new ConnectedMediaSessionBroadcaster(
 					this,
 					cachedFilePropertiesProvider,
@@ -566,7 +568,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					this,
 					cachedFilePropertiesProvider,
 					imageProvider,
-					remoteControlClient.getObject()));
+					remoteControlClient.getObject())));
 
 		localBroadcastManagerLazy
 			.getObject()
