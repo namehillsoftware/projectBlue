@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -22,6 +21,7 @@ import android.os.PowerManager;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
@@ -71,7 +71,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteCo
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedMediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.ConnectedRemoteControlClientBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.IConnectedDeviceBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -98,7 +97,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import edu.emory.mathcs.backport.java.util.Collections;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 
@@ -186,7 +184,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
 
-	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
+	private final CreateAndHold<NotificationManagerCompat> notificationManagerLazy = new Lazy<>(() -> NotificationManagerCompat.from(this));
 	private final CreateAndHold<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
 	private final CreateAndHold<LocalBroadcastManager> localBroadcastManagerLazy = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 	private final CreateAndHold<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
@@ -558,7 +556,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 
 		final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
 		remoteControlProxy =
-			new RemoteControlProxy(Collections.<IConnectedDeviceBroadcaster>singleton(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
+			new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
 				new ConnectedMediaSessionBroadcaster(
 					this,
 					cachedFilePropertiesProvider,
@@ -568,7 +566,7 @@ public class PlaybackService extends Service implements OnAudioFocusChangeListen
 					this,
 					cachedFilePropertiesProvider,
 					imageProvider,
-					remoteControlClient.getObject())));
+					remoteControlClient.getObject()));
 
 		localBroadcastManagerLazy
 			.getObject()
