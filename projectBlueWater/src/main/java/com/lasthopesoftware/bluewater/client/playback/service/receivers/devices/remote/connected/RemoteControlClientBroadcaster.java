@@ -11,13 +11,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConnectedRemoteControlClientBroadcaster implements IConnectedDeviceBroadcaster {
-	private static final Logger logger = LoggerFactory.getLogger(ConnectedRemoteControlClientBroadcaster.class);
+public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
+	private static final Logger logger = LoggerFactory.getLogger(RemoteControlClientBroadcaster.class);
 
 	private static final float playbackSpeed = 1.0f;
 
@@ -37,7 +38,7 @@ public class ConnectedRemoteControlClientBroadcaster implements IConnectedDevice
 	private volatile boolean isPlaying;
 	private Bitmap remoteClientBitmap;
 
-	public ConnectedRemoteControlClientBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
+	public RemoteControlClientBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
 		this.context = context;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
