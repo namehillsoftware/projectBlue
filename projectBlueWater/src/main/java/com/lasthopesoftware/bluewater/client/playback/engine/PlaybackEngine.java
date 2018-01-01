@@ -248,7 +248,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 				changePosition(0, 0)
 					.then(positionedFile -> {
-						if (onPlayingFileChanged != null)
+						if (onPlaylistReset != null)
 							onPlaylistReset.onPlaylistReset(positionedFile);
 
 						if (onPlaybackCompleted != null)

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,12 +54,15 @@ public class WhenObservingPlayback {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
-		final CountDownLatch countDownLatch = new CountDownLatch(5);
+		final CountDownLatch countDownLatch = new CountDownLatch(6);
 
 		playbackEngine
 			.setOnPlaybackStarted(p -> firstPlayingFile = p)
 			.setOnPlayingFileChanged(p -> countDownLatch.countDown())
-			.setOnPlaybackCompleted(() -> isCompleted = true)
+			.setOnPlaybackCompleted(() -> {
+				isCompleted = true;
+				countDownLatch.countDown();
+			})
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -77,7 +79,7 @@ public class WhenObservingPlayback {
 		}
 		playingPlaybackHandler.resolve();
 
-		countDownLatch.await(1, TimeUnit.SECONDS);
+		countDownLatch.await();
 
 		isPlaying = playbackEngine.isPlaying();
 	}
