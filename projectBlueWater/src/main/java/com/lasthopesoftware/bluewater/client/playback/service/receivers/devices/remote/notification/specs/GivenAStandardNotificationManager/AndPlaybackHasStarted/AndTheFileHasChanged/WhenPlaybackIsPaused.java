@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -26,9 +26,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-public class WhenTheFileChanges {
-
-	private static final Notification startedNotification = new Notification();
+public class WhenPlaybackIsPaused {
+	private static final Notification pausedNotification = new Notification();
 	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
 	private static final NotificationManager notificationManager = mock(NotificationManager.class);
 	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
@@ -38,7 +37,10 @@ public class WhenTheFileChanges {
 		protected Object create() throws Throwable {
 
 			when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), true))
-				.thenReturn(new Promise<>(startedNotification));
+				.thenReturn(new Promise<>(new Notification()));
+
+			when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), false))
+				.thenReturn(new Promise<>(pausedNotification));
 
 			final NotificationBroadcaster notificationBroadcaster =
 				new NotificationBroadcaster(
@@ -49,6 +51,7 @@ public class WhenTheFileChanges {
 
 			notificationBroadcaster.setPlaying();
 			notificationBroadcaster.updateNowPlaying(new ServiceFile(1));
+			notificationBroadcaster.setPaused();
 
 			return new Object();
 		}
@@ -60,7 +63,12 @@ public class WhenTheFileChanges {
 	}
 
 	@Test
-	public void thenTheServiceIsStartedInTheForeground() {
-		verify(service.getObject()).startForeground(43, startedNotification);
+	public void thenTheServiceContinuesInTheBackground() {
+		verify(service.getObject()).stopForeground(false);
+	}
+
+	@Test
+	public void thenTheNotificationIsSetToThePausedNotification() {
+		verify(notificationManager).notify(43, pausedNotification);
 	}
 }

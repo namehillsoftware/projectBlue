@@ -16,6 +16,7 @@ public class NotificationBroadcaster implements IRemoteBroadcaster {
 	private final BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder;
 
 	private volatile boolean isPlaying;
+	private volatile ServiceFile serviceFile;
 
 	public NotificationBroadcaster(Service service, NotificationManager notificationManager, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
 		this.service = service;
@@ -31,7 +32,12 @@ public class NotificationBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void setPaused() {
-
+		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(this.serviceFile, isPlaying = false)
+			.then(notification -> {
+				notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification);
+				service.stopForeground(false);
+				return null;
+			});
 	}
 
 	@Override
@@ -41,7 +47,7 @@ public class NotificationBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
-		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
+		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(this.serviceFile = serviceFile, isPlaying)
 			.then(notification -> {
 				service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
 				return null;
