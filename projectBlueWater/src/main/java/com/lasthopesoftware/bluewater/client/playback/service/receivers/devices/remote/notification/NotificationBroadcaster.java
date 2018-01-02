@@ -49,7 +49,12 @@ public class NotificationBroadcaster implements IRemoteBroadcaster {
 	public void updateNowPlaying(ServiceFile serviceFile) {
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(this.serviceFile = serviceFile, isPlaying)
 			.then(notification -> {
-				service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
+				if (isPlaying)
+					service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
+
+				notificationManager.notify(
+					playbackNotificationsConfiguration.getNotificationId(),
+					notification);
 				return null;
 			});
 	}

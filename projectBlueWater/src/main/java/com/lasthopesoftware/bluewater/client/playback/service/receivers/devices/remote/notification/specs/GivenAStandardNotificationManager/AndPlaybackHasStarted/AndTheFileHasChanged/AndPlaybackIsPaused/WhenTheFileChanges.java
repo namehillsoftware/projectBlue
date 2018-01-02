@@ -22,8 +22,10 @@ import org.robolectric.RobolectricTestRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,6 +66,12 @@ public class WhenTheFileChanges {
 	@Before
 	public void context() {
 		testSetup.getObject();
+	}
+
+	@Test
+	public void thenTheServiceIsStartedInTheForegroundOnce() {
+		verify(service.getObject(), times(1))
+			.startForeground(eq(43), any());
 	}
 
 	@Test
