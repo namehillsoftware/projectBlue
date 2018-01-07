@@ -43,7 +43,9 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void setStopped() {
-
+		isNotificationStarted = false;
+		isPlaying = false;
+		service.stopForeground(true);
 	}
 
 	@Override
