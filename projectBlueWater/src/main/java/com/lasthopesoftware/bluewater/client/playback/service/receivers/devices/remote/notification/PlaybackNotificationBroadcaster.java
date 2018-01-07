@@ -35,6 +35,11 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void setPaused() {
+		if (serviceFile == null) {
+			service.stopForeground(false);
+			return;
+		}
+
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(this.serviceFile, isPlaying = false)
 			.then(notification -> {
 				notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification);
