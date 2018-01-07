@@ -31,6 +31,9 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 	@Override
 	public void setPlaying() {
 		isPlaying = true;
+
+		if (serviceFile != null)
+			updateNowPlaying(serviceFile);
 	}
 
 	@Override
@@ -57,9 +60,11 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
+		this.serviceFile = serviceFile;
+
 		if (!isNotificationStarted && !isPlaying) return;
 
-		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(this.serviceFile = serviceFile, isPlaying)
+		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 			.then(perform(notification -> {
 				if (!isPlaying || isNotificationStarted) {
 					notificationManager.notify(
