@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.NotificationBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.PlaybackNotificationBroadcaster;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -47,17 +47,17 @@ public class WhenTheFileChanges {
 			when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(2), false))
 				.thenReturn(new Promise<>(pausedNotification));
 
-			final NotificationBroadcaster notificationBroadcaster =
-				new NotificationBroadcaster(
+			final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
+				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
 					new PlaybackNotificationsConfiguration(43),
 					notificationContentBuilder);
 
-			notificationBroadcaster.setPlaying();
-			notificationBroadcaster.updateNowPlaying(new ServiceFile(1));
-			notificationBroadcaster.setPaused();
-			notificationBroadcaster.updateNowPlaying(new ServiceFile(2));
+			playbackNotificationBroadcaster.setPlaying();
+			playbackNotificationBroadcaster.updateNowPlaying(new ServiceFile(1));
+			playbackNotificationBroadcaster.setPaused();
+			playbackNotificationBroadcaster.updateNowPlaying(new ServiceFile(2));
 
 			return new Object();
 		}

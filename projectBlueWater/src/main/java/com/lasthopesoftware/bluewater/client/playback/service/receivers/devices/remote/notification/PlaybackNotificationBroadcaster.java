@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 
 
-public class NotificationBroadcaster implements IRemoteBroadcaster {
+public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
 	private final Service service;
 	private final NotificationManager notificationManager;
@@ -19,7 +19,7 @@ public class NotificationBroadcaster implements IRemoteBroadcaster {
 	private volatile boolean isNotificationStarted;
 	private volatile ServiceFile serviceFile;
 
-	public NotificationBroadcaster(Service service, NotificationManager notificationManager, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
+	public PlaybackNotificationBroadcaster(Service service, NotificationManager notificationManager, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
 		this.service = service;
 		this.notificationManager = notificationManager;
 		this.playbackNotificationsConfiguration = playbackNotificationsConfiguration;
