@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
+
 
 public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
@@ -53,18 +55,17 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 		if (!isNotificationStarted && !isPlaying) return;
 
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(this.serviceFile = serviceFile, isPlaying)
-			.then(notification -> {
-				if (isPlaying && !isNotificationStarted) {
-					service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
-					isNotificationStarted = true;
-					return null;
+			.then(perform(notification -> {
+				if (!isPlaying || isNotificationStarted) {
+					notificationManager.notify(
+						playbackNotificationsConfiguration.getNotificationId(),
+						notification);
+					return;
 				}
 
-				notificationManager.notify(
-					playbackNotificationsConfiguration.getNotificationId(),
-					notification);
-				return null;
-			});
+				service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
+				isNotificationStarted = true;
+			}));
 	}
 
 	@Override
