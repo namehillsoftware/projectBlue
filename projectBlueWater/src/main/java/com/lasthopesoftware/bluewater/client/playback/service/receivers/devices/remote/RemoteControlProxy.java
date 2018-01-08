@@ -7,7 +7,7 @@ import android.content.Intent;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.vedsoft.futures.runnables.TwoParameterAction;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,17 +15,17 @@ import java.util.Set;
 
 public class RemoteControlProxy extends BroadcastReceiver {
 
-	private final IRemoteBroadcaster[] connectedDeviceBroadcasters;
-	private final Map<String, TwoParameterAction<Intent, IRemoteBroadcaster>> mappedEvents;
+	private final IRemoteBroadcaster remoteBroadcaster;
+	private final Map<String, OneParameterAction<Intent>> mappedEvents;
 
-	public RemoteControlProxy(IRemoteBroadcaster... connectedDeviceBroadcasters) {
-		this.connectedDeviceBroadcasters = connectedDeviceBroadcasters;
+	public RemoteControlProxy(IRemoteBroadcaster remoteBroadcaster) {
+		this.remoteBroadcaster = remoteBroadcaster;
 
 		mappedEvents = new HashMap<>(5);
 		mappedEvents.put(PlaylistEvents.onPlaylistChange, this::onPlaylistChange);
-		mappedEvents.put(PlaylistEvents.onPlaylistPause, (i, cd) -> cd.setPaused());
-		mappedEvents.put(PlaylistEvents.onPlaylistStart, (i, cd) -> cd.setPlaying());
-		mappedEvents.put(PlaylistEvents.onPlaylistStop, (i, cd) -> cd.setStopped());
+		mappedEvents.put(PlaylistEvents.onPlaylistPause, i -> remoteBroadcaster.setPaused());
+		mappedEvents.put(PlaylistEvents.onPlaylistStart, i -> remoteBroadcaster.setPlaying());
+		mappedEvents.put(PlaylistEvents.onPlaylistStop, i -> remoteBroadcaster.setStopped());
 		mappedEvents.put(TrackPositionBroadcaster.trackPositionUpdate, this::onTrackPositionUpdate);
 	}
 
@@ -38,22 +38,20 @@ public class RemoteControlProxy extends BroadcastReceiver {
 		final String action = intent.getAction();
 		if (action == null) return;
 
-		final TwoParameterAction<Intent, IRemoteBroadcaster> eventHandler = mappedEvents.get(action);
-		if (eventHandler == null) return;
-
-		for (final IRemoteBroadcaster connectedDeviceBroadcaster : connectedDeviceBroadcasters)
-			eventHandler.runWith(intent, connectedDeviceBroadcaster);
+		final OneParameterAction<Intent> eventHandler = mappedEvents.get(action);
+		if (eventHandler != null)
+			eventHandler.runWith(intent);
 	}
 
-	private void onPlaylistChange(Intent intent, final IRemoteBroadcaster connectedDeviceBroadcaster) {
+	private void onPlaylistChange(Intent intent) {
 		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
-		if (fileKey > -1)
-			connectedDeviceBroadcaster.updateNowPlaying(new ServiceFile(fileKey));
+		if (fileKey > 0)
+			remoteBroadcaster.updateNowPlaying(new ServiceFile(fileKey));
 	}
 
-	private void onTrackPositionUpdate(Intent intent, final IRemoteBroadcaster connectedDeviceBroadcaster) {
+	private void onTrackPositionUpdate(Intent intent) {
 		final long trackPosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
-		if (trackPosition > -1)
-			connectedDeviceBroadcaster.updateTrackPosition(trackPosition);
+		if (trackPosition >= 0)
+			remoteBroadcaster.updateTrackPosition(trackPosition);
 	}
 }

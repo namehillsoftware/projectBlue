@@ -3,9 +3,15 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.IntentFilter;
+import android.support.v4.content.LocalBroadcastManager;
 
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
@@ -19,6 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -58,11 +65,42 @@ public class WhenTheFileChanges {
 					new PlaybackNotificationsConfiguration(43),
 					notificationContentBuilder);
 
-			playbackNotificationBroadcaster.setPlaying();
-			playbackNotificationBroadcaster.updateNowPlaying(new ServiceFile(1));
-			playbackNotificationBroadcaster.setPaused();
-			playbackNotificationBroadcaster.updateNowPlaying(new ServiceFile(2));
-			playbackNotificationBroadcaster.setPlaying();
+			final LocalPlaybackBroadcaster localPlaybackBroadcaster =
+				new LocalPlaybackBroadcaster(RuntimeEnvironment.application);
+
+			LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
+				.registerReceiver(
+					playbackNotificationBroadcaster,
+					Stream.of(playbackNotificationBroadcaster.registerForIntents())
+						.reduce(new IntentFilter(), (intentFilter, action) -> {
+							intentFilter.addAction(action);
+							return intentFilter;
+						}));
+
+			localPlaybackBroadcaster.sendPlaybackBroadcast(
+				PlaylistEvents.onPlaylistStart,
+				1,
+				new PositionedFile(1, new ServiceFile(1)));
+
+			localPlaybackBroadcaster.sendPlaybackBroadcast(
+				PlaylistEvents.onPlaylistChange,
+				1,
+				new PositionedFile(1, new ServiceFile(1)));
+
+			localPlaybackBroadcaster.sendPlaybackBroadcast(
+				PlaylistEvents.onPlaylistPause,
+				1,
+				new PositionedFile(1, new ServiceFile(1)));
+
+			localPlaybackBroadcaster.sendPlaybackBroadcast(
+				PlaylistEvents.onPlaylistChange,
+				1,
+				new PositionedFile(2, new ServiceFile(2)));
+
+			localPlaybackBroadcaster.sendPlaybackBroadcast(
+				PlaylistEvents.onPlaylistStart,
+				1,
+				new PositionedFile(2, new ServiceFile(2)));
 
 			return new Object();
 		}

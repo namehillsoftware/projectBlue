@@ -573,19 +573,33 @@ implements
 					this,
 					cachedFilePropertiesProvider,
 					imageProvider,
-					remoteControlClient.getObject()),
-				new PlaybackNotificationBroadcaster(
-					this,
-					notificationManagerLazy.getObject(),
-					new PlaybackNotificationsConfiguration(notificationId),
-					this
-				));
+					remoteControlClient.getObject()));
 
 		localBroadcastManagerLazy
 			.getObject()
 			.registerReceiver(
 				remoteControlProxy,
 				Stream.of(remoteControlProxy.registerForIntents())
+					.reduce(new IntentFilter(), (intentFilter, action) -> {
+						intentFilter.addAction(action);
+						return intentFilter;
+					}));
+
+		if (playbackNotificationBroadcaster != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationBroadcaster);
+
+		playbackNotificationBroadcaster =
+			new PlaybackNotificationBroadcaster(
+				this,
+				notificationManagerLazy.getObject(),
+				new PlaybackNotificationsConfiguration(notificationId),
+				this);
+
+		localBroadcastManagerLazy
+			.getObject()
+			.registerReceiver(
+				playbackNotificationBroadcaster,
+				Stream.of(playbackNotificationBroadcaster.registerForIntents())
 					.reduce(new IntentFilter(), (intentFilter, action) -> {
 						intentFilter.addAction(action);
 						return intentFilter;
@@ -977,6 +991,9 @@ implements
 		if (areListenersRegistered) unregisterListeners();
 
 		if (remoteControlProxy != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
+
+		if (playbackNotificationBroadcaster != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
 		if (remoteControlReceiver.isCreated())
