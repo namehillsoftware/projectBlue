@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsStopped;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -7,8 +7,8 @@ import android.app.Service;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.notification.PlaybackNotificationBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -22,8 +22,10 @@ import org.robolectric.RobolectricTestRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -44,7 +46,7 @@ public class WhenTheFileChanges {
 			when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
 				.thenReturn(new Promise<>(new Notification()));
 
-			when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(2), false))
+			when(notificationContentBuilder.promiseNowPlayingNotification(argThat(a -> a.equals(new ServiceFile(2))), anyBoolean()))
 				.thenReturn(new Promise<>(secondNotification));
 
 			final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
@@ -56,7 +58,7 @@ public class WhenTheFileChanges {
 
 			playbackNotificationBroadcaster.setPlaying();
 			playbackNotificationBroadcaster.updateNowPlaying(new ServiceFile(1));
-			playbackNotificationBroadcaster.setPaused();
+			playbackNotificationBroadcaster.setStopped();
 			playbackNotificationBroadcaster.updateNowPlaying(new ServiceFile(2));
 
 			return new Object();
@@ -75,12 +77,12 @@ public class WhenTheFileChanges {
 	}
 
 	@Test
-	public void thenTheServiceContinuesInTheBackground() {
-		verify(service.getObject()).stopForeground(false);
+	public void thenTheServiceDoesNotContinueInTheBackground() {
+		verify(service.getObject()).stopForeground(true);
 	}
 
 	@Test
-	public void thenTheNotificationIsSetToThePausedNotification() {
-		verify(notificationManager).notify(43, secondNotification);
+	public void thenTheNotificationIsNotSetToTheSecondNotification() {
+		verify(notificationManager, never()).notify(43, secondNotification);
 	}
 }
