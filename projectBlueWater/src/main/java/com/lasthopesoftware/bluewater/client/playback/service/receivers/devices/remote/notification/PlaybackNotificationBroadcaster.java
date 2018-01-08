@@ -19,6 +19,7 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
 	private volatile boolean isPlaying;
 	private volatile boolean isNotificationStarted;
+	private volatile boolean isNotificationForeground;
 	private volatile ServiceFile serviceFile;
 
 	public PlaybackNotificationBroadcaster(Service service, NotificationManager notificationManager, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
@@ -40,6 +41,7 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 	public void setPaused() {
 		if (serviceFile == null) {
 			service.stopForeground(false);
+			isNotificationForeground = false;
 			return;
 		}
 
@@ -47,15 +49,17 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 			.then(notification -> {
 				notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification);
 				service.stopForeground(false);
+				isNotificationForeground = false;
 				return null;
 			});
 	}
 
 	@Override
 	public void setStopped() {
-		isNotificationStarted = false;
 		isPlaying = false;
 		service.stopForeground(true);
+		isNotificationStarted = false;
+		isNotificationForeground = false;
 	}
 
 	@Override
@@ -66,7 +70,7 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 			.then(perform(notification -> {
-				if (!isPlaying || isNotificationStarted) {
+				if (!isPlaying || (isNotificationStarted && isNotificationForeground)) {
 					notificationManager.notify(
 						playbackNotificationsConfiguration.getNotificationId(),
 						notification);
@@ -75,6 +79,7 @@ public class PlaybackNotificationBroadcaster implements IRemoteBroadcaster {
 
 				service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
 				isNotificationStarted = true;
+				isNotificationForeground = true;
 			}));
 	}
 

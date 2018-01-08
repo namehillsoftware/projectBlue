@@ -9,19 +9,17 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class RemoteControlProxy extends BroadcastReceiver {
 
-	private final Collection<IRemoteBroadcaster> connectedDeviceBroadcasters;
+	private final IRemoteBroadcaster[] connectedDeviceBroadcasters;
 	private final Map<String, TwoParameterAction<Intent, IRemoteBroadcaster>> mappedEvents;
 
 	public RemoteControlProxy(IRemoteBroadcaster... connectedDeviceBroadcasters) {
-		this.connectedDeviceBroadcasters = Arrays.asList(connectedDeviceBroadcasters);
+		this.connectedDeviceBroadcasters = connectedDeviceBroadcasters;
 
 		mappedEvents = new HashMap<>(5);
 		mappedEvents.put(PlaylistEvents.onPlaylistChange, this::onPlaylistChange);
