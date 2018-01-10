@@ -994,7 +994,7 @@ implements
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
 		if (playbackNotificationBroadcaster != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
+			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationBroadcaster);
 
 		if (remoteControlReceiver.isCreated())
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());

@@ -3,12 +3,12 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
@@ -66,15 +66,20 @@ public class WhenPlaybackStarts {
 							return intentFilter;
 						}));
 
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistChange,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
+			{
+				final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
+				playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
+				playbackNotificationBroadcaster
+					.onReceive(
+						RuntimeEnvironment.application,
+						playlistChangeIntent);
+			}
 
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistStart,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
+			playbackNotificationBroadcaster
+				.onReceive(
+					RuntimeEnvironment.application,
+					new Intent(PlaylistEvents.onPlaylistStart));
+
 			return new Object();
 		}
 	};
