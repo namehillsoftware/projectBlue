@@ -91,7 +91,7 @@ public class PlaybackNotificationBroadcaster extends BroadcastReceiver {
 
 	private void onPlaylistChange(Intent intent) {
 		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
-		if (fileKey > 0)
+		if (fileKey >= 0)
 			updateNowPlaying(new ServiceFile(fileKey));
 	}
 
