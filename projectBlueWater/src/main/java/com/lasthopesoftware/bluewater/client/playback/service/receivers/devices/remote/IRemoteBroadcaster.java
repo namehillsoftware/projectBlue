@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
-public interface IConnectedDeviceBroadcaster {
+public interface IRemoteBroadcaster {
 	void setPlaying();
 	void setPaused();
 	void setStopped();
