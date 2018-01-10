@@ -3,14 +3,10 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
+import android.content.Intent;
 
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
@@ -56,32 +52,24 @@ public class WhenPlaybackIsPaused {
 					new PlaybackNotificationsConfiguration(43),
 					notificationContentBuilder);
 
-			final LocalPlaybackBroadcaster localPlaybackBroadcaster =
-				new LocalPlaybackBroadcaster(RuntimeEnvironment.application);
+			playbackNotificationBroadcaster
+				.onReceive(
+					RuntimeEnvironment.application,
+					new Intent(PlaylistEvents.onPlaylistStart));
 
-			LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
-				.registerReceiver(
-					playbackNotificationBroadcaster,
-					Stream.of(playbackNotificationBroadcaster.registerForIntents())
-						.reduce(new IntentFilter(), (intentFilter, action) -> {
-							intentFilter.addAction(action);
-							return intentFilter;
-						}));
+			{
+				final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
+				playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
+				playbackNotificationBroadcaster
+					.onReceive(
+						RuntimeEnvironment.application,
+						playlistChangeIntent);
+			}
 
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistStart,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
-
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistChange,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
-
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistPause,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
+			playbackNotificationBroadcaster
+				.onReceive(
+					RuntimeEnvironment.application,
+					new Intent(PlaylistEvents.onPlaylistPause));
 
 			return new Object();
 		}
