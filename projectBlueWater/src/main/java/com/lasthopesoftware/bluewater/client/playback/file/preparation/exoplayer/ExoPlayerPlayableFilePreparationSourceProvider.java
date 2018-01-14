@@ -108,7 +108,8 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 			DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
 			maxBufferMs.getObject(),
 			DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-			DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
-		);
+			DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+			DefaultLoadControl.DEFAULT_TARGET_BUFFER_BYTES,
+			DefaultLoadControl.DEFAULT_PRIORITIZE_TIME_OVER_SIZE_THRESHOLDS);
 	}
 }

@@ -1,12 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.upstream.DataSpec;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -21,6 +24,7 @@ implements
 	PlayableFile,
 	Player.EventListener,
 	MessengerOperator<PlayableFile>,
+	MediaSourceEventListener,
 	Runnable
 {
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
@@ -126,14 +130,19 @@ implements
 	}
 
 	@Override
+	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+	}
+
+	@Override
 	public void onPlayerError(ExoPlaybackException error) {
 		logger.error("A player error has occurred", error);
 		playbackHandlerMessenger.sendRejection(error);
 	}
 
 	@Override
-	public void onPositionDiscontinuity() {
-		logger.debug("Position discontinuity has occurred");
+	public void onPositionDiscontinuity(int reason) {
+
 	}
 
 	@Override
@@ -142,11 +151,46 @@ implements
 	}
 
 	@Override
+	public void onSeekProcessed() {
+
+	}
+
+	@Override
 	public void run() {
 		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
 		exoPlayer.release();
+	}
+
+	@Override
+	public void onLoadStarted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs) {
+
+	}
+
+	@Override
+	public void onLoadCompleted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
+
+	}
+
+	@Override
+	public void onLoadCanceled(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
+
+	}
+
+	@Override
+	public void onLoadError(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded, IOException error, boolean wasCanceled) {
+		logger.error("A loading error occurred", error);
+		playbackHandlerMessenger.sendRejection(error);
+	}
+
+	@Override
+	public void onUpstreamDiscarded(int trackType, long mediaStartTimeMs, long mediaEndTimeMs) {
+
+	}
+
+	@Override
+	public void onDownstreamFormatChanged(int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaTimeMs) {
 
 	}
 }

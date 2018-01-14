@@ -5,6 +5,7 @@ import android.os.Handler;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
@@ -14,10 +15,12 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.TransferringExoPlayer;
@@ -125,15 +128,15 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 
 			if (cancellationToken.isCancelled()) return;
 
-			final MediaSource mediaSource = new ExtractorMediaSource(
+			final ExtractorMediaSource.Factory factory =
+				new ExtractorMediaSource.Factory(
+					dataSourceFactoryProvider.getFactory(uri, serviceFile, transferringExoPlayer));
+			factory
+				.setMinLoadableRetryCount(ExtractorMediaSource.DEFAULT_MIN_LOADABLE_RETRY_COUNT_LIVE);
+			final MediaSource mediaSource = factory.createMediaSource(
 				uri,
-				dataSourceFactoryProvider.getFactory(uri, serviceFile, transferringExoPlayer),
-				extractorsFactory,
-				ExtractorMediaSource.DEFAULT_MIN_LOADABLE_RETRY_COUNT_LIVE,
 				handler,
-				exoPlayerPreparationHandler,
-				null,
-				ExtractorMediaSource.DEFAULT_LOADING_CHECK_INTERVAL_BYTES);
+				exoPlayerPreparationHandler);
 
 			try {
 				exoPlayer.prepare(mediaSource);
@@ -146,9 +149,8 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 	private static final class ExoPlayerPreparationHandler
 	implements
 		Player.EventListener,
-		ExtractorMediaSource.EventListener,
-		Runnable
-	{
+		Runnable,
+		MediaSourceEventListener {
 		private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 		private final SimpleExoPlayer exoPlayer;
@@ -156,6 +158,8 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 		private final TransferringExoPlayer<? super DataSource> transferringExoPlayer;
 		private final long prepareAt;
 		private final CancellationToken cancellationToken;
+
+		private boolean isLoaded;
 
 		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
 			this.exoPlayer = exoPlayer;
@@ -210,6 +214,11 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 		}
 
 		@Override
+		public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+		}
+
+		@Override
 		public void onPlayerError(ExoPlaybackException error) {
 			logger.error("An error occurred while preparing the exo player! Retrying initialization.", error);
 
@@ -219,7 +228,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 		}
 
 		@Override
-		public void onPositionDiscontinuity() {
+		public void onPositionDiscontinuity(int reason) {
 
 		}
 
@@ -228,9 +237,37 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 		}
 
 		@Override
-		public void onLoadError(IOException error) {
-			exoPlayer.release();
+		public void onSeekProcessed() {
+
+		}
+
+		@Override
+		public void onLoadStarted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs) {
+
+		}
+
+		@Override
+		public void onLoadCompleted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
+		}
+
+		@Override
+		public void onLoadCanceled(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
+
+		}
+
+		@Override
+		public void onLoadError(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded, IOException error, boolean wasCanceled) {
 			messenger.sendRejection(error);
+		}
+
+		@Override
+		public void onUpstreamDiscarded(int trackType, long mediaStartTimeMs, long mediaEndTimeMs) {
+
+		}
+
+		@Override
+		public void onDownstreamFormatChanged(int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaTimeMs) {
+
 		}
 	}
 }
