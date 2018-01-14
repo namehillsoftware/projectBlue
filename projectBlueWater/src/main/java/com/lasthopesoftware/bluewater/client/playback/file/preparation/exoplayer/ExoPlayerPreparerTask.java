@@ -164,6 +164,12 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 			this.messenger = messenger;
 			this.cancellationToken = cancellationToken;
 			messenger.cancellationRequested(this);
+
+			loadingExoPlayer.promiseBufferedPlaybackFile()
+				.excuse(e -> {
+					handleError(e);
+					return null;
+				});
 		}
 
 		@Override
@@ -206,7 +212,6 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 
 		@Override
 		public void onRepeatModeChanged(int repeatMode) {
-
 		}
 
 		@Override
@@ -216,16 +221,11 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 
 		@Override
 		public void onPlayerError(ExoPlaybackException error) {
-			logger.error("An error occurred while preparing the exo player! Retrying initialization.", error);
-
-			exoPlayer.stop();
-			exoPlayer.release();
-			messenger.sendRejection(error);
+			handleError(error);
 		}
 
 		@Override
 		public void onPositionDiscontinuity(int reason) {
-
 		}
 
 		@Override
@@ -234,7 +234,14 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 
 		@Override
 		public void onSeekProcessed() {
+		}
 
+		private void handleError(Throwable error) {
+			logger.error("An error occurred while preparing the exo player! Retrying initialization.", error);
+
+			exoPlayer.stop();
+			exoPlayer.release();
+			messenger.sendRejection(error);
 		}
 	}
 }
