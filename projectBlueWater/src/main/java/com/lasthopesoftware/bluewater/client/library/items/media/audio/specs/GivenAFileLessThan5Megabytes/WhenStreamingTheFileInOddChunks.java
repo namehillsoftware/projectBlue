@@ -14,6 +14,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.io.IOException;
 import java.util.Random;
@@ -26,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(RobolectricTestRunner.class)
 public class WhenStreamingTheFileInOddChunks {
 
 	private static final byte[] bytesWritten = new byte[2 * 1024 * 1024];
@@ -94,7 +97,7 @@ public class WhenStreamingTheFileInOddChunks {
 				dataSource,
 				fakeCacheStreamSupplier);
 
-		diskFileCacheDataSource.open(new DataSpec(Uri.EMPTY, 0, 2 * 1024 * 1024, "1"));
+		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file"), 0, 2 * 1024 * 1024, "1"));
 
 		final Random random = new Random();
 		int readResult;

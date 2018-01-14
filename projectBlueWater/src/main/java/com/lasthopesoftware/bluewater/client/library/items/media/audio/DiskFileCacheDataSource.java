@@ -37,7 +37,7 @@ public class DiskFileCacheDataSource implements DataSource {
 	public long open(DataSpec dataSpec) throws IOException {
 		if (dataSpec.position == 0) {
 			buffer = new Buffer();
-			promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(dataSpec.uri.normalizeScheme().toString());
+			promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(dataSpec.uri.toString());
 		}
 
 		return defaultHttpDataSource.open(dataSpec);

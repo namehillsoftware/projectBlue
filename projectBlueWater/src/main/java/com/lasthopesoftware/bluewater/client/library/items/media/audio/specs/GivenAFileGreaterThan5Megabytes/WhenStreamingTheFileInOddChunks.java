@@ -14,6 +14,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.io.IOException;
 import java.util.Random;
@@ -21,15 +23,19 @@ import java.util.Random;
 import okio.Buffer;
 import okio.BufferedSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(RobolectricTestRunner.class)
 public class WhenStreamingTheFileInOddChunks {
 
 	private static final byte[] bytesWritten = new byte[7 * 1024 * 1024];
 	private static final byte[] bytes = new byte[7 * 1024 * 1024];
+
+	private static String cacheKey;
 
 	static {
 		new Random().nextBytes(bytes);
@@ -38,6 +44,10 @@ public class WhenStreamingTheFileInOddChunks {
 	@BeforeClass
 	public static void context() throws IOException {
 		final ICacheStreamSupplier fakeCacheStreamSupplier = uniqueKey -> new Promise<>(new CacheOutputStream() {
+				{
+					cacheKey = uniqueKey;
+				}
+
 				int numberOfBytesWritten = 0;
 
 				@Override
@@ -94,7 +104,7 @@ public class WhenStreamingTheFileInOddChunks {
 				dataSource,
 				fakeCacheStreamSupplier);
 
-		diskFileCacheDataSource.open(new DataSpec(Uri.EMPTY, 0, 7 * 1024 * 1024, "hi"));
+		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file"), 0, 7 * 1024 * 1024, "hi"));
 
 		final Random random = new Random();
 		int readResult;
@@ -107,5 +117,10 @@ public class WhenStreamingTheFileInOddChunks {
 	@Test
 	public void thenTheEntireFileIsWritten() {
 		Assert.assertArrayEquals(bytes, bytesWritten);
+	}
+
+	@Test
+	public void thenTheKeyIsCorrect() {
+		assertThat(cacheKey).isEqualToIgnoringCase("http://my-server/file");
 	}
 }
