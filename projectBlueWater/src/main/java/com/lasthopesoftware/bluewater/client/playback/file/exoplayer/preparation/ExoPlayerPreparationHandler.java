@@ -8,7 +8,7 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.LoadingExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
@@ -26,19 +26,19 @@ implements
 
 	private final SimpleExoPlayer exoPlayer;
 	private final Messenger<PreparedPlayableFile> messenger;
-	private final LoadingExoPlayer loadingExoPlayer;
+	private final BufferingExoPlayer bufferingExoPlayer;
 	private final long prepareAt;
 	private final CancellationToken cancellationToken;
 
-	ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, LoadingExoPlayer loadingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
+	ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, BufferingExoPlayer bufferingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
 		this.exoPlayer = exoPlayer;
-		this.loadingExoPlayer = loadingExoPlayer;
+		this.bufferingExoPlayer = bufferingExoPlayer;
 		this.prepareAt = prepareAt;
 		this.messenger = messenger;
 		this.cancellationToken = cancellationToken;
 		messenger.cancellationRequested(this);
 
-		loadingExoPlayer.promiseBufferedPlaybackFile()
+		bufferingExoPlayer.promiseBufferedPlaybackFile()
 			.excuse(e -> {
 				handleError(e);
 				return null;
@@ -80,7 +80,7 @@ implements
 
 		exoPlayer.removeListener(this);
 
-		messenger.sendResolution(new PreparedPlayableFile(new ExoPlayerPlaybackHandler(exoPlayer), loadingExoPlayer));
+		messenger.sendResolution(new PreparedPlayableFile(new ExoPlayerPlaybackHandler(exoPlayer), bufferingExoPlayer));
 	}
 
 	@Override

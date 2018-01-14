@@ -12,7 +12,7 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.io.IOException;
 
-public class LoadingExoPlayer
+public class BufferingExoPlayer
 implements
 	IBufferingPlaybackFile,
 	MessengerOperator<IBufferingPlaybackFile>,
@@ -22,7 +22,7 @@ implements
 	private final CreateAndHold<Promise<IBufferingPlaybackFile>> bufferingPlaybackFilePromise = new AbstractSynchronousLazy<Promise<IBufferingPlaybackFile>>() {
 		@Override
 		protected Promise<IBufferingPlaybackFile> create() throws Exception {
-			return new Promise<>((MessengerOperator<IBufferingPlaybackFile>) LoadingExoPlayer.this);
+			return new Promise<>((MessengerOperator<IBufferingPlaybackFile>) BufferingExoPlayer.this);
 		}
 	};
 

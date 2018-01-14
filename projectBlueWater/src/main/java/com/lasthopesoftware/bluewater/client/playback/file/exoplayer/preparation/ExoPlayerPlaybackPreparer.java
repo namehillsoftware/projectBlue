@@ -13,7 +13,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.LoadingExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
@@ -68,11 +68,11 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 						return;
 					}
 
-					final LoadingExoPlayer loadingExoPlayer = new LoadingExoPlayer();
+					final BufferingExoPlayer bufferingExoPlayer = new BufferingExoPlayer();
 
 					final ExoPlayerPreparationHandler exoPlayerPreparationHandler =
 						new ExoPlayerPreparationHandler(exoPlayer,
-							loadingExoPlayer,
+							bufferingExoPlayer,
 							preparedAt,
 							messenger,
 							cancellationToken);
@@ -84,7 +84,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 					final MediaSource mediaSource = extractorMediaSourceFactoryProvider.getFactory(uri).createMediaSource(
 						uri,
 						handler,
-						loadingExoPlayer);
+						bufferingExoPlayer);
 
 					try {
 						exoPlayer.prepare(mediaSource);
