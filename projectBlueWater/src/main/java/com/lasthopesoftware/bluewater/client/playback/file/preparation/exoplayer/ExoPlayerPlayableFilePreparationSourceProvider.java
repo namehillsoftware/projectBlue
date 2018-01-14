@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFile
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
@@ -40,7 +40,7 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	private static final CreateAndHold<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
 	private final IFileUriProvider fileUriProvider;
-	private final DataSourceFactoryProvider dataSourceFactoryProvider;
+	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
 	private final Handler handler;
 	private final DiskFileCache diskFileCache;
@@ -63,7 +63,7 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 				diskFileAccessTimeUpdater),
 			cachedFilesProvider);
 
-		dataSourceFactoryProvider = new DataSourceFactoryProvider(context, library, diskFileCacheStream);
+		extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(context, library, diskFileCacheStream);
 
 
 		diskFileCache =
@@ -88,7 +88,7 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	@Override
 	public PlayableFilePreparationSource providePlayableFilePreparationSource() {
 		return new ExoPlayerPlaybackPreparer(
-			dataSourceFactoryProvider,
+			extractorMediaSourceFactoryProvider,
 			trackSelector.getObject(),
 			loadControl.getObject(),
 			renderersFactory,

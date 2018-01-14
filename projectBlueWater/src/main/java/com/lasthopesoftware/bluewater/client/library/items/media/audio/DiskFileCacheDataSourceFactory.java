@@ -6,7 +6,6 @@ import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -31,11 +30,9 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 
 	private final OkHttpDataSourceFactory httpDataSourceFactory;
 	private final ICacheStreamSupplier cacheStreamSupplier;
-	private final ServiceFile serviceFile;
 
-	public DiskFileCacheDataSourceFactory(Context context, ICacheStreamSupplier cacheStreamSupplier, Library library, ServiceFile serviceFile) {
+	public DiskFileCacheDataSourceFactory(Context context, ICacheStreamSupplier cacheStreamSupplier, Library library) {
 		this.cacheStreamSupplier = cacheStreamSupplier;
-		this.serviceFile = serviceFile;
 		httpDataSourceFactory = new OkHttpDataSourceFactory(
 			okHttpClient.getObject(),
 			Util.getUserAgent(context, context.getString(R.string.app_name)),
@@ -49,6 +46,6 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 
 	@Override
 	public DataSource createDataSource() {
-		return new DiskFileCacheDataSource(httpDataSourceFactory.createDataSource(), serviceFile, cacheStreamSupplier);
+		return new DiskFileCacheDataSource(httpDataSourceFactory.createDataSource(), cacheStreamSupplier);
 	}
 }

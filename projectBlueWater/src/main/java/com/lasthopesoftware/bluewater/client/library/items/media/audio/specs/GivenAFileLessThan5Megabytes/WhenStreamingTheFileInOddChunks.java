@@ -6,7 +6,6 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.DiskFileCacheDataSource;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
@@ -93,10 +92,9 @@ public class WhenStreamingTheFileInOddChunks {
 		final DiskFileCacheDataSource diskFileCacheDataSource =
 			new DiskFileCacheDataSource(
 				dataSource,
-				new ServiceFile(1),
 				fakeCacheStreamSupplier);
 
-		diskFileCacheDataSource.open(new DataSpec(Uri.EMPTY, 0, 2 * 1024 * 1024, "hi"));
+		diskFileCacheDataSource.open(new DataSpec(Uri.EMPTY, 0, 2 * 1024 * 1024, "1"));
 
 		final Random random = new Random();
 		int readResult;
