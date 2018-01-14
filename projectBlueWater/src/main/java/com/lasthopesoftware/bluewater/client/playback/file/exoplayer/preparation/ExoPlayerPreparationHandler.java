@@ -22,6 +22,7 @@ final class ExoPlayerPreparationHandler
 implements
 	Player.EventListener,
 	Runnable {
+
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final SimpleExoPlayer exoPlayer;
@@ -29,6 +30,8 @@ implements
 	private final BufferingExoPlayer bufferingExoPlayer;
 	private final long prepareAt;
 	private final CancellationToken cancellationToken;
+
+	private boolean isResolved;
 
 	ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, BufferingExoPlayer bufferingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
 		this.exoPlayer = exoPlayer;
@@ -55,21 +58,17 @@ implements
 	}
 
 	@Override
-	public void onTimelineChanged(Timeline timeline, Object manifest) {
-	}
+	public void onTimelineChanged(Timeline timeline, Object manifest) {}
 
 	@Override
-	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-	}
+	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
 
 	@Override
-	public void onLoadingChanged(boolean isLoading) {
-	}
+	public void onLoadingChanged(boolean isLoading) {}
 
 	@Override
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-		if (cancellationToken.isCancelled()) return;
+		if (isResolved || cancellationToken.isCancelled()) return;
 
 		if (playbackState != Player.STATE_READY) return;
 
@@ -78,19 +77,20 @@ implements
 			return;
 		}
 
+		isResolved = true;
+
 		exoPlayer.removeListener(this);
-
-		messenger.sendResolution(new PreparedPlayableFile(new ExoPlayerPlaybackHandler(exoPlayer), bufferingExoPlayer));
+		messenger.sendResolution(
+			new PreparedPlayableFile(
+				new ExoPlayerPlaybackHandler(exoPlayer),
+				bufferingExoPlayer));
 	}
 
 	@Override
-	public void onRepeatModeChanged(int repeatMode) {
-	}
+	public void onRepeatModeChanged(int repeatMode) {}
 
 	@Override
-	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-	}
+	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
 
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
@@ -98,18 +98,18 @@ implements
 	}
 
 	@Override
-	public void onPositionDiscontinuity(int reason) {
-	}
+	public void onPositionDiscontinuity(int reason) {}
 
 	@Override
-	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-	}
+	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
 
 	@Override
-	public void onSeekProcessed() {
-	}
+	public void onSeekProcessed() {}
 
 	private void handleError(Throwable error) {
+		if (isResolved) return;
+		isResolved = true;
+
 		logger.error("An error occurred while preparing the exo player!", error);
 
 		exoPlayer.stop();

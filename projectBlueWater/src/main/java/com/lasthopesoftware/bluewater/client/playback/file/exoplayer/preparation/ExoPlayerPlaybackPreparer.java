@@ -81,10 +81,13 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
 					if (cancellationToken.isCancelled()) return;
 
-					final MediaSource mediaSource = extractorMediaSourceFactoryProvider.getFactory(uri).createMediaSource(
-						uri,
-						handler,
-						bufferingExoPlayer);
+					final MediaSource mediaSource =
+						extractorMediaSourceFactoryProvider
+							.getFactory(uri)
+							.createMediaSource(
+								uri,
+								handler,
+								bufferingExoPlayer);
 
 					try {
 						exoPlayer.prepare(mediaSource);
