@@ -5,7 +5,6 @@ import android.os.Handler;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
@@ -15,15 +14,12 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DataSpec;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.TransferringExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.LoadingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.DataSourceFactoryProvider;
 import com.namehillsoftware.handoff.Messenger;
@@ -35,7 +31,6 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
 final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlayableFile> {
@@ -119,10 +114,14 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 				return;
 			}
 
-			final TransferringExoPlayer<? super DataSource> transferringExoPlayer = new TransferringExoPlayer<>();
+			final LoadingExoPlayer loadingExoPlayer = new LoadingExoPlayer();
 
 			final ExoPlayerPreparationHandler exoPlayerPreparationHandler =
-				new ExoPlayerPreparationHandler(exoPlayer, transferringExoPlayer, prepareAt, messenger, cancellationToken);
+				new ExoPlayerPreparationHandler(exoPlayer,
+					loadingExoPlayer,
+					prepareAt,
+					messenger,
+					cancellationToken);
 
 			exoPlayer.addListener(exoPlayerPreparationHandler);
 
@@ -130,13 +129,13 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 
 			final ExtractorMediaSource.Factory factory =
 				new ExtractorMediaSource.Factory(
-					dataSourceFactoryProvider.getFactory(uri, serviceFile, transferringExoPlayer));
+					dataSourceFactoryProvider.getFactory(uri, serviceFile));
 			factory
 				.setMinLoadableRetryCount(ExtractorMediaSource.DEFAULT_MIN_LOADABLE_RETRY_COUNT_LIVE);
 			final MediaSource mediaSource = factory.createMediaSource(
 				uri,
 				handler,
-				exoPlayerPreparationHandler);
+				loadingExoPlayer);
 
 			try {
 				exoPlayer.prepare(mediaSource);
@@ -149,21 +148,18 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 	private static final class ExoPlayerPreparationHandler
 	implements
 		Player.EventListener,
-		Runnable,
-		MediaSourceEventListener {
+		Runnable {
 		private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 		private final SimpleExoPlayer exoPlayer;
 		private final Messenger<PreparedPlayableFile> messenger;
-		private final TransferringExoPlayer<? super DataSource> transferringExoPlayer;
+		private final LoadingExoPlayer loadingExoPlayer;
 		private final long prepareAt;
 		private final CancellationToken cancellationToken;
 
-		private boolean isLoaded;
-
-		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, TransferringExoPlayer<? super DataSource> transferringExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
+		private ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, LoadingExoPlayer loadingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
 			this.exoPlayer = exoPlayer;
-			this.transferringExoPlayer = transferringExoPlayer;
+			this.loadingExoPlayer = loadingExoPlayer;
 			this.prepareAt = prepareAt;
 			this.messenger = messenger;
 			this.cancellationToken = cancellationToken;
@@ -205,7 +201,7 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 
 			exoPlayer.removeListener(this);
 
-			messenger.sendResolution(new PreparedPlayableFile(new ExoPlayerPlaybackHandler(exoPlayer), transferringExoPlayer));
+			messenger.sendResolution(new PreparedPlayableFile(new ExoPlayerPlaybackHandler(exoPlayer), loadingExoPlayer));
 		}
 
 		@Override
@@ -238,35 +234,6 @@ final class ExoPlayerPreparerTask implements PromisedResponse<Uri, PreparedPlaya
 
 		@Override
 		public void onSeekProcessed() {
-
-		}
-
-		@Override
-		public void onLoadStarted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs) {
-
-		}
-
-		@Override
-		public void onLoadCompleted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
-		}
-
-		@Override
-		public void onLoadCanceled(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
-
-		}
-
-		@Override
-		public void onLoadError(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded, IOException error, boolean wasCanceled) {
-			messenger.sendRejection(error);
-		}
-
-		@Override
-		public void onUpstreamDiscarded(int trackType, long mediaStartTimeMs, long mediaEndTimeMs) {
-
-		}
-
-		@Override
-		public void onDownstreamFormatChanged(int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaTimeMs) {
 
 		}
 	}
