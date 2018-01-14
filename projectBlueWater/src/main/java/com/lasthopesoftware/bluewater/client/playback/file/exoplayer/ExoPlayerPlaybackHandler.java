@@ -8,7 +8,6 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -33,17 +32,11 @@ implements
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
 
-	public ExoPlayerPlaybackHandler(SimpleExoPlayer exoPlayer, BufferingExoPlayer bufferingExoPlayer) {
+	public ExoPlayerPlaybackHandler(SimpleExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
 		exoPlayer.addListener(this);
 
 		this.playbackHandlerPromise = new Promise<>((MessengerOperator<PlayableFile>) this);
-		bufferingExoPlayer
-			.promiseBufferedPlaybackFile()
-			.excuse(e -> {
-				handlePlaybackError(e);
-				return  null;
-			});
 	}
 
 	@Override

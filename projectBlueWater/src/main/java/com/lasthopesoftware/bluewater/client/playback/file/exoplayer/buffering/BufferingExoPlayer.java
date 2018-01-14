@@ -10,6 +10,9 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 public class BufferingExoPlayer
@@ -18,6 +21,7 @@ implements
 	MessengerOperator<IBufferingPlaybackFile>,
 	MediaSourceEventListener
 {
+	private static final Logger logger = LoggerFactory.getLogger(BufferingExoPlayer.class);
 
 	private final CreateAndHold<Promise<IBufferingPlaybackFile>> bufferingPlaybackFilePromise = new AbstractSynchronousLazy<Promise<IBufferingPlaybackFile>>() {
 		@Override
@@ -63,6 +67,7 @@ implements
 
 	@Override
 	public void onLoadError(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded, IOException error, boolean wasCanceled) {
+		logger.error("An error occurred during playback buffering", error);
 		loadError = error;
 		if (messenger != null)
 			messenger.sendRejection(error);
