@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerIllegalStateReporter;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
 
 public class MediaPlayerCloser {
 

@@ -5,8 +5,8 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.ExoPlayerPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer.MediaPlayerPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparation.MediaPlayerPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.compilation.FlagCompilationForDebugging;
 
 public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlaybackQueueFeeder {

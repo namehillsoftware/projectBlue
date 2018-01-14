@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import android.net.Uri;
 import android.os.Handler;
@@ -13,10 +13,10 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.LoadingExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.LoadingExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 

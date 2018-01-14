@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer.MediaPlayerPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparation.MediaPlayerPlayableFilePreparationSourceProvider;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

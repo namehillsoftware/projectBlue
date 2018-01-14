@@ -1,8 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.file.buffering;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering;
 
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.google.android.exoplayer2.upstream.DataSpec;
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;

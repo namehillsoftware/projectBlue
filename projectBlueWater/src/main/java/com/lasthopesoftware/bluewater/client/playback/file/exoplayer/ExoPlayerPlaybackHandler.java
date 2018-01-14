@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -7,6 +7,8 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -133,7 +135,7 @@ implements
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
 		logger.error("A player error has occurred", error);
-		playbackHandlerMessenger.sendRejection(error);
+		playbackHandlerMessenger.sendRejection(new ExoPlayerException(this, error));
 	}
 
 	@Override

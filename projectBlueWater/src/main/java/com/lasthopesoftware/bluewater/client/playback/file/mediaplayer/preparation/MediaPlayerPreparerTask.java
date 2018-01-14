@@ -1,14 +1,14 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparation;
 
 import android.media.MediaPlayer;
 import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerCloser;
-import com.lasthopesoftware.bluewater.client.playback.file.MediaPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingMediaPlayerFile;
-import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerCloser;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.buffering.BufferingMediaPlayerFile;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;

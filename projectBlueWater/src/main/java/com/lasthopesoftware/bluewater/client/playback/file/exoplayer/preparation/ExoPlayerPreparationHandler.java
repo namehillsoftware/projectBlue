@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -7,8 +7,8 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.lasthopesoftware.bluewater.client.playback.file.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.LoadingExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.LoadingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;

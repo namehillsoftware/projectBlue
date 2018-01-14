@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparation;
 
 import android.media.MediaPlayer;
 

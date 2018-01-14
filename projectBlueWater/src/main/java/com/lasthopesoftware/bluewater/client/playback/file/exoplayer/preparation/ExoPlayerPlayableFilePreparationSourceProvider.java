@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import android.content.Context;
 import android.os.Handler;
@@ -24,8 +24,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 

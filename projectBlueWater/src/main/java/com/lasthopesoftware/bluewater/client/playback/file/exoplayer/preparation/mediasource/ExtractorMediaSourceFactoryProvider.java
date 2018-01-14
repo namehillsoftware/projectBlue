@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.exoplayer.mediasource;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource;
 
 import android.content.Context;
 import android.net.Uri;
