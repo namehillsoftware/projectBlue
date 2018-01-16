@@ -121,6 +121,6 @@ public class WhenStreamingTheFileInOddChunks {
 
 	@Test
 	public void thenTheKeyIsCorrect() {
-		assertThat(cacheKey).isEqualToIgnoringCase("http://my-server/file");
+		assertThat(cacheKey).isEqualToIgnoringCase("/file");
 	}
 }
