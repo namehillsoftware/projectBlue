@@ -104,7 +104,7 @@ public class WhenStreamingTheFileInOddChunks {
 				dataSource,
 				fakeCacheStreamSupplier);
 
-		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file"), 0, 7 * 1024 * 1024, "hi"));
+		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file?ID=1"), 0, 7 * 1024 * 1024, "hi"));
 
 		final Random random = new Random();
 		int readResult;
@@ -121,6 +121,6 @@ public class WhenStreamingTheFileInOddChunks {
 
 	@Test
 	public void thenTheKeyIsCorrect() {
-		assertThat(cacheKey).isEqualToIgnoringCase("/file");
+		assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1");
 	}
 }
