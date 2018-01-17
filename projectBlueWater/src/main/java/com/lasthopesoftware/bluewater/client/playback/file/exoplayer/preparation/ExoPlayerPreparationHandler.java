@@ -7,6 +7,8 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
@@ -114,6 +116,6 @@ implements
 
 		exoPlayer.stop();
 		exoPlayer.release();
-		messenger.sendRejection(error);
+		messenger.sendRejection(new PlaybackException(new EmptyPlaybackHandler(0), error));
 	}
 }
