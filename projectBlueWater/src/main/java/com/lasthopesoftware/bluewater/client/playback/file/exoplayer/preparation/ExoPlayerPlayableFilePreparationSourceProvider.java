@@ -21,7 +21,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.di
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileAccessTimeUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
@@ -39,14 +40,16 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	private static final CreateAndHold<LoadControl> loadControl = new Lazy<>(ExoPlayerPlayableFilePreparationSourceProvider::getNewLoadControl);
 	private static final CreateAndHold<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
-	private final IFileUriProvider fileUriProvider;
+	private final BestMatchUriProvider bestMatchUriProvider;
+	private final RemoteFileUriProvider remoteFileUriProvider;
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
 	private final Handler handler;
 	private final DiskFileCache diskFileCache;
 
-	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, IFileUriProvider fileUriProvider, Library library) {
-		this.fileUriProvider = fileUriProvider;
+	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, BestMatchUriProvider bestMatchUriProvider, RemoteFileUriProvider remoteFileUriProvider, Library library) {
+		this.bestMatchUriProvider = bestMatchUriProvider;
+		this.remoteFileUriProvider = remoteFileUriProvider;
 
 		final AudioCacheConfiguration audioCacheConfiguration = new AudioCacheConfiguration(library);
 		final CachedFilesProvider cachedFilesProvider = new CachedFilesProvider(context, audioCacheConfiguration);
@@ -92,10 +95,10 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 			trackSelector.getObject(),
 			loadControl.getObject(),
 			renderersFactory,
-			extractorsFactory.getObject(),
 			handler,
 			diskFileCache,
-			fileUriProvider);
+			bestMatchUriProvider,
+			remoteFileUriProvider);
 	}
 
 	private static TrackSelector getNewTrackSelector() {
