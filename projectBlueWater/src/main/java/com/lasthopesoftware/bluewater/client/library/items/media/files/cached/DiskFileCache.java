@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.di
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.IDiskFileAccessTimeUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -58,7 +57,7 @@ public class DiskFileCache implements ICache {
 				.eventually(cachedFileOutputStream -> writeCachedFileWithRetries(uniqueKey, cachedFileOutputStream, fileData));
 
 		putPromise.excuse(e -> {
-			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
+			logger.error("There was an error putting the cached file with the unique key " + uniqueKey + " into the cache.", e);
 
 			return null;
 		});
@@ -98,7 +97,7 @@ public class DiskFileCache implements ICache {
 				.eventually(cachedFileOutputStream -> writeCachedFileWithRetries(cachedFileOutputStream, buffer));
 
 		putPromise.excuse(e -> {
-			logger.error("There was an error putting the serviceFile with the unique key " + uniqueKey + " into the cache.", e);
+			logger.error("There was an error putting the cached file with the unique key " + uniqueKey + " into the cache.", e);
 
 			return null;
 		});
@@ -141,7 +140,7 @@ public class DiskFileCache implements ICache {
 					final File returnFile = new File(cachedFile.getFileName());
 					logger.info("Checking if " + cachedFile.getFileName() + " exists.");
 					if (!returnFile.exists()) {
-						logger.warn("Cached serviceFile `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
+						logger.warn("Cached file `" + cachedFile.getFileName() + "` doesn't exist! Removing from database.");
 						if (deleteCachedFile(cachedFile.getId()) <= 0)
 							throw new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId());
 
@@ -150,22 +149,22 @@ public class DiskFileCache implements ICache {
 
 					// Remove the serviceFile and return null if it's past its expired time
 					if (expirationTime > -1 && cachedFile.getCreatedTime() < System.currentTimeMillis() - expirationTime) {
-						logger.info("Cached serviceFile " + uniqueKey + " expired. Deleting.");
+						logger.info("Cached file " + uniqueKey + " expired. Deleting.");
 						if (!returnFile.delete())
-							throw new IOException("Unable to delete serviceFile " + returnFile.getAbsolutePath());
+							throw new IOException("Unable to delete cached file " + returnFile.getAbsolutePath());
 
 						if (deleteCachedFile(cachedFile.getId()) <= 0)
-							throw new SQLDataException("Unable to delete serviceFile with ID " + cachedFile.getId());
+							throw new SQLDataException("Unable to delete cached file with ID " + cachedFile.getId());
 
 						return null;
 					}
 
 					diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile);
 
-					logger.info("Returning cached serviceFile " + uniqueKey);
+					logger.info("Returning cached file " + uniqueKey);
 					return returnFile;
 				} catch (SQLException sqlException) {
-					logger.error("There was an error attempting to get the cached serviceFile " + uniqueKey, sqlException);
+					logger.error("There was an error attempting to get the cached file " + uniqueKey, sqlException);
 					return null;
 				}
 			});
@@ -178,10 +177,10 @@ public class DiskFileCache implements ICache {
 	private long deleteCachedFile(final long cachedFileId) {
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-				logger.info("Deleting cached serviceFile with id " + cachedFileId);
+				logger.info("Deleting cached file with id " + cachedFileId);
 
 				if (logger.isDebugEnabled())
-					logger.debug("Cached serviceFile count: " + getTotalCachedFileCount(repositoryAccessHelper));
+					logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper));
 
 				final long executionResult =
 						repositoryAccessHelper
@@ -190,13 +189,13 @@ public class DiskFileCache implements ICache {
 								.execute();
 
 				if (logger.isDebugEnabled())
-					logger.debug("Cached serviceFile count: " + getTotalCachedFileCount(repositoryAccessHelper));
+					logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper));
 
 				closeableTransaction.setTransactionSuccessful();
 
 				return executionResult;
 			} catch (SQLException sqlException) {
-				logger.warn("There was an error trying to delete the cached serviceFile with id " + cachedFileId, sqlException);
+				logger.warn("There was an error trying to delete the cached file with id " + cachedFileId, sqlException);
 			}
 		}
 
