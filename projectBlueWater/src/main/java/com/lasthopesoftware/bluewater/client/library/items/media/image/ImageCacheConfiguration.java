@@ -4,12 +4,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.co
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 import org.joda.time.Days;
+import org.joda.time.Duration;
 
 
 public final class ImageCacheConfiguration implements IDiskFileCacheConfiguration {
 
 	private static final int MAX_DISK_CACHE_SIZE = 50 * 1024 * 1024; // 100 * 1024 * 1024 for 100MB of cache
-	private static final Days MAX_DAYS_IN_CACHE = Days.days(30);
+	private static final Duration MAX_DAYS_IN_CACHE = Days.days(30).toStandardDuration();
 	private static final String IMAGES_CACHE_NAME = "images";
 	private final Library library;
 
@@ -34,7 +35,7 @@ public final class ImageCacheConfiguration implements IDiskFileCacheConfiguratio
 	}
 
 	@Override
-	public Days getCacheExpirationDays() {
+	public Duration getCacheItemLifetime() {
 		return MAX_DAYS_IN_CACHE;
 	}
 }

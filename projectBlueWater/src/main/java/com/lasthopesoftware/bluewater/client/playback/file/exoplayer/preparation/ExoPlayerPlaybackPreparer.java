@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.B
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
+import com.lasthopesoftware.resources.uri.PathAndQuery;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
@@ -47,7 +48,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	@Override
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return remoteFileUriProvider.getFileUri(serviceFile)
-			.eventually(uri -> diskFileCache.promiseCachedFile(uri.getPath() + "?" + uri.getQuery()))
+			.eventually(uri -> diskFileCache.promiseCachedFile(PathAndQuery.forUri(uri)))
 			.eventually(file -> file != null
 				? new Promise<>(Uri.fromFile(file))
 				: bestMatchUriProvider.getFileUri(serviceFile))

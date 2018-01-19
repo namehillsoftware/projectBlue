@@ -41,8 +41,8 @@ public class DiskFileCache implements ICache {
 		this.diskCacheDirectory = diskCacheDirectory;
 		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
 
-		expirationTime = diskFileCacheConfiguration.getCacheExpirationDays() != null
-			? diskFileCacheConfiguration.getCacheExpirationDays().toStandardDuration().getMillis()
+		expirationTime = diskFileCacheConfiguration.getCacheItemLifetime() != null
+			? diskFileCacheConfiguration.getCacheItemLifetime().getMillis()
 			: -1;
 
 		this.cacheStreamSupplier = cacheStreamSupplier;
