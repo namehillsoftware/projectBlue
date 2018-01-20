@@ -1,7 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.buffering;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.buffering;
 
 import android.media.MediaPlayer;
 
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class BufferingMediaPlayerFile

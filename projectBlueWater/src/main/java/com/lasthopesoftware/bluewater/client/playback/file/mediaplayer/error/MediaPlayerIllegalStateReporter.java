@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.error;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

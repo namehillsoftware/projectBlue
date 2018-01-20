@@ -1,8 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.file.error;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error;
 
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 

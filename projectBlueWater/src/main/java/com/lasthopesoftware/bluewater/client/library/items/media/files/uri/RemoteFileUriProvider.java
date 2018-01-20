@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by david on 7/24/15.
  */
-class RemoteFileUriProvider implements IFileUriProvider {
+public class RemoteFileUriProvider implements IFileUriProvider {
 	private final IConnectionProvider connectionProvider;
 	private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 
-	RemoteFileUriProvider(IConnectionProvider connectionProvider, IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider) {
+	public RemoteFileUriProvider(IConnectionProvider connectionProvider, IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider) {
 		this.connectionProvider = connectionProvider;
 		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 	}

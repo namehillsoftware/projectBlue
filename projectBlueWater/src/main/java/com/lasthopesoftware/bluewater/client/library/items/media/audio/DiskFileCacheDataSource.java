@@ -6,9 +6,9 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
+import com.lasthopesoftware.resources.uri.PathAndQuery;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;
@@ -25,14 +25,12 @@ public class DiskFileCacheDataSource implements DataSource {
 	private static final long maxBufferSize = 5 * 1024 * 1024; // 5MB
 
 	private final HttpDataSource defaultHttpDataSource;
-	private final String serviceFileKey;
 	private final ICacheStreamSupplier cacheStreamSupplier;
 	private Buffer buffer;
 	private Promise<CacheOutputStream> promisedOutputStream;
 
-	public DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ServiceFile serviceFile, ICacheStreamSupplier cacheStreamSupplier) {
+	public DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ICacheStreamSupplier cacheStreamSupplier) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
-		serviceFileKey = String.valueOf(serviceFile.getKey());
 		this.cacheStreamSupplier = cacheStreamSupplier;
 	}
 
@@ -40,7 +38,7 @@ public class DiskFileCacheDataSource implements DataSource {
 	public long open(DataSpec dataSpec) throws IOException {
 		if (dataSpec.position == 0) {
 			buffer = new Buffer();
-			promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(serviceFileKey);
+			promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(PathAndQuery.forUri(dataSpec.uri));
 		}
 
 		return defaultHttpDataSource.open(dataSpec);

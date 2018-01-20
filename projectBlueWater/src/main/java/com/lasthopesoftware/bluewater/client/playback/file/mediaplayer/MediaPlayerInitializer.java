@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.initialization;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -7,15 +7,13 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.playback.file.initialization.IPlaybackInitialization;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by david on 9/24/16.
- */
 public final class MediaPlayerInitializer implements IPlaybackInitialization<MediaPlayer> {
 	private Context context;
 	private final Library library;

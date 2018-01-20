@@ -2,12 +2,13 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.mediaplayer.MediaPlayerPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparation.MediaPlayerPlayableFilePreparationSourceProvider;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,7 +31,8 @@ public class WhenBuildingTheEngine {
 		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 			new PreparedPlaybackQueueFeederBuilder(
 				mock(Context.class),
-				mock(IFileUriProvider.class),
+				mock(BestMatchUriProvider.class),
+				mock(RemoteFileUriProvider.class),
 				lookupSelectedPlaybackEngineType,
 				() -> false);
 

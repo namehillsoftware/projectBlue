@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerErrorException;
-import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerException;
-import com.lasthopesoftware.bluewater.client.playback.file.error.MediaPlayerIllegalStateReporter;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;

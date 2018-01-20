@@ -6,7 +6,6 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.DiskFileCacheDataSource;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
@@ -15,6 +14,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.io.IOException;
 import java.util.Random;
@@ -22,15 +23,19 @@ import java.util.Random;
 import okio.Buffer;
 import okio.BufferedSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(RobolectricTestRunner.class)
 public class WhenStreamingTheFileInOddChunks {
 
 	private static final byte[] bytesWritten = new byte[7 * 1024 * 1024];
 	private static final byte[] bytes = new byte[7 * 1024 * 1024];
+
+	private static String cacheKey;
 
 	static {
 		new Random().nextBytes(bytes);
@@ -39,6 +44,10 @@ public class WhenStreamingTheFileInOddChunks {
 	@BeforeClass
 	public static void context() throws IOException {
 		final ICacheStreamSupplier fakeCacheStreamSupplier = uniqueKey -> new Promise<>(new CacheOutputStream() {
+				{
+					cacheKey = uniqueKey;
+				}
+
 				int numberOfBytesWritten = 0;
 
 				@Override
@@ -93,10 +102,9 @@ public class WhenStreamingTheFileInOddChunks {
 		final DiskFileCacheDataSource diskFileCacheDataSource =
 			new DiskFileCacheDataSource(
 				dataSource,
-				new ServiceFile(1),
 				fakeCacheStreamSupplier);
 
-		diskFileCacheDataSource.open(new DataSpec(Uri.EMPTY, 0, 7 * 1024 * 1024, "hi"));
+		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file?ID=1"), 0, 7 * 1024 * 1024, "hi"));
 
 		final Random random = new Random();
 		int readResult;
@@ -109,5 +117,10 @@ public class WhenStreamingTheFileInOddChunks {
 	@Test
 	public void thenTheEntireFileIsWritten() {
 		Assert.assertArrayEquals(bytes, bytesWritten);
+	}
+
+	@Test
+	public void thenTheKeyIsCorrect() {
+		assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1");
 	}
 }

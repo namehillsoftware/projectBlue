@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -7,6 +7,8 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -126,14 +128,23 @@ implements
 	}
 
 	@Override
-	public void onPlayerError(ExoPlaybackException error) {
-		logger.error("A player error has occurred", error);
-		playbackHandlerMessenger.sendRejection(error);
+	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
 	}
 
 	@Override
-	public void onPositionDiscontinuity() {
-		logger.debug("Position discontinuity has occurred");
+	public void onPlayerError(ExoPlaybackException error) {
+		handlePlaybackError(error);
+	}
+
+	private void handlePlaybackError(Throwable error) {
+		logger.error("A player error has occurred", error);
+		playbackHandlerMessenger.sendRejection(new ExoPlayerException(this, error));
+	}
+
+	@Override
+	public void onPositionDiscontinuity(int reason) {
+
 	}
 
 	@Override
@@ -142,11 +153,15 @@ implements
 	}
 
 	@Override
+	public void onSeekProcessed() {
+
+	}
+
+	@Override
 	public void run() {
 		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
 		exoPlayer.release();
-
 	}
 }
