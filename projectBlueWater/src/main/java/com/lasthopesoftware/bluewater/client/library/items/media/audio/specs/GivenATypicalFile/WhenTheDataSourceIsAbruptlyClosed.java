@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenAFileGreaterThan5Megabytes;
+package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenATypicalFile;
 
 import android.net.Uri;
 
@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,12 +29,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-public class WhenStreamingTheFileInOddChunks {
+public class WhenTheDataSourceIsAbruptlyClosed {
 
 	private static final byte[] bytesWritten = new byte[7 * 1024 * 1024];
 	private static final byte[] bytes = new byte[7 * 1024 * 1024];
-
-	private static String cacheKey;
 	private static boolean committedToCache;
 
 	static {
@@ -45,47 +42,43 @@ public class WhenStreamingTheFileInOddChunks {
 	@BeforeClass
 	public static void context() throws IOException {
 		final ICacheStreamSupplier fakeCacheStreamSupplier = uniqueKey -> new Promise<>(new CacheOutputStream() {
-				{
-					cacheKey = uniqueKey;
-				}
+			int numberOfBytesWritten = 0;
 
-				int numberOfBytesWritten = 0;
+			@Override
+			public Promise<CacheOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
+				return new Promise<>(this);
+			}
 
-				@Override
-				public Promise<CacheOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
-					return new Promise<>(this);
-				}
-
-				@Override
-				public Promise<CacheOutputStream> promiseTransfer(BufferedSource bufferedSource) {
-					try {
-						while (numberOfBytesWritten < bytesWritten.length) {
-							int read = bufferedSource.read(bytesWritten, numberOfBytesWritten, bytesWritten.length - numberOfBytesWritten);
-							if (read == -1) return new Promise<>(this);
-							numberOfBytesWritten += read;
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
+			@Override
+			public Promise<CacheOutputStream> promiseTransfer(BufferedSource bufferedSource) {
+				try {
+					while (numberOfBytesWritten < bytesWritten.length) {
+						int read = bufferedSource.read(bytesWritten, numberOfBytesWritten, bytesWritten.length - numberOfBytesWritten);
+						if (read == -1) return new Promise<>(this);
+						numberOfBytesWritten += read;
 					}
-					return new Promise<>(this);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
+				return new Promise<>(this);
+			}
 
-				@Override
-				public Promise<CachedFile> commitToCache() {
-					committedToCache = true;
-					return new Promise<>(new CachedFile());
-				}
+			@Override
+			public Promise<CachedFile> commitToCache() {
+				committedToCache = true;
+				return new Promise<>(new CachedFile());
+			}
 
-				@Override
-				public Promise<CacheOutputStream> flush() {
-					return new Promise<>(this);
-				}
+			@Override
+			public Promise<CacheOutputStream> flush() {
+				return new Promise<>(this);
+			}
 
-				@Override
-				public void close() throws IOException {
+			@Override
+			public void close() throws IOException {
 
-				}
-			});
+			}
+		});
 
 		final Buffer buffer = new Buffer();
 		buffer.write(bytes);
@@ -106,28 +99,22 @@ public class WhenStreamingTheFileInOddChunks {
 				dataSource,
 				fakeCacheStreamSupplier);
 
-		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file?ID=1"), 0, 7 * 1024 * 1024, "hi"));
+		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file"), 0, 2 * 1024 * 1024, "1"));
 
 		final Random random = new Random();
-		int readResult;
+		int byteCount = 0;
 		do {
 			final byte[] bytes = new byte[random.nextInt(1000000)];
-			readResult = diskFileCacheDataSource.read(bytes, 0, bytes.length);
-		} while (readResult != C.RESULT_END_OF_INPUT);
+			final int readResult = diskFileCacheDataSource.read(bytes, 0, bytes.length);
+			if (readResult == C.RESULT_END_OF_INPUT) break;
+			byteCount += readResult;
+		} while (byteCount < 3 * 1024 * 1024);
+
+		diskFileCacheDataSource.close();
 	}
 
 	@Test
-	public void thenTheEntireFileIsWritten() {
-		Assert.assertArrayEquals(bytes, bytesWritten);
-	}
-
-	@Test
-	public void thenTheKeyIsCorrect() {
-		assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1");
-	}
-
-	@Test
-	public void thenTheFileIsCached() {
-		assertThat(committedToCache).isTrue();
+	public void thenTheFileIsNotCached() {
+		assertThat(committedToCache).isFalse();
 	}
 }

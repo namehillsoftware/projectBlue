@@ -23,6 +23,7 @@ import java.util.Random;
 import okio.Buffer;
 import okio.BufferedSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -33,6 +34,7 @@ public class WhenStreamingTheFileInOddChunks {
 
 	private static final byte[] bytesWritten = new byte[2 * 1024 * 1024];
 	private static final byte[] bytes = new byte[2 * 1024 * 1024];
+	private static boolean committedToCache;
 
 	static {
 		new Random().nextBytes(bytes);
@@ -64,6 +66,7 @@ public class WhenStreamingTheFileInOddChunks {
 
 				@Override
 				public Promise<CachedFile> commitToCache() {
+					committedToCache = true;
 					return new Promise<>(new CachedFile());
 				}
 
@@ -105,10 +108,17 @@ public class WhenStreamingTheFileInOddChunks {
 			final byte[] bytes = new byte[random.nextInt(1000000)];
 			readResult = diskFileCacheDataSource.read(bytes, 0, bytes.length);
 		} while (readResult != C.RESULT_END_OF_INPUT);
+
+		diskFileCacheDataSource.close();
 	}
 
 	@Test
 	public void thenTheEntireFileIsWritten() {
 		Assert.assertArrayEquals(bytes, bytesWritten);
+	}
+
+	@Test
+	public void thenTheFileIsCached() {
+		assertThat(committedToCache).isTrue();
 	}
 }
