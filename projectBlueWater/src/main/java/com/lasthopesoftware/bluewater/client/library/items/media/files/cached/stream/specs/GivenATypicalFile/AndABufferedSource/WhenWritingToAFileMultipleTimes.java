@@ -57,6 +57,9 @@ public class WhenWritingToAFileMultipleTimes {
 				}
 				countDownLatch.countDown();
 				return null;
+			},	e -> {
+				countDownLatch.countDown();
+				return null;
 			});
 
 		countDownLatch.await();
