@@ -22,9 +22,11 @@ import okio.Buffer;
 public class DiskFileCacheDataSource implements DataSource {
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCacheDataSource.class);
+	private static final long maxBufferSize = 1024 * 1024; // 1MB
 
 	private final HttpDataSource defaultHttpDataSource;
 	private final ICacheStreamSupplier cacheStreamSupplier;
+	private Buffer buffer;
 	private Promise<CacheOutputStream> promisedOutputStream;
 
 	public DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ICacheStreamSupplier cacheStreamSupplier) {
@@ -35,9 +37,8 @@ public class DiskFileCacheDataSource implements DataSource {
 	@Override
 	public long open(DataSpec dataSpec) throws IOException {
 		if (dataSpec.position == 0) {
-			promisedOutputStream =
-				cacheStreamSupplier
-					.promiseCachedFileOutputStream(PathAndQuery.forUri(dataSpec.uri));
+			buffer = new Buffer();
+			promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(PathAndQuery.forUri(dataSpec.uri));
 		}
 
 		return defaultHttpDataSource.open(dataSpec);
@@ -47,47 +48,77 @@ public class DiskFileCacheDataSource implements DataSource {
 	public int read(byte[] bytes, int offset, int readLength) throws IOException {
 		final int result = defaultHttpDataSource.read(bytes, offset, readLength);
 
-		if (promisedOutputStream == null) return result;
+		if (buffer == null) return result;
 
-		if (result == C.RESULT_END_OF_INPUT) {
-			promisedOutputStream
-				.eventually(cachedFileOutputStream ->
-					cachedFileOutputStream
-						.flush()
-						.eventually(
-							os -> {
-								os.close();
-								return os.commitToCache();
-							},
-							e -> {
-								logger.warn("An error occurred flushing the output stream", e);
-								cachedFileOutputStream.close();
-								return Promise.empty();
-							}));
+		if (result != C.RESULT_END_OF_INPUT) {
+
+			buffer.write(bytes, offset, result);
+
+			if (buffer.size() <= maxBufferSize) return result;
+
+			final Buffer bufferToWrite = buffer;
+			buffer = new Buffer();
+
+			promisedOutputStream = promisedOutputStream
+				.eventually(cachedFileOutputStream -> {
+					final Promise<CacheOutputStream> promisedWrite =
+						cachedFileOutputStream.promiseTransfer(bufferToWrite);
+
+					promisedWrite.then(
+						os -> {
+							bufferToWrite.close();
+							return null;
+						},
+						e -> {
+							logger.warn("An error occurred storing the audio file", e);
+							bufferToWrite.close();
+							cachedFileOutputStream.close();
+							return null;
+						});
+
+					return promisedWrite;
+				});
 
 			return result;
 		}
 
-		final Buffer buffer = new Buffer();
-		buffer.write(bytes, offset, result);
+		final Promise<CacheOutputStream> outputStream = buffer.size() == 0
+			? promisedOutputStream
+			: promisedOutputStream
+				.eventually(cachedFileOutputStream -> {
+					final Promise<CacheOutputStream> promisedWrite =
+						cachedFileOutputStream.promiseTransfer(buffer);
 
-		promisedOutputStream = promisedOutputStream
-			.eventually(cachedFileOutputStream -> {
-				final Promise<CacheOutputStream> promisedWrite = cachedFileOutputStream.promiseTransfer(buffer);
-				promisedWrite.then(
+					promisedWrite.then(
+						os -> {
+							buffer.close();
+							return null;
+						},
+						e -> {
+							logger.warn("An error occurred storing the audio file", e);
+							buffer.close();
+							cachedFileOutputStream.close();
+							return null;
+						});
+
+					return promisedWrite;
+				});
+
+		outputStream.eventually(cachedFileOutputStream ->
+			cachedFileOutputStream
+				.flush()
+				.eventually(
 					os -> {
+						os.close();
 						buffer.close();
-						return null;
+						return os.commitToCache();
 					},
 					e -> {
-						logger.warn("An error occurred storing the audio file", e);
-						buffer.close();
+						logger.warn("An error occurred flushing the output stream", e);
 						cachedFileOutputStream.close();
-						return null;
-					});
-
-				return promisedWrite;
-			});
+						buffer.close();
+						return Promise.empty();
+					}));
 
 		return result;
 	}

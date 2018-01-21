@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenAFileLessThan5Megabytes;
+package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenAFileLessThan1Megabyte;
 
 import android.net.Uri;
 
@@ -32,8 +32,8 @@ import static org.mockito.Mockito.when;
 @RunWith(RobolectricTestRunner.class)
 public class WhenStreamingTheFileInOddChunks {
 
-	private static final byte[] bytesWritten = new byte[2 * 1024 * 1024];
-	private static final byte[] bytes = new byte[2 * 1024 * 1024];
+	private static final byte[] bytesWritten = new byte[512 * 1024];
+	private static final byte[] bytes = new byte[512 * 1024];
 	private static boolean committedToCache;
 
 	static {

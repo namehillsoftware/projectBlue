@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
 
 import okio.BufferedSource;
 import okio.Okio;
-import okio.Sink;
 
 public class CachedFileOutputStream implements CacheOutputStream {
 
@@ -46,9 +45,8 @@ public class CachedFileOutputStream implements CacheOutputStream {
 
 	public Promise<CacheOutputStream> promiseTransfer(BufferedSource bufferedSource) {
 		return new QueuedPromise<>(() -> {
-			try (final Sink sink = Okio.sink(lazyFileOutputStream.getObject())) {
-				bufferedSource.readAll(sink);
-			}
+			bufferedSource
+				.readAll(Okio.sink(lazyFileOutputStream.getObject()));
 			return this;
 		}, cachedFileWriteExecutor);
 	}
