@@ -87,7 +87,6 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -624,8 +623,7 @@ implements
 				new RemoteFileUriProvider(
 					connectionProvider,
 					new ServiceFileUriQueryParamsProvider()),
-				new SelectedPlaybackEngineTypeAccess(this),
-				DebugFlag.getInstance());
+				new SelectedPlaybackEngineTypeAccess(this));
 
 		final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
 

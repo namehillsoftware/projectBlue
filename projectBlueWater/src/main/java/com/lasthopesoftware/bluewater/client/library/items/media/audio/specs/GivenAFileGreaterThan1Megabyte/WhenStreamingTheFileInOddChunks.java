@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenAFileGreaterThan5Megabytes;
+package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenAFileGreaterThan1Megabyte;
 
 import android.net.Uri;
 
@@ -36,6 +36,7 @@ public class WhenStreamingTheFileInOddChunks {
 	private static final byte[] bytes = new byte[7 * 1024 * 1024];
 
 	private static String cacheKey;
+	private static boolean committedToCache;
 
 	static {
 		new Random().nextBytes(bytes);
@@ -71,6 +72,7 @@ public class WhenStreamingTheFileInOddChunks {
 
 				@Override
 				public Promise<CachedFile> commitToCache() {
+					committedToCache = true;
 					return new Promise<>(new CachedFile());
 				}
 
@@ -122,5 +124,10 @@ public class WhenStreamingTheFileInOddChunks {
 	@Test
 	public void thenTheKeyIsCorrect() {
 		assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1");
+	}
+
+	@Test
+	public void thenTheFileIsCached() {
+		assertThat(committedToCache).isTrue();
 	}
 }

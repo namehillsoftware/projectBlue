@@ -22,7 +22,7 @@ import okio.Buffer;
 public class DiskFileCacheDataSource implements DataSource {
 
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCacheDataSource.class);
-	private static final long maxBufferSize = 5 * 1024 * 1024; // 5MB
+	private static final long maxBufferSize = 1024 * 1024; // 1MB
 
 	private final HttpDataSource defaultHttpDataSource;
 	private final ICacheStreamSupplier cacheStreamSupplier;
