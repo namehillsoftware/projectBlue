@@ -33,8 +33,8 @@ public class WhenBuildingTheEngine {
 				mock(Context.class),
 				mock(BestMatchUriProvider.class),
 				mock(RemoteFileUriProvider.class),
-				lookupSelectedPlaybackEngineType,
-				() -> true);
+				lookupSelectedPlaybackEngineType
+			);
 
 		engine = playbackEngineBuilder.build(new Library());
 	}

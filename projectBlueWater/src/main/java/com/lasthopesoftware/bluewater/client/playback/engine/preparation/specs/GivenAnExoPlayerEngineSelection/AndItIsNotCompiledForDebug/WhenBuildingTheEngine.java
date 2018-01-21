@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
-import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparation.MediaPlayerPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,14 +33,14 @@ public class WhenBuildingTheEngine {
 				mock(Context.class),
 				mock(BestMatchUriProvider.class),
 				mock(RemoteFileUriProvider.class),
-				lookupSelectedPlaybackEngineType,
-				() -> false);
+				lookupSelectedPlaybackEngineType
+			);
 
 		engine = playbackEngineBuilder.build(new Library());
 	}
 
 	@Test
-	public void thenAMediaPlayerEngineIsBuilt() {
-		assertThat(engine).isInstanceOf(MediaPlayerPlayableFilePreparationSourceProvider.class);
+	public void thenAnExoPlayerEngineIsBuilt() {
+		assertThat(engine).isInstanceOf(ExoPlayerPlayableFilePreparationSourceProvider.class);
 	}
 }
