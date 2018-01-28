@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.di
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-import com.vedsoft.futures.callables.CarelessFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ import java.io.IOException;
  * @author david
  *
  */
-public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
+public class CacheFlusherTask implements MessageWriter<Void> {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
 
@@ -31,7 +31,7 @@ public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
 	private final long targetSize;
 
 	public static Promise<?> promisedCacheFlushing(final Context context, final IDiskCacheDirectoryProvider diskCacheDirectory, final IDiskFileCacheConfiguration diskFileCacheConfiguration, final long targetSize) {
-		return new QueuedPromise<>(() -> new CacheFlusherTask(context, diskCacheDirectory, diskFileCacheConfiguration, targetSize), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(new CacheFlusherTask(context, diskCacheDirectory, diskFileCacheConfiguration, targetSize), RepositoryAccessHelper.databaseExecutor);
 	}
 
 	/*
@@ -45,14 +45,9 @@ public class CacheFlusherTask implements Runnable, CarelessFunction<Void> {
 	}
 
 	@Override
-	public Void result() throws Throwable {
+	public Void prepareMessage() throws Throwable {
 		flushCache();
 		return null;
-	}
-
-	@Override
-	public void run() {
-		flushCache();
 	}
 
 	private void flushCache() {
