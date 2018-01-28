@@ -72,7 +72,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 				}
 
 				return new QueuedPromise<>(() -> {
-					logger.info("ServiceFile with unique key " + uniqueKey + " doesn't exist. Creating...");
+					logger.info("File with unique key " + uniqueKey + " doesn't exist. Creating...");
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 						final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
 
@@ -92,13 +92,15 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 							closeableTransaction.setTransactionSuccessful();
 						} catch (SQLException sqlException) {
 							logger.warn("There was an error inserting the cached serviceFile with the unique key " + uniqueKey, sqlException);
+							throw sqlException;
 						}
 					} finally {
 						CacheFlusherTask.promisedCacheFlushing(context, diskCacheDirectoryProvider, diskFileCacheConfiguration, diskFileCacheConfiguration.getMaxSize());
 					}
 
-					return cachedFile;
-				}, RepositoryAccessHelper.databaseExecutor);
+					return null;
+				}, RepositoryAccessHelper.databaseExecutor)
+				.eventually(v -> cachedFilesProvider.promiseCachedFile(uniqueKey));
 			});
 	}
 
