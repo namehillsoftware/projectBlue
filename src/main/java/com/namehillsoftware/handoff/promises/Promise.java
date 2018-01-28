@@ -38,20 +38,18 @@ public class Promise<Resolution> {
 		singleMessageBroadcaster.cancel();
 	}
 
-	private <NewResolution> Promise<NewResolution> then(ResolutionResponseMessenger<Resolution, NewResolution> onFulfilled) {
+	private <NewResolution> Promise<NewResolution> then(ResponseRoutingMessenger<Resolution, NewResolution> onFulfilled) {
 		singleMessageBroadcaster.awaitResolution(onFulfilled);
 
 		return new Promise<>(onFulfilled);
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled) {
-		return then(new Execution.ExpectedResult<Resolution, NewResolution>(onFulfilled));
+		return then(new FulfilledResponseExecutor<>(onFulfilled));
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled, ImmediateResponse<Throwable, NewResolution> onRejected) {
-		final GuaranteedResponseMessenger<Resolution, NewResolution> guaranteedResponse = new GuaranteedResponseMessenger<>(onFulfilled, onRejected);
-		singleMessageBroadcaster.awaitResolution(guaranteedResponse);
-		return new Promise<>(guaranteedResponse);
+		return then(new ResponseExecutor<>(onFulfilled, onRejected));
 	}
 
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled) {
@@ -59,19 +57,11 @@ public class Promise<Resolution> {
 	}
 
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled, PromisedResponse<Throwable, NewResolution> onRejected) {
-		final PromisedGuaranteedResponseMessenger<Resolution, NewResolution> promisedGuaranteedResponse = new PromisedGuaranteedResponseMessenger<>(onFulfilled, onRejected);
-		singleMessageBroadcaster.awaitResolution(promisedGuaranteedResponse);
-		return new Promise<>(promisedGuaranteedResponse);
-	}
-
-	private <NewRejection> Promise<NewRejection> excuse(RejectionResponseMessenger<Resolution, NewRejection> rejectionResponseMessenger) {
-		singleMessageBroadcaster.awaitResolution(rejectionResponseMessenger);
-
-		return new Promise<>(rejectionResponseMessenger);
+		return then(new PromisedGuaranteedResponseMessenger<>(onFulfilled, onRejected));
 	}
 
 	public final <NewRejection> Promise<NewRejection> excuse(ImmediateResponse<Throwable, NewRejection> onRejected) {
-		return excuse(new Execution.ErrorResultExecutor<>(onRejected));
+		return then(new RejectedResponseExecutor<>(onRejected));
 	}
 
 	public static <Resolution> Promise<Resolution> empty() {

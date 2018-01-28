@@ -13,7 +13,7 @@ final class PromisedResolutionResponseMessenger<Resolution, Response> extends Re
 	}
 
 	@Override
-	void respond(Resolution resolution) {
+	protected void respond(Resolution resolution) {
 		try {
 			promiseProxy.proxy(onFulfilled.promiseResponse(resolution));
 		} catch (Throwable throwable) {

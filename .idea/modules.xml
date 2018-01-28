@@ -2,12 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/src/main/main.iml" filepath="$PROJECT_DIR$/src/main/main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/messenger.iml" filepath="$PROJECT_DIR$/.idea/modules/messenger.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/messenger_main.iml" filepath="$PROJECT_DIR$/.idea/modules/messenger_main.iml" group="messenger" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/messenger_test.iml" filepath="$PROJECT_DIR$/.idea/modules/messenger_test.iml" group="messenger" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sandbox-messenger.iml" filepath="$PROJECT_DIR$/.idea/modules/sandbox-messenger.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sandbox-messenger_main.iml" filepath="$PROJECT_DIR$/.idea/modules/sandbox-messenger_main.iml" group="messenger" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sandbox-messenger_test.iml" filepath="$PROJECT_DIR$/.idea/modules/sandbox-messenger_test.iml" group="messenger" />
+      <module fileurl="file://$PROJECT_DIR$/src/specs/specs.iml" filepath="$PROJECT_DIR$/src/specs/specs.iml" />
     </modules>
   </component>
 </project>
