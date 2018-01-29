@@ -44,6 +44,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -87,6 +90,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -616,13 +620,28 @@ implements
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(this, library, cachedFilePropertiesProvider);
 
+		final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
+			new ExternalStorageReadPermissionsArbitratorForOs(this);
+
+		final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
+			connectionProvider,
+			new ServiceFileUriQueryParamsProvider());
+
 		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 			new PreparedPlaybackQueueFeederBuilder(
 				this,
-				new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess),
-				new RemoteFileUriProvider(
-					connectionProvider,
-					new ServiceFileUriQueryParamsProvider()),
+				new BestMatchUriProvider(
+					library,
+					new StoredFileUriProvider(
+						storedFileAccess,
+						arbitratorForOs),
+					new MediaFileUriProvider(
+						this,
+						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+						arbitratorForOs,
+						library),
+					remoteFileUriProvider),
+				remoteFileUriProvider,
 				new SelectedPlaybackEngineTypeAccess(this));
 
 		final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
