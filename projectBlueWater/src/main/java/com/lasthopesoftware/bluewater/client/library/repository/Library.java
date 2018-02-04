@@ -60,8 +60,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param nowPlayingId the nowPlayingId to set
 	 */
-	public void setNowPlayingId(int nowPlayingId) {
+	public Library setNowPlayingId(int nowPlayingId) {
 		this.nowPlayingId = nowPlayingId;
+		return this;
 	}
 	
 	/**
@@ -73,8 +74,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param libraryName the mLibraryName to set
 	 */
-	public void setLibraryName(String libraryName) {
+	public Library setLibraryName(String libraryName) {
 		this.libraryName = libraryName;
+		return this;
 	}
 	/**
 	 * @return the mAccessCode
@@ -85,8 +87,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param accessCode the mAccessCode to set
 	 */
-	public void setAccessCode(String accessCode) {
+	public Library setAccessCode(String accessCode) {
 		this.accessCode = accessCode;
+		return this;
 	}
 
 	/**
@@ -98,8 +101,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param authKey the authKey to set
 	 */
-	public void setAuthKey(String authKey) {
+	public Library setAuthKey(String authKey) {
 		this.authKey = authKey;
+		return this;
 	}
 
 	/**
@@ -111,16 +115,18 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param nowPlayingProgress the nowPlayingProgress to set
 	 */
-	public void setNowPlayingProgress(long nowPlayingProgress) {
+	public Library setNowPlayingProgress(long nowPlayingProgress) {
 		this.nowPlayingProgress = nowPlayingProgress;
+		return this;
 	}
 		
 	public String getSavedTracksString() {
 		return savedTracksString;
 	}
 	
-	public void setSavedTracksString(String savedTracksString) {
+	public Library setSavedTracksString(String savedTracksString) {
 		this.savedTracksString = savedTracksString;
+		return this;
 	}
 
 	/**
@@ -138,8 +144,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param isLocalOnly the isLocalOnly to set
 	 */
-	public void setLocalOnly(boolean isLocalOnly) {
+	public Library setLocalOnly(boolean isLocalOnly) {
 		this.isLocalOnly = isLocalOnly;
+		return this;
 	}
 	/**
 	 * @return the selectedView
@@ -150,8 +157,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param selectedView the selectedView to set
 	 */
-	public void setSelectedView(int selectedView) {
+	public Library setSelectedView(int selectedView) {
 		this.selectedView = selectedView;
+		return this;
 	}
 	/**
 	 * @return the isRepeating
@@ -162,16 +170,18 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param isRepeating the isRepeating to set
 	 */
-	public void setRepeating(boolean isRepeating) {
+	public Library setRepeating(boolean isRepeating) {
 		this.isRepeating = isRepeating;
+		return this;
 	}
 
 	public String getCustomSyncedFilesPath() {
 		return customSyncedFilesPath;
 	}
 
-	public void setCustomSyncedFilesPath(String customSyncedFilesPath) {
+	public Library setCustomSyncedFilesPath(String customSyncedFilesPath) {
 		this.customSyncedFilesPath = customSyncedFilesPath;
+		return this;
 	}
 
 	public File getSyncDir(Context context) {
@@ -196,32 +206,36 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return syncedFileLocation;
 	}
 
-	public void setSyncedFileLocation(SyncedFileLocation syncedFileLocation) {
+	public Library setSyncedFileLocation(SyncedFileLocation syncedFileLocation) {
 		this.syncedFileLocation = syncedFileLocation;
+		return this;
 	}
 
 	public boolean isUsingExistingFiles() {
 		return isUsingExistingFiles;
 	}
 
-	public void setIsUsingExistingFiles(boolean isUsingExistingFiles) {
+	public Library setIsUsingExistingFiles(boolean isUsingExistingFiles) {
 		this.isUsingExistingFiles = isUsingExistingFiles;
+		return this;
 	}
 
 	public boolean isSyncLocalConnectionsOnly() {
 		return isSyncLocalConnectionsOnly;
 	}
 
-	public void setIsSyncLocalConnectionsOnly(boolean isSyncLocalConnections) {
+	public Library setIsSyncLocalConnectionsOnly(boolean isSyncLocalConnections) {
 		this.isSyncLocalConnectionsOnly = isSyncLocalConnections;
+		return this;
 	}
 
 	public ViewType getSelectedViewType() {
 		return selectedViewType;
 	}
 
-	public void setSelectedViewType(ViewType selectedViewType) {
+	public Library setSelectedViewType(ViewType selectedViewType) {
 		this.selectedViewType = selectedViewType;
+		return this;
 	}
 
 	public void setId(int id) {
