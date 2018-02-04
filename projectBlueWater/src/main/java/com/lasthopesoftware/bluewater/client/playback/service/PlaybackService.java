@@ -648,7 +648,6 @@ implements
 						library,
 						false),
 					remoteFileUriProvider),
-				remoteFileUriProvider,
 				new SelectedPlaybackEngineTypeAccess(this));
 
 		final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
