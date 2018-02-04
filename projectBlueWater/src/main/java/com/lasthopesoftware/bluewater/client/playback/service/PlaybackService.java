@@ -37,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -635,6 +636,7 @@ implements
 					new StoredFileUriProvider(
 						storedFileAccess,
 						arbitratorForOs),
+					new CachedFileUriProvider(),
 					new MediaFileUriProvider(
 						this,
 						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.uri.specs.GivenAFileThatIsStoredCachedAndAvailableRemotely;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.uri.specs.GivenAFileThatIsCachedAndAvailableRemotely;
 
 import android.net.Uri;
 
@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,16 +34,16 @@ public class WhenGettingTheUri {
 	public static void context() throws Throwable {
 
 		final StoredFileUriProvider mockStoredFileUriProvider = mock(StoredFileUriProvider.class);
-		when(mockStoredFileUriProvider.promiseFileUri(new ServiceFile(3)))
-			.thenReturn(new Promise<>(Uri.fromFile(new File("/a_path/to_a_file.mp3"))));
+		when(mockStoredFileUriProvider.promiseFileUri(any()))
+			.thenReturn(Promise.empty());
 
 		final CachedFileUriProvider cachedFileUriProvider = mock(CachedFileUriProvider.class);
 		when(cachedFileUriProvider.promiseFileUri(new ServiceFile(3)))
 			.thenReturn(new Promise<>(Uri.fromFile(new File("/a_cached_path/to_a_file.mp3"))));
 
 		final MediaFileUriProvider mockMediaFileUriProvider = mock(MediaFileUriProvider.class);
-		when(mockMediaFileUriProvider.promiseFileUri(new ServiceFile(3)))
-			.thenReturn(new Promise<>(Uri.fromFile(new File("/a_media_path/to_a_file.mp3"))));
+		when(mockMediaFileUriProvider.promiseFileUri(any()))
+			.thenReturn(Promise.empty());
 
 		final RemoteFileUriProvider mockRemoteFileUriProvider = mock(RemoteFileUriProvider.class);
 		when(mockRemoteFileUriProvider.promiseFileUri(new ServiceFile(3)))
@@ -77,7 +78,7 @@ public class WhenGettingTheUri {
 	}
 
 	@Test
-	public void thenTheStoredFileUriIsReturned() {
-		assertThat(returnedFileUri.toString()).isEqualTo("file:///a_path/to_a_file.mp3");
+	public void thenTheCachedFileUriIsReturned() {
+		assertThat(returnedFileUri.toString()).isEqualTo("file:///a_cached_path/to_a_file.mp3");
 	}
 }
