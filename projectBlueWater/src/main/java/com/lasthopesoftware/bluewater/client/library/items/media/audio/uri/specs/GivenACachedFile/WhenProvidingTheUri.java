@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.specs.GivenTheUriIsNotAvailable;
+package com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.specs.GivenACachedFile;
 
 import android.net.Uri;
 
@@ -14,6 +14,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
+import java.io.File;
+import java.io.IOException;
+
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,15 +26,31 @@ public class WhenProvidingTheUri {
 
 	private static Uri cachedFileUri;
 
+	private static final File file;
+
+	static {
+		File file1;
+		try {
+			file1 = File.createTempFile("temp", ".txt");
+		} catch (IOException e) {
+			e.printStackTrace();
+			file1 = new File("test");
+		}
+
+		file = file1;
+		file.deleteOnExit();
+	}
+
 	@BeforeClass
 	public static void before() {
+		final Uri remoteUri = Uri.parse("http://a-url/file?key=1");
 		final RemoteFileUriProvider remoteFileUriProvider = mock(RemoteFileUriProvider.class);
 		when(remoteFileUriProvider.promiseFileUri(new ServiceFile(10)))
-			.thenReturn(Promise.empty());
+			.thenReturn(new Promise<>(remoteUri));
 
 		final ICachedFilesProvider cachedFilesProvider = mock(ICachedFilesProvider.class);
-		when(cachedFilesProvider.promiseCachedFile("file?key=1"))
-			.thenReturn(new Promise<>(new CachedFile()));
+		when(cachedFilesProvider.promiseCachedFile(remoteUri.getPath() + "?" + remoteUri.getQuery()))
+			.thenReturn(new Promise<>(new CachedFile().setFileName(file.getAbsolutePath())));
 
 		final CachedAudioFileUriProvider cachedAudioFileUriProvider =
 			new CachedAudioFileUriProvider(
@@ -44,7 +63,7 @@ public class WhenProvidingTheUri {
 	}
 
 	@Test
-	public void thenTheUriIsEmpty() {
-		assertThat(cachedFileUri).isNull();
+	public void thenTheUriIsThePathToTheFile() {
+		assertThat(cachedFileUri.toString()).isEqualTo(Uri.fromFile(file).toString());
 	}
 }

@@ -26,10 +26,10 @@ public class WhenProvidingTheUri {
 	public static void before() {
 		final RemoteFileUriProvider remoteFileUriProvider = mock(RemoteFileUriProvider.class);
 		when(remoteFileUriProvider.promiseFileUri(new ServiceFile(10)))
-			.thenReturn(new Promise<>(Uri.parse("http://a-url/")));
+			.thenReturn(new Promise<>(Uri.parse("http://a-url/file?key=1")));
 
 		final ICachedFilesProvider cachedFilesProvider = mock(ICachedFilesProvider.class);
-		when(cachedFilesProvider.promiseCachedFile("http://a-url/"))
+		when(cachedFilesProvider.promiseCachedFile("file?key=1"))
 			.thenReturn(Promise.empty());
 
 		final CachedAudioFileUriProvider cachedAudioFileUriProvider =

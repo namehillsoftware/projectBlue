@@ -27,8 +27,9 @@ public class CachedAudioFileUriProvider implements IFileUriProvider {
 			.eventually(uri -> {
 				if (uri == null) return Promise.empty();
 
+				final String key = uri.getPath() + "?" + uri.getQuery();
 				return cachedFilesProvider
-					.promiseCachedFile(uri.getPath() + "?" + uri.getQuery())
+					.promiseCachedFile(key)
 					.then(cachedFile -> {
 						if (cachedFile == null) return null;
 
