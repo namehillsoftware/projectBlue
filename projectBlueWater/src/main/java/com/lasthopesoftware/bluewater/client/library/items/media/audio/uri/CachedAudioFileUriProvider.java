@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.audio;
+package com.lasthopesoftware.bluewater.client.library.items.media.audio.uri;
 
 import android.net.Uri;
 

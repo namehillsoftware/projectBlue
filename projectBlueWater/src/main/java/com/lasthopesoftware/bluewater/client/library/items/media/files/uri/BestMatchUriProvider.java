@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.uri;
 
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.audio.CachedAudioFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;

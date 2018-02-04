@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenACachedFileIsNotAvailable;
+package com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.specs.GivenTheUriIsNotAvailable;
 
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.audio.CachedAudioFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.ICachedFilesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -14,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,11 +26,12 @@ public class WhenProvidingTheUri {
 	@BeforeClass
 	public static void before() {
 		final RemoteFileUriProvider remoteFileUriProvider = mock(RemoteFileUriProvider.class);
-		when(remoteFileUriProvider.promiseFileUri(any()))
+		when(remoteFileUriProvider.promiseFileUri(new ServiceFile(10)))
 			.thenReturn(Promise.empty());
 
 		final ICachedFilesProvider cachedFilesProvider = mock(ICachedFilesProvider.class);
-		when(cachedFilesProvider.promiseCachedFile("http://a-url/"));
+		when(cachedFilesProvider.promiseCachedFile("http://a-url/"))
+			.thenReturn(new Promise<>(new CachedFile()));
 
 		final CachedAudioFileUriProvider cachedAudioFileUriProvider =
 			new CachedAudioFileUriProvider(
