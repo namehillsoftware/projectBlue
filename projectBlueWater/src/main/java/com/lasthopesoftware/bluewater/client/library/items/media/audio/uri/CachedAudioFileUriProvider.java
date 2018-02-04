@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.ICachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
+import com.lasthopesoftware.resources.uri.PathAndQuery;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
@@ -27,9 +28,8 @@ public class CachedAudioFileUriProvider implements IFileUriProvider {
 			.eventually(uri -> {
 				if (uri == null) return Promise.empty();
 
-				final String key = uri.getPath() + "?" + uri.getQuery();
 				return cachedFilesProvider
-					.promiseCachedFile(key)
+					.promiseCachedFile(PathAndQuery.forUri(uri))
 					.then(cachedFile -> {
 						if (cachedFile == null) return null;
 
