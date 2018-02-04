@@ -26,25 +26,25 @@ public class BestMatchUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> promiseFileUri(ServiceFile serviceFile) {
 		return
 			storedFileUriProvider
-				.getFileUri(serviceFile)
+				.promiseFileUri(serviceFile)
 				.eventually(storedFileUri -> {
 					if (storedFileUri != null)
 						return new Promise<>(storedFileUri);
 
 					if (!library.isUsingExistingFiles())
-						return remoteFileUriProvider.getFileUri(serviceFile);
+						return remoteFileUriProvider.promiseFileUri(serviceFile);
 
 					return
 						mediaFileUriProvider
-							.getFileUri(serviceFile)
+							.promiseFileUri(serviceFile)
 							.eventually(mediaFileUri -> {
 								if (mediaFileUri != null)
 									return new Promise<>(mediaFileUri);
 
-								return remoteFileUriProvider.getFileUri(serviceFile);
+								return remoteFileUriProvider.promiseFileUri(serviceFile);
 							});
 				});
 	}

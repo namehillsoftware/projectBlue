@@ -18,9 +18,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by david on 7/24/15.
- */
 public class MediaFileUriProvider implements IFileUriProvider {
 
 	public static final String mediaFileFoundEvent = MagicPropertyBuilder.buildMagicPropertyName(MediaFileUriProvider.class, "mediaFileFoundEvent");
@@ -39,10 +36,6 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	private final Library library;
 	private final boolean isSilent;
 
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, Library library) {
-		this (context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, false);
-	}
-
 	/**
 	 *
 	 * @param context the application context under which to operate
@@ -57,7 +50,7 @@ public class MediaFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> promiseFileUri(ServiceFile serviceFile) {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return Promise.empty();
 

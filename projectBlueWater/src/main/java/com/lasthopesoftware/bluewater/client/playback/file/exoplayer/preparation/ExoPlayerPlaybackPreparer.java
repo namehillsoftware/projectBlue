@@ -47,11 +47,11 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
 	@Override
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
-		return remoteFileUriProvider.getFileUri(serviceFile)
+		return remoteFileUriProvider.promiseFileUri(serviceFile)
 			.eventually(uri -> diskFileCache.promiseCachedFile(PathAndQuery.forUri(uri)))
 			.eventually(file -> file != null
 				? new Promise<>(Uri.fromFile(file))
-				: bestMatchUriProvider.getFileUri(serviceFile))
+				: bestMatchUriProvider.promiseFileUri(serviceFile))
 			.eventually(uri ->
 				new Promise<>(messenger -> {
 					final CancellationToken cancellationToken = new CancellationToken();

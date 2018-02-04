@@ -639,7 +639,8 @@ implements
 						this,
 						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
 						arbitratorForOs,
-						library),
+						library,
+						false),
 					remoteFileUriProvider),
 				remoteFileUriProvider,
 				new SelectedPlaybackEngineTypeAccess(this));
