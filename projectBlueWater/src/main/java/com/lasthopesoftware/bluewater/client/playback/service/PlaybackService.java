@@ -35,10 +35,10 @@ import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
+import com.lasthopesoftware.bluewater.client.library.items.media.audio.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
@@ -638,7 +638,7 @@ implements
 					new StoredFileUriProvider(
 						storedFileAccess,
 						arbitratorForOs),
-					new CachedFileUriProvider(new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+					new CachedAudioFileUriProvider(new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
 					new MediaFileUriProvider(
 						this,
 						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),

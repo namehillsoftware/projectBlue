@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.uri;
 
 import android.net.Uri;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.audio.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -16,14 +16,14 @@ import com.namehillsoftware.handoff.promises.Promise;
 public class BestMatchUriProvider implements IFileUriProvider {
 	private final Library library;
 	private final StoredFileUriProvider storedFileUriProvider;
-	private final CachedFileUriProvider cachedFileUriProvider;
+	private final CachedAudioFileUriProvider cachedAudioFileUriProvider;
 	private final MediaFileUriProvider mediaFileUriProvider;
 	private final RemoteFileUriProvider remoteFileUriProvider;
 
-	public BestMatchUriProvider(Library library, StoredFileUriProvider storedFileUriProvider, CachedFileUriProvider cachedFileUriProvider, MediaFileUriProvider mediaFileUriProvider, RemoteFileUriProvider remoteFileUriProvider) {
+	public BestMatchUriProvider(Library library, StoredFileUriProvider storedFileUriProvider, CachedAudioFileUriProvider cachedAudioFileUriProvider, MediaFileUriProvider mediaFileUriProvider, RemoteFileUriProvider remoteFileUriProvider) {
 		this.library = library;
 		this.storedFileUriProvider = storedFileUriProvider;
-		this.cachedFileUriProvider = cachedFileUriProvider;
+		this.cachedAudioFileUriProvider = cachedAudioFileUriProvider;
 		this.mediaFileUriProvider = mediaFileUriProvider;
 		this.remoteFileUriProvider = remoteFileUriProvider;
 	}
@@ -49,7 +49,7 @@ public class BestMatchUriProvider implements IFileUriProvider {
 	}
 
 	private Promise<Uri> promiseCachedOrRemoteFileUri(ServiceFile serviceFile) {
-		return cachedFileUriProvider
+		return cachedAudioFileUriProvider
 			.promiseFileUri(serviceFile)
 			.eventually(cachedFileUri -> {
 				if (cachedFileUri != null)

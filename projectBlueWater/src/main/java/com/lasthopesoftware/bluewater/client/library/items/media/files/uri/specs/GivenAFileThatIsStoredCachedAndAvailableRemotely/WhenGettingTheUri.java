@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.uri.spec
 
 import android.net.Uri;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.audio.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
@@ -36,8 +36,8 @@ public class WhenGettingTheUri {
 		when(mockStoredFileUriProvider.promiseFileUri(new ServiceFile(3)))
 			.thenReturn(new Promise<>(Uri.fromFile(new File("/a_path/to_a_file.mp3"))));
 
-		final CachedFileUriProvider cachedFileUriProvider = mock(CachedFileUriProvider.class);
-		when(cachedFileUriProvider.promiseFileUri(new ServiceFile(3)))
+		final CachedAudioFileUriProvider cachedAudioFileUriProvider = mock(CachedAudioFileUriProvider.class);
+		when(cachedAudioFileUriProvider.promiseFileUri(new ServiceFile(3)))
 			.thenReturn(new Promise<>(Uri.fromFile(new File("/a_cached_path/to_a_file.mp3"))));
 
 		final MediaFileUriProvider mockMediaFileUriProvider = mock(MediaFileUriProvider.class);
@@ -52,7 +52,7 @@ public class WhenGettingTheUri {
 			new BestMatchUriProvider(
 				new Library(),
 				mockStoredFileUriProvider,
-				cachedFileUriProvider,
+				cachedAudioFileUriProvider,
 				mockMediaFileUriProvider,
 				mockRemoteFileUriProvider);
 
