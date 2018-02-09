@@ -199,7 +199,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 					return new Promise<>(storedFile);
 
-				final Promise<Uri> fileUriPromise = mediaFileUriProvider.getFileUri(serviceFile);
+				final Promise<Uri> fileUriPromise = mediaFileUriProvider.promiseFileUri(serviceFile);
 
 				return fileUriPromise
 					.eventually(localUri -> {

@@ -26,7 +26,10 @@ public final class StoredFile {
 		this.isOwner = isOwner;
 	}
 
-	public void setId(int id) { this.id = id; }
+	public StoredFile setId(int id) {
+		this.id = id;
+		return this;
+	}
 
 	public int getId() {
 		return id;
@@ -36,47 +39,53 @@ public final class StoredFile {
 		return libraryId;
 	}
 
-	public void setLibraryId(int libraryId) {
+	public StoredFile setLibraryId(int libraryId) {
 		this.libraryId = libraryId;
+		return this;
 	}
 
 	public int getStoredMediaId() {
 		return storedMediaId;
 	}
 
-	public void setStoredMediaId(int storedMediaId) {
+	public StoredFile setStoredMediaId(int storedMediaId) {
 		this.storedMediaId = storedMediaId;
+		return this;
 	}
 
 	public int getServiceId() {
 		return serviceId;
 	}
 
-	public void setServiceId(int serviceId) {
+	public StoredFile setServiceId(int serviceId) {
 		this.serviceId = serviceId;
+		return this;
 	}
 
 	public boolean isDownloadComplete() {
 		return isDownloadComplete;
 	}
 
-	public void setIsDownloadComplete(boolean isDownloadComplete) {
+	public StoredFile setIsDownloadComplete(boolean isDownloadComplete) {
 		this.isDownloadComplete = isDownloadComplete;
+		return this;
 	}
 
 	public String getPath() {
 		return path;
 	}
 
-	public void setPath(String path) {
+	public StoredFile setPath(String path) {
 		this.path = path;
+		return this;
 	}
 
 	public boolean isOwner() {
 		return isOwner;
 	}
 
-	public void setIsOwner(boolean isOwner) {
+	public StoredFile setIsOwner(boolean isOwner) {
 		this.isOwner = isOwner;
+		return this;
 	}
 }

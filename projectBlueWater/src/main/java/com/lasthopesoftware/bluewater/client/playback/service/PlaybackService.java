@@ -34,9 +34,12 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection.Buildi
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
+import com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -44,6 +47,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -87,6 +93,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -616,13 +623,31 @@ implements
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(this, library, cachedFilePropertiesProvider);
 
+		final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
+			new ExternalStorageReadPermissionsArbitratorForOs(this);
+
+		final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
+			connectionProvider,
+			new ServiceFileUriQueryParamsProvider());
+
 		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 			new PreparedPlaybackQueueFeederBuilder(
 				this,
-				new BestMatchUriProvider(this, connectionProvider, library, storedFileAccess),
-				new RemoteFileUriProvider(
-					connectionProvider,
-					new ServiceFileUriQueryParamsProvider()),
+				new BestMatchUriProvider(
+					library,
+					new StoredFileUriProvider(
+						storedFileAccess,
+						arbitratorForOs),
+					new CachedAudioFileUriProvider(
+						remoteFileUriProvider,
+						new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+					new MediaFileUriProvider(
+						this,
+						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+						arbitratorForOs,
+						library,
+						false),
+					remoteFileUriProvider),
 				new SelectedPlaybackEngineTypeAccess(this));
 
 		final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);

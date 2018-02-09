@@ -6,5 +6,5 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.namehillsoftware.handoff.promises.Promise;
 
 public interface IFileUriProvider {
-	Promise<Uri> getFileUri(ServiceFile serviceFile);
+	Promise<Uri> promiseFileUri(ServiceFile serviceFile);
 }

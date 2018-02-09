@@ -23,7 +23,7 @@ final class MediaPlayerPlaybackPreparer implements PlayableFilePreparationSource
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return
 			fileUriProvider
-				.getFileUri(serviceFile)
+				.promiseFileUri(serviceFile)
 				.eventually(new MediaPlayerPreparerTask(preparedAt, playbackInitialization));
 	}
 }

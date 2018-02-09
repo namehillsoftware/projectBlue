@@ -21,7 +21,7 @@ public class StoredFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> promiseFileUri(ServiceFile serviceFile) {
 		return storedFileAccess
 			.getStoredFile(serviceFile)
 			.then(storedFile -> {

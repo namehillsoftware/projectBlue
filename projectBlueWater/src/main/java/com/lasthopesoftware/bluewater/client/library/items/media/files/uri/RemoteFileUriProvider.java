@@ -9,9 +9,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by david on 7/24/15.
- */
 public class RemoteFileUriProvider implements IFileUriProvider {
 	private final IConnectionProvider connectionProvider;
 	private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
@@ -22,7 +19,7 @@ public class RemoteFileUriProvider implements IFileUriProvider {
 	}
 
 	@Override
-	public Promise<Uri> getFileUri(ServiceFile serviceFile) {
+	public Promise<Uri> promiseFileUri(ServiceFile serviceFile) {
 		LoggerFactory.getLogger(RemoteFileUriProvider.class).info("Returning serviceFile URL from server.");
 
 		/* Playback:

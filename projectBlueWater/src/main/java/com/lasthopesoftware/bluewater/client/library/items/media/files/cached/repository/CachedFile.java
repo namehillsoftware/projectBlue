@@ -44,8 +44,9 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param libraryId the library to set
 	 */
-	public final void setLibraryId(int libraryId) {
+	public final CachedFile setLibraryId(int libraryId) {
 		this.libraryId = libraryId;
+		return this;
 	}
 
 	/**
@@ -58,8 +59,9 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param lastAccessedTime the lastAccessedTime to set
 	 */
-	public final void setLastAccessedTime(long lastAccessedTime) {
+	public final CachedFile setLastAccessedTime(long lastAccessedTime) {
 		this.lastAccessedTime = lastAccessedTime;
+		return this;
 	}
 
 	/**
@@ -72,8 +74,9 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param fileName the fileName to set
 	 */
-	public final void setFileName(String fileName) {
+	public final CachedFile setFileName(String fileName) {
 		this.fileName = fileName;
+		return this;
 	}
 
 	/**
@@ -86,8 +89,9 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param fileSize the fileSize to set
 	 */
-	public final void setFileSize(long fileSize) {
+	public final CachedFile setFileSize(long fileSize) {
 		this.fileSize = fileSize;
+		return this;
 	}
 
 	/**
@@ -100,8 +104,9 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param uniqueKey the uniqueKey to set
 	 */
-	public final void setUniqueKey(String uniqueKey) {
+	public final CachedFile setUniqueKey(String uniqueKey) {
 		this.uniqueKey = uniqueKey;
+		return this;
 	}
 
 	/**
@@ -114,8 +119,9 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param cacheName the cacheName to set
 	 */
-	public final void setCacheName(String cacheName) {
+	public final CachedFile setCacheName(String cacheName) {
 		this.cacheName = cacheName;
+		return this;
 	}
 
 	/**
@@ -128,16 +134,18 @@ public class CachedFile implements IEntityCreator, IEntityUpdater {
 	/**
 	 * @param createdTime the createdTime to set
 	 */
-	public final void setCreatedTime(long createdTime) {
+	public final CachedFile setCreatedTime(long createdTime) {
 		this.createdTime = createdTime;
+		return this;
 	}
 
 	public long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public CachedFile setId(long id) {
 		this.id = id;
+		return this;
 	}
 
 	@Override
