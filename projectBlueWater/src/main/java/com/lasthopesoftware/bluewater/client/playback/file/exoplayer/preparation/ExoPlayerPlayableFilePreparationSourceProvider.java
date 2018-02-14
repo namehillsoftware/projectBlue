@@ -11,13 +11,7 @@ import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
-import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileAccessTimeUpdater;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
@@ -43,22 +37,10 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, BestMatchUriProvider bestMatchUriProvider, Library library) {
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
-		final AudioCacheConfiguration audioCacheConfiguration = new AudioCacheConfiguration(library);
-		final CachedFilesProvider cachedFilesProvider = new CachedFilesProvider(context, audioCacheConfiguration);
-		final DiskFileAccessTimeUpdater diskFileAccessTimeUpdater = new DiskFileAccessTimeUpdater(context);
-		final IDiskCacheDirectoryProvider diskCacheDirectoryProvider = new AndroidDiskCacheDirectoryProvider(context);
-		final DiskFileCacheStreamSupplier diskFileCacheStream = new DiskFileCacheStreamSupplier(
-			diskCacheDirectoryProvider,
-			audioCacheConfiguration,
-			new DiskFileCachePersistence(
-				context,
-				diskCacheDirectoryProvider,
-				audioCacheConfiguration,
-				cachedFilesProvider,
-				diskFileAccessTimeUpdater),
-			cachedFilesProvider);
-
-		extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(context, library, diskFileCacheStream);
+		extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
+			context,
+			library,
+			new AndroidDiskCacheDirectoryProvider(context));
 
 
 		renderersFactory = new DefaultRenderersFactory(context);
@@ -79,8 +61,7 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 			loadControl.getObject(),
 			renderersFactory,
 			handler,
-			bestMatchUriProvider
-		);
+			bestMatchUriProvider);
 	}
 
 	private static TrackSelector getNewTrackSelector() {
