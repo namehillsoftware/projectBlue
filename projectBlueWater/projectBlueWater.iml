@@ -104,7 +104,6 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/symbols" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/transforms" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/unitTestConfig" />
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
       <excludeFolder url="file://$MODULE_DIR$/build/reports" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
@@ -146,6 +145,7 @@
     <orderEntry type="library" name="com.github.danrien:xmlwise:master-SNAPSHOT@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="nekohtml:nekohtml:1.9.6.2@jar" level="project" />
     <orderEntry type="library" name="com.google.android.exoplayer:extension-okhttp-2.6.1" level="project" />
+    <orderEntry type="library" name="com.github.danrien:artfull-0-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="TEST" name="com.android.support:multidex-instrumentation-1.0.2" level="project" />
     <orderEntry type="library" name="com.android.support:design-26.1.0" level="project" />
     <orderEntry type="library" name="com.android.support:transition-26.1.0" level="project" />
@@ -198,7 +198,6 @@
     <orderEntry type="library" name="com.google.android.exoplayer:exoplayer-core-2.6.1" level="project" />
     <orderEntry type="library" scope="TEST" name="org.apache.maven:maven-settings:2.2.1@jar" level="project" />
     <orderEntry type="module" module-name="futures" />
-    <orderEntry type="module" module-name="objective-droid" />
     <orderEntry type="module" module-name="pagerslidingtabstrip" />
   </component>
 </module>

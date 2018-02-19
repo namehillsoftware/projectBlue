@@ -4,7 +4,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
-import com.vedsoft.objective.droid.ObjectiveDroid;
+import com.namehillsoftware.artfull.Artfull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public class StoredFileEntityUpdater implements IEntityUpdater {
 	}
 
 	private static void recreateTableSchema(SQLiteDatabase db) {
-		final ObjectiveDroid objectiveDroid = new ObjectiveDroid(db, checkIfStoredFilesExists);
+		final Artfull objectiveDroid = new Artfull(db, checkIfStoredFilesExists);
 		final long storedFileCheckResults = objectiveDroid.execute();
 
 		if (storedFileCheckResults == 0) {
