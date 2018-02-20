@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
-import com.namehillsoftware.artfull.Artfull;
+import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
@@ -144,7 +144,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;
 
-					final Artfull artfull =
+					final Artful artful =
 						repositoryAccessHelper
 							.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
 							.addParameter(Library.accessCodeColumn, library.getAccessCode())
@@ -163,9 +163,9 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 							.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
 
 					if (isLibraryExists)
-						artfull.addParameter("id", library.getId());
+						artful.addParameter("id", library.getId());
 
-					final long result = artfull.execute();
+					final long result = artful.execute();
 					closeableTransaction.setTransactionSuccessful();
 
 					if (!isLibraryExists)

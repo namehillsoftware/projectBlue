@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.re
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.namehillsoftware.artfull.Artfull;
+import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
@@ -74,7 +74,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 				return new QueuedPromise<>(() -> {
 					logger.info("File with unique key " + uniqueKey + " doesn't exist. Creating...");
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-						final Artfull sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
+						final Artful sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
 
 						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, canonicalFilePath);
 

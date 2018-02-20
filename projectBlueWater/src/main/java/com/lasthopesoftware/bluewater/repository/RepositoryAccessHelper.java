@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.namehillsoftware.artfull.Artfull;
+import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.io.Closeable;
@@ -31,8 +31,8 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper implements Closeabl
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
-	public Artfull mapSql(String sqlQuery) {
-		return new Artfull(sqliteDb.getObject(), sqlQuery);
+	public Artful mapSql(String sqlQuery) {
+		return new Artful(sqliteDb.getObject(), sqlQuery);
 	}
 
 	@Override

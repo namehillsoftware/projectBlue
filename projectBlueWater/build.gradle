@@ -108,9 +108,9 @@ dependencies {
     compile 'com.google.android.exoplayer:exoplayer-core:2.6.1'
     compile 'com.google.android.exoplayer:extension-okhttp:2.6.1'
     compile 'com.squareup.okio:okio:1.13.0'
-    compile 'com.github.danrien:artfull:-SNAPSHOT'
+    compile 'com.github.danrien:artful:93a23b2515'
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.12.0'
+    testCompile 'org.mockito:mockito-core:2.13.0'
     testCompile 'org.assertj:assertj-core:3.8.0'
     testImplementation 'org.robolectric:robolectric:3.5.1'
 }

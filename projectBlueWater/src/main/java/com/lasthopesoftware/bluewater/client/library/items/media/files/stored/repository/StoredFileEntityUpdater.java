@@ -4,7 +4,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
-import com.namehillsoftware.artfull.Artfull;
+import com.namehillsoftware.artful.Artful;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +25,8 @@ public class StoredFileEntityUpdater implements IEntityUpdater {
 	}
 
 	private static void recreateTableSchema(SQLiteDatabase db) {
-		final Artfull objectiveDroid = new Artfull(db, checkIfStoredFilesExists);
-		final long storedFileCheckResults = objectiveDroid.execute();
+		final Artful artful = new Artful(db, checkIfStoredFilesExists);
+		final long storedFileCheckResults = artful.execute();
 
 		if (storedFileCheckResults == 0) {
 			db.execSQL(StoredFileEntityInformation.createTableSql);
