@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
@@ -19,12 +20,16 @@ import static org.mockito.Mockito.when;
 
 public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
-	private static PositionedPlaybackFile positionedPlaybackFile;
-	private static PositionedPlaybackFile expectedPositionedPlaybackFile;
+	private static PositionedPlayableFile positionedPlayableFile;
+	private static PositionedPlayableFile expectedPositionedPlayableFile;
 
 	@BeforeClass
 	public static void before() {
-		expectedPositionedPlaybackFile = new PositionedPlaybackFile(6, mock(PlayableFile.class), new ServiceFile(6));
+		expectedPositionedPlayableFile = new PositionedPlayableFile(
+			6,
+			mock(PlayableFile.class),
+			new EmptyFileVolumeManager(),
+			new ServiceFile(6));
 
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
@@ -55,11 +60,11 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 		queue.updateQueue(newPositionedFileQueue);
 
 		queue.promiseNextPreparedPlaybackFile(0);
-		queue.promiseNextPreparedPlaybackFile(0).then(file -> positionedPlaybackFile = file);
+		queue.promiseNextPreparedPlaybackFile(0).then(file -> positionedPlayableFile = file);
 	}
 
 	@Test
 	public void thenTheQueueContinues() {
-		assertThat(positionedPlaybackFile).isEqualTo(expectedPositionedPlaybackFile);
+		assertThat(positionedPlayableFile).isEqualTo(expectedPositionedPlayableFile);
 	}
 }

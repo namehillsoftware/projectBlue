@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
@@ -34,9 +34,9 @@ import static org.mockito.Mockito.when;
 public class WhenChangingTracks {
 
 	private static PositionedFile nextSwitchedFile;
-	private static PositionedPlaybackFile latestFile;
+	private static PositionedPlayableFile latestFile;
 
-	private static List<PositionedPlaybackFile> startedFiles = new ArrayList<>();
+	private static List<PositionedPlayableFile> startedFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws IOException, InterruptedException {

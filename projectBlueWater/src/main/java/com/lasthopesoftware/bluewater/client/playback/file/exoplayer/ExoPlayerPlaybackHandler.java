@@ -51,16 +51,6 @@ implements
 	}
 
 	@Override
-	public void setVolume(float volume) {
-		exoPlayer.setVolume(volume);
-	}
-
-	@Override
-	public float getVolume() {
-		return exoPlayer.getVolume();
-	}
-
-	@Override
 	public long getCurrentPosition() {
 		return exoPlayer.getCurrentPosition();
 	}

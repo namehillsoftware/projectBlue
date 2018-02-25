@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
@@ -23,12 +24,12 @@ import static org.mockito.Mockito.when;
 
 public class WhenSwitchingQueuesAndGettingTheNextFile {
 
-	private static final List<PositionedPlaybackFile> playedFiles = new ArrayList<>();
-	private static final List<PositionedPlaybackFile> expectedPositionedPlaybackFiles = Arrays.asList(
-		new PositionedPlaybackFile(3, mock(PlayableFile.class), new ServiceFile(3)),
-		new PositionedPlaybackFile(4, mock(PlayableFile.class), new ServiceFile(4)),
-		new PositionedPlaybackFile(5, mock(PlayableFile.class), new ServiceFile(6)),
-		new PositionedPlaybackFile(6, mock(PlayableFile.class), new ServiceFile(7)));
+	private static final List<PositionedPlayableFile> playedFiles = new ArrayList<>();
+	private static final List<PositionedPlayableFile> expectedPositionedPlayableFile = Arrays.asList(
+		new PositionedPlayableFile(3, mock(PlayableFile.class), new EmptyFileVolumeManager(), new ServiceFile(3)),
+		new PositionedPlayableFile(4, mock(PlayableFile.class), new EmptyFileVolumeManager(),new ServiceFile(4)),
+		new PositionedPlayableFile(5, mock(PlayableFile.class), new EmptyFileVolumeManager(),new ServiceFile(6)),
+		new PositionedPlayableFile(6, mock(PlayableFile.class), new EmptyFileVolumeManager(),new ServiceFile(7)));
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -84,6 +85,6 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 
 	@Test
 	public void thenTheQueueContinuesToCompletion() {
-		assertThat(playedFiles).asList().containsExactlyElementsOf(expectedPositionedPlaybackFiles);
+		assertThat(playedFiles).asList().containsExactlyElementsOf(expectedPositionedPlayableFile);
 	}
 }

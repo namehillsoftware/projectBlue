@@ -1,29 +1,29 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes;
 
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
 
 
 public class FakeVolumeControllerFactory implements IPlaybackHandlerVolumeControllerFactory {
 	@Override
-	public IVolumeManagement manageVolume(PositionedPlaybackFile positionedPlaybackFile, float initialVolume) {
-		positionedPlaybackFile.getPlayableFile().setVolume(initialVolume);
-		return new FakeVolumeManager(positionedPlaybackFile);
+	public IVolumeManagement manageVolume(PositionedPlayableFile positionedPlayableFile, float initialVolume) {
+		positionedPlayableFile.getPlayableFileVolumeManager().setVolume(initialVolume);
+		return new FakeVolumeManager(positionedPlayableFile);
 	}
 
 	private static class FakeVolumeManager implements IVolumeManagement {
 
-		private final PositionedPlaybackFile positionedPlaybackFile;
+		private final PositionedPlayableFile positionedPlayableFile;
 
-		FakeVolumeManager(PositionedPlaybackFile positionedPlaybackFile) {
-			this.positionedPlaybackFile = positionedPlaybackFile;
+		FakeVolumeManager(PositionedPlayableFile positionedPlayableFile) {
+			this.positionedPlayableFile = positionedPlayableFile;
 		}
 
 		@Override
 		public float setVolume(float volume) {
-			positionedPlaybackFile.getPlayableFile().setVolume(volume);
-			return positionedPlaybackFile.getPlayableFile().getVolume();
+			positionedPlayableFile.getPlayableFileVolumeManager().setVolume(volume);
+			return positionedPlayableFile.getPlayableFileVolumeManager().getVolume();
 		}
 	}
 }

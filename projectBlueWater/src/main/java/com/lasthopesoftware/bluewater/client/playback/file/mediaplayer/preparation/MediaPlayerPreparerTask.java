@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlay
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.buffering.BufferingMediaPlayerFile;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.volume.MediaPlayerVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -94,7 +95,10 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, PreparedPla
 			}
 
 			if (prepareAt <= 0) {
-				messenger.sendResolution(new PreparedPlayableFile(new MediaPlayerPlaybackHandler(mediaPlayer), new BufferingMediaPlayerFile(mediaPlayer)));
+				messenger.sendResolution(new PreparedPlayableFile(
+					new MediaPlayerPlaybackHandler(mediaPlayer),
+					new MediaPlayerVolumeManager(mediaPlayer),
+					new BufferingMediaPlayerFile(mediaPlayer)));
 				return;
 			}
 
@@ -129,7 +133,10 @@ final class MediaPlayerPreparerTask implements PromisedResponse<Uri, PreparedPla
 		@Override
 		public void onSeekComplete(MediaPlayer mp) {
 			if (!cancellationToken.isCancelled())
-				messenger.sendResolution(new PreparedPlayableFile(new MediaPlayerPlaybackHandler(mp), new BufferingMediaPlayerFile(mp)));
+				messenger.sendResolution(new PreparedPlayableFile(
+					new MediaPlayerPlaybackHandler(mp),
+					new MediaPlayerVolumeManager(mp),
+					new BufferingMediaPlayerFile(mp)));
 		}
 
 		@Override
