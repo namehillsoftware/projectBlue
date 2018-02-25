@@ -7,9 +7,11 @@ import com.namehillsoftware.handoff.promises.Promise;
 import java.io.IOException;
 
 public class FakeBufferingPlaybackHandler
-implements IBufferingPlaybackFile, PlayableFile {
+implements
+	IBufferingPlaybackFile,
+	PlayableFile
+{
 	private boolean isPlaying;
-	private float volume;
 	private int currentPosition;
 
 	@Override
@@ -20,16 +22,6 @@ implements IBufferingPlaybackFile, PlayableFile {
 	@Override
 	public void pause() {
 		isPlaying = false;
-	}
-
-	@Override
-	public void setVolume(float volume) {
-		this.volume = volume;
-	}
-
-	@Override
-	public float getVolume() {
-		return this.volume;
 	}
 
 	@Override

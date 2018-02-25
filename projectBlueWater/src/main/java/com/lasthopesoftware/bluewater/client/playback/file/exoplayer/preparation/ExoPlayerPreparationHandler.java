@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.volume.SimpleExoPlayerVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
@@ -85,6 +86,7 @@ implements
 		messenger.sendResolution(
 			new PreparedPlayableFile(
 				new ExoPlayerPlaybackHandler(exoPlayer),
+				new SimpleExoPlayerVolumeManager(exoPlayer),
 				bufferingExoPlayer));
 	}
 

@@ -6,11 +6,8 @@ import java.io.Closeable;
 
 public interface PlayableFile extends Closeable {
 	boolean isPlaying();
+	
 	void pause();
-
-	void setVolume(float volume);
-
-	float getVolume();
 
 	long getCurrentPosition();
 

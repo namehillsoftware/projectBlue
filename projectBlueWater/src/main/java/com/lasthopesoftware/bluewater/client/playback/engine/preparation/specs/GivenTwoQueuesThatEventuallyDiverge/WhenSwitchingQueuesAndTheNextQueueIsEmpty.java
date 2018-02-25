@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
-	private static Promise<PositionedPlaybackFile> nextPreparedPlaybackFilePromise;
+	private static Promise<PositionedPlayableFile> nextPreparedPlaybackFilePromise;
 
 	@BeforeClass
 	public static void before() {

@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
@@ -38,7 +38,7 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
-	private static List<PositionedPlaybackFile> positionedFiles = new ArrayList<>();
+	private static List<PositionedPlayableFile> positionedFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -124,7 +124,7 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	public void thenTheFirstSkippedFileIsOnlyObservedOnce() {
 		assertThat(
 			Stream.of(positionedFiles)
-				.map(PositionedPlaybackFile::asPositionedFile)
+				.map(PositionedPlayableFile::asPositionedFile)
 				.collect(Collectors.toList()))
 			.containsOnlyOnce(new PositionedFile(1, new ServiceFile(2)));
 	}
@@ -133,7 +133,7 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	public void thenTheSecondSkippedFileIsNotObserved() {
 		assertThat(
 			Stream.of(positionedFiles)
-				.map(PositionedPlaybackFile::asPositionedFile)
+				.map(PositionedPlayableFile::asPositionedFile)
 				.collect(Collectors.toList()))
 			.doesNotContain(new PositionedFile(2, new ServiceFile(3)));
 	}

@@ -29,7 +29,6 @@ implements
 	private static final MediaPlayerIllegalStateReporter mediaPlayerIllegalStateReporter = new MediaPlayerIllegalStateReporter(MediaPlayerPlaybackHandler.class);
 
 	private final MediaPlayer mediaPlayer;
-	private float volume;
 	private final Promise<PlayableFile> playbackPromise;
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
@@ -54,17 +53,6 @@ implements
 	@Override
 	public void pause() {
 		mediaPlayer.pause();
-	}
-
-	@Override
-	public void setVolume(float volume) {
-		this.volume = volume;
-		mediaPlayer.setVolume(volume, volume);
-	}
-
-	@Override
-	public float getVolume() {
-		return volume;
 	}
 
 	@Override

@@ -4,7 +4,7 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.Messenger;
@@ -58,7 +58,7 @@ public class WhenTheQueueIsConsumed {
 		final int expectedNumberAbsolutePromises = expectedCycles * expectedNumberOfFiles;
 
 		for (int i = 0; i < expectedNumberAbsolutePromises; i++) {
-			final Promise<PositionedPlaybackFile> positionedPlaybackFilePromise =
+			final Promise<PositionedPlayableFile> positionedPlaybackFilePromise =
 				queue.promiseNextPreparedPlaybackFile(0);
 
 			if (positionedPlaybackFilePromise != null)

@@ -9,7 +9,6 @@ public class EmptyPlaybackHandler
 implements IBufferingPlaybackFile, PlayableFile {
 
 	private final int duration;
-	private float volume;
 
 	public EmptyPlaybackHandler(int duration) {
 		this.duration = duration;
@@ -23,16 +22,6 @@ implements IBufferingPlaybackFile, PlayableFile {
 	@Override
 	public void pause() {
 
-	}
-
-	@Override
-	public void setVolume(float volume) {
-		this.volume = volume;
-	}
-
-	@Override
-	public float getVolume() {
-		return this.volume;
 	}
 
 	@Override

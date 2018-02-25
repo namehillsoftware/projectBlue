@@ -2,14 +2,15 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.reactivex.Observable;
@@ -20,15 +21,19 @@ import static org.mockito.Mockito.when;
 
 public class WhenChangingTheVolume {
 
-	private FakeBufferingPlaybackHandler playbackHandler;
+	private static final EmptyFileVolumeManager volumeManager = new EmptyFileVolumeManager();
 
-	@Before
-	public void before() {
-		playbackHandler = new FakeBufferingPlaybackHandler();
+	@BeforeClass
+	public static void before() {
+		final FakeBufferingPlaybackHandler playbackHandler = new FakeBufferingPlaybackHandler();
 		playbackHandler.promisePlayback();
 
-		final Promise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
-			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new ServiceFile(1)));
+		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
+			new Promise<>(new PositionedPlayableFile(
+				0,
+				playbackHandler,
+				volumeManager,
+				new ServiceFile(1)));
 
 		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
@@ -42,6 +47,6 @@ public class WhenChangingTheVolume {
 
 	@Test
 	public void thenTheVolumeIsChanged() {
-		assertThat(playbackHandler.getVolume()).isEqualTo(0.8f);
+		assertThat(volumeManager.getVolume()).isEqualTo(0.8f);
 	}
 }

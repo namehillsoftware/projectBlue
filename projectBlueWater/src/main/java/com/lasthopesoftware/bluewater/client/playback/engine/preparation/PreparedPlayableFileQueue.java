@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class PreparedPlayableFileQueue
 implements
 	ResponseAction<IBufferingPlaybackFile>,
-	ImmediateResponse<PositionedPreparedPlayableFile, PositionedPlaybackFile>,
+	ImmediateResponse<PositionedPreparedPlayableFile, PositionedPlayableFile>,
 	PromisedResponse<PositionedPreparedPlayableFile, PositionedPreparedPlayableFile>,
 	Closeable
 {
@@ -79,7 +79,7 @@ implements
 		}
 	}
 
-	public Promise<PositionedPlaybackFile> promiseNextPreparedPlaybackFile(long preparedAt) {
+	public Promise<PositionedPlayableFile> promiseNextPreparedPlaybackFile(long preparedAt) {
 		currentPreparingPlaybackHandlerPromise = bufferingMediaPlayerPromises.poll();
 		if (currentPreparingPlaybackHandlerPromise == null) {
 			currentPreparingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
@@ -149,10 +149,17 @@ implements
 	}
 
 	@Override
-	public PositionedPlaybackFile respond(PositionedPreparedPlayableFile positionedPreparedPlayableFile) {
-		positionedPreparedPlayableFile.preparedPlayableFile.getBufferingPlaybackFile().promiseBufferedPlaybackFile().then(ImmediateAction.perform(this));
+	public PositionedPlayableFile respond(PositionedPreparedPlayableFile positionedPreparedPlayableFile) {
+		positionedPreparedPlayableFile
+			.preparedPlayableFile
+			.getBufferingPlaybackFile()
+			.promiseBufferedPlaybackFile()
+			.then(ImmediateAction.perform(this));
 
-		return new PositionedPlaybackFile(positionedPreparedPlayableFile.preparedPlayableFile.getPlaybackHandler(), positionedPreparedPlayableFile.positionedFile);
+		return new PositionedPlayableFile(
+			positionedPreparedPlayableFile.preparedPlayableFile.getPlaybackHandler(),
+			positionedPreparedPlayableFile.preparedPlayableFile.getPlayableFileVolumeManager(),
+			positionedPreparedPlayableFile.positionedFile);
 	}
 
 	@Override

@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
@@ -27,8 +28,12 @@ public class WhenResumingPlayback {
 	public void before() {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
-		final Promise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
-			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new ServiceFile(1)));
+		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
+			new Promise<>(new PositionedPlayableFile(
+				0,
+				playbackHandler,
+				new EmptyFileVolumeManager(),
+				new ServiceFile(1)));
 
 		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))

@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenATypicalMaxVolume;
 
 
-import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 
 import org.junit.BeforeClass;
@@ -13,21 +12,21 @@ import static org.assertj.core.api.Assertions.offset;
 
 public class WhenSettingTheVolumeToSeventyPercent {
 
-	private static PlayableFile playbackHandler;
+	private static EmptyFileVolumeManager volumeManager;
 	private static float returnedVolume;
 
 	@BeforeClass
 	public static void before() {
-		playbackHandler = new FakeBufferingPlaybackHandler();
+		volumeManager = new EmptyFileVolumeManager();
 
-		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler, 1);
+		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(volumeManager, 1);
 		playbackHandlerMaxVolumeModifier.setMaxFileVolume(.9f);
 		returnedVolume = playbackHandlerMaxVolumeModifier.setVolume(.7f);
 	}
 
 	@Test
 	public void thenThePlaybackHandlerVolumeIsSetToTheCorrectVolume() {
-		assertThat(playbackHandler.getVolume()).isCloseTo(.63f, offset(.00001f));
+		assertThat(volumeManager.getVolume()).isCloseTo(.63f, offset(.00001f));
 	}
 
 	@Test

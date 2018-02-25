@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenATypicalMaxVolume.AndTheVolumeIsAdjusted;
 
 
-import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 
 import org.junit.BeforeClass;
@@ -11,12 +11,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
 public class WhenChangingTheMaxVolume {
-	private static FakeBufferingPlaybackHandler playbackHandler;
+	private static final EmptyFileVolumeManager playbackHandler = new EmptyFileVolumeManager();
 
 	@BeforeClass
 	public static void before() {
-		playbackHandler = new FakeBufferingPlaybackHandler();
-
 		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(playbackHandler, .58f);
 		playbackHandlerMaxVolumeModifier.setMaxFileVolume(.8f);
 		playbackHandlerMaxVolumeModifier.setVolume(.23f);

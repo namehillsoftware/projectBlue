@@ -8,8 +8,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
@@ -60,7 +61,11 @@ public class WhenRequestingVolumeManagement {
 
 		playbackFileVolumeController =
 			playbackHandlerVolumeControllerFactory
-				.manageVolume(new PositionedPlaybackFile(1, mock(PlayableFile.class), new ServiceFile(1)), 1);
+				.manageVolume(new PositionedPlayableFile(
+					1,
+					mock(PlayableFile.class),
+					new EmptyFileVolumeManager(),
+					new ServiceFile(1)), 1);
 	}
 
 	@Test

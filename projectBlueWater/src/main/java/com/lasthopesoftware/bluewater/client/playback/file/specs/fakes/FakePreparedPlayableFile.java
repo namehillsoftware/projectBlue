@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
 
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
@@ -8,6 +9,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 public class FakePreparedPlayableFile<PlaybackHandler extends PlayableFile & IBufferingPlaybackFile> extends PreparedPlayableFile {
 
 	public FakePreparedPlayableFile(PlaybackHandler playbackHandler) {
-		super(playbackHandler, playbackHandler);
+		super(playbackHandler, new EmptyFileVolumeManager(), playbackHandler);
 	}
 }

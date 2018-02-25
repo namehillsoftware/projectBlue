@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
@@ -20,32 +21,40 @@ import static org.mockito.Mockito.when;
 
 public class WhenChangingTracks {
 
-	private PositionedPlaybackFile positionedPlaybackFile;
-	private PositionedPlaybackFile expectedPositionedPlaybackFile;
+	private PositionedPlayableFile positionedPlayableFile;
+	private PositionedPlayableFile expectedPositionedPlayableFile;
 
 	@Before
 	public void context() {
 		final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
 		final FakeBufferingPlaybackHandler playbackHandlerUnderTest = new FakeBufferingPlaybackHandler();
 
-		final Promise<PositionedPlaybackFile> positionedPlaybackHandlerContainer =
-			new Promise<>(new PositionedPlaybackFile(0, playbackHandler, new ServiceFile(1)));
+		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
+			new Promise<>(new PositionedPlayableFile(
+				0,
+				playbackHandler,
+				new EmptyFileVolumeManager(),
+				new ServiceFile(1)));
 
-		final Promise<PositionedPlaybackFile> secondPositionedPlaybackHandlerContainer =
-			new Promise<>((this.expectedPositionedPlaybackFile = new PositionedPlaybackFile(0, playbackHandlerUnderTest, new ServiceFile(1))));
+		final Promise<PositionedPlayableFile> secondPositionedPlaybackHandlerContainer =
+			new Promise<>((this.expectedPositionedPlayableFile = new PositionedPlayableFile(
+				0,
+				playbackHandlerUnderTest,
+				new EmptyFileVolumeManager(),
+				new ServiceFile(1))));
 
 		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, new FakeVolumeControllerFactory(), 0)).subscribe(positionedPlaybackFile -> this.positionedPlaybackFile = positionedPlaybackFile);
+		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, new FakeVolumeControllerFactory(), 0)).subscribe(positionedPlaybackFile -> this.positionedPlayableFile = positionedPlaybackFile);
 
 		playbackHandler.resolve();
 	}
 
 	@Test
 	public void thenTheChangeCanBeObserved() {
-		assertThat(this.positionedPlaybackFile).isEqualTo(this.expectedPositionedPlaybackFile);
+		assertThat(this.positionedPlayableFile).isEqualTo(this.expectedPositionedPlayableFile);
 	}
 }

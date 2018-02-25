@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine;
 
 
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
 
@@ -13,7 +13,7 @@ public class ActivePlayer implements IActivePlayer, AutoCloseable {
 
 	private final Disposable fileChangedObservableConnection;
 	private final IPlaylistPlayer playlistPlayer;
-	private final ConnectableObservable<PositionedPlaybackFile> observableProxy;
+	private final ConnectableObservable<PositionedPlayableFile> observableProxy;
 
 	public ActivePlayer(IPlaylistPlayer playlistPlayer, PlaylistVolumeManager volumeManagement) {
 		this.playlistPlayer = playlistPlayer;
@@ -36,7 +36,7 @@ public class ActivePlayer implements IActivePlayer, AutoCloseable {
 	}
 
 	@Override
-	public ConnectableObservable<PositionedPlaybackFile> observe() {
+	public ConnectableObservable<PositionedPlayableFile> observe() {
 		return observableProxy;
 	}
 
