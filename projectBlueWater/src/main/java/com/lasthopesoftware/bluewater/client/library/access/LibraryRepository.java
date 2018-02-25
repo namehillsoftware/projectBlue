@@ -8,11 +8,11 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
+import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,7 +144,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;
 
-					final ObjectiveDroid objectiveDroid =
+					final Artful artful =
 						repositoryAccessHelper
 							.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
 							.addParameter(Library.accessCodeColumn, library.getAccessCode())
@@ -163,9 +163,9 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 							.addParameter(Library.syncedFileLocationColumn, library.getSyncedFileLocation());
 
 					if (isLibraryExists)
-						objectiveDroid.addParameter("id", library.getId());
+						artful.addParameter("id", library.getId());
 
-					final long result = objectiveDroid.execute();
+					final long result = artful.execute();
 					closeableTransaction.setTransactionSuccessful();
 
 					if (!isLibraryExists)

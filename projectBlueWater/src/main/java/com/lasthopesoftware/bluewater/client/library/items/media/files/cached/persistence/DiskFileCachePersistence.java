@@ -11,10 +11,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.re
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
+import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
-import com.vedsoft.objective.droid.ObjectiveDroid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +74,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 				return new QueuedPromise<>(() -> {
 					logger.info("File with unique key " + uniqueKey + " doesn't exist. Creating...");
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-						final ObjectiveDroid sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
+						final Artful sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
 
 						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, canonicalFilePath);
 

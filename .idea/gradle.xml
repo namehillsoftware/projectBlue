@@ -10,7 +10,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/futures" />
-            <option value="$PROJECT_DIR$/objective-droid" />
             <option value="$PROJECT_DIR$/pagerslidingtabstrip" />
             <option value="$PROJECT_DIR$/projectBlueWater" />
           </set>

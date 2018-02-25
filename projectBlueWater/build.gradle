@@ -85,32 +85,32 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-    compile project(':pagerslidingtabstrip')
-    compile project(':futures')
-    compile project(':objective-droid')
-    compile 'com.android.support:appcompat-v7:26.1.0'
-    compile 'com.android.support:design:26.1.0'
-    compile 'joda-time:joda-time:2.9.9'
-    compile 'commons-io:commons-io:2.4'
-    compile 'com.github.amlcurran.showcaseview:library:5.4.3'
-    compile 'com.github.tony19:logback-android-core:1.1.1-6'
-    compile('com.github.tony19:logback-android-classic:1.1.1-6') {
+    implementation project(':pagerslidingtabstrip')
+    implementation project(':futures')
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support:design:26.1.0'
+    implementation 'joda-time:joda-time:2.9.9'
+    implementation 'commons-io:commons-io:2.4'
+    implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
+    implementation 'com.github.tony19:logback-android-core:1.1.1-6'
+    implementation('com.github.tony19:logback-android-classic:1.1.1-6') {
         // workaround issue #73
         exclude group: 'com.google.android', module: 'android'
     }
-    compile 'org.slf4j:slf4j-api:1.7.12'
-    compile 'com.android.support:support-v4:26.1.0'
-    compile 'com.annimon:stream:1.1.9'
-    compile 'com.github.danrien:handoff:0.5.0'
-    compile 'io.reactivex.rxjava2:rxjava:2.1.5'
-    compile 'com.namehillsoftware:lazy-j:0.11.0'
-    compile 'com.github.danrien:xmlwise:master-SNAPSHOT'
-    compile 'com.android.support:multidex:1.0.2'
-    compile 'com.google.android.exoplayer:exoplayer-core:2.6.1'
-    compile 'com.google.android.exoplayer:extension-okhttp:2.6.1'
-    compile 'com.squareup.okio:okio:1.13.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.12.0'
-    testCompile 'org.assertj:assertj-core:3.8.0'
+    implementation 'org.slf4j:slf4j-api:1.7.12'
+    implementation 'com.android.support:support-v4:26.1.0'
+    implementation 'com.annimon:stream:1.1.9'
+    implementation 'com.github.danrien:handoff:0.5.0'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.5'
+    implementation 'com.namehillsoftware:lazy-j:0.11.0'
+    implementation 'com.github.danrien:xmlwise:master-SNAPSHOT'
+    implementation 'com.android.support:multidex:1.0.2'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.6.1'
+    implementation 'com.google.android.exoplayer:extension-okhttp:2.6.1'
+    implementation 'com.squareup.okio:okio:1.13.0'
+    implementation 'com.github.namehillsoftware:artful:93a23b2515'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:2.13.0'
+    testImplementation 'org.assertj:assertj-core:3.8.0'
     testImplementation 'org.robolectric:robolectric:3.5.1'
 }
