@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
 

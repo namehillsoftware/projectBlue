@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
+import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 

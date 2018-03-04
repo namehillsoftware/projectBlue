@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.AudioTrackVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 

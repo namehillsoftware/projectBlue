@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
+import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 
 
 public class FakeVolumeControllerFactory implements IPlaybackHandlerVolumeControllerFactory {

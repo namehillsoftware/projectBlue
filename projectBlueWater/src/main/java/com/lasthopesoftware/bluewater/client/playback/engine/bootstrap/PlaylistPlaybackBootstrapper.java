@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.IActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 
 import java.io.Closeable;
 import java.io.IOException;

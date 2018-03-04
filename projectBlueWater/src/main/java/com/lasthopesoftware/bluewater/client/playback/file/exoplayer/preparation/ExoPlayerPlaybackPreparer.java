@@ -13,6 +13,8 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderingEventListener;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.MetadataOutputLogger;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.TextOutputLogger;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
@@ -54,14 +56,14 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 					}
 
 					final MediaCodecAudioRenderer[] renderers =
-						(MediaCodecAudioRenderer[])Stream.of(renderersFactory.createRenderers(
-								handler,
-								null,
-								new AudioRenderingEventListener(),
-								null,
-								null))
+						Stream.of(renderersFactory.createRenderers(
+							handler,
+							null,
+							new AudioRenderingEventListener(),
+							new TextOutputLogger(),
+							new MetadataOutputLogger()))
 							.filter(r -> r instanceof MediaCodecAudioRenderer)
-							.toArray();
+							.toArray(MediaCodecAudioRenderer[]::new);
 
 					final ExoPlayer exoPlayer = ExoPlayerFactory.newInstance(
 						renderers,

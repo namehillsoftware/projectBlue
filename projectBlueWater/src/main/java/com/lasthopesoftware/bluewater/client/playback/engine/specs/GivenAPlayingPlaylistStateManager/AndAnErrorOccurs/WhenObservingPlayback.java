@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 

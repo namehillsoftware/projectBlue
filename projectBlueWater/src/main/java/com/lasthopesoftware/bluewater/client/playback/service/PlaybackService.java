@@ -83,7 +83,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
