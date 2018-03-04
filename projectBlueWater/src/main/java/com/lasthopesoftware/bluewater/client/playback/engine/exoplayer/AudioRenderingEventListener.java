@@ -15,17 +15,23 @@ implements
 
 	@Override
 	public void onAudioEnabled(DecoderCounters counters) {
+		if (!logger.isDebugEnabled()) return;
+
 		logger.debug("Audio decoder counters updated");
 	}
 
 	@Override
 	public void onAudioSessionId(int sessionId) {
+		if (!logger.isDebugEnabled()) return;
+
 		logger.debug("Audio session ID changed to " + sessionId);
 	}
 
 	@Override
 	public void onAudioDecoderInitialized(String decoderName, long initializedTimestampMs,
 										  long initializationDurationMs) {
+		if (!logger.isDebugEnabled()) return;
+
 		logger.debug("Audio decoder initialized. " +
 			"decoderName=" + decoderName + ", " +
 			"initializedTimestampMs=" + initializedTimestampMs + ", " +
@@ -34,12 +40,16 @@ implements
 
 	@Override
 	public void onAudioInputFormatChanged(Format format) {
+		if (!logger.isDebugEnabled()) return;
+
 		logger.info("Audio format changed.");
 	}
 
 	@Override
 	public void onAudioSinkUnderrun(int bufferSize, long bufferSizeMs,
 									long elapsedSinceLastFeedMs) {
+		if (!logger.isDebugEnabled()) return;
+
 		logger.debug("Audio sink underrun occurred. " +
 			"bufferSize=" + bufferSize + "," +
 			"bufferSizeMs" + bufferSizeMs + "," +
@@ -48,6 +58,8 @@ implements
 
 	@Override
 	public void onAudioDisabled(DecoderCounters counters) {
+		if (!logger.isDebugEnabled()) return;
+
 		logger.debug("Audio disabled.");
 
 	}

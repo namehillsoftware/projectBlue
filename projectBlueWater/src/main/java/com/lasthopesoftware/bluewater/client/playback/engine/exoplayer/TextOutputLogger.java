@@ -15,6 +15,8 @@ public class TextOutputLogger implements TextOutput {
 
 	@Override
 	public void onCues(List<Cue> cues) {
+		if (!logger.isDebugEnabled()) return;
+		
 		logger.debug("Cues updated");
 	}
 }

@@ -13,6 +13,8 @@ public class MetadataOutputLogger implements MetadataOutput {
 
 	@Override
 	public void onMetadata(Metadata metadata) {
+		if (!logger.isDebugEnabled()) return;
+
 		logger.debug("New metadata");
 	}
 }
