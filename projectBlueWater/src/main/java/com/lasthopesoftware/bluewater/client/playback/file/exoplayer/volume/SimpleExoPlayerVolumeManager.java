@@ -7,14 +7,16 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayable
 public class SimpleExoPlayerVolumeManager implements ManagePlayableFileVolume {
 
 	private final SimpleExoPlayer simpleExoPlayer;
+	private float volume;
 
 	public SimpleExoPlayerVolumeManager(SimpleExoPlayer simpleExoPlayer) {
 		this.simpleExoPlayer = simpleExoPlayer;
 	}
 
 	@Override
-	public void setVolume(float volume) {
-		simpleExoPlayer.setVolume(volume);
+	public float setVolume(float volume) {
+		simpleExoPlayer.setVolume(this.volume = volume);
+		return volume;
 	}
 
 	@Override

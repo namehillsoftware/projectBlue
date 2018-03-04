@@ -1,18 +1,19 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.volume.SimpleExoPlayerVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.state.volume.AudioTrackVolumeManager;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
@@ -28,16 +29,18 @@ implements
 
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
-	private final SimpleExoPlayer exoPlayer;
+	private final ExoPlayer exoPlayer;
 	private final Messenger<PreparedPlayableFile> messenger;
+	private final MediaCodecAudioRenderer[] audioRenderers;
 	private final BufferingExoPlayer bufferingExoPlayer;
 	private final long prepareAt;
 	private final CancellationToken cancellationToken;
 
 	private boolean isResolved;
 
-	ExoPlayerPreparationHandler(SimpleExoPlayer exoPlayer, BufferingExoPlayer bufferingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
+	ExoPlayerPreparationHandler(ExoPlayer exoPlayer, MediaCodecAudioRenderer[] audioRenderers, BufferingExoPlayer bufferingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
 		this.exoPlayer = exoPlayer;
+		this.audioRenderers = audioRenderers;
 		this.bufferingExoPlayer = bufferingExoPlayer;
 		this.prepareAt = prepareAt;
 		this.messenger = messenger;
@@ -86,7 +89,7 @@ implements
 		messenger.sendResolution(
 			new PreparedPlayableFile(
 				new ExoPlayerPlaybackHandler(exoPlayer),
-				new SimpleExoPlayerVolumeManager(exoPlayer),
+				new AudioTrackVolumeManager(exoPlayer, audioRenderers),
 				bufferingExoPlayer));
 	}
 

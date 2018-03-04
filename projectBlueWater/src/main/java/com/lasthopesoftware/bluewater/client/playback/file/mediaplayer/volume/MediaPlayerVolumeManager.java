@@ -15,9 +15,10 @@ public class MediaPlayerVolumeManager implements ManagePlayableFileVolume {
 	}
 
 	@Override
-	public void setVolume(float volume) {
+	public float setVolume(float volume) {
 		this.volume = volume;
 		mediaPlayer.setVolume(volume, volume);
+		return volume;
 	}
 
 	@Override

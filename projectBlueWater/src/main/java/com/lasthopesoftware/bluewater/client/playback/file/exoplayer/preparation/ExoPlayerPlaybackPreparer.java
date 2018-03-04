@@ -2,14 +2,17 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.os.Handler;
 
+import com.annimon.stream.Stream;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.RenderersFactory;
-import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderingEventListener;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
@@ -50,10 +53,21 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 						return;
 					}
 
-					final SimpleExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(
-						renderersFactory,
+					final MediaCodecAudioRenderer[] renderers =
+						(MediaCodecAudioRenderer[])Stream.of(renderersFactory.createRenderers(
+								handler,
+								null,
+								new AudioRenderingEventListener(),
+								null,
+								null))
+							.filter(r -> r instanceof MediaCodecAudioRenderer)
+							.toArray();
+
+					final ExoPlayer exoPlayer = ExoPlayerFactory.newInstance(
+						renderers,
 						trackSelector,
 						loadControl);
+
 					if (cancellationToken.isCancelled()) {
 						exoPlayer.release();
 						messenger.sendRejection(new CancellationException());
@@ -63,7 +77,9 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 					final BufferingExoPlayer bufferingExoPlayer = new BufferingExoPlayer();
 
 					final ExoPlayerPreparationHandler exoPlayerPreparationHandler =
-						new ExoPlayerPreparationHandler(exoPlayer,
+						new ExoPlayerPreparationHandler(
+							exoPlayer,
+							renderers,
 							bufferingExoPlayer,
 							preparedAt,
 							messenger,

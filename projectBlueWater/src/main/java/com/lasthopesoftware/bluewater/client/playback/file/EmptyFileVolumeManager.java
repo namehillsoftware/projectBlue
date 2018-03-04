@@ -7,8 +7,8 @@ public class EmptyFileVolumeManager implements ManagePlayableFileVolume {
 	private float volume;
 
 	@Override
-	public void setVolume(float volume) {
-		this.volume = volume;
+	public float setVolume(float volume) {
+		return this.volume = volume;
 	}
 
 	@Override
