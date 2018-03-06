@@ -8,8 +8,12 @@ public class LooperThreadCreator {
 
 	public static Promise<Looper> promiseNewLooperThread(String looperThreadName) {
 		return new Promise<>(m -> new Thread(() -> {
-			Looper.prepare();
-			m.sendResolution(Looper.myLooper());
+			try {
+				Looper.prepare();
+				m.sendResolution(Looper.myLooper());
+			} catch (Throwable t) {
+				m.sendRejection(t);
+			}
 		}, looperThreadName).start());
 	}
 }
