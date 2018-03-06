@@ -10,6 +10,6 @@ public class LooperThreadCreator {
 		return new Promise<>(m -> new Thread(() -> {
 			Looper.prepare();
 			m.sendResolution(Looper.myLooper());
-		}, looperThreadName));
+		}, looperThreadName).start());
 	}
 }

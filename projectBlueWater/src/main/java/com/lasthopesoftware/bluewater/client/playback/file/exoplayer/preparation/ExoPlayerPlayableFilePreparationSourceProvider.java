@@ -40,7 +40,6 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 			library,
 			new AndroidDiskCacheDirectoryProvider(context));
 
-
 		renderersFactory = new DefaultRenderersFactory(context);
 	}
 

@@ -62,67 +62,66 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	@Override
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return bestMatchUriProvider.promiseFileUri(serviceFile)
-			.eventually(uri ->
-				rendererHandler.getObject().eventually(rh ->
-					extractorHandler.getObject().eventually(eh ->
-						new Promise<>(messenger -> {
-							final CancellationToken cancellationToken = new CancellationToken();
-							messenger.cancellationRequested(cancellationToken);
+			.eventually(uri -> rendererHandler.getObject().eventually(rh ->
+				extractorHandler.getObject().eventually(eh ->
+					new Promise<>(messenger -> {
+						final CancellationToken cancellationToken = new CancellationToken();
+						messenger.cancellationRequested(cancellationToken);
 
-							if (cancellationToken.isCancelled()) {
-								messenger.sendRejection(new CancellationException());
-								return;
-							}
+						if (cancellationToken.isCancelled()) {
+							messenger.sendRejection(new CancellationException());
+							return;
+						}
 
-							final MediaCodecAudioRenderer[] renderers =
-								Stream.of(renderersFactory.createRenderers(
-									rh,
-									null,
-									new AudioRenderingEventListener(),
-									new TextOutputLogger(),
-									new MetadataOutputLogger()))
-									.filter(r -> r instanceof MediaCodecAudioRenderer)
-									.toArray(MediaCodecAudioRenderer[]::new);
+						final MediaCodecAudioRenderer[] renderers =
+							Stream.of(renderersFactory.createRenderers(
+								rh,
+								null,
+								new AudioRenderingEventListener(),
+								new TextOutputLogger(),
+								new MetadataOutputLogger()))
+								.filter(r -> r instanceof MediaCodecAudioRenderer)
+								.toArray(MediaCodecAudioRenderer[]::new);
 
-							final ExoPlayer exoPlayer = ExoPlayerFactory.newInstance(
+						final ExoPlayer exoPlayer = ExoPlayerFactory.newInstance(
+							renderers,
+							trackSelector,
+							loadControl);
+
+						if (cancellationToken.isCancelled()) {
+							exoPlayer.release();
+							messenger.sendRejection(new CancellationException());
+							return;
+						}
+
+						final BufferingExoPlayer bufferingExoPlayer = new BufferingExoPlayer();
+
+						final ExoPlayerPreparationHandler exoPlayerPreparationHandler =
+							new ExoPlayerPreparationHandler(
+								exoPlayer,
 								renderers,
-								trackSelector,
-								loadControl);
+								bufferingExoPlayer,
+								preparedAt,
+								messenger,
+								cancellationToken);
 
-							if (cancellationToken.isCancelled()) {
-								exoPlayer.release();
-								messenger.sendRejection(new CancellationException());
-								return;
-							}
+						exoPlayer.addListener(exoPlayerPreparationHandler);
 
-							final BufferingExoPlayer bufferingExoPlayer = new BufferingExoPlayer();
+						if (cancellationToken.isCancelled()) return;
 
-							final ExoPlayerPreparationHandler exoPlayerPreparationHandler =
-								new ExoPlayerPreparationHandler(
-									exoPlayer,
-									renderers,
-									bufferingExoPlayer,
-									preparedAt,
-									messenger,
-									cancellationToken);
+						final MediaSource mediaSource =
+							extractorMediaSourceFactoryProvider
+								.getFactory(uri)
+								.createMediaSource(
+									uri,
+									eh,
+									bufferingExoPlayer);
 
-							exoPlayer.addListener(exoPlayerPreparationHandler);
-
-							if (cancellationToken.isCancelled()) return;
-
-							final MediaSource mediaSource =
-								extractorMediaSourceFactoryProvider
-									.getFactory(uri)
-									.createMediaSource(
-										uri,
-										eh,
-										bufferingExoPlayer);
-
-							try {
-								exoPlayer.prepare(mediaSource);
-							} catch (IllegalStateException e) {
-								messenger.sendRejection(e);
-							}
-				}))));
+						try {
+							exoPlayer.prepare(mediaSource);
+						} catch (IllegalStateException e) {
+							messenger.sendRejection(e);
+						}
+			}))));
 	}
 }
