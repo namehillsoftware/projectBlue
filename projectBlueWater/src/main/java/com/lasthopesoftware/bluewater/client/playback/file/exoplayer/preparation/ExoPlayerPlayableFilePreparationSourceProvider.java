@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import android.content.Context;
-import android.os.Handler;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -32,7 +31,6 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	private final BestMatchUriProvider bestMatchUriProvider;
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
-	private final Handler handler;
 
 	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, BestMatchUriProvider bestMatchUriProvider, Library library) {
 		this.bestMatchUriProvider = bestMatchUriProvider;
@@ -44,8 +42,6 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 
 
 		renderersFactory = new DefaultRenderersFactory(context);
-
-		handler = new Handler(context.getMainLooper());
 	}
 
 	@Override
@@ -60,7 +56,6 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 			trackSelector.getObject(),
 			loadControl.getObject(),
 			renderersFactory,
-			handler,
 			bestMatchUriProvider);
 	}
 
