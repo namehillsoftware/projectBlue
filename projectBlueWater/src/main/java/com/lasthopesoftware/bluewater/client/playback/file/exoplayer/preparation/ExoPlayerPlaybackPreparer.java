@@ -6,6 +6,7 @@ import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -78,15 +79,13 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 							return;
 						}
 
-						final MediaCodecAudioRenderer[] renderers =
-							Stream.of(renderersFactory.createRenderers(
+						final Renderer[] renderers =
+							renderersFactory.createRenderers(
 								rh,
 								null,
-								new AudioRenderingEventListener(),
+								AudioRenderingEventListener.isDebugEnabled() ? new AudioRenderingEventListener() : null,
 								new TextOutputLogger(),
-								new MetadataOutputLogger()))
-								.filter(r -> r instanceof MediaCodecAudioRenderer)
-								.toArray(MediaCodecAudioRenderer[]::new);
+								new MetadataOutputLogger());
 
 						final ExoPlayer exoPlayer = ExoPlayerFactory.newInstance(
 							renderers,
@@ -104,7 +103,9 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 						final ExoPlayerPreparationHandler exoPlayerPreparationHandler =
 							new ExoPlayerPreparationHandler(
 								exoPlayer,
-								renderers,
+								Stream.of(renderers)
+									.filter(r -> r instanceof MediaCodecAudioRenderer)
+									.toArray(MediaCodecAudioRenderer[]::new),
 								bufferingExoPlayer,
 								preparedAt,
 								messenger,

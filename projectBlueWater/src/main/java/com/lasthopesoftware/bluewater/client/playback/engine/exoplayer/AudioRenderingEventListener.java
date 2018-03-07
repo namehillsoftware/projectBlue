@@ -13,6 +13,10 @@ implements
 
 	private static final Logger logger = LoggerFactory.getLogger(AudioRenderingEventListener.class);
 
+	public static boolean isDebugEnabled() {
+		return logger.isDebugEnabled();
+	}
+
 	@Override
 	public void onAudioEnabled(DecoderCounters counters) {
 		if (!logger.isDebugEnabled()) return;
