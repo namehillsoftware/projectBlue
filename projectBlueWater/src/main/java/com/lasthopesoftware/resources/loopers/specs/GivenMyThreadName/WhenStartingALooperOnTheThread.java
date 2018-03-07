@@ -3,10 +3,7 @@ package com.lasthopesoftware.resources.loopers.specs.GivenMyThreadName;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.lasthopesoftware.resources.loopers.LooperThreadCreator;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
+import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,18 +18,16 @@ import static org.robolectric.Shadows.shadowOf;
 @RunWith(RobolectricTestRunner.class)
 public class WhenStartingALooperOnTheThread {
 
-	private static final CreateAndHold<Promise<Looper>> looperInit = new Lazy<>(() -> LooperThreadCreator.promiseNewLooperThread("MyThreadName"));
+	private Looper looper;
 
-	private static Looper looper;
-
-	private static Throwable throwable;
+	private Throwable throwable;
 
 	@Before
 	public void context() throws Throwable {
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		looperInit.getObject()
-			.then(l -> {
-				looper = l;
+		HandlerThreadCreator.promiseNewHandlerThread("MyThreadName")
+			.then(h -> {
+				looper = h.getLooper();
 				countDownLatch.countDown();
 				return null;
 			}, e -> {

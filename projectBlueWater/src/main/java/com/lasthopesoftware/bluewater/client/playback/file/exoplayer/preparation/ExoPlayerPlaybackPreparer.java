@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.compilation.DebugFlag;
-import com.lasthopesoftware.resources.loopers.LooperThreadCreator;
+import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
@@ -37,8 +37,8 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	private static final CreateAndHold<Promise<Handler>> extractorHandler = new AbstractSynchronousLazy<Promise<Handler>>() {
 		@Override
 		protected Promise<Handler> create() throws Throwable {
-			return LooperThreadCreator.promiseNewLooperThread("Media Extracting thread")
-				.then(Handler::new);
+			return HandlerThreadCreator.promiseNewHandlerThread("Media Extracting thread")
+				.then(h -> new Handler(h.getLooper()));
 		}
 	};
 
