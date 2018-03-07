@@ -21,11 +21,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.resources.LooperThreadCreator;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
@@ -44,6 +47,8 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 				.then(Handler::new);
 		}
 	};
+
+	private static final Executor preparationExecutor = Executors.newSingleThreadExecutor();
 
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final TrackSelector trackSelector;
@@ -64,7 +69,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 		return bestMatchUriProvider.promiseFileUri(serviceFile)
 			.eventually(uri -> rendererHandler.getObject().eventually(rh ->
 				extractorHandler.getObject().eventually(eh ->
-					new Promise<>(messenger -> {
+					new QueuedPromise<>(messenger -> {
 						final CancellationToken cancellationToken = new CancellationToken();
 						messenger.cancellationRequested(cancellationToken);
 
@@ -122,6 +127,6 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 						} catch (IllegalStateException e) {
 							messenger.sendRejection(e);
 						}
-			}))));
+			}, preparationExecutor))));
 	}
 }
