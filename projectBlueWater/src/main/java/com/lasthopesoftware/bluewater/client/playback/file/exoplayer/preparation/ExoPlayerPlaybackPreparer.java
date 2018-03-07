@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.B
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
+import com.lasthopesoftware.compilation.DebugFlag;
 import com.lasthopesoftware.resources.loopers.LooperThreadCreator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
@@ -32,14 +33,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
-
-	private static final CreateAndHold<Promise<Handler>> rendererHandler = new AbstractSynchronousLazy<Promise<Handler>>() {
-		@Override
-		protected Promise<Handler> create() throws Throwable {
-			return LooperThreadCreator.promiseNewLooperThread("Audio Rendering thread")
-				.then(Handler::new);
-		}
-	};
 
 	private static final CreateAndHold<Promise<Handler>> extractorHandler = new AbstractSynchronousLazy<Promise<Handler>>() {
 		@Override
@@ -68,8 +61,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	@Override
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return bestMatchUriProvider.promiseFileUri(serviceFile)
-			.eventually(uri -> rendererHandler.getObject().eventually(rh ->
-				extractorHandler.getObject().eventually(eh ->
+			.eventually(uri -> extractorHandler.getObject().eventually(handler ->
 					new QueuedPromise<>(messenger -> {
 						final CancellationToken cancellationToken = new CancellationToken();
 						messenger.cancellationRequested(cancellationToken);
@@ -81,9 +73,9 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
 						final Renderer[] renderers =
 							renderersFactory.createRenderers(
-								rh,
+								handler,
 								null,
-								AudioRenderingEventListener.isDebugEnabled() ? new AudioRenderingEventListener() : null,
+								DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
 								new TextOutputLogger(),
 								new MetadataOutputLogger());
 
@@ -120,7 +112,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 								.getFactory(uri)
 								.createMediaSource(
 									uri,
-									eh,
+									handler,
 									bufferingExoPlayer);
 
 						try {
@@ -128,6 +120,6 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 						} catch (IllegalStateException e) {
 							messenger.sendRejection(e);
 						}
-			}, preparationExecutor))));
+			}, preparationExecutor)));
 	}
 }
