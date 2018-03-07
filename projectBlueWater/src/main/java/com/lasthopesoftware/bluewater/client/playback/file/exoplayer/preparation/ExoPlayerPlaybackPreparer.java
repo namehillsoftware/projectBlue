@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.B
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.resources.LooperThreadCreator;
+import com.lasthopesoftware.resources.loopers.LooperThreadCreator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
