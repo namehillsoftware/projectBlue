@@ -10,8 +10,8 @@ public class LooperThreadCreator {
 		return new Promise<>(m -> new Thread(() -> {
 			try {
 				Looper.prepare();
-				Looper.loop();
 				m.sendResolution(Looper.myLooper());
+				Looper.loop();
 			} catch (Throwable t) {
 				m.sendRejection(t);
 			}

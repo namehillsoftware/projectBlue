@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.loopers.specs.GivenMyThreadName;
 
+import android.os.Handler;
 import android.os.Looper;
 
 import com.lasthopesoftware.resources.loopers.LooperThreadCreator;
@@ -7,8 +8,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -16,20 +16,19 @@ import org.robolectric.RobolectricTestRunner;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(RobolectricTestRunner.class)
 public class WhenStartingALooperOnTheThread {
 
 	private static final CreateAndHold<Promise<Looper>> looperInit = new Lazy<>(() -> LooperThreadCreator.promiseNewLooperThread("MyThreadName"));
 
-	private static CountDownLatch KeepAliveCountdown = new CountDownLatch(1);
-
 	private static Looper looper;
 
 	private static Throwable throwable;
 
-	@BeforeClass
-	public static void context() throws Throwable {
+	@Before
+	public void context() throws Throwable {
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		looperInit.getObject()
 			.then(l -> {
@@ -46,11 +45,12 @@ public class WhenStartingALooperOnTheThread {
 		if (throwable != null)
 			throw throwable;
 
-		looperInit.getObject()
-			.then(l -> {
-				KeepAliveCountdown.await();
-				return null;
-			});
+		final Handler handler = new Handler(looper);
+		final CountDownLatch countDownLatch1 = new CountDownLatch(1);
+		handler.post(countDownLatch1::countDown);
+
+		shadowOf(looper).getScheduler().advanceToLastPostedRunnable();
+		countDownLatch1.await();
 	}
 
 	@Test
@@ -61,10 +61,5 @@ public class WhenStartingALooperOnTheThread {
 	@Test
 	public void thenTheLooperThreadIsStarted() {
 		assertThat(looper.getThread().isAlive()).isTrue();
-	}
-
-	@AfterClass
-	public static void teardown() {
-		KeepAliveCountdown.countDown();
 	}
 }
