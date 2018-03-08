@@ -6,8 +6,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 public class HandlerThreadCreator {
 
-	public static Promise<HandlerThread> promiseNewHandlerThread(String looperThreadName) {
-		return new Promise<>(m -> new HandlerThread(looperThreadName) {
+	public static Promise<HandlerThread> promiseNewHandlerThread(String looperThreadName, int threadPriority) {
+		return new Promise<>(m -> new HandlerThread(looperThreadName, threadPriority) {
 			@Override
 			protected void onLooperPrepared() {
 				try {

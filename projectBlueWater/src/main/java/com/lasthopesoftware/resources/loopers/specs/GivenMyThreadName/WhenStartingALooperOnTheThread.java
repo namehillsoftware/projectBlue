@@ -25,7 +25,7 @@ public class WhenStartingALooperOnTheThread {
 	@Before
 	public void context() throws Throwable {
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		HandlerThreadCreator.promiseNewHandlerThread("MyThreadName")
+		HandlerThreadCreator.promiseNewHandlerThread("MyThreadName", 3)
 			.then(h -> {
 				looper = h.getLooper();
 				countDownLatch.countDown();
@@ -49,7 +49,7 @@ public class WhenStartingALooperOnTheThread {
 	}
 
 	@Test
-	public void thenTheLooperThreadIsCorrect() {
+	public void thenTheLooperThreadNameIsCorrect() {
 		assertThat(looper.getThread().getName()).isEqualTo("MyThreadName");
 	}
 

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import android.os.Handler;
+import android.os.Process;
 
 import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -37,8 +38,9 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	private static final CreateAndHold<Promise<Handler>> extractorHandler = new AbstractSynchronousLazy<Promise<Handler>>() {
 		@Override
 		protected Promise<Handler> create() throws Throwable {
-			return HandlerThreadCreator.promiseNewHandlerThread("Media Extracting thread")
-				.then(h -> new Handler(h.getLooper()));
+			return HandlerThreadCreator.promiseNewHandlerThread(
+				"Media Extracting thread",
+				Process.THREAD_PRIORITY_AUDIO).then(h -> new Handler(h.getLooper()));
 		}
 	};
 
