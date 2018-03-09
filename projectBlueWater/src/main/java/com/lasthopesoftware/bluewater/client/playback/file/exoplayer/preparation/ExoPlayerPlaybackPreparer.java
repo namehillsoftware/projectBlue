@@ -24,14 +24,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
@@ -43,8 +40,6 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 				Process.THREAD_PRIORITY_AUDIO).then(h -> new Handler(h.getLooper()));
 		}
 	};
-
-	private static final Executor preparationExecutor = Executors.newSingleThreadExecutor();
 
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final TrackSelector trackSelector;
@@ -64,7 +59,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return bestMatchUriProvider.promiseFileUri(serviceFile)
 			.eventually(uri -> extractorHandler.getObject().eventually(handler ->
-				new QueuedPromise<>(messenger -> {
+				new Promise<>(messenger -> new Thread(() -> {
 					final CancellationToken cancellationToken = new CancellationToken();
 					messenger.cancellationRequested(cancellationToken);
 
@@ -122,6 +117,6 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 					} catch (IllegalStateException e) {
 						messenger.sendRejection(e);
 					}
-		}, preparationExecutor)));
+		}, "PreparationThread-File-" + serviceFile.getKey()).start())));
 	}
 }
