@@ -16,11 +16,11 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Offset.offset;
 
 public class WhenStoringTheUpdatedPlayStats {
 
 	private static Map<String, String> fileProperties;
+	private static long originalLastPlayed;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -29,7 +29,7 @@ public class WhenStoringTheUpdatedPlayStats {
 		connectionProvider.setSyncRevision(1);
 
 		final long duration = Duration.standardMinutes(5).getMillis();
-		final long lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).getMillis()).getStandardSeconds();
+		originalLastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).getMillis()).getStandardSeconds();
 
 		connectionProvider.mapResponse((params) ->
 			("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
@@ -37,7 +37,7 @@ public class WhenStoringTheUpdatedPlayStats {
 				"<Item>\n" +
 					"<Field Name=\"Key\">23</Field>\n" +
 					"<Field Name=\"Media Type\">Audio</Field>\n" +
-					"<Field Name=\"" + FilePropertiesProvider.LAST_PLAYED + "\">" + String.valueOf(lastPlayed) + "</Field>\n" +
+					"<Field Name=\"" + FilePropertiesProvider.LAST_PLAYED + "\">" + String.valueOf(originalLastPlayed) + "</Field>\n" +
 					"<Field Name=\"Rating\">4</Field>\n" +
 					"<Field Name=\"File Size\">2345088</Field>\n" +
 					"<Field Name=\"" + FilePropertiesProvider.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
@@ -70,7 +70,7 @@ public class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	public void thenTheLastPlayedIsRecent() {
-		assertThat(Long.parseLong(fileProperties.get(FilePropertiesProvider.LAST_PLAYED))).isCloseTo(Duration.millis(System.currentTimeMillis()).getStandardSeconds(), offset(10L));
+		assertThat(Long.parseLong(fileProperties.get(FilePropertiesProvider.LAST_PLAYED))).isGreaterThan(originalLastPlayed);
 	}
 
 	@Test

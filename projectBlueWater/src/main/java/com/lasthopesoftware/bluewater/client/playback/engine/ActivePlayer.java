@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;

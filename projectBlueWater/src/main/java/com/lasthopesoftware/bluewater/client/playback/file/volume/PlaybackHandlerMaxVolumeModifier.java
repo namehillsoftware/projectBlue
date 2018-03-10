@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume;
 
-import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
+import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 
 
 public class PlaybackHandlerMaxVolumeModifier implements IVolumeManagement {

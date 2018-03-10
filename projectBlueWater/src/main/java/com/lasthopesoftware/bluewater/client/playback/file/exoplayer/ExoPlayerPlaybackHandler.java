@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
@@ -27,12 +27,12 @@ implements
 {
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
-	private final SimpleExoPlayer exoPlayer;
+	private final ExoPlayer exoPlayer;
 	private final Promise<PlayableFile> playbackHandlerPromise;
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
 
-	public ExoPlayerPlaybackHandler(SimpleExoPlayer exoPlayer) {
+	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
 		exoPlayer.addListener(this);
 

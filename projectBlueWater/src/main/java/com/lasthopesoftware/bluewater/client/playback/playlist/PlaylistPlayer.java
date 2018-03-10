@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
+import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume;
 
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.state.volume.IVolumeManagement;
+import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
