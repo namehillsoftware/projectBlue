@@ -27,7 +27,12 @@ public class PlaybackEngineTypeSelectionView {
 			new LinearLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT,
 				ViewGroup.LayoutParams.WRAP_CONTENT));
-		radioButton.setText(playbackEngineType.name());
+
+		String playbackEngineName = playbackEngineType.name();
+		if (playbackEngineType == PlaybackEngineType.ExoPlayer)
+			playbackEngineName += " (Beta)";
+
+		radioButton.setText(playbackEngineName);
 		radioButton.setId(playbackEngineType.ordinal());
 
 		return radioButton;
