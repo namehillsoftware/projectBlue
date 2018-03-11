@@ -239,7 +239,7 @@ public class SyncService extends Service {
 	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
-	private final CreateAndHold<String> lazyNotificationChannelId = new AbstractSynchronousLazy<String>() {
+	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() throws Throwable {
 			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
@@ -366,7 +366,7 @@ public class SyncService extends Service {
 
 	@NonNull
 	private Notification buildSyncNotification(@Nullable String syncNotification) {
-		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this, lazyNotificationChannelId.getObject());
+		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this, lazyActiveNotificationChannelId.getObject());
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		if (syncNotification != null)

@@ -251,7 +251,7 @@ implements
 	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
-	private final CreateAndHold<String> lazyNotificationChannelId = new AbstractSynchronousLazy<String>() {
+	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() throws Throwable {
 			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
@@ -373,7 +373,7 @@ implements
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
-				final Builder builder = new Builder(this, lazyNotificationChannelId.getObject());
+				final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 				builder
 					.setOngoing(isPlaying)
 					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
@@ -412,7 +412,7 @@ implements
 	}
 
 	private void notifyStartingService() {
-		final Builder builder = new Builder(this, lazyNotificationChannelId.getObject());
+		final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		builder.setOngoing(true);
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
 
@@ -527,7 +527,7 @@ implements
 	}
 	
 	private void handleBuildConnectionStatusChange(final int status, final Intent intentToRun) {
-		final Builder notifyBuilder = new Builder(this, lazyNotificationChannelId.getObject());
+		final Builder notifyBuilder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
@@ -886,7 +886,7 @@ implements
 
 		lastErrorTime = currentErrorTime;
 
-		final Builder builder = new Builder(this, lazyNotificationChannelId.getObject());
+		final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
 		final Intent intent = new Intent(this, PlaybackService.class);
