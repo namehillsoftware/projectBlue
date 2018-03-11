@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.sync.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -10,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -63,6 +65,8 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
+import com.lasthopesoftware.resources.notifications.channel.NotificationChannelBuilder;
+import com.lasthopesoftware.resources.notifications.channel.SharedChannelProperties;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
@@ -232,6 +236,22 @@ public class SyncService extends Service {
 		}
 	};
 
+	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
+
+	private final CreateAndHold<String> lazyNotificationChannelId = new AbstractSynchronousLazy<String>() {
+		@Override
+		protected String create() throws Throwable {
+			final SharedChannelProperties sharedChannelProperties = new SharedChannelProperties(SyncService.this);
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return sharedChannelProperties.getChannelId();
+
+			final NotificationChannelBuilder channelBuilder = new NotificationChannelBuilder(sharedChannelProperties);
+
+			notificationManagerLazy.getObject().createNotificationChannel(channelBuilder.buildNotificationChannel());
+
+			return sharedChannelProperties.getChannelId();
+		}
+	};
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -350,7 +370,7 @@ public class SyncService extends Service {
 
 	@NonNull
 	private Notification buildSyncNotification(@Nullable String syncNotification) {
-		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this);
+		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this, lazyNotificationChannelId.getObject());
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		if (syncNotification != null)

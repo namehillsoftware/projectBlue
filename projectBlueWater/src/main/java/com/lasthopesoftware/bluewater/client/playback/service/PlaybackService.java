@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.service;
 
 
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -95,6 +94,8 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.notifications.channel.NotificationChannelBuilder;
+import com.lasthopesoftware.resources.notifications.channel.SharedChannelProperties;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -251,17 +252,14 @@ implements
 	private final CreateAndHold<String> lazyNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() throws Throwable {
-			final String notificationChannelId = "MusicCanoe";
+			final SharedChannelProperties sharedChannelProperties = new SharedChannelProperties(PlaybackService.this);
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return sharedChannelProperties.getChannelId();
 
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return notificationChannelId;
+			final NotificationChannelBuilder channelBuilder = new NotificationChannelBuilder(sharedChannelProperties);
 
-			final String channelName = getString(R.string.app_name);
-			NotificationChannel channel = new NotificationChannel(notificationChannelId, channelName, NotificationManager.IMPORTANCE_DEFAULT);
-			channel.setDescription(String.format("Notifications for %1$s", channelName));
+			notificationManagerLazy.getObject().createNotificationChannel(channelBuilder.buildNotificationChannel());
 
-			notificationManagerLazy.getObject().createNotificationChannel(channel);
-
-			return notificationChannelId;
+			return sharedChannelProperties.getChannelId();
 		}
 	};
 
