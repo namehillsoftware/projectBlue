@@ -1,4 +1,4 @@
-package com.lasthopesoftware.resources.notifications.channel;
+package com.lasthopesoftware.resources.notifications.notificationchannel;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -25,6 +25,6 @@ public class NotificationChannelActivator implements ActivateChannel {
 
 		notificationManager.createNotificationChannel(channel);
 
-		return channelConfiguration.getChannelId();
+		return channel.getId();
 	}
 }

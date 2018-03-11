@@ -1,4 +1,4 @@
-package com.lasthopesoftware.resources.notifications.channel;
+package com.lasthopesoftware.resources.notifications.notificationchannel;
 
 import android.app.NotificationManager;
 import android.content.Context;

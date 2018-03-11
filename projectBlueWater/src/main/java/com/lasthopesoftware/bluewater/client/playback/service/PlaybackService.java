@@ -94,11 +94,9 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.resources.notifications.NotificationBuilderSupplier;
-import com.lasthopesoftware.resources.notifications.SupplyNotificationBuilders;
-import com.lasthopesoftware.resources.notifications.channel.ChannelConfiguration;
-import com.lasthopesoftware.resources.notifications.channel.NotificationChannelBuilder;
-import com.lasthopesoftware.resources.notifications.channel.SharedChannelProperties;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
+import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
+import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -256,22 +254,9 @@ implements
 	private final CreateAndHold<String> lazyNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() throws Throwable {
-			final ChannelConfiguration sharedChannelProperties = lazyChannelConfiguration.getObject();
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return sharedChannelProperties.getChannelId();
+			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
 
-			final NotificationChannelBuilder channelBuilder = new NotificationChannelBuilder(sharedChannelProperties);
-
-			notificationManagerLazy.getObject().createNotificationChannel(channelBuilder.buildNotificationChannel());
-
-			return sharedChannelProperties.getChannelId();
-		}
-	};
-	private final CreateAndHold<SupplyNotificationBuilders> lazyNotificationBuilderSupplier = new AbstractSynchronousLazy<SupplyNotificationBuilders>() {
-		@Override
-		protected SupplyNotificationBuilders create() throws Throwable {
-			return new NotificationBuilderSupplier(
-				PlaybackService.this,
-				lazyChannelConfiguration.getObject());
+			return notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 		}
 	};
 
@@ -427,7 +412,7 @@ implements
 	}
 
 	private void notifyStartingService() {
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this, lazyNotificationChannelId.getObject());
+		final Builder builder = new Builder(this, lazyNotificationChannelId.getObject());
 		builder.setOngoing(true);
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
 
@@ -901,7 +886,7 @@ implements
 
 		lastErrorTime = currentErrorTime;
 
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this, lazyNotificationChannelId.getObject());
+		final Builder builder = new Builder(this, lazyNotificationChannelId.getObject());
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
 		final Intent intent = new Intent(this, PlaybackService.class);

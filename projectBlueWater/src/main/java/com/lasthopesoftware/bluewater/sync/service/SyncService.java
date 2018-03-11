@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -65,8 +64,9 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.resources.notifications.channel.NotificationChannelBuilder;
-import com.lasthopesoftware.resources.notifications.channel.SharedChannelProperties;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
+import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
+import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
@@ -238,17 +238,13 @@ public class SyncService extends Service {
 
 	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 
+	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
 	private final CreateAndHold<String> lazyNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() throws Throwable {
-			final SharedChannelProperties sharedChannelProperties = new SharedChannelProperties(SyncService.this);
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return sharedChannelProperties.getChannelId();
+			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
 
-			final NotificationChannelBuilder channelBuilder = new NotificationChannelBuilder(sharedChannelProperties);
-
-			notificationManagerLazy.getObject().createNotificationChannel(channelBuilder.buildNotificationChannel());
-
-			return sharedChannelProperties.getChannelId();
+			return notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 		}
 	};
 

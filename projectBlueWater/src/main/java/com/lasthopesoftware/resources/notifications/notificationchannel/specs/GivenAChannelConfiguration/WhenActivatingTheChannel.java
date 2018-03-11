@@ -1,12 +1,12 @@
-package com.lasthopesoftware.resources.notifications.channel.specs.GivenAChannelConfiguration;
+package com.lasthopesoftware.resources.notifications.notificationchannel.specs.GivenAChannelConfiguration;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 
-import com.lasthopesoftware.resources.notifications.channel.ChannelConfiguration;
-import com.lasthopesoftware.resources.notifications.channel.NotificationChannelActivator;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
+import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;

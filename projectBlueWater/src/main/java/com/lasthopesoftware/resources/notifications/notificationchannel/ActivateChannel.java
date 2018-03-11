@@ -1,4 +1,4 @@
-package com.lasthopesoftware.resources.notifications.channel;
+package com.lasthopesoftware.resources.notifications.notificationchannel;
 
 public interface ActivateChannel {
 	String activateChannel(ChannelConfiguration channelConfiguration);
