@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 
 import com.annimon.stream.Collectors;
@@ -20,6 +21,11 @@ import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineTypeSelectionPersistence;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.engine.preferences.view.PlaybackEngineTypeSelectionView;
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
@@ -44,6 +50,23 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, findViewById(R.id.syncOnPowerCheckbox));
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, findViewById(R.id.syncOnWifiCheckbox));
 		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled, findViewById(R.id.isVolumeLevelingEnabled));
+
+		final PlaybackEngineTypeSelectionPersistence selection = new PlaybackEngineTypeSelectionPersistence(
+			this,
+			new PlaybackEngineTypeChangedBroadcaster(this));
+
+		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
+			new SelectedPlaybackEngineTypeAccess(this);
+
+		final PlaybackEngineTypeSelectionView playbackEngineTypeSelectionView =
+			new PlaybackEngineTypeSelectionView(this);
+
+		final RadioGroup playbackEngineOptions = findViewById(R.id.playbackEngineOptions);
+		playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections()
+			.forEach(playbackEngineOptions::addView);
+		playbackEngineOptions.check(selectedPlaybackEngineTypeAccess.getSelectedPlaybackEngineType().ordinal());
+		playbackEngineOptions
+			.setOnCheckedChangeListener((group, checkedId) -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]));
 
 		updateServerList();
 	}
