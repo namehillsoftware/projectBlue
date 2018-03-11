@@ -94,6 +94,9 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.notifications.NotificationBuilderSupplier;
+import com.lasthopesoftware.resources.notifications.SupplyNotificationBuilders;
+import com.lasthopesoftware.resources.notifications.channel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.channel.NotificationChannelBuilder;
 import com.lasthopesoftware.resources.notifications.channel.SharedChannelProperties;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
@@ -249,10 +252,11 @@ implements
 	private final CreateAndHold<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
+	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
 	private final CreateAndHold<String> lazyNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() throws Throwable {
-			final SharedChannelProperties sharedChannelProperties = new SharedChannelProperties(PlaybackService.this);
+			final ChannelConfiguration sharedChannelProperties = lazyChannelConfiguration.getObject();
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return sharedChannelProperties.getChannelId();
 
 			final NotificationChannelBuilder channelBuilder = new NotificationChannelBuilder(sharedChannelProperties);
@@ -260,6 +264,14 @@ implements
 			notificationManagerLazy.getObject().createNotificationChannel(channelBuilder.buildNotificationChannel());
 
 			return sharedChannelProperties.getChannelId();
+		}
+	};
+	private final CreateAndHold<SupplyNotificationBuilders> lazyNotificationBuilderSupplier = new AbstractSynchronousLazy<SupplyNotificationBuilders>() {
+		@Override
+		protected SupplyNotificationBuilders create() throws Throwable {
+			return new NotificationBuilderSupplier(
+				PlaybackService.this,
+				lazyChannelConfiguration.getObject());
 		}
 	};
 
