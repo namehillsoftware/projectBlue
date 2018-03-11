@@ -75,6 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
@@ -82,7 +83,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -260,7 +261,7 @@ implements
 	private Disposable filePositionSubscription;
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
 	private RemoteControlProxy remoteControlProxy;
-	private PlaybackNotificationBroadcaster playbackNotificationBroadcaster;
+	private PlaybackNotificationRouter playbackNotificationRouter;
 
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
@@ -593,21 +594,21 @@ implements
 						return intentFilter;
 					}));
 
-		if (playbackNotificationBroadcaster != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationBroadcaster);
+		if (playbackNotificationRouter != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 
-		playbackNotificationBroadcaster =
-			new PlaybackNotificationBroadcaster(
+		playbackNotificationRouter =
+			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				this,
 				notificationManagerLazy.getObject(),
 				new PlaybackNotificationsConfiguration(notificationId),
-				this);
+				this));
 
 		localBroadcastManagerLazy
 			.getObject()
 			.registerReceiver(
-				playbackNotificationBroadcaster,
-				Stream.of(playbackNotificationBroadcaster.registerForIntents())
+				playbackNotificationRouter,
+				Stream.of(playbackNotificationRouter.registerForIntents())
 					.reduce(new IntentFilter(), (intentFilter, action) -> {
 						intentFilter.addAction(action);
 						return intentFilter;
@@ -1021,8 +1022,8 @@ implements
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
-		if (playbackNotificationBroadcaster != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationBroadcaster);
+		if (playbackNotificationRouter != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 
 		if (remoteControlReceiver.isCreated())
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());

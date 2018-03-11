@@ -7,9 +7,10 @@ import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -45,17 +46,17 @@ public class WhenTheFileChanges {
 			when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
 				.thenReturn(new Promise<>(new Notification()));
 
-			final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
-				new PlaybackNotificationBroadcaster(
+			final PlaybackNotificationRouter playbackNotificationRouter =
+				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
 					new PlaybackNotificationsConfiguration(43),
-					notificationContentBuilder);
+					notificationContentBuilder));
 
 			{
 				final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
 				playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
-				playbackNotificationBroadcaster
+				playbackNotificationRouter
 					.onReceive(
 						RuntimeEnvironment.application,
 						playlistChangeIntent);

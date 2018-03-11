@@ -1,21 +1,14 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsStopped;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsStopped;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
 
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -26,7 +19,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -47,9 +39,9 @@ public class WhenTheFileChanges {
 	private static final NotificationManager notificationManager = mock(NotificationManager.class);
 	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
 
-	private static final CreateAndHold<Object> testSetup = new AbstractSynchronousLazy<Object>() {
+	private static final CreateAndHold<Void> testSetup = new AbstractSynchronousLazy<Void>() {
 		@Override
-		protected Object create() throws Throwable {
+		protected Void create() throws Throwable {
 
 			when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
 				.thenReturn(new Promise<>(new Notification()));
@@ -57,46 +49,19 @@ public class WhenTheFileChanges {
 			when(notificationContentBuilder.promiseNowPlayingNotification(argThat(a -> a.equals(new ServiceFile(2))), anyBoolean()))
 				.thenReturn(new Promise<>(secondNotification));
 
-			final PlaybackNotificationRouter playbackNotificationRouter =
-				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
+			final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
+				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
 					new PlaybackNotificationsConfiguration(43),
-					notificationContentBuilder));
+					notificationContentBuilder);
 
-			final LocalPlaybackBroadcaster localPlaybackBroadcaster =
-				new LocalPlaybackBroadcaster(RuntimeEnvironment.application);
+			playbackNotificationBroadcaster.notifyPlaying();
+			playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
+			playbackNotificationBroadcaster.notifyStopped();
+			playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(2));
 
-			LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
-				.registerReceiver(
-					playbackNotificationRouter,
-					Stream.of(playbackNotificationRouter.registerForIntents())
-						.reduce(new IntentFilter(), (intentFilter, action) -> {
-							intentFilter.addAction(action);
-							return intentFilter;
-						}));
-
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistStart,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
-
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistChange,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
-
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistStop,
-				1,
-				new PositionedFile(1, new ServiceFile(1)));
-
-			localPlaybackBroadcaster.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistChange,
-				1,
-				new PositionedFile(1, new ServiceFile(2)));
-
-			return new Object();
+			return null;
 		}
 	};
 

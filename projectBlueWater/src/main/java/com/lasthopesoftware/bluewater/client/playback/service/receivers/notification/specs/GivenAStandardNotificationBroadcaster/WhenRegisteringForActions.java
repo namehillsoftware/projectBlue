@@ -1,17 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationBroadcaster;
 
-import android.app.NotificationManager;
-
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import java.util.Collection;
@@ -26,14 +21,10 @@ public class WhenRegisteringForActions {
 
 	@Before
 	public void context() {
-		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
-			new PlaybackNotificationBroadcaster(
-				Robolectric.buildService(PlaybackService.class).get(),
-				mock(NotificationManager.class),
-				new PlaybackNotificationsConfiguration(3),
-				mock(BuildNowPlayingNotificationContent.class));
+		final PlaybackNotificationRouter playbackNotificationRouter =
+			new PlaybackNotificationRouter(mock(NotifyOfPlaybackEvents.class));
 
-		registeredIntents = playbackNotificationBroadcaster.registerForIntents();
+		registeredIntents = playbackNotificationRouter.registerForIntents();
 	}
 
 	@Test
