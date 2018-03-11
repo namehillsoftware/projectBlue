@@ -2,6 +2,7 @@ package com.lasthopesoftware.resources.notifications.channel;
 
 import android.app.NotificationManager;
 import android.content.Context;
+import android.os.Build;
 
 import com.lasthopesoftware.bluewater.R;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -11,7 +12,7 @@ public class SharedChannelProperties implements ChannelConfiguration {
 
 	private static final String channelId = "MusicCanoe";
 
-	private static final int channelImportance = NotificationManager.IMPORTANCE_DEFAULT;
+	private static final int channelImportance = Build.VERSION.SDK_INT < Build.VERSION_CODES.N ? 3 : NotificationManager.IMPORTANCE_DEFAULT;
 
 	private final Context context;
 
