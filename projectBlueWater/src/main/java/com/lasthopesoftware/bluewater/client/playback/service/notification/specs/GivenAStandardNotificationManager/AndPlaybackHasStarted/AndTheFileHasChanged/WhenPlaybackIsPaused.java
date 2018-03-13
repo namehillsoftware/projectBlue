@@ -1,17 +1,14 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -22,7 +19,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -30,42 +26,34 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-public class WhenTheFileChanges {
-
-	private static final Notification startedNotification = new Notification();
+public class WhenPlaybackIsPaused {
+	private static final Notification pausedNotification = new Notification();
 	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
 	private static final NotificationManager notificationManager = mock(NotificationManager.class);
 	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
 
-	private static final CreateAndHold<Object> testSetup = new AbstractSynchronousLazy<Object>() {
+	private static final CreateAndHold<Void> testSetup = new AbstractSynchronousLazy<Void>() {
 		@Override
-		protected Object create() throws Throwable {
+		protected Void create() throws Throwable {
 
 			when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), true))
-				.thenReturn(new Promise<>(startedNotification));
+				.thenReturn(new Promise<>(new Notification()));
 
-			final PlaybackNotificationRouter playbackNotificationRouter =
-				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
+			when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), false))
+				.thenReturn(new Promise<>(pausedNotification));
+
+			final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
+				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
 					new PlaybackNotificationsConfiguration(43),
-					notificationContentBuilder));
+					notificationContentBuilder);
 
-			playbackNotificationRouter
-				.onReceive(
-					RuntimeEnvironment.application,
-					new Intent(PlaylistEvents.onPlaylistStart));
+			playbackNotificationBroadcaster.notifyPlaying();
+			playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
+			playbackNotificationBroadcaster.notifyPaused();
 
-			{
-				final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
-				playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
-				playbackNotificationRouter
-					.onReceive(
-						RuntimeEnvironment.application,
-						playlistChangeIntent);
-			}
-
-			return new Object();
+			return null;
 		}
 	};
 
@@ -75,7 +63,12 @@ public class WhenTheFileChanges {
 	}
 
 	@Test
-	public void thenTheServiceIsStartedInTheForeground() {
-		verify(service.getObject()).startForeground(43, startedNotification);
+	public void thenTheServiceContinuesInTheBackground() {
+		verify(service.getObject()).stopForeground(false);
+	}
+
+	@Test
+	public void thenTheNotificationIsSetToThePausedNotification() {
+		verify(notificationManager).notify(43, pausedNotification);
 	}
 }

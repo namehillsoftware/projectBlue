@@ -12,9 +12,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -47,20 +48,20 @@ public class WhenPlaybackStarts {
 			when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), true))
 				.thenReturn(new Promise<>(startedNotification));
 
-			final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
-				new PlaybackNotificationBroadcaster(
+			final PlaybackNotificationRouter playbackNotificationRouter =
+				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
 					new PlaybackNotificationsConfiguration(43),
-					notificationContentBuilder);
+					notificationContentBuilder));
 
 			final LocalPlaybackBroadcaster localPlaybackBroadcaster =
 				new LocalPlaybackBroadcaster(RuntimeEnvironment.application);
 
 			LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
 				.registerReceiver(
-					playbackNotificationBroadcaster,
-					Stream.of(playbackNotificationBroadcaster.registerForIntents())
+					playbackNotificationRouter,
+					Stream.of(playbackNotificationRouter.registerForIntents())
 						.reduce(new IntentFilter(), (intentFilter, action) -> {
 							intentFilter.addAction(action);
 							return intentFilter;
@@ -69,13 +70,13 @@ public class WhenPlaybackStarts {
 			{
 				final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
 				playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
-				playbackNotificationBroadcaster
+				playbackNotificationRouter
 					.onReceive(
 						RuntimeEnvironment.application,
 						playlistChangeIntent);
 			}
 
-			playbackNotificationBroadcaster
+			playbackNotificationRouter
 				.onReceive(
 					RuntimeEnvironment.application,
 					new Intent(PlaylistEvents.onPlaylistStart));

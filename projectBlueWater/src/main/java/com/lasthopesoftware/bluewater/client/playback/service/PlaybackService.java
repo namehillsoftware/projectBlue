@@ -75,6 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
@@ -82,7 +83,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -93,6 +94,9 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
+import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
+import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -246,6 +250,15 @@ implements
 	private final CreateAndHold<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
+	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
+	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
+		@Override
+		protected String create() throws Throwable {
+			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
+
+			return notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
+		}
+	};
 
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
@@ -260,7 +273,7 @@ implements
 	private Disposable filePositionSubscription;
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
 	private RemoteControlProxy remoteControlProxy;
-	private PlaybackNotificationBroadcaster playbackNotificationBroadcaster;
+	private PlaybackNotificationRouter playbackNotificationRouter;
 
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
@@ -360,7 +373,7 @@ implements
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
-				final Builder builder = new Builder(this);
+				final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 				builder
 					.setOngoing(isPlaying)
 					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
@@ -399,7 +412,7 @@ implements
 	}
 
 	private void notifyStartingService() {
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		builder.setOngoing(true);
 		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
 
@@ -514,7 +527,7 @@ implements
 	}
 	
 	private void handleBuildConnectionStatusChange(final int status, final Intent intentToRun) {
-		final Builder notifyBuilder = new Builder(this);
+		final Builder notifyBuilder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
@@ -593,21 +606,21 @@ implements
 						return intentFilter;
 					}));
 
-		if (playbackNotificationBroadcaster != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationBroadcaster);
+		if (playbackNotificationRouter != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 
-		playbackNotificationBroadcaster =
-			new PlaybackNotificationBroadcaster(
+		playbackNotificationRouter =
+			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				this,
 				notificationManagerLazy.getObject(),
 				new PlaybackNotificationsConfiguration(notificationId),
-				this);
+				this));
 
 		localBroadcastManagerLazy
 			.getObject()
 			.registerReceiver(
-				playbackNotificationBroadcaster,
-				Stream.of(playbackNotificationBroadcaster.registerForIntents())
+				playbackNotificationRouter,
+				Stream.of(playbackNotificationRouter.registerForIntents())
 					.reduce(new IntentFilter(), (intentFilter, action) -> {
 						intentFilter.addAction(action);
 						return intentFilter;
@@ -873,7 +886,7 @@ implements
 
 		lastErrorTime = currentErrorTime;
 
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
 		final Intent intent = new Intent(this, PlaybackService.class);
@@ -1021,8 +1034,8 @@ implements
 		if (remoteControlProxy != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
-		if (playbackNotificationBroadcaster != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationBroadcaster);
+		if (playbackNotificationRouter != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 
 		if (remoteControlReceiver.isCreated())
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());

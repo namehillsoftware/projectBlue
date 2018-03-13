@@ -1,26 +1,15 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification;
+package com.lasthopesoftware.bluewater.client.playback.service.notification;
 
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.vedsoft.futures.runnables.OneParameterAction;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 
-public class PlaybackNotificationBroadcaster extends BroadcastReceiver {
-
-	private final Map<String, OneParameterAction<Intent>> mappedEvents;
+public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 	private final Service service;
 	private final NotificationManager notificationManager;
@@ -37,36 +26,18 @@ public class PlaybackNotificationBroadcaster extends BroadcastReceiver {
 		this.notificationManager = notificationManager;
 		this.playbackNotificationsConfiguration = playbackNotificationsConfiguration;
 		this.nowPlayingNotificationContentBuilder = nowPlayingNotificationContentBuilder;
-
-		mappedEvents = new HashMap<>(4);
-		mappedEvents.put(PlaylistEvents.onPlaylistChange, this::onPlaylistChange);
-		mappedEvents.put(PlaylistEvents.onPlaylistPause, i -> setPaused());
-		mappedEvents.put(PlaylistEvents.onPlaylistStart, i -> setPlaying());
-		mappedEvents.put(PlaylistEvents.onPlaylistStop, i -> setStopped());
-	}
-
-	public Set<String> registerForIntents() {
-		return mappedEvents.keySet();
 	}
 
 	@Override
-	public void onReceive(Context context, Intent intent) {
-		final String action = intent.getAction();
-		if (action == null) return;
-
-		final OneParameterAction<Intent> eventHandler = mappedEvents.get(action);
-		if (eventHandler != null)
-			eventHandler.runWith(intent);
-	}
-
-	private void setPlaying() {
+	public void notifyPlaying() {
 		isPlaying = true;
 
 		if (serviceFile != null)
 			updateNowPlaying(serviceFile);
 	}
 
-	private void setPaused() {
+	@Override
+	public void notifyPaused() {
 		if (serviceFile == null) {
 			service.stopForeground(false);
 			isNotificationForeground = false;
@@ -82,17 +53,17 @@ public class PlaybackNotificationBroadcaster extends BroadcastReceiver {
 			});
 	}
 
-	private void setStopped() {
+	@Override
+	public void notifyStopped() {
 		isPlaying = false;
 		service.stopForeground(true);
 		isNotificationStarted = false;
 		isNotificationForeground = false;
 	}
 
-	private void onPlaylistChange(Intent intent) {
-		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
-		if (fileKey >= 0)
-			updateNowPlaying(new ServiceFile(fileKey));
+	@Override
+	public void notifyPlayingFileChanged(ServiceFile serviceFile) {
+		updateNowPlaying(serviceFile);
 	}
 
 	private void updateNowPlaying(ServiceFile serviceFile) {
