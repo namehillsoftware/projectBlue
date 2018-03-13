@@ -27,6 +27,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.concurrent.CancellationException;
 
@@ -40,6 +41,9 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 				Process.THREAD_PRIORITY_AUDIO).then(h -> new Handler(h.getLooper()));
 		}
 	};
+
+	private static final CreateAndHold<TextOutputLogger> lazyTextOutputLogger = new Lazy<>(TextOutputLogger::new);
+	private static final CreateAndHold<MetadataOutputLogger> lazyMetadataOutputLogger = new Lazy<>(MetadataOutputLogger::new);
 
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final TrackSelector trackSelector;
@@ -59,7 +63,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return bestMatchUriProvider.promiseFileUri(serviceFile)
 			.eventually(uri -> extractorHandler.getObject().eventually(handler ->
-				new Promise<>(messenger -> new Thread(() -> {
+				new Promise<>(messenger -> {
 					final CancellationToken cancellationToken = new CancellationToken();
 					messenger.cancellationRequested(cancellationToken);
 
@@ -73,8 +77,8 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 							handler,
 							null,
 							DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
-							new TextOutputLogger(),
-							new MetadataOutputLogger());
+							lazyTextOutputLogger.getObject(),
+							lazyMetadataOutputLogger.getObject());
 
 					final ExoPlayer exoPlayer = ExoPlayerFactory.newInstance(
 						renderers,
@@ -117,6 +121,6 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 					} catch (IllegalStateException e) {
 						messenger.sendRejection(e);
 					}
-		}, "PreparationThread-File-" + serviceFile.getKey()).start())));
+		})));
 	}
 }
