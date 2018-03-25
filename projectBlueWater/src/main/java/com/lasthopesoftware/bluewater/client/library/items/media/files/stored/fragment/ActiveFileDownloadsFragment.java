@@ -28,7 +28,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
@@ -59,8 +61,8 @@ public class ActiveFileDownloadsFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final RelativeLayout viewFileslayout = (RelativeLayout) inflater.inflate(R.layout.layout_downloads, container, false);
 
-		final ProgressBar progressBar = (ProgressBar) viewFileslayout.findViewById(R.id.pbLoadingItems);
-		final ListView listView = (ListView) viewFileslayout.findViewById(R.id.lvItems);
+		final ProgressBar progressBar = viewFileslayout.findViewById(R.id.pbLoadingItems);
+		final ListView listView = viewFileslayout.findViewById(R.id.lvItems);
 
 		listView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
@@ -79,8 +81,9 @@ public class ActiveFileDownloadsFragment extends Fragment {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
 				final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
+				final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(activity);
 
-				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library, cachedFilePropertiesProvider);
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library, getAllStoredFilesInLibrary, cachedFilePropertiesProvider);
 				storedFileAccess.getDownloadingStoredFiles()
 					.eventually(LoopedInPromise.response(perform(storedFiles -> {
 						final List<StoredFile> localStoredFiles =
@@ -152,7 +155,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 					}), activity));
 		}));
 
-		final Button toggleSyncButton = (Button) viewFileslayout.findViewById(R.id.toggleSyncButton);
+		final Button toggleSyncButton = viewFileslayout.findViewById(R.id.toggleSyncButton);
 		final CharSequence startSyncLabel = activity.getText(R.string.start_sync_button);
 		final CharSequence stopSyncLabel = activity.getText(R.string.stop_sync_button);
 

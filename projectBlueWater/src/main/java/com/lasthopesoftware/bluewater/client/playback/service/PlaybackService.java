@@ -46,7 +46,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
@@ -259,6 +261,7 @@ implements
 			return notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 		}
 	};
+	private final CreateAndHold<GetAllStoredFilesInLibrary> lazyAllStoredFilesInLibrary = new Lazy<>(() -> new StoredFilesCollection(this));
 
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
@@ -634,7 +637,11 @@ implements
 			new PlaybackHandlerVolumeControllerFactory(
 				new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
 
-		final StoredFileAccess storedFileAccess = new StoredFileAccess(this, library, cachedFilePropertiesProvider);
+		final StoredFileAccess storedFileAccess = new StoredFileAccess(
+			this,
+			library,
+			lazyAllStoredFilesInLibrary.getObject(),
+			cachedFilePropertiesProvider);
 
 		final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
 			new ExternalStorageReadPermissionsArbitratorForOs(this);
