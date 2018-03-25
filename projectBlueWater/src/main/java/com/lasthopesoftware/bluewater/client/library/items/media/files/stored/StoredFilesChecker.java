@@ -5,15 +5,15 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 public class StoredFilesChecker implements CheckForAnyStoredFiles {
 
-	private final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary;
+	private final CountStoredFiles countStoredFiles;
 
-	public StoredFilesChecker(GetAllStoredFilesInLibrary getAllStoredFilesInLibrary) {
-		this.getAllStoredFilesInLibrary = getAllStoredFilesInLibrary;
+	public StoredFilesChecker(CountStoredFiles countStoredFiles) {
+		this.countStoredFiles = countStoredFiles;
 	}
 
 	@Override
 	public Promise<Boolean> promiseIsAnyStoredFiles(Library library) {
-		return getAllStoredFilesInLibrary.promiseAllStoredFiles(library)
-			.then(storedFiles -> !storedFiles.isEmpty());
+		return countStoredFiles.promiseStoredFilesCount(library)
+			.then(count -> count > 0);
 	}
 }

@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.St
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesChecker;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCounter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
@@ -253,6 +254,8 @@ public class SyncService extends Service {
 		}
 	};
 
+	private final CreateAndHold<StoredFilesChecker> lazyStoredFilesChecker = new Lazy<>(() -> new StoredFilesChecker(new StoredFilesCounter(this)));
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -302,7 +305,7 @@ public class SyncService extends Service {
 
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 				final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(context);
-				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, new StoredFilesChecker(getAllStoredFilesInLibrary));
+				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, lazyStoredFilesChecker.getObject());
 
 				storedItemsChecker.promiseIsAnyStoredItemsOrFiles(library).eventually(isAny -> {
 					if (!isAny) {
