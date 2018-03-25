@@ -39,6 +39,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	private final Context context;
 	private final Library library;
+	private final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
 	private static final String selectFromStoredFiles = "SELECT * FROM " + StoredFileEntityInformation.tableName;
@@ -64,9 +65,10 @@ public final class StoredFileAccess implements IStoredFileAccess {
 							.setFilter("WHERE id = @id")
 							.buildQuery());
 
-	public StoredFileAccess(Context context, Library library, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+	public StoredFileAccess(Context context, Library library, GetAllStoredFilesInLibrary getAllStoredFilesInLibrary, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
 		this.context = context;
 		this.library = library;
+		this.getAllStoredFilesInLibrary = getAllStoredFilesInLibrary;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
@@ -85,14 +87,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	private Promise<Collection<StoredFile>> promiseAllStoredFilesInLibrary() {
-		return new QueuedPromise<>(() -> {
-			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				return repositoryAccessHelper
-					.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " + @" + StoredFileEntityInformation.libraryIdColumnName)
-					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
-					.fetch(StoredFile.class);
-			}
-		}, RepositoryAccessHelper.databaseExecutor);
+		return getAllStoredFilesInLibrary.promiseAllStoredFiles(library);
 	}
 
 	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {

@@ -40,9 +40,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesChecker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
@@ -298,9 +301,10 @@ public class SyncService extends Service {
 				}
 
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess);
+				final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(context);
+				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, new StoredFilesChecker(getAllStoredFilesInLibrary));
 
-				storedItemsChecker.promiseIsAnyStoredItemsWithFiles().eventually(isAny -> {
+				storedItemsChecker.promiseIsAnyStoredItemsOrFiles(library).eventually(isAny -> {
 					if (!isAny) {
 						if (--librariesProcessing == 0) finishSync();
 						return Promise.empty();
@@ -320,7 +324,7 @@ public class SyncService extends Service {
 								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
 								final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
-								final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, cachedFilePropertiesProvider);
+								final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, getAllStoredFilesInLibrary, cachedFilePropertiesProvider);
 
 								final LibrarySyncHandler librarySyncHandler =
 									new LibrarySyncHandler(library,

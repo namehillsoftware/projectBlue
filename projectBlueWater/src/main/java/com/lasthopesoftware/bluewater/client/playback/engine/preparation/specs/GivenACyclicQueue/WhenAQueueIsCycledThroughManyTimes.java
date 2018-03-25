@@ -36,7 +36,7 @@ public class WhenAQueueIsCycledThroughManyTimes {
 	@BeforeClass
 	public static void before() {
 
-		final Random random = new Random(System.currentTimeMillis());
+		final Random random = new Random();
 		final int numberOfFiles = random.nextInt(500);
 
 		final List<ServiceFile> serviceFiles =
