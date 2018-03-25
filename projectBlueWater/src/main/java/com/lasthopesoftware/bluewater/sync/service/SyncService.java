@@ -288,9 +288,12 @@ public class SyncService extends Service {
 				return;
 			}
 
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+
 			for (final Library library : libraries) {
-				if (library.isSyncLocalConnectionsOnly())
+				if (library.isSyncLocalConnectionsOnly()) {
 					library.setLocalOnly(true);
+				}
 
 				AccessConfigurationBuilder.buildConfiguration(context, library)
 					.then(perform(urlProvider -> {
@@ -302,7 +305,6 @@ public class SyncService extends Service {
 						final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 						libraryConnectionProviders.put(library.getId(), connectionProvider);
 
-						final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 						final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
 						final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
