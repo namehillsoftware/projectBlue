@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemsChecker;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestedBroadcast;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
@@ -75,6 +76,7 @@ import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermis
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -295,51 +297,67 @@ public class SyncService extends Service {
 					library.setLocalOnly(true);
 				}
 
-				AccessConfigurationBuilder.buildConfiguration(context, library)
-					.then(perform(urlProvider -> {
-						if (urlProvider == null) {
-							if (--librariesProcessing == 0) finishSync();
-							return;
-						}
+				final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
+				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess);
 
-						final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-						libraryConnectionProviders.put(library.getId(), connectionProvider);
-
-						final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
-						final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
-
-						final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, cachedFilePropertiesProvider);
-
-						final LibrarySyncHandler librarySyncHandler =
-							new LibrarySyncHandler(library,
-								new StoredItemServiceFileCollector(new StoredItemAccess(context, library), new FileProvider(new FileStringListProvider(connectionProvider))),
-								storedFileAccess,
-								new StoredFileDownloader(
-									lazyStoredFileSystemFileProducer.getObject(),
-									connectionProvider,
-									storedFileAccess,
-									lazyServiceFileUriQueryParamsProvider.getObject(),
-									lazyFileReadPossibleArbitrator.getObject(),
-									lazyFileWritePossibleArbitrator.getObject(),
-									lazyFileStreamWriter.getObject()),
-								lazyLibraryStorageReadPermissionsRequirementsProvider.getObject(),
-								lazyLibraryStorageWritePermissionsRequirementsProvider.getObject());
-
-						librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
-						librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
-						librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
-						librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
-						librarySyncHandler.setOnFileReadError(storedFileReadErrorAction);
-						librarySyncHandler.setOnFileWriteError(storedFileWriteErrorAction);
-						librarySyncHandler.startSync();
-
-						librarySyncHandlers.add(librarySyncHandler);
-					}))
-					.excuse(e -> {
-						logger.error("There was an error getting the URL for library ID " + library.getId());
+				storedItemsChecker.promiseIsAnyStoredItemsWithFiles().eventually(isAny -> {
+					if (!isAny) {
 						if (--librariesProcessing == 0) finishSync();
-						return null;
-					});
+						return Promise.empty();
+					}
+
+					final Promise<Void> promiseLibrarySyncStarted =
+						AccessConfigurationBuilder.buildConfiguration(context, library)
+							.then(perform(urlProvider -> {
+								if (urlProvider == null) {
+									if (--librariesProcessing == 0) finishSync();
+									return;
+								}
+
+								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+								libraryConnectionProviders.put(library.getId(), connectionProvider);
+
+								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+								final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
+
+								final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, cachedFilePropertiesProvider);
+
+								final LibrarySyncHandler librarySyncHandler =
+									new LibrarySyncHandler(library,
+										new StoredItemServiceFileCollector(storedItemAccess, new FileProvider(new FileStringListProvider(connectionProvider))),
+										storedFileAccess,
+										new StoredFileDownloader(
+											lazyStoredFileSystemFileProducer.getObject(),
+											connectionProvider,
+											storedFileAccess,
+											lazyServiceFileUriQueryParamsProvider.getObject(),
+											lazyFileReadPossibleArbitrator.getObject(),
+											lazyFileWritePossibleArbitrator.getObject(),
+											lazyFileStreamWriter.getObject()),
+										lazyLibraryStorageReadPermissionsRequirementsProvider.getObject(),
+										lazyLibraryStorageWritePermissionsRequirementsProvider.getObject());
+
+								librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
+								librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
+								librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
+								librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
+								librarySyncHandler.setOnFileReadError(storedFileReadErrorAction);
+								librarySyncHandler.setOnFileWriteError(storedFileWriteErrorAction);
+								librarySyncHandler.startSync();
+
+								librarySyncHandlers.add(librarySyncHandler);
+							}));
+
+					promiseLibrarySyncStarted
+						.excuse(perform(e ->
+							logger.error("There was an error getting the URL for library ID " + library.getId(), e)));
+
+					return promiseLibrarySyncStarted;
+				})
+				.excuse(e -> {
+					if (--librariesProcessing == 0) finishSync();
+					return null;
+				});
 			}
 		}));
 

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.stored;
 
 import com.namehillsoftware.handoff.promises.Promise;
 
-public class StoredItemsChecker implements CheckIfStoredItemsWithFilesExist {
+public class StoredItemsChecker implements CheckIfAnyStoredItemsExist {
 	private final IStoredItemAccess storedItemAccess;
 
 	public StoredItemsChecker(IStoredItemAccess storedItemAccess) {
