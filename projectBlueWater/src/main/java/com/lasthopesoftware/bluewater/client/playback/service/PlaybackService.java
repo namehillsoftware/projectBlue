@@ -289,6 +289,7 @@ implements
 	private boolean areListenersRegistered = false;
 	private boolean isNotificationForeground = false;
 
+	private Promise<PlaybackEngine> playbackEnginePromise;
 	private PlaybackEngine playbackEngine;
 	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private PositionedPlayableFile positionedPlayableFile;
@@ -521,7 +522,7 @@ implements
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.eventually(this::initializePlaybackPlaylistStateManager)
+				.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 				.then(perform(m -> actOnIntent(intent)))
 				.excuse(UnhandledRejectionHandler);
 
@@ -579,7 +580,7 @@ implements
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.eventually(this::initializePlaybackPlaylistStateManager)
+				.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 				.then(perform(m -> actOnIntent(intentToRun)))
 				.excuse(UnhandledRejectionHandler);
 
@@ -588,6 +589,13 @@ implements
 			return;
 		}
 		notifyNotificationManager(notifyBuilder);
+	}
+
+	private Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) throws Exception {
+		return playbackEnginePromise =
+			playbackEnginePromise != null
+				? playbackEnginePromise.eventually(e -> initializePlaybackPlaylistStateManager(library))
+				: initializePlaybackPlaylistStateManager(library);
 	}
 
 	private Promise<PlaybackEngine> initializePlaybackPlaylistStateManager(Library library) throws Exception {
@@ -669,6 +677,7 @@ implements
 		final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
 			connectionProvider,
 			new ServiceFileUriQueryParamsProvider());
+
 
 		return extractorHandler.getObject().then(handler -> {
 			final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
@@ -946,7 +955,7 @@ implements
 
 		lazyLibraryRepository.getObject()
 			.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-			.eventually(this::initializePlaybackPlaylistStateManager)
+			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 			.then(v -> {
 				if (isPlaying)
 					playbackEngine.resume();
@@ -1058,7 +1067,7 @@ implements
 				logger.warn("There was an error closing the prepared playback queue", e);
 			}
 		}
-		
+
 		if (areListenersRegistered) unregisterListeners();
 
 		if (remoteControlProxy != null)
