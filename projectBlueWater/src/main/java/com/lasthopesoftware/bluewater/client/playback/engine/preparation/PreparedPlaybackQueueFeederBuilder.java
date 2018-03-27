@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
 import android.content.Context;
+import android.os.Handler;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -11,15 +12,18 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparati
 public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlaybackQueueFeeder {
 
 	private final Context context;
+	private final Handler handler;
 	private final BestMatchUriProvider bestMatchUriProvider;
 	private final LookupSelectedPlaybackEngineType playbackEngineTypeLookup;
 
 	public PreparedPlaybackQueueFeederBuilder(
 		Context context,
+		Handler handler,
 		BestMatchUriProvider bestMatchUriProvider,
 		LookupSelectedPlaybackEngineType playbackEngineTypeLookup) {
 
 		this.context = context;
+		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 		this.playbackEngineTypeLookup = playbackEngineTypeLookup;
 	}
@@ -30,6 +34,7 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 			case ExoPlayer:
 				return new ExoPlayerPlayableFilePreparationSourceProvider(
 					context,
+					handler,
 					bestMatchUriProvider,
 					library);
 			case MediaPlayer:

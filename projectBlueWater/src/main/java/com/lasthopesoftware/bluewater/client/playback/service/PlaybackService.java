@@ -18,8 +18,11 @@ import android.media.session.MediaSession;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.Process;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -96,6 +99,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
@@ -213,7 +217,7 @@ implements
 	private final CreateAndHold<ComponentName> remoteControlReceiver = new Lazy<>(() -> new ComponentName(getPackageName(), RemoteControlReceiver.class.getName()));
 	private final CreateAndHold<RemoteControlClient> remoteControlClient = new AbstractSynchronousLazy<RemoteControlClient>() {
 		@Override
-		protected RemoteControlClient create() throws Exception {
+		protected RemoteControlClient create() {
 			// build the PendingIntent for the remote control client
 			final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
 			mediaButtonIntent.setComponent(remoteControlReceiver.getObject());
@@ -227,7 +231,7 @@ implements
 		new AbstractSynchronousLazy<MediaSession>() {
 			@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 			@Override
-			protected MediaSession create() throws Exception {
+			protected MediaSession create() {
 				final MediaSession newMediaSession = new MediaSession(
 					PlaybackService.this,
 					mediaSessionTag);
@@ -255,13 +259,29 @@ implements
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
 	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
-		protected String create() throws Throwable {
+		protected String create() {
 			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
 
 			return notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 		}
 	};
 	private final CreateAndHold<GetAllStoredFilesInLibrary> lazyAllStoredFilesInLibrary = new Lazy<>(() -> new StoredFilesCollection(this));
+
+	private final CreateAndHold<Promise<HandlerThread>> extractorThread = new AbstractSynchronousLazy<Promise<HandlerThread>>() {
+		@Override
+		protected Promise<HandlerThread> create() {
+			return HandlerThreadCreator.promiseNewHandlerThread(
+				"Media Extracting thread",
+				Process.THREAD_PRIORITY_AUDIO);
+		}
+	};
+
+	private final CreateAndHold<Promise<Handler>> extractorHandler = new AbstractSynchronousLazy<Promise<Handler>>() {
+		@Override
+		protected Promise<Handler> create() {
+			return extractorThread.getObject().then(h -> new Handler(h.getLooper()));
+		}
+	};
 
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
@@ -283,7 +303,7 @@ implements
 
 	private final CreateAndHold<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
-		protected final Runnable create() throws Exception {
+		protected final Runnable create() {
 			return () -> {
 				if (playbackEngine == null) {
 					stopSelf(startId);
@@ -297,7 +317,7 @@ implements
 
 	private final CreateAndHold<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
-		protected final Runnable create() throws Exception {
+		protected final Runnable create() {
 			return () -> {
 				unregisterListeners();
 				stopSelf(startId);
@@ -501,7 +521,7 @@ implements
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.then(this::initializePlaybackPlaylistStateManager)
+				.eventually(this::initializePlaybackPlaylistStateManager)
 				.then(perform(m -> actOnIntent(intent)))
 				.excuse(UnhandledRejectionHandler);
 
@@ -559,7 +579,7 @@ implements
 
 			lazyLibraryRepository.getObject()
 				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.then(this::initializePlaybackPlaylistStateManager)
+				.eventually(this::initializePlaybackPlaylistStateManager)
 				.then(perform(m -> actOnIntent(intentToRun)))
 				.excuse(UnhandledRejectionHandler);
 
@@ -570,7 +590,7 @@ implements
 		notifyNotificationManager(notifyBuilder);
 	}
 
-	private PlaybackEngine initializePlaybackPlaylistStateManager(Library library) throws Exception {
+	private Promise<PlaybackEngine> initializePlaybackPlaylistStateManager(Library library) throws Exception {
 		if (playbackEngine != null)
 			playbackEngine.close();
 
@@ -650,44 +670,47 @@ implements
 			connectionProvider,
 			new ServiceFileUriQueryParamsProvider());
 
-		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
-			new PreparedPlaybackQueueFeederBuilder(
-				this,
-				new BestMatchUriProvider(
-					library,
-					new StoredFileUriProvider(
-						storedFileAccess,
-						arbitratorForOs),
-					new CachedAudioFileUriProvider(
-						remoteFileUriProvider,
-						new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
-					new MediaFileUriProvider(
-						this,
-						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
-						arbitratorForOs,
+		return extractorHandler.getObject().then(handler -> {
+			final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
+				new PreparedPlaybackQueueFeederBuilder(
+					this,
+					handler,
+					new BestMatchUriProvider(
 						library,
-						false),
-					remoteFileUriProvider),
-				new SelectedPlaybackEngineTypeAccess(this));
+						new StoredFileUriProvider(
+							storedFileAccess,
+							arbitratorForOs),
+						new CachedAudioFileUriProvider(
+							remoteFileUriProvider,
+							new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+						new MediaFileUriProvider(
+							this,
+							new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+							arbitratorForOs,
+							library,
+							false),
+						remoteFileUriProvider),
+					new SelectedPlaybackEngineTypeAccess(this));
 
-		final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
+			final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
 
-		playbackEngine =
-			new PlaybackEngine(
-				preparationSourceProvider,
-				preparationSourceProvider,
-				QueueProviders.providers(),
-				new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
-				playlistPlaybackBootstrapper);
+			playbackEngine =
+				new PlaybackEngine(
+					preparationSourceProvider,
+					preparationSourceProvider,
+					QueueProviders.providers(),
+					new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
+					playlistPlaybackBootstrapper);
 
-		playbackEngine
-			.setOnPlaybackStarted(this::handlePlaybackStarted)
-			.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
-			.setOnPlaylistError(this::uncaughtExceptionHandler)
-			.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
-			.setOnPlaylistReset(this::broadcastResetPlaylist);
+			playbackEngine
+				.setOnPlaybackStarted(this::handlePlaybackStarted)
+				.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
+				.setOnPlaylistError(this::uncaughtExceptionHandler)
+				.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
+				.setOnPlaylistReset(this::broadcastResetPlaylist);
 
-		return playbackEngine;
+			return playbackEngine;
+		});
 	}
 	
 	private void actOnIntent(final Intent intent) {
@@ -923,7 +946,7 @@ implements
 
 		lazyLibraryRepository.getObject()
 			.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-			.then(perform(this::initializePlaybackPlaylistStateManager))
+			.eventually(this::initializePlaybackPlaylistStateManager)
 			.then(v -> {
 				if (isPlaying)
 					playbackEngine.resume();
@@ -1049,6 +1072,9 @@ implements
 
 		if (remoteControlClient.isCreated())
 			audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject());
+
+		if (extractorThread.isCreated())
+			extractorThread.getObject().then(HandlerThread::quitSafely);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated()) {
 			lazyMediaSession.getObject().setActive(false);
