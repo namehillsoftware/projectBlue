@@ -591,7 +591,7 @@ implements
 		notifyNotificationManager(notifyBuilder);
 	}
 
-	private Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) throws Exception {
+	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) throws Exception {
 		return playbackEnginePromise =
 			playbackEnginePromise != null
 				? playbackEnginePromise.eventually(e -> initializePlaybackPlaylistStateManager(library))
