@@ -200,6 +200,10 @@ implements
 		context.startService(intent);
 	}
 
+	public static void killService(final Context context) {
+		context.startService(getNewSelfIntent(context, Action.killMusicService));
+	}
+
 	/* End streamer intent helpers */
 
 	private static final String wifiLockSvcName =  MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "wifiLockSvcName");
@@ -1042,7 +1046,7 @@ implements
 	private void onPlaylistPlaybackComplete() {
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
 
-		stopSelf(startId);
+		killService(this);
 	}
 		
 	@Override
