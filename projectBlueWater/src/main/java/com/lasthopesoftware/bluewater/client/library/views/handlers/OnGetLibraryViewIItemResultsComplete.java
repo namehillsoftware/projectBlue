@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.PointTarget;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
@@ -19,11 +21,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.util.List;
-
-import tourguide.tourguide.Overlay;
-import tourguide.tourguide.Pointer;
-import tourguide.tourguide.ToolTip;
-import tourguide.tourguide.TourGuide;
 
 public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ImmediateResponse<List<T>, Void> {
 
@@ -65,7 +62,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
         return null;
     }
 
-    private final static boolean DEBUGGING_TUTORIAL = true;
+    private final static boolean DEBUGGING_TUTORIAL = false;
 
 	private static void buildTutorialView(final Activity activity, final ViewGroup container, final ListView listView) {
         // use this flag to ensure the least amount of possible work is done for this tutorial
@@ -84,14 +81,13 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
 
         // Put the view on the second item to make it clear we're talking about menu items
         final int topPosition = position[1] + measuredHeight + (measuredHeight / 2);
-
-        TourGuide.init(activity).with(TourGuide.Technique.CLICK)
-            .setPointer(new Pointer())
-            .setToolTip(new ToolTip()
-				.setTitle(activity.getString(R.string.title_long_click_menu))
-				.setDescription(activity.getString(R.string.tutorial_long_click_menu)))
-            .setOverlay(new Overlay())
-            .playOn(childView);
+        new ShowcaseView.Builder(activity)
+                .setTarget(new PointTarget(position[0], topPosition))
+                .hideOnTouchOutside()
+                .setContentTitle(R.string.title_long_click_menu)
+                .setContentText(R.string.tutorial_long_click_menu)
+                .build()
+                .setBackgroundColor(activity.getResources().getColor(R.color.overlay_dark));
 
         sharedPreferences.edit().putBoolean(PREFS_KEY, true).apply();
     }
