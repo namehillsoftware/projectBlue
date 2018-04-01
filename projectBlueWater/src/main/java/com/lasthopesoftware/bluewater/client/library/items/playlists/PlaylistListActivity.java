@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.list.DemoableItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
@@ -42,7 +43,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
 		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
-			protected ISelectedBrowserLibraryProvider create() throws Exception {
+			protected ISelectedBrowserLibraryProvider create() {
 				return new SelectedBrowserLibraryProvider(
 					new SelectedBrowserLibraryIdentifierProvider(PlaylistListActivity.this),
 					new LibraryRepository(PlaylistListActivity.this));
@@ -110,7 +111,7 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.eventually(LoopedInPromise.response(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
-				final ItemListAdapter<Playlist> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);
+				final ItemListAdapter<Playlist> itemListAdapter = new DemoableItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 
 				final ListView localPlaylistView = playlistView.findView();
 				localPlaylistView.setAdapter(itemListAdapter);
