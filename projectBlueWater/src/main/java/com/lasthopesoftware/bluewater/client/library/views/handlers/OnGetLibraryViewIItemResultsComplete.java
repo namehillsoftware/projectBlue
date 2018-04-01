@@ -9,7 +9,7 @@ import android.widget.ListView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
+import com.lasthopesoftware.bluewater.client.library.items.list.DemoableItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
@@ -56,7 +56,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
         if (result == null) return null;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-        listView.setAdapter(new ItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler, storedItemAccess, library));
+        listView.setAdapter(new DemoableItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler, storedItemAccess, library));
         loadingView.setVisibility(View.INVISIBLE);
         listView.setVisibility(View.VISIBLE);
 
