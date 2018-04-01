@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import android.os.Handler;
-import android.os.Process;
 
 import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -22,25 +21,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.compilation.DebugFlag;
-import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.concurrent.CancellationException;
 
 final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
-
-	private static final CreateAndHold<Promise<Handler>> extractorHandler = new AbstractSynchronousLazy<Promise<Handler>>() {
-		@Override
-		protected Promise<Handler> create() throws Throwable {
-			return HandlerThreadCreator.promiseNewHandlerThread(
-				"Media Extracting thread",
-				Process.THREAD_PRIORITY_AUDIO).then(h -> new Handler(h.getLooper()));
-		}
-	};
 
 	private static final CreateAndHold<TextOutputLogger> lazyTextOutputLogger = new Lazy<>(TextOutputLogger::new);
 	private static final CreateAndHold<MetadataOutputLogger> lazyMetadataOutputLogger = new Lazy<>(MetadataOutputLogger::new);
@@ -49,12 +37,21 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	private final TrackSelector trackSelector;
 	private final LoadControl loadControl;
 	private final RenderersFactory renderersFactory;
+	private final Handler handler;
 	private final BestMatchUriProvider bestMatchUriProvider;
 
-	ExoPlayerPlaybackPreparer(ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider, TrackSelector trackSelector, LoadControl loadControl, RenderersFactory renderersFactory, BestMatchUriProvider bestMatchUriProvider) {
+	ExoPlayerPlaybackPreparer(
+		ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider,
+		TrackSelector trackSelector,
+		LoadControl loadControl,
+		RenderersFactory renderersFactory,
+		Handler handler,
+		BestMatchUriProvider bestMatchUriProvider) {
+
 		this.trackSelector = trackSelector;
 		this.loadControl = loadControl;
 		this.renderersFactory = renderersFactory;
+		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 		this.extractorMediaSourceFactoryProvider = extractorMediaSourceFactoryProvider;
 	}
@@ -62,7 +59,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 	@Override
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return bestMatchUriProvider.promiseFileUri(serviceFile)
-			.eventually(uri -> extractorHandler.getObject().eventually(handler ->
+			.eventually(uri ->
 				new Promise<>(messenger -> {
 					final CancellationToken cancellationToken = new CancellationToken();
 					messenger.cancellationRequested(cancellationToken);
@@ -121,6 +118,6 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 					} catch (IllegalStateException e) {
 						messenger.sendRejection(e);
 					}
-		})));
+		}));
 	}
 }

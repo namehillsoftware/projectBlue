@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenAMediaPlayerEngineSelection;
 
 import android.content.Context;
+import android.os.Handler;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -30,9 +31,9 @@ public class WhenBuildingTheEngine {
 		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 			new PreparedPlaybackQueueFeederBuilder(
 				mock(Context.class),
+				mock(Handler.class),
 				mock(BestMatchUriProvider.class),
-				lookupSelectedPlaybackEngineType
-			);
+				lookupSelectedPlaybackEngineType);
 
 		engine = playbackEngineBuilder.build(new Library());
 	}
