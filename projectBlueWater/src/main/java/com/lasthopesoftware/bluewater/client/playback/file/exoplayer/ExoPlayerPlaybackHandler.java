@@ -8,13 +8,19 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
 
 public class ExoPlayerPlaybackHandler
 implements
@@ -29,6 +35,8 @@ implements
 	private final Promise<PlayableFile> playbackHandlerPromise;
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
+
+	private ExoPlayerObservablePeriod exoPlayerObservablePeriod;
 
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
@@ -51,6 +59,25 @@ implements
 	@Override
 	public long getDuration() {
 		return exoPlayer.getDuration();
+	}
+
+	@Override
+	public synchronized Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
+		if (exoPlayerObservablePeriod != null) {
+			if (observationPeriod.getMillis() > exoPlayerObservablePeriod.observedPeriod.getMillis())
+				return Observable.create(exoPlayerObservablePeriod.exoPlayerPositionSource).sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
+
+			if (observationPeriod.getMillis() == exoPlayerObservablePeriod.observedPeriod.getMillis())
+				return Observable.create(exoPlayerObservablePeriod.exoPlayerPositionSource);
+
+			exoPlayerObservablePeriod = null;
+		}
+
+		exoPlayerObservablePeriod = new ExoPlayerObservablePeriod(
+			observationPeriod,
+			new ExoPlayerPositionSource(exoPlayer, observationPeriod));
+
+		return Observable.create(exoPlayerObservablePeriod.exoPlayerPositionSource);
 	}
 
 	@Override
@@ -146,5 +173,15 @@ implements
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
 		exoPlayer.release();
+	}
+
+	private static class ExoPlayerObservablePeriod {
+		final Period observedPeriod;
+		final ExoPlayerPositionSource exoPlayerPositionSource;
+
+		private ExoPlayerObservablePeriod(Period observedPeriod, ExoPlayerPositionSource exoPlayerPositionSource) {
+			this.observedPeriod = observedPeriod;
+			this.exoPlayerPositionSource = exoPlayerPositionSource;
+		}
 	}
 }

@@ -15,7 +15,6 @@ import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
@@ -73,8 +72,11 @@ implements
 	@Override
 	public synchronized Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
 		if (mediaPlayerObservablePeriod != null) {
-			if (observationPeriod.getMillis() >= mediaPlayerObservablePeriod.observedPeriod.getMillis())
+			if (observationPeriod.getMillis() > mediaPlayerObservablePeriod.observedPeriod.getMillis())
 				return Observable.create(mediaPlayerObservablePeriod.mediaPlayerPositionSource).sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
+
+			if (observationPeriod.getMillis() == mediaPlayerObservablePeriod.observedPeriod.getMillis())
+				return Observable.create(mediaPlayerObservablePeriod.mediaPlayerPositionSource);
 
 			mediaPlayerObservablePeriod = null;
 		}
@@ -93,11 +95,7 @@ implements
 		try {
 			mediaPlayer.start();
 		} catch (IllegalStateException e) {
-			try {
-				close();
-			} catch (IOException io) {
-				logger.warn("There was an error closing the media player when handling the `IllegalStateException` - ignoring and continuing with rejection", io);
-			}
+			close();
 
 			playbackHandlerMessenger.sendRejection(new MediaPlayerException(this, mediaPlayer, e));
 		}
@@ -147,12 +145,8 @@ implements
 
 	@Override
 	public void run() {
-		try {
-			close();
-			playbackHandlerMessenger.sendRejection(new CancellationException());
-		} catch (IOException e) {
-			playbackHandlerMessenger.sendRejection(e);
-		}
+		close();
+		playbackHandlerMessenger.sendRejection(new CancellationException());
 	}
 
 	private static class MediaPlayerObservablePeriod {
