@@ -4,12 +4,10 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.Closeable;
 
-public interface PlayableFile extends Closeable {
+public interface PlayableFile extends PlayingFile, Closeable {
 	boolean isPlaying();
 	
 	void pause();
-
-	long getCurrentPosition();
 
 	long getDuration();
 

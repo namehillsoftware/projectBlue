@@ -16,8 +16,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 public class ExoPlayerPlaybackHandler
 implements
 	PlayableFile,
@@ -51,11 +49,6 @@ implements
 	}
 
 	@Override
-	public long getCurrentPosition() {
-		return exoPlayer.getCurrentPosition();
-	}
-
-	@Override
 	public long getDuration() {
 		return exoPlayer.getDuration();
 	}
@@ -68,7 +61,7 @@ implements
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		run();
 	}
 

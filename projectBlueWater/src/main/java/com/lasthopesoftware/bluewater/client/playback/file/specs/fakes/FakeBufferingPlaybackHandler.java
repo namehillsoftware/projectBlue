@@ -4,8 +4,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.io.IOException;
-
 public class FakeBufferingPlaybackHandler
 implements
 	IBufferingPlaybackFile,
@@ -24,11 +22,6 @@ implements
 		isPlaying = false;
 	}
 
-	@Override
-	public long getCurrentPosition() {
-		return this.currentPosition;
-	}
-
 	public void setCurrentPosition(int position) {
 		this.currentPosition = position;
 	}
@@ -45,7 +38,7 @@ implements
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 
 	}
 

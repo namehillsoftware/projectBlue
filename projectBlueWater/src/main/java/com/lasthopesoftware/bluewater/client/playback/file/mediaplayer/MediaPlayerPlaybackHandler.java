@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
@@ -10,11 +11,15 @@ import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
 
 public final class MediaPlayerPlaybackHandler
 implements
@@ -33,7 +38,7 @@ implements
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 
-	private int previousMediaPlayerPosition;
+	private MediaPlayerObservablePeriod mediaPlayerObservablePeriod;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -56,18 +61,6 @@ implements
 	}
 
 	@Override
-	public long getCurrentPosition() {
-		try {
-			return isPlaying()
-				? previousMediaPlayerPosition = mediaPlayer.getCurrentPosition()
-				: previousMediaPlayerPosition;
-		} catch (IllegalStateException e) {
-			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track position");
-			return previousMediaPlayerPosition;
-		}
-	}
-
-	@Override
 	public long getDuration() {
 		try {
 			return mediaPlayer.getDuration();
@@ -75,6 +68,22 @@ implements
 			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
 			return 0;
 		}
+	}
+
+	@Override
+	public synchronized Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
+		if (mediaPlayerObservablePeriod != null) {
+			if (observationPeriod.getMillis() >= mediaPlayerObservablePeriod.observedPeriod.getMillis())
+				return Observable.create(mediaPlayerObservablePeriod.mediaPlayerPositionSource).sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
+
+			mediaPlayerObservablePeriod = null;
+		}
+
+		mediaPlayerObservablePeriod = new MediaPlayerObservablePeriod(
+			observationPeriod,
+			new MediaPlayerPositionSource(mediaPlayer, observationPeriod));
+
+		return Observable.create(mediaPlayerObservablePeriod.mediaPlayerPositionSource);
 	}
 
 	@Override
@@ -123,7 +132,7 @@ implements
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		logger.info("Closing the media player");
 
 		try {
@@ -143,6 +152,16 @@ implements
 			playbackHandlerMessenger.sendRejection(new CancellationException());
 		} catch (IOException e) {
 			playbackHandlerMessenger.sendRejection(e);
+		}
+	}
+
+	private static class MediaPlayerObservablePeriod {
+		final Period observedPeriod;
+		final MediaPlayerPositionSource mediaPlayerPositionSource;
+
+		private MediaPlayerObservablePeriod(Period observedPeriod, MediaPlayerPositionSource mediaPlayerPositionSource) {
+			this.observedPeriod = observedPeriod;
+			this.mediaPlayerPositionSource = mediaPlayerPositionSource;
 		}
 	}
 }

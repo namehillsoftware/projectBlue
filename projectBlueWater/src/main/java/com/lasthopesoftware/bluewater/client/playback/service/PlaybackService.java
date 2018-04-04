@@ -110,6 +110,7 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,9 +118,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
@@ -1013,11 +1012,9 @@ implements
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
 
 		final Disposable localFilePositionSubscription = filePositionSubscription =
-			Observable
-				.interval(1, TimeUnit.SECONDS)
-				.map(i -> playbackHandler.getCurrentPosition())
+			playbackHandler.observeProgress(Period.seconds(1))
 				.distinctUntilChanged()
-				.subscribe(new TrackPositionBroadcaster(this, playbackHandler));
+				.subscribe(new TrackPositionBroadcaster(this));
 
 		playbackHandler
 			.promisePlayback()

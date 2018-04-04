@@ -3,8 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.io.IOException;
-
 public class EmptyPlaybackHandler
 implements IBufferingPlaybackFile, PlayableFile {
 
@@ -25,11 +23,6 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public long getCurrentPosition() {
-		return 0;
-	}
-
-	@Override
 	public long getDuration() {
 		return duration;
 	}
@@ -40,7 +33,7 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 
 	}
 
