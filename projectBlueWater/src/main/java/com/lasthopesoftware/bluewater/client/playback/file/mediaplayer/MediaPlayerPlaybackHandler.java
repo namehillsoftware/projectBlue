@@ -7,17 +7,18 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
-import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.position.MediaPlayerPositionSource;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.position.MediaPlayerPositionObservableProvider;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 
@@ -38,7 +39,12 @@ implements
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 
-	private MediaPlayerObservablePeriod mediaPlayerObservablePeriod;
+	private final CreateAndHold<MediaPlayerPositionObservableProvider> mediaPlayerPositionObservableProvider = new AbstractSynchronousLazy<MediaPlayerPositionObservableProvider>() {
+		@Override
+		protected MediaPlayerPositionObservableProvider create() {
+			return new MediaPlayerPositionObservableProvider(mediaPlayer);
+		}
+	};
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -71,22 +77,8 @@ implements
 	}
 
 	@Override
-	public synchronized Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
-		if (mediaPlayerObservablePeriod != null) {
-			if (observationPeriod.getMillis() > mediaPlayerObservablePeriod.observedPeriod.getMillis())
-				return Observable.create(mediaPlayerObservablePeriod.mediaPlayerPositionSource).sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
-
-			if (observationPeriod.getMillis() == mediaPlayerObservablePeriod.observedPeriod.getMillis())
-				return Observable.create(mediaPlayerObservablePeriod.mediaPlayerPositionSource);
-
-			mediaPlayerObservablePeriod = null;
-		}
-
-		mediaPlayerObservablePeriod = new MediaPlayerObservablePeriod(
-			observationPeriod,
-			new MediaPlayerPositionSource(mediaPlayer, observationPeriod));
-
-		return Observable.create(mediaPlayerObservablePeriod.mediaPlayerPositionSource);
+	public Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
+		return mediaPlayerPositionObservableProvider.getObject().observePlayingFileProgress(observationPeriod);
 	}
 
 	@Override
@@ -148,15 +140,5 @@ implements
 	public void run() {
 		close();
 		playbackHandlerMessenger.sendRejection(new CancellationException());
-	}
-
-	private static class MediaPlayerObservablePeriod {
-		final Period observedPeriod;
-		final MediaPlayerPositionSource mediaPlayerPositionSource;
-
-		private MediaPlayerObservablePeriod(Period observedPeriod, MediaPlayerPositionSource mediaPlayerPositionSource) {
-			this.observedPeriod = observedPeriod;
-			this.mediaPlayerPositionSource = mediaPlayerPositionSource;
-		}
 	}
 }

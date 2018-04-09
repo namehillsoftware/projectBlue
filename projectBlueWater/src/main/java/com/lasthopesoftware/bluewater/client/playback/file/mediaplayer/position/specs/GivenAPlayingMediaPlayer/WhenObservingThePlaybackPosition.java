@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.specs.GivenAPlayingMediaPlayer;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.position.specs.GivenAPlayingMediaPlayer;
 
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
-import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.position.MediaPlayerPositionObservableProvider;
 
 import org.joda.time.Period;
 import org.junit.BeforeClass;
@@ -13,6 +13,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+//@RunWith(RobolectricTestRunner.class)
 public class WhenObservingThePlaybackPosition {
 
 	private static PlayingFileProgress progress;
@@ -24,9 +25,9 @@ public class WhenObservingThePlaybackPosition {
 		when(mockMediaPlayer.getCurrentPosition()).thenReturn(50);
 		when(mockMediaPlayer.getDuration()).thenReturn(100);
 
-		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
+		final MediaPlayerPositionObservableProvider mediaPlayerPlaybackHandler = new MediaPlayerPositionObservableProvider(mockMediaPlayer);
 		progress = mediaPlayerPlaybackHandler
-			.observeProgress(Period.ZERO)
+			.observePlayingFileProgress(Period.ZERO)
 			.blockingFirst();
 	}
 
