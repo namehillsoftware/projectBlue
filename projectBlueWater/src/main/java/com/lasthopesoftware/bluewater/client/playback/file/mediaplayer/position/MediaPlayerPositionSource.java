@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.position;
 
 import android.media.MediaPlayer;
 
@@ -27,7 +27,7 @@ public class MediaPlayerPositionSource extends Thread implements ObservableOnSub
 	}
 
 	@Override
-	public void subscribe(ObservableEmitter<PlayingFileProgress> e) {
+	public synchronized void subscribe(ObservableEmitter<PlayingFileProgress> e) {
 		progressEmitters.add(e);
 
 		e.setDisposable(new Disposable() {
