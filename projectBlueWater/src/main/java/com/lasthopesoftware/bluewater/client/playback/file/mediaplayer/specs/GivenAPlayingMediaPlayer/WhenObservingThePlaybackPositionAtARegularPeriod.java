@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CountDownLatch;
 
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
@@ -26,7 +27,7 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 	private static List<PlayingFileProgress> collectedProgresses = new ArrayList<>();
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws InterruptedException {
 		final MediaPlayer mockMediaPlayer = mock(MediaPlayer.class);
 		when(mockMediaPlayer.isPlaying()).thenReturn(true);
 		when(mockMediaPlayer.getCurrentPosition()).thenReturn(50, 50, 50, 50, 50);
@@ -40,21 +41,25 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 			.publish();
 
 		final Disposable disposable = progressObservable.connect();
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
 
 		final Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				disposable.dispose();
+				countDownLatch.countDown();
 			}
 		}, 2600);
 
 		progressObservable
 			.subscribe(collectedProgresses::add);
+
+		countDownLatch.await();
 	}
 
 	@Test
-	public void thenThePlaybackPositionIsCorrect() {
+	public void thenTheCorrectNumberOfPlaylistProgressesAreCollected() {
 		assertThat(collectedProgresses.size()).isEqualTo(5);
 	}
 }
