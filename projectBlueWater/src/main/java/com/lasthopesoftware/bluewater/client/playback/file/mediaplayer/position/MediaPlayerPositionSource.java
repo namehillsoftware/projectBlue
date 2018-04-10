@@ -22,8 +22,9 @@ public class MediaPlayerPositionSource extends Thread {
 	private final Map<ObservableEmitter<PlayingFileProgress>, Integer> progressEmitters = new ConcurrentHashMap<>();
 	private final MediaPlayer mediaPlayer;
 
-	private int minimalObservationPeriod;
+	private Integer minimalObservationPeriod;
 	private boolean isStarted;
+	private volatile boolean isCancelled;
 
 	public MediaPlayerPositionSource(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -32,7 +33,9 @@ public class MediaPlayerPositionSource extends Thread {
 	public ObservableOnSubscribe<PlayingFileProgress> observePeriodically(Period observationPeriod) {
 		final int observationMilliseconds = observationPeriod.getMillis();
 		synchronized (periodSyncObject) {
-			minimalObservationPeriod = Math.min(observationMilliseconds, minimalObservationPeriod);
+			minimalObservationPeriod = minimalObservationPeriod != null
+				? Math.min(observationMilliseconds, minimalObservationPeriod)
+				: observationMilliseconds;
 		}
 
 		return e -> {
@@ -50,8 +53,7 @@ public class MediaPlayerPositionSource extends Thread {
 								.sorted()
 								.findFirst();
 
-						if (maybeSmallestEmitter.isPresent())
-							minimalObservationPeriod = maybeSmallestEmitter.get();
+						minimalObservationPeriod = maybeSmallestEmitter.isPresent() ? maybeSmallestEmitter.get() : null;
 					}
 				}
 
@@ -78,7 +80,15 @@ public class MediaPlayerPositionSource extends Thread {
 
 	@Override
 	public void run() {
-		while (!progressEmitters.isEmpty()) {
+		while (!isCancelled) {
+			if (progressEmitters.isEmpty()) {
+				try {
+					Thread.sleep(100);
+					continue;
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
 			try {
 				synchronized (periodSyncObject) {
 					Thread.sleep(minimalObservationPeriod);
@@ -107,6 +117,7 @@ public class MediaPlayerPositionSource extends Thread {
 	}
 
 	public void cancel() {
+		isCancelled = true;
 		progressEmitters.clear();
 	}
 }
