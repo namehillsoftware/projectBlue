@@ -32,8 +32,9 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 
-		final ExoPlayerPlaybackHandler mediaPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
-		final ConnectableObservable<FileProgress> progressObservable = mediaPlayerPlaybackHandler
+		final ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
+		exoPlayerPlaybackHandler.promisePlayback();
+		final ConnectableObservable<FileProgress> progressObservable = exoPlayerPlaybackHandler
 			.observeProgress(Duration.millis(500))
 			.publish();
 

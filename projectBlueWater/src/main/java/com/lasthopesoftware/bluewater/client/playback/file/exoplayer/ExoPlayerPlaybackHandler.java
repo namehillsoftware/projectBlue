@@ -9,7 +9,9 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -35,13 +37,14 @@ implements
 
 	private final ExoPlayer exoPlayer;
 	private final Promise<PlayableFile> playbackHandlerPromise;
+
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
 
-	private final CreateAndHold<ExoPlayerPositionSource> exoPlayerPositionSource = new AbstractSynchronousLazy<ExoPlayerPositionSource>() {
+	private final CreateAndHold<PollingProgressSource> exoPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
-		protected ExoPlayerPositionSource create() {
-			return new ExoPlayerPositionSource(exoPlayer);
+		protected PollingProgressSource create() {
+			return new PollingProgressSource(new ExoPlayerFileProgressReader(exoPlayer));
 		}
 	};
 
@@ -64,7 +67,7 @@ implements
 	}
 
 	@Override
-	public synchronized Observable<FileProgress> observeProgress(Duration observationPeriod) {
+	public Observable<FileProgress> observeProgress(Duration observationPeriod) {
 		return Observable
 			.create(exoPlayerPositionSource.getObject().observePeriodically(observationPeriod))
 			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);

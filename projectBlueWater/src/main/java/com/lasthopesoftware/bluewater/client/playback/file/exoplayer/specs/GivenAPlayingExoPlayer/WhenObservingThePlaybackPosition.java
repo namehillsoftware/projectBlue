@@ -23,8 +23,9 @@ public class WhenObservingThePlaybackPosition {
 		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 
-		final ExoPlayerPlaybackHandler mediaPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
-		progress = mediaPlayerPlaybackHandler
+		final ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
+		exoPlayerPlaybackHandler.promisePlayback();
+		progress = exoPlayerPlaybackHandler
 			.observeProgress(Duration.ZERO)
 			.blockingFirst();
 	}

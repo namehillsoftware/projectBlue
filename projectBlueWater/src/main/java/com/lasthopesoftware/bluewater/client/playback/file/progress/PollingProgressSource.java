@@ -12,17 +12,18 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 
-public class PollingProgressSource implements Runnable {
+public class PollingProgressSource extends Thread {
+
+	private static final long minimalObservationPeriod = 100L;
 
 	private final Object periodSyncObject = new Object();
 	private final Object startSyncObject = new Object();
 	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final ReadFileProgress fileProgressReader;
 
-	private Long minimalObservationPeriod;
+	private long observationPeriodMilliseconds = minimalObservationPeriod;
 	private boolean isStarted;
 	private volatile boolean isCancelled;
-	private Thread broadcastThread;
 
 	public PollingProgressSource(ReadFileProgress fileProgressReader) {
 		this.fileProgressReader = fileProgressReader;
@@ -31,9 +32,7 @@ public class PollingProgressSource implements Runnable {
 	public ObservableOnSubscribe<FileProgress> observePeriodically(Duration observationPeriod) {
 		final long observationMilliseconds = observationPeriod.getMillis();
 		synchronized (periodSyncObject) {
-			minimalObservationPeriod = Math.max(minimalObservationPeriod != null
-				? Math.min(observationMilliseconds, minimalObservationPeriod)
-				: observationMilliseconds, 100);
+			updateObservationPeriod(observationMilliseconds);
 		}
 
 		return e -> {
@@ -44,14 +43,16 @@ public class PollingProgressSource implements Runnable {
 				public void dispose() {
 					progressEmitters.remove(e);
 					synchronized (periodSyncObject) {
-						if (observationMilliseconds > minimalObservationPeriod) return;
+						if (observationMilliseconds > observationPeriodMilliseconds) return;
 
 						final Optional<Long> maybeSmallestEmitter =
 							Stream.of(progressEmitters.values())
 								.sorted()
 								.findFirst();
 
-						minimalObservationPeriod = maybeSmallestEmitter.isPresent() ? maybeSmallestEmitter.get() : null;
+						updateObservationPeriod(maybeSmallestEmitter.isPresent()
+							? maybeSmallestEmitter.get()
+							: minimalObservationPeriod);
 					}
 				}
 
@@ -68,32 +69,36 @@ public class PollingProgressSource implements Runnable {
 			synchronized (startSyncObject) {
 				if (isStarted) return;
 
-				broadcastThread = new Thread(this);
-				broadcastThread.start();
+				start();
 
 				isStarted = true;
 			}
 		};
 	}
 
+	private void updateObservationPeriod(long newObservationPeriodMilliseconds) {
+		synchronized (periodSyncObject) {
+			observationPeriodMilliseconds = Math.max(
+				Math.min(newObservationPeriodMilliseconds, observationPeriodMilliseconds),
+				minimalObservationPeriod);
+		}
+	}
+
 	@Override
 	public void run() {
 		while (!isCancelled) {
-			if (progressEmitters.isEmpty() || minimalObservationPeriod == null) {
-				stopThread();
-				return;
-			}
-
 			try {
 				synchronized (periodSyncObject) {
-					Thread.sleep(minimalObservationPeriod);
+					Thread.sleep(observationPeriodMilliseconds);
 				}
 			} catch (InterruptedException e) {
 				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
 					emitter.onError(e);
-				stopThread();
+
 				return;
 			}
+
+			if (progressEmitters.isEmpty()) continue;
 
 			try {
 				final FileProgress fileProgress = fileProgressReader.getFileProgress();
@@ -103,15 +108,9 @@ public class PollingProgressSource implements Runnable {
 			} catch (Throwable t) {
 				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
 					emitter.onError(t);
-				stopThread();
+
 				return;
 			}
-		}
-	}
-
-	private void stopThread() {
-		synchronized (startSyncObject) {
-			isStarted = false;
 		}
 	}
 

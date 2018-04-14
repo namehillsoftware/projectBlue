@@ -34,6 +34,7 @@ public class WhenObservingThePlaybackPositionTwice {
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 
 		final ExoPlayerPlaybackHandler mediaPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
+		mediaPlayerPlaybackHandler.promisePlayback();
 		final ConnectableObservable<FileProgress> firstObservable =
 			mediaPlayerPlaybackHandler.observeProgress(Duration.millis(500))
 				.publish();

@@ -32,8 +32,9 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 
-		final ExoPlayerPlaybackHandler mediaPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
-		final ConnectableObservable<FileProgress> progressObservable = mediaPlayerPlaybackHandler
+		final ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
+		exoPlayerPlaybackHandler.promisePlayback();
+		final ConnectableObservable<FileProgress> progressObservable = exoPlayerPlaybackHandler
 			.observeProgress(Duration.millis(5))
 			.publish();
 
@@ -47,7 +48,7 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 				disposable.dispose();
 				countDownLatch.countDown();
 			}
-		}, 2590);
+		}, 2550);
 
 		progressObservable
 			.subscribe(collectedProgresses::add);
