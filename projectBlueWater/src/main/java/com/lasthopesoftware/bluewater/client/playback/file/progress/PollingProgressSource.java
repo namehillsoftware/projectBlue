@@ -16,6 +16,7 @@ public class PollingProgressSource extends Thread {
 
 	private static final long minimalObservationPeriod = 100L;
 
+	private final Object periodSync = new Object();
 	private final Object startSyncObject = new Object();
 	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final ReadFileProgress fileProgressReader;
@@ -30,7 +31,11 @@ public class PollingProgressSource extends Thread {
 
 	public ObservableOnSubscribe<FileProgress> observePeriodically(Duration observationPeriod) {
 		final long observationMilliseconds = observationPeriod.getMillis();
-		updateObservationPeriod(observationMilliseconds);
+		synchronized (periodSync) {
+			observationPeriodMilliseconds = Math.max(
+				Math.min(observationMilliseconds, observationPeriodMilliseconds),
+				minimalObservationPeriod);
+		}
 
 		return e -> {
 			progressEmitters.put(e, observationMilliseconds);
@@ -39,14 +44,16 @@ public class PollingProgressSource extends Thread {
 				@Override
 				public void dispose() {
 					progressEmitters.remove(e);
+					synchronized (periodSync) {
 					if (observationMilliseconds > observationPeriodMilliseconds) return;
 
-					final Optional<Long> maybeSmallestEmitter =
-						Stream.of(progressEmitters.values())
-							.sorted()
-							.findFirst();
+						final Optional<Long> maybeSmallestEmitter =
+							Stream.of(progressEmitters.values())
+								.sorted()
+								.findFirst();
 
-					updateObservationPeriod(maybeSmallestEmitter.orElse(minimalObservationPeriod));
+						observationPeriodMilliseconds = maybeSmallestEmitter.orElse(minimalObservationPeriod);
+					}
 				}
 
 				@Override
