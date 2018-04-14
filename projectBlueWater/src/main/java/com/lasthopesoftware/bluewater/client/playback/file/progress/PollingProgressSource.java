@@ -45,7 +45,7 @@ public class PollingProgressSource extends Thread {
 				public void dispose() {
 					progressEmitters.remove(e);
 					synchronized (periodSync) {
-					if (observationMilliseconds > observationPeriodMilliseconds) return;
+						if (observationMilliseconds > observationPeriodMilliseconds) return;
 
 						final Optional<Long> maybeSmallestEmitter =
 							Stream.of(progressEmitters.values())
