@@ -32,11 +32,6 @@ implements
 	}
 
 	@Override
-	public long getDuration() {
-		return 0;
-	}
-
-	@Override
 	public Promise<PlayableFile> promisePlayback() {
 		isPlaying = true;
 		return new Promise<>((messenger) -> {});
@@ -54,6 +49,6 @@ implements
 
 	@Override
 	public Observable<PlayingFileProgress> observeProgress(Duration observationPeriod) {
-		return Observable.just(new PlayingFileProgress(currentPosition, getDuration()));
+		return Observable.just(new PlayingFileProgress(currentPosition, 0));
 	}
 }

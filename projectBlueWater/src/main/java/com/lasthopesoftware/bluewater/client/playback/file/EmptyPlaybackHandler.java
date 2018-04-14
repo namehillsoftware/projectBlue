@@ -27,11 +27,6 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public long getDuration() {
-		return duration;
-	}
-
-	@Override
 	public Promise<PlayableFile> promisePlayback() {
 		return new Promise<>(this);
 	}

@@ -67,16 +67,6 @@ implements
 	}
 
 	@Override
-	public long getDuration() {
-		try {
-			return mediaPlayer.getDuration();
-		} catch (IllegalStateException e) {
-			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
-			return 0;
-		}
-	}
-
-	@Override
 	public Observable<PlayingFileProgress> observeProgress(org.joda.time.Duration observationPeriod) {
 		return Observable
 			.create(mediaPlayerPositionSource.getObject().observePeriodically(observationPeriod))
@@ -134,6 +124,9 @@ implements
 		} catch (IllegalStateException se) {
 			mediaPlayerIllegalStateReporter.reportIllegalStateException(se, "stopping");
 		}
+
+		if (mediaPlayerPositionSource.isCreated())
+			mediaPlayerPositionSource.getObject().cancel();
 
 		MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 	}

@@ -13,6 +13,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPl
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -36,7 +38,12 @@ implements
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
 
-	private ExoPlayerObservablePeriod exoPlayerObservablePeriod;
+	private final CreateAndHold<ExoPlayerPositionSource> exoPlayerPositionSource = new AbstractSynchronousLazy<ExoPlayerPositionSource>() {
+		@Override
+		protected ExoPlayerPositionSource create() {
+			return new ExoPlayerPositionSource(exoPlayer);
+		}
+	};
 
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
@@ -57,27 +64,10 @@ implements
 	}
 
 	@Override
-	public long getDuration() {
-		return exoPlayer.getDuration();
-	}
-
-	@Override
 	public synchronized Observable<PlayingFileProgress> observeProgress(Duration observationPeriod) {
-		if (exoPlayerObservablePeriod != null) {
-			if (observationPeriod.getMillis() > exoPlayerObservablePeriod.observedPeriod.getMillis())
-				return Observable.create(exoPlayerObservablePeriod.exoPlayerPositionSource).sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
-
-			if (observationPeriod.getMillis() == exoPlayerObservablePeriod.observedPeriod.getMillis())
-				return Observable.create(exoPlayerObservablePeriod.exoPlayerPositionSource);
-
-			exoPlayerObservablePeriod = null;
-		}
-
-		exoPlayerObservablePeriod = new ExoPlayerObservablePeriod(
-			observationPeriod,
-			new ExoPlayerPositionSource(exoPlayer, observationPeriod));
-
-		return Observable.create(exoPlayerObservablePeriod.exoPlayerPositionSource);
+		return Observable
+			.create(exoPlayerPositionSource.getObject().observePeriodically(observationPeriod))
+			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
 	}
 
 	@Override
@@ -172,16 +162,10 @@ implements
 		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
+
+		if (exoPlayerPositionSource.isCreated())
+			exoPlayerPositionSource.getObject().cancel();
+
 		exoPlayer.release();
-	}
-
-	private static class ExoPlayerObservablePeriod {
-		final Duration observedPeriod;
-		final ExoPlayerPositionSource exoPlayerPositionSource;
-
-		private ExoPlayerObservablePeriod(Duration observedPeriod, ExoPlayerPositionSource exoPlayerPositionSource) {
-			this.observedPeriod = observedPeriod;
-			this.exoPlayerPositionSource = exoPlayerPositionSource;
-		}
 	}
 }
