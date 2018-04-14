@@ -59,6 +59,6 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 
 	@Test
 	public void thenThePlaylistProgressesAreStillCollectedAtEvery100Milliseconds() {
-		assertThat(collectedProgresses.size()).isEqualTo(26);
+		assertThat(collectedProgresses.size()).isEqualTo(25);
 	}
 }

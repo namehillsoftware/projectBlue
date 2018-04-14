@@ -5,6 +5,7 @@ import android.media.MediaPlayer;
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
 
 import org.joda.time.Duration;
 
@@ -15,7 +16,9 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 
-public class MediaPlayerPositionSource extends Thread {
+public class MediaPlayerPositionSource implements Runnable {
+
+	private static final MediaPlayerIllegalStateReporter mediaPlayerIllegalStateReporter = new MediaPlayerIllegalStateReporter(MediaPlayerPositionSource.class);
 
 	private final Object periodSyncObject = new Object();
 	private final Object startSyncObject = new Object();
@@ -25,6 +28,9 @@ public class MediaPlayerPositionSource extends Thread {
 	private Long minimalObservationPeriod;
 	private boolean isStarted;
 	private volatile boolean isCancelled;
+	private Thread broadcastThread;
+	private int lastPosition;
+	private int lastDuration;
 
 	public MediaPlayerPositionSource(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -63,16 +69,17 @@ public class MediaPlayerPositionSource extends Thread {
 				}
 			});
 
-			if (mediaPlayer.isPlaying()) {
-				e.onNext(new PlayingFileProgress(
-					mediaPlayer.getCurrentPosition(),
-					mediaPlayer.getDuration()));
-			}
+			if (mediaPlayer.isPlaying())
+				e.onNext(produceFilePlayingProgress());
 
 			if (isStarted) return;
 
 			synchronized (startSyncObject) {
-				if (!isStarted) start();
+				if (isStarted) return;
+
+				broadcastThread = new Thread(this);
+				broadcastThread.start();
+
 				isStarted = true;
 			}
 		};
@@ -82,13 +89,10 @@ public class MediaPlayerPositionSource extends Thread {
 	public void run() {
 		while (!isCancelled) {
 			if (progressEmitters.isEmpty() || minimalObservationPeriod == null) {
-				try {
-					Thread.sleep(100);
-					continue;
-				} catch (InterruptedException e) {
-					return;
-				}
+				setStopped();
+				return;
 			}
+
 			try {
 				synchronized (periodSyncObject) {
 					Thread.sleep(minimalObservationPeriod);
@@ -96,23 +100,43 @@ public class MediaPlayerPositionSource extends Thread {
 			} catch (InterruptedException e) {
 				for (ObservableEmitter<PlayingFileProgress> emitter : progressEmitters.keySet())
 					emitter.onError(e);
+				setStopped();
 				return;
 			}
 
 			try {
 				if (!mediaPlayer.isPlaying()) continue;
 
-				final PlayingFileProgress playingFileProgress = new PlayingFileProgress(
-					mediaPlayer.getCurrentPosition(),
-					mediaPlayer.getDuration());
+				final PlayingFileProgress playingFileProgress = produceFilePlayingProgress();
 
 				for (ObservableEmitter<PlayingFileProgress> emitter : progressEmitters.keySet())
 					emitter.onNext(playingFileProgress);
 			} catch (Throwable t) {
 				for (ObservableEmitter<PlayingFileProgress> emitter : progressEmitters.keySet())
 					emitter.onError(t);
+				setStopped();
 				return;
 			}
+		}
+	}
+
+	private PlayingFileProgress produceFilePlayingProgress() {
+		try {
+			return new PlayingFileProgress(
+				lastPosition = mediaPlayer.getCurrentPosition(),
+				lastDuration = mediaPlayer.getDuration());
+		} catch (IllegalStateException e) {
+			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "Getting current position");
+
+			return new PlayingFileProgress(
+				lastPosition,
+				lastDuration);
+		}
+	}
+
+	private void setStopped() {
+		synchronized (startSyncObject) {
+			isStarted = false;
 		}
 	}
 
