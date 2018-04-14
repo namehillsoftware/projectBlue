@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer;
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
 import org.joda.time.Duration;
 
@@ -18,7 +18,7 @@ public class ExoPlayerPositionSource extends Thread {
 
 	private final Object periodSyncObject = new Object();
 	private final Object startSyncObject = new Object();
-	private final Map<ObservableEmitter<PlayingFileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
+	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final ExoPlayer exoPlayer;
 
 	private Long minimalObservationPeriod;
@@ -29,7 +29,7 @@ public class ExoPlayerPositionSource extends Thread {
 		this.exoPlayer = exoPlayer;
 	}
 
-	public ObservableOnSubscribe<PlayingFileProgress> observePeriodically(Duration observationPeriod) {
+	public ObservableOnSubscribe<FileProgress> observePeriodically(Duration observationPeriod) {
 		final long observationMilliseconds = observationPeriod.getMillis();
 		synchronized (periodSyncObject) {
 			minimalObservationPeriod = Math.max(minimalObservationPeriod != null
@@ -63,7 +63,7 @@ public class ExoPlayerPositionSource extends Thread {
 			});
 
 			if (exoPlayer.getPlayWhenReady()) {
-				e.onNext(new PlayingFileProgress(
+				e.onNext(new FileProgress(
 					exoPlayer.getCurrentPosition(),
 					exoPlayer.getDuration()));
 			}
@@ -93,7 +93,7 @@ public class ExoPlayerPositionSource extends Thread {
 					Thread.sleep(minimalObservationPeriod);
 				}
 			} catch (InterruptedException e) {
-				for (ObservableEmitter<PlayingFileProgress> emitter : progressEmitters.keySet())
+				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
 					emitter.onError(e);
 				return;
 			}
@@ -101,14 +101,14 @@ public class ExoPlayerPositionSource extends Thread {
 			try {
 				if (!exoPlayer.getPlayWhenReady()) continue;
 
-				final PlayingFileProgress playingFileProgress = new PlayingFileProgress(
+				final FileProgress fileProgress = new FileProgress(
 					exoPlayer.getCurrentPosition(),
 					exoPlayer.getDuration());
 
-				for (ObservableEmitter<PlayingFileProgress> emitter : progressEmitters.keySet())
-					emitter.onNext(playingFileProgress);
+				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
+					emitter.onNext(fileProgress);
 			} catch (Throwable t) {
-				for (ObservableEmitter<PlayingFileProgress> emitter : progressEmitters.keySet())
+				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
 					emitter.onError(t);
 				return;
 			}

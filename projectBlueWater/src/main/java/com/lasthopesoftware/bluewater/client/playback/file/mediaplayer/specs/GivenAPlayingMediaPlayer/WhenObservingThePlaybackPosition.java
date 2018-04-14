@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.specs.Gi
 
 import android.media.MediaPlayer;
 
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingThePlaybackPosition {
 
-	private static PlayingFileProgress progress;
+	private static FileProgress progress;
 
 	@BeforeClass
 	public static void before() {
@@ -32,11 +32,6 @@ public class WhenObservingThePlaybackPosition {
 
 	@Test
 	public void thenThePlaybackPositionIsCorrect() {
-		assertThat(progress.position).isEqualTo(50);
-	}
-
-	@Test
-	public void thenThePlaybackDurationIsCorrect() {
-		assertThat(progress.duration).isEqualTo(100);
+		assertThat(progress).isEqualTo(new FileProgress(50, 100));
 	}
 }

@@ -8,8 +8,8 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -64,7 +64,7 @@ implements
 	}
 
 	@Override
-	public synchronized Observable<PlayingFileProgress> observeProgress(Duration observationPeriod) {
+	public synchronized Observable<FileProgress> observeProgress(Duration observationPeriod) {
 		return Observable
 			.create(exoPlayerPositionSource.getObject().observePeriodically(observationPeriod))
 			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);

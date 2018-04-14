@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.joda.time.Duration;
@@ -48,7 +48,7 @@ implements
 	}
 
 	@Override
-	public Observable<PlayingFileProgress> observeProgress(Duration observationPeriod) {
-		return Observable.just(new PlayingFileProgress(currentPosition, 0));
+	public Observable<FileProgress> observeProgress(Duration observationPeriod) {
+		return Observable.just(new FileProgress(currentPosition, 0));
 	}
 }

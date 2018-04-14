@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
-import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.position.MediaPlayerPositionSource;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerPositionSource;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -67,7 +67,7 @@ implements
 	}
 
 	@Override
-	public Observable<PlayingFileProgress> observeProgress(org.joda.time.Duration observationPeriod) {
+	public Observable<FileProgress> observeProgress(org.joda.time.Duration observationPeriod) {
 		return Observable
 			.create(mediaPlayerPositionSource.getObject().observePeriodically(observationPeriod))
 			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);

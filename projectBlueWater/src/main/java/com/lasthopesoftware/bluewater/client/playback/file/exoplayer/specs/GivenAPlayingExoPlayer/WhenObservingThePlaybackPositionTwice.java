@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingExoPlayer;
 
 import com.google.android.exoplayer2.ExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingThePlaybackPositionTwice {
 
-	private static List<PlayingFileProgress> collectedProgresses = new ArrayList<>();
+	private static List<FileProgress> collectedProgresses = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -34,12 +34,12 @@ public class WhenObservingThePlaybackPositionTwice {
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 
 		final ExoPlayerPlaybackHandler mediaPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
-		final ConnectableObservable<PlayingFileProgress> firstObservable =
+		final ConnectableObservable<FileProgress> firstObservable =
 			mediaPlayerPlaybackHandler.observeProgress(Duration.millis(500))
 				.publish();
 
 		final CountDownLatch countDownLatch = new CountDownLatch(2);
-		final Observable<PlayingFileProgress> secondObservable = mediaPlayerPlaybackHandler.observeProgress(Duration.ZERO);
+		final Observable<FileProgress> secondObservable = mediaPlayerPlaybackHandler.observeProgress(Duration.ZERO);
 		secondObservable.take(3)
 			.subscribe(e -> {}, e -> {}, () -> countDownLatch.countDown());
 

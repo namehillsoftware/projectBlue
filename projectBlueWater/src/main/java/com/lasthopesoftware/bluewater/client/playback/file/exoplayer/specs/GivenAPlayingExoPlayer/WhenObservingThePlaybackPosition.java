@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingExoPlayer;
 
 import com.google.android.exoplayer2.ExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingThePlaybackPosition {
 
-	private static PlayingFileProgress progress;
+	private static FileProgress progress;
 
 	@BeforeClass
 	public static void before() {
