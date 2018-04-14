@@ -49,9 +49,7 @@ public class PollingProgressSource extends Thread {
 							.sorted()
 							.findFirst();
 
-					updateObservationPeriod(maybeSmallestEmitter.isPresent()
-						? maybeSmallestEmitter.get()
-						: minimalObservationPeriod);
+					updateObservationPeriod(maybeSmallestEmitter.orElse(minimalObservationPeriod));
 				}
 
 				@Override
