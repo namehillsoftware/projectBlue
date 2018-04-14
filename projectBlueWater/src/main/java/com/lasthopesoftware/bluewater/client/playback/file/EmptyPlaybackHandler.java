@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.joda.time.Period;
+import org.joda.time.Duration;
 
 import io.reactivex.Observable;
 
@@ -47,7 +47,7 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
+	public Observable<PlayingFileProgress> observeProgress(Duration observationPeriod) {
 		return Observable.just(new PlayingFileProgress(0, duration));
 	}
 }

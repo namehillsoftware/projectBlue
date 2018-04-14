@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 
-import org.joda.time.Period;
+import org.joda.time.Duration;
 
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -16,11 +16,11 @@ public class ExoPlayerPositionSource extends Thread implements ObservableOnSubsc
 
 	private final Collection<ObservableEmitter<PlayingFileProgress>> progressEmitters = new CopyOnWriteArrayList<>();
 	private final ExoPlayer exoPlayer;
-	private final int periodMilliseconds;
+	private final long periodMilliseconds;
 
 	private boolean isStarted;
 
-	public ExoPlayerPositionSource(ExoPlayer exoPlayer, Period period) {
+	public ExoPlayerPositionSource(ExoPlayer exoPlayer, Duration period) {
 		this.exoPlayer = exoPlayer;
 		this.periodMilliseconds = period.getMillis();
 	}

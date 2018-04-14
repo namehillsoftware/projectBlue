@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 
+import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
 
@@ -22,7 +23,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenObservingThePlaybackPositionAtARegularPeriod {
+public class WhenObservingThePlaybackPositionTwice {
 
 	private static List<PlayingFileProgress> collectedProgresses = new ArrayList<>();
 
@@ -34,14 +35,17 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 		when(mockMediaPlayer.getDuration())
 			.thenReturn(100);
 
-
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
-		final ConnectableObservable<PlayingFileProgress> progressObservable = mediaPlayerPlaybackHandler
-			.observeProgress(Duration.millis(500))
-			.publish();
+		final ConnectableObservable<PlayingFileProgress> firstObservable =
+			mediaPlayerPlaybackHandler.observeProgress(Duration.millis(500))
+				.publish();
 
-		final Disposable disposable = progressObservable.connect();
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		final CountDownLatch countDownLatch = new CountDownLatch(2);
+		final Observable<PlayingFileProgress> secondObservable = mediaPlayerPlaybackHandler.observeProgress(Duration.ZERO);
+		secondObservable.take(3)
+			.subscribe(e -> {}, e -> {}, () -> countDownLatch.countDown());
+
+		final Disposable disposable = firstObservable.connect();
 
 		final Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
@@ -52,8 +56,7 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 			}
 		}, 2600);
 
-		progressObservable
-			.subscribe(collectedProgresses::add);
+		firstObservable.subscribe(collectedProgresses::add);
 
 		countDownLatch.await();
 	}

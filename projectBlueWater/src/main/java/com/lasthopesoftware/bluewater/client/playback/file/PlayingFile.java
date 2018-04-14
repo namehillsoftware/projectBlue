@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
-import org.joda.time.Period;
+import org.joda.time.Duration;
 
 import io.reactivex.Observable;
 
 public interface PlayingFile {
-	Observable<PlayingFileProgress> observeProgress(Period observationPeriod);
+	Observable<PlayingFileProgress> observeProgress(Duration observationPeriod);
 }

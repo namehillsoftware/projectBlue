@@ -110,7 +110,7 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-import org.joda.time.Period;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1012,7 +1012,7 @@ implements
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
 
 		final Disposable localFilePositionSubscription = filePositionSubscription =
-			playbackHandler.observeProgress(Period.seconds(1))
+			playbackHandler.observeProgress(Duration.standardSeconds(1))
 				.distinctUntilChanged()
 				.subscribe(new TrackPositionBroadcaster(this));
 

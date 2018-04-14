@@ -14,7 +14,7 @@ import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.joda.time.Period;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,7 @@ implements
 	}
 
 	@Override
-	public synchronized Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
+	public synchronized Observable<PlayingFileProgress> observeProgress(Duration observationPeriod) {
 		if (exoPlayerObservablePeriod != null) {
 			if (observationPeriod.getMillis() > exoPlayerObservablePeriod.observedPeriod.getMillis())
 				return Observable.create(exoPlayerObservablePeriod.exoPlayerPositionSource).sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
@@ -176,10 +176,10 @@ implements
 	}
 
 	private static class ExoPlayerObservablePeriod {
-		final Period observedPeriod;
+		final Duration observedPeriod;
 		final ExoPlayerPositionSource exoPlayerPositionSource;
 
-		private ExoPlayerObservablePeriod(Period observedPeriod, ExoPlayerPositionSource exoPlayerPositionSource) {
+		private ExoPlayerObservablePeriod(Duration observedPeriod, ExoPlayerPositionSource exoPlayerPositionSource) {
 			this.observedPeriod = observedPeriod;
 			this.exoPlayerPositionSource = exoPlayerPositionSource;
 		}

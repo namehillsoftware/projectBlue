@@ -6,7 +6,7 @@ import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 
-import org.joda.time.Period;
+import org.joda.time.Duration;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,10 +19,10 @@ public class MediaPlayerPositionSource extends Thread {
 
 	private final Object periodSyncObject = new Object();
 	private final Object startSyncObject = new Object();
-	private final Map<ObservableEmitter<PlayingFileProgress>, Integer> progressEmitters = new ConcurrentHashMap<>();
+	private final Map<ObservableEmitter<PlayingFileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final MediaPlayer mediaPlayer;
 
-	private Integer minimalObservationPeriod;
+	private Long minimalObservationPeriod;
 	private boolean isStarted;
 	private volatile boolean isCancelled;
 
@@ -30,8 +30,8 @@ public class MediaPlayerPositionSource extends Thread {
 		this.mediaPlayer = mediaPlayer;
 	}
 
-	public ObservableOnSubscribe<PlayingFileProgress> observePeriodically(Period observationPeriod) {
-		final int observationMilliseconds = observationPeriod.getMillis();
+	public ObservableOnSubscribe<PlayingFileProgress> observePeriodically(Duration observationPeriod) {
+		final long observationMilliseconds = observationPeriod.getMillis();
 		synchronized (periodSyncObject) {
 			minimalObservationPeriod = minimalObservationPeriod != null
 				? Math.min(observationMilliseconds, minimalObservationPeriod)
@@ -48,7 +48,7 @@ public class MediaPlayerPositionSource extends Thread {
 					synchronized (periodSyncObject) {
 						if (observationMilliseconds > minimalObservationPeriod) return;
 
-						final Optional<Integer> maybeSmallestEmitter =
+						final Optional<Long> maybeSmallestEmitter =
 							Stream.of(progressEmitters.values())
 								.sorted()
 								.findFirst();
@@ -81,7 +81,7 @@ public class MediaPlayerPositionSource extends Thread {
 	@Override
 	public void run() {
 		while (!isCancelled) {
-			if (progressEmitters.isEmpty()) {
+			if (progressEmitters.isEmpty() || minimalObservationPeriod == null) {
 				try {
 					Thread.sleep(100);
 					continue;

@@ -14,11 +14,11 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 
@@ -77,8 +77,10 @@ implements
 	}
 
 	@Override
-	public Observable<PlayingFileProgress> observeProgress(Period observationPeriod) {
-		return Observable.create(mediaPlayerPositionSource.getObject().observePeriodically(observationPeriod));
+	public Observable<PlayingFileProgress> observeProgress(org.joda.time.Duration observationPeriod) {
+		return Observable
+			.create(mediaPlayerPositionSource.getObject().observePeriodically(observationPeriod))
+			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
 	}
 
 	@Override

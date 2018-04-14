@@ -22,7 +22,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenObservingThePlaybackPositionAtARegularPeriod {
+public class WhenObservingThePlaybackPositionInSeconds {
 
 	private static List<PlayingFileProgress> collectedProgresses = new ArrayList<>();
 
@@ -37,7 +37,7 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
 		final ConnectableObservable<PlayingFileProgress> progressObservable = mediaPlayerPlaybackHandler
-			.observeProgress(Duration.millis(500))
+			.observeProgress(Duration.standardSeconds(1))
 			.publish();
 
 		final Disposable disposable = progressObservable.connect();
@@ -60,6 +60,6 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 
 	@Test
 	public void thenTheCorrectNumberOfPlaylistProgressesAreCollected() {
-		assertThat(collectedProgresses.size()).isEqualTo(5);
+		assertThat(collectedProgresses.size()).isEqualTo(2);
 	}
 }

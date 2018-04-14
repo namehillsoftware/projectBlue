@@ -5,7 +5,7 @@ import android.media.MediaPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerPlaybackHandler;
 
-import org.joda.time.Period;
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -26,7 +26,7 @@ public class WhenObservingThePlaybackPosition {
 
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
 		progress = mediaPlayerPlaybackHandler
-			.observeProgress(Period.ZERO)
+			.observeProgress(Duration.ZERO)
 			.blockingFirst();
 	}
 
