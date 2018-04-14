@@ -32,9 +32,9 @@ public class ExoPlayerPositionSource extends Thread {
 	public ObservableOnSubscribe<PlayingFileProgress> observePeriodically(Duration observationPeriod) {
 		final long observationMilliseconds = observationPeriod.getMillis();
 		synchronized (periodSyncObject) {
-			minimalObservationPeriod = minimalObservationPeriod != null
+			minimalObservationPeriod = Math.max(minimalObservationPeriod != null
 				? Math.min(observationMilliseconds, minimalObservationPeriod)
-				: observationMilliseconds;
+				: observationMilliseconds, 100);
 		}
 
 		return e -> {

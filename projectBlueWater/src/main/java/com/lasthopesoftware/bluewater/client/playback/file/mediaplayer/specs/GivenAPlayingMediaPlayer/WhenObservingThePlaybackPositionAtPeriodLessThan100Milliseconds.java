@@ -22,7 +22,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenObservingThePlaybackPositionAtARegularPeriod {
+public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 
 	private static List<PlayingFileProgress> collectedProgresses = new ArrayList<>();
 
@@ -30,13 +30,13 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 	public static void before() throws InterruptedException {
 		final MediaPlayer mockMediaPlayer = mock(MediaPlayer.class);
 		when(mockMediaPlayer.isPlaying()).thenReturn(true);
-		when(mockMediaPlayer.getCurrentPosition()).thenReturn(50, 50, 50, 50, 50);
+		when(mockMediaPlayer.getCurrentPosition()).thenReturn(50);
 		when(mockMediaPlayer.getDuration())
 			.thenReturn(100);
 
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
 		final ConnectableObservable<PlayingFileProgress> progressObservable = mediaPlayerPlaybackHandler
-			.observeProgress(Duration.millis(500))
+			.observeProgress(Duration.millis(5))
 			.publish();
 
 		final Disposable disposable = progressObservable.connect();
@@ -49,7 +49,7 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 				disposable.dispose();
 				countDownLatch.countDown();
 			}
-		}, 2600);
+		}, 2590);
 
 		progressObservable
 			.subscribe(collectedProgresses::add);
@@ -58,7 +58,7 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 	}
 
 	@Test
-	public void thenTheCorrectNumberOfPlaylistProgressesAreCollected() {
-		assertThat(collectedProgresses.size()).isEqualTo(5);
+	public void thenThePlaylistProgressesAreStillCollectedAtEvery100Milliseconds() {
+		assertThat(collectedProgresses.size()).isEqualTo(26);
 	}
 }

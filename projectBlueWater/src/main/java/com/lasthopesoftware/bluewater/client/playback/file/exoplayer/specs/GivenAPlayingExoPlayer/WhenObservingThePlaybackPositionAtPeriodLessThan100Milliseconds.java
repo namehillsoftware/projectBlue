@@ -1,9 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.specs.GivenAPlayingMediaPlayer;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingExoPlayer;
 
-import android.media.MediaPlayer;
-
+import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFileProgress;
-import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -22,21 +21,20 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenObservingThePlaybackPositionAtARegularPeriod {
+public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 
 	private static List<PlayingFileProgress> collectedProgresses = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
-		final MediaPlayer mockMediaPlayer = mock(MediaPlayer.class);
-		when(mockMediaPlayer.isPlaying()).thenReturn(true);
-		when(mockMediaPlayer.getCurrentPosition()).thenReturn(50, 50, 50, 50, 50);
-		when(mockMediaPlayer.getDuration())
-			.thenReturn(100);
+		final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
+		when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
+		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
+		when(mockExoPlayer.getDuration()).thenReturn(100L);
 
-		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
+		final ExoPlayerPlaybackHandler mediaPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
 		final ConnectableObservable<PlayingFileProgress> progressObservable = mediaPlayerPlaybackHandler
-			.observeProgress(Duration.millis(500))
+			.observeProgress(Duration.millis(5))
 			.publish();
 
 		final Disposable disposable = progressObservable.connect();
@@ -49,7 +47,7 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 				disposable.dispose();
 				countDownLatch.countDown();
 			}
-		}, 2600);
+		}, 2590);
 
 		progressObservable
 			.subscribe(collectedProgresses::add);
@@ -58,7 +56,7 @@ public class WhenObservingThePlaybackPositionAtARegularPeriod {
 	}
 
 	@Test
-	public void thenTheCorrectNumberOfPlaylistProgressesAreCollected() {
-		assertThat(collectedProgresses.size()).isEqualTo(5);
+	public void thenThePlaylistProgressesAreStillCollectedAtEvery100Milliseconds() {
+		assertThat(collectedProgresses.size()).isEqualTo(26);
 	}
 }
