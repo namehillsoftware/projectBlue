@@ -49,7 +49,7 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 				disposable.dispose();
 				countDownLatch.countDown();
 			}
-		}, 2590);
+		}, 2550);
 
 		progressObservable
 			.subscribe(collectedProgresses::add);
@@ -59,6 +59,6 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 
 	@Test
 	public void thenThePlaylistProgressesAreStillCollectedAtEvery100Milliseconds() {
-		assertThat(collectedProgresses.size()).isEqualTo(25);
+		assertThat(collectedProgresses.size()).isEqualTo(26);
 	}
 }

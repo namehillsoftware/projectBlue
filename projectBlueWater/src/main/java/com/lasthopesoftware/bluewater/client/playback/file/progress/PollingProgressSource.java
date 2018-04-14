@@ -1,11 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress;
-
-import android.media.MediaPlayer;
+package com.lasthopesoftware.bluewater.client.playback.file.progress;
 
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
 import org.joda.time.Duration;
 
@@ -16,24 +12,20 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 
-public class MediaPlayerPositionSource implements Runnable {
-
-	private static final MediaPlayerIllegalStateReporter mediaPlayerIllegalStateReporter = new MediaPlayerIllegalStateReporter(MediaPlayerPositionSource.class);
+public class PollingProgressSource implements Runnable {
 
 	private final Object periodSyncObject = new Object();
 	private final Object startSyncObject = new Object();
 	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
-	private final MediaPlayer mediaPlayer;
+	private final ReadFileProgress fileProgressReader;
 
 	private Long minimalObservationPeriod;
 	private boolean isStarted;
 	private volatile boolean isCancelled;
 	private Thread broadcastThread;
-	private int lastPosition;
-	private int lastDuration;
 
-	public MediaPlayerPositionSource(MediaPlayer mediaPlayer) {
-		this.mediaPlayer = mediaPlayer;
+	public PollingProgressSource(ReadFileProgress fileProgressReader) {
+		this.fileProgressReader = fileProgressReader;
 	}
 
 	public ObservableOnSubscribe<FileProgress> observePeriodically(Duration observationPeriod) {
@@ -69,8 +61,7 @@ public class MediaPlayerPositionSource implements Runnable {
 				}
 			});
 
-			if (mediaPlayer.isPlaying())
-				e.onNext(produceFilePlayingProgress());
+			e.onNext(fileProgressReader.getFileProgress());
 
 			if (isStarted) return;
 
@@ -105,9 +96,7 @@ public class MediaPlayerPositionSource implements Runnable {
 			}
 
 			try {
-				if (!mediaPlayer.isPlaying()) continue;
-
-				final FileProgress fileProgress = produceFilePlayingProgress();
+				final FileProgress fileProgress = fileProgressReader.getFileProgress();
 
 				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
 					emitter.onNext(fileProgress);
@@ -117,20 +106,6 @@ public class MediaPlayerPositionSource implements Runnable {
 				stopThread();
 				return;
 			}
-		}
-	}
-
-	private FileProgress produceFilePlayingProgress() {
-		try {
-			return new FileProgress(
-				lastPosition = mediaPlayer.getCurrentPosition(),
-				lastDuration = mediaPlayer.getDuration());
-		} catch (IllegalStateException e) {
-			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "Getting current position");
-
-			return new FileProgress(
-				lastPosition,
-				lastDuration);
 		}
 	}
 
