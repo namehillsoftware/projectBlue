@@ -35,9 +35,13 @@ public class MediaPlayerFileProgressReader implements ReadFileProgress {
 			duration = mediaPlayer.getDuration();
 		} catch (IllegalStateException e) {
 			reporter.reportIllegalStateException(e, "reading duration");
-			return fileProgress;
+			return getUpdatedFileProgress(position, fileProgress.duration);
 		}
 
+		return getUpdatedFileProgress(position, duration);
+	}
+
+	private FileProgress getUpdatedFileProgress(long position, long duration) {
 		return fileProgress = new FileProgress(position, duration);
 	}
 }

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.specs.GivenAPlayingFile.ThatStartsThrowingStateExceptions;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.specs.GivenAPlayingFile.ThatThrowsStateExceptionsWhenGettingDuration;
 
 import android.media.MediaPlayer;
 
@@ -22,10 +22,11 @@ public class WhenGettingTheFileProgress {
 		when(mockMediaPlayer.isPlaying()).thenReturn(true);
 		when(mockMediaPlayer.getCurrentPosition())
 			.thenReturn(78)
-			.thenThrow(new IllegalStateException());
+			.thenReturn(80);
 
 		when(mockMediaPlayer.getDuration())
-			.thenReturn(101);
+			.thenReturn(101)
+			.thenThrow(new IllegalStateException());
 
 		final MediaPlayerFileProgressReader mediaPlayerFileProgressReader = new MediaPlayerFileProgressReader(mockMediaPlayer);
 		mediaPlayerFileProgressReader.getFileProgress();
@@ -33,7 +34,12 @@ public class WhenGettingTheFileProgress {
 	}
 
 	@Test
-	public void thenTheFileProgressIsLastValidFileProgress() {
-		assertThat(progress).isEqualTo(new FileProgress(78, 101));
+	public void thenTheProgressIsCurrentProgress() {
+		assertThat(progress.position).isEqualTo(80);
+	}
+
+	@Test
+	public void thenTheDurationIsLastValidDuration() {
+		assertThat(progress.duration).isEqualTo(101);
 	}
 }
