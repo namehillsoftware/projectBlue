@@ -35,6 +35,7 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 			.thenReturn(100);
 
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
+		mediaPlayerPlaybackHandler.promisePlayback();
 		final ConnectableObservable<FileProgress> progressObservable = mediaPlayerPlaybackHandler
 			.observeProgress(Duration.millis(5))
 			.publish();
@@ -59,6 +60,6 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 
 	@Test
 	public void thenThePlaylistProgressesAreStillCollectedAtEvery100Milliseconds() {
-		assertThat(collectedProgresses.size()).isEqualTo(26);
+		assertThat(collectedProgresses.size()).isBetween(25, 26);
 	}
 }
