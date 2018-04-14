@@ -42,18 +42,16 @@ public class PollingProgressSource extends Thread {
 				@Override
 				public void dispose() {
 					progressEmitters.remove(e);
-					synchronized (periodSyncObject) {
-						if (observationMilliseconds > observationPeriodMilliseconds) return;
+					if (observationMilliseconds > observationPeriodMilliseconds) return;
 
-						final Optional<Long> maybeSmallestEmitter =
-							Stream.of(progressEmitters.values())
-								.sorted()
-								.findFirst();
+					final Optional<Long> maybeSmallestEmitter =
+						Stream.of(progressEmitters.values())
+							.sorted()
+							.findFirst();
 
-						updateObservationPeriod(maybeSmallestEmitter.isPresent()
-							? maybeSmallestEmitter.get()
-							: minimalObservationPeriod);
-					}
+					updateObservationPeriod(maybeSmallestEmitter.isPresent()
+						? maybeSmallestEmitter.get()
+						: minimalObservationPeriod);
 				}
 
 				@Override
