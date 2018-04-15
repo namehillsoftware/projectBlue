@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -20,9 +22,11 @@ public class PollingProgressSource extends Thread {
 	private static final Executor notificationExecutor = Executors.newSingleThreadExecutor();
 	private static final long minimalObservationPeriod = 100L;
 
-	private final Object periodSync = new Object();
+	private final ReentrantLock periodSync = new ReentrantLock();
 	private final Object startSyncObject = new Object();
 	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
+	private final ReentrantLock emittersLock = new ReentrantLock();
+	private final Condition emittersNotEmpty = emittersLock.newCondition();
 	private final ReadFileProgress fileProgressReader;
 
 	private long observationPeriodMilliseconds = minimalObservationPeriod;
@@ -35,23 +39,31 @@ public class PollingProgressSource extends Thread {
 
 	public ObservableOnSubscribe<FileProgress> observePeriodically(Duration observationPeriod) {
 		final long observationMilliseconds = observationPeriod.getMillis();
-		synchronized (periodSync) {
+		periodSync.lock();
+		try {
 			observationPeriodMilliseconds = Math.max(
 				Math.min(observationMilliseconds, observationPeriodMilliseconds),
 				minimalObservationPeriod);
+		} finally {
+			periodSync.unlock();
 		}
 
 		return e -> {
-			synchronized (progressEmitters) {
+			emittersLock.lock();
+			try {
 				progressEmitters.put(e, observationMilliseconds);
-				progressEmitters.notify();
+				emittersNotEmpty.signal();
+			} finally {
+				emittersLock.unlock();
 			}
 
 			e.setDisposable(new Disposable() {
 				@Override
 				public void dispose() {
 					progressEmitters.remove(e);
-					synchronized (periodSync) {
+
+					periodSync.lock();
+					try {
 						if (observationMilliseconds > observationPeriodMilliseconds) return;
 
 						final Optional<Long> maybeSmallestEmitter =
@@ -60,6 +72,8 @@ public class PollingProgressSource extends Thread {
 								.findFirst();
 
 						observationPeriodMilliseconds = maybeSmallestEmitter.orElse(minimalObservationPeriod);
+					} finally {
+						periodSync.unlock();
 					}
 				}
 
@@ -95,14 +109,15 @@ public class PollingProgressSource extends Thread {
 			}
 
 			if (progressEmitters.isEmpty()) {
-				synchronized (progressEmitters) {
-					try {
-						progressEmitters.wait();
-					} catch (InterruptedException e) {
-						notificationExecutor.execute(new ErrorEmitter(e, progressEmitters.keySet()));
+				emittersLock.lock();
+				try {
+					emittersNotEmpty.await();
+				} catch (InterruptedException e) {
+					notificationExecutor.execute(new ErrorEmitter(e, progressEmitters.keySet()));
 
-						return;
-					}
+					return;
+				} finally {
+					emittersLock.unlock();
 				}
 			}
 
@@ -122,8 +137,12 @@ public class PollingProgressSource extends Thread {
 	public void cancel() {
 		isCancelled = true;
 		progressEmitters.clear();
-		synchronized (progressEmitters) {
-			progressEmitters.notify();
+
+		emittersLock.lock();
+		try {
+			emittersNotEmpty.signal();
+		} finally {
+			emittersLock.unlock();
 		}
 	}
 
