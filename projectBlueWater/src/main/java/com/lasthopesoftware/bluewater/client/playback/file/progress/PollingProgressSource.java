@@ -6,7 +6,10 @@ import com.annimon.stream.Stream;
 import org.joda.time.Duration;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -14,6 +17,7 @@ import io.reactivex.disposables.Disposable;
 
 public class PollingProgressSource extends Thread {
 
+	private static final Executor notificationExecutor = Executors.newSingleThreadExecutor();
 	private static final long minimalObservationPeriod = 100L;
 
 	private final Object periodSync = new Object();
@@ -38,7 +42,10 @@ public class PollingProgressSource extends Thread {
 		}
 
 		return e -> {
-			progressEmitters.put(e, observationMilliseconds);
+			synchronized (progressEmitters) {
+				progressEmitters.put(e, observationMilliseconds);
+				progressEmitters.notify();
+			}
 
 			e.setDisposable(new Disposable() {
 				@Override
@@ -76,34 +83,36 @@ public class PollingProgressSource extends Thread {
 		};
 	}
 
-	private synchronized void updateObservationPeriod(long newObservationPeriodMilliseconds) {
-		observationPeriodMilliseconds = Math.max(
-			Math.min(newObservationPeriodMilliseconds, observationPeriodMilliseconds),
-			minimalObservationPeriod);
-	}
-
 	@Override
 	public void run() {
 		while (!isCancelled) {
 			try {
 				Thread.sleep(observationPeriodMilliseconds);
 			} catch (InterruptedException e) {
-				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
-					emitter.onError(e);
+				notificationExecutor.execute(new ErrorEmitter(e, progressEmitters.keySet()));
 
 				return;
 			}
 
-			if (progressEmitters.isEmpty()) continue;
+			if (progressEmitters.isEmpty()) {
+				synchronized (progressEmitters) {
+					try {
+						progressEmitters.wait();
+					} catch (InterruptedException e) {
+						notificationExecutor.execute(new ErrorEmitter(e, progressEmitters.keySet()));
+
+						return;
+					}
+				}
+			}
 
 			try {
-				final FileProgress fileProgress = fileProgressReader.getFileProgress();
-
-				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
-					emitter.onNext(fileProgress);
+				notificationExecutor.execute(
+					new ProgressEmitter(
+						fileProgressReader.getFileProgress(),
+						progressEmitters.keySet()));
 			} catch (Throwable t) {
-				for (ObservableEmitter<FileProgress> emitter : progressEmitters.keySet())
-					emitter.onError(t);
+				notificationExecutor.execute(new ErrorEmitter(t, progressEmitters.keySet()));
 
 				return;
 			}
@@ -113,5 +122,42 @@ public class PollingProgressSource extends Thread {
 	public void cancel() {
 		isCancelled = true;
 		progressEmitters.clear();
+		synchronized (progressEmitters) {
+			progressEmitters.notify();
+		}
+	}
+
+	private static class ProgressEmitter implements Runnable {
+
+		private final FileProgress fileProgress;
+		private final Set<ObservableEmitter<FileProgress>> emitters;
+
+		ProgressEmitter(FileProgress fileProgress, Set<ObservableEmitter<FileProgress>> emitters) {
+			this.fileProgress = fileProgress;
+			this.emitters = emitters;
+		}
+
+		@Override
+		public void run() {
+			for (ObservableEmitter<FileProgress> emitter : emitters)
+				emitter.onNext(fileProgress);
+		}
+	}
+
+	private static class ErrorEmitter implements Runnable {
+
+		private final Throwable error;
+		private final Set<ObservableEmitter<FileProgress>> emitters;
+
+		ErrorEmitter(Throwable error, Set<ObservableEmitter<FileProgress>> emitters) {
+			this.error = error;
+			this.emitters = emitters;
+		}
+
+		@Override
+		public void run() {
+			for (ObservableEmitter<FileProgress> emitter : emitters)
+				emitter.onError(error);
+		}
 	}
 }
