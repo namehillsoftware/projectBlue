@@ -20,21 +20,22 @@ import io.reactivex.disposables.Disposable;
 public class PollingProgressSource extends Thread {
 
 	private static final Executor notificationExecutor = Executors.newSingleThreadExecutor();
-	private static final long minimalObservationPeriod = 100L;
 
 	private final ReentrantLock periodSync = new ReentrantLock();
 	private final Object startSyncObject = new Object();
-	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final ReentrantLock emittersLock = new ReentrantLock();
 	private final Condition emittersNotEmpty = emittersLock.newCondition();
+
+	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final ReadFileProgress fileProgressReader;
-
-	private long observationPeriodMilliseconds = minimalObservationPeriod;
+	private final long minimalObservationPeriod;
+	private long observationPeriodMilliseconds;
 	private boolean isStarted;
-	private volatile boolean isCancelled;
+	private boolean isCancelled;
 
-	public PollingProgressSource(ReadFileProgress fileProgressReader) {
+	public PollingProgressSource(ReadFileProgress fileProgressReader, Duration minimalObservationPeriod) {
 		this.fileProgressReader = fileProgressReader;
+		this.minimalObservationPeriod = minimalObservationPeriod.getMillis();
 	}
 
 	public ObservableOnSubscribe<FileProgress> observePeriodically(Duration observationPeriod) {
@@ -71,7 +72,7 @@ public class PollingProgressSource extends Thread {
 								.sorted()
 								.findFirst();
 
-						observationPeriodMilliseconds = maybeSmallestEmitter.orElse(minimalObservationPeriod);
+						observationPeriodMilliseconds = Math.max(maybeSmallestEmitter.orElse(minimalObservationPeriod), minimalObservationPeriod);
 					} finally {
 						periodSync.unlock();
 					}

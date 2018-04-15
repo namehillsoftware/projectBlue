@@ -15,6 +15,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,9 @@ implements
 	private final CreateAndHold<PollingProgressSource> mediaPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
 		protected PollingProgressSource create() {
-			return new PollingProgressSource(new MediaPlayerFileProgressReader(mediaPlayer));
+			return new PollingProgressSource(
+				new MediaPlayerFileProgressReader(mediaPlayer),
+				Duration.millis(100));
 		}
 	};
 

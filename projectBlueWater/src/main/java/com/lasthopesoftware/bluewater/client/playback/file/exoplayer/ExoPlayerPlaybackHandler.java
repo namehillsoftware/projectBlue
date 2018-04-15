@@ -44,7 +44,9 @@ implements
 	private final CreateAndHold<PollingProgressSource> exoPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
 		protected PollingProgressSource create() {
-			return new PollingProgressSource(new ExoPlayerFileProgressReader(exoPlayer));
+			return new PollingProgressSource(
+				new ExoPlayerFileProgressReader(exoPlayer),
+				Duration.millis(100));
 		}
 	};
 
