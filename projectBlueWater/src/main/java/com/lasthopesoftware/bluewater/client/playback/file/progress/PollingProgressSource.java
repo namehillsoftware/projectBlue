@@ -10,28 +10,28 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Condition;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 
-public class PollingProgressSource extends Thread {
+public class PollingProgressSource implements Runnable {
 
-	private static final Executor notificationExecutor = Executors.newSingleThreadExecutor();
+	private static final Executor notificationExecutor = Executors.newCachedThreadPool();
 
+	private final ScheduledExecutorService pollingExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final ReentrantLock periodSync = new ReentrantLock();
 	private final Object startSyncObject = new Object();
-	private final ReentrantLock emittersLock = new ReentrantLock();
-	private final Condition emittersNotEmpty = emittersLock.newCondition();
 
 	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final ReadFileProgress fileProgressReader;
 	private final long minimalObservationPeriod;
+
 	private long observationPeriodMilliseconds;
 	private boolean isStarted;
-	private boolean isCancelled;
 
 	public PollingProgressSource(ReadFileProgress fileProgressReader, Duration minimalObservationPeriod) {
 		this.fileProgressReader = fileProgressReader;
@@ -50,13 +50,7 @@ public class PollingProgressSource extends Thread {
 		}
 
 		return e -> {
-			emittersLock.lock();
-			try {
-				progressEmitters.put(e, observationMilliseconds);
-				emittersNotEmpty.signal();
-			} finally {
-				emittersLock.unlock();
-			}
+			progressEmitters.put(e, observationMilliseconds);
 
 			e.setDisposable(new Disposable() {
 				@Override
@@ -86,12 +80,10 @@ public class PollingProgressSource extends Thread {
 
 			e.onNext(fileProgressReader.getFileProgress());
 
-			if (isStarted) return;
-
 			synchronized (startSyncObject) {
 				if (isStarted) return;
 
-				start();
+				pollingExecutor.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
 				isStarted = true;
 			}
@@ -100,51 +92,27 @@ public class PollingProgressSource extends Thread {
 
 	@Override
 	public void run() {
-		while (!isCancelled) {
-			try {
-				Thread.sleep(observationPeriodMilliseconds);
-			} catch (InterruptedException e) {
-				notificationExecutor.execute(new ErrorEmitter(e, progressEmitters.keySet()));
+		try {
+			notificationExecutor.execute(
+				new ProgressEmitter(
+					fileProgressReader.getFileProgress(),
+					progressEmitters.keySet()));
+		} catch (Throwable t) {
+			notificationExecutor.execute(new ErrorEmitter(t, progressEmitters.keySet()));
+		}
 
-				return;
-			}
+		if (!progressEmitters.isEmpty()) {
+			pollingExecutor.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+			return;
+		}
 
-			if (progressEmitters.isEmpty()) {
-				emittersLock.lock();
-				try {
-					emittersNotEmpty.await();
-				} catch (InterruptedException e) {
-					notificationExecutor.execute(new ErrorEmitter(e, progressEmitters.keySet()));
-
-					return;
-				} finally {
-					emittersLock.unlock();
-				}
-			}
-
-			try {
-				notificationExecutor.execute(
-					new ProgressEmitter(
-						fileProgressReader.getFileProgress(),
-						progressEmitters.keySet()));
-			} catch (Throwable t) {
-				notificationExecutor.execute(new ErrorEmitter(t, progressEmitters.keySet()));
-
-				return;
-			}
+		synchronized (startSyncObject) {
+			isStarted = false;
 		}
 	}
 
-	public void cancel() {
-		isCancelled = true;
-		progressEmitters.clear();
-
-		emittersLock.lock();
-		try {
-			emittersNotEmpty.signal();
-		} finally {
-			emittersLock.unlock();
-		}
+	public void close() {
+		pollingExecutor.shutdown();
 	}
 
 	private static class ProgressEmitter implements Runnable {

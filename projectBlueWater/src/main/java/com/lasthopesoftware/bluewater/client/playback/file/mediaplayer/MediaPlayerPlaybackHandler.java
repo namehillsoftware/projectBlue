@@ -130,7 +130,7 @@ implements
 		}
 
 		if (mediaPlayerPositionSource.isCreated())
-			mediaPlayerPositionSource.getObject().cancel();
+			mediaPlayerPositionSource.getObject().close();
 
 		MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 	}

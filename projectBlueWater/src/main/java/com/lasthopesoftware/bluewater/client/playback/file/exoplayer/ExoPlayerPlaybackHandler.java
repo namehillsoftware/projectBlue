@@ -169,7 +169,7 @@ implements
 		exoPlayer.stop();
 
 		if (exoPlayerPositionSource.isCreated())
-			exoPlayerPositionSource.getObject().cancel();
+			exoPlayerPositionSource.getObject().close();
 
 		exoPlayer.release();
 	}
