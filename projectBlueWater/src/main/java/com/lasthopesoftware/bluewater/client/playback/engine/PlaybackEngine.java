@@ -369,7 +369,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 					positionedPlayableFile.getPlayableFile().observeProgress(Duration.ZERO).firstElement()
 						.subscribe(p -> {
 							np.playlistPosition = positionedPlayableFile.getPlaylistPosition();
-							np.filePosition = p.position;
+							np.filePosition = p.getMillis();
 							m.sendResolution(np);
 						}, m::sendRejection));
 			})

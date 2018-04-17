@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.specs.Gi
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.MediaPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -24,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 
-	private static List<FileProgress> collectedProgresses = new ArrayList<>();
+	private static List<Duration> collectedProgresses = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -36,7 +35,7 @@ public class WhenObservingThePlaybackPositionAtPeriodLessThan100Milliseconds {
 
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
 		mediaPlayerPlaybackHandler.promisePlayback();
-		final ConnectableObservable<FileProgress> progressObservable = mediaPlayerPlaybackHandler
+		final ConnectableObservable<Duration> progressObservable = mediaPlayerPlaybackHandler
 			.observeProgress(Duration.millis(5))
 			.publish();
 

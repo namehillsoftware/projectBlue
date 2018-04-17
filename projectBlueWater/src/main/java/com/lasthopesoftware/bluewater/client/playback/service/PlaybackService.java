@@ -1014,7 +1014,7 @@ implements
 		final Disposable localFilePositionSubscription = filePositionSubscription =
 			playbackHandler.observeProgress(Duration.standardSeconds(1))
 				.distinctUntilChanged()
-				.subscribe(new TrackPositionBroadcaster(this));
+				.subscribe(new TrackPositionBroadcaster(this, playbackHandler));
 
 		playbackHandler
 			.promisePlayback()

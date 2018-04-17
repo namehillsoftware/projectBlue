@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.joda.time.Duration;
@@ -43,7 +42,12 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public Observable<FileProgress> observeProgress(Duration observationPeriod) {
-		return Observable.just(new FileProgress(0, duration));
+	public Observable<Duration> observeProgress(Duration observationPeriod) {
+		return Observable.just(Duration.ZERO);
+	}
+
+	@Override
+	public Duration getDuration() {
+		return Duration.millis(duration);
 	}
 }

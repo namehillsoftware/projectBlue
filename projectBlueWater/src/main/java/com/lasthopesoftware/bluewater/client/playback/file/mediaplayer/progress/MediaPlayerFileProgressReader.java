@@ -3,8 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress;
+
+import org.joda.time.Duration;
 
 public class MediaPlayerFileProgressReader implements ReadFileProgress {
 
@@ -12,36 +13,21 @@ public class MediaPlayerFileProgressReader implements ReadFileProgress {
 
 	private final MediaPlayer mediaPlayer;
 
-	private FileProgress fileProgress = new FileProgress(0, 0);
+	private Duration fileProgress = Duration.ZERO;
 
 	public MediaPlayerFileProgressReader(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
 	}
 
 	@Override
-	public synchronized FileProgress getFileProgress() {
+	public synchronized Duration getFileProgress() {
 		if (!mediaPlayer.isPlaying()) return fileProgress;
 
-		final long position;
 		try {
-			position = mediaPlayer.getCurrentPosition();
+			return fileProgress = Duration.millis(mediaPlayer.getCurrentPosition());
 		} catch (IllegalStateException e) {
 			reporter.reportIllegalStateException(e, "reading position");
 			return fileProgress;
 		}
-
-		final long duration;
-		try {
-			duration = mediaPlayer.getDuration();
-		} catch (IllegalStateException e) {
-			reporter.reportIllegalStateException(e, "reading duration");
-			return getUpdatedFileProgress(position, fileProgress.duration);
-		}
-
-		return getUpdatedFileProgress(position, duration);
-	}
-
-	private FileProgress getUpdatedFileProgress(long position, long duration) {
-		return fileProgress = new FileProgress(position, duration);
 	}
 }

@@ -26,7 +26,7 @@ public class PollingProgressSource implements Runnable {
 	private final ReentrantLock periodSync = new ReentrantLock();
 	private final Object startSyncObject = new Object();
 
-	private final Map<ObservableEmitter<FileProgress>, Long> progressEmitters = new ConcurrentHashMap<>();
+	private final Map<ObservableEmitter<Duration>, Long> progressEmitters = new ConcurrentHashMap<>();
 	private final ReadFileProgress fileProgressReader;
 	private final long minimalObservationPeriod;
 
@@ -38,7 +38,7 @@ public class PollingProgressSource implements Runnable {
 		this.minimalObservationPeriod = minimalObservationPeriod.getMillis();
 	}
 
-	public ObservableOnSubscribe<FileProgress> observePeriodically(Duration observationPeriod) {
+	public ObservableOnSubscribe<Duration> observePeriodically(Duration observationPeriod) {
 		final long observationMilliseconds = observationPeriod.getMillis();
 		periodSync.lock();
 		try {
@@ -117,17 +117,17 @@ public class PollingProgressSource implements Runnable {
 
 	private static class ProgressEmitter implements Runnable {
 
-		private final FileProgress fileProgress;
-		private final Set<ObservableEmitter<FileProgress>> emitters;
+		private final Duration fileProgress;
+		private final Set<ObservableEmitter<Duration>> emitters;
 
-		ProgressEmitter(FileProgress fileProgress, Set<ObservableEmitter<FileProgress>> emitters) {
+		ProgressEmitter(Duration fileProgress, Set<ObservableEmitter<Duration>> emitters) {
 			this.fileProgress = fileProgress;
 			this.emitters = emitters;
 		}
 
 		@Override
 		public void run() {
-			for (ObservableEmitter<FileProgress> emitter : emitters)
+			for (ObservableEmitter<Duration> emitter : emitters)
 				emitter.onNext(fileProgress);
 		}
 	}
@@ -135,16 +135,16 @@ public class PollingProgressSource implements Runnable {
 	private static class ErrorEmitter implements Runnable {
 
 		private final Throwable error;
-		private final Set<ObservableEmitter<FileProgress>> emitters;
+		private final Set<ObservableEmitter<Duration>> emitters;
 
-		ErrorEmitter(Throwable error, Set<ObservableEmitter<FileProgress>> emitters) {
+		ErrorEmitter(Throwable error, Set<ObservableEmitter<Duration>> emitters) {
 			this.error = error;
 			this.emitters = emitters;
 		}
 
 		@Override
 		public void run() {
-			for (ObservableEmitter<FileProgress> emitter : emitters)
+			for (ObservableEmitter emitter : emitters)
 				emitter.onError(error);
 		}
 	}

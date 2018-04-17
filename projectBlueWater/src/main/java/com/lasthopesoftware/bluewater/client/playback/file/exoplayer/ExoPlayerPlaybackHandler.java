@@ -10,7 +10,6 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -37,6 +36,7 @@ implements
 
 	private final ExoPlayer exoPlayer;
 	private final Promise<PlayableFile> playbackHandlerPromise;
+	private final Duration duration;
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
@@ -53,6 +53,7 @@ implements
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
 		exoPlayer.addListener(this);
+		duration = Duration.millis(exoPlayer.getDuration());
 
 		this.playbackHandlerPromise = new Promise<>((MessengerOperator<PlayableFile>) this);
 	}
@@ -69,10 +70,15 @@ implements
 	}
 
 	@Override
-	public Observable<FileProgress> observeProgress(Duration observationPeriod) {
+	public Observable<Duration> observeProgress(Duration observationPeriod) {
 		return Observable
 			.create(exoPlayerPositionSource.getObject().observePeriodically(observationPeriod))
 			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
+	}
+
+	@Override
+	public Duration getDuration() {
+		return duration;
 	}
 
 	@Override

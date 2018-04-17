@@ -12,9 +12,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenObservingThePlaybackPosition {
+public class WhenGettingThePlaybackDuration {
 
-	private static Duration progress;
+	private static Duration duration;
 
 	@BeforeClass
 	public static void before() {
@@ -24,13 +24,12 @@ public class WhenObservingThePlaybackPosition {
 		when(mockMediaPlayer.getDuration()).thenReturn(100);
 
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
-		progress = mediaPlayerPlaybackHandler
-			.observeProgress(Duration.ZERO)
-			.blockingFirst();
+
+		duration = mediaPlayerPlaybackHandler.getDuration();
 	}
 
 	@Test
 	public void thenThePlaybackPositionIsCorrect() {
-		assertThat(progress).isEqualTo(Duration.millis(50));
+		assertThat(duration).isEqualTo(Duration.millis(100));
 	}
 }

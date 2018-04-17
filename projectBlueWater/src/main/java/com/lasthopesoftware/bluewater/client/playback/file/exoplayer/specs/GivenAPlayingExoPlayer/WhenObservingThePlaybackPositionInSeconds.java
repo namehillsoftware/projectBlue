@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.Give
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -23,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenObservingThePlaybackPositionInSeconds {
 
-	private static List<FileProgress> collectedProgresses = new ArrayList<>();
+	private static List<Duration> collectedProgresses = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -34,7 +33,7 @@ public class WhenObservingThePlaybackPositionInSeconds {
 
 		final ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
 		exoPlayerPlaybackHandler.promisePlayback();
-		final ConnectableObservable<FileProgress> progressObservable = exoPlayerPlaybackHandler
+		final ConnectableObservable<Duration> progressObservable = exoPlayerPlaybackHandler
 			.observeProgress(Duration.standardSeconds(1))
 			.publish();
 

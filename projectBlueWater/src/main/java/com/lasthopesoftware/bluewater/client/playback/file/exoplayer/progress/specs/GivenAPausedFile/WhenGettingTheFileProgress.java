@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.s
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenGettingTheFileProgress {
 
-	private static FileProgress progress;
+	private static Duration progress;
 
 	@BeforeClass
 	public static void before() {
@@ -26,6 +26,6 @@ public class WhenGettingTheFileProgress {
 
 	@Test
 	public void thenTheFileProgressIsCorrect() {
-		assertThat(progress).isEqualTo(new FileProgress(0, 0));
+		assertThat(progress).isEqualTo(Duration.ZERO);
 	}
 }

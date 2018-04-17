@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.FileProgress;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenGettingTheFileProgress {
 
-	private static FileProgress progress;
+	private static Duration progress;
 
 	@BeforeClass
 	public static void before() {
@@ -39,6 +39,6 @@ public class WhenGettingTheFileProgress {
 
 	@Test
 	public void thenTheFileProgressIsLastValidFileProgress() {
-		assertThat(progress).isEqualTo(new FileProgress(78, 101));
+		assertThat(progress).isEqualTo(Duration.millis(78));
 	}
 }
