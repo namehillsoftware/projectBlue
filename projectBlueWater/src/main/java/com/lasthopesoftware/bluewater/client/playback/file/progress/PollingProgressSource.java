@@ -5,6 +5,7 @@ import com.annimon.stream.Stream;
 
 import org.joda.time.Duration;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,23 +93,26 @@ public class PollingProgressSource implements Runnable {
 
 	@Override
 	public void run() {
+		if (progressEmitters.isEmpty()) {
+			synchronized (startSyncObject) {
+				if (progressEmitters.isEmpty()) {
+					isStarted = false;
+					return;
+				}
+			}
+		}
+
 		try {
 			notificationExecutor.execute(
 				new ProgressEmitter(
 					fileProgressReader.getFileProgress(),
-					progressEmitters.keySet()));
+					new HashSet<>(progressEmitters.keySet())));
 		} catch (Throwable t) {
-			notificationExecutor.execute(new ErrorEmitter(t, progressEmitters.keySet()));
+			notificationExecutor.execute(
+				new ErrorEmitter(t, new HashSet<>(progressEmitters.keySet())));
 		}
 
-		if (!progressEmitters.isEmpty()) {
-			pollingExecutor.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
-			return;
-		}
-
-		synchronized (startSyncObject) {
-			isStarted = false;
-		}
+		pollingExecutor.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 	}
 
 	public void close() {
@@ -127,8 +131,10 @@ public class PollingProgressSource implements Runnable {
 
 		@Override
 		public void run() {
-			for (ObservableEmitter<Duration> emitter : emitters)
-				emitter.onNext(fileProgress);
+			for (ObservableEmitter<Duration> emitter : emitters) {
+				if (!emitter.isDisposed())
+					emitter.onNext(fileProgress);
+			}
 		}
 	}
 
@@ -144,8 +150,10 @@ public class PollingProgressSource implements Runnable {
 
 		@Override
 		public void run() {
-			for (ObservableEmitter emitter : emitters)
-				emitter.onError(error);
+			for (ObservableEmitter emitter : emitters) {
+				if (!emitter.isDisposed())
+					emitter.onError(error);
+			}
 		}
 	}
 }
