@@ -4,7 +4,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.io.IOException;
+import org.joda.time.Duration;
+
+import io.reactivex.Observable;
 
 public class FakeBufferingPlaybackHandler
 implements
@@ -24,18 +26,8 @@ implements
 		isPlaying = false;
 	}
 
-	@Override
-	public long getCurrentPosition() {
-		return this.currentPosition;
-	}
-
 	public void setCurrentPosition(int position) {
 		this.currentPosition = position;
-	}
-
-	@Override
-	public long getDuration() {
-		return 0;
 	}
 
 	@Override
@@ -45,12 +37,22 @@ implements
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 
 	}
 
 	@Override
 	public Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile() {
 		return new Promise<>(this);
+	}
+
+	@Override
+	public Observable<Duration> observeProgress(Duration observationPeriod) {
+		return Observable.just(Duration.millis(currentPosition));
+	}
+
+	@Override
+	public Duration getDuration() {
+		return Duration.ZERO;
 	}
 }

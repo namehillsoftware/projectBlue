@@ -9,14 +9,21 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
 
 public class ExoPlayerPlaybackHandler
 implements
@@ -29,12 +36,24 @@ implements
 
 	private final ExoPlayer exoPlayer;
 	private final Promise<PlayableFile> playbackHandlerPromise;
+	private final Duration duration;
+
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
+
+	private final CreateAndHold<PollingProgressSource> exoPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
+		@Override
+		protected PollingProgressSource create() {
+			return new PollingProgressSource(
+				new ExoPlayerFileProgressReader(exoPlayer),
+				Duration.millis(100));
+		}
+	};
 
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
 		exoPlayer.addListener(this);
+		duration = Duration.millis(exoPlayer.getDuration());
 
 		this.playbackHandlerPromise = new Promise<>((MessengerOperator<PlayableFile>) this);
 	}
@@ -51,13 +70,15 @@ implements
 	}
 
 	@Override
-	public long getCurrentPosition() {
-		return exoPlayer.getCurrentPosition();
+	public Observable<Duration> observeProgress(Duration observationPeriod) {
+		return Observable
+			.create(exoPlayerPositionSource.getObject().observePeriodically(observationPeriod))
+			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
 	}
 
 	@Override
-	public long getDuration() {
-		return exoPlayer.getDuration();
+	public Duration getDuration() {
+		return duration;
 	}
 
 	@Override
@@ -68,7 +89,7 @@ implements
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		run();
 	}
 
@@ -152,6 +173,10 @@ implements
 		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
+
+		if (exoPlayerPositionSource.isCreated())
+			exoPlayerPositionSource.getObject().close();
+
 		exoPlayer.release();
 	}
 }

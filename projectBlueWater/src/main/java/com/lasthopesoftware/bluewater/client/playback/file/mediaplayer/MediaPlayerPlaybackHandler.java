@@ -6,15 +6,22 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
+import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerFileProgressReader;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
 
 public final class MediaPlayerPlaybackHandler
 implements
@@ -32,8 +39,16 @@ implements
 	private final Promise<PlayableFile> playbackPromise;
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
+	private Duration duration;
 
-	private int previousMediaPlayerPosition;
+	private final CreateAndHold<PollingProgressSource> mediaPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
+		@Override
+		protected PollingProgressSource create() {
+			return new PollingProgressSource(
+				new MediaPlayerFileProgressReader(mediaPlayer),
+				Duration.millis(100));
+		}
+	};
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -56,24 +71,19 @@ implements
 	}
 
 	@Override
-	public long getCurrentPosition() {
-		try {
-			return isPlaying()
-				? previousMediaPlayerPosition = mediaPlayer.getCurrentPosition()
-				: previousMediaPlayerPosition;
-		} catch (IllegalStateException e) {
-			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track position");
-			return previousMediaPlayerPosition;
-		}
+	public Observable<Duration> observeProgress(Duration observationPeriod) {
+		return Observable
+			.create(mediaPlayerPositionSource.getObject().observePeriodically(observationPeriod))
+			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
 	}
 
 	@Override
-	public long getDuration() {
+	public synchronized Duration getDuration() {
 		try {
-			return mediaPlayer.getDuration();
+			return Duration.millis(mediaPlayer.getDuration());
 		} catch (IllegalStateException e) {
 			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
-			return 0;
+			return Duration.ZERO;
 		}
 	}
 
@@ -84,11 +94,7 @@ implements
 		try {
 			mediaPlayer.start();
 		} catch (IllegalStateException e) {
-			try {
-				close();
-			} catch (IOException io) {
-				logger.warn("There was an error closing the media player when handling the `IllegalStateException` - ignoring and continuing with rejection", io);
-			}
+			close();
 
 			playbackHandlerMessenger.sendRejection(new MediaPlayerException(this, mediaPlayer, e));
 		}
@@ -123,7 +129,7 @@ implements
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		logger.info("Closing the media player");
 
 		try {
@@ -133,16 +139,15 @@ implements
 			mediaPlayerIllegalStateReporter.reportIllegalStateException(se, "stopping");
 		}
 
+		if (mediaPlayerPositionSource.isCreated())
+			mediaPlayerPositionSource.getObject().close();
+
 		MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 	}
 
 	@Override
 	public void run() {
-		try {
-			close();
-			playbackHandlerMessenger.sendRejection(new CancellationException());
-		} catch (IOException e) {
-			playbackHandlerMessenger.sendRejection(e);
-		}
+		close();
+		playbackHandlerMessenger.sendRejection(new CancellationException());
 	}
 }

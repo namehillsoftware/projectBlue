@@ -4,27 +4,29 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
+import org.joda.time.Duration;
+
 import io.reactivex.functions.Consumer;
 
-public class TrackPositionBroadcaster implements Consumer<Long> {
+public class TrackPositionBroadcaster implements Consumer<Duration> {
 	private CreateAndHold<LocalBroadcastManager> lazyLocalBroadcastManager;
-	private final PlayableFile playbackHandler;
+	private final PlayingFile playingFile;
 
-	public TrackPositionBroadcaster(Context context, PlayableFile playbackHandler) {
+	public TrackPositionBroadcaster(Context context, PlayingFile playingFile) {
 		lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(context));
-		this.playbackHandler = playbackHandler;
+		this.playingFile = playingFile;
 	}
 
 	@Override
-	public void accept(Long newPosition) throws Exception {
+	public void accept(Duration fileProgress) {
 		final Intent trackPositionChangedIntent = new Intent(trackPositionUpdate);
-		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, newPosition);
-		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, playbackHandler.getDuration());
+		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, fileProgress.getMillis());
+		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, playingFile.getDuration());
 
 		lazyLocalBroadcastManager.getObject().sendBroadcast(trackPositionChangedIntent);
 	}

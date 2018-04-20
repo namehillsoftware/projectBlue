@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.io.IOException;
+import org.joda.time.Duration;
+
+import io.reactivex.Observable;
 
 public class EmptyPlaybackHandler
 implements IBufferingPlaybackFile, PlayableFile {
@@ -25,27 +27,27 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public long getCurrentPosition() {
-		return 0;
-	}
-
-	@Override
-	public long getDuration() {
-		return duration;
-	}
-
-	@Override
 	public Promise<PlayableFile> promisePlayback() {
 		return new Promise<>(this);
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 
 	}
 
 	@Override
 	public Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile() {
 		return new Promise<>(this);
+	}
+
+	@Override
+	public Observable<Duration> observeProgress(Duration observationPeriod) {
+		return Observable.just(Duration.ZERO);
+	}
+
+	@Override
+	public Duration getDuration() {
+		return Duration.millis(duration);
 	}
 }
