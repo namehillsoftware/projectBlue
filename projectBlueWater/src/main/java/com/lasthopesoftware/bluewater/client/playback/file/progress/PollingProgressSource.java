@@ -34,7 +34,10 @@ public class PollingProgressSource implements Runnable {
 	private long observationPeriodMilliseconds;
 	private boolean isStarted;
 
-	public PollingProgressSource(ReadFileProgress fileProgressReader, Duration minimalObservationPeriod) {
+	public PollingProgressSource(
+		ReadFileProgress fileProgressReader,
+		NotifyFilePlaybackComplete notifyFilePlaybackComplete,
+		Duration minimalObservationPeriod) {
 		this.fileProgressReader = fileProgressReader;
 		this.minimalObservationPeriod = minimalObservationPeriod.getMillis();
 	}

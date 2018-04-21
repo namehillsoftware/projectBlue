@@ -46,6 +46,7 @@ implements
 		protected PollingProgressSource create() {
 			return new PollingProgressSource(
 				new ExoPlayerFileProgressReader(exoPlayer),
+				runnable -> {},
 				Duration.millis(100));
 		}
 	};

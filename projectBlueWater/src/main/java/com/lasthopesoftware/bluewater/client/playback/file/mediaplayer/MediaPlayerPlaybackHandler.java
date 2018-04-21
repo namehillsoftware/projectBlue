@@ -46,6 +46,7 @@ implements
 		protected PollingProgressSource create() {
 			return new PollingProgressSource(
 				new MediaPlayerFileProgressReader(mediaPlayer),
+				r -> {},
 				Duration.millis(100));
 		}
 	};
