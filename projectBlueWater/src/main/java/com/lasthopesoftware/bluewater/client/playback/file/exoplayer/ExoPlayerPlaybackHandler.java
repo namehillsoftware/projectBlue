@@ -10,7 +10,8 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.completion.ExoPlayerPlaybackCompletedNotifier;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -45,14 +46,16 @@ implements
 	private final CreateAndHold<PollingProgressSource> exoPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
 		protected PollingProgressSource create() {
-			final ExoPlayerPlaybackCompletedNotifier notifier = new ExoPlayerPlaybackCompletedNotifier();
+			final ExoPlayerPlaybackCompletedNotifier completedNotifier = new ExoPlayerPlaybackCompletedNotifier();
+			exoPlayer.addListener(completedNotifier);
 
-			exoPlayer.addListener(notifier);
+			final ExoPlayerPlaybackErrorNotifier errorNotifier = new ExoPlayerPlaybackErrorNotifier(ExoPlayerPlaybackHandler.this);
+			exoPlayer.addListener(errorNotifier);
 
-			return new PollingProgressSource<ExoPlayerException>(
+			return new PollingProgressSource<>(
 				new ExoPlayerFileProgressReader(exoPlayer),
-				notifier,
-				(a) -> {},
+				completedNotifier,
+				errorNotifier,
 				Duration.millis(100));
 		}
 	};
