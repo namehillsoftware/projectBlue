@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.Med
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerFileProgressReader;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackComplete;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -30,6 +31,7 @@ implements
 	MediaPlayer.OnCompletionListener,
 	MediaPlayer.OnErrorListener,
 	MediaPlayer.OnInfoListener,
+	NotifyFilePlaybackComplete,
 	Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerPlaybackHandler.class);
@@ -40,12 +42,16 @@ implements
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 
+	private Runnable playbackCompletedAction;
+
 	private final CreateAndHold<PollingProgressSource> mediaPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
 		protected PollingProgressSource create() {
+			final MediaPlayerFileProgressReader mediaPlayerFileProgressReader = new MediaPlayerFileProgressReader(mediaPlayer);
+			mediaPlayer.setOnCompletionListener(MediaPlayerPlaybackHandler.this);
 			return new PollingProgressSource(
-				new MediaPlayerFileProgressReader(mediaPlayer),
-				r -> {},
+				mediaPlayerFileProgressReader,
+				MediaPlayerPlaybackHandler.this,
 				Duration.millis(100));
 		}
 	};
@@ -114,6 +120,8 @@ implements
 	@Override
 	public void onCompletion(MediaPlayer mp) {
 		playbackHandlerMessenger.sendResolution(this);
+		if (playbackCompletedAction != null)
+			playbackCompletedAction.run();
 	}
 
 	@Override
@@ -149,5 +157,10 @@ implements
 	public void run() {
 		close();
 		playbackHandlerMessenger.sendRejection(new CancellationException());
+	}
+
+	@Override
+	public void playbackCompleted(Runnable runnable) {
+		playbackCompletedAction = runnable;
 	}
 }
