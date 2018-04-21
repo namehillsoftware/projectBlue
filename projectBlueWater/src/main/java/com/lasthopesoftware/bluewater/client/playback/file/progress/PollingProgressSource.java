@@ -19,7 +19,7 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 
-public class PollingProgressSource implements Runnable {
+public class PollingProgressSource<Error extends Exception> implements Runnable {
 
 	private static final Executor notificationExecutor = Executors.newCachedThreadPool();
 
@@ -37,11 +37,13 @@ public class PollingProgressSource implements Runnable {
 	public PollingProgressSource(
 		ReadFileProgress fileProgressReader,
 		NotifyFilePlaybackComplete notifyFilePlaybackComplete,
+		NotifyFilePlaybackError<Error> notifyPlaybackError,
 		Duration minimalObservationPeriod) {
 
 		this.fileProgressReader = fileProgressReader;
 		this.minimalObservationPeriod = minimalObservationPeriod.getMillis();
 		notifyFilePlaybackComplete.playbackCompleted(this::whenPlaybackCompleted);
+		notifyPlaybackError.playbackError(this::onPlaybackError);
 	}
 
 	public ObservableOnSubscribe<Duration> observePeriodically(Duration observationPeriod) {
@@ -125,6 +127,11 @@ public class PollingProgressSource implements Runnable {
 			emitter.onComplete();
 
 		close();
+	}
+
+	private void onPlaybackError(Error error) {
+		for (ObservableEmitter<Duration> emitter : progressEmitters.keySet())
+			emitter.onError(error);
 	}
 
 	public void close() {

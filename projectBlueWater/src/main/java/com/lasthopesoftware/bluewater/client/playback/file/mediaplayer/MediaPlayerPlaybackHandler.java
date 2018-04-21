@@ -8,12 +8,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.Med
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackComplete;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackError;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ implements
 	MediaPlayer.OnErrorListener,
 	MediaPlayer.OnInfoListener,
 	NotifyFilePlaybackComplete,
+	NotifyFilePlaybackError<MediaPlayerErrorException>,
 	Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(MediaPlayerPlaybackHandler.class);
@@ -43,14 +46,15 @@ implements
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 
 	private Runnable playbackCompletedAction;
+	private OneParameterAction<MediaPlayerErrorException> playbackErrorAction;
 
 	private final CreateAndHold<PollingProgressSource> mediaPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
 		protected PollingProgressSource create() {
-			final MediaPlayerFileProgressReader mediaPlayerFileProgressReader = new MediaPlayerFileProgressReader(mediaPlayer);
 			mediaPlayer.setOnCompletionListener(MediaPlayerPlaybackHandler.this);
-			return new PollingProgressSource(
-				mediaPlayerFileProgressReader,
+			return new PollingProgressSource<>(
+				new MediaPlayerFileProgressReader(mediaPlayer),
+				MediaPlayerPlaybackHandler.this,
 				MediaPlayerPlaybackHandler.this,
 				Duration.millis(100));
 		}
@@ -126,7 +130,10 @@ implements
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		playbackHandlerMessenger.sendRejection(new MediaPlayerErrorException(this, mp, what, extra));
+		final MediaPlayerErrorException e = new MediaPlayerErrorException(this, mp, what, extra);
+		playbackHandlerMessenger.sendRejection(e);
+		if (playbackErrorAction != null)
+			playbackErrorAction.runWith(e);
 		return true;
 	}
 
@@ -162,5 +169,10 @@ implements
 	@Override
 	public void playbackCompleted(Runnable runnable) {
 		playbackCompletedAction = runnable;
+	}
+
+	@Override
+	public void playbackError(OneParameterAction<MediaPlayerErrorException> onError) {
+		playbackErrorAction = onError;
 	}
 }

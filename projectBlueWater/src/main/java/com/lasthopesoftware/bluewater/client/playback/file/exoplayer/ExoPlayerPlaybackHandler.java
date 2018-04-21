@@ -49,9 +49,10 @@ implements
 
 			exoPlayer.addListener(notifier);
 
-			return new PollingProgressSource(
+			return new PollingProgressSource<ExoPlayerException>(
 				new ExoPlayerFileProgressReader(exoPlayer),
 				notifier,
+				(a) -> {},
 				Duration.millis(100));
 		}
 	};
