@@ -12,7 +12,7 @@ import org.mockito.stubbing.Answer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import io.reactivex.observables.ConnectableObservable;
+import io.reactivex.Observable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,9 +39,8 @@ public class WhenPlaybackCompletes {
 
 		final ExoPlayerPlaybackHandler mediaPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
 		mediaPlayerPlaybackHandler.promisePlayback();
-		final ConnectableObservable<Duration> firstObservable =
-			mediaPlayerPlaybackHandler.observeProgress(Duration.millis(500))
-				.publish();
+		final Observable<Duration> firstObservable =
+			mediaPlayerPlaybackHandler.observeProgress(Duration.millis(500));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 

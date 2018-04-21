@@ -10,6 +10,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.completion.ExoPlayerPlaybackCompletedNotifier;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
@@ -44,9 +45,13 @@ implements
 	private final CreateAndHold<PollingProgressSource> exoPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
 		protected PollingProgressSource create() {
+			final ExoPlayerPlaybackCompletedNotifier notifier = new ExoPlayerPlaybackCompletedNotifier();
+
+			exoPlayer.addListener(notifier);
+
 			return new PollingProgressSource(
 				new ExoPlayerFileProgressReader(exoPlayer),
-				runnable -> {},
+				notifier,
 				Duration.millis(100));
 		}
 	};

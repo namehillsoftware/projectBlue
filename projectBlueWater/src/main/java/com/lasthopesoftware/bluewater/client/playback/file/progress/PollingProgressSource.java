@@ -38,8 +38,10 @@ public class PollingProgressSource implements Runnable {
 		ReadFileProgress fileProgressReader,
 		NotifyFilePlaybackComplete notifyFilePlaybackComplete,
 		Duration minimalObservationPeriod) {
+
 		this.fileProgressReader = fileProgressReader;
 		this.minimalObservationPeriod = minimalObservationPeriod.getMillis();
+		notifyFilePlaybackComplete.playbackCompleted(this::whenPlaybackCompleted);
 	}
 
 	public ObservableOnSubscribe<Duration> observePeriodically(Duration observationPeriod) {
@@ -116,6 +118,13 @@ public class PollingProgressSource implements Runnable {
 		}
 
 		pollingExecutor.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+	}
+
+	private void whenPlaybackCompleted() {
+		for (ObservableEmitter<Duration> emitter : progressEmitters.keySet())
+			emitter.onComplete();
+
+		close();
 	}
 
 	public void close() {

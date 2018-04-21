@@ -39,7 +39,6 @@ implements
 	private final Promise<PlayableFile> playbackPromise;
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
-	private Duration duration;
 
 	private final CreateAndHold<PollingProgressSource> mediaPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
 		@Override
