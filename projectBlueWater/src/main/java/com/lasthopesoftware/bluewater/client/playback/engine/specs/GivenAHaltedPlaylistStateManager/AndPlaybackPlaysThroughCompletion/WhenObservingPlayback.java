@@ -18,10 +18,10 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +35,7 @@ public class WhenObservingPlayback {
 	private static boolean isCompleted;
 
 	@BeforeClass
-	public static void context() throws IOException, InterruptedException {
+	public static void context() throws InterruptedException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		final Library library = new Library();
@@ -79,7 +79,7 @@ public class WhenObservingPlayback {
 		}
 		playingPlaybackHandler.resolve();
 
-		countDownLatch.await();
+		countDownLatch.await(1, TimeUnit.SECONDS);
 
 		isPlaying = playbackEngine.isPlaying();
 	}

@@ -120,6 +120,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.functions.Functions;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
@@ -1011,17 +1012,13 @@ implements
 		broadcastChangedFile(positionedPlayableFile.asPositionedFile());
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
 
-		final Disposable localFilePositionSubscription = filePositionSubscription =
+		filePositionSubscription =
 			playbackHandler.observeProgress(Duration.standardSeconds(1))
 				.distinctUntilChanged()
-				.subscribe(new TrackPositionBroadcaster(this, playbackHandler));
-
-		playbackHandler
-			.promisePlayback()
-			.then(perform(handler -> {
-				lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
-				localFilePositionSubscription.dispose();
-			}));
+				.subscribe(
+					new TrackPositionBroadcaster(this, playbackHandler),
+					Functions.ON_ERROR_MISSING,
+					() -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile()));
 
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();

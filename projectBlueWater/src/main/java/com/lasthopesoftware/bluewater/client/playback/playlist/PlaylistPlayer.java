@@ -2,11 +2,13 @@ package com.lasthopesoftware.bluewater.client.playback.playlist;
 
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +39,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	@Override
-	public void subscribe(ObservableEmitter<PositionedPlayableFile> e) throws Exception {
+	public void subscribe(ObservableEmitter<PositionedPlayableFile> e) {
 		emitter = e;
 
 		if (!isStarted) {
@@ -108,12 +110,18 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		return positionedPlayableFile;
 	}
 
-	private Promise<PlayableFile> startFilePlayback(PositionedPlayableFile positionedPlayableFile) {
+	private Promise<PlayingFile> startFilePlayback(PositionedPlayableFile positionedPlayableFile) {
 		final PlayableFile playbackHandler = positionedPlayableFile.getPlayableFile();
 
-		final Promise<PlayableFile> promisedPlayback = playbackHandler.promisePlayback();
+		final Promise<PlayingFile> promisedPlayback = playbackHandler.promisePlayback();
 
-		promisedPlayback.then(perform(this::closeAndStartNextFile));
+		promisedPlayback
+			.then(playingFile -> {
+				playingFile.observeProgress(Duration.millis(Long.MAX_VALUE))
+					.doOnComplete(() -> closeAndStartNextFile(playbackHandler));
+
+				return null;
+			});
 
 		return promisedPlayback;
 	}
@@ -149,7 +157,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		haltPlayback();
 	}
 

@@ -9,5 +9,5 @@ public interface PlayableFile extends PlayingFile, Closeable {
 	
 	void pause();
 
-	Promise<PlayableFile> promisePlayback();
+	Promise<PlayingFile> promisePlayback();
 }

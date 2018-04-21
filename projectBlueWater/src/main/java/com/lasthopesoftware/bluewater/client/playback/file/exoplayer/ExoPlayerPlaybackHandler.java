@@ -8,6 +8,7 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
@@ -37,7 +38,6 @@ implements
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final ExoPlayer exoPlayer;
-	private final Promise<PlayableFile> playbackHandlerPromise;
 	private final Duration duration;
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
@@ -65,7 +65,6 @@ implements
 		exoPlayer.addListener(this);
 		duration = Duration.millis(exoPlayer.getDuration());
 
-		this.playbackHandlerPromise = new Promise<>((MessengerOperator<PlayableFile>) this);
 	}
 
 	@Override
@@ -77,6 +76,12 @@ implements
 	public void pause() {
 		exoPlayer.stop();
 		isPlaying = false;
+	}
+
+	@Override
+	public Promise<PlayableFile> promisePause() {
+		pause();
+		return new Promise<>((PlayableFile)this);
 	}
 
 	@Override
@@ -92,10 +97,10 @@ implements
 	}
 
 	@Override
-	public Promise<PlayableFile> promisePlayback() {
+	public Promise<PlayingFile> promisePlayback() {
 		exoPlayer.setPlayWhenReady(true);
 		isPlaying = true;
-		return playbackHandlerPromise;
+		return new Promise<PlayingFile>(this);
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerIllegalStateReporter;
@@ -88,6 +89,12 @@ implements
 	}
 
 	@Override
+	public Promise<PlayableFile> promisePause() {
+		pause();
+		return new Promise<>((PlayableFile)this);
+	}
+
+	@Override
 	public synchronized Duration getDuration() {
 		try {
 			return Duration.millis(mediaPlayer.getDuration());
@@ -98,18 +105,18 @@ implements
 	}
 
 	@Override
-	public synchronized Promise<PlayableFile> promisePlayback() {
-		if (isPlaying()) return playbackPromise;
+	public synchronized Promise<PlayingFile> promisePlayback() {
+		if (isPlaying()) return new Promise<PlayingFile>(this);
 
 		try {
 			mediaPlayer.start();
 		} catch (IllegalStateException e) {
 			close();
 
-			playbackHandlerMessenger.sendRejection(new MediaPlayerException(this, mediaPlayer, e));
+			return new Promise<>(new MediaPlayerException(this, mediaPlayer, e));
 		}
 
-		return playbackPromise;
+		return new Promise<PlayingFile>(this);
 	}
 
 	@Override

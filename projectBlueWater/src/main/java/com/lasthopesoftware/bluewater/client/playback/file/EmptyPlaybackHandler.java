@@ -27,7 +27,7 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public Promise<PlayableFile> promisePlayback() {
+	public Promise<PlayingFile> promisePlayback() {
 		return new Promise<>(this);
 	}
 
@@ -44,6 +44,11 @@ implements IBufferingPlaybackFile, PlayableFile {
 	@Override
 	public Observable<Duration> observeProgress(Duration observationPeriod) {
 		return Observable.just(Duration.ZERO);
+	}
+
+	@Override
+	public Promise<PlayableFile> promisePause() {
+		return null;
 	}
 
 	@Override

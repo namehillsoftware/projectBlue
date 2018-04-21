@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -31,7 +32,7 @@ implements
 	}
 
 	@Override
-	public Promise<PlayableFile> promisePlayback() {
+	public Promise<PlayingFile> promisePlayback() {
 		isPlaying = true;
 		return new Promise<>((messenger) -> {});
 	}
@@ -49,6 +50,11 @@ implements
 	@Override
 	public Observable<Duration> observeProgress(Duration observationPeriod) {
 		return Observable.just(Duration.millis(currentPosition));
+	}
+
+	@Override
+	public Promise<PlayableFile> promisePause() {
+		return null;
 	}
 
 	@Override
