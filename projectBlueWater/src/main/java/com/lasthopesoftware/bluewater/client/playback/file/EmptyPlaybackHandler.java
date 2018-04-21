@@ -8,7 +8,10 @@ import org.joda.time.Duration;
 import io.reactivex.Observable;
 
 public class EmptyPlaybackHandler
-implements IBufferingPlaybackFile, PlayableFile {
+implements
+	IBufferingPlaybackFile,
+	PlayableFile,
+	PlayingFile {
 
 	private final int duration;
 

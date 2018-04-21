@@ -12,7 +12,8 @@ import io.reactivex.Observable;
 public class FakeBufferingPlaybackHandler
 implements
 	IBufferingPlaybackFile,
-	PlayableFile
+	PlayableFile,
+	PlayingFile
 {
 	private boolean isPlaying;
 	private int currentPosition;

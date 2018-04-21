@@ -30,6 +30,7 @@ import io.reactivex.Observable;
 public final class MediaPlayerPlaybackHandler
 implements
 	PlayableFile,
+	PlayingFile,
 	MessengerOperator<PlayableFile>,
 	MediaPlayer.OnCompletionListener,
 	MediaPlayer.OnErrorListener,
@@ -42,7 +43,6 @@ implements
 	private static final MediaPlayerIllegalStateReporter mediaPlayerIllegalStateReporter = new MediaPlayerIllegalStateReporter(MediaPlayerPlaybackHandler.class);
 
 	private final MediaPlayer mediaPlayer;
-	private final Promise<PlayableFile> playbackPromise;
 
 	private Messenger<PlayableFile> playbackHandlerMessenger;
 
@@ -63,7 +63,6 @@ implements
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
-		playbackPromise = new Promise<>((MessengerOperator<PlayableFile>) this);
 	}
 
 	@Override

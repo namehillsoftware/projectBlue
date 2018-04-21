@@ -31,6 +31,7 @@ import io.reactivex.Observable;
 public class ExoPlayerPlaybackHandler
 implements
 	PlayableFile,
+	PlayingFile,
 	Player.EventListener,
 	MessengerOperator<PlayableFile>,
 	Runnable
