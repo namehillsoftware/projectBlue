@@ -4,7 +4,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -22,12 +24,12 @@ import static org.mockito.Mockito.when;
 
 public class WhenStartingPlayback {
 
-	private List<PositionedPlayableFile> positionedPlayableFiles;
+	private List<PositionedPlayingFile> positionedPlayingFiles;
 
 	@Before
 	public void before() {
 		PlayableFile playbackHandler = mock(PlayableFile.class);
-		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mock(PlayableFile.class)));
+		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mock(PlayingFile.class)));
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlayableFile(
@@ -47,11 +49,11 @@ public class WhenStartingPlayback {
 			.thenReturn(null);
 
 		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, mock(IPlaybackHandlerVolumeControllerFactory.class), 0))
-			.toList().subscribe(positionedPlaybackFiles -> this.positionedPlayableFiles = positionedPlaybackFiles);
+			.toList().subscribe(positionedPlayingFiles -> this.positionedPlayingFiles = positionedPlayingFiles);
 	}
 
 	@Test
 	public void thenThePlaybackCountIsCorrect() {
-		assertThat(this.positionedPlayableFiles.size()).isEqualTo(5);
+		assertThat(this.positionedPlayingFiles.size()).isEqualTo(5);
 	}
 }

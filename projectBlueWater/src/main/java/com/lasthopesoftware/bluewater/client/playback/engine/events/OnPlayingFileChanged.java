@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.events;
 
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 
 public interface OnPlayingFileChanged {
-	void onPlayingFileChanged(PositionedPlayableFile positionedPlayableFile);
+	void onPlayingFileChanged(PositionedPlayingFile positionedPlayingFile);
 }

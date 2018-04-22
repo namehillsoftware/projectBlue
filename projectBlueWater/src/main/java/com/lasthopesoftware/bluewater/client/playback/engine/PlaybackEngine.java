@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -47,7 +47,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	private final INowPlayingRepository nowPlayingRepository;
 	private final Map<Boolean, IPositionedFileQueueProvider> positionedFileQueueProviders;
 
-	private PositionedPlayableFile positionedPlayableFile;
+	private PositionedPlayingFile positionedPlayingFile;
 	private List<ServiceFile> playlist;
 	private boolean isPlaying;
 
@@ -164,8 +164,8 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 		isPlaying = false;
 
-		if (positionedPlayableFile != null)
-			saveStateToLibrary(positionedPlayableFile);
+		if (positionedPlayingFile != null)
+			saveStateToLibrary(positionedPlayingFile);
 	}
 
 	public boolean isPlaying() {
@@ -210,19 +210,19 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		startPlayback(preparedPlaybackQueue, nowPlaying.filePosition);
 	}
 
-	private ConnectableObservable<PositionedPlayableFile> startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException {
+	private ConnectableObservable<PositionedPlayingFile> startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException {
 		if (playbackSubscription != null)
 			playbackSubscription.dispose();
 
 		activePlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition);
 		isPlaying = true;
 
-		final ConnectableObservable<PositionedPlayableFile> observable = activePlayer.observe();
+		final ConnectableObservable<PositionedPlayingFile> observable = activePlayer.observe();
 
 		playbackSubscription = observable.subscribe(
 			p -> {
 				isPlaying = true;
-				positionedPlayableFile = p;
+				positionedPlayingFile = p;
 
 				if (onPlayingFileChanged != null)
 					onPlayingFileChanged.onPlayingFileChanged(p);
@@ -235,7 +235,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 						(PreparationException)e;
 
 					saveStateToLibrary(
-						new PositionedPlayableFile(
+						new PositionedPlayingFile(
 							new EmptyPlaybackHandler(0),
 							new EmptyFileVolumeManager(),
 							preparationException.getPositionedFile()));
@@ -246,7 +246,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 			},
 			() -> {
 				isPlaying = false;
-				positionedPlayableFile = null;
+				positionedPlayingFile = null;
 				activePlayer = null;
 
 				changePosition(0, 0)
@@ -310,9 +310,9 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	}
 
 	private void updatePreparedFileQueueUsingState(IPositionedFileQueueProvider fileQueueProvider) {
-		if (playlist != null && positionedPlayableFile != null)
+		if (playlist != null && positionedPlayingFile != null)
 			preparedPlaybackQueueResourceManagement
-				.tryUpdateQueue(fileQueueProvider.provideQueue(playlist, positionedPlayableFile.getPlaylistPosition() + 1));
+				.tryUpdateQueue(fileQueueProvider.provideQueue(playlist, positionedPlayingFile.getPlaylistPosition() + 1));
 	}
 
 	private Promise<NowPlaying> updateLibraryPlaylistPositions(final int playlistPosition, final int filePosition) {
@@ -354,7 +354,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 				});
 	}
 
-	private void saveStateToLibrary(PositionedPlayableFile positionedPlayableFile) {
+	private void saveStateToLibrary(PositionedPlayingFile positionedPlayingFile) {
 		if (playlist == null) return;
 
 		nowPlayingRepository
@@ -362,13 +362,13 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 			.eventually(np -> {
 				np.playlist = playlist;
 
-				if (positionedPlayableFile == null)
+				if (positionedPlayingFile == null)
 					return new Promise<>(np);
 
 				return new Promise<>(m ->
-					positionedPlayableFile.getPlayableFile().observeProgress(Duration.ZERO).firstElement()
+					positionedPlayingFile.getPlayingFile().observeProgress(Duration.ZERO).firstElement()
 						.subscribe(p -> {
-							np.playlistPosition = positionedPlayableFile.getPlaylistPosition();
+							np.playlistPosition = positionedPlayingFile.getPlaylistPosition();
 							np.filePosition = p.getMillis();
 							m.sendResolution(np);
 						}, m::sendRejection));
@@ -389,7 +389,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 		activePlayer = null;
 
-		positionedPlayableFile = null;
+		positionedPlayingFile = null;
 		playlist = null;
 
 		preparedPlaybackQueueResourceManagement.close();

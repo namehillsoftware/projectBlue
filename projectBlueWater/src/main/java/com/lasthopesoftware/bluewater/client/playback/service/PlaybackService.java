@@ -67,9 +67,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayab
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
@@ -296,7 +296,7 @@ implements
 	private Promise<PlaybackEngine> playbackEnginePromise;
 	private PlaybackEngine playbackEngine;
 	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
-	private PositionedPlayableFile positionedPlayableFile;
+	private PositionedPlayingFile positionedPlayingFile;
 	private boolean isPlaying;
 	private Disposable filePositionSubscription;
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
@@ -835,7 +835,7 @@ implements
 		}
 	}
 
-	private void handlePlaybackStarted(PositionedPlayableFile positionedPlayableFile) {
+	private void handlePlaybackStarted(PositionedPlayingFile positionedPlayableFile) {
 		isPlaying = true;
 		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted(positionedPlayableFile.asPositionedFile());
 	}
@@ -849,8 +849,8 @@ implements
 
 		playbackEngine.pause();
 
-		if (positionedPlayableFile != null)
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
+		if (positionedPlayingFile != null)
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
@@ -999,26 +999,26 @@ implements
 	    }
 	}
 
-	private void changePositionedPlaybackFile(PositionedPlayableFile positionedPlayableFile) {
-		this.positionedPlayableFile = positionedPlayableFile;
+	private void changePositionedPlaybackFile(PositionedPlayingFile positionedPlayingFile) {
+		this.positionedPlayingFile = positionedPlayingFile;
 
-		final PlayableFile playbackHandler = positionedPlayableFile.getPlayableFile();
+		final PlayingFile playingFile = positionedPlayingFile.getPlayingFile();
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
 
-		if (playbackHandler instanceof EmptyPlaybackHandler) return;
+		if (playingFile instanceof EmptyPlaybackHandler) return;
 
-		broadcastChangedFile(positionedPlayableFile.asPositionedFile());
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
+		broadcastChangedFile(positionedPlayingFile.asPositionedFile());
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
 		filePositionSubscription =
-			playbackHandler.observeProgress(Duration.standardSeconds(1))
+			playingFile.observeProgress(Duration.standardSeconds(1))
 				.distinctUntilChanged()
 				.subscribe(
-					new TrackPositionBroadcaster(this, playbackHandler),
+					new TrackPositionBroadcaster(this, playingFile),
 					Functions.ON_ERROR_MISSING,
-					() -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile()));
+					() -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile()));
 
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();
@@ -1038,7 +1038,7 @@ implements
 	}
 
 	private void onPlaylistPlaybackComplete() {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayableFile.asPositionedFile());
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
 		killService(this);
 	}

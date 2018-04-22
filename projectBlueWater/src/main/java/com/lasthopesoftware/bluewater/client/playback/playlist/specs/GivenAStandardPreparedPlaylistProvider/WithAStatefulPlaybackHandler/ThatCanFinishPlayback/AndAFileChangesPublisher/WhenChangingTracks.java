@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenChangingTracks {
 
-	private PositionedPlayableFile positionedPlayableFile;
+	private PositionedPlayingFile positionedPlayingFile;
 	private PositionedPlayableFile expectedPositionedPlayableFile;
 
 	@Before
@@ -48,13 +49,13 @@ public class WhenChangingTracks {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, new FakeVolumeControllerFactory(), 0)).subscribe(positionedPlaybackFile -> this.positionedPlayableFile = positionedPlaybackFile);
+		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, new FakeVolumeControllerFactory(), 0)).subscribe(positionedPlayingFile -> this.positionedPlayingFile = positionedPlayingFile);
 
 		playbackHandler.resolve();
 	}
 
 	@Test
 	public void thenTheChangeCanBeObserved() {
-		assertThat(this.positionedPlayableFile).isEqualTo(this.expectedPositionedPlayableFile);
+		assertThat(this.positionedPlayingFile).isEqualTo(this.expectedPositionedPlayableFile);
 	}
 }
