@@ -8,14 +8,19 @@ import org.joda.time.Duration;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
+import io.reactivex.observables.ConnectableObservable;
 
 public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 
-	private final Observable<Duration> observable;
+	private final ConnectableObservable<Duration> observable;
 	private ObservableEmitter<Duration> observableEmitter;
 
 	public ResolveablePlaybackHandler() {
-		observable = Observable.create(e -> observableEmitter = e);
+		observable = Observable.<Duration>create(e -> {
+			observableEmitter = e;
+		}).publish();
+
+		observable.connect();
 	}
 
 	public void resolve() {

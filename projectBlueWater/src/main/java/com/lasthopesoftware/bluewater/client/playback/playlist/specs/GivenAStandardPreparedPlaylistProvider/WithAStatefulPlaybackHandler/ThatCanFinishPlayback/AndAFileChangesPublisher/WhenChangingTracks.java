@@ -56,6 +56,7 @@ public class WhenChangingTracks {
 
 	@Test
 	public void thenTheChangeCanBeObserved() {
-		assertThat(this.positionedPlayingFile).isEqualTo(this.expectedPositionedPlayableFile);
+		assertThat(positionedPlayingFile.asPositionedFile())
+			.isEqualTo(expectedPositionedPlayableFile.asPositionedFile());
 	}
 }
