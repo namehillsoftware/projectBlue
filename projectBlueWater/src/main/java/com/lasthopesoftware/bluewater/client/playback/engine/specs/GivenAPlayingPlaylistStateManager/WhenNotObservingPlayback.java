@@ -67,7 +67,7 @@ public class WhenNotObservingPlayback {
 	}
 
 	@Test
-	public void thenTheSavedTrackPositionIsZero() {
+	public void thenTheSavedTrackPositionIsOne() {
 		assertThat(library.getNowPlayingId()).isEqualTo(1);
 	}
 

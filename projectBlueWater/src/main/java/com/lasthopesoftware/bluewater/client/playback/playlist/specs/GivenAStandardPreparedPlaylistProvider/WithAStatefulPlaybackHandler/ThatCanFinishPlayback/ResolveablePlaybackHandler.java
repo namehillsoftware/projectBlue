@@ -2,28 +2,38 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
-import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
+
+import org.joda.time.Duration;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
 
 public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 
-	private final Promise<PlayingFile> promise;
-	private Messenger<PlayingFile> resolve;
+	private final Observable<Duration> observable;
+	private ObservableEmitter<Duration> observableEmitter;
 
 	public ResolveablePlaybackHandler() {
-		promise = new Promise<>((messenger) -> this.resolve = messenger);
+		observable = Observable.create(e -> observableEmitter = e);
 	}
 
 	public void resolve() {
-		if (this.resolve != null)
-			this.resolve.sendResolution(this);
+		if (observableEmitter != null)
+			observableEmitter.onComplete();
 
-		this.resolve = null;
+		observableEmitter = null;
+	}
+
+	@Override
+	public Observable<Duration> observeProgress(Duration observationPeriod) {
+		return super.observeProgress(observationPeriod)
+			.concatWith(observable);
 	}
 
 	@Override
 	public Promise<PlayingFile> promisePlayback() {
 		super.promisePlayback();
-		return promise;
+		return new Promise<>(this);
 	}
 }

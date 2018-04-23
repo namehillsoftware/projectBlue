@@ -55,7 +55,8 @@ implements
 
 	@Override
 	public Promise<PlayableFile> promisePause() {
-		return null;
+		pause();
+		return new Promise<>(this);
 	}
 
 	@Override
