@@ -18,6 +18,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,7 +51,7 @@ public class WhenPersistingTheSelectedPlaybackEngine {
 			new PlaybackEngineTypeChangedBroadcaster(RuntimeEnvironment.application))
 				.selectPlaybackEngine(PlaybackEngineType.ExoPlayer);
 
-		countDownLatch.await();
+		countDownLatch.await(1, TimeUnit.SECONDS);
 	}
 
 	@Test

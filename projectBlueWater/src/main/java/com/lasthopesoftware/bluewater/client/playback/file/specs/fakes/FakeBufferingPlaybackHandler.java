@@ -35,7 +35,7 @@ implements
 	@Override
 	public Promise<PlayingFile> promisePlayback() {
 		isPlaying = true;
-		return new Promise<>((messenger) -> {});
+		return new Promise<>(this);
 	}
 
 	@Override
