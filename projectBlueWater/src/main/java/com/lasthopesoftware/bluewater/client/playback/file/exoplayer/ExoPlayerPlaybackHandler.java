@@ -9,13 +9,10 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
-import com.namehillsoftware.handoff.Messenger;
-import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -33,7 +30,6 @@ implements
 	PlayableFile,
 	PlayingFile,
 	Player.EventListener,
-	MessengerOperator<PlayableFile>,
 	Runnable
 {
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
@@ -41,7 +37,6 @@ implements
 	private final ExoPlayer exoPlayer;
 	private final Duration duration;
 
-	private Messenger<PlayableFile> playbackHandlerMessenger;
 	private boolean isPlaying;
 
 	private final CreateAndHold<PollingProgressSource> exoPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
@@ -82,7 +77,7 @@ implements
 	@Override
 	public Promise<PlayableFile> promisePause() {
 		pause();
-		return new Promise<>((PlayableFile)this);
+		return new Promise<>(this);
 	}
 
 	@Override
@@ -101,19 +96,12 @@ implements
 	public Promise<PlayingFile> promisePlayback() {
 		exoPlayer.setPlayWhenReady(true);
 		isPlaying = true;
-		return new Promise<PlayingFile>(this);
+		return new Promise<>(this);
 	}
 
 	@Override
 	public void close() {
 		run();
-	}
-
-	@Override
-	public void send(Messenger<PlayableFile> playbackHandlerMessenger) {
-		this.playbackHandlerMessenger = playbackHandlerMessenger;
-
-		playbackHandlerMessenger.cancellationRequested(this);
 	}
 
 	@Override
@@ -145,7 +133,6 @@ implements
 
 		isPlaying = false;
 
-		playbackHandlerMessenger.sendResolution(this);
 		exoPlayer.removeListener(this);
 	}
 
@@ -166,7 +153,6 @@ implements
 
 	private void handlePlaybackError(Throwable error) {
 		logger.error("A player error has occurred", error);
-		playbackHandlerMessenger.sendRejection(new ExoPlayerException(this, error));
 	}
 
 	@Override
