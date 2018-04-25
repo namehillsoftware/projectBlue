@@ -19,6 +19,7 @@ import java.util.List;
 import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,8 +29,10 @@ public class WhenStartingPlayback {
 
 	@Before
 	public void before() {
+		PlayingFile mockPlayingFile = mock(PlayingFile.class);
+		when(mockPlayingFile.observeProgress(any())).thenReturn(Observable.empty());
 		PlayableFile playbackHandler = mock(PlayableFile.class);
-		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mock(PlayingFile.class)));
+		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mockPlayingFile));
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlayableFile(
