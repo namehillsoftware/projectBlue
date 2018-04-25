@@ -60,8 +60,7 @@ implements
 		this.mediaPlayer = mediaPlayer;
 	}
 
-	@Override
-	public boolean isPlaying() {
+	private boolean isPlaying() {
 		try {
 			return mediaPlayer.isPlaying();
 		} catch (IllegalStateException e) {
@@ -70,8 +69,7 @@ implements
 		}
 	}
 
-	@Override
-	public void pause() {
+	private void pause() {
 		mediaPlayer.pause();
 	}
 

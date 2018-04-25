@@ -15,18 +15,8 @@ implements
 	PlayableFile,
 	PlayingFile
 {
-	private boolean isPlaying;
+
 	private int currentPosition;
-
-	@Override
-	public boolean isPlaying() {
-		return isPlaying;
-	}
-
-	@Override
-	public void pause() {
-		isPlaying = false;
-	}
 
 	public void setCurrentPosition(int position) {
 		this.currentPosition = position;
@@ -34,7 +24,6 @@ implements
 
 	@Override
 	public Promise<PlayingFile> promisePlayback() {
-		isPlaying = true;
 		return new Promise<>(this);
 	}
 
@@ -55,7 +44,6 @@ implements
 
 	@Override
 	public Promise<PlayableFile> promisePause() {
-		pause();
 		return new Promise<>(this);
 	}
 

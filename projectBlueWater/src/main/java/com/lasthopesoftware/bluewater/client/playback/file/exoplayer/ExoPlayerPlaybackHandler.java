@@ -63,13 +63,7 @@ implements
 
 	}
 
-	@Override
-	public boolean isPlaying() {
-		return isPlaying;
-	}
-
-	@Override
-	public void pause() {
+	private void pause() {
 		exoPlayer.stop();
 		isPlaying = false;
 	}

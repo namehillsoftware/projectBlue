@@ -20,16 +20,6 @@ implements
 	}
 
 	@Override
-	public boolean isPlaying() {
-		return false;
-	}
-
-	@Override
-	public void pause() {
-
-	}
-
-	@Override
 	public Promise<PlayingFile> promisePlayback() {
 		return new Promise<>(this);
 	}
