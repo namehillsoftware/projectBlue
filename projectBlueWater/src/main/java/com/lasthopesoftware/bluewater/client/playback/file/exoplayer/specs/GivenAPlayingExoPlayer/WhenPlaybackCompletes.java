@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingExoPlayer;
 
+import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
@@ -9,6 +10,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +27,7 @@ public class WhenPlaybackCompletes {
 
 	private static boolean isCompleted;
 
-	private static Player.EventListener eventListener;
+	private static List<Player.EventListener> eventListeners = new ArrayList<>();
 
 	@BeforeClass
 	public static void context() throws InterruptedException {
@@ -33,7 +36,7 @@ public class WhenPlaybackCompletes {
 		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 		doAnswer((Answer<Void>) invocation -> {
-			eventListener = invocation.getArgument(0);
+			eventListeners.add(invocation.getArgument(0));
 			return null;
 		}).when(mockExoPlayer).addListener(any());
 
@@ -53,9 +56,9 @@ public class WhenPlaybackCompletes {
 					countDownLatch.countDown();
 				});
 
-		eventListener.onPlayerStateChanged(false, Player.STATE_ENDED);
+		Stream.of(eventListeners).forEach(e -> e.onPlayerStateChanged(false, Player.STATE_ENDED));
 
-		countDownLatch.await(1, TimeUnit.SECONDS);
+		countDownLatch.await(2, TimeUnit.SECONDS);
 	}
 
 	@Test

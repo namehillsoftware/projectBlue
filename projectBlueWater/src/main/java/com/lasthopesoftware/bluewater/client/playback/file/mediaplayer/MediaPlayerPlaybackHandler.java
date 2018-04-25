@@ -11,8 +11,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackComplete;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackError;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
-import com.namehillsoftware.handoff.Messenger;
-import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -22,7 +20,6 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -31,7 +28,6 @@ public final class MediaPlayerPlaybackHandler
 implements
 	PlayableFile,
 	PlayingFile,
-	MessengerOperator<PlayableFile>,
 	MediaPlayer.OnCompletionListener,
 	MediaPlayer.OnErrorListener,
 	MediaPlayer.OnInfoListener,
@@ -44,8 +40,6 @@ implements
 
 	private final MediaPlayer mediaPlayer;
 
-	private Messenger<PlayableFile> playbackHandlerMessenger;
-
 	private Runnable playbackCompletedAction;
 	private OneParameterAction<MediaPlayerErrorException> playbackErrorAction;
 
@@ -53,6 +47,7 @@ implements
 		@Override
 		protected PollingProgressSource create() {
 			mediaPlayer.setOnCompletionListener(MediaPlayerPlaybackHandler.this);
+			mediaPlayer.setOnErrorListener(MediaPlayerPlaybackHandler.this);
 			return new PollingProgressSource<>(
 				new MediaPlayerFileProgressReader(mediaPlayer),
 				MediaPlayerPlaybackHandler.this,
@@ -90,7 +85,7 @@ implements
 	@Override
 	public Promise<PlayableFile> promisePause() {
 		pause();
-		return new Promise<>((PlayableFile)this);
+		return new Promise<>(this);
 	}
 
 	@Override
@@ -105,7 +100,7 @@ implements
 
 	@Override
 	public synchronized Promise<PlayingFile> promisePlayback() {
-		if (isPlaying()) return new Promise<PlayingFile>(this);
+		if (isPlaying()) return new Promise<>(this);
 
 		try {
 			mediaPlayer.start();
@@ -115,21 +110,11 @@ implements
 			return new Promise<>(new MediaPlayerException(this, mediaPlayer, e));
 		}
 
-		return new Promise<PlayingFile>(this);
-	}
-
-	@Override
-	public void send(Messenger<PlayableFile> playbackHandlerMessenger) {
-		this.playbackHandlerMessenger = playbackHandlerMessenger;
-
-		playbackHandlerMessenger.cancellationRequested(this);
-		mediaPlayer.setOnCompletionListener(this);
-		mediaPlayer.setOnErrorListener(this);
+		return new Promise<>(this);
 	}
 
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		playbackHandlerMessenger.sendResolution(this);
 		if (playbackCompletedAction != null)
 			playbackCompletedAction.run();
 	}
@@ -137,7 +122,6 @@ implements
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		final MediaPlayerErrorException e = new MediaPlayerErrorException(this, mp, what, extra);
-		playbackHandlerMessenger.sendRejection(e);
 		if (playbackErrorAction != null)
 			playbackErrorAction.runWith(e);
 		return true;
@@ -169,7 +153,6 @@ implements
 	@Override
 	public void run() {
 		close();
-		playbackHandlerMessenger.sendRejection(new CancellationException());
 	}
 
 	@Override
