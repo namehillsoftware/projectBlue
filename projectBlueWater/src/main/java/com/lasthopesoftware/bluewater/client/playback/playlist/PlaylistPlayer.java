@@ -149,17 +149,13 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 
 		preparingPlaybackFile
-			.then(this::changeVolumeManager)
 			.eventually(this::startFilePlayback)
 			.excuse(perform(this::handlePlaybackException));
 	}
 
-	private PositionedPlayableFile changeVolumeManager(PositionedPlayableFile positionedPlayingFile) {
-		this.volumeManager = volumeControllerFactory.manageVolume(positionedPlayingFile, volume);
-		return positionedPlayingFile;
-	}
-
 	private Promise<PlayingFile> startFilePlayback(PositionedPlayableFile positionedPlayableFile) {
+		volumeManager = volumeControllerFactory.manageVolume(positionedPlayableFile, volume);
+
 		final PlayableFile playbackHandler = positionedPlayableFile.getPlayableFile();
 
 		synchronized (stateChangeSync) {

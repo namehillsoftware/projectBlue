@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettin
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -37,7 +38,13 @@ public class WhenChangingTheVolume {
 
 	@BeforeClass
 	public static void before() {
-		final FakeBufferingPlaybackHandler playbackHandler = new FakeBufferingPlaybackHandler();
+		final FakeBufferingPlaybackHandler playbackHandler = new FakeBufferingPlaybackHandler() {
+			@Override
+			public Observable<Duration> observeProgress(Duration observationPeriod) {
+				return super.observeProgress(observationPeriod)
+					.concatWith(Observable.never());
+			}
+		};
 		playbackHandler.promisePlayback();
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
