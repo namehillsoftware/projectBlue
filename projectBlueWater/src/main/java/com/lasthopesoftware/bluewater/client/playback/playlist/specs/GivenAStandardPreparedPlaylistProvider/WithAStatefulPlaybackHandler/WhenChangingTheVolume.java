@@ -26,7 +26,8 @@ public class WhenChangingTheVolume {
 	@BeforeClass
 	public static void before() {
 		final FakeBufferingPlaybackHandler playbackHandler = new FakeBufferingPlaybackHandler();
-		playbackHandler.promisePlayback();
+		playbackHandler
+			.promisePlayback();
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlayableFile(
