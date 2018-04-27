@@ -77,7 +77,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 						positionedPlayingFile.getPlayableFileVolumeManager(),
 						positionedPlayingFile.asPositionedFile());
 
-					positionedPlayingFile = null;
+					positionedPlayableFile = null;
 
 					return null;
 				})
