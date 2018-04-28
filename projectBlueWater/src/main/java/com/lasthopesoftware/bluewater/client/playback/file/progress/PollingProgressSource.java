@@ -2,28 +2,32 @@ package com.lasthopesoftware.bluewater.client.playback.file.progress;
 
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import org.joda.time.Duration;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.schedulers.ComputationScheduler;
 
 public class PollingProgressSource<Error extends Exception> implements Runnable {
 
-	private static final Executor notificationExecutor = Executors.newCachedThreadPool();
-
-	private final ScheduledExecutorService pollingExecutor = Executors.newSingleThreadScheduledExecutor();
+	private final CreateAndHold<Scheduler> scheduler = new AbstractSynchronousLazy<Scheduler>() {
+		@Override
+		protected Scheduler create() {
+			final Scheduler scheduler = new ComputationScheduler();
+			scheduler.start();
+			return scheduler;
+		}
+	};
 	private final ReentrantLock periodSync = new ReentrantLock();
 	private final Object startSyncObject = new Object();
 
@@ -91,7 +95,7 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 			synchronized (startSyncObject) {
 				if (isStarted) return;
 
-				pollingExecutor.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+				scheduler.getObject().scheduleDirect(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
 				isStarted = true;
 			}
@@ -109,17 +113,27 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 			}
 		}
 
-		try {
-			notificationExecutor.execute(
-				new ProgressEmitter(
-					fileProgressReader.getFileProgress(),
-					new HashSet<>(progressEmitters.keySet())));
-		} catch (Throwable t) {
-			notificationExecutor.execute(
-				new ErrorEmitter(t, new HashSet<>(progressEmitters.keySet())));
-		}
+		scheduler.getObject().scheduleDirect(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
-		pollingExecutor.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+		try {
+			emitProgress(fileProgressReader.getFileProgress());
+		} catch (Throwable t) {
+			emitError(t);
+		}
+	}
+
+	private void emitProgress(Duration fileProgress) {
+		for (ObservableEmitter<Duration> emitter : progressEmitters.keySet()) {
+			if (!emitter.isDisposed())
+				emitter.onNext(fileProgress);
+		}
+	}
+
+	private void emitError(Throwable error) {
+		for (ObservableEmitter emitter : progressEmitters.keySet()) {
+			if (!emitter.isDisposed())
+				emitter.onError(error);
+		}
 	}
 
 	private void whenPlaybackCompleted() {
@@ -135,44 +149,7 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 	}
 
 	public void close() {
-		pollingExecutor.shutdown();
-	}
-
-	private static class ProgressEmitter implements Runnable {
-
-		private final Duration fileProgress;
-		private final Set<ObservableEmitter<Duration>> emitters;
-
-		ProgressEmitter(Duration fileProgress, Set<ObservableEmitter<Duration>> emitters) {
-			this.fileProgress = fileProgress;
-			this.emitters = emitters;
-		}
-
-		@Override
-		public void run() {
-			for (ObservableEmitter<Duration> emitter : emitters) {
-				if (!emitter.isDisposed())
-					emitter.onNext(fileProgress);
-			}
-		}
-	}
-
-	private static class ErrorEmitter implements Runnable {
-
-		private final Throwable error;
-		private final Set<ObservableEmitter<Duration>> emitters;
-
-		ErrorEmitter(Throwable error, Set<ObservableEmitter<Duration>> emitters) {
-			this.error = error;
-			this.emitters = emitters;
-		}
-
-		@Override
-		public void run() {
-			for (ObservableEmitter emitter : emitters) {
-				if (!emitter.isDisposed())
-					emitter.onError(error);
-			}
-		}
+		if (scheduler.isCreated())
+			scheduler.getObject().shutdown();
 	}
 }
