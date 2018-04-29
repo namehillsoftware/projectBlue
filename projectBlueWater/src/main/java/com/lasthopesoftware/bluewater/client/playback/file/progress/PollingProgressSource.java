@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.progress;
 
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Duration;
 
@@ -20,14 +20,7 @@ import io.reactivex.internal.schedulers.ComputationScheduler;
 
 public class PollingProgressSource<Error extends Exception> implements Runnable {
 
-	private final CreateAndHold<Scheduler> scheduler = new AbstractSynchronousLazy<Scheduler>() {
-		@Override
-		protected Scheduler create() {
-			final Scheduler scheduler = new ComputationScheduler();
-			scheduler.start();
-			return scheduler;
-		}
-	};
+	private final CreateAndHold<Scheduler> scheduler = new Lazy<>(ComputationScheduler::new);
 	private final ReentrantLock periodSync = new ReentrantLock();
 	private final Object startSyncObject = new Object();
 
@@ -47,7 +40,7 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 		this.fileProgressReader = fileProgressReader;
 		this.minimalObservationPeriod = minimalObservationPeriod.getMillis();
 		notifyFilePlaybackComplete.playbackCompleted(this::whenPlaybackCompleted);
-		notifyPlaybackError.playbackError(this::onPlaybackError);
+		notifyPlaybackError.playbackError(this::emitError);
 	}
 
 	public ObservableOnSubscribe<Duration> observePeriodically(Duration observationPeriod) {
@@ -137,15 +130,12 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 	}
 
 	private void whenPlaybackCompleted() {
-		for (ObservableEmitter<Duration> emitter : progressEmitters.keySet())
-			emitter.onComplete();
+		for (ObservableEmitter<Duration> emitter : progressEmitters.keySet()) {
+			if (!emitter.isDisposed())
+				emitter.onComplete();
+		}
 
 		close();
-	}
-
-	private void onPlaybackError(Error error) {
-		for (ObservableEmitter<Duration> emitter : progressEmitters.keySet())
-			emitter.onError(error);
 	}
 
 	public void close() {
