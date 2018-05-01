@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.file.progress;
 
-import android.support.annotation.NonNull;
-
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -11,34 +9,25 @@ import org.joda.time.Duration;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.schedulers.ComputationScheduler;
+import io.reactivex.internal.schedulers.RxThreadFactory;
 
 public class PollingProgressSource<Error extends Exception> implements Runnable {
 
-	private static final CreateAndHold<ScheduledExecutorService> scheduledExecutorService = new AbstractSynchronousLazy<ScheduledExecutorService>() {
+	private static final CreateAndHold<Scheduler> lazyScheduler = new AbstractSynchronousLazy<Scheduler>() {
 		@Override
-		protected ScheduledExecutorService create() {
-			return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-
-				private final AtomicInteger threadNumber = new AtomicInteger();
-
-				@Override
-				public Thread newThread(@NonNull Runnable r) {
-					final Thread thread = new Thread(
-						r,
-						"File Progress Thread " + threadNumber.getAndIncrement());
-					thread.setPriority(Thread.MIN_PRIORITY);
-					return thread;
-				}
-			});
+		protected Scheduler create() {
+			return new ComputationScheduler(
+				new RxThreadFactory(
+					"File Progress Thread",
+					Thread.MIN_PRIORITY,
+					true));
 		}
 	};
 
@@ -104,9 +93,9 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 			synchronized (startSyncObject) {
 				if (isStarted) return;
 
-				scheduledExecutorService
+				lazyScheduler
 					.getObject()
-					.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+					.scheduleDirect(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
 				isStarted = true;
 			}
@@ -124,9 +113,9 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 			}
 		}
 
-		scheduledExecutorService
+		lazyScheduler
 			.getObject()
-			.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+			.scheduleDirect(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
 		try {
 			emitProgress(fileProgressReader.getFileProgress());
