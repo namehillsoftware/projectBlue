@@ -2,11 +2,17 @@ package com.lasthopesoftware.bluewater.client.playback.playlist;
 
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,21 +20,70 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import io.reactivex.ObservableEmitter;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlaylistPlayer.class);
+
+	private final Object stateChangeSync = new Object();
 	private final PreparedPlayableFileQueue preparedPlaybackFileProvider;
 	private final IPlaybackHandlerVolumeControllerFactory volumeControllerFactory;
 	private final long preparedPosition;
+
+	private PositionedPlayingFile positionedPlayingFile;
 	private PositionedPlayableFile positionedPlayableFile;
+	private Promise<?> lastStateChangePromise = Promise.empty();
 	private float volume;
 
 	private volatile boolean isStarted;
-	private ObservableEmitter<PositionedPlayableFile> emitter;
+	private ObservableEmitter<PositionedPlayingFile> emitter;
 	private IVolumeManagement volumeManager;
+
+	private final CreateAndHold<PromisedResponse> lazyPausedPromise = new AbstractSynchronousLazy<PromisedResponse>() {
+		@Override
+		protected PromisedResponse create() {
+			return o -> positionedPlayingFile != null
+				? positionedPlayingFile
+				.getPlayingFile()
+				.promisePause()
+				.then(p -> {
+					positionedPlayableFile = new PositionedPlayableFile(
+						p,
+						positionedPlayingFile.getPlayableFileVolumeManager(),
+						positionedPlayingFile.asPositionedFile());
+
+					positionedPlayingFile = null;
+
+					return null;
+				})
+				: Promise.empty();
+		}
+	};
+
+	private final CreateAndHold<PromisedResponse> lazyResumePromise = new AbstractSynchronousLazy<PromisedResponse>() {
+		@Override
+		protected PromisedResponse create() {
+			return o -> positionedPlayableFile != null
+				? positionedPlayableFile
+				.getPlayableFile()
+				.promisePlayback()
+				.then(p -> {
+					positionedPlayingFile = new PositionedPlayingFile(
+						p,
+						positionedPlayingFile.getPlayableFileVolumeManager(),
+						positionedPlayingFile.asPositionedFile());
+
+					positionedPlayableFile = null;
+
+					return null;
+				})
+				: Promise.empty();
+		}
+	};
 
 	public PlaylistPlayer(PreparedPlayableFileQueue preparedPlaybackFileProvider, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory, long preparedPosition) {
 		this.preparedPlaybackFileProvider = preparedPlaybackFileProvider;
@@ -37,7 +92,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	@Override
-	public void subscribe(ObservableEmitter<PositionedPlayableFile> e) throws Exception {
+	public void subscribe(ObservableEmitter<PositionedPlayingFile> e) {
 		emitter = e;
 
 		if (!isStarted) {
@@ -47,22 +102,27 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	public void pause() {
-		if (positionedPlayableFile == null) return;
-
-		final PlayableFile playbackHandler = positionedPlayableFile.getPlayableFile();
-
-		if (playbackHandler.isPlaying()) playbackHandler.pause();
+		synchronized (stateChangeSync) {
+			lastStateChangePromise = lastStateChangePromise
+				.eventually(
+					lazyPausedPromise.getObject(),
+					lazyPausedPromise.getObject());
+		}
 	}
 
 	@Override
 	public void resume() {
-		if (positionedPlayableFile != null)
-			positionedPlayableFile.getPlayableFile().promisePlayback();
+		synchronized (stateChangeSync) {
+			lastStateChangePromise = lastStateChangePromise
+				.eventually(
+					lazyResumePromise.getObject(),
+					lazyResumePromise.getObject());
+		}
 	}
 
 	@Override
 	public boolean isPlaying() {
-		return positionedPlayableFile != null && positionedPlayableFile.getPlayableFile().isPlaying();
+		return positionedPlayingFile != null;
 	}
 
 	@Override
@@ -89,33 +149,58 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 
 		preparingPlaybackFile
-			.then(this::changeVolumeManager)
-			.then(this::changePlaybackFile)
 			.eventually(this::startFilePlayback)
 			.excuse(perform(this::handlePlaybackException));
 	}
 
-	private PositionedPlayableFile changeVolumeManager(PositionedPlayableFile positionedPlayableFile) {
-		this.volumeManager = volumeControllerFactory.manageVolume(positionedPlayableFile, volume);
-		return positionedPlayableFile;
-	}
+	private Promise<PlayingFile> startFilePlayback(PositionedPlayableFile positionedPlayableFile) {
+		volumeManager = volumeControllerFactory.manageVolume(positionedPlayableFile, volume);
 
-	private PositionedPlayableFile changePlaybackFile(PositionedPlayableFile positionedPlayableFile) {
-		this.positionedPlayableFile = positionedPlayableFile;
-
-		emitter.onNext(this.positionedPlayableFile);
-
-		return positionedPlayableFile;
-	}
-
-	private Promise<PlayableFile> startFilePlayback(PositionedPlayableFile positionedPlayableFile) {
 		final PlayableFile playbackHandler = positionedPlayableFile.getPlayableFile();
 
-		final Promise<PlayableFile> promisedPlayback = playbackHandler.promisePlayback();
+		synchronized (stateChangeSync) {
+			final Promise<PlayingFile> promisedPlayback = lastStateChangePromise.eventually(
+				v -> playbackHandler.promisePlayback(),
+				e -> playbackHandler.promisePlayback());
 
-		promisedPlayback.then(perform(this::closeAndStartNextFile));
+			lastStateChangePromise = promisedPlayback
+				.then(playingFile -> {
+					positionedPlayingFile = new PositionedPlayingFile(
+						playingFile,
+						positionedPlayableFile.getPlayableFileVolumeManager(),
+						positionedPlayableFile.asPositionedFile());
 
-		return promisedPlayback;
+					emitter.onNext(positionedPlayingFile);
+
+					playingFile
+						.observeProgress(Duration.millis(Long.MAX_VALUE))
+						.safeSubscribe(new Observer<Duration>() {
+							@Override
+							public void onSubscribe(Disposable d) {
+
+							}
+
+							@Override
+							public void onNext(Duration duration) {
+
+							}
+
+							@Override
+							public void onError(Throwable e) {
+
+							}
+
+							@Override
+							public void onComplete() {
+								closeAndStartNextFile(playbackHandler);
+							}
+						});
+
+					return null;
+				});
+
+			return promisedPlayback;
+		}
 	}
 
 	private void closeAndStartNextFile(PlayableFile playbackHandler) {
@@ -131,15 +216,36 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	private void haltPlayback() {
-		try {
-			if (positionedPlayableFile != null)
-				positionedPlayableFile.getPlayableFile().close();
+		synchronized (stateChangeSync) {
+			lastStateChangePromise = lastStateChangePromise
+				.eventually(
+					generateHaltPromise(),
+					generateHaltPromise())
+				.then(p -> {
+					if (p != null)
+						p.close();
+					doCompletion();
+					return null;
+				}, e -> {
+					logger.error("There was an error releasing the media player", e);
+					emitter.onError(e);
 
-			doCompletion();
-		} catch (IOException e) {
-			logger.error("There was an error releasing the media player", e);
-			emitter.onError(e);
+					return null;
+				});
 		}
+	}
+
+	private <T> PromisedResponse<T, PlayableFile> generateHaltPromise() {
+		return o -> {
+			if (positionedPlayableFile != null)
+				return new Promise<>(positionedPlayableFile.getPlayableFile());
+
+			if (positionedPlayingFile == null) return Promise.empty();
+
+			return positionedPlayingFile
+				.getPlayingFile()
+				.promisePause();
+		};
 	}
 
 	private void handlePlaybackException(Throwable exception) {
@@ -149,12 +255,12 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		haltPlayback();
 	}
 
 	private void doCompletion() {
-		this.positionedPlayableFile = null;
+		this.positionedPlayingFile = null;
 
 		emitter.onComplete();
 	}

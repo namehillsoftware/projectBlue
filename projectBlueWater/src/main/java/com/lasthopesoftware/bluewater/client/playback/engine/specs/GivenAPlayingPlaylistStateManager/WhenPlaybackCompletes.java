@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
@@ -34,7 +34,7 @@ public class WhenPlaybackCompletes {
 
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
-	private static PositionedPlayableFile observedPlaybackFile;
+	private static PositionedPlayingFile observedPlayingFile;
 	private static PositionedFile resetPositionedFile;
 
 	@BeforeClass
@@ -60,7 +60,7 @@ public class WhenPlaybackCompletes {
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
 
 		playbackEngine
-			.setOnPlayingFileChanged(f -> observedPlaybackFile = f)
+			.setOnPlayingFileChanged(f -> observedPlayingFile = f)
 			.setOnPlaylistReset(f -> resetPositionedFile = f)
 			.startPlaylist(
 				Arrays.asList(
@@ -97,7 +97,7 @@ public class WhenPlaybackCompletes {
 
 	@Test
 	public void thenTheObservedFilePositionIsCorrect() {
-		assertThat(observedPlaybackFile.asPositionedFile()).isEqualTo(new PositionedFile(4, new ServiceFile(5)));
+		assertThat(observedPlayingFile.asPositionedFile()).isEqualTo(new PositionedFile(4, new ServiceFile(5)));
 	}
 
 	@Test

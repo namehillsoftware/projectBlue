@@ -38,7 +38,7 @@ public class LazyViewFinder<TView extends View> {
 		}
 
 		@Override
-		protected T create() throws Exception {
+		protected T create() {
 			return activity.findViewById(viewId);
 		}
 	}
@@ -54,7 +54,7 @@ public class LazyViewFinder<TView extends View> {
 		}
 
 		@Override
-		protected T create() throws Exception {
+		protected T create() {
 			return view.findViewById(viewId);
 		}
 	}

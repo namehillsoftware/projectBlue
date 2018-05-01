@@ -8,7 +8,10 @@ import org.joda.time.Duration;
 import io.reactivex.Observable;
 
 public class EmptyPlaybackHandler
-implements IBufferingPlaybackFile, PlayableFile {
+implements
+	IBufferingPlaybackFile,
+	PlayableFile,
+	PlayingFile {
 
 	private final int duration;
 
@@ -17,17 +20,7 @@ implements IBufferingPlaybackFile, PlayableFile {
 	}
 
 	@Override
-	public boolean isPlaying() {
-		return false;
-	}
-
-	@Override
-	public void pause() {
-
-	}
-
-	@Override
-	public Promise<PlayableFile> promisePlayback() {
+	public Promise<PlayingFile> promisePlayback() {
 		return new Promise<>(this);
 	}
 
@@ -44,6 +37,11 @@ implements IBufferingPlaybackFile, PlayableFile {
 	@Override
 	public Observable<Duration> observeProgress(Duration observationPeriod) {
 		return Observable.just(Duration.ZERO);
+	}
+
+	@Override
+	public Promise<PlayableFile> promisePause() {
+		return null;
 	}
 
 	@Override

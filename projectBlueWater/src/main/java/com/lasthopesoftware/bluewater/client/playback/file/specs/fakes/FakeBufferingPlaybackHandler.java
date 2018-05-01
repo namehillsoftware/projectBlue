@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -11,19 +12,14 @@ import io.reactivex.Observable;
 public class FakeBufferingPlaybackHandler
 implements
 	IBufferingPlaybackFile,
-	PlayableFile
+	PlayableFile,
+	PlayingFile
 {
 	private boolean isPlaying;
 	private int currentPosition;
 
-	@Override
 	public boolean isPlaying() {
 		return isPlaying;
-	}
-
-	@Override
-	public void pause() {
-		isPlaying = false;
 	}
 
 	public void setCurrentPosition(int position) {
@@ -31,9 +27,9 @@ implements
 	}
 
 	@Override
-	public Promise<PlayableFile> promisePlayback() {
+	public Promise<PlayingFile> promisePlayback() {
 		isPlaying = true;
-		return new Promise<>((messenger) -> {});
+		return new Promise<>(this);
 	}
 
 	@Override
@@ -49,6 +45,12 @@ implements
 	@Override
 	public Observable<Duration> observeProgress(Duration observationPeriod) {
 		return Observable.just(Duration.millis(currentPosition));
+	}
+
+	@Override
+	public Promise<PlayableFile> promisePause() {
+		isPlaying = false;
+		return new Promise<>(this);
 	}
 
 	@Override

@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
@@ -18,10 +18,10 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,11 +31,11 @@ import static org.mockito.Mockito.when;
 public class WhenObservingPlayback {
 
 	private static boolean isPlaying;
-	private static PositionedPlayableFile firstPlayingFile;
+	private static PositionedPlayingFile firstPlayingFile;
 	private static boolean isCompleted;
 
 	@BeforeClass
-	public static void context() throws IOException, InterruptedException {
+	public static void context() throws InterruptedException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		final Library library = new Library();
@@ -79,7 +79,7 @@ public class WhenObservingPlayback {
 		}
 		playingPlaybackHandler.resolve();
 
-		countDownLatch.await();
+		countDownLatch.await(1, TimeUnit.SECONDS);
 
 		isPlaying = playbackEngine.isPlaying();
 	}

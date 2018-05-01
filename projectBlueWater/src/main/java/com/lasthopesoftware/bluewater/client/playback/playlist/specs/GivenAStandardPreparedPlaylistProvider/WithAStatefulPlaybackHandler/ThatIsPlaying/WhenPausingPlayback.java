@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
@@ -20,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenPausingPlayback {
 
-	private static PlayableFile playbackHandler;
+	private static FakeBufferingPlaybackHandler playbackHandler;
 
 	@BeforeClass
 	public static void before() {

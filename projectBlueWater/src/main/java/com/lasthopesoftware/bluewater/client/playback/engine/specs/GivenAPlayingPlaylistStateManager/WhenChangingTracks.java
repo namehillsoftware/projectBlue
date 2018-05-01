@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
@@ -19,7 +19,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,12 +33,12 @@ import static org.mockito.Mockito.when;
 public class WhenChangingTracks {
 
 	private static PositionedFile nextSwitchedFile;
-	private static PositionedPlayableFile latestFile;
+	private static PositionedPlayingFile latestFile;
 
-	private static List<PositionedPlayableFile> startedFiles = new ArrayList<>();
+	private static List<PositionedPlayingFile> startedFiles = new ArrayList<>();
 
 	@BeforeClass
-	public static void before() throws IOException, InterruptedException {
+	public static void before() throws InterruptedException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		final Library library = new Library();
