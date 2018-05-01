@@ -1,27 +1,48 @@
 package com.lasthopesoftware.bluewater.client.playback.file.progress;
 
+import android.support.annotation.NonNull;
+
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Duration;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.schedulers.ComputationScheduler;
 
 public class PollingProgressSource<Error extends Exception> implements Runnable {
 
-	private final CreateAndHold<Scheduler> scheduler = new Lazy<>(ComputationScheduler::new);
-	private final ReentrantLock periodSync = new ReentrantLock();
+	private static final CreateAndHold<ScheduledExecutorService> scheduledExecutorService = new AbstractSynchronousLazy<ScheduledExecutorService>() {
+		@Override
+		protected ScheduledExecutorService create() {
+			return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+
+				private final AtomicInteger threadNumber = new AtomicInteger();
+
+				@Override
+				public Thread newThread(@NonNull Runnable r) {
+					final Thread thread = new Thread(
+						r,
+						"File Progress Thread " + threadNumber.getAndIncrement());
+					thread.setPriority(Thread.MIN_PRIORITY);
+					return thread;
+				}
+			});
+		}
+	};
+
+	private final Object periodSync = new Object();
 	private final Object startSyncObject = new Object();
 
 	private final Map<ObservableEmitter<Duration>, Long> progressEmitters = new ConcurrentHashMap<>();
@@ -45,13 +66,11 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 
 	public ObservableOnSubscribe<Duration> observePeriodically(Duration observationPeriod) {
 		final long observationMilliseconds = observationPeriod.getMillis();
-		periodSync.lock();
-		try {
+
+		synchronized (periodSync) {
 			observationPeriodMilliseconds = Math.max(
 				Math.min(observationMilliseconds, observationPeriodMilliseconds),
 				minimalObservationPeriod);
-		} finally {
-			periodSync.unlock();
 		}
 
 		return e -> {
@@ -62,8 +81,7 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 				public void dispose() {
 					progressEmitters.remove(e);
 
-					periodSync.lock();
-					try {
+					synchronized (periodSync) {
 						if (observationMilliseconds > observationPeriodMilliseconds) return;
 
 						final Optional<Long> maybeSmallestEmitter =
@@ -72,8 +90,6 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 								.findFirst();
 
 						observationPeriodMilliseconds = Math.max(maybeSmallestEmitter.orElse(minimalObservationPeriod), minimalObservationPeriod);
-					} finally {
-						periodSync.unlock();
 					}
 				}
 
@@ -88,7 +104,9 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 			synchronized (startSyncObject) {
 				if (isStarted) return;
 
-				scheduler.getObject().scheduleDirect(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+				scheduledExecutorService
+					.getObject()
+					.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
 				isStarted = true;
 			}
@@ -106,7 +124,9 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 			}
 		}
 
-		scheduler.getObject().scheduleDirect(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
+		scheduledExecutorService
+			.getObject()
+			.schedule(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
 		try {
 			emitProgress(fileProgressReader.getFileProgress());
@@ -139,7 +159,6 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 	}
 
 	public void close() {
-		if (scheduler.isCreated())
-			scheduler.getObject().shutdown();
+		progressEmitters.clear();
 	}
 }
