@@ -21,10 +21,6 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Observable;
-
 public class ExoPlayerPlaybackHandler
 implements
 	PlayableFile,
@@ -56,11 +52,12 @@ implements
 		}
 	};
 
+	private volatile Duration fileProgress = Duration.ZERO;
+
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
 		exoPlayer.addListener(this);
 		duration = Duration.millis(exoPlayer.getDuration());
-
 	}
 
 	private void pause() {
@@ -75,10 +72,10 @@ implements
 	}
 
 	@Override
-	public Observable<Duration> observeProgress(Duration observationPeriod) {
-		return Observable
-			.create(exoPlayerPositionSource.getObject().observePeriodically(observationPeriod))
-			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
+	public Duration getProgress() {
+		if (!exoPlayer.getPlayWhenReady()) return fileProgress;
+
+		return fileProgress = Duration.millis(exoPlayer.getCurrentPosition());
 	}
 
 	@Override

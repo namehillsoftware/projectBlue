@@ -20,10 +20,6 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Observable;
-
 public final class MediaPlayerPlaybackHandler
 implements
 	PlayableFile,
@@ -74,10 +70,8 @@ implements
 	}
 
 	@Override
-	public Observable<Duration> observeProgress(Duration observationPeriod) {
-		return Observable
-			.create(mediaPlayerPositionSource.getObject().observePeriodically(observationPeriod))
-			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
+	public Duration getProgress() {
+		return null;
 	}
 
 	@Override

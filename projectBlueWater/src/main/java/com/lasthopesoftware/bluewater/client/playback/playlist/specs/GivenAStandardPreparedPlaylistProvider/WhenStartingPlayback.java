@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandl
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,7 +20,6 @@ import java.util.List;
 import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +30,7 @@ public class WhenStartingPlayback {
 	@Before
 	public void before() {
 		PlayingFile mockPlayingFile = mock(PlayingFile.class);
-		when(mockPlayingFile.observeProgress(any())).thenReturn(Observable.empty());
+		when(mockPlayingFile.getProgress()).thenReturn(Duration.ZERO);
 		PlayableFile playbackHandler = mock(PlayableFile.class);
 		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mockPlayingFile));
 

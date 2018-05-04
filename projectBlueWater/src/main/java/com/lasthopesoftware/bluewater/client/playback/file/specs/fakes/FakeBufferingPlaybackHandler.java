@@ -7,8 +7,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import org.joda.time.Duration;
 
-import io.reactivex.Observable;
-
 public class FakeBufferingPlaybackHandler
 implements
 	IBufferingPlaybackFile,
@@ -42,9 +40,8 @@ implements
 		return new Promise<>(this);
 	}
 
-	@Override
-	public Observable<Duration> observeProgress(Duration observationPeriod) {
-		return Observable.just(Duration.millis(currentPosition));
+	public Duration getProgress() {
+		return Duration.millis(currentPosition);
 	}
 
 	@Override

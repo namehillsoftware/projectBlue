@@ -12,7 +12,6 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +19,6 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import io.reactivex.ObservableEmitter;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
@@ -172,29 +169,29 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 					emitter.onNext(positionedPlayingFile);
 
-					playingFile
-						.observeProgress(Duration.millis(Long.MAX_VALUE))
-						.safeSubscribe(new Observer<Duration>() {
-							@Override
-							public void onSubscribe(Disposable d) {
-
-							}
-
-							@Override
-							public void onNext(Duration duration) {
-
-							}
-
-							@Override
-							public void onError(Throwable e) {
-
-							}
-
-							@Override
-							public void onComplete() {
-								closeAndStartNextFile(playbackHandler);
-							}
-						});
+//					playingFile
+//						.observeProgress(Duration.millis(Long.MAX_VALUE))
+//						.safeSubscribe(new Observer<Duration>() {
+//							@Override
+//							public void onSubscribe(Disposable d) {
+//
+//							}
+//
+//							@Override
+//							public void onNext(Duration duration) {
+//
+//							}
+//
+//							@Override
+//							public void onError(Throwable e) {
+//
+//							}
+//
+//							@Override
+//							public void onComplete() {
+//								closeAndStartNextFile(playbackHandler);
+//							}
+//						});
 
 					return null;
 				});

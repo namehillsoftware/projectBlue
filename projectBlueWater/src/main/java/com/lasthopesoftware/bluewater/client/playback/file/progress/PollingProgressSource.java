@@ -88,7 +88,7 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 				}
 			});
 
-			e.onNext(fileProgressReader.getFileProgress());
+			e.onNext(fileProgressReader.getProgress());
 
 			synchronized (startSyncObject) {
 				if (isStarted) return;
@@ -118,7 +118,7 @@ public class PollingProgressSource<Error extends Exception> implements Runnable 
 			.scheduleDirect(this, observationPeriodMilliseconds, TimeUnit.MILLISECONDS);
 
 		try {
-			emitProgress(fileProgressReader.getFileProgress());
+			emitProgress(fileProgressReader.getProgress());
 		} catch (Throwable t) {
 			emitError(t);
 		}

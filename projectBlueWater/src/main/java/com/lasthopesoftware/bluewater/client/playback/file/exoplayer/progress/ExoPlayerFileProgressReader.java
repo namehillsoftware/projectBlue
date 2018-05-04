@@ -16,7 +16,7 @@ public class ExoPlayerFileProgressReader implements ReadFileProgress {
 	}
 
 	@Override
-	public synchronized Duration getFileProgress() {
+	public synchronized Duration getProgress() {
 		if (!exoPlayer.getPlayWhenReady()) return fileProgress;
 
 		return fileProgress = Duration.millis(exoPlayer.getCurrentPosition());

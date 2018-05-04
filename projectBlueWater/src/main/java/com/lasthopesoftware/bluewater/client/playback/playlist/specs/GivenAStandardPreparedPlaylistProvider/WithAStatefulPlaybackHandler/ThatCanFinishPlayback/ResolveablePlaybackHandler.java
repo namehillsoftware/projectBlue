@@ -31,12 +31,6 @@ public class ResolveablePlaybackHandler extends FakeBufferingPlaybackHandler {
 	}
 
 	@Override
-	public Observable<Duration> observeProgress(Duration observationPeriod) {
-		return super.observeProgress(observationPeriod)
-			.concatWith(observable);
-	}
-
-	@Override
 	public Promise<PlayingFile> promisePlayback() {
 		super.promisePlayback();
 		return new Promise<>(this);

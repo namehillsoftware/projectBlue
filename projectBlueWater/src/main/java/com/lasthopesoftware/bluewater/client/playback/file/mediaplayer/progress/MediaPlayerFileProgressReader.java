@@ -20,7 +20,7 @@ public class MediaPlayerFileProgressReader implements ReadFileProgress {
 	}
 
 	@Override
-	public synchronized Duration getFileProgress() {
+	public synchronized Duration getProgress() {
 		if (!mediaPlayer.isPlaying()) return fileProgress;
 
 		try {

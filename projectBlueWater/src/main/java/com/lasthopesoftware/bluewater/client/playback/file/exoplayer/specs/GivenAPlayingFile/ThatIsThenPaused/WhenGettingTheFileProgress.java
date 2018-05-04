@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.specs.GivenAPlayingFile.ThatIsThenPaused;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile.ThatIsThenPaused;
 
 import com.google.android.exoplayer2.ExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -29,9 +29,9 @@ public class WhenGettingTheFileProgress {
 			.thenReturn(new Random().nextLong())
 			.thenReturn(new Random().nextLong());
 
-		final ExoPlayerFileProgressReader exoPlayerFileProgressReader = new ExoPlayerFileProgressReader(mockMediaPlayer);
-		exoPlayerFileProgressReader.getFileProgress();
-		progress = exoPlayerFileProgressReader.getFileProgress();
+		final ExoPlayerPlaybackHandler exoPlayerFileProgressReader = new ExoPlayerPlaybackHandler(mockMediaPlayer);
+		exoPlayerFileProgressReader.getProgress();
+		progress = exoPlayerFileProgressReader.getProgress();
 	}
 
 	@Test

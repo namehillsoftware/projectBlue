@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.specs.GivenAPausedFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
@@ -18,14 +18,16 @@ public class WhenGettingTheFileProgress {
 	@BeforeClass
 	public static void before() {
 		final ExoPlayer mockMediaPlayer = mock(ExoPlayer.class);
-		when(mockMediaPlayer.getPlayWhenReady()).thenReturn(false);
+		when(mockMediaPlayer.getPlayWhenReady()).thenReturn(true);
+		when(mockMediaPlayer.getCurrentPosition()).thenReturn(75L);
+		when(mockMediaPlayer.getDuration()).thenReturn(101L);
 
 		final ExoPlayerFileProgressReader exoPlayerFileProgressReader = new ExoPlayerFileProgressReader(mockMediaPlayer);
-		progress = exoPlayerFileProgressReader.getFileProgress();
+		progress = exoPlayerFileProgressReader.getProgress();
 	}
 
 	@Test
 	public void thenTheFileProgressIsCorrect() {
-		assertThat(progress).isEqualTo(Duration.ZERO);
+		assertThat(progress).isEqualTo(Duration.millis(75));
 	}
 }

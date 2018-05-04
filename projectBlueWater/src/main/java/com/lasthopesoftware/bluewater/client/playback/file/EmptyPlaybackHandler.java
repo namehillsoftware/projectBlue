@@ -5,8 +5,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import org.joda.time.Duration;
 
-import io.reactivex.Observable;
-
 public class EmptyPlaybackHandler
 implements
 	IBufferingPlaybackFile,
@@ -35,8 +33,8 @@ implements
 	}
 
 	@Override
-	public Observable<Duration> observeProgress(Duration observationPeriod) {
-		return Observable.just(Duration.ZERO);
+	public Duration getProgress() {
+		return Duration.ZERO;
 	}
 
 	@Override
