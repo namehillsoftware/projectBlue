@@ -17,7 +17,7 @@ public class PromiseProxy<Resolution> {
 	public void proxy(Promise<Resolution> promise) {
 		cancellationProxy.doCancel(promise);
 
-		promise.then(new ResolutionProxy<Resolution>(messenger));
+		promise.then(new ResolutionProxy<>(messenger));
 		promise.excuse(new RejectionProxy(messenger));
 	}
 }
