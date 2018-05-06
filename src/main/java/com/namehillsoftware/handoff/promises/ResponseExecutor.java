@@ -17,11 +17,11 @@ class ResponseExecutor<Resolution, Response> extends ResponseRoutingMessenger<Re
 
 	@Override
 	protected void respond(Resolution resolution) throws Throwable {
-		onFulfilled.respond(resolution);
+		sendResolution(onFulfilled.respond(resolution));
 	}
 
 	@Override
 	protected void respond(Throwable rejection) throws Throwable {
-		onRejected.respond(rejection);
+		sendResolution(onRejected.respond(rejection));
 	}
 }

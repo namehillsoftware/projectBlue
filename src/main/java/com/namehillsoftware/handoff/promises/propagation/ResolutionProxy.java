@@ -12,7 +12,7 @@ public final class ResolutionProxy<Resolution> implements ImmediateResponse<Reso
 	}
 
 	@Override
-	public Void respond(Resolution resolution) throws Throwable {
+	public Void respond(Resolution resolution) {
 		resolve.sendResolution(resolution);
 		return null;
 	}
