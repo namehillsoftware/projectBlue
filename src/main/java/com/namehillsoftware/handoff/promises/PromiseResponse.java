@@ -3,9 +3,13 @@ package com.namehillsoftware.handoff.promises;
 import com.namehillsoftware.handoff.Message;
 import com.namehillsoftware.handoff.RespondingMessenger;
 
-abstract class ResponseRoutingPromise<Resolution, Response> extends Promise<Response> implements RespondingMessenger<Resolution> {
+abstract class PromiseResponse<Resolution, Response>
+extends
+	Promise<Response>
+implements
+	RespondingMessenger<Resolution> {
 
-	@Override
+		@Override
 	public final void respond(Message<Resolution> message) {
 		try {
 			if (message.rejection == null)
@@ -19,5 +23,5 @@ abstract class ResponseRoutingPromise<Resolution, Response> extends Promise<Resp
 
 	protected abstract void respond(Resolution resolution) throws Throwable;
 
-	protected abstract void respond(Throwable rejection) throws Throwable;
+	protected abstract void respond(Throwable reason) throws Throwable;
 }

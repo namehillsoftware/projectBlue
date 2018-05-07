@@ -4,7 +4,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
-class PromisedGuaranteedResponseMessenger<Resolution, Response> extends ResponseRoutingPromise<Resolution, Response> {
+class PromisedEventualResponse<Resolution, Response> extends PromiseResponse<Resolution, Response> {
 
 	private final CancellationProxy cancellationProxy = new CancellationProxy();
 	private final PromisedResponse<Resolution, Response> onFulfilled;
@@ -12,7 +12,11 @@ class PromisedGuaranteedResponseMessenger<Resolution, Response> extends Response
 	private final InternalRejectionProxy rejectionProxy = new InternalRejectionProxy();
 	private final InternalResolutionProxy resolutionProxy = new InternalResolutionProxy();
 
-	PromisedGuaranteedResponseMessenger(PromisedResponse<Resolution, Response> onFulfilled, PromisedResponse<Throwable, Response> onRejected) {
+	PromisedEventualResponse(PromisedResponse<Resolution, Response> onFulfilled) {
+		this(onFulfilled, null);
+	}
+
+	PromisedEventualResponse(PromisedResponse<Resolution, Response> onFulfilled, PromisedResponse<Throwable, Response> onRejected) {
 		this.onFulfilled = onFulfilled;
 		this.onRejected = onRejected;
 		cancellationRequested(cancellationProxy);
@@ -24,8 +28,11 @@ class PromisedGuaranteedResponseMessenger<Resolution, Response> extends Response
 	}
 
 	@Override
-	protected void respond(Throwable rejection) throws Throwable {
-		proxy(onRejected.promiseResponse(rejection));
+	protected void respond(Throwable reason) throws Throwable {
+		if (onRejected != null)
+			proxy(onRejected.promiseResponse(reason));
+		else
+			reject(reason);
 	}
 
 	private void proxy(Promise<Response> promisedResponse) {

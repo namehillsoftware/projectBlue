@@ -2,7 +2,7 @@ package com.namehillsoftware.handoff.promises;
 
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
-final class RejectedResponsePromise<Resolution, Response> extends ResponseRoutingPromise<Resolution, Response> {
+final class RejectedResponsePromise<Resolution, Response> extends PromiseResponse<Resolution, Response> {
 	private final ImmediateResponse<Throwable, Response> onFulfilled;
 
 	RejectedResponsePromise(ImmediateResponse<Throwable, Response> onRejected) {

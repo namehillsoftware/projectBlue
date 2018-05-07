@@ -39,26 +39,26 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 	public Promise() {}
 
-	private <NewResolution> Promise<NewResolution> then(ResponseRoutingPromise<Resolution, NewResolution> onFulfilled) {
+	private <NewResolution> Promise<NewResolution> then(PromiseResponse<Resolution, NewResolution> onFulfilled) {
 		awaitResolution(onFulfilled);
 
 		return onFulfilled;
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled) {
-		return then(new FulfilledResponsePromise<>(onFulfilled));
+		return then(new PromiseImmediateResponse<>(onFulfilled));
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled, ImmediateResponse<Throwable, NewResolution> onRejected) {
-		return then(new PromiseGuaranteedResponse<>(onFulfilled, onRejected));
+		return then(new PromiseImmediateResponse<>(onFulfilled, onRejected));
 	}
 
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled) {
-		return then(new PromisedResolutionResponsePromise<>(onFulfilled));
+		return then(new PromisedEventualResponse<>(onFulfilled));
 	}
 
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled, PromisedResponse<Throwable, NewResolution> onRejected) {
-		return then(new PromisedGuaranteedResponseMessenger<>(onFulfilled, onRejected));
+		return then(new PromisedEventualResponse<>(onFulfilled, onRejected));
 	}
 
 	public final <NewRejection> Promise<NewRejection> excuse(ImmediateResponse<Throwable, NewRejection> onRejected) {
