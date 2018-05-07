@@ -84,6 +84,6 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 	}
 
 	public static <Resolution> Promise<Resolution> whenAny(Collection<Promise<Resolution>> promises) {
-		return new Promise<>(new Resolutions.FirstPromiseResolver<>(promises));
+		return new Resolutions.HonorFirstPromise<>(promises);
 	}
 }
