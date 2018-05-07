@@ -2,12 +2,12 @@ package com.namehillsoftware.handoff.promises;
 
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
-class ResponseExecutor<Resolution, Response> extends ResponseRoutingPromise<Resolution, Response> {
+class PromiseGuaranteedResponse<Resolution, Response> extends ResponseRoutingPromise<Resolution, Response> {
 
 	private final ImmediateResponse<Resolution, Response> onFulfilled;
 	private final ImmediateResponse<Throwable, Response> onRejected;
 
-	ResponseExecutor(
+	PromiseGuaranteedResponse(
 			ImmediateResponse<Resolution, Response> onFulfilled,
 			ImmediateResponse<Throwable, Response> onRejected) {
 

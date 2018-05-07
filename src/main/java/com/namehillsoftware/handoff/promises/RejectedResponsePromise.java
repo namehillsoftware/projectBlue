@@ -2,12 +2,15 @@ package com.namehillsoftware.handoff.promises;
 
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
-final class RejectedResponsePromise<TResult, TNewResult> extends RejectionResponsePromise<TResult, TNewResult> {
-	private final ImmediateResponse<Throwable, TNewResult> onFulfilled;
+final class RejectedResponsePromise<Resolution, Response> extends ResponseRoutingPromise<Resolution, Response> {
+	private final ImmediateResponse<Throwable, Response> onFulfilled;
 
-	RejectedResponsePromise(ImmediateResponse<Throwable, TNewResult> onRejected) {
+	RejectedResponsePromise(ImmediateResponse<Throwable, Response> onRejected) {
 		this.onFulfilled = onRejected;
 	}
+
+	@Override
+	protected void respond(Resolution resolution) {}
 
 	@Override
 	protected void respond(Throwable throwable) throws Throwable {

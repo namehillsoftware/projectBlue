@@ -50,7 +50,7 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled, ImmediateResponse<Throwable, NewResolution> onRejected) {
-		return then(new ResponseExecutor<>(onFulfilled, onRejected));
+		return then(new PromiseGuaranteedResponse<>(onFulfilled, onRejected));
 	}
 
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled) {
