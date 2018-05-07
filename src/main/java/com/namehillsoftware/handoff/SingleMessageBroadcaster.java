@@ -3,7 +3,7 @@ package com.namehillsoftware.handoff;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class SingleMessageBroadcaster<Resolution> implements Messenger<Resolution> {
+public abstract class SingleMessageBroadcaster<Resolution> {
 
 	private final Object resolveSync = new Object();
 	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
@@ -11,18 +11,15 @@ public class SingleMessageBroadcaster<Resolution> implements Messenger<Resolutio
 
 	private Message<Resolution> message;
 
-	@Override
-	public final void sendRejection(Throwable error) {
+	protected final void reject(Throwable error) {
 		resolve(null, error);
 	}
 
-	@Override
-	public final void sendResolution(Resolution resolution) {
+	protected final void resolve(Resolution resolution) {
 		resolve(resolution, null);
 	}
 
-	@Override
-	public final void cancellationRequested(Runnable reaction) {
+	protected final void cancellationRequested(Runnable reaction) {
 		cancellation.respondToCancellation(reaction);
 	}
 

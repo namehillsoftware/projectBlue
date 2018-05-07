@@ -1,11 +1,8 @@
 package com.namehillsoftware.handoff.promises;
 
 import com.namehillsoftware.handoff.Message;
-import com.namehillsoftware.handoff.RespondingMessenger;
-import com.namehillsoftware.handoff.SingleMessageBroadcaster;
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
-abstract class ResponseRoutingMessenger<Resolution, Response> extends SingleMessageBroadcaster<Response> implements com.namehillsoftware.handoff.RespondingMessenger<Resolution> {
+abstract class ResponseRoutingPromise<Resolution, Response> extends Promise<Response> implements com.namehillsoftware.handoff.RespondingMessenger<Resolution> {
 
 	@Override
 	public final void respond(Message<Resolution> message) {
@@ -15,7 +12,7 @@ abstract class ResponseRoutingMessenger<Resolution, Response> extends SingleMess
 			else
 				respond(message.rejection);
 		} catch (Throwable error) {
-			sendRejection(error);
+			reject(error);
 		}
 	}
 

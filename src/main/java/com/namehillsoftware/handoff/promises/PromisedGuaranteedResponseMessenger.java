@@ -3,7 +3,7 @@ package com.namehillsoftware.handoff.promises;
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
-class PromisedGuaranteedResponseMessenger<Resolution, Response> extends ResponseRoutingMessenger<Resolution, Response> {
+class PromisedGuaranteedResponseMessenger<Resolution, Response> extends ResponseRoutingPromise<Resolution, Response> {
 
 	private final PromiseProxy<Response> promiseProxy = new PromiseProxy<>(this);
 	private final PromisedResponse<Resolution, Response> onFulfilled;

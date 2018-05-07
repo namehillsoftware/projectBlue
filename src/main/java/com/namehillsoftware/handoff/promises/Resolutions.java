@@ -19,7 +19,7 @@ final class Resolutions {
 
 		AggregatePromiseResolver(Collection<Promise<Resolution>> promises) {
 			if (promises.isEmpty()) {
-				sendResolution(Collections.emptyList());
+				resolve(Collections.emptyList());
 				return;
 			}
 
@@ -60,11 +60,11 @@ final class Resolutions {
 			}
 
 			for (Promise<Resolution> promise : promises) promise.cancel();
-			sendRejection(new CancellationException());
+			reject(new CancellationException());
 		}
 
 		@Override
-		public Void respond(Throwable throwable) throws Throwable {
+		public Void respond(Throwable throwable) {
 			final Lock readLock = readWriteLock.readLock();
 			readLock.lock();
 			try {
@@ -73,7 +73,7 @@ final class Resolutions {
 				readLock.unlock();
 			}
 
-			sendRejection(throwable);
+			reject(throwable);
 
 			return null;
 		}
