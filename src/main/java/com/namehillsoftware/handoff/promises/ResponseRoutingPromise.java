@@ -1,8 +1,9 @@
 package com.namehillsoftware.handoff.promises;
 
 import com.namehillsoftware.handoff.Message;
+import com.namehillsoftware.handoff.RespondingMessenger;
 
-abstract class ResponseRoutingPromise<Resolution, Response> extends Promise<Response> implements com.namehillsoftware.handoff.RespondingMessenger<Resolution> {
+abstract class ResponseRoutingPromise<Resolution, Response> extends Promise<Response> implements RespondingMessenger<Resolution> {
 
 	@Override
 	public final void respond(Message<Resolution> message) {

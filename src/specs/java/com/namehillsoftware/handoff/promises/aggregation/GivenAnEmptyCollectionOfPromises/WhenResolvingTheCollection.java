@@ -1,7 +1,7 @@
 package com.namehillsoftware.handoff.promises.aggregation.GivenAnEmptyCollectionOfPromises;
 
 import com.namehillsoftware.handoff.Message;
-import com.namehillsoftware.handoff.SingleMessageBroadcaster;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.aggregation.CollectedResultsResolver;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,10 +17,8 @@ public class WhenResolvingTheCollection {
 
 	@BeforeClass
 	public static void before() {
-		final SingleMessageBroadcaster<Collection<Void>> messenger = new SingleMessageBroadcaster<>();
+		final Promise<Collection<Void>> messenger = new Promise<>(m -> new CollectedResultsResolver<>(m, Collections.emptyList()));
 		messenger.awaitResolution(v -> response = v);
-
-		new CollectedResultsResolver<>(messenger, Collections.emptyList());
 	}
 
 	@Test
