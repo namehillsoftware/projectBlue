@@ -11,22 +11,7 @@ import java.util.Collection;
 public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 	public Promise(MessengerOperator<Resolution> messengerOperator) {
-		messengerOperator.send(new Messenger<Resolution>() {
-			@Override
-			public void sendResolution(Resolution resolution) {
-				resolve(resolution);
-			}
-
-			@Override
-			public void sendRejection(Throwable error) {
-				reject(error);
-			}
-
-			@Override
-			public void cancellationRequested(Runnable response) {
-				Promise.this.cancellationRequested(response);
-			}
-		});
+		messengerOperator.send(new PromiseMessenger());
 	}
 
 	public Promise(Resolution passThroughResult) {
@@ -85,5 +70,23 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 	public static <Resolution> Promise<Resolution> whenAny(Collection<Promise<Resolution>> promises) {
 		return new Resolutions.HonorFirstPromise<>(promises);
+	}
+
+	private class PromiseMessenger implements Messenger<Resolution> {
+
+		@Override
+		public void sendResolution(Resolution resolution) {
+			resolve(resolution);
+		}
+
+		@Override
+		public void sendRejection(Throwable error) {
+			reject(error);
+		}
+
+		@Override
+		public void cancellationRequested(Runnable response) {
+			Promise.this.cancellationRequested(response);
+		}
 	}
 }
