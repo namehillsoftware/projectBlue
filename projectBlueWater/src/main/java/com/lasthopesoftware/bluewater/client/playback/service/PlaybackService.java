@@ -67,6 +67,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayab
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
@@ -99,6 +100,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
@@ -110,6 +112,7 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1012,14 +1015,18 @@ implements
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile());
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
+		final ProgressingPromise<Duration, PlayedFile> progressingPromise = playingFile.promisePlayedFile();
 		filePositionSubscription =
 			Observable.interval(1, TimeUnit.SECONDS)
-				.map(t -> playingFile.getProgress())
+				.map(t -> progressingPromise.getProgress())
 				.distinctUntilChanged()
 				.subscribe(new TrackPositionBroadcaster(this, playingFile));
 
-//		Functions.ON_ERROR_MISSING,
-			() -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile())
+
+		progressingPromise.then(p -> {
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
+			return null;
+		});
 
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();

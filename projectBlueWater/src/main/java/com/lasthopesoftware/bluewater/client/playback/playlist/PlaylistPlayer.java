@@ -169,29 +169,12 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 					emitter.onNext(positionedPlayingFile);
 
-//					playingFile
-//						.observeProgress(Duration.millis(Long.MAX_VALUE))
-//						.safeSubscribe(new Observer<Duration>() {
-//							@Override
-//							public void onSubscribe(Disposable d) {
-//
-//							}
-//
-//							@Override
-//							public void onNext(Duration duration) {
-//
-//							}
-//
-//							@Override
-//							public void onError(Throwable e) {
-//
-//							}
-//
-//							@Override
-//							public void onComplete() {
-//								closeAndStartNextFile(playbackHandler);
-//							}
-//						});
+					positionedPlayingFile.getPlayingFile()
+						.promisePlayedFile()
+						.then(p -> {
+							closeAndStartNextFile(playbackHandler);
+							return null;
+						});
 
 					return null;
 				});

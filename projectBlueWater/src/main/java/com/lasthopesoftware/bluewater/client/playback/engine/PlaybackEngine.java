@@ -367,6 +367,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 				np.filePosition =
 					positionedPlayingFile
 						.getPlayingFile()
+						.promisePlayedFile()
 						.getProgress()
 						.getMillis();
 

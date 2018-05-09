@@ -8,11 +8,11 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -25,6 +25,7 @@ public class ExoPlayerPlaybackHandler
 implements
 	PlayableFile,
 	PlayingFile,
+	PlayedFile,
 	Player.EventListener,
 	Runnable
 {
@@ -35,20 +36,39 @@ implements
 
 	private boolean isPlaying;
 
-	private final CreateAndHold<PollingProgressSource> exoPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
+	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> exoPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
 		@Override
-		protected PollingProgressSource create() {
+		protected ProgressingPromise<Duration, PlayedFile> create() {
 			final ExoPlayerPlaybackCompletedNotifier completedNotifier = new ExoPlayerPlaybackCompletedNotifier();
 			exoPlayer.addListener(completedNotifier);
 
 			final ExoPlayerPlaybackErrorNotifier errorNotifier = new ExoPlayerPlaybackErrorNotifier(ExoPlayerPlaybackHandler.this);
 			exoPlayer.addListener(errorNotifier);
 
-			return new PollingProgressSource<>(
-				new ExoPlayerFileProgressReader(exoPlayer),
-				completedNotifier,
-				errorNotifier,
-				Duration.millis(100));
+			final ProgressingPromise<Duration, PlayedFile> progressingPromise = new ProgressingPromise<Duration, PlayedFile>() {
+				{
+					completedNotifier.playbackCompleted(() -> resolve(ExoPlayerPlaybackHandler.this));
+					errorNotifier.playbackError(this::reject);
+				}
+
+				@Override
+				public Duration getProgress() {
+					return Duration.millis(exoPlayer.getCurrentPosition());
+				}
+			};
+
+			progressingPromise
+				.then(p -> {
+					exoPlayer.removeListener(completedNotifier);
+					exoPlayer.removeListener(errorNotifier);
+					return null;
+				}, e -> {
+					exoPlayer.removeListener(completedNotifier);
+					exoPlayer.removeListener(errorNotifier);
+					return null;
+				});
+
+			return progressingPromise;
 		}
 	};
 
@@ -69,6 +89,11 @@ implements
 	public Promise<PlayableFile> promisePause() {
 		pause();
 		return new Promise<>(this);
+	}
+
+	@Override
+	public ProgressingPromise<Duration, PlayedFile> promisePlayedFile() {
+		return exoPlayerPositionSource.getObject();
 	}
 
 	@Override
@@ -166,10 +191,6 @@ implements
 		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
-
-		if (exoPlayerPositionSource.isCreated())
-			exoPlayerPositionSource.getObject().close();
-
 		exoPlayer.release();
 	}
 }

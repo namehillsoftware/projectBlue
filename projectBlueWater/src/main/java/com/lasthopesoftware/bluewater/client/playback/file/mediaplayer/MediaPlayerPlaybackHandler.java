@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
@@ -11,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackComplete;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackError;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -78,6 +80,16 @@ implements
 	public Promise<PlayableFile> promisePause() {
 		pause();
 		return new Promise<>(this);
+	}
+
+	@Override
+	public ProgressingPromise<Duration, PlayedFile> promisePlayedFile() {
+		return new ProgressingPromise<Duration, PlayedFile>() {
+			@Override
+			public Duration getProgress() {
+				return Duration.ZERO;
+			}
+		};
 	}
 
 	@Override
