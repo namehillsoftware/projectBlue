@@ -33,6 +33,9 @@ public class WhenStartingPlayback {
 	public void before() {
 		PlayingFile mockPlayingFile = mock(PlayingFile.class);
 		when(mockPlayingFile.promisePlayedFile()).thenReturn(new ProgressingPromise<Duration, PlayedFile>() {
+			{
+				resolve(mock(PlayedFile.class));
+			}
 			@Override
 			public Duration getProgress() {
 				return Duration.ZERO;

@@ -57,12 +57,12 @@ implements
 		return new ProgressingPromise<Duration, PlayedFile>() {
 
 			{
-				resolve(null);
+				resolve(new PlayedFile() {});
 			}
 
 			@Override
 			public Duration getProgress() {
-				return Duration.ZERO;
+				return Duration.millis(currentPosition);
 			}
 		};
 	}
