@@ -13,7 +13,8 @@ public class FakeBufferingPlaybackHandler
 implements
 	IBufferingPlaybackFile,
 	PlayableFile,
-	PlayingFile
+	PlayingFile,
+	PlayedFile
 {
 	private boolean isPlaying;
 	private int currentPosition;
@@ -57,7 +58,7 @@ implements
 		return new ProgressingPromise<Duration, PlayedFile>() {
 
 			{
-				resolve(new PlayedFile() {});
+				resolve(FakeBufferingPlaybackHandler.this);
 			}
 
 			@Override
@@ -69,6 +70,6 @@ implements
 
 	@Override
 	public Duration getDuration() {
-		return Duration.ZERO;
+		return Duration.millis(currentPosition);
 	}
 }
