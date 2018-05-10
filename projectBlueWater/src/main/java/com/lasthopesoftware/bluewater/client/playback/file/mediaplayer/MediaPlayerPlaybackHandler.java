@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.Med
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackComplete;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackError;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -26,6 +25,7 @@ public final class MediaPlayerPlaybackHandler
 implements
 	PlayableFile,
 	PlayingFile,
+	PlayedFile,
 	MediaPlayer.OnCompletionListener,
 	MediaPlayer.OnErrorListener,
 	MediaPlayer.OnInfoListener,
@@ -41,16 +41,23 @@ implements
 	private Runnable playbackCompletedAction;
 	private OneParameterAction<MediaPlayerErrorException> playbackErrorAction;
 
-	private final CreateAndHold<PollingProgressSource> mediaPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
+	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> mediaPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
 		@Override
-		protected PollingProgressSource create() {
-			mediaPlayer.setOnCompletionListener(MediaPlayerPlaybackHandler.this);
-			mediaPlayer.setOnErrorListener(MediaPlayerPlaybackHandler.this);
-			return new PollingProgressSource<>(
-				new MediaPlayerFileProgressReader(mediaPlayer),
-				MediaPlayerPlaybackHandler.this,
-				MediaPlayerPlaybackHandler.this,
-				Duration.millis(100));
+		protected ProgressingPromise<Duration, PlayedFile> create() {
+			final MediaPlayerFileProgressReader mediaPlayerFileProgressReader = new MediaPlayerFileProgressReader(mediaPlayer);
+			return new ProgressingPromise<Duration, PlayedFile>() {
+				{
+					MediaPlayerPlaybackHandler.this
+						.playbackCompleted(() -> resolve(MediaPlayerPlaybackHandler.this));
+					MediaPlayerPlaybackHandler.this
+						.playbackError(this::reject);
+				}
+
+				@Override
+				public Duration getProgress() {
+					return mediaPlayerFileProgressReader.getProgress();
+				}
+			};
 		}
 	};
 
@@ -84,12 +91,7 @@ implements
 
 	@Override
 	public ProgressingPromise<Duration, PlayedFile> promisePlayedFile() {
-		return new ProgressingPromise<Duration, PlayedFile>() {
-			@Override
-			public Duration getProgress() {
-				return Duration.ZERO;
-			}
-		};
+		return mediaPlayerPositionSource.getObject();
 	}
 
 	@Override
@@ -147,9 +149,6 @@ implements
 		} catch (IllegalStateException se) {
 			mediaPlayerIllegalStateReporter.reportIllegalStateException(se, "stopping");
 		}
-
-		if (mediaPlayerPositionSource.isCreated())
-			mediaPlayerPositionSource.getObject().close();
 
 		MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 	}
