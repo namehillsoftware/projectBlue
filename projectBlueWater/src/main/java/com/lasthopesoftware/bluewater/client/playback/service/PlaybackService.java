@@ -123,7 +123,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.schedulers.RxThreadFactory;
+import io.reactivex.internal.schedulers.SingleScheduler;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
@@ -217,6 +220,18 @@ implements
 
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
+
+	private static final CreateAndHold<Scheduler> lazyObservationScheduler = new AbstractSynchronousLazy<Scheduler>() {
+		@Override
+		protected Scheduler create() {
+			return new SingleScheduler(
+				new RxThreadFactory(
+					"Playback Observation",
+					Thread.MIN_PRIORITY,
+					false
+				));
+		}
+	};
 
 	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 	private final CreateAndHold<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
@@ -1017,7 +1032,7 @@ implements
 
 		final ProgressingPromise<Duration, PlayedFile> progressingPromise = playingFile.promisePlayedFile();
 		filePositionSubscription =
-			Observable.interval(1, TimeUnit.SECONDS)
+			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.getObject())
 				.map(t -> progressingPromise.getProgress())
 				.distinctUntilChanged()
 				.subscribe(new TrackPositionBroadcaster(this, playingFile));
