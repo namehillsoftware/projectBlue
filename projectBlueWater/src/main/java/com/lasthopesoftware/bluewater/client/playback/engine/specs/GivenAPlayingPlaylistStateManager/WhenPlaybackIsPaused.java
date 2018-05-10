@@ -31,6 +31,7 @@ public class WhenPlaybackIsPaused {
 
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
+	private static ResolveablePlaybackHandler resolveablePlaybackHandler;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -64,7 +65,7 @@ public class WhenPlaybackIsPaused {
 					new ServiceFile(5)), 0, 0);
 
 		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-		final ResolveablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		playingPlaybackHandler.resolve();
 
 		resolveablePlaybackHandler.setCurrentPosition(30);
@@ -81,6 +82,11 @@ public class WhenPlaybackIsPaused {
 			});
 
 		countDownLatch.await();
+	}
+
+	@Test
+	public void thenThePlayerIsNotPlaying() {
+		assertThat(resolveablePlaybackHandler.isPlaying()).isFalse();
 	}
 
 	@Test

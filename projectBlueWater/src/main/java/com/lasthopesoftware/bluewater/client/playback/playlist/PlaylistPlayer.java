@@ -161,7 +161,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 				e -> playbackHandler.promisePlayback());
 
 			lastStateChangePromise = promisedPlayback
-				.eventually(playingFile -> {
+				.then(playingFile -> {
 					positionedPlayingFile = new PositionedPlayingFile(
 						playingFile,
 						positionedPlayableFile.getPlayableFileVolumeManager(),
@@ -169,14 +169,17 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 					emitter.onNext(positionedPlayingFile);
 
-					return positionedPlayingFile
+					positionedPlayingFile
 						.getPlayingFile()
-						.promisePlayedFile();
-				}).then(p -> {
-					closeAndStartNextFile(playbackHandler);
-					return null;
-				}, e -> {
-					handlePlaybackException(e);
+						.promisePlayedFile()
+						.then(p -> {
+							closeAndStartNextFile(playbackHandler);
+							return null;
+						}, e -> {
+							handlePlaybackException(e);
+							return null;
+						});
+
 					return null;
 				});
 

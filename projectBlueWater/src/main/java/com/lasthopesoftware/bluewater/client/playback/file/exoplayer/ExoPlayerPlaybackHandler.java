@@ -53,7 +53,7 @@ implements
 
 				@Override
 				public Duration getProgress() {
-					return Duration.millis(exoPlayer.getCurrentPosition());
+					return ExoPlayerPlaybackHandler.this.getProgress();
 				}
 			};
 
@@ -117,7 +117,10 @@ implements
 
 	@Override
 	public void close() {
-		run();
+		isPlaying = false;
+		exoPlayer.setPlayWhenReady(false);
+		exoPlayer.stop();
+		exoPlayer.release();
 	}
 
 	@Override
@@ -188,9 +191,6 @@ implements
 
 	@Override
 	public void run() {
-		isPlaying = false;
-		exoPlayer.setPlayWhenReady(false);
-		exoPlayer.stop();
-		exoPlayer.release();
+		close();
 	}
 }
