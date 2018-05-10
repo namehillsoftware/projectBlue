@@ -191,8 +191,6 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 			logger.error("There was an error releasing the media player", e);
 		}
 
-		volumeManager = null;
-
 		setupNextPreparedFile();
 	}
 
