@@ -1030,16 +1030,17 @@ implements
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile());
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
-		final ProgressingPromise<Duration, PlayedFile> progressingPromise = playingFile.promisePlayedFile();
-		filePositionSubscription =
+		final ProgressingPromise<Duration, PlayedFile> promisedPlayedFile = playingFile.promisePlayedFile();
+		final Disposable localSubscription = filePositionSubscription =
 			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.getObject())
-				.map(t -> progressingPromise.getProgress())
+				.map(t -> promisedPlayedFile.getProgress())
 				.distinctUntilChanged()
 				.subscribe(new TrackPositionBroadcaster(this, playingFile));
 
 
-		progressingPromise.then(p -> {
+		promisedPlayedFile.then(p -> {
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
+			localSubscription.dispose();
 			return null;
 		});
 
