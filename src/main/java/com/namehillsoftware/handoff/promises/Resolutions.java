@@ -1,10 +1,9 @@
 package com.namehillsoftware.handoff.promises;
 
-import com.namehillsoftware.handoff.SingleMessageBroadcaster;
+import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.aggregation.AggregateCancellation;
 import com.namehillsoftware.handoff.promises.aggregation.CollectedErrorExcuse;
 import com.namehillsoftware.handoff.promises.aggregation.CollectedResultsResolver;
-import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.util.Collection;
@@ -15,36 +14,66 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 final class Resolutions {
 
-	static final class AggregatePromiseResolver<Resolution> extends SingleMessageBroadcaster<Collection<Resolution>> {
+	static final class AggregatePromiseResolver<Resolution> implements MessengerOperator<Collection<Resolution>> {
+
+		private final Collection<Promise<Resolution>> promises;
 
 		AggregatePromiseResolver(Collection<Promise<Resolution>> promises) {
+			this.promises = promises;
+		}
+
+		@Override
+		public void send(Messenger<Collection<Resolution>> messenger) {
 			if (promises.isEmpty()) {
-				sendResolution(Collections.emptyList());
+				messenger.sendResolution(Collections.emptyList());
 				return;
 			}
 
-			final CollectedErrorExcuse<Resolution> errorHandler = new CollectedErrorExcuse<>(this, promises);
+			final CollectedErrorExcuse<Resolution> errorHandler = new CollectedErrorExcuse<>(messenger, promises);
 			if (errorHandler.isRejected()) return;
 
-			final CollectedResultsResolver<Resolution> resolver = new CollectedResultsResolver<>(this, promises);
-			cancellationRequested(new AggregateCancellation<>(this, promises, resolver));
+			final CollectedResultsResolver<Resolution> resolver = new CollectedResultsResolver<>(messenger, promises);
+			messenger.cancellationRequested(new AggregateCancellation<>(messenger, promises, resolver));
 		}
 	}
 
-	static final class FirstPromiseResolver<Resolution> extends SingleMessageBroadcaster<Resolution> implements
-		Runnable,
-		ImmediateResponse<Throwable, Void> {
+	static final class HonorFirstPromise<Resolution> extends Promise<Resolution> implements
+		Runnable
+	{
 
 		private final Collection<Promise<Resolution>> promises;
 		private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+		private final ImmediateResponse<Resolution, Void> promiseProxy = new ImmediateResponse<Resolution, Void>() {
+			@Override
+			public Void respond(Resolution resolution) {
+				resolve(resolution);
+				return null;
+			}
+		};
+
+		private final ImmediateResponse<Throwable, Void> errorProxy = new ImmediateResponse<Throwable, Void>() {
+			@Override
+			public Void respond(Throwable resolution) {
+				final Lock readLock = readWriteLock.readLock();
+				readLock.lock();
+				try {
+					if (isCancelled) return null;
+				} finally {
+					readLock.unlock();
+				}
+
+				reject(resolution);
+
+				return null;
+			}
+		};
 
 		private boolean isCancelled;
 
-		FirstPromiseResolver(Collection<Promise<Resolution>> promises) {
+		HonorFirstPromise(Collection<Promise<Resolution>> promises) {
 			this.promises = promises;
 			for (Promise<Resolution> promise : promises) {
-				promise.then(new ResolutionProxy<>(this));
-				promise.excuse(this);
+				promise.then(promiseProxy, errorProxy);
 			}
 			cancellationRequested(this);
 		}
@@ -60,22 +89,7 @@ final class Resolutions {
 			}
 
 			for (Promise<Resolution> promise : promises) promise.cancel();
-			sendRejection(new CancellationException());
-		}
-
-		@Override
-		public Void respond(Throwable throwable) throws Throwable {
-			final Lock readLock = readWriteLock.readLock();
-			readLock.lock();
-			try {
-				if (isCancelled) return null;
-			} finally {
-				readLock.unlock();
-			}
-
-			sendRejection(throwable);
-
-			return null;
+			reject(new CancellationException());
 		}
 	}
 }

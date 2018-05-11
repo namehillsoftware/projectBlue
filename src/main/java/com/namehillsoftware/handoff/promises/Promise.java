@@ -1,5 +1,6 @@
 package com.namehillsoftware.handoff.promises;
 
+import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.SingleMessageBroadcaster;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -7,61 +8,46 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class Promise<Resolution> {
-
-	private final SingleMessageBroadcaster<Resolution> singleMessageBroadcaster;
+public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 	public Promise(MessengerOperator<Resolution> messengerOperator) {
-		this();
-		messengerOperator.send(singleMessageBroadcaster);
+		messengerOperator.send(new PromiseMessenger());
 	}
 
 	public Promise(Resolution passThroughResult) {
-		this();
-		singleMessageBroadcaster.sendResolution(passThroughResult);
-	}
-
-	private Promise() {
-		this(new SingleMessageBroadcaster<>());
-	}
-
-	private Promise(SingleMessageBroadcaster<Resolution> singleMessageBroadcaster) {
-		this.singleMessageBroadcaster = singleMessageBroadcaster;
+		resolve(passThroughResult);
 	}
 
 	public Promise(Throwable rejection) {
-		this();
-		singleMessageBroadcaster.sendRejection(rejection);
+		reject(rejection);
 	}
 
-	public final void cancel() {
-		singleMessageBroadcaster.cancel();
-	}
+	public Promise() {}
 
-	private <NewResolution> Promise<NewResolution> then(ResponseRoutingMessenger<Resolution, NewResolution> onFulfilled) {
-		singleMessageBroadcaster.awaitResolution(onFulfilled);
+	private <NewResolution> Promise<NewResolution> then(PromiseResponse<Resolution, NewResolution> onFulfilled) {
+		awaitResolution(onFulfilled);
 
-		return new Promise<>(onFulfilled);
+		return onFulfilled;
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled) {
-		return then(new FulfilledResponseExecutor<>(onFulfilled));
+		return then(new PromiseImmediateResponse<>(onFulfilled));
 	}
 
 	public final <NewResolution> Promise<NewResolution> then(ImmediateResponse<Resolution, NewResolution> onFulfilled, ImmediateResponse<Throwable, NewResolution> onRejected) {
-		return then(new ResponseExecutor<>(onFulfilled, onRejected));
+		return then(new PromiseImmediateResponse<>(onFulfilled, onRejected));
 	}
 
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled) {
-		return then(new PromisedResolutionResponseMessenger<>(onFulfilled));
+		return then(new PromisedEventualResponse<>(onFulfilled));
 	}
 
 	public final <NewResolution> Promise<NewResolution> eventually(PromisedResponse<Resolution, NewResolution> onFulfilled, PromisedResponse<Throwable, NewResolution> onRejected) {
-		return then(new PromisedGuaranteedResponseMessenger<>(onFulfilled, onRejected));
+		return then(new PromisedEventualResponse<>(onFulfilled, onRejected));
 	}
 
 	public final <NewRejection> Promise<NewRejection> excuse(ImmediateResponse<Throwable, NewRejection> onRejected) {
-		return then(new RejectedResponseExecutor<>(onRejected));
+		return then(new RejectedResponsePromise<>(onRejected));
 	}
 
 	public static <Resolution> Promise<Resolution> empty() {
@@ -83,6 +69,24 @@ public class Promise<Resolution> {
 	}
 
 	public static <Resolution> Promise<Resolution> whenAny(Collection<Promise<Resolution>> promises) {
-		return new Promise<>(new Resolutions.FirstPromiseResolver<>(promises));
+		return new Resolutions.HonorFirstPromise<>(promises);
+	}
+
+	private class PromiseMessenger implements Messenger<Resolution> {
+
+		@Override
+		public void sendResolution(Resolution resolution) {
+			resolve(resolution);
+		}
+
+		@Override
+		public void sendRejection(Throwable error) {
+			reject(error);
+		}
+
+		@Override
+		public void cancellationRequested(Runnable response) {
+			Promise.this.cancellationRequested(response);
+		}
 	}
 }
