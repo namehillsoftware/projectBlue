@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer;
 import android.media.MediaPlayer;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerErrorException;
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.MediaPlayerException;
@@ -10,7 +11,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.Med
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackComplete;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackError;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.PollingProgressSource;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.PromisedPlayedFile;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -19,10 +21,6 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Observable;
 
 public final class MediaPlayerPlaybackHandler
 implements
@@ -43,21 +41,28 @@ implements
 	private Runnable playbackCompletedAction;
 	private OneParameterAction<MediaPlayerErrorException> playbackErrorAction;
 
-	private final CreateAndHold<PollingProgressSource> mediaPlayerPositionSource = new AbstractSynchronousLazy<PollingProgressSource>() {
+	private final CreateAndHold<MediaPlayerFileProgressReader> lazyFileProgressReader = new AbstractSynchronousLazy<MediaPlayerFileProgressReader>() {
 		@Override
-		protected PollingProgressSource create() {
-			mediaPlayer.setOnCompletionListener(MediaPlayerPlaybackHandler.this);
-			mediaPlayer.setOnErrorListener(MediaPlayerPlaybackHandler.this);
-			return new PollingProgressSource<>(
-				new MediaPlayerFileProgressReader(mediaPlayer),
+		protected MediaPlayerFileProgressReader create() {
+			return new MediaPlayerFileProgressReader(mediaPlayer);
+		}
+	};
+
+	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> mediaPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
+		@Override
+		protected ProgressingPromise<Duration, PlayedFile> create() {
+			return new PromisedPlayedFile<>(
+				lazyFileProgressReader.getObject(),
 				MediaPlayerPlaybackHandler.this,
-				MediaPlayerPlaybackHandler.this,
-				Duration.millis(100));
+				MediaPlayerPlaybackHandler.this);
 		}
 	};
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
+		mediaPlayer.setOnErrorListener(this);
+		mediaPlayer.setOnCompletionListener(this);
+		mediaPlayer.setOnInfoListener(this);
 	}
 
 	private boolean isPlaying() {
@@ -74,10 +79,8 @@ implements
 	}
 
 	@Override
-	public Observable<Duration> observeProgress(Duration observationPeriod) {
-		return Observable
-			.create(mediaPlayerPositionSource.getObject().observePeriodically(observationPeriod))
-			.sample(observationPeriod.getMillis(), TimeUnit.MILLISECONDS);
+	public Duration getProgress() {
+		return lazyFileProgressReader.getObject().getProgress();
 	}
 
 	@Override
@@ -87,13 +90,13 @@ implements
 	}
 
 	@Override
+	public ProgressingPromise<Duration, PlayedFile> promisePlayedFile() {
+		return mediaPlayerPositionSource.getObject();
+	}
+
+	@Override
 	public synchronized Duration getDuration() {
-		try {
-			return Duration.millis(mediaPlayer.getDuration());
-		} catch (IllegalStateException e) {
-			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
-			return Duration.ZERO;
-		}
+		return lazyFileProgressReader.getObject().getProgress();
 	}
 
 	@Override
@@ -141,9 +144,6 @@ implements
 		} catch (IllegalStateException se) {
 			mediaPlayerIllegalStateReporter.reportIllegalStateException(se, "stopping");
 		}
-
-		if (mediaPlayerPositionSource.isCreated())
-			mediaPlayerPositionSource.getObject().close();
 
 		MediaPlayerCloser.closeMediaPlayer(mediaPlayer);
 	}

@@ -4,13 +4,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,7 +22,6 @@ import java.util.List;
 import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +32,15 @@ public class WhenStartingPlayback {
 	@Before
 	public void before() {
 		PlayingFile mockPlayingFile = mock(PlayingFile.class);
-		when(mockPlayingFile.observeProgress(any())).thenReturn(Observable.empty());
+		when(mockPlayingFile.promisePlayedFile()).thenReturn(new ProgressingPromise<Duration, PlayedFile>() {
+			{
+				resolve(mock(PlayedFile.class));
+			}
+			@Override
+			public Duration getProgress() {
+				return Duration.ZERO;
+			}
+		});
 		PlayableFile playbackHandler = mock(PlayableFile.class);
 		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mockPlayingFile));
 

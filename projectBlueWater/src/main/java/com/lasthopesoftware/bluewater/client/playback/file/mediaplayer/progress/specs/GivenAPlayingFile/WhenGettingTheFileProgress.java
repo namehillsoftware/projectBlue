@@ -23,7 +23,7 @@ public class WhenGettingTheFileProgress {
 		when(mockMediaPlayer.getCurrentPosition()).thenReturn(75);
 
 		final MediaPlayerFileProgressReader mediaPlayerFileProgressReader = new MediaPlayerFileProgressReader(mockMediaPlayer);
-		progress = mediaPlayerFileProgressReader.getFileProgress();
+		progress = mediaPlayerFileProgressReader.getProgress();
 	}
 
 	@Test

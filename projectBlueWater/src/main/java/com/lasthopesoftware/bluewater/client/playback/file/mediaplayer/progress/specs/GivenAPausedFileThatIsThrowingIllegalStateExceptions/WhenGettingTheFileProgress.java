@@ -24,7 +24,7 @@ public class WhenGettingTheFileProgress {
 		when(mockMediaPlayer.getDuration()).thenThrow(new IllegalStateException());
 
 		final MediaPlayerFileProgressReader mediaPlayerFileProgressReader = new MediaPlayerFileProgressReader(mockMediaPlayer);
-		progress = mediaPlayerFileProgressReader.getFileProgress();
+		progress = mediaPlayerFileProgressReader.getProgress();
 	}
 
 	@Test

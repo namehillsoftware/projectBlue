@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -359,19 +358,20 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 		nowPlayingRepository
 			.getNowPlaying()
-			.eventually(np -> {
+			.then(np -> {
 				np.playlist = playlist;
 
-				if (positionedPlayingFile == null)
-					return new Promise<>(np);
+				if (positionedPlayingFile == null) return np;
 
-				return new Promise<>(m ->
-					positionedPlayingFile.getPlayingFile().observeProgress(Duration.ZERO).firstElement()
-						.subscribe(p -> {
-							np.playlistPosition = positionedPlayingFile.getPlaylistPosition();
-							np.filePosition = p.getMillis();
-							m.sendResolution(np);
-						}, m::sendRejection));
+				np.playlistPosition = positionedPlayingFile.getPlaylistPosition();
+				np.filePosition =
+					positionedPlayingFile
+						.getPlayingFile()
+						.promisePlayedFile()
+						.getProgress()
+						.getMillis();
+
+				return np;
 			})
 			.eventually(nowPlayingRepository::updateNowPlaying);
 	}

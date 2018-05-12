@@ -67,6 +67,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayab
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
@@ -99,6 +100,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
@@ -118,9 +120,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.schedulers.RxThreadFactory;
+import io.reactivex.internal.schedulers.SingleScheduler;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
@@ -214,6 +220,18 @@ implements
 
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
+
+	private static final CreateAndHold<Scheduler> lazyObservationScheduler = new AbstractSynchronousLazy<Scheduler>() {
+		@Override
+		protected Scheduler create() {
+			return new SingleScheduler(
+				new RxThreadFactory(
+					"Playback Observation",
+					Thread.MIN_PRIORITY,
+					false
+				));
+		}
+	};
 
 	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 	private final CreateAndHold<AudioManager> audioManagerLazy = new Lazy<>(() -> (AudioManager)getSystemService(Context.AUDIO_SERVICE));
@@ -1012,13 +1030,19 @@ implements
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile());
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
-		filePositionSubscription =
-			playingFile.observeProgress(Duration.standardSeconds(1))
+		final ProgressingPromise<Duration, PlayedFile> promisedPlayedFile = playingFile.promisePlayedFile();
+		final Disposable localSubscription = filePositionSubscription =
+			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.getObject())
+				.map(t -> promisedPlayedFile.getProgress())
 				.distinctUntilChanged()
-				.subscribe(
-					new TrackPositionBroadcaster(this, playingFile),
-					Functions.ON_ERROR_MISSING,
-					() -> lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile()));
+				.subscribe(new TrackPositionBroadcaster(this, playingFile));
+
+
+		promisedPlayedFile.then(p -> {
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
+			localSubscription.dispose();
+			return null;
+		});
 
 		if (!areListenersRegistered) registerListeners();
 		registerRemoteClientControl();

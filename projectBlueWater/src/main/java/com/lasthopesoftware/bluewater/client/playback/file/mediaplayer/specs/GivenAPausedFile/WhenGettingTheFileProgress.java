@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.specs.GivenAPlayingMediaPlayer;
+package com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.specs.GivenAPausedFile;
 
 import android.media.MediaPlayer;
 
@@ -12,25 +12,21 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenObservingThePlaybackPosition {
+public class WhenGettingTheFileProgress {
 
 	private static Duration progress;
 
 	@BeforeClass
 	public static void before() {
 		final MediaPlayer mockMediaPlayer = mock(MediaPlayer.class);
-		when(mockMediaPlayer.isPlaying()).thenReturn(true);
-		when(mockMediaPlayer.getCurrentPosition()).thenReturn(50);
-		when(mockMediaPlayer.getDuration()).thenReturn(100);
+		when(mockMediaPlayer.isPlaying()).thenReturn(false);
 
 		final MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mockMediaPlayer);
-		progress = mediaPlayerPlaybackHandler
-			.observeProgress(Duration.ZERO)
-			.blockingFirst();
+		progress = mediaPlayerPlaybackHandler.getProgress();
 	}
 
 	@Test
-	public void thenThePlaybackPositionIsCorrect() {
-		assertThat(progress).isEqualTo(Duration.millis(50));
+	public void thenTheFileProgressIsCorrect() {
+		assertThat(progress).isEqualTo(Duration.ZERO);
 	}
 }
