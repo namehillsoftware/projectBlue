@@ -14,6 +14,7 @@ public class WhenCreatingAHandler {
 	private static MediaPlayer.OnCompletionListener onCompletionListener;
 	private static MediaPlayer.OnErrorListener onErrorListener;
 	private static MediaPlayer.OnInfoListener onInfoListener;
+	private static MediaPlayerPlaybackHandler mediaPlayerPlaybackHandler;
 
 	@BeforeClass
 	public static void before() {
@@ -34,21 +35,21 @@ public class WhenCreatingAHandler {
 			}
 		};
 
-		new MediaPlayerPlaybackHandler(mediaPlayer);
+		mediaPlayerPlaybackHandler = new MediaPlayerPlaybackHandler(mediaPlayer);
 	}
 
 	@Test
-	public void thenTheOnCompletionHandlerIsSet() {
-		assertThat(onCompletionListener).isNotNull();
+	public void thenTheOnCompletionHandlerIsSetCorrectly() {
+		assertThat(onCompletionListener).isEqualTo(mediaPlayerPlaybackHandler);
 	}
 
 	@Test
-	public void thenTheOnErrorHandlerIsSet() {
-		assertThat(onErrorListener).isNotNull();
+	public void thenTheOnErrorHandlerIsSetCorrectly() {
+		assertThat(onErrorListener).isEqualTo(mediaPlayerPlaybackHandler);
 	}
 
 	@Test
-	public void thenTheOnInfoHandlerIsSet() {
-		assertThat(onInfoListener).isNotNull();
+	public void thenTheOnInfoHandlerIsSetCorrectly() {
+		assertThat(onInfoListener).isEqualTo(mediaPlayerPlaybackHandler);
 	}
 }
