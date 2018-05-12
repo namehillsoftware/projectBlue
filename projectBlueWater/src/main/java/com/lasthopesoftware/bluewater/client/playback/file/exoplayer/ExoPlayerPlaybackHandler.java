@@ -10,8 +10,11 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.PromisedPlayedFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -36,6 +39,13 @@ implements
 
 	private boolean isPlaying;
 
+	private final CreateAndHold<ExoPlayerFileProgressReader> lazyFileProgressReader = new AbstractSynchronousLazy<ExoPlayerFileProgressReader>() {
+		@Override
+		protected ExoPlayerFileProgressReader create() {
+			return new ExoPlayerFileProgressReader(exoPlayer);
+		}
+	};
+
 	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> exoPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
 		@Override
 		protected ProgressingPromise<Duration, PlayedFile> create() {
@@ -45,19 +55,12 @@ implements
 			final ExoPlayerPlaybackErrorNotifier errorNotifier = new ExoPlayerPlaybackErrorNotifier(ExoPlayerPlaybackHandler.this);
 			exoPlayer.addListener(errorNotifier);
 
-			final ProgressingPromise<Duration, PlayedFile> progressingPromise = new ProgressingPromise<Duration, PlayedFile>() {
-				{
-					completedNotifier.playbackCompleted(() -> resolve(ExoPlayerPlaybackHandler.this));
-					errorNotifier.playbackError(this::reject);
-				}
+			final PromisedPlayedFile<ExoPlayerException> promisedPlayedFile = new PromisedPlayedFile<>(
+				lazyFileProgressReader.getObject(),
+				completedNotifier,
+				errorNotifier);
 
-				@Override
-				public Duration getProgress() {
-					return ExoPlayerPlaybackHandler.this.getProgress();
-				}
-			};
-
-			progressingPromise
+			promisedPlayedFile
 				.then(p -> {
 					exoPlayer.removeListener(completedNotifier);
 					exoPlayer.removeListener(errorNotifier);
@@ -68,11 +71,9 @@ implements
 					return null;
 				});
 
-			return progressingPromise;
+			return promisedPlayedFile;
 		}
 	};
-
-	private volatile Duration fileProgress = Duration.ZERO;
 
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
@@ -98,9 +99,7 @@ implements
 
 	@Override
 	public Duration getProgress() {
-		if (!exoPlayer.getPlayWhenReady()) return fileProgress;
-
-		return fileProgress = Duration.millis(exoPlayer.getCurrentPosition());
+		return lazyFileProgressReader.getObject().getProgress();
 	}
 
 	@Override

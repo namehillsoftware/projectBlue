@@ -24,7 +24,10 @@ public class MediaPlayerFileProgressReader implements ReadFileProgress {
 		if (!mediaPlayer.isPlaying()) return fileProgress;
 
 		try {
-			return fileProgress = Duration.millis(mediaPlayer.getCurrentPosition());
+			final int currentPosition = mediaPlayer.getCurrentPosition();
+			return currentPosition != fileProgress.getMillis()
+				? (fileProgress = Duration.millis(currentPosition))
+				: fileProgress;
 		} catch (IllegalStateException e) {
 			reporter.reportIllegalStateException(e, "reading position");
 			return fileProgress;

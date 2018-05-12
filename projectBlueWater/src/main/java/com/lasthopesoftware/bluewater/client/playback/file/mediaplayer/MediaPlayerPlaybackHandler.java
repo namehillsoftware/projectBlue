@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.error.Med
 import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.progress.MediaPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackComplete;
 import com.lasthopesoftware.bluewater.client.playback.file.progress.NotifyFilePlaybackError;
+import com.lasthopesoftware.bluewater.client.playback.file.progress.PromisedPlayedFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -41,23 +42,20 @@ implements
 	private Runnable playbackCompletedAction;
 	private OneParameterAction<MediaPlayerErrorException> playbackErrorAction;
 
+	private final CreateAndHold<MediaPlayerFileProgressReader> lazyFileProgressReader = new AbstractSynchronousLazy<MediaPlayerFileProgressReader>() {
+		@Override
+		protected MediaPlayerFileProgressReader create() {
+			return new MediaPlayerFileProgressReader(mediaPlayer);
+		}
+	};
+
 	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> mediaPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
 		@Override
 		protected ProgressingPromise<Duration, PlayedFile> create() {
-			final MediaPlayerFileProgressReader mediaPlayerFileProgressReader = new MediaPlayerFileProgressReader(mediaPlayer);
-			return new ProgressingPromise<Duration, PlayedFile>() {
-				{
-					MediaPlayerPlaybackHandler.this
-						.playbackCompleted(() -> resolve(MediaPlayerPlaybackHandler.this));
-					MediaPlayerPlaybackHandler.this
-						.playbackError(this::reject);
-				}
-
-				@Override
-				public Duration getProgress() {
-					return mediaPlayerFileProgressReader.getProgress();
-				}
-			};
+			return new PromisedPlayedFile<>(
+				lazyFileProgressReader.getObject(),
+				MediaPlayerPlaybackHandler.this,
+				MediaPlayerPlaybackHandler.this);
 		}
 	};
 
@@ -96,12 +94,7 @@ implements
 
 	@Override
 	public synchronized Duration getDuration() {
-		try {
-			return Duration.millis(mediaPlayer.getDuration());
-		} catch (IllegalStateException e) {
-			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
-			return Duration.ZERO;
-		}
+		return lazyFileProgressReader.getObject().getProgress();
 	}
 
 	@Override
