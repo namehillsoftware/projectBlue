@@ -80,7 +80,7 @@ implements
 
 	@Override
 	public Duration getProgress() {
-		return null;
+		return lazyFileProgressReader.getObject().getProgress();
 	}
 
 	@Override
