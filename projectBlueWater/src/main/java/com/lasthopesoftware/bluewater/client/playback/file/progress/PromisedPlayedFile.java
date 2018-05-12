@@ -20,11 +20,7 @@ implements
 
 		this.fileProgressReader = fileProgressReader;
 		notifyFilePlaybackComplete.playbackCompleted(this::whenPlaybackCompleted);
-		notifyPlaybackError.playbackError(this::emitError);
-	}
-
-	private void emitError(Throwable error) {
-		reject(error);
+		notifyPlaybackError.playbackError(this::reject);
 	}
 
 	private void whenPlaybackCompleted() {

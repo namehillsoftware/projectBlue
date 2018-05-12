@@ -26,7 +26,6 @@ public final class MediaPlayerPlaybackHandler
 implements
 	PlayableFile,
 	PlayingFile,
-	PlayedFile,
 	MediaPlayer.OnCompletionListener,
 	MediaPlayer.OnErrorListener,
 	MediaPlayer.OnInfoListener,
@@ -61,6 +60,9 @@ implements
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
+		mediaPlayer.setOnErrorListener(this);
+		mediaPlayer.setOnCompletionListener(this);
+		mediaPlayer.setOnInfoListener(this);
 	}
 
 	private boolean isPlaying() {

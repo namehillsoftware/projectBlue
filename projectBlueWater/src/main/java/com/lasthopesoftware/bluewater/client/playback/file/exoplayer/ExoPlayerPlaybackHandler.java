@@ -28,7 +28,6 @@ public class ExoPlayerPlaybackHandler
 implements
 	PlayableFile,
 	PlayingFile,
-	PlayedFile,
 	Player.EventListener,
 	Runnable
 {
