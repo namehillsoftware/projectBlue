@@ -3,11 +3,10 @@ package com.namehillsoftware.handoff;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public abstract class SingleMessageBroadcaster<Resolution> {
+public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation {
 
 	private final Object resolveSync = new Object();
 	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
-	private final Cancellation cancellation = new Cancellation();
 
 	private Message<Resolution> message;
 
@@ -19,13 +18,9 @@ public abstract class SingleMessageBroadcaster<Resolution> {
 		resolve(resolution, null);
 	}
 
-	protected final void cancellationRequested(Runnable reaction) {
-		cancellation.respondToCancellation(reaction);
-	}
-
 	public final void cancel() {
 		if (!isResolvedSynchronously())
-			cancellation.cancel();
+			super.cancel();
 	}
 
 	public final void awaitResolution(RespondingMessenger<Resolution> recipient) {
