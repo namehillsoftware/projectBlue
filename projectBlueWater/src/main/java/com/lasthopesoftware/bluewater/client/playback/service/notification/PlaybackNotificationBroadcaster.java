@@ -73,7 +73,9 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 			.then(perform(notification -> {
-				if (!isPlaying || (isNotificationStarted && isNotificationForeground)) {
+				if (!isPlaying || isNotificationForeground) {
+					if (!isNotificationStarted) return;
+
 					notificationManager.notify(
 						playbackNotificationsConfiguration.getNotificationId(),
 						notification);
