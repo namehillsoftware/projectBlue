@@ -75,7 +75,7 @@ final class Resolutions {
 			for (Promise<Resolution> promise : promises) {
 				promise.then(promiseProxy, errorProxy);
 			}
-			cancellationRequested(this);
+			respondToCancellation(this);
 		}
 
 		@Override
