@@ -16,10 +16,11 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	private final PlaybackNotificationsConfiguration playbackNotificationsConfiguration;
 	private final BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder;
 
-	private volatile boolean isPlaying;
-	private volatile boolean isNotificationStarted;
-	private volatile boolean isNotificationForeground;
-	private volatile ServiceFile serviceFile;
+	private final Object notificationSync = new Object();
+	private boolean isPlaying;
+	private boolean isNotificationStarted;
+	private boolean isNotificationForeground;
+	private ServiceFile serviceFile;
 
 	public PlaybackNotificationBroadcaster(Service service, NotificationManager notificationManager, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
 		this.service = service;
@@ -30,35 +31,43 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 	@Override
 	public void notifyPlaying() {
-		isPlaying = true;
+		synchronized (notificationSync) {
+			isPlaying = true;
 
-		if (serviceFile != null)
-			updateNowPlaying(serviceFile);
+			if (serviceFile != null)
+				updateNowPlaying(serviceFile);
+		}
 	}
 
 	@Override
 	public void notifyPaused() {
-		if (serviceFile == null) {
-			service.stopForeground(false);
-			isNotificationForeground = false;
-			return;
-		}
-
-		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying = false)
-			.then(notification -> {
-				notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification);
+		synchronized (notificationSync) {
+			if (serviceFile == null) {
 				service.stopForeground(false);
 				isNotificationForeground = false;
-				return null;
-			});
+				return;
+			}
+
+			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying = false)
+				.then(notification -> {
+					synchronized (notificationSync) {
+						notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification);
+						service.stopForeground(false);
+						isNotificationForeground = false;
+						return null;
+					}
+				});
+		}
 	}
 
 	@Override
 	public void notifyStopped() {
-		isPlaying = false;
-		service.stopForeground(true);
-		isNotificationStarted = false;
-		isNotificationForeground = false;
+		synchronized (notificationSync) {
+			isPlaying = false;
+			service.stopForeground(true);
+			isNotificationStarted = false;
+			isNotificationForeground = false;
+		}
 	}
 
 	@Override
@@ -67,22 +76,28 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	}
 
 	private void updateNowPlaying(ServiceFile serviceFile) {
-		this.serviceFile = serviceFile;
+		synchronized (notificationSync) {
+			this.serviceFile = serviceFile;
 
-		if (!isNotificationStarted && !isPlaying) return;
+			if (!isNotificationStarted && !isPlaying) return;
 
-		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
-			.then(perform(notification -> {
-				if (!isPlaying || (isNotificationStarted && isNotificationForeground)) {
-					notificationManager.notify(
-						playbackNotificationsConfiguration.getNotificationId(),
-						notification);
-					return;
-				}
+			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
+				.then(perform(notification -> {
+					synchronized (notificationSync) {
+						if (!isPlaying || isNotificationForeground) {
+							if (!isNotificationStarted) return;
 
-				service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
-				isNotificationStarted = true;
-				isNotificationForeground = true;
-			}));
+							notificationManager.notify(
+								playbackNotificationsConfiguration.getNotificationId(),
+								notification);
+							return;
+						}
+
+						service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
+						isNotificationStarted = true;
+						isNotificationForeground = true;
+					}
+				}));
+		}
 	}
 }
