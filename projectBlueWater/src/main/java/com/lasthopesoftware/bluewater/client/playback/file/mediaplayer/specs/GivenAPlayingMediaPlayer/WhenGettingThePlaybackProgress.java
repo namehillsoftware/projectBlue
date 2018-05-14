@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 public class WhenGettingThePlaybackProgress {
 
 	private static Duration progress;
+	private static Duration duration;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -31,6 +32,7 @@ public class WhenGettingThePlaybackProgress {
 			.promisePlayback()
 			.then(p -> {
 				progress = p.promisePlayedFile().getProgress();
+				duration = p.getDuration();
 				countDownLatch.countDown();
 				return null;
 			});
@@ -41,5 +43,10 @@ public class WhenGettingThePlaybackProgress {
 	@Test
 	public void thenThePlaybackPositionIsCorrect() {
 		assertThat(progress).isEqualTo(Duration.millis(50));
+	}
+
+	@Test
+	public void thenTheDurationIsCorrect() {
+		assertThat(duration).isEqualTo(Duration.millis(100));
 	}
 }

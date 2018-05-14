@@ -38,9 +38,6 @@ implements
 
 	private final MediaPlayer mediaPlayer;
 
-	private Runnable playbackCompletedAction;
-	private OneParameterAction<MediaPlayerErrorException> playbackErrorAction;
-
 	private final CreateAndHold<MediaPlayerFileProgressReader> lazyFileProgressReader = new AbstractSynchronousLazy<MediaPlayerFileProgressReader>() {
 		@Override
 		protected MediaPlayerFileProgressReader create() {
@@ -57,6 +54,11 @@ implements
 				MediaPlayerPlaybackHandler.this);
 		}
 	};
+
+	private Runnable playbackCompletedAction;
+	private OneParameterAction<MediaPlayerErrorException> playbackErrorAction;
+
+	private Duration duration = Duration.ZERO;
 
 	public MediaPlayerPlaybackHandler(MediaPlayer mediaPlayer) {
 		this.mediaPlayer = mediaPlayer;
@@ -96,7 +98,16 @@ implements
 
 	@Override
 	public synchronized Duration getDuration() {
-		return lazyFileProgressReader.getObject().getProgress();
+		try {
+			final long newDuration = mediaPlayer.getDuration();
+
+			return newDuration == duration.getMillis()
+				? duration
+				: (duration = Duration.millis(newDuration));
+		} catch (IllegalStateException e) {
+			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
+			return Duration.ZERO;
+		}
 	}
 
 	@Override
