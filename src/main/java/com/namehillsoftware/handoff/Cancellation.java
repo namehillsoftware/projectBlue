@@ -8,7 +8,7 @@ class Cancellation {
 	private Runnable reaction;
 	private boolean isCancelled;
 
-	public final void cancel() {
+	public void cancel() {
 		reentrantLock.lock();
 		try {
 			isCancelled = true;

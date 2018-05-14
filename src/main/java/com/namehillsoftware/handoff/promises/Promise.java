@@ -86,7 +86,7 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 		@Override
 		public void cancellationRequested(Runnable response) {
-			Promise.this.cancellationRequested(response);
+			respondToCancellation(response);
 		}
 	}
 }

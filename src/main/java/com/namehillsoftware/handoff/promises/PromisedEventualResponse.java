@@ -19,7 +19,7 @@ class PromisedEventualResponse<Resolution, Response> extends PromiseResponse<Res
 	PromisedEventualResponse(PromisedResponse<Resolution, Response> onFulfilled, PromisedResponse<Throwable, Response> onRejected) {
 		this.onFulfilled = onFulfilled;
 		this.onRejected = onRejected;
-		cancellationRequested(cancellationProxy);
+		respondToCancellation(cancellationProxy);
 	}
 
 	@Override
