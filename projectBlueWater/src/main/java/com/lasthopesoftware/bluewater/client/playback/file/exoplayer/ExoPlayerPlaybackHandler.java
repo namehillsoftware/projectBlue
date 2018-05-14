@@ -34,9 +34,6 @@ implements
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final ExoPlayer exoPlayer;
-	private final Duration duration;
-
-	private boolean isPlaying;
 
 	private final CreateAndHold<ExoPlayerFileProgressReader> lazyFileProgressReader = new AbstractSynchronousLazy<ExoPlayerFileProgressReader>() {
 		@Override
@@ -74,10 +71,13 @@ implements
 		}
 	};
 
+	private boolean isPlaying;
+
+	private Duration duration = Duration.ZERO;
+
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
 		this.exoPlayer = exoPlayer;
 		exoPlayer.addListener(this);
-		duration = Duration.millis(exoPlayer.getDuration());
 	}
 
 	private void pause() {
@@ -103,7 +103,11 @@ implements
 
 	@Override
 	public Duration getDuration() {
-		return duration;
+		final long newDuration = exoPlayer.getDuration();
+
+		return newDuration == duration.getMillis()
+			? duration
+			: (duration = Duration.millis(newDuration));
 	}
 
 	@Override
