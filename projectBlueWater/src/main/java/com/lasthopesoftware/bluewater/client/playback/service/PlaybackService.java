@@ -1035,7 +1035,9 @@ implements
 			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.getObject())
 				.map(t -> promisedPlayedFile.getProgress())
 				.distinctUntilChanged()
-				.subscribe(new TrackPositionBroadcaster(this, playingFile));
+				.subscribe(new TrackPositionBroadcaster(
+					localBroadcastManagerLazy.getObject(),
+					playingFile));
 
 
 		promisedPlayedFile.then(p -> {
