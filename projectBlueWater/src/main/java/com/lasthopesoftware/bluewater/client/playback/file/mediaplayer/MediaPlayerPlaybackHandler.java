@@ -96,7 +96,12 @@ implements
 
 	@Override
 	public synchronized Duration getDuration() {
-		return lazyFileProgressReader.getObject().getProgress();
+		try {
+			return Duration.millis(mediaPlayer.getDuration());
+		} catch (IllegalStateException e) {
+			mediaPlayerIllegalStateReporter.reportIllegalStateException(e, "getting track duration");
+			return Duration.ZERO;
+		}
 	}
 
 	@Override
