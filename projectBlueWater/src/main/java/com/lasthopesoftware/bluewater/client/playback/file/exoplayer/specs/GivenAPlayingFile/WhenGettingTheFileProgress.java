@@ -19,6 +19,8 @@ public class WhenGettingTheFileProgress {
 
 	private static Duration progress;
 
+	private static Duration duration;
+
 	@BeforeClass
 	public static void before() throws InterruptedException {
 		final ExoPlayer mockMediaPlayer = mock(ExoPlayer.class);
@@ -35,6 +37,8 @@ public class WhenGettingTheFileProgress {
 
 				progress = returnPromise.getProgress();
 
+				duration = p.getDuration();
+
 				countDownLatch.countDown();
 
 				return null;
@@ -49,5 +53,10 @@ public class WhenGettingTheFileProgress {
 	@Test
 	public void thenTheFileProgressIsCorrect() {
 		assertThat(progress).isEqualTo(Duration.millis(75));
+	}
+
+	@Test
+	public void thenTheFileDurationIsCorrect() {
+		assertThat(duration).isEqualTo(Duration.millis(101));
 	}
 }
