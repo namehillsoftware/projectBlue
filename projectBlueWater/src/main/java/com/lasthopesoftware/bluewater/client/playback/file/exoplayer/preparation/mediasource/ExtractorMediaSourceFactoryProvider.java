@@ -8,12 +8,10 @@ import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.extractor.mp3.Mp3Extractor;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.upstream.FileDataSourceFactory;
+import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
-import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
-import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
@@ -29,13 +27,13 @@ public class ExtractorMediaSourceFactoryProvider {
 
 	private final Context context;
 	private final Library library;
-	private final IDiskCacheDirectoryProvider diskCacheDirectory;
+	private final Cache cache;
 
 	private static final CreateAndHold<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
 	private final CreateAndHold<ExtractorMediaSource.Factory> lazyFileExtractorFactory = new AbstractSynchronousLazy<ExtractorMediaSource.Factory>() {
 		@Override
-		protected ExtractorMediaSource.Factory create() throws Throwable {
+		protected ExtractorMediaSource.Factory create() {
 			final ExtractorMediaSource.Factory factory = new ExtractorMediaSource.Factory(new FileDataSourceFactory());
 			factory.setMinLoadableRetryCount(ExtractorMediaSource.DEFAULT_MIN_LOADABLE_RETRY_COUNT_LIVE);
 			factory.setExtractorsFactory(extractorsFactory.getObject());
@@ -45,7 +43,7 @@ public class ExtractorMediaSourceFactoryProvider {
 
 	private final CreateAndHold<ExtractorMediaSource.Factory> lazyRemoteExtractorFactory = new AbstractSynchronousLazy<ExtractorMediaSource.Factory>() {
 		@Override
-		protected ExtractorMediaSource.Factory create() throws Throwable {
+		protected ExtractorMediaSource.Factory create() {
 			final OkHttpDataSourceFactory httpDataSourceFactory = new OkHttpDataSourceFactory(
 				new OkHttpClient.Builder()
 					.readTimeout(45, TimeUnit.SECONDS)
@@ -59,9 +57,8 @@ public class ExtractorMediaSourceFactoryProvider {
 			if (authKey != null && !authKey.isEmpty())
 				httpDataSourceFactory.getDefaultRequestProperties().set("Authorization", "basic " + authKey);
 
-			final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
 			final CacheDataSourceFactory cacheDataSourceFactory = new CacheDataSourceFactory(
-				new SimpleCache(diskCacheDirectory.getDiskCacheDirectory(cacheConfiguration), new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize())),
+				cache,
 				httpDataSourceFactory);
 
 			final ExtractorMediaSource.Factory factory = new ExtractorMediaSource.Factory(cacheDataSourceFactory);
@@ -71,10 +68,10 @@ public class ExtractorMediaSourceFactoryProvider {
 		}
 	};
 
-	public ExtractorMediaSourceFactoryProvider(Context context, Library library, IDiskCacheDirectoryProvider diskCacheDirectory) {
+	public ExtractorMediaSourceFactoryProvider(Context context, Library library, IDiskCacheDirectoryProvider diskCacheDirectory, Cache cache) {
 		this.context = context;
 		this.library = library;
-		this.diskCacheDirectory = diskCacheDirectory;
+		this.cache = cache;
 	}
 
 	public ExtractorMediaSource.Factory getFactory(Uri uri) {

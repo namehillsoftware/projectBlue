@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 import android.content.Context;
 import android.os.Handler;
 
+import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
@@ -33,8 +34,8 @@ public class WhenBuildingTheEngine {
 				mock(Context.class),
 				mock(Handler.class),
 				mock(BestMatchUriProvider.class),
-				lookupSelectedPlaybackEngineType
-			);
+				lookupSelectedPlaybackEngineType,
+				mock(Cache.class));
 
 		engine = playbackEngineBuilder.build(new Library());
 	}
