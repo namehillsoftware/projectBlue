@@ -30,6 +30,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
 import com.annimon.stream.Stream;
+import com.google.android.exoplayer2.upstream.cache.Cache;
+import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
@@ -323,6 +326,7 @@ implements
 
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
+	private SimpleCache cache;
 
 	private final CreateAndHold<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
 		@Override
@@ -700,6 +704,12 @@ implements
 			connectionProvider,
 			new ServiceFileUriQueryParamsProvider());
 
+		final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
+		if (cache != null)
+			cache.release();
+		cache = new SimpleCache(
+			new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
+			new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
 
 		return extractorHandler.getObject().then(handler -> {
 			final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
@@ -721,7 +731,8 @@ implements
 							library,
 							false),
 						remoteFileUriProvider),
-					new SelectedPlaybackEngineTypeAccess(this));
+					new SelectedPlaybackEngineTypeAccess(this),
+					cache);
 
 			final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
 
@@ -1116,6 +1127,14 @@ implements
 
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
+
+		if (cache != null) {
+			try {
+				cache.release();
+			} catch (Cache.CacheException e) {
+				logger.warn("There was an error releasing the cache", e);
+			}
+		}
 	}
 
 	/* End Event Handlers */

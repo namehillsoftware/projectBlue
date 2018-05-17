@@ -75,7 +75,8 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 							null,
 							DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
 							lazyTextOutputLogger.getObject(),
-							lazyMetadataOutputLogger.getObject());
+							lazyMetadataOutputLogger.getObject(),
+							null);
 
 					final ExoPlayer exoPlayer = ExoPlayerFactory.newInstance(
 						renderers,
@@ -108,10 +109,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 					final MediaSource mediaSource =
 						extractorMediaSourceFactoryProvider
 							.getFactory(uri)
-							.createMediaSource(
-								uri,
-								handler,
-								bufferingExoPlayer);
+							.createMediaSource(uri);
 
 					try {
 						exoPlayer.prepare(mediaSource);

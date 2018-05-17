@@ -11,6 +11,7 @@ import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
+import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -34,14 +35,15 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
 
-	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, BestMatchUriProvider bestMatchUriProvider, Library library) {
+	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, BestMatchUriProvider bestMatchUriProvider, Library library, Cache cache) {
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
 		extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
 			context,
 			library,
-			new AndroidDiskCacheDirectoryProvider(context));
+			new AndroidDiskCacheDirectoryProvider(context),
+			cache);
 
 		renderersFactory = new DefaultRenderersFactory(context);
 	}
