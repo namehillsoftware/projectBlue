@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying;
+package com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying.AndThenPaused;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
@@ -7,22 +7,24 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.PlayableFilePlayer;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+
+import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenPausingPlayback {
+public class WhenResumingPlayback {
 
-	private static FakeBufferingPlaybackHandler playbackHandler;
+	private FakeBufferingPlaybackHandler playbackHandler;
 
-	@BeforeClass
-	public static void before() {
+	@Before
+	public void before() {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
@@ -36,13 +38,17 @@ public class WhenPausingPlayback {
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
 			.thenReturn(positionedPlaybackHandlerContainer);
 
-		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, new FakeVolumeControllerFactory(), 0);
+		final IPlaylistPlayer playlistPlayback = new PlayableFilePlayer(preparedPlaybackFileQueue, new FakeVolumeControllerFactory(), 0);
+
+		Observable.create(playlistPlayback).subscribe();
 
 		playlistPlayback.pause();
+
+		playlistPlayback.resume();
 	}
 
 	@Test
-	public void thenPlaybackIsPaused() {
-		assertThat(playbackHandler.isPlaying()).isFalse();
+	public void thenPlaybackIsResumed() {
+		assertThat(playbackHandler.isPlaying()).isTrue();
 	}
 }

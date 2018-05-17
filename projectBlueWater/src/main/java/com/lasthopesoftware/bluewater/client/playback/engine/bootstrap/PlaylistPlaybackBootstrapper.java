@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.ActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.IActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.PlayableFilePlayer;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 
 import java.io.Closeable;
@@ -15,7 +15,7 @@ public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Close
 	private final PlaylistVolumeManager volumeManagement;
 	private final IPlaybackHandlerVolumeControllerFactory volumeControllerFactory;
 
-	private PlaylistPlayer playlistPlayer;
+	private PlayableFilePlayer playlistPlayer;
 	private ActivePlayer activePlayer;
 
 	public PlaylistPlaybackBootstrapper(PlaylistVolumeManager volumeManagement, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory) {
@@ -27,14 +27,14 @@ public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Close
 	public IActivePlayer startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException {
 		close();
 
-		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, volumeControllerFactory, filePosition);
+		playlistPlayer = new PlayableFilePlayer(preparedPlaybackQueue, volumeControllerFactory, filePosition);
 		activePlayer = new ActivePlayer(playlistPlayer, volumeManagement);
 
 		return activePlayer;
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		if (activePlayer != null) activePlayer.close();
 		if (playlistPlayer != null)	playlistPlayer.close();
 	}

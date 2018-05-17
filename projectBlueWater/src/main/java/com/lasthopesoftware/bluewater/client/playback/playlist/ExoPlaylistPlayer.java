@@ -5,7 +5,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.source.DynamicConcatenatingMediaSource;
+import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
@@ -15,11 +15,12 @@ import io.reactivex.ObservableEmitter;
 public class ExoPlaylistPlayer implements IPlaylistPlayer, Player.EventListener {
 
 	private final ExoPlayer exoPlayer;
-	private final DynamicConcatenatingMediaSource dynamicConcatenatingMediaSource;
+	private final ConcatenatingMediaSource concatenatingMediaSource;
+	private ObservableEmitter<PositionedPlayingFile> emitter;
 
-	public ExoPlaylistPlayer(ExoPlayer exoPlayer, DynamicConcatenatingMediaSource dynamicConcatenatingMediaSource) {
+	public ExoPlaylistPlayer(ExoPlayer exoPlayer, ConcatenatingMediaSource concatenatingMediaSource) {
 		this.exoPlayer = exoPlayer;
-		this.dynamicConcatenatingMediaSource = dynamicConcatenatingMediaSource;
+		this.concatenatingMediaSource = concatenatingMediaSource;
 	}
 
 	@Override
@@ -44,17 +45,17 @@ public class ExoPlaylistPlayer implements IPlaylistPlayer, Player.EventListener 
 
 	@Override
 	public void subscribe(ObservableEmitter<PositionedPlayingFile> emitter) {
+		this.emitter = emitter;
 
 	}
 
 	@Override
-	public void onTimelineChanged(Timeline timeline, Object manifest) {
+	public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
 
 	}
 
 	@Override
 	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
 	}
 
 	@Override
@@ -84,12 +85,11 @@ public class ExoPlaylistPlayer implements IPlaylistPlayer, Player.EventListener 
 
 	@Override
 	public void onPositionDiscontinuity(int reason) {
-
+		exoPlayer.getCurrentPeriodIndex();
 	}
 
 	@Override
 	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
 	}
 
 	@Override

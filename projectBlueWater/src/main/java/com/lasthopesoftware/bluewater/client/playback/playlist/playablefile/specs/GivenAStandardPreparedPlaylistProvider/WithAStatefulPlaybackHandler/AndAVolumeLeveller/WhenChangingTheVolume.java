@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.AndAVolumeLeveller;
+package com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.AndAVolumeLeveller;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBuffe
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.PlayableFilePlayer;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -71,7 +71,7 @@ public class WhenChangingTheVolume {
 		when(volumeLevelSettings.isVolumeLevellingEnabled()).thenReturn(true);
 
 		final IPlaylistPlayer playlistPlayback =
-			new PlaylistPlayer(
+			new PlayableFilePlayer(
 				preparedPlaybackFileQueue,
 				new PlaybackHandlerVolumeControllerFactory(
 					new MaxFileVolumeProvider(volumeLevelSettings, cachedFilePropertiesProvider)),
