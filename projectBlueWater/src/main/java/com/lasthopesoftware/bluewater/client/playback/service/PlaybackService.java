@@ -1087,13 +1087,8 @@ implements
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
 
-		if (playlistPlaybackBootstrapper != null) {
-			try {
-				playlistPlaybackBootstrapper.close();
-			} catch (IOException e) {
-				logger.warn("There was an error closing the prepared playback bootstrapper", e);
-			}
-		}
+		if (playlistPlaybackBootstrapper != null)
+			playlistPlaybackBootstrapper.close();
 
 		if (playbackEngine != null) {
 			try {

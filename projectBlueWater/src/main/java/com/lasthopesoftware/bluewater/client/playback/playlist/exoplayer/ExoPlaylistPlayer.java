@@ -1,26 +1,37 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist;
+package com.lasthopesoftware.bluewater.client.playback.playlist.exoplayer;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
+import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
+import com.namehillsoftware.handoff.promises.Promise;
+
+import org.joda.time.Duration;
+
+import java.util.List;
 
 import io.reactivex.ObservableEmitter;
 
 public class ExoPlaylistPlayer implements IPlaylistPlayer, Player.EventListener {
 
 	private final ExoPlayer exoPlayer;
-	private final ConcatenatingMediaSource concatenatingMediaSource;
+	private final List<ServiceFile> serviceFiles;
 	private ObservableEmitter<PositionedPlayingFile> emitter;
 
-	public ExoPlaylistPlayer(ExoPlayer exoPlayer, ConcatenatingMediaSource concatenatingMediaSource) {
+	public ExoPlaylistPlayer(ExoPlayer exoPlayer, List<ServiceFile> serviceFiles) {
 		this.exoPlayer = exoPlayer;
-		this.concatenatingMediaSource = concatenatingMediaSource;
+		exoPlayer.addListener(this);
+		this.serviceFiles = serviceFiles;
 	}
 
 	@Override
@@ -85,7 +96,30 @@ public class ExoPlaylistPlayer implements IPlaylistPlayer, Player.EventListener 
 
 	@Override
 	public void onPositionDiscontinuity(int reason) {
-		exoPlayer.getCurrentPeriodIndex();
+		if (emitter == null) return;
+
+		final int position = exoPlayer.getCurrentPeriodIndex();
+		emitter.onNext(new PositionedPlayingFile(
+			position,
+			new PlayingFile() {
+				@Override
+				public Promise<PlayableFile> promisePause() {
+					return Promise.empty();
+				}
+
+				@Override
+				public ProgressingPromise<Duration, PlayedFile> promisePlayedFile() {
+					return null;
+				}
+
+				@Override
+				public Duration getDuration() {
+					return null;
+				}
+			},
+			null,
+			serviceFiles.get(position)
+		));
 	}
 
 	@Override
