@@ -88,12 +88,14 @@ implements
 					.setMediaSession(mediaSessionCompat.getSessionToken())
 					.setShowActionsInCompactView(1))
 				.setOngoing(isPlaying)
-				.setContentTitle(name)
-				.setContentText(artist)
 				.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 				.setContentIntent(buildNowPlayingActivityIntent())
-				.setShowWhen(false)
 				.setDeleteIntent(PlaybackService.pendingKillService(context))
+				.setShowWhen(false)
+				.setSmallIcon(R.drawable.clearstream_logo_dark)
+				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+				.setContentTitle(name)
+				.setContentText(artist)
 				.addAction(new NotificationCompat.Action(
 					R.drawable.av_rewind,
 					context.getString(R.string.btn_previous),
@@ -110,9 +112,7 @@ implements
 				.addAction(new NotificationCompat.Action(
 					R.drawable.av_fast_forward,
 					context.getString(R.string.btn_next),
-					PlaybackService.pendingNextIntent(context)))
-				.setSmallIcon(R.drawable.clearstream_logo_dark)
-				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+					PlaybackService.pendingNextIntent(context)));
 
 			if (bitmap != null)
 				builder.setLargeIcon(bitmap);
