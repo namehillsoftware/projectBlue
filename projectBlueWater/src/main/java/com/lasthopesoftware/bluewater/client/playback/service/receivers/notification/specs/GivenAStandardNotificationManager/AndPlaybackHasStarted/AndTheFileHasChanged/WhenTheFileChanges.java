@@ -8,9 +8,9 @@ import android.content.Intent;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -42,7 +42,7 @@ public class WhenTheFileChanges {
 
 	private static final CreateAndHold<Object> testSetup = new AbstractSynchronousLazy<Object>() {
 		@Override
-		protected Object create() throws Throwable {
+		protected Object create() {
 
 			when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
 				.thenReturn(new Promise<>(startedNotification));

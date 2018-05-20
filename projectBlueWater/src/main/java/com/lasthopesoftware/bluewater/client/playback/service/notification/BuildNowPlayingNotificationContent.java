@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification;
+package com.lasthopesoftware.bluewater.client.playback.service.notification;
 
 import android.app.Notification;
 

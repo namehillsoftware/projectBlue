@@ -4,7 +4,6 @@ import android.app.NotificationManager;
 import android.app.Service;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
