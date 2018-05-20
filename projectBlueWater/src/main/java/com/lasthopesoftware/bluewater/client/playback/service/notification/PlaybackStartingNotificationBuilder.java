@@ -37,7 +37,8 @@ public class PlaybackStartingNotificationBuilder {
 			.setShowWhen(false)
 			.setSmallIcon(R.drawable.clearstream_logo_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-			.setContentTitle(String.format(context.getString(R.string.lbl_starting_service), context.getString(R.string.app_name)));
+			.setContentTitle(context.getString(R.string.app_name))
+			.setContentText(context.getString(R.string.lbl_starting_playback));
 
 		return new Promise<>(builder);
 	}
