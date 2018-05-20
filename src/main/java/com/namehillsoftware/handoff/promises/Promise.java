@@ -50,8 +50,9 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 		return then(new RejectedResponsePromise<>(onRejected));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <Resolution> Promise<Resolution> empty() {
-		return new Promise<>((Resolution) null);
+		return LazyEmptyPromiseHolder.emptyPromiseInstance;
 	}
 
 	@SafeVarargs
@@ -70,6 +71,10 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 	public static <Resolution> Promise<Resolution> whenAny(Collection<Promise<Resolution>> promises) {
 		return new Resolutions.HonorFirstPromise<>(promises);
+	}
+
+	private static class LazyEmptyPromiseHolder {
+		private static final Promise emptyPromiseInstance = new Promise<>((Object) null);
 	}
 
 	private class PromiseMessenger implements Messenger<Resolution> {
