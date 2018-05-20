@@ -678,6 +678,7 @@ implements OnAudioFocusChangeListener
 					this,
 					lazyMediaSession.getObject(),
 					cachedFilePropertiesProvider,
+					imageProvider,
 					playbackNotificationsConfiguration)));
 
 		localBroadcastManagerLazy
