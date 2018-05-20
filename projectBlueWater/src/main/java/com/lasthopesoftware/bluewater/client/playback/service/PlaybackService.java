@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -27,6 +26,7 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
 
 import com.annimon.stream.Stream;
@@ -84,7 +84,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.BuildNowPlayingNotificationContent;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
@@ -135,9 +135,7 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 
 public class PlaybackService
 extends Service
-implements
-	OnAudioFocusChangeListener,
-	BuildNowPlayingNotificationContent
+implements OnAudioFocusChangeListener
 {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
 
@@ -173,8 +171,28 @@ implements
 		context.startService(getNewSelfIntent(context, Action.play));
 	}
 
+	public static PendingIntent pendingPlayingIntent(final Context context) {
+		return PendingIntent.getService(
+			context,
+			0,
+			getNewSelfIntent(
+				context,
+				PlaybackService.Action.play),
+			PendingIntent.FLAG_UPDATE_CURRENT);
+	}
+
 	public static void pause(final Context context) {
 		context.startService(getNewSelfIntent(context, Action.pause));
+	}
+
+	public static PendingIntent pendingPauseIntent(final Context context) {
+		return PendingIntent.getService(
+			context,
+			0,
+			getNewSelfIntent(
+				context,
+				Action.pause),
+			PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	public static void togglePlayPause(final Context context) {
@@ -185,8 +203,28 @@ implements
 		context.startService(getNewSelfIntent(context, Action.next));
 	}
 
+	public static PendingIntent pendingNextIntent(final Context context) {
+		return PendingIntent.getService(
+			context,
+			0,
+			getNewSelfIntent(
+				context,
+				Action.next),
+			PendingIntent.FLAG_UPDATE_CURRENT);
+	}
+
 	public static void previous(final Context context) {
 		context.startService(getNewSelfIntent(context, Action.previous));
+	}
+
+	public static PendingIntent pendingPreviousIntent(final Context context) {
+		return PendingIntent.getService(
+			context,
+			0,
+			getNewSelfIntent(
+				context,
+				Action.previous),
+			PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	public static void setRepeating(final Context context) {
@@ -211,6 +249,16 @@ implements
 
 	public static void killService(final Context context) {
 		context.startService(getNewSelfIntent(context, Action.killMusicService));
+	}
+
+	public static PendingIntent pendingKillService(final Context context) {
+		return PendingIntent.getService(
+			context,
+			0,
+			getNewSelfIntent(
+				context,
+				Action.killMusicService),
+			PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	/* End streamer intent helpers */
@@ -252,12 +300,12 @@ implements
 			return new RemoteControlClient(mediaPendingIntent);
 		}
 	};
-	private final CreateAndHold<MediaSession> lazyMediaSession =
-		new AbstractSynchronousLazy<MediaSession>() {
+	private final CreateAndHold<MediaSessionCompat> lazyMediaSession =
+		new AbstractSynchronousLazy<MediaSessionCompat>() {
 			@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 			@Override
-			protected MediaSession create() {
-				final MediaSession newMediaSession = new MediaSession(
+			protected MediaSessionCompat create() {
+				final MediaSessionCompat newMediaSession = new MediaSessionCompat(
 					PlaybackService.this,
 					mediaSessionTag);
 
@@ -409,52 +457,6 @@ implements
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 	}
 
-	private PendingIntent buildNowPlayingActivityIntent() {
-		// Set the notification area
-		final Intent viewIntent = new Intent(this, NowPlayingActivity.class);
-		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		return PendingIntent.getActivity(this, 0, viewIntent, 0);
-	}
-
-	@Override
-	public Promise<Notification> promiseNowPlayingNotification(ServiceFile serviceFile, boolean isPlaying) {
-		return cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey())
-			.then(fileProperties -> {
-				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(FilePropertiesProvider.NAME);
-
-				final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
-				builder
-					.setOngoing(isPlaying)
-					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
-					.setContentText(artist + " - " + name)
-					.setContentIntent(buildNowPlayingActivityIntent())
-					.setShowWhen(false)
-					.setDeleteIntent(PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.killMusicService), PendingIntent.FLAG_UPDATE_CURRENT))
-					.addAction(new NotificationCompat.Action(
-						R.drawable.av_rewind,
-						getString(R.string.btn_previous),
-						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.previous), PendingIntent.FLAG_UPDATE_CURRENT)))
-					.addAction(isPlaying
-						? new NotificationCompat.Action(
-						R.drawable.av_pause,
-						getString(R.string.btn_pause),
-						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.pause), PendingIntent.FLAG_UPDATE_CURRENT))
-						: new NotificationCompat.Action(
-						R.drawable.av_play,
-						getString(R.string.btn_play),
-						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.play), PendingIntent.FLAG_UPDATE_CURRENT)))
-					.addAction(new NotificationCompat.Action(
-						R.drawable.av_fast_forward,
-						getString(R.string.btn_next),
-						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.next), PendingIntent.FLAG_UPDATE_CURRENT)))
-					.setSmallIcon(R.drawable.clearstream_logo_dark)
-					.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-
-				return builder.build();
-			});
-	}
-	
 	private void stopNotification() {
 		stopForeground(true);
 		isNotificationForeground = false;
@@ -666,12 +668,17 @@ implements
 		if (playbackNotificationRouter != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 
+		final PlaybackNotificationsConfiguration playbackNotificationsConfiguration = new PlaybackNotificationsConfiguration(lazyActiveNotificationChannelId.getObject(), notificationId);
 		playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				this,
 				notificationManagerLazy.getObject(),
-				new PlaybackNotificationsConfiguration(notificationId),
-				this));
+				playbackNotificationsConfiguration,
+				new NowPlayingNotificationBuilder(
+					this,
+					lazyMediaSession.getObject(),
+					cachedFilePropertiesProvider,
+					playbackNotificationsConfiguration)));
 
 		localBroadcastManagerLazy
 			.getObject()
