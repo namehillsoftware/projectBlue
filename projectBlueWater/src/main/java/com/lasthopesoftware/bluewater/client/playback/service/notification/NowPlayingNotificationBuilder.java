@@ -38,12 +38,14 @@ public class NowPlayingNotificationBuilder implements BuildNowPlayingNotificatio
 
 				final NotificationCompat.Builder builder = new NotificationCompat.Builder(context, configuration.getNotificationChannel());
 				builder
-					.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+					.setStyle(new android.support.v4.media.app.NotificationCompat.DecoratedMediaCustomViewStyle()
 						.setCancelButtonIntent(PlaybackService.pendingKillService(context))
-						.setMediaSession(mediaSessionCompat.getSessionToken()))
+						.setMediaSession(mediaSessionCompat.getSessionToken())
+						.setShowActionsInCompactView(1))
 					.setOngoing(isPlaying)
-					.setContentTitle(String.format(context.getString(R.string.title_svc_now_playing), context.getText(R.string.app_name)))
-					.setContentText(artist + " - " + name)
+					.setContentTitle(artist + " - " + name)
+					.setContentText(String.format(context.getString(R.string.title_svc_now_playing), context.getText(R.string.app_name)))
+					.setColor(NotificationCompat.COLOR_DEFAULT)
 					.setContentIntent(buildNowPlayingActivityIntent())
 					.setShowWhen(false)
 					.setDeleteIntent(PlaybackService.pendingKillService(context))
