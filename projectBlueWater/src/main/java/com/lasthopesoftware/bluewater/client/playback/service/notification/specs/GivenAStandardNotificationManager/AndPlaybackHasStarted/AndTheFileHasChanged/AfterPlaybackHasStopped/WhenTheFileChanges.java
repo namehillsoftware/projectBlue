@@ -55,7 +55,7 @@ public class WhenTheFileChanges {
 				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
-					new PlaybackNotificationsConfiguration(43),
+					new PlaybackNotificationsConfiguration("",43),
 					notificationContentBuilder);
 
 			playbackNotificationBroadcaster.notifyPlaying();

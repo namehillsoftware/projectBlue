@@ -44,7 +44,7 @@ public class WhenPlaybackStarts {
 				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
-					new PlaybackNotificationsConfiguration(43),
+					new PlaybackNotificationsConfiguration("",43),
 					notificationContentBuilder);
 
 			playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));

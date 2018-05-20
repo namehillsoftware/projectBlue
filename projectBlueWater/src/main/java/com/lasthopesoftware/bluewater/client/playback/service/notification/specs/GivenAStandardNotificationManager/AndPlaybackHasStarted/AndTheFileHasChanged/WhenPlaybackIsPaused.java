@@ -46,7 +46,7 @@ public class WhenPlaybackIsPaused {
 				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
-					new PlaybackNotificationsConfiguration(43),
+					new PlaybackNotificationsConfiguration("",43),
 					notificationContentBuilder);
 
 			playbackNotificationBroadcaster.notifyPlaying();
