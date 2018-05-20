@@ -3,13 +3,11 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaMetadata;
+import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Build;
 import android.support.annotation.IntDef;
 import android.support.annotation.RequiresApi;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -37,16 +35,16 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 	private final Context context;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
-	private final MediaSessionCompat mediaSession;
+	private final MediaSession mediaSession;
 
 	private volatile int playbackState = PlaybackState.STATE_STOPPED;
 	private volatile long trackPosition = -1;
-	private volatile MediaMetadataCompat mediaMetadata = (new MediaMetadataCompat.Builder()).build();
+	private volatile MediaMetadata mediaMetadata = (new MediaMetadata.Builder()).build();
 	@Actions private volatile long capabilities = standardCapabilities;
 	private Bitmap remoteClientBitmap;
 	private volatile boolean isPlaying;
 
-	public MediaSessionBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, MediaSessionCompat mediaSession) {
+	public MediaSessionBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, MediaSession mediaSession) {
 		this.context = context;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
@@ -56,7 +54,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 	@Override
 	public void setPlaying() {
 		isPlaying = true;
-		final PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder();
+		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		capabilities = PlaybackState.ACTION_PAUSE | standardCapabilities;
 		builder.setActions(capabilities);
 		playbackState = PlaybackState.STATE_PLAYING;
@@ -70,7 +68,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 	@Override
 	public void setPaused() {
 		isPlaying = false;
-		final PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder();
+		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		capabilities = PlaybackState.ACTION_PLAY | standardCapabilities;
 		builder.setActions(capabilities);
 		playbackState = PlaybackState.STATE_PAUSED;
@@ -85,7 +83,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 	@Override
 	public void setStopped() {
 		isPlaying = false;
-		final PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder();
+		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		capabilities = PlaybackState.ACTION_PLAY | standardCapabilities;
 		builder.setActions(capabilities);
 		playbackState = PlaybackState.STATE_STOPPED;
@@ -109,7 +107,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 				final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
 				final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
-				final MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder(mediaMetadata);
+				final MediaMetadata.Builder metadataBuilder = new MediaMetadata.Builder(mediaMetadata);
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, artist);
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM, album);
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, name);
@@ -138,7 +136,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void updateTrackPosition(long trackPosition) {
-		final PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder();
+		final PlaybackState.Builder builder = new PlaybackState.Builder();
 		builder.setActions(capabilities);
 		builder.setState(
 			playbackState,
@@ -150,7 +148,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 	private synchronized Void updateClientBitmap(Bitmap bitmap) {
 		if (remoteClientBitmap == bitmap) return null;
 
-		final MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder(mediaMetadata);
+		final MediaMetadata.Builder metadataBuilder = new MediaMetadata.Builder(mediaMetadata);
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap);
 		mediaSession.setMetadata(mediaMetadata = metadataBuilder.build());
 

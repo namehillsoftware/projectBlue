@@ -6,9 +6,9 @@ import android.app.Service;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -44,7 +44,7 @@ public class WhenTheFileChanges {
 				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
-					new PlaybackNotificationsConfiguration("", 43),
+					new PlaybackNotificationsConfiguration(43),
 					notificationContentBuilder);
 
 			playbackNotificationBroadcaster.notifyPlaying();

@@ -10,6 +10,7 @@
     <color name="clearstream_blue">#8c9eff</color>
     <color name="clearstream_dark">#303f9f</color>
     <color name="custom_transparent_white">#CCFFFFFF</color>
+    <!-- Use Gingerbread-orange -->
     <color name="selection_background_color_light">#FEBB20</color>
 
 </resources>

@@ -39,7 +39,7 @@
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
     <string name="title_svc_now_playing">%1$s Now Playing</string>
     <string name="lbl_something_went_wrong">Something went wrong! Attempting to reconnect.</string>
-    <string name="lbl_starting_playback">Starting Playback</string>
+    <string name="lbl_starting_service">Starting %1$s</string>
     <string name="title_activity_wait_for_connection">Waiting For Connection</string>
     <string name="btn_view_song_details">View Song Details</string>
     <string name="lbl_loading">Loading&#8230;</string>

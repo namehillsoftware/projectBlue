@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -26,7 +27,6 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
 
 import com.annimon.stream.Stream;
@@ -84,15 +84,14 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackStartingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
@@ -136,7 +135,9 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 
 public class PlaybackService
 extends Service
-implements OnAudioFocusChangeListener
+implements
+	OnAudioFocusChangeListener,
+	BuildNowPlayingNotificationContent
 {
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackService.class);
 
@@ -172,28 +173,8 @@ implements OnAudioFocusChangeListener
 		context.startService(getNewSelfIntent(context, Action.play));
 	}
 
-	public static PendingIntent pendingPlayingIntent(final Context context) {
-		return PendingIntent.getService(
-			context,
-			0,
-			getNewSelfIntent(
-				context,
-				PlaybackService.Action.play),
-			PendingIntent.FLAG_UPDATE_CURRENT);
-	}
-
 	public static void pause(final Context context) {
 		context.startService(getNewSelfIntent(context, Action.pause));
-	}
-
-	public static PendingIntent pendingPauseIntent(final Context context) {
-		return PendingIntent.getService(
-			context,
-			0,
-			getNewSelfIntent(
-				context,
-				Action.pause),
-			PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	public static void togglePlayPause(final Context context) {
@@ -204,28 +185,8 @@ implements OnAudioFocusChangeListener
 		context.startService(getNewSelfIntent(context, Action.next));
 	}
 
-	public static PendingIntent pendingNextIntent(final Context context) {
-		return PendingIntent.getService(
-			context,
-			0,
-			getNewSelfIntent(
-				context,
-				Action.next),
-			PendingIntent.FLAG_UPDATE_CURRENT);
-	}
-
 	public static void previous(final Context context) {
 		context.startService(getNewSelfIntent(context, Action.previous));
-	}
-
-	public static PendingIntent pendingPreviousIntent(final Context context) {
-		return PendingIntent.getService(
-			context,
-			0,
-			getNewSelfIntent(
-				context,
-				Action.previous),
-			PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	public static void setRepeating(final Context context) {
@@ -250,16 +211,6 @@ implements OnAudioFocusChangeListener
 
 	public static void killService(final Context context) {
 		context.startService(getNewSelfIntent(context, Action.killMusicService));
-	}
-
-	public static PendingIntent pendingKillService(final Context context) {
-		return PendingIntent.getService(
-			context,
-			0,
-			getNewSelfIntent(
-				context,
-				Action.killMusicService),
-			PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	/* End streamer intent helpers */
@@ -301,12 +252,12 @@ implements OnAudioFocusChangeListener
 			return new RemoteControlClient(mediaPendingIntent);
 		}
 	};
-	private final CreateAndHold<MediaSessionCompat> lazyMediaSession =
-		new AbstractSynchronousLazy<MediaSessionCompat>() {
+	private final CreateAndHold<MediaSession> lazyMediaSession =
+		new AbstractSynchronousLazy<MediaSession>() {
 			@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 			@Override
-			protected MediaSessionCompat create() {
-				final MediaSessionCompat newMediaSession = new MediaSessionCompat(
+			protected MediaSession create() {
+				final MediaSession newMediaSession = new MediaSession(
 					PlaybackService.this,
 					mediaSessionTag);
 
@@ -331,14 +282,12 @@ implements OnAudioFocusChangeListener
 	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
-	private final CreateAndHold<PlaybackNotificationsConfiguration> lazyPlaybackNotificationsConfiguration = new AbstractSynchronousLazy<PlaybackNotificationsConfiguration>() {
+	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
-		protected PlaybackNotificationsConfiguration create() {
+		protected String create() {
 			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
 
-			final String channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
-			
-			return new PlaybackNotificationsConfiguration(channelName, notificationId);
+			return notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 		}
 	};
 	private final CreateAndHold<GetAllStoredFilesInLibrary> lazyAllStoredFilesInLibrary = new Lazy<>(() -> new StoredFilesCollection(this));
@@ -356,16 +305,6 @@ implements OnAudioFocusChangeListener
 		@Override
 		protected Promise<Handler> create() {
 			return extractorThread.getObject().then(h -> new Handler(h.getLooper()));
-		}
-	};
-
-	private final CreateAndHold<PlaybackStartingNotificationBuilder> lazyPlaybackStartingNotificationBuilder = new AbstractSynchronousLazy<PlaybackStartingNotificationBuilder>() {
-		@Override
-		protected PlaybackStartingNotificationBuilder create() {
-			return new PlaybackStartingNotificationBuilder(
-				PlaybackService.this,
-				lazyMediaSession.getObject(),
-				lazyPlaybackNotificationsConfiguration.getObject());
 		}
 	};
 
@@ -470,6 +409,52 @@ implements OnAudioFocusChangeListener
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 	}
 
+	private PendingIntent buildNowPlayingActivityIntent() {
+		// Set the notification area
+		final Intent viewIntent = new Intent(this, NowPlayingActivity.class);
+		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		return PendingIntent.getActivity(this, 0, viewIntent, 0);
+	}
+
+	@Override
+	public Promise<Notification> promiseNowPlayingNotification(ServiceFile serviceFile, boolean isPlaying) {
+		return cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey())
+			.then(fileProperties -> {
+				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+				final String name = fileProperties.get(FilePropertiesProvider.NAME);
+
+				final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
+				builder
+					.setOngoing(isPlaying)
+					.setContentTitle(String.format(getString(R.string.title_svc_now_playing), getText(R.string.app_name)))
+					.setContentText(artist + " - " + name)
+					.setContentIntent(buildNowPlayingActivityIntent())
+					.setShowWhen(false)
+					.setDeleteIntent(PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.killMusicService), PendingIntent.FLAG_UPDATE_CURRENT))
+					.addAction(new NotificationCompat.Action(
+						R.drawable.av_rewind,
+						getString(R.string.btn_previous),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.previous), PendingIntent.FLAG_UPDATE_CURRENT)))
+					.addAction(isPlaying
+						? new NotificationCompat.Action(
+						R.drawable.av_pause,
+						getString(R.string.btn_pause),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.pause), PendingIntent.FLAG_UPDATE_CURRENT))
+						: new NotificationCompat.Action(
+						R.drawable.av_play,
+						getString(R.string.btn_play),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.play), PendingIntent.FLAG_UPDATE_CURRENT)))
+					.addAction(new NotificationCompat.Action(
+						R.drawable.av_fast_forward,
+						getString(R.string.btn_next),
+						PendingIntent.getService(this, 0, getNewSelfIntent(this, Action.next), PendingIntent.FLAG_UPDATE_CURRENT)))
+					.setSmallIcon(R.drawable.clearstream_logo_dark)
+					.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+				return builder.build();
+			});
+	}
+	
 	private void stopNotification() {
 		stopForeground(true);
 		isNotificationForeground = false;
@@ -477,9 +462,11 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void notifyStartingService() {
-		lazyPlaybackStartingNotificationBuilder.getObject()
-			.promisePreparedPlaybackStartingNotification()
-			.then(perform(this::notifyForeground));
+		final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
+		builder.setOngoing(true);
+		builder.setContentTitle(String.format(getString(R.string.lbl_starting_service), getString(R.string.app_name)));
+
+		notifyForeground(builder);
 	}
 	
 	private void registerListeners() {
@@ -569,6 +556,8 @@ implements OnAudioFocusChangeListener
 		}
 
 		// TODO this should probably be its own service soon
+		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+
 		final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
@@ -576,11 +565,11 @@ implements OnAudioFocusChangeListener
 				handleBuildConnectionStatusChange(buildStatus, intent);
 
 				if (BuildingSessionConnectionStatus.completeConditions.contains(buildStatus))
-					localBroadcastManagerLazy.getObject().unregisterReceiver(this);
+					localBroadcastManager.unregisterReceiver(this);
 			}
 		};
 
-		localBroadcastManagerLazy.getObject().registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+		localBroadcastManager.registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		handleBuildConnectionStatusChange(SessionConnection.build(this), intent);
 
@@ -588,7 +577,7 @@ implements OnAudioFocusChangeListener
 	}
 	
 	private void handleBuildConnectionStatusChange(final int status, final Intent intentToRun) {
-		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
+		final Builder notifyBuilder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
@@ -681,13 +670,8 @@ implements OnAudioFocusChangeListener
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				this,
 				notificationManagerLazy.getObject(),
-				lazyPlaybackNotificationsConfiguration.getObject(),
-				new NowPlayingNotificationBuilder(
-					this,
-					lazyMediaSession.getObject(),
-					cachedFilePropertiesProvider,
-					imageProvider,
-					lazyPlaybackNotificationsConfiguration.getObject())));
+				new PlaybackNotificationsConfiguration(notificationId),
+				this));
 
 		localBroadcastManagerLazy
 			.getObject()
@@ -974,7 +958,7 @@ implements OnAudioFocusChangeListener
 
 		lastErrorTime = currentErrorTime;
 
-		final Builder builder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
+		final Builder builder = new Builder(this, lazyActiveNotificationChannelId.getObject());
 		builder.setOngoing(true);
 		// Add intent for canceling waiting for connection to come back
 		final Intent intent = new Intent(this, PlaybackService.class);
