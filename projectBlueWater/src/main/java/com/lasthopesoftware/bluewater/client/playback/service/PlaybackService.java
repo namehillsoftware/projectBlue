@@ -684,6 +684,7 @@ implements OnAudioFocusChangeListener
 				lazyPlaybackNotificationsConfiguration.getObject(),
 				new NowPlayingNotificationBuilder(
 					this,
+					connectionProvider,
 					lazyMediaSession.getObject(),
 					cachedFilePropertiesProvider,
 					imageProvider,
