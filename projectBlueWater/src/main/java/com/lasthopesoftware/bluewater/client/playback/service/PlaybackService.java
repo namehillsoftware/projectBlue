@@ -384,6 +384,7 @@ implements OnAudioFocusChangeListener
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
 	private RemoteControlProxy remoteControlProxy;
 	private PlaybackNotificationRouter playbackNotificationRouter;
+	private NowPlayingNotificationBuilder nowPlayingNotificationBuilder;
 
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
@@ -677,12 +678,15 @@ implements OnAudioFocusChangeListener
 		if (playbackNotificationRouter != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 
+		if (nowPlayingNotificationBuilder != null)
+			nowPlayingNotificationBuilder.close();
+
 		playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				this,
 				notificationManagerLazy.getObject(),
 				lazyPlaybackNotificationsConfiguration.getObject(),
-				new NowPlayingNotificationBuilder(
+				nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
 					this,
 					connectionProvider,
 					lazyMediaSession.getObject(),
@@ -1152,6 +1156,9 @@ implements OnAudioFocusChangeListener
 				logger.warn("There was an error releasing the cache", e);
 			}
 		}
+
+		if (nowPlayingNotificationBuilder != null)
+			nowPlayingNotificationBuilder.close();
 	}
 
 	/* End Event Handlers */
