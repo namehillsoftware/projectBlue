@@ -73,7 +73,7 @@ public class WhenChangingTracks {
 		when(connectionProvider.getConnection(any())).thenReturn(urlConnection);
 
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
-		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", 4)))
+		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(4))))
 			.thenReturn(new FilePropertiesContainer(1, new HashMap<String, String>() {{
 					put(FilePropertiesProvider.DURATION, "100");
 			}}));

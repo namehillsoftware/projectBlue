@@ -24,7 +24,8 @@ import java.util.Map;
 
 public class NowPlayingNotificationBuilder
 implements
-	BuildNowPlayingNotificationContent {
+	BuildNowPlayingNotificationContent,
+	AutoCloseable {
 
 	private final Context context;
 	private final IConnectionProvider connectionProvider;
@@ -60,7 +61,7 @@ implements
 			viewStructure.promisedNowPlayingImage = imageProvider.promiseFileBitmap(serviceFile);
 
 		if (viewStructure.promisedFileProperties == null)
-			viewStructure.promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
+			viewStructure.promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
 
 		return viewStructure.promisedFileProperties
 			.eventually(fileProperties -> {
@@ -121,6 +122,12 @@ implements
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
 		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		return PendingIntent.getActivity(context, 0, viewIntent, 0);
+	}
+
+	@Override
+	public void close() {
+		if (viewStructure != null)
+			viewStructure.release();
 	}
 
 	private static class ViewStructure {

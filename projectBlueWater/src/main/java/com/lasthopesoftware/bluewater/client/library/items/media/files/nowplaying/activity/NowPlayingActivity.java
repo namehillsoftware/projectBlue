@@ -103,13 +103,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<ProgressBar> loadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingImg);
 	private final CreateAndHold<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
-		protected NowPlayingToggledVisibilityControls create() throws Exception {
+		protected NowPlayingToggledVisibilityControls create() {
 			return new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(NowPlayingActivity.this, R.id.llNpButtons), new LazyViewFinder<>(NowPlayingActivity.this, R.id.menuControlsLinearLayout), songRating);
 		}
 	};
 	private final CreateAndHold<INowPlayingRepository> lazyNowPlayingRepository = new AbstractSynchronousLazy<INowPlayingRepository>() {
 		@Override
-		protected INowPlayingRepository create() throws Exception {
+		protected INowPlayingRepository create() {
 			final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingActivity.this);
 
 			return
@@ -165,7 +165,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private final CreateAndHold<ImageProvider> lazyImageProvider = new AbstractSynchronousLazy<ImageProvider>() {
 		@Override
-		protected ImageProvider create() throws Throwable {
+		protected ImageProvider create() {
 			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
@@ -420,7 +420,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
 		filePropertiesProvider
-			.promiseFileProperties(serviceFile.getKey())
+			.promiseFileProperties(serviceFile)
 			.eventually(LoopedInPromise.response(fileProperties -> {
 				localViewStructure.fileProperties = fileProperties;
 				setFileProperties(serviceFile, initialFilePosition, fileProperties);
@@ -496,7 +496,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 				return;
 
 			final String stringRating = String.valueOf(Math.round(newRating));
-			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance(), serviceFile.getKey(), FilePropertiesProvider.RATING, stringRating, false);
+			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance(), serviceFile, FilePropertiesProvider.RATING, stringRating, false);
 			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
 		});
 

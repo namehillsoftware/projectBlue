@@ -78,7 +78,7 @@ public class FileNameTextViewSetter {
 				return;
 			}
 
-			final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
+			final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
 
 			cancellationProxy.doCancel(filePropertiesPromise);
 

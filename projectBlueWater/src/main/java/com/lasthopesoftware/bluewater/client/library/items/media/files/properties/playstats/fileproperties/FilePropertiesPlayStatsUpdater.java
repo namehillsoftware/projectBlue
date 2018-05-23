@@ -24,8 +24,7 @@ public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 
 	@Override
 	public Promise<?> promisePlaystatsUpdate(ServiceFile serviceFile) {
-		final int fileKey = serviceFile.getKey();
-		return filePropertiesProvider.promiseFileProperties(fileKey)
+		return filePropertiesProvider.promiseFileProperties(serviceFile)
 			.eventually(fileProperties -> {
 				try {
 					final String lastPlayedServer = fileProperties.get(FilePropertiesProvider.LAST_PLAYED);

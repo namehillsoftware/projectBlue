@@ -34,7 +34,7 @@ public class MediaQueryCursorProvider implements IMediaQueryCursorProvider, Imme
 
 		return
 			cachedFilePropertiesProvider
-				.promiseFileProperties(serviceFile.getKey())
+				.promiseFileProperties(serviceFile)
 				.then(this);
 	}
 

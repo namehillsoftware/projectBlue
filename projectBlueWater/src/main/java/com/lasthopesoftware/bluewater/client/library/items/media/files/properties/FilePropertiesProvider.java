@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
@@ -40,28 +41,28 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 	}
 
 	@Override
-	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
+	public Promise<Map<String, String>> promiseFileProperties(ServiceFile serviceFile) {
 		return RevisionChecker.promiseRevision(connectionProvider).eventually(revision -> {
-			final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+			final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
 			final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder);
 			if (filePropertiesContainer != null && filePropertiesContainer.getProperties().size() > 0 && revision.equals(filePropertiesContainer.revision)) {
-				return new Promise<>(new HashMap<String, String>(filePropertiesContainer.getProperties()));
+				return new Promise<>(new HashMap<>(filePropertiesContainer.getProperties()));
 			}
 
-			return new QueuedPromise<>(new FilePropertiesWriter(connectionProvider, filePropertiesContainerProvider, fileKey, revision), filePropertiesExecutor);
+			return new QueuedPromise<>(new FilePropertiesWriter(connectionProvider, filePropertiesContainerProvider, serviceFile, revision), filePropertiesExecutor);
 		});
 	}
 
 	private static final class FilePropertiesWriter implements CancellableMessageWriter<Map<String, String>> {
 
 		private final IConnectionProvider connectionProvider;
-		private final Integer fileKey;
+		private final ServiceFile serviceFile;
 		private final Integer serverRevision;
 		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 
-		private FilePropertiesWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, Integer fileKey, Integer serverRevision) {
+		private FilePropertiesWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ServiceFile serviceFile, Integer serverRevision) {
 			this.connectionProvider = connectionProvider;
-			this.fileKey = fileKey;
+			this.serviceFile = serviceFile;
 			this.serverRevision = serverRevision;
 			this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 		}
@@ -75,7 +76,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 				if (cancellationToken.isCancelled())
 					throw new CancellationException();
 
-				final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + fileKey);
+				final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + serviceFile.getKey());
 				conn.setReadTimeout(45000);
 				try {
 					if (cancellationToken.isCancelled())
@@ -92,7 +93,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 						for (XmlElement el : parent)
 							returnProperties.put(el.getAttribute("Name"), el.getValue());
 
-						final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+						final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
 						filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
 
 						return returnProperties;
