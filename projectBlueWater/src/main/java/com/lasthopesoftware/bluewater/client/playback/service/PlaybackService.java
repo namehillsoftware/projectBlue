@@ -84,10 +84,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackStartingNotificationBuilder;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.PlaybackStartingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
@@ -103,6 +103,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettin
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
@@ -338,7 +339,7 @@ implements OnAudioFocusChangeListener
 
 			final String channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 			
-			return new PlaybackNotificationsConfiguration(channelName, notificationId);
+			return new PlaybackNotificationsConfiguration(channelName, notificationId, lazyMediaSession.getObject().getSessionToken());
 		}
 	};
 	private final CreateAndHold<GetAllStoredFilesInLibrary> lazyAllStoredFilesInLibrary = new Lazy<>(() -> new StoredFilesCollection(this));
@@ -364,7 +365,6 @@ implements OnAudioFocusChangeListener
 		protected PlaybackStartingNotificationBuilder create() {
 			return new PlaybackStartingNotificationBuilder(
 				PlaybackService.this,
-				lazyMediaSession.getObject(),
 				lazyPlaybackNotificationsConfiguration.getObject());
 		}
 	};
@@ -688,8 +688,8 @@ implements OnAudioFocusChangeListener
 				lazyPlaybackNotificationsConfiguration.getObject(),
 				nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
 					this,
+					new NotificationBuilderProducer(this),
 					connectionProvider,
-					lazyMediaSession.getObject(),
 					cachedFilePropertiesProvider,
 					imageProvider,
 					lazyPlaybackNotificationsConfiguration.getObject())));
