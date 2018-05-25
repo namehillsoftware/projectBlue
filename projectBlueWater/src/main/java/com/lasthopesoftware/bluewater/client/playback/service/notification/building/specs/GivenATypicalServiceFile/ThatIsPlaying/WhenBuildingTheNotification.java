@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPlaying;
 
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 
@@ -34,6 +36,7 @@ public class WhenBuildingTheNotification {
 
 	private NotificationCompat.Builder builder;
 
+	@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 	@Before
 	public void before() throws InterruptedException {
 		final ProduceNotificationBuilders notificationBuilders = mock(ProduceNotificationBuilders.class);
@@ -41,6 +44,7 @@ public class WhenBuildingTheNotification {
 
 		final IConnectionProvider connectionProvider = new FakeConnectionProvider();
 
+		final MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(RuntimeEnvironment.application, "test");
 		final NowPlayingNotificationBuilder npBuilder = new NowPlayingNotificationBuilder(
 			RuntimeEnvironment.application,
 			notificationBuilders,
@@ -52,7 +56,7 @@ public class WhenBuildingTheNotification {
 					connectionProvider,
 					FilePropertyCache.getInstance())),
 			mock(ImageProvider.class),
-			new PlaybackNotificationsConfiguration("channel", 1, MediaSessionCompat.Token.fromToken(this)));
+			new PlaybackNotificationsConfiguration("channel", 1, mediaSessionCompat.getSessionToken()));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)

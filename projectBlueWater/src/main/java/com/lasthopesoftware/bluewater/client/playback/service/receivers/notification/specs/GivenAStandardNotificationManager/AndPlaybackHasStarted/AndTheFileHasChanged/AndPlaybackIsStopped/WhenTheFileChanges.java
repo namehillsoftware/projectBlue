@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.media.session.MediaSessionCompat;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -61,7 +62,7 @@ public class WhenTheFileChanges {
 				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
-					new PlaybackNotificationsConfiguration("",43, mediaSessionToken),
+					new PlaybackNotificationsConfiguration("",43, MediaSessionCompat.Token.fromToken(this)),
 					notificationContentBuilder));
 
 			final LocalPlaybackBroadcaster localPlaybackBroadcaster =

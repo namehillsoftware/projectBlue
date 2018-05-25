@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.spec
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.support.v4.media.session.MediaSessionCompat;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -44,7 +45,7 @@ public class WhenPlaybackStarts {
 				new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
-					new PlaybackNotificationsConfiguration("",43, mediaSessionToken),
+					new PlaybackNotificationsConfiguration("",43, MediaSessionCompat.Token.fromToken(this)),
 					notificationContentBuilder);
 
 			playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
