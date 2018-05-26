@@ -18,7 +18,6 @@ public class FuturePromise<Resolution> implements Future<Resolution> {
 
 	private Resolution resolution;
 	private Throwable rejection;
-	private boolean isCancelled;
 	private boolean isCompleted;
 
 	public FuturePromise(Promise<Resolution> promise) {
@@ -41,13 +40,12 @@ public class FuturePromise<Resolution> implements Future<Resolution> {
 		if (isCompleted) return false;
 
 		cancellationProxy.run();
-		isCancelled = true;
 		return true;
 	}
 
 	@Override
 	public boolean isCancelled() {
-		return isCancelled;
+		return cancellationProxy.isCancelled();
 	}
 
 	@Override
