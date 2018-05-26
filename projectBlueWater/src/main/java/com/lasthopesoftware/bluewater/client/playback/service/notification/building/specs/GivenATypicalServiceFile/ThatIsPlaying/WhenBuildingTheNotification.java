@@ -1,30 +1,31 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPlaying;
 
-import android.os.Build;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,40 +33,42 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
+@Config(sdk=19)
 public class WhenBuildingTheNotification {
 
 	private NotificationCompat.Builder builder;
 
-	@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 	@Before
-	public void before() throws InterruptedException {
+	public void before() throws InterruptedException, ExecutionException {
 		final ProduceNotificationBuilders notificationBuilders = mock(ProduceNotificationBuilders.class);
 		when(notificationBuilders.getNotificationBuilder(any())).thenAnswer(a -> builder = new NotificationCompat.Builder(RuntimeEnvironment.application, a.getArgument(0)));
 
-		final IConnectionProvider connectionProvider = new FakeConnectionProvider();
+		final FakeFileConnectionProvider connectionProvider = new FakeFileConnectionProvider();
+		connectionProvider.setupFile(
+			new ServiceFile(3),
+			new HashMap<String, String>() {
+				{
+					put(FilePropertiesProvider.ARTIST, "test-artist");
+					put(FilePropertiesProvider.NAME, "song");
+				}
+			});
 
-		final MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(RuntimeEnvironment.application, "test");
+		final IFilePropertiesContainerRepository containerRepository = new FakeFilePropertiesContainer();
+
 		final NowPlayingNotificationBuilder npBuilder = new NowPlayingNotificationBuilder(
 			RuntimeEnvironment.application,
 			notificationBuilders,
 			connectionProvider,
 			new CachedFilePropertiesProvider(
 				connectionProvider,
-				FilePropertyCache.getInstance(),
+				containerRepository,
 				new FilePropertiesProvider(
 					connectionProvider,
-					FilePropertyCache.getInstance())),
+					containerRepository)),
 			mock(ImageProvider.class),
-			new PlaybackNotificationsConfiguration("channel", 1, mediaSessionCompat.getSessionToken()));
+			new PlaybackNotificationsConfiguration("channel", 1, MediaSessionCompat.Token.fromToken(null)));
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)
-			.then(n -> {
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
 	}
 
 	@Test
