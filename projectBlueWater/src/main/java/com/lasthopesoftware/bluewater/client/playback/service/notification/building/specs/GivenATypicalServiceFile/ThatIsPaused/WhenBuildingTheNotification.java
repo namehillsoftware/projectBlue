@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPlaying;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPaused;
 
 import android.graphics.Bitmap;
 import android.support.v4.app.NotificationCompat;
@@ -67,13 +67,13 @@ public class WhenBuildingTheNotification extends AndroidContext {
 					containerRepository)),
 			imageProvider);
 
-		builder = new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
+		builder = new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), false)).get();
 	}
 
 	@Test
-	public void thenTheNotificationHasAPauseButton() {
+	public void thenTheNotificationHasAPlayButton() {
 		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
-			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_pause));
+			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_play));
 	}
 
 	@Test
