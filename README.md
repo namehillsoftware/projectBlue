@@ -1,4 +1,4 @@
-# Project Blue
+# project blue
 
 ### Alternative streaming music player for [JRiver Media Center](http://jriver.com/)
 
