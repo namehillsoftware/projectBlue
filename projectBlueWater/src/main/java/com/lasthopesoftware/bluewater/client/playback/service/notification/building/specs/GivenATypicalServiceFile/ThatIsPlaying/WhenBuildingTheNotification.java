@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPlaying;
 
+import android.graphics.Bitmap;
 import android.support.v4.app.NotificationCompat;
 
 import com.annimon.stream.Stream;
@@ -12,8 +13,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
-import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -36,9 +37,6 @@ public class WhenBuildingTheNotification {
 
 	@Before
 	public void before() throws InterruptedException, ExecutionException {
-		final ProduceNotificationBuilders notificationBuilders = mock(ProduceNotificationBuilders.class);
-		when(notificationBuilders.getNotificationBuilder(any())).thenAnswer(a -> builder = new NotificationCompat.Builder(RuntimeEnvironment.application, a.getArgument(0)));
-
 		final FakeFileConnectionProvider connectionProvider = new FakeFileConnectionProvider();
 		connectionProvider.setupFile(
 			new ServiceFile(3),
@@ -51,9 +49,16 @@ public class WhenBuildingTheNotification {
 
 		final IFilePropertiesContainerRepository containerRepository = new FakeFilePropertiesContainer();
 
+
+		final Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
+		final Bitmap bmp = Bitmap.createBitmap(1, 1, conf);
+		final ImageProvider imageProvider = mock(ImageProvider.class);
+		when(imageProvider.promiseFileBitmap(any()))
+			.thenReturn(new Promise<>(bmp));
+
 		final NowPlayingNotificationBuilder npBuilder = new NowPlayingNotificationBuilder(
 			RuntimeEnvironment.application,
-			() -> new NotificationCompat.Builder(RuntimeEnvironment.application, "test"),
+			() -> builder = new NotificationCompat.Builder(RuntimeEnvironment.application, "test"),
 			connectionProvider,
 			new CachedFilePropertiesProvider(
 				connectionProvider,
@@ -61,7 +66,7 @@ public class WhenBuildingTheNotification {
 				new FilePropertiesProvider(
 					connectionProvider,
 					containerRepository)),
-			mock(ImageProvider.class));
+			imageProvider);
 
 		new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
 	}
