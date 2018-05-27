@@ -54,7 +54,7 @@ public class WhenBuildingTheNotification extends AndroidContext {
 
 		final NowPlayingNotificationBuilder npBuilder = new NowPlayingNotificationBuilder(
 			RuntimeEnvironment.application,
-			() -> builder = new NotificationCompat.Builder(RuntimeEnvironment.application, "test"),
+			() -> new NotificationCompat.Builder(RuntimeEnvironment.application, "test"),
 			connectionProvider,
 			new CachedFilePropertiesProvider(
 				connectionProvider,
@@ -64,7 +64,7 @@ public class WhenBuildingTheNotification extends AndroidContext {
 					containerRepository)),
 			imageProvider);
 
-		new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
+		builder = new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
 	}
 
 	@Test
@@ -77,5 +77,11 @@ public class WhenBuildingTheNotification extends AndroidContext {
 	public void thenTheNotificationHasAPreviousButton() {
 		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
 			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_previous));
+	}
+
+	@Test
+	public void thenTheNotificationHasANextButton() {
+		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
+			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_next));
 	}
 }

@@ -3,22 +3,20 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.spec
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.support.v4.app.NotificationCompat;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
+import com.lasthopesoftware.bluewater.shared.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -28,8 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(RobolectricTestRunner.class)
-public class WhenTheFileChanges {
+public class WhenTheFileChanges extends AndroidContext {
 
 	private static final Notification firstNotification = new Notification();
 	private static final Notification secondNotification = new Notification();
@@ -37,40 +34,34 @@ public class WhenTheFileChanges {
 	private static final NotificationManager notificationManager = mock(NotificationManager.class);
 	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
 
-	private static final CreateAndHold<Void> testSetup = new AbstractSynchronousLazy<Void>() {
-		@Override
-		protected Void create() {
+	@Override
+	public void before() {
+		final NotificationCompat.Builder firstBuilder = mock(NotificationCompat.Builder.class);
+		when(firstBuilder.build()).thenReturn(firstNotification);
+		when(notificationContentBuilder.promiseNowPlayingNotification(
+			argThat(arg -> new ServiceFile(1).equals(arg)),
+			anyBoolean()))
+			.thenReturn(new Promise<>(firstBuilder));
 
-			when(notificationContentBuilder.promiseNowPlayingNotification(
-					argThat(arg -> new ServiceFile(1).equals(arg)),
-					anyBoolean()))
-				.thenReturn(new Promise<>(firstNotification));
+		final NotificationCompat.Builder secondBuilder = mock(NotificationCompat.Builder.class);
+		when(secondBuilder.build()).thenReturn(secondNotification);
+		when(notificationContentBuilder.promiseNowPlayingNotification(
+			argThat(arg -> new ServiceFile(2).equals(arg)),
+			anyBoolean()))
+			.thenReturn(new Promise<>(secondBuilder));
 
-			when(notificationContentBuilder.promiseNowPlayingNotification(
-					argThat(arg -> new ServiceFile(2).equals(arg)),
-					anyBoolean()))
-				.thenReturn(new Promise<>(secondNotification));
+		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
+			new PlaybackNotificationBroadcaster(
+				service.getObject(),
+				notificationManager,
+				new PlaybackNotificationsConfiguration("",43),
+				notificationContentBuilder);
 
-			final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
-				new PlaybackNotificationBroadcaster(
-					service.getObject(),
-					notificationManager,
-					new PlaybackNotificationsConfiguration("",43),
-					notificationContentBuilder);
-
-			playbackNotificationBroadcaster.notifyPlaying();
-			playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
-			playbackNotificationBroadcaster.notifyPaused();
-			playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(2));
-			playbackNotificationBroadcaster.notifyPlaying();
-
-			return null;
-		}
-	};
-
-	@Before
-	public void context() {
-		testSetup.getObject();
+		playbackNotificationBroadcaster.notifyPlaying();
+		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
+		playbackNotificationBroadcaster.notifyPaused();
+		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(2));
+		playbackNotificationBroadcaster.notifyPlaying();
 	}
 
 	@Test

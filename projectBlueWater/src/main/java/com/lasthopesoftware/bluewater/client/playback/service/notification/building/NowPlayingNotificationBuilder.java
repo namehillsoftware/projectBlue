@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building;
 
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -43,7 +42,7 @@ implements
 	}
 
 	@Override
-	public synchronized Promise<Notification> promiseNowPlayingNotification(ServiceFile serviceFile, boolean isPlaying) {
+	public synchronized Promise<NotificationCompat.Builder> promiseNowPlayingNotification(ServiceFile serviceFile, boolean isPlaying) {
 		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey());
 
 		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
@@ -96,7 +95,7 @@ implements
 						PlaybackService.pendingNextIntent(context)));
 
 				if (!viewStructure.urlKeyHolder.equals(urlKeyHolder))
-					return new Promise<>(builder.build());
+					return new Promise<>(builder);
 
 				return viewStructure
 					.promisedNowPlayingImage
@@ -105,9 +104,9 @@ implements
 							if (bitmap != null)
 								builder.setLargeIcon(bitmap);
 
-							return builder.build();
+							return builder;
 						},
-						e -> builder.build());
+						e -> builder);
 			});
 	}
 

@@ -51,7 +51,7 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying = false)
 				.then(notification -> {
 					synchronized (notificationSync) {
-						notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification);
+						notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification.build());
 						service.stopForeground(false);
 						isNotificationForeground = false;
 						return null;
@@ -89,11 +89,11 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 							notificationManager.notify(
 								playbackNotificationsConfiguration.getNotificationId(),
-								notification);
+								notification.build());
 							return;
 						}
 
-						service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
+						service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification.build());
 						isNotificationStarted = true;
 						isNotificationForeground = true;
 					}

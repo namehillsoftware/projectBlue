@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 public class FuturePromise<Resolution> implements Future<Resolution> {
 
 	private final CancellationProxy cancellationProxy = new CancellationProxy();
-	private final Promise<Resolution> promise;
+	private final Promise<Void> promise;
 
 	private Resolution resolution;
 	private Throwable rejection;
