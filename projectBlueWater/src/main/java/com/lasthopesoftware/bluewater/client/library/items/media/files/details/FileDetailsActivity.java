@@ -72,7 +72,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	private static final AbstractSynchronousLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
 			new AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
 				@Override
-				protected RelativeLayout.LayoutParams create() throws Exception {
+				protected RelativeLayout.LayoutParams create() {
 					final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 					layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
 
@@ -86,7 +86,7 @@ public class FileDetailsActivity extends AppCompatActivity {
     private final LazyViewFinder<ProgressBar> pbLoadingFileDetails = new LazyViewFinder<>(this, R.id.pbLoadingFileDetails);
     private final AbstractSynchronousLazy<ScaledWrapImageView> imgFileThumbnailBuilder = new AbstractSynchronousLazy<ScaledWrapImageView>() {
 	    @Override
-	    protected final ScaledWrapImageView create() throws Exception {
+	    protected final ScaledWrapImageView create() {
 		    final RelativeLayout rlFileThumbnailContainer = findViewById(R.id.rlFileThumbnailContainer);
 		    if (rlFileThumbnailContainer == null) return null;
 
@@ -143,7 +143,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
 		formattedFilePropertiesProvider
-			.promiseFileProperties(fileKey)
+			.promiseFileProperties(new ServiceFile(fileKey))
 			.eventually(LoopedInPromise.response(perform(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 

@@ -50,10 +50,11 @@ public class WhenStoringTheUpdatedPlayStats {
 
 		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(filePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
 
+		final ServiceFile serviceFile = new ServiceFile(23);
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		filePropertiesPlayStatsUpdater
-			.promisePlaystatsUpdate(new ServiceFile(23))
-			.eventually(o -> filePropertiesProvider.promiseFileProperties(23))
+			.promisePlaystatsUpdate(serviceFile)
+			.eventually(o -> filePropertiesProvider.promiseFileProperties(serviceFile))
 			.then(o -> {
 				fileProperties = o;
 				countDownLatch.countDown();

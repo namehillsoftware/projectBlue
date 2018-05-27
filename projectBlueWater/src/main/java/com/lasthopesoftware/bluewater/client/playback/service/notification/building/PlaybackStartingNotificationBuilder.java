@@ -1,36 +1,28 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.building;
 
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class PlaybackStartingNotificationBuilder {
 
 	private final Context context;
-	private final MediaSessionCompat mediaSessionCompat;
-	private final PlaybackNotificationsConfiguration configuration;
+	private final SetupMediaStyleNotifications mediaStyleNotificationsSetup;
 
-	public PlaybackStartingNotificationBuilder(Context context, MediaSessionCompat mediaSessionCompat, PlaybackNotificationsConfiguration configuration) {
+	public PlaybackStartingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationsSetup) {
 		this.context = context;
-		this.mediaSessionCompat = mediaSessionCompat;
-		this.configuration = configuration;
+		this.mediaStyleNotificationsSetup = mediaStyleNotificationsSetup;
 	}
 
 	public Promise<NotificationCompat.Builder> promisePreparedPlaybackStartingNotification() {
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(context, configuration.getNotificationChannel());
+		final NotificationCompat.Builder builder = mediaStyleNotificationsSetup.getMediaStyleNotification();
 		builder
-			.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
-				.setCancelButtonIntent(PlaybackService.pendingKillService(context))
-				.setMediaSession(mediaSessionCompat.getSessionToken())
-				.setShowCancelButton(true))
 			.setOngoing(true)
 			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 			.setContentIntent(buildNowPlayingActivityIntent())

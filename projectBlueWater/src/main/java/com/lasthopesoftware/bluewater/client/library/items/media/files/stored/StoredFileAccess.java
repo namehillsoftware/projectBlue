@@ -224,7 +224,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 						return new Promise<>(storedFile);
 
 					return cachedFilePropertiesProvider
-						.promiseFileProperties(serviceFile.getKey())
+						.promiseFileProperties(serviceFile)
 						.then(fileProperties -> {
 							String fullPath = library.getSyncDir(context).getPath();
 

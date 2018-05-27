@@ -84,10 +84,11 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackStartingNotificationBuilder;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.PlaybackStartingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
@@ -103,6 +104,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettin
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
@@ -341,6 +343,16 @@ implements OnAudioFocusChangeListener
 			return new PlaybackNotificationsConfiguration(channelName, notificationId);
 		}
 	};
+	private final CreateAndHold<MediaStyleNotificationSetup> lazyMediaStyleNotificationSetup = new AbstractSynchronousLazy<MediaStyleNotificationSetup>() {
+		@Override
+		protected MediaStyleNotificationSetup create() {
+			return new MediaStyleNotificationSetup(
+				PlaybackService.this,
+				new NotificationBuilderProducer(PlaybackService.this),
+				lazyPlaybackNotificationsConfiguration.getObject(),
+				lazyMediaSession.getObject());
+		}
+	};
 	private final CreateAndHold<GetAllStoredFilesInLibrary> lazyAllStoredFilesInLibrary = new Lazy<>(() -> new StoredFilesCollection(this));
 
 	private final CreateAndHold<Promise<HandlerThread>> extractorThread = new AbstractSynchronousLazy<Promise<HandlerThread>>() {
@@ -364,8 +376,7 @@ implements OnAudioFocusChangeListener
 		protected PlaybackStartingNotificationBuilder create() {
 			return new PlaybackStartingNotificationBuilder(
 				PlaybackService.this,
-				lazyMediaSession.getObject(),
-				lazyPlaybackNotificationsConfiguration.getObject());
+				lazyMediaStyleNotificationSetup.getObject());
 		}
 	};
 
@@ -384,6 +395,7 @@ implements OnAudioFocusChangeListener
 	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
 	private RemoteControlProxy remoteControlProxy;
 	private PlaybackNotificationRouter playbackNotificationRouter;
+	private NowPlayingNotificationBuilder nowPlayingNotificationBuilder;
 
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
@@ -677,17 +689,20 @@ implements OnAudioFocusChangeListener
 		if (playbackNotificationRouter != null)
 			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 
+		if (nowPlayingNotificationBuilder != null)
+			nowPlayingNotificationBuilder.close();
+
 		playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				this,
 				notificationManagerLazy.getObject(),
 				lazyPlaybackNotificationsConfiguration.getObject(),
-				new NowPlayingNotificationBuilder(
+				nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
 					this,
-					lazyMediaSession.getObject(),
+					lazyMediaStyleNotificationSetup.getObject(),
+					connectionProvider,
 					cachedFilePropertiesProvider,
-					imageProvider,
-					lazyPlaybackNotificationsConfiguration.getObject())));
+					imageProvider)));
 
 		localBroadcastManagerLazy
 			.getObject()
@@ -1151,6 +1166,9 @@ implements OnAudioFocusChangeListener
 				logger.warn("There was an error releasing the cache", e);
 			}
 		}
+
+		if (nowPlayingNotificationBuilder != null)
+			nowPlayingNotificationBuilder.close();
 	}
 
 	/* End Event Handlers */

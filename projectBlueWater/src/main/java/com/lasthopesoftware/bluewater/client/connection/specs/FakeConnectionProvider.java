@@ -4,6 +4,7 @@ import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
+import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
 import java.io.ByteArrayInputStream;
@@ -58,9 +59,6 @@ public class FakeConnectionProvider implements IConnectionProvider {
 
 	@Override
 	public IUrlProvider getUrlProvider() {
-		final IUrlProvider urlProvider = mock(IUrlProvider.class);
-		when(urlProvider.getBaseUrl()).thenReturn("");
-		return urlProvider;
+		return new MediaServerUrlProvider(null, "test", 80);
 	}
-
 }

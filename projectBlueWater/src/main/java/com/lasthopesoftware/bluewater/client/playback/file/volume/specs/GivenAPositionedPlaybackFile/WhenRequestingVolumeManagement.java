@@ -32,7 +32,7 @@ public class WhenRequestingVolumeManagement {
 	private static IVolumeManagement playbackFileVolumeController;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() {
 		final IUrlProvider urlProvider = mock(IUrlProvider.class);
 		when(urlProvider.getBaseUrl()).thenReturn("");
 
@@ -40,7 +40,7 @@ public class WhenRequestingVolumeManagement {
 		when(connectionProvider.getUrlProvider()).thenReturn(urlProvider);
 
 		final IFilePropertiesContainerRepository repository = mock(IFilePropertiesContainerRepository.class);
-		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", 1)))
+		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(1))))
 			.thenReturn(new FilePropertiesContainer(0, new HashMap<String, String>() {{
 				put(FilePropertiesProvider.VolumeLevelR128, "-13.5");
 			}}));

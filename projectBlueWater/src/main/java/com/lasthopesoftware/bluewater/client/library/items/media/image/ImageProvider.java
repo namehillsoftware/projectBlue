@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileAccessTimeUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
@@ -93,7 +92,7 @@ public class ImageProvider {
 
 		@Override
 		public void send(Messenger<Bitmap> messenger) {
-			final Promise<Map<String, String>> promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile.getKey());
+			final Promise<Map<String, String>> promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
 
 			final CancellationProxy cancellationProxy = new CancellationProxy();
 			messenger.cancellationRequested(cancellationProxy);
@@ -183,7 +182,7 @@ public class ImageProvider {
 
 
 		@Override
-		public Bitmap prepareMessage(CancellationToken cancellationToken) throws Throwable {
+		public Bitmap prepareMessage(CancellationToken cancellationToken) {
 			if (cancellationToken.isCancelled())
 				throw new CancellationException(cancellationMessage);
 
