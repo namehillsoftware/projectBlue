@@ -14,12 +14,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProv
 import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.HashMap;
@@ -30,12 +28,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(RobolectricTestRunner.class)
-public class WhenBuildingTheNotification {
+public class WhenBuildingTheNotification extends AndroidContext {
 
-	private NotificationCompat.Builder builder;
+	private static NotificationCompat.Builder builder;
 
-	@Before
 	public void before() throws InterruptedException, ExecutionException {
 		final FakeFileConnectionProvider connectionProvider = new FakeFileConnectionProvider();
 		connectionProvider.setupFile(
@@ -75,5 +71,11 @@ public class WhenBuildingTheNotification {
 	public void thenTheNotificationHasAPlayingButton() {
 		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
 			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_pause));
+	}
+
+	@Test
+	public void thenTheNotificationHasAPreviousButton() {
+		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
+			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_previous));
 	}
 }
