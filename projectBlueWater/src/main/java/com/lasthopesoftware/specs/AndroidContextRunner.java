@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.specs;
+package com.lasthopesoftware.specs;
 
 import org.junit.runners.model.InitializationError;
 import org.robolectric.RobolectricTestRunner;
