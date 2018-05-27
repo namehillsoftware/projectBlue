@@ -16,9 +16,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.Map;
@@ -31,19 +29,17 @@ implements
 	private final IConnectionProvider connectionProvider;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
-	private final PlaybackNotificationsConfiguration configuration;
 	private final Context context;
-	private final ProduceNotificationBuilders produceNotificationBuilders;
+	private final SetupMediaStyleNotifications mediaStyleNotificationSetup;
 
 	private ViewStructure viewStructure;
 
-	public NowPlayingNotificationBuilder(Context context, ProduceNotificationBuilders produceNotificationBuilders, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, PlaybackNotificationsConfiguration configuration) {
+	public NowPlayingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationSetup, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider) {
 		this.context = context;
-		this.produceNotificationBuilders = produceNotificationBuilders;
+		this.mediaStyleNotificationSetup = mediaStyleNotificationSetup;
 		this.connectionProvider = connectionProvider;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
-		this.configuration = configuration;
 	}
 
 	@Override
@@ -69,12 +65,8 @@ implements
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
-				final NotificationCompat.Builder builder = produceNotificationBuilders.getNotificationBuilder(configuration.getNotificationChannel());
+				final NotificationCompat.Builder builder = mediaStyleNotificationSetup.getMediaStyleNotification();
 				builder
-					.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
-						.setCancelButtonIntent(PlaybackService.pendingKillService(context))
-						.setMediaSession(configuration.getMediaSessionToken())
-						.setShowActionsInCompactView(1))
 					.setOngoing(isPlaying)
 					.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 					.setContentIntent(buildNowPlayingActivityIntent())

@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.support.v4.media.session.MediaSessionCompat;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -51,7 +50,7 @@ public class WhenPlaybackIsPaused {
 				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 					service.getObject(),
 					notificationManager,
-					new PlaybackNotificationsConfiguration("",43, MediaSessionCompat.Token.fromToken(this)),
+					new PlaybackNotificationsConfiguration("",43),
 					notificationContentBuilder));
 
 			playbackNotificationRouter

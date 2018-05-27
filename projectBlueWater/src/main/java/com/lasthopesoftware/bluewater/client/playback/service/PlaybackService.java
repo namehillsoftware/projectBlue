@@ -86,6 +86,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.PlaybackStartingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
@@ -339,7 +340,17 @@ implements OnAudioFocusChangeListener
 
 			final String channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 			
-			return new PlaybackNotificationsConfiguration(channelName, notificationId, lazyMediaSession.getObject().getSessionToken());
+			return new PlaybackNotificationsConfiguration(channelName, notificationId);
+		}
+	};
+	private final CreateAndHold<MediaStyleNotificationSetup> lazyMediaStyleNotificationSetup = new AbstractSynchronousLazy<MediaStyleNotificationSetup>() {
+		@Override
+		protected MediaStyleNotificationSetup create() {
+			return new MediaStyleNotificationSetup(
+				PlaybackService.this,
+				new NotificationBuilderProducer(PlaybackService.this),
+				lazyPlaybackNotificationsConfiguration.getObject(),
+				lazyMediaSession.getObject());
 		}
 	};
 	private final CreateAndHold<GetAllStoredFilesInLibrary> lazyAllStoredFilesInLibrary = new Lazy<>(() -> new StoredFilesCollection(this));
@@ -365,7 +376,7 @@ implements OnAudioFocusChangeListener
 		protected PlaybackStartingNotificationBuilder create() {
 			return new PlaybackStartingNotificationBuilder(
 				PlaybackService.this,
-				lazyPlaybackNotificationsConfiguration.getObject());
+				lazyMediaStyleNotificationSetup.getObject());
 		}
 	};
 
@@ -688,11 +699,10 @@ implements OnAudioFocusChangeListener
 				lazyPlaybackNotificationsConfiguration.getObject(),
 				nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
 					this,
-					new NotificationBuilderProducer(this),
+					lazyMediaStyleNotificationSetup.getObject(),
 					connectionProvider,
 					cachedFilePropertiesProvider,
-					imageProvider,
-					lazyPlaybackNotificationsConfiguration.getObject())));
+					imageProvider)));
 
 		localBroadcastManagerLazy
 			.getObject()

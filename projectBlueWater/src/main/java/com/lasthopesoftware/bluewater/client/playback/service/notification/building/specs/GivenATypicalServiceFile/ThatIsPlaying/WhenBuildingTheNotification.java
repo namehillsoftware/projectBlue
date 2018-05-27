@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPlaying;
 
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
@@ -12,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -22,7 +20,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +30,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk=19)
 public class WhenBuildingTheNotification {
 
 	private NotificationCompat.Builder builder;
@@ -57,7 +53,7 @@ public class WhenBuildingTheNotification {
 
 		final NowPlayingNotificationBuilder npBuilder = new NowPlayingNotificationBuilder(
 			RuntimeEnvironment.application,
-			notificationBuilders,
+			() -> new NotificationCompat.Builder(RuntimeEnvironment.application, "test"),
 			connectionProvider,
 			new CachedFilePropertiesProvider(
 				connectionProvider,
@@ -65,8 +61,7 @@ public class WhenBuildingTheNotification {
 				new FilePropertiesProvider(
 					connectionProvider,
 					containerRepository)),
-			mock(ImageProvider.class),
-			new PlaybackNotificationsConfiguration("channel", 1, MediaSessionCompat.Token.fromToken(null)));
+			mock(ImageProvider.class));
 
 		new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
 	}

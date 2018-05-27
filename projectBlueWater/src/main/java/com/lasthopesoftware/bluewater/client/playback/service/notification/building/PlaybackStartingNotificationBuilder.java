@@ -8,27 +8,21 @@ import android.support.v4.content.ContextCompat;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class PlaybackStartingNotificationBuilder {
 
 	private final Context context;
-	private final PlaybackNotificationsConfiguration configuration;
+	private final SetupMediaStyleNotifications mediaStyleNotificationsSetup;
 
-	public PlaybackStartingNotificationBuilder(Context context, PlaybackNotificationsConfiguration configuration) {
+	public PlaybackStartingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationsSetup) {
 		this.context = context;
-		this.configuration = configuration;
+		this.mediaStyleNotificationsSetup = mediaStyleNotificationsSetup;
 	}
 
 	public Promise<NotificationCompat.Builder> promisePreparedPlaybackStartingNotification() {
-		final NotificationCompat.Builder builder = new NotificationCompat.Builder(context, configuration.getNotificationChannel());
+		final NotificationCompat.Builder builder = mediaStyleNotificationsSetup.getMediaStyleNotification();
 		builder
-			.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
-				.setCancelButtonIntent(PlaybackService.pendingKillService(context))
-				.setMediaSession(configuration.getMediaSessionToken())
-				.setShowCancelButton(true))
 			.setOngoing(true)
 			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 			.setContentIntent(buildNowPlayingActivityIntent())
