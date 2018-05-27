@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 
@@ -49,9 +50,10 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 			}
 
 			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying = false)
-				.then(notification -> {
+				.then(builder -> {
+					final Notification notification = builder.build();
 					synchronized (notificationSync) {
-						notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification.build());
+						notificationManager.notify(playbackNotificationsConfiguration.getNotificationId(), notification);
 						service.stopForeground(false);
 						isNotificationForeground = false;
 						return null;
@@ -82,18 +84,19 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 			if (!isNotificationStarted && !isPlaying) return;
 
 			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
-				.then(perform(notification -> {
+				.then(perform(builder -> {
+					final Notification notification = builder.build();
 					synchronized (notificationSync) {
 						if (!isPlaying || isNotificationForeground) {
 							if (!isNotificationStarted) return;
 
 							notificationManager.notify(
 								playbackNotificationsConfiguration.getNotificationId(),
-								notification.build());
+								notification);
 							return;
 						}
 
-						service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification.build());
+						service.startForeground(playbackNotificationsConfiguration.getNotificationId(), notification);
 						isNotificationStarted = true;
 						isNotificationForeground = true;
 					}
