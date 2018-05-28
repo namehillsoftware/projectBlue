@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
@@ -13,9 +14,11 @@ import java.net.URL;
 public class UrlScanner implements BuildUrlProviders {
 
 	private final TestConnections connectionTester;
+	private final LookupServers serverLookup;
 
-	public UrlScanner(TestConnections connectionTester) {
+	public UrlScanner(TestConnections connectionTester, LookupServers serverLookup) {
 		this.connectionTester = connectionTester;
+		this.serverLookup = serverLookup;
 	}
 
 	@Override
@@ -37,7 +40,16 @@ public class UrlScanner implements BuildUrlProviders {
 		}
 
 		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider))
-			.then(isValid -> mediaServerUrlProvider);
+			.eventually(isValid -> {
+				if (isValid) return new Promise<>(mediaServerUrlProvider);
+
+				return serverLookup.promiseServerInformation(library)
+					.then(info -> new MediaServerUrlProvider(
+						library.getAuthKey(),
+						"http",
+						info.getRemoteIp(),
+						info.getHttpPort()));
+			});
 	}
 
 	private static URL parseAccessCode(String accessCode) throws MalformedURLException {

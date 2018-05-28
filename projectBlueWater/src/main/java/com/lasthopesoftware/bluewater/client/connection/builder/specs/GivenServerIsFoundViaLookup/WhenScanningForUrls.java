@@ -1,7 +1,8 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenAnAccessCodeThatIsAValidServer.WithAPort;
+package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -28,14 +29,18 @@ public class WhenScanningForUrls {
 		final TestConnections connectionTester = mock(TestConnections.class);
 		when(connectionTester.promiseIsConnectionPossible(any()))
 			.thenReturn(new Promise<>(false));
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> a.getUrlProvider().getBaseUrl().equals("http://gooPc:3504/MCWS/v1"))))
-			.thenReturn(new Promise<>(true));
 
-		final UrlScanner urlScanner = new UrlScanner(connectionTester, mock(LookupServers.class));
+		final LookupServers serverLookup = mock(LookupServers.class);
+		when(serverLookup.promiseServerInformation(argThat(a -> "gooPc".equals(a.getAccessCode()))))
+			.thenReturn(new Promise<>(new ServerInfo().setRemoteIp("1.2.3.4").setHttpPort(143)));
+
+		final UrlScanner urlScanner = new UrlScanner(
+			connectionTester,
+			serverLookup);
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
-				.setAccessCode("gooPc:3504"))).get();
+				.setAccessCode("gooPc"))).get();
 	}
 
 	@Test
@@ -45,6 +50,6 @@ public class WhenScanningForUrls {
 
 	@Test
 	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://gooPc:3504/MCWS/v1");
+		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://1.2.3.4:143/MCWS/v1");
 	}
 }
