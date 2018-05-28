@@ -42,29 +42,27 @@ public class UrlScanner implements BuildUrlProviders {
 		}
 
 		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider))
-			.eventually(isValid -> {
-				if (isValid) return new Promise<>(mediaServerUrlProvider);
+			.eventually(isValid -> isValid
+				? new Promise<>(mediaServerUrlProvider)
+				: serverLookup.promiseServerInformation(library)
+				.eventually(info -> {
+					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
+					mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+						authKey,
+						"http",
+						info.getRemoteIp(),
+						info.getHttpPort()));
 
-				return serverLookup.promiseServerInformation(library)
-					.eventually(info -> {
-						final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
+					for (String ip : info.getLocalIps()) {
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
 							"http",
-							info.getRemoteIp(),
+							ip,
 							info.getHttpPort()));
+					}
 
-						for (String ip : info.getLocalIps()) {
-							mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-								authKey,
-								"http",
-								ip,
-								info.getHttpPort()));
-						}
-
-						return testUrls(mediaServerUrlProvidersQueue);
-					});
-			});
+					return testUrls(mediaServerUrlProvidersQueue);
+				}));
 	}
 
 	private Promise<IUrlProvider> testUrls(Queue<IUrlProvider> urls) {
