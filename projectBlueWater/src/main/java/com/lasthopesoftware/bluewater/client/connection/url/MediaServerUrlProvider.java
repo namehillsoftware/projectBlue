@@ -10,12 +10,12 @@ public class MediaServerUrlProvider implements IUrlProvider {
 	private final String authCode;
 
 	public MediaServerUrlProvider(String authCode, String scheme, String ipAddress, int port) throws MalformedURLException {
-		this(authCode, new URL(scheme, ipAddress, port, "/MCWS/v1"));
+		this(authCode, new URL(scheme, ipAddress, port, ""));
 	}
 
-	public MediaServerUrlProvider(String authCode, URL baseUrl) {
+	public MediaServerUrlProvider(String authCode, URL baseUrl) throws MalformedURLException {
 		this.authCode = authCode;
-		this.baseUrl = baseUrl.toString();
+		this.baseUrl = new URL(baseUrl, "/MCWS/v1").toString();
 	}
 
 	public String getAuthCode() {

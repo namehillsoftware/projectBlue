@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenAValidServer.WithAPort;
+package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenAnAccessCodeThatIsAValidServer.WithAPort;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
@@ -40,5 +40,10 @@ public class WhenScanningForUrls {
 	@Test
 	public void thenTheUrlProviderIsReturned() {
 		assertThat(urlProvider).isNotNull();
+	}
+
+	@Test
+	public void thenTheBaseUrlIsCorrect() {
+		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://gooPc:3504/MCWS/v1");
 	}
 }

@@ -41,7 +41,7 @@ public class UrlScanner implements BuildUrlProviders {
 	}
 
 	private static URL parseAccessCode(String accessCode) throws MalformedURLException {
-		final String[] urlParts = accessCode.split(":", 1);
+		final String[] urlParts = accessCode.split(":", 2);
 		final int port =
 			urlParts.length > 1 && isPositiveInteger(urlParts[1])
 				? Integer.parseInt(urlParts[1])
