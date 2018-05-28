@@ -10,6 +10,7 @@ import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,6 +60,10 @@ public class FakeConnectionProvider implements IConnectionProvider {
 
 	@Override
 	public IUrlProvider getUrlProvider() {
-		return new MediaServerUrlProvider(null, "test", 80);
+		try {
+			return new MediaServerUrlProvider(null, "http", "test", 80);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

@@ -16,6 +16,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -36,7 +37,7 @@ public class AccessConfigurationBuilder {
 
 	private static Promise<MediaServerUrlProvider> buildConfiguration(final Context context, final Library library, int timeout) {
 		if (library == null)
-			throw new NullPointerException("The library cannot be null.");
+			throw new IllegalArgumentException("The library cannot be null.");
 
 		if (timeout <= 0) timeout = buildConnectionTimeoutTime;
 
@@ -60,7 +61,12 @@ public class AccessConfigurationBuilder {
 
 		if (Patterns.WEB_URL.matcher(localAccessString).matches()) {
 			final Uri url = Uri.parse(localAccessString);
-			final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, url.getHost(), url.getPort());
+			final MediaServerUrlProvider urlProvider;
+			try {
+				urlProvider = new MediaServerUrlProvider(authKey, "http", url.getHost(), url.getPort());
+			} catch (MalformedURLException e) {
+				return new Promise<>(e);
+			}
 
 			return
 				ConnectionTester
@@ -104,9 +110,15 @@ public class AccessConfigurationBuilder {
 
 	private static Promise<MediaServerUrlProvider> promiseMediaServerUrlFromXml(XmlElement xml, Library library, String authKey, int timeout) throws XmlParseException {
 		final int port = Integer.parseInt(xml.getUnique("port").getValue());
+		final int httpsPort = Integer.parseInt(xml.getUnique("https_port").getValue());
 
 		if (!library.isLocalOnly()) {
-			final MediaServerUrlProvider remoteUrlProvider = new MediaServerUrlProvider(authKey, xml.getUnique("ip").getValue(), port);
+			final MediaServerUrlProvider remoteUrlProvider;
+			try {
+				remoteUrlProvider = new MediaServerUrlProvider(authKey, "http", xml.getUnique("ip").getValue(), port);
+			} catch (MalformedURLException e) {
+				return new Promise<>(e);
+			}
 			return ConnectionTester.doTest(new ConnectionProvider(remoteUrlProvider), timeout)
 				.eventually(testResult -> {
 					if (testResult) return new Promise<>(remoteUrlProvider);
@@ -124,7 +136,12 @@ public class AccessConfigurationBuilder {
 		final String ipAddress = urls.poll();
 		if (ipAddress == null) return Promise.empty();
 
-		final MediaServerUrlProvider urlProvider = new MediaServerUrlProvider(authKey, ipAddress, port);
+		final MediaServerUrlProvider urlProvider;
+		try {
+			urlProvider = new MediaServerUrlProvider(authKey, "http", ipAddress, port);
+		} catch (MalformedURLException e) {
+			return new Promise<>(e);
+		}
 		return
 			ConnectionTester.doTest(new ConnectionProvider(urlProvider), timeout)
 				.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls, authKey, port, timeout));

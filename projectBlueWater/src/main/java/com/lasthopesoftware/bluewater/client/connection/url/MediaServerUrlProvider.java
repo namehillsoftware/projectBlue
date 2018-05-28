@@ -1,16 +1,18 @@
 package com.lasthopesoftware.bluewater.client.connection.url;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 
 public class MediaServerUrlProvider implements IUrlProvider {
 	private final String baseUrl;
 	private final String authCode;
 
-	public MediaServerUrlProvider(String authCode, String ipAddress, int port) {
+	public MediaServerUrlProvider(String authCode, String scheme, String ipAddress, int port) throws MalformedURLException {
 		this.authCode = authCode;
 
-		baseUrl = "http://" + ipAddress + ":" + String.valueOf(port) + "/MCWS/v1/";
+		baseUrl = new URL(scheme, ipAddress, port, "/MCWS/v1").toString();
 	}
 
 	public String getAuthCode() {
