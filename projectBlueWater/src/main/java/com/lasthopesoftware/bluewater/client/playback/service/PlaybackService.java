@@ -104,10 +104,10 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettin
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
+import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
@@ -376,7 +376,9 @@ implements OnAudioFocusChangeListener
 		protected PlaybackStartingNotificationBuilder create() {
 			return new PlaybackStartingNotificationBuilder(
 				PlaybackService.this,
-				lazyMediaStyleNotificationSetup.getObject());
+				new NotificationBuilderProducer(PlaybackService.this),
+				lazyPlaybackNotificationsConfiguration.getObject(),
+				lazyMediaSession.getObject());
 		}
 	};
 

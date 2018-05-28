@@ -5,24 +5,34 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
+import com.lasthopesoftware.resources.notifications.ProduceNotificationBuilders;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class PlaybackStartingNotificationBuilder {
 
 	private final Context context;
-	private final SetupMediaStyleNotifications mediaStyleNotificationsSetup;
+	private final ProduceNotificationBuilders produceNotificationBuilders;
+	private final PlaybackNotificationsConfiguration configuration;
+	private final MediaSessionCompat mediaSessionCompat;
 
-	public PlaybackStartingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationsSetup) {
+	public PlaybackStartingNotificationBuilder(Context context, ProduceNotificationBuilders produceNotificationBuilders, PlaybackNotificationsConfiguration configuration, MediaSessionCompat mediaSessionCompat) {
 		this.context = context;
-		this.mediaStyleNotificationsSetup = mediaStyleNotificationsSetup;
+		this.produceNotificationBuilders = produceNotificationBuilders;
+		this.configuration = configuration;
+		this.mediaSessionCompat = mediaSessionCompat;
 	}
 
 	public Promise<NotificationCompat.Builder> promisePreparedPlaybackStartingNotification() {
-		final NotificationCompat.Builder builder = mediaStyleNotificationsSetup.getMediaStyleNotification();
-		builder
+		return new Promise<>(produceNotificationBuilders.getNotificationBuilder(configuration.getNotificationChannel())
+			.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+				.setCancelButtonIntent(PlaybackService.pendingKillService(context))
+				.setMediaSession(mediaSessionCompat.getSessionToken()))
 			.setOngoing(true)
 			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 			.setContentIntent(buildNowPlayingActivityIntent())
@@ -30,9 +40,7 @@ public class PlaybackStartingNotificationBuilder {
 			.setSmallIcon(R.drawable.clearstream_logo_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.setContentTitle(context.getString(R.string.app_name))
-			.setContentText(context.getString(R.string.lbl_starting_playback));
-
-		return new Promise<>(builder);
+			.setContentText(context.getString(R.string.lbl_starting_playback)));
 	}
 
 	private PendingIntent buildNowPlayingActivityIntent() {
