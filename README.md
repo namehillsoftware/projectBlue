@@ -1,4 +1,4 @@
-# project blue
+![project blue](design/feature-graphic/feature_graphic.png)
 
 ### Alternative streaming music player for [JRiver Media Center](http://jriver.com/)
 
