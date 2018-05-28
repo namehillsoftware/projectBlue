@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenANullAccessCode;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 
@@ -10,6 +11,7 @@ import org.junit.Test;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class WhenScanningForUrls {
 
@@ -17,7 +19,7 @@ public class WhenScanningForUrls {
 
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException {
-		final UrlScanner urlScanner = new UrlScanner();
+		final UrlScanner urlScanner = new UrlScanner(mock(TestConnections.class));
 
 		try {
 			new FuturePromise<>(urlScanner.promiseBuiltUrlProvider(new Library())).get();

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -170,7 +170,7 @@ public class SessionConnection {
 		private static final CreateAndHold<Set<Integer>> runningConditionsLazy =
 				new AbstractSynchronousLazy<Set<Integer>>() {
 					@Override
-					protected Set<Integer> create() throws Exception {
+					protected Set<Integer> create() {
 						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView)));
 					}
 				};
@@ -178,7 +178,7 @@ public class SessionConnection {
 		private static final CreateAndHold<Set<Integer>> completeConditionsLazy =
 				new AbstractSynchronousLazy<Set<Integer>>() {
 					@Override
-					protected Set<Integer> create() throws Exception {
+					protected Set<Integer> create() {
 						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 					}
 				};

@@ -6,7 +6,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Patterns;
 
-import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -55,10 +55,10 @@ public class AccessConfigurationBuilder {
 		if (library.getAccessCode() == null)
 			throw new IllegalArgumentException("The access code cannot be null");
 
+
 		final String authKey = library.getAuthKey();
 
 		final String localAccessString = parseAccessCode(library);
-
 		if (Patterns.WEB_URL.matcher(localAccessString).matches()) {
 			final Uri url = Uri.parse(localAccessString);
 			final MediaServerUrlProvider urlProvider;
@@ -82,7 +82,7 @@ public class AccessConfigurationBuilder {
 				.eventually(xml -> promiseMediaServerUrlFromXml(xml, library, authKey, timeout));
 	}
 
-	private static String parseAccessCode(Library library){
+	private static String parseAccessCode(Library library) {
 		String localAccessString = library.getAccessCode();
 		if (localAccessString.contains(".")) {
 			if (!localAccessString.contains(":")) localAccessString += ":80";

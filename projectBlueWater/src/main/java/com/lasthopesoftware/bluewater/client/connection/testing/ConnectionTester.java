@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.helpers;
+package com.lasthopesoftware.bluewater.client.connection.testing;
 
 import android.os.AsyncTask;
 
@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
-public class ConnectionTester {
+public class ConnectionTester implements TestConnections {
 
 	private static final int stdTimeoutTime = 30000;
 
@@ -26,6 +26,11 @@ public class ConnectionTester {
 
 	public static Promise<Boolean> doTest(final ConnectionProvider connectionProvider, final int timeout) {
 		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
+	}
+
+	@Override
+	public Promise<Boolean> promiseIsConnectionPossible(ConnectionProvider connectionProvider) {
+		return doTest(connectionProvider, stdTimeoutTime);
 	}
 
 	private static boolean doTestSynchronously(final ConnectionProvider connectionProvider, final int timeout) {
