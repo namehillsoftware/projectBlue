@@ -10,6 +10,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class UrlScanner implements BuildUrlProviders {
 
@@ -29,11 +31,11 @@ public class UrlScanner implements BuildUrlProviders {
 		if (library.getAccessCode() == null)
 			return new Promise<>(new IllegalArgumentException("The access code cannot be null"));
 
-
+		final String authKey = library.getAuthKey();
 		final MediaServerUrlProvider mediaServerUrlProvider;
 		try {
 			mediaServerUrlProvider = new MediaServerUrlProvider(
-				library.getAuthKey(),
+				authKey,
 				parseAccessCode(library.getAccessCode()));
 		} catch (MalformedURLException e) {
 			return new Promise<>(e);
@@ -44,12 +46,34 @@ public class UrlScanner implements BuildUrlProviders {
 				if (isValid) return new Promise<>(mediaServerUrlProvider);
 
 				return serverLookup.promiseServerInformation(library)
-					.then(info -> new MediaServerUrlProvider(
-						library.getAuthKey(),
-						"http",
-						info.getRemoteIp(),
-						info.getHttpPort()));
+					.eventually(info -> {
+						final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
+						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+							authKey,
+							"http",
+							info.getRemoteIp(),
+							info.getHttpPort()));
+
+						for (String ip : info.getLocalIps()) {
+							mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+								authKey,
+								"http",
+								ip,
+								info.getHttpPort()));
+						}
+
+						return testUrls(mediaServerUrlProvidersQueue);
+					});
 			});
+	}
+
+	private Promise<IUrlProvider> testUrls(Queue<IUrlProvider> urls) {
+		final IUrlProvider urlProvider = urls.poll();
+		if (urlProvider == null) return Promise.empty();
+
+		return
+			connectionTester.promiseIsConnectionPossible(new ConnectionProvider(urlProvider))
+				.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls));
 	}
 
 	private static URL parseAccessCode(String accessCode) throws MalformedURLException {

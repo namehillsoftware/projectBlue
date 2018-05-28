@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class ServerInfo {
 	private int httpPort;
 	private Integer httpsPort;
 	private String remoteIp;
-	private Collection<String> localIps;
+	private Collection<String> localIps = Collections.emptyList();
 
 	public Collection<String> getLocalIps() {
 		return localIps;
