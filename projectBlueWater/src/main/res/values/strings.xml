@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Music Canoe</string>
+    <string name="app_name">project blue</string>
     <string name="company_name">Name Hill Software</string>
     <string name="copyright_year">2015</string>
     <string name="layout_settings">Settings</string>
