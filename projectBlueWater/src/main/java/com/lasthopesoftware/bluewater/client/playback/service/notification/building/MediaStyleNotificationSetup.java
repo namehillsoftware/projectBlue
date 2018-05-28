@@ -6,7 +6,7 @@ import android.support.v4.media.session.MediaSessionCompat;
 
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
-import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders;
+import com.lasthopesoftware.resources.notifications.ProduceNotificationBuilders;
 
 public class MediaStyleNotificationSetup implements SetupMediaStyleNotifications {
 
@@ -25,6 +25,7 @@ public class MediaStyleNotificationSetup implements SetupMediaStyleNotifications
 	@Override
 	public NotificationCompat.Builder getMediaStyleNotification() {
 		final NotificationCompat.Builder builder = produceNotificationBuilders.getNotificationBuilder(configuration.getNotificationChannel());
+
 		builder
 			.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
 				.setCancelButtonIntent(PlaybackService.pendingKillService(context))
