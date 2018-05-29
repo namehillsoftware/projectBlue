@@ -46,19 +46,25 @@ public class UrlScanner implements BuildUrlProviders {
 				? new Promise<>(mediaServerUrlProvider)
 				: serverLookup.promiseServerInformation(library)
 				.eventually(info -> {
-					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
-					mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-						authKey,
-						"http",
-						info.getRemoteIp(),
-						info.getHttpPort()));
+					final SchemePortPair[] availableSchemes = info.getHttpsPort() == null
+						? new SchemePortPair[] { new SchemePortPair("http", info.getHttpPort()) }
+						: new SchemePortPair[] { new SchemePortPair("https", info.getHttpsPort()), new SchemePortPair("http", info.getHttpPort()) };
 
-					for (String ip : info.getLocalIps()) {
+					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
+					for (final SchemePortPair schemePortPair : availableSchemes) {
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
-							"http",
-							ip,
-							info.getHttpPort()));
+							schemePortPair.scheme,
+							info.getRemoteIp(),
+							schemePortPair.port));
+
+						for (String ip : info.getLocalIps()) {
+							mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+								authKey,
+								schemePortPair.scheme,
+								ip,
+								schemePortPair.port));
+						}
 					}
 
 					return testUrls(mediaServerUrlProvidersQueue);
@@ -69,9 +75,9 @@ public class UrlScanner implements BuildUrlProviders {
 		final IUrlProvider urlProvider = urls.poll();
 		if (urlProvider == null) return Promise.empty();
 
-		return
-			connectionTester.promiseIsConnectionPossible(new ConnectionProvider(urlProvider))
-				.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls));
+		return connectionTester
+			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider))
+			.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls));
 	}
 
 	private static URL parseAccessCode(String accessCode) throws MalformedURLException {
@@ -88,5 +94,15 @@ public class UrlScanner implements BuildUrlProviders {
 			if (!Character.isDigit(c)) return false;
 
 		return true;
+	}
+
+	private static class SchemePortPair {
+		final String scheme;
+		final int port;
+
+		SchemePortPair(String scheme, int port) {
+			this.scheme = scheme;
+			this.port = port;
+		}
 	}
 }
