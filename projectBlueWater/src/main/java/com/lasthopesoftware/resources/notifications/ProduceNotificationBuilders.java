@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.notifications;
+package com.lasthopesoftware.resources.notifications;
 
 import android.support.v4.app.NotificationCompat;
 
