@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +29,15 @@ public class ConnectionTester implements TestConnections {
 		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
+	private final int timeout;
+
+	public ConnectionTester(Duration timeout) {
+		this.timeout = (int)timeout.getMillis();
+	}
+
 	@Override
 	public Promise<Boolean> promiseIsConnectionPossible(ConnectionProvider connectionProvider) {
-		return doTest(connectionProvider, stdTimeoutTime);
+		return doTest(connectionProvider, timeout);
 	}
 
 	private static boolean doTestSynchronously(final ConnectionProvider connectionProvider, final int timeout) {
