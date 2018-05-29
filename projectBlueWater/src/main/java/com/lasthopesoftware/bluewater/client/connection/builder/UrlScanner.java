@@ -83,12 +83,25 @@ public class UrlScanner implements BuildUrlProviders {
 	}
 
 	private static URL parseAccessCode(String accessCode) throws MalformedURLException {
-		final String[] urlParts = accessCode.split(":", 2);
+		String url = accessCode;
+
+		String scheme = "http";
+		if (url.startsWith("http://"))
+			url = url.replaceFirst("http://", "");
+
+		if (url.startsWith("https://")) {
+			url = url.replaceFirst("https://", "");
+			scheme = "https";
+		}
+
+		final String[] urlParts = url.split(":", 2);
+
 		final int port =
 			urlParts.length > 1 && isPositiveInteger(urlParts[1])
 				? Integer.parseInt(urlParts[1])
 				: 80;
-		return new URL("http", urlParts[0], port, "");
+
+		return new URL(scheme, urlParts[0], port, "");
 	}
 
 	private static boolean isPositiveInteger(String string) {
