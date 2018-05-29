@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.testing;
 
 import android.os.AsyncTask;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
@@ -21,11 +21,11 @@ public class ConnectionTester implements TestConnections {
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static Promise<Boolean> doTest(ConnectionProvider connectionProvider) {
+	public static Promise<Boolean> doTest(IConnectionProvider connectionProvider) {
 		return doTest(connectionProvider, stdTimeoutTime);
 	}
 
-	public static Promise<Boolean> doTest(final ConnectionProvider connectionProvider, final int timeout) {
+	public static Promise<Boolean> doTest(final IConnectionProvider connectionProvider, final int timeout) {
 		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
@@ -36,11 +36,11 @@ public class ConnectionTester implements TestConnections {
 	}
 
 	@Override
-	public Promise<Boolean> promiseIsConnectionPossible(ConnectionProvider connectionProvider) {
+	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
 		return doTest(connectionProvider, timeout);
 	}
 
-	private static boolean doTestSynchronously(final ConnectionProvider connectionProvider, final int timeout) {
+	private static boolean doTestSynchronously(final IConnectionProvider connectionProvider, final int timeout) {
 		try {
 
 			final HttpURLConnection conn = connectionProvider.getConnection("Alive");

@@ -25,7 +25,7 @@ public class WhenScanningForUrls {
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException {
 		final TestConnections connectionTester = mock(TestConnections.class);
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> a.getUrlProvider().getBaseUrl().equals("http://gooPc:80/MCWS/v1"))))
+		when(connectionTester.promiseIsConnectionPossible(argThat(a -> a.getUrlProvider().getBaseUrl().equals("http://gooPc:80/MCWS/v1/"))))
 			.thenReturn(new Promise<>(true));
 
 		final UrlScanner urlScanner = new UrlScanner(connectionTester, mock(LookupServers.class));
@@ -42,6 +42,6 @@ public class WhenScanningForUrls {
 
 	@Test
 	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://gooPc:80/MCWS/v1");
+		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://gooPc:80/MCWS/v1/");
 	}
 }

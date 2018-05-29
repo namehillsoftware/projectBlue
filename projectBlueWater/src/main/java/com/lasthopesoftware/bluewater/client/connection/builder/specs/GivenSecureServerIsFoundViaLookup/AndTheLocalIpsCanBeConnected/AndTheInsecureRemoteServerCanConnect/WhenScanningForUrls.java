@@ -33,8 +33,8 @@ public class WhenScanningForUrls {
 
 		when(connectionTester.promiseIsConnectionPossible(argThat(a -> {
 				final String baseUrl = a.getUrlProvider().getBaseUrl();
-				return "http://1.2.3.4:143/MCWS/v1".equals(baseUrl)
-					|| "https://192.168.1.56:452/MCWS/v1".equals(baseUrl);
+				return "http://1.2.3.4:143/MCWS/v1/".equals(baseUrl)
+					|| "https://192.168.1.56:452/MCWS/v1/".equals(baseUrl);
 			})))
 			.thenReturn(new Promise<>(true));
 
@@ -65,6 +65,6 @@ public class WhenScanningForUrls {
 
 	@Test
 	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://1.2.3.4:143/MCWS/v1");
+		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://1.2.3.4:143/MCWS/v1/");
 	}
 }

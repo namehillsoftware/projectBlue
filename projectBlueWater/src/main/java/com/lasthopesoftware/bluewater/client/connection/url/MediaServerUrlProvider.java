@@ -15,7 +15,7 @@ public class MediaServerUrlProvider implements IUrlProvider {
 
 	public MediaServerUrlProvider(String authCode, URL baseUrl) throws MalformedURLException {
 		this.authCode = authCode;
-		this.baseUrl = new URL(baseUrl, "/MCWS/v1").toString();
+		this.baseUrl = new URL(baseUrl, "/MCWS/v1/").toString();
 	}
 
 	public String getAuthCode() {

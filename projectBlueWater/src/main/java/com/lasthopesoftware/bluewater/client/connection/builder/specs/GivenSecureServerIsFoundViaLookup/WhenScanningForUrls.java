@@ -30,7 +30,7 @@ public class WhenScanningForUrls {
 		when(connectionTester.promiseIsConnectionPossible(any()))
 			.thenReturn(new Promise<>(false));
 
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "https://1.2.3.4:452/MCWS/v1".equals(a.getUrlProvider().getBaseUrl()))))
+		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "https://1.2.3.4:452/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()))))
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
@@ -56,6 +56,6 @@ public class WhenScanningForUrls {
 
 	@Test
 	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("https://1.2.3.4:452/MCWS/v1");
+		assertThat(urlProvider.getBaseUrl()).isEqualTo("https://1.2.3.4:452/MCWS/v1/");
 	}
 }
