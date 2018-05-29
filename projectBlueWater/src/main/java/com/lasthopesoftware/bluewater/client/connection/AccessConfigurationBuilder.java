@@ -32,8 +32,8 @@ public class AccessConfigurationBuilder {
 
 	public static Promise<IUrlProvider> buildConfiguration(final Context context, final Library library) {
 		final NetworkInfo networkInfo = ConnectionInfo.getActiveNetworkInfo(context);
-		if (networkInfo != null && networkInfo.isConnected()) return Promise.empty();
-
-		return lazyUrlScanner.getObject().promiseBuiltUrlProvider(library);
+		return networkInfo != null && networkInfo.isConnected()
+			? lazyUrlScanner.getObject().promiseBuiltUrlProvider(library)
+			: Promise.empty();
 	}
 }
