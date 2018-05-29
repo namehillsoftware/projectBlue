@@ -57,7 +57,9 @@ public class UrlScanner implements BuildUrlProviders {
 							schemePortPair.scheme,
 							info.getRemoteIp(),
 							schemePortPair.port));
+					}
 
+					for (final SchemePortPair schemePortPair : availableSchemes) {
 						for (String ip : info.getLocalIps()) {
 							mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 								authKey,
