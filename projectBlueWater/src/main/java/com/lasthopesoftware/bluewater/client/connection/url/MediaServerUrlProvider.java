@@ -22,6 +22,11 @@ public class MediaServerUrlProvider implements IUrlProvider {
 		return authCode;
 	}
 
+	@Override
+	public String getCertificateFingerprint() {
+		return null;
+	}
+
 	public String getBaseUrl() {
 		return baseUrl;
 	}

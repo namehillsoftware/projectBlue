@@ -19,7 +19,15 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
 
@@ -43,11 +51,31 @@ public class ExtractorMediaSourceFactoryProvider {
 
 	private final CreateAndHold<ExtractorMediaSource.Factory> lazyRemoteExtractorFactory = new AbstractSynchronousLazy<ExtractorMediaSource.Factory>() {
 		@Override
-		protected ExtractorMediaSource.Factory create() {
+		protected ExtractorMediaSource.Factory create() throws NoSuchAlgorithmException, KeyManagementException {
+			final X509TrustManager trustManager = new X509TrustManager() {
+				@Override
+				public void checkClientTrusted(X509Certificate[] chain, String authType) {
+				}
+
+				@Override
+				public void checkServerTrusted(X509Certificate[] chain, String authType) {
+				}
+
+				@Override
+				public X509Certificate[] getAcceptedIssuers() {
+					return new X509Certificate[0];
+				}
+			};
+
+			final SSLContext sslContext = SSLContext.getInstance("TLS");
+			sslContext.init(null, new TrustManager[] { trustManager }, null);
+			final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
 			final OkHttpDataSourceFactory httpDataSourceFactory = new OkHttpDataSourceFactory(
 				new OkHttpClient.Builder()
 					.readTimeout(45, TimeUnit.SECONDS)
 					.retryOnConnectionFailure(false)
+					.sslSocketFactory(sslSocketFactory, trustManager)
 					.build(),
 				Util.getUserAgent(context, context.getString(R.string.app_name)),
 				null);
