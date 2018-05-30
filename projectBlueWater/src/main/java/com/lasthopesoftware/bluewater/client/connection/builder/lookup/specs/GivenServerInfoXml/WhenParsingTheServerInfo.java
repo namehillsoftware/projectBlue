@@ -35,6 +35,7 @@ public class WhenParsingTheServerInfo {
 					"<ip>108.491.23.154</ip>\n" +
 					"<port>52199</port>\n" +
 					"<localiplist>169.254.72.216,192.168.1.50</localiplist>\n" +
+					"<certificate_fingerprint>746E06046B44CED35658F300DB2D08A799DEBC7E</certificate_fingerprint>\n" +
 					"<https_port>52200</https_port>\n" +
 				"</Response>")));
 
@@ -60,5 +61,10 @@ public class WhenParsingTheServerInfo {
 	@Test
 	public void thenTheHttpsPortIsCorrect() {
 		assertThat(serverInfo.getHttpsPort()).isEqualTo(52200);
+	}
+
+	@Test
+	public void thenTheCertificateFingerprintIsCorrect() {
+		assertThat(serverInfo.getCertificateFingerprint()).isEqualToIgnoringCase("746E06046B44CED35658F300DB2D08A799DEBC7E");
 	}
 }

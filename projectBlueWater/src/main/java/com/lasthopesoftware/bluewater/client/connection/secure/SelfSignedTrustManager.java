@@ -26,10 +26,10 @@ import javax.net.ssl.X509TrustManager;
 
 public class SelfSignedTrustManager implements X509TrustManager {
 
-	private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final X509Certificate[] acceptedIssuers = new X509Certificate[]{};
 
-	private String certKey;
+	private final String certKey;
 
 	public SelfSignedTrustManager(String certKey) {
 		super();
@@ -82,7 +82,6 @@ public class SelfSignedTrustManager implements X509TrustManager {
 		} catch (NoSuchAlgorithmException e) {
 			throw new CertificateException("Unable to check self-signed cert, unknown algorithm. " + e.toString());
 		}
-
 	}
 
 	@Override

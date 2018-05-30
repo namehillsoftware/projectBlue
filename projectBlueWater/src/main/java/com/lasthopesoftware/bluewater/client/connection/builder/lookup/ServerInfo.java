@@ -8,6 +8,7 @@ public class ServerInfo {
 	private Integer httpsPort;
 	private String remoteIp;
 	private Collection<String> localIps = Collections.emptyList();
+	private String certificateFingerprint;
 
 	public Collection<String> getLocalIps() {
 		return localIps;
@@ -42,6 +43,15 @@ public class ServerInfo {
 
 	public ServerInfo setHttpPort(int httpPort) {
 		this.httpPort = httpPort;
+		return this;
+	}
+
+	public String getCertificateFingerprint() {
+		return certificateFingerprint;
+	}
+
+	public ServerInfo setCertificateFingerprint(String certificateFingerprint) {
+		this.certificateFingerprint = certificateFingerprint;
 		return this;
 	}
 }

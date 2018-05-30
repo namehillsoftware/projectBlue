@@ -33,6 +33,9 @@ public class ServerLookup implements LookupServers {
 				final XmlElement securePortXml = xml.getUnique("https_port");
 				if (securePortXml != null) serverInfo.setHttpsPort(Integer.parseInt(securePortXml.getValue()));
 
+				final XmlElement certificateFingerprintXml = xml.getUnique("certificate_fingerprint");
+				if (certificateFingerprintXml != null) serverInfo.setCertificateFingerprint(certificateFingerprintXml.getValue());
+
 				return serverInfo;
 			});
 	}

@@ -20,9 +20,7 @@ import android.annotation.TargetApi;
 import android.net.SSLCertificateSocketFactory;
 import android.os.Build;
 
-import org.apache.http.conn.scheme.LayeredSocketFactory;
 import org.apache.http.conn.ssl.StrictHostnameVerifier;
-import org.apache.http.params.HttpParams;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,6 +30,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 
 /**
@@ -53,7 +52,7 @@ import javax.net.ssl.TrustManager;
  * <p/>
  * Finally, the ignoring of all SSL certificates (and hostname) is possible (which is obviously very insecure!).
  */
-public class TlsSniSocketFactory implements LayeredSocketFactory {
+public class TlsSniSocketFactory extends SSLSocketFactory {
 
 	private final static HostnameVerifier hostnameVerifier = new StrictHostnameVerifier();
 
@@ -63,6 +62,16 @@ public class TlsSniSocketFactory implements LayeredSocketFactory {
 		this.selfSignedCertificateKey = null;
 	}
 
+	@Override
+	public String[] getDefaultCipherSuites() {
+		return new String[0];
+	}
+
+	@Override
+	public String[] getSupportedCipherSuites() {
+		return new String[0];
+	}
+
 	public TlsSniSocketFactory(String certKey) {
 		this.selfSignedCertificateKey = certKey;
 	}
@@ -70,22 +79,28 @@ public class TlsSniSocketFactory implements LayeredSocketFactory {
 	// Plain TCP/IP (layer below TLS)
 
 	@Override
-	public Socket connectSocket(Socket s, String host, int port, InetAddress localAddress, int localPort,
-								HttpParams params) {
-		return null;
-	}
-
-	@Override
 	public Socket createSocket() {
 		return null;
 	}
 
 	@Override
-	public boolean isSecure(Socket s) throws IllegalArgumentException {
-		if (s instanceof SSLSocket) {
-			return s.isConnected();
-		}
-		return false;
+	public Socket createSocket(String host, int port) {
+		return null;
+	}
+
+	@Override
+	public Socket createSocket(String host, int port, InetAddress localHost, int localPort) {
+		return null;
+	}
+
+	@Override
+	public Socket createSocket(InetAddress host, int port) {
+		return null;
+	}
+
+	@Override
+	public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) {
+		return null;
 	}
 
 	// TLS layer
