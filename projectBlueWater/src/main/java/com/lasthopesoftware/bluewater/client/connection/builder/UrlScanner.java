@@ -15,6 +15,9 @@ import java.util.Queue;
 
 public class UrlScanner implements BuildUrlProviders {
 
+	private static final String httpSchema = "http";
+	private static final String httpsSchema = "https";
+
 	private final TestConnections connectionTester;
 	private final LookupServers serverLookup;
 
@@ -46,27 +49,31 @@ public class UrlScanner implements BuildUrlProviders {
 				? new Promise<>(mediaServerUrlProvider)
 				: serverLookup.promiseServerInformation(library)
 				.eventually(info -> {
-					final SchemePortPair[] availableSchemes = info.getHttpsPort() == null
-						? new SchemePortPair[] { new SchemePortPair("http", info.getHttpPort()) }
-						: new SchemePortPair[] { new SchemePortPair("https", info.getHttpsPort()), new SchemePortPair("http", info.getHttpPort()) };
+					final int httpPort = info.getHttpPort();
+					final String remoteIp = info.getRemoteIp();
 
 					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
-					for (final SchemePortPair schemePortPair : availableSchemes) {
+					mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+						authKey,
+						httpSchema,
+						remoteIp,
+						httpPort));
+
+					final Integer httpsPort = info.getHttpsPort();
+					if (httpsPort != null) {
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
-							schemePortPair.scheme,
-							info.getRemoteIp(),
-							schemePortPair.port));
+							httpsSchema,
+							remoteIp,
+							httpsPort));
 					}
 
-					for (final SchemePortPair schemePortPair : availableSchemes) {
-						for (String ip : info.getLocalIps()) {
-							mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-								authKey,
-								schemePortPair.scheme,
-								ip,
-								schemePortPair.port));
-						}
+					for (String ip : info.getLocalIps()) {
+						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+							authKey,
+							httpSchema,
+							ip,
+							httpPort));
 					}
 
 					return testUrls(mediaServerUrlProvidersQueue);
