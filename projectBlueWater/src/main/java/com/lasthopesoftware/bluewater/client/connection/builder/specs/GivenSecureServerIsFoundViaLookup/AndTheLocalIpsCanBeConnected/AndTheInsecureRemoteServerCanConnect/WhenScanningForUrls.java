@@ -45,6 +45,7 @@ public class WhenScanningForUrls {
 					.setRemoteIp("1.2.3.4")
 					.setHttpPort(143)
 					.setHttpsPort(452)
+					.setCertificateFingerprint("2386166660562C5AAA1253B2BED7C2483F9C2D45")
 					.setLocalIps(Arrays.asList(
 						"53.24.19.245",
 						"192.168.1.56"))));

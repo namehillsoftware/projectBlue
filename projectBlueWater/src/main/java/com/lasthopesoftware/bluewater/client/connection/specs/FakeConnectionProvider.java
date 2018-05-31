@@ -61,7 +61,7 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	@Override
 	public IUrlProvider getUrlProvider() {
 		try {
-			return new MediaServerUrlProvider(null, "http", "test", 80);
+			return new MediaServerUrlProvider(null, "test", 80);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}

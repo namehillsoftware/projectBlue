@@ -6,16 +6,30 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 public class MediaServerUrlProvider implements IUrlProvider {
-	private final String baseUrl;
-	private final String authCode;
 
-	public MediaServerUrlProvider(String authCode, String scheme, String ipAddress, int port) throws MalformedURLException {
-		this(authCode, new URL(scheme, ipAddress, port, ""));
+	private static final String httpScheme = "http";
+	private static final String httpsScheme = "https";
+
+	private final URL baseUrl;
+	private final String authCode;
+	private final byte[] certificateFingerprint;
+
+	public MediaServerUrlProvider(String authCode, String ipAddress, int port, byte[] certificateFingerprint) throws MalformedURLException {
+		this(authCode, new URL(httpsScheme, ipAddress, port, ""), certificateFingerprint);
+	}
+
+	public MediaServerUrlProvider(String authCode, String ipAddress, int port) throws MalformedURLException {
+		this(authCode, new URL(httpScheme, ipAddress, port, ""));
 	}
 
 	public MediaServerUrlProvider(String authCode, URL baseUrl) throws MalformedURLException {
+		this(authCode, baseUrl, new byte[0]);
+	}
+
+	private MediaServerUrlProvider(String authCode, URL baseUrl, byte[] certificateFingerprint) throws MalformedURLException {
 		this.authCode = authCode;
-		this.baseUrl = new URL(baseUrl, "/MCWS/v1/").toString();
+		this.baseUrl = new URL(baseUrl, "/MCWS/v1/");
+		this.certificateFingerprint = certificateFingerprint;
 	}
 
 	public String getAuthCode() {
@@ -23,19 +37,19 @@ public class MediaServerUrlProvider implements IUrlProvider {
 	}
 
 	@Override
-	public String getCertificateFingerprint() {
-		return null;
+	public byte[] getCertificateFingerprint() {
+		return certificateFingerprint;
 	}
 
 	public String getBaseUrl() {
-		return baseUrl;
+		return baseUrl.toString();
 	}
 
 	public String getUrl(String... params) {
 		// Add base url
-		if (params.length == 0) return baseUrl;
+		if (params.length == 0) return getBaseUrl();
 
-		final StringBuilder urlBuilder = new StringBuilder(baseUrl);
+		final StringBuilder urlBuilder = new StringBuilder(getBaseUrl());
 
 		// Add action
 		urlBuilder.append(params[0]);

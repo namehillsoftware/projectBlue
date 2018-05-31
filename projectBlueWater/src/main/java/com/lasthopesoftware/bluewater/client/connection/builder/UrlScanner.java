@@ -8,15 +8,14 @@ import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvid
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.apache.commons.codec.binary.Hex;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class UrlScanner implements BuildUrlProviders {
-
-	private static final String httpSchema = "http";
-	private static final String httpsSchema = "https";
 
 	private final TestConnections connectionTester;
 	private final LookupServers serverLookup;
@@ -55,7 +54,6 @@ public class UrlScanner implements BuildUrlProviders {
 					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
 					mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 						authKey,
-						httpSchema,
 						remoteIp,
 						httpPort));
 
@@ -63,15 +61,14 @@ public class UrlScanner implements BuildUrlProviders {
 					if (httpsPort != null) {
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
-							httpsSchema,
 							remoteIp,
-							httpsPort));
+							httpsPort,
+							Hex.decodeHex(info.getCertificateFingerprint())));
 					}
 
 					for (String ip : info.getLocalIps()) {
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
-							httpSchema,
 							ip,
 							httpPort));
 					}
