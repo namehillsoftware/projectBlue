@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.url;
 
+import com.lasthopesoftware.bluewater.shared.IoCommon;
+
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -7,19 +9,16 @@ import java.net.URLEncoder;
 
 public class MediaServerUrlProvider implements IUrlProvider {
 
-	private static final String httpScheme = "http";
-	private static final String httpsScheme = "https";
-
 	private final URL baseUrl;
 	private final String authCode;
 	private final byte[] certificateFingerprint;
 
 	public MediaServerUrlProvider(String authCode, String ipAddress, int port, byte[] certificateFingerprint) throws MalformedURLException {
-		this(authCode, new URL(httpsScheme, ipAddress, port, ""), certificateFingerprint);
+		this(authCode, new URL(IoCommon.httpsUriScheme, ipAddress, port, ""), certificateFingerprint);
 	}
 
 	public MediaServerUrlProvider(String authCode, String ipAddress, int port) throws MalformedURLException {
-		this(authCode, new URL(httpScheme, ipAddress, port, ""));
+		this(authCode, new URL(IoCommon.httpUriScheme, ipAddress, port, ""));
 	}
 
 	public MediaServerUrlProvider(String authCode, URL baseUrl) throws MalformedURLException {

@@ -39,7 +39,7 @@ public class SelfSignedTrustManager implements X509TrustManager {
 	// Thank you: http://stackoverflow.com/questions/1270703/how-to-retrieve-compute-an-x509-certificates-thumbprint-in-java
 	private static String getThumbPrint(X509Certificate cert)
 		throws NoSuchAlgorithmException, CertificateEncodingException {
-		MessageDigest md = MessageDigest.getInstance("SHA-1");
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		byte[] der = cert.getEncoded();
 		md.update(der);
 		byte[] digest = md.digest();

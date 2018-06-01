@@ -12,6 +12,7 @@ import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.connection.secure.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
@@ -21,13 +22,11 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
 
@@ -52,20 +51,7 @@ public class ExtractorMediaSourceFactoryProvider {
 	private final CreateAndHold<ExtractorMediaSource.Factory> lazyRemoteExtractorFactory = new AbstractSynchronousLazy<ExtractorMediaSource.Factory>() {
 		@Override
 		protected ExtractorMediaSource.Factory create() throws NoSuchAlgorithmException, KeyManagementException {
-			final X509TrustManager trustManager = new X509TrustManager() {
-				@Override
-				public void checkClientTrusted(X509Certificate[] chain, String authType) {
-				}
-
-				@Override
-				public void checkServerTrusted(X509Certificate[] chain, String authType) {
-				}
-
-				@Override
-				public X509Certificate[] getAcceptedIssuers() {
-					return new X509Certificate[0];
-				}
-			};
+			final SelfSignedTrustManager trustManager = new SelfSignedTrustManager();
 
 			final SSLContext sslContext = SSLContext.getInstance("TLS");
 			sslContext.init(null, new TrustManager[] { trustManager }, null);
