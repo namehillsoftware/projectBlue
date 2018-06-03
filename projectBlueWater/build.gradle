@@ -97,7 +97,6 @@ dependencies {
     implementation 'com.android.support:design:26.1.0'
     implementation 'joda-time:joda-time:2.9.9'
     implementation 'commons-io:commons-io:2.4'
-    implementation 'commons-codec:commons-codec:1.11'
     implementation ('com.github.worker8:tourguide:1.0.19-SNAPSHOT@aar') {
         transitive=true
     }
@@ -123,4 +122,5 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.18.3'
     testImplementation 'org.assertj:assertj-core:3.8.0'
     testImplementation 'org.robolectric:robolectric:3.5.1'
+    testImplementation 'commons-codec:commons-codec:1.11'
 }

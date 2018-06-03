@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 
@@ -78,5 +79,10 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public HostnameVerifier getHostnameVerifier() {
+		return mock(HostnameVerifier.class);
 	}
 }

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
+import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -13,6 +14,7 @@ import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -52,6 +54,16 @@ public class ConnectionProvider implements IConnectionProvider {
 		}
 	};
 
+	private final CreateAndHold<HostnameVerifier> lazyHostnameVerifier = new AbstractSynchronousLazy<HostnameVerifier>() {
+		@Override
+		protected HostnameVerifier create() throws Throwable {
+			final HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+			return urlProvider.getCertificateFingerprint().length == 0
+				? defaultHostnameVerifier
+				: new AdditionalHostnameVerifier(new URL(urlProvider.getBaseUrl()).getHost(), defaultHostnameVerifier);
+		}
+	};
+
 	public ConnectionProvider(IUrlProvider urlProvider) {
 		this.urlProvider = urlProvider;
 	}
@@ -67,8 +79,11 @@ public class ConnectionProvider implements IConnectionProvider {
 		connection.setConnectTimeout(5000);
 		connection.setReadTimeout(180000);
 
-		if (connection instanceof HttpsURLConnection)
-			((HttpsURLConnection) connection).setSSLSocketFactory(lazySslSocketFactory.getObject());
+		if (connection instanceof HttpsURLConnection) {
+			final HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
+			httpsConnection.setSSLSocketFactory(lazySslSocketFactory.getObject());
+			httpsConnection.setHostnameVerifier(lazyHostnameVerifier.getObject());
+		}
 
 		if (authCode != null && !authCode.isEmpty())
 			connection.setRequestProperty("Authorization", "basic " + authCode);
@@ -88,6 +103,11 @@ public class ConnectionProvider implements IConnectionProvider {
 
 	public IUrlProvider getUrlProvider() {
 		return urlProvider;
+	}
+
+	@Override
+	public HostnameVerifier getHostnameVerifier() {
+		return lazyHostnameVerifier.getObject();
 	}
 
 }

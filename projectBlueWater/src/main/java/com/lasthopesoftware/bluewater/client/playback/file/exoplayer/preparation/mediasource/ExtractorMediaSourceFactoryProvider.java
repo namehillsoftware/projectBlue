@@ -50,6 +50,7 @@ public class ExtractorMediaSourceFactoryProvider {
 					.readTimeout(45, TimeUnit.SECONDS)
 					.retryOnConnectionFailure(false)
 					.sslSocketFactory(connectionProvider.getSslSocketFactory(), connectionProvider.getTrustManager())
+					.hostnameVerifier(connectionProvider.getHostnameVerifier())
 					.build(),
 				Util.getUserAgent(context, context.getString(R.string.app_name)),
 				null);

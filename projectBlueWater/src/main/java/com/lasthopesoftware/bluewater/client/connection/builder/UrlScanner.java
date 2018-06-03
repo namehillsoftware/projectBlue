@@ -8,8 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvid
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.apache.commons.codec.binary.Hex;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
@@ -61,7 +59,7 @@ public class UrlScanner implements BuildUrlProviders {
 							remoteIp,
 							httpsPort,
 							certificateFingerprint != null
-								? Hex.decodeHex(certificateFingerprint)
+								? decodeHex(certificateFingerprint.toCharArray())
 								: new byte[0]));
 					}
 
@@ -117,5 +115,27 @@ public class UrlScanner implements BuildUrlProviders {
 			if (!Character.isDigit(c)) return false;
 
 		return true;
+	}
+
+	private static byte[] decodeHex(final char[] data) {
+
+		final int len = data.length;
+
+		if ((len & 0x01) != 0) {
+			return new byte[0];
+		}
+
+		final byte[] out = new byte[len >> 1];
+
+		// two characters form the hex value.
+		for (int i = 0, j = 0; j < len; i++) {
+			int f = Character.digit(data[j], 16) << 4;
+			j++;
+			f = f | Character.digit(data[j], 16);
+			j++;
+			out[i] = (byte) (f & 0xFF);
+		}
+
+		return out;
 	}
 }
