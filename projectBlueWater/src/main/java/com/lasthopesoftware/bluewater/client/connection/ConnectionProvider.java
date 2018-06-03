@@ -37,7 +37,7 @@ public class ConnectionProvider implements IConnectionProvider {
 			}
 			final X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
 
-			return urlProvider.getCertificateFingerprint() == null
+			return urlProvider.getCertificateFingerprint().length == 0
 				? trustManager
 				: new SelfSignedTrustManager(urlProvider.getCertificateFingerprint(), trustManager);
 		}
