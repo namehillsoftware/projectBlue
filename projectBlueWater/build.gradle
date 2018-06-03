@@ -117,6 +117,7 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer-core:2.8.0'
     implementation 'com.google.android.exoplayer:extension-okhttp:2.8.0'
     implementation 'com.squareup.okio:okio:1.14.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.github.namehillsoftware:artful:93a23b2515'
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.18.3'

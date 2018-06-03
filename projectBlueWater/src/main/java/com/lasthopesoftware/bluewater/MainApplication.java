@@ -47,6 +47,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
+import javax.net.ssl.SSLSocketFactory;
+
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -93,7 +95,7 @@ public class MainApplication extends Application {
 						AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
 							if (urlProvider == null) return;
 
-							ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, (SSLSocketFactory) SSLSocketFactory.getDefault());
 							final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
 							final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);

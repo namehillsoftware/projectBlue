@@ -12,7 +12,6 @@ import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.secure.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
@@ -20,13 +19,7 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 
 import okhttp3.OkHttpClient;
 
@@ -50,18 +43,11 @@ public class ExtractorMediaSourceFactoryProvider {
 
 	private final CreateAndHold<ExtractorMediaSource.Factory> lazyRemoteExtractorFactory = new AbstractSynchronousLazy<ExtractorMediaSource.Factory>() {
 		@Override
-		protected ExtractorMediaSource.Factory create() throws NoSuchAlgorithmException, KeyManagementException {
-			final SelfSignedTrustManager trustManager = new SelfSignedTrustManager();
-
-			final SSLContext sslContext = SSLContext.getInstance("TLS");
-			sslContext.init(null, new TrustManager[] { trustManager }, null);
-			final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
+		protected ExtractorMediaSource.Factory create() {
 			final OkHttpDataSourceFactory httpDataSourceFactory = new OkHttpDataSourceFactory(
 				new OkHttpClient.Builder()
 					.readTimeout(45, TimeUnit.SECONDS)
 					.retryOnConnectionFailure(false)
-					.sslSocketFactory(sslSocketFactory, trustManager)
 					.build(),
 				Util.getUserAgent(context, context.getString(R.string.app_name)),
 				null);

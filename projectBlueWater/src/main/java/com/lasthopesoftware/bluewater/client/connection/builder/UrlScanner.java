@@ -15,6 +15,8 @@ import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+import javax.net.ssl.SSLSocketFactory;
+
 public class UrlScanner implements BuildUrlProviders {
 
 	private final TestConnections connectionTester;
@@ -43,7 +45,7 @@ public class UrlScanner implements BuildUrlProviders {
 			return new Promise<>(e);
 		}
 
-		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider))
+		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider, (SSLSocketFactory) SSLSocketFactory.getDefault()))
 			.eventually(isValid -> isValid
 				? new Promise<>(mediaServerUrlProvider)
 				: serverLookup.promiseServerInformation(library)
@@ -59,6 +61,11 @@ public class UrlScanner implements BuildUrlProviders {
 
 					final Integer httpsPort = info.getHttpsPort();
 					if (httpsPort != null) {
+//						final SelfSignedTrustManager trustManager = new SelfSignedTrustManager());
+//
+//						final SSLContext sslContext = SSLContext.getInstance("TLS");
+//						sslContext.init(null, new TrustManager[] { trustManager }, null);
+
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
 							remoteIp,
@@ -82,7 +89,7 @@ public class UrlScanner implements BuildUrlProviders {
 		if (urlProvider == null) return Promise.empty();
 
 		return connectionTester
-			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider))
+			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider, (SSLSocketFactory) SSLSocketFactory.getDefault()))
 			.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls));
 	}
 
@@ -113,15 +120,5 @@ public class UrlScanner implements BuildUrlProviders {
 			if (!Character.isDigit(c)) return false;
 
 		return true;
-	}
-
-	private static class SchemePortPair {
-		final String scheme;
-		final int port;
-
-		SchemePortPair(String scheme, int port) {
-			this.scheme = scheme;
-			this.port = port;
-		}
 	}
 }

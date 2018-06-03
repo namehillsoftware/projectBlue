@@ -14,74 +14,61 @@
  * You should have received a copy of the GNU General Public License
  * along with Transdroid.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.lasthopesoftware.bluewater.client.connection.secure;
+package com.lasthopesoftware.bluewater.client.connection.trust;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 
 import javax.net.ssl.X509TrustManager;
 
 public class SelfSignedTrustManager implements X509TrustManager {
 
-	private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final X509Certificate[] acceptedIssuers = new X509Certificate[]{};
 
-	private final String certKey;
+	private final byte[] certificateFingerprint;
+	private final X509TrustManager fallbackTrustManager;
 
-	public SelfSignedTrustManager(String certKey) {
+	public SelfSignedTrustManager(byte[] certificateFingerprint, X509TrustManager fallbackTrustManager) {
 		super();
-		this.certKey = certKey;
+		this.certificateFingerprint = certificateFingerprint;
+		this.fallbackTrustManager = fallbackTrustManager;
 	}
 
 	// Thank you: http://stackoverflow.com/questions/1270703/how-to-retrieve-compute-an-x509-certificates-thumbprint-in-java
-	private static String getThumbPrint(X509Certificate cert)
+	private static byte[] getThumbPrint(X509Certificate cert)
 		throws NoSuchAlgorithmException, CertificateEncodingException {
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		byte[] der = cert.getEncoded();
-		md.update(der);
-		byte[] digest = md.digest();
-		return hexify(digest);
-	}
-
-	private static String hexify(byte bytes[]) {
-		final char[] hexChars = new char[bytes.length * 2];
-		for (int j = 0; j < bytes.length; j++ ) {
-			final int v = bytes[j] & 0xFF;
-			hexChars[j * 2] = hexArray[v >>> 4];
-			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-		}
-		return new String(hexChars);
+		final MessageDigest md = MessageDigest.getInstance("SHA-1");
+		md.update(cert.getEncoded());
+		return md.digest();
 	}
 
 	@Override
-	public void checkClientTrusted(X509Certificate[] chain, String authType) {
+	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		fallbackTrustManager.checkClientTrusted(chain, authType);
 	}
 
 	@Override
 	public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-		if (this.certKey == null) {
-			throw new CertificateException("Requires a non-null certificate key in SHA-1 format to match.");
+		if (this.certificateFingerprint == null) {
+			throw new CertificateException("Requires a non-null certificateFingerprint key in SHA-1 format to match.");
 		}
 
 		// Qe have a certKey defined. We should now examine the one we got from the server.
 		// They match? All is good. They don't, throw an exception.
-		String ourKey = this.certKey.replaceAll("[^a-fA-F0-9]+", "");
 		try {
 			// Assume self-signed root is okay?
 			X509Certificate sslCert = chain[0];
-			String thumbprint = SelfSignedTrustManager.getThumbPrint(sslCert);
-			if (ourKey.equalsIgnoreCase(thumbprint))
-				return;
-
-			//Log.e(SelfSignedTrustManager.class.getSimpleName(), certificateException.toString());
-			throw new CertificateException("Certificate key [" + thumbprint + "] doesn't match expected value.");
-
+			final byte[] thumbprint = getThumbPrint(sslCert);
+			if (Arrays.equals(this.certificateFingerprint, thumbprint)) return;
 		} catch (NoSuchAlgorithmException e) {
-			throw new CertificateException("Unable to check self-signed cert, unknown algorithm. " + e.toString());
+			throw new CertificateException("Unable to check self-signed certificate, unknown algorithm. " + e.toString());
 		}
+
+		fallbackTrustManager.checkServerTrusted(chain, authType);
 	}
 
 	@Override
