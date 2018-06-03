@@ -52,10 +52,6 @@ public class UrlScanner implements BuildUrlProviders {
 					final String remoteIp = info.getRemoteIp();
 
 					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
-					mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-						authKey,
-						remoteIp,
-						httpPort));
 
 					final Integer httpsPort = info.getHttpsPort();
 					if (httpsPort != null) {
@@ -68,6 +64,11 @@ public class UrlScanner implements BuildUrlProviders {
 								? Hex.decodeHex(certificateFingerprint)
 								: new byte[0]));
 					}
+
+					mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+						authKey,
+						remoteIp,
+						httpPort));
 
 					for (String ip : info.getLocalIps()) {
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
