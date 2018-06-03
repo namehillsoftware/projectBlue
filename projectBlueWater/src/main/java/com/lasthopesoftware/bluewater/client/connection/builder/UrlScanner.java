@@ -59,11 +59,6 @@ public class UrlScanner implements BuildUrlProviders {
 
 					final Integer httpsPort = info.getHttpsPort();
 					if (httpsPort != null) {
-//						final SelfSignedTrustManager trustManager = new SelfSignedTrustManager());
-//
-//						final SSLContext sslContext = SSLContext.getInstance("TLS");
-//						sslContext.init(null, new TrustManager[] { trustManager }, null);
-
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
 							remoteIp,
