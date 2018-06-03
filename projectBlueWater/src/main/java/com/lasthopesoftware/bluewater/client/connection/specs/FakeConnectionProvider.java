@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -56,6 +59,16 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		when(mockConnection.getResponseCode()).thenReturn(200);
 
 		return mockConnection;
+	}
+
+	@Override
+	public X509TrustManager getTrustManager() {
+		return mock(X509TrustManager.class);
+	}
+
+	@Override
+	public SSLSocketFactory getSslSocketFactory() {
+		return mock(SSLSocketFactory.class);
 	}
 
 	@Override

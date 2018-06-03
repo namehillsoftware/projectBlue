@@ -24,8 +24,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.net.ssl.SSLSocketFactory;
-
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
 import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
 
@@ -78,7 +76,7 @@ public class SessionConnection {
 								return Promise.empty();
 							}
 
-							sessionConnectionProvider = new ConnectionProvider(urlProvider, (SSLSocketFactory) SSLSocketFactory.getDefault());
+							sessionConnectionProvider = new ConnectionProvider(urlProvider);
 
 							if (library.getSelectedView() >= 0) {
 								doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);

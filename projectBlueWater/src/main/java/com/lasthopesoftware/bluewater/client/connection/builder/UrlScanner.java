@@ -15,8 +15,6 @@ import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import javax.net.ssl.SSLSocketFactory;
-
 public class UrlScanner implements BuildUrlProviders {
 
 	private final TestConnections connectionTester;
@@ -45,7 +43,7 @@ public class UrlScanner implements BuildUrlProviders {
 			return new Promise<>(e);
 		}
 
-		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider, (SSLSocketFactory) SSLSocketFactory.getDefault()))
+		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider))
 			.eventually(isValid -> isValid
 				? new Promise<>(mediaServerUrlProvider)
 				: serverLookup.promiseServerInformation(library)
@@ -89,7 +87,7 @@ public class UrlScanner implements BuildUrlProviders {
 		if (urlProvider == null) return Promise.empty();
 
 		return connectionTester
-			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider, (SSLSocketFactory) SSLSocketFactory.getDefault()))
+			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider))
 			.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls));
 	}
 

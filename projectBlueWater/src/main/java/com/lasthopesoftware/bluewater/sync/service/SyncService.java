@@ -95,8 +95,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.net.ssl.SSLSocketFactory;
-
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class SyncService extends Service {
@@ -324,7 +322,7 @@ public class SyncService extends Service {
 									return;
 								}
 
-								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, (SSLSocketFactory) SSLSocketFactory.getDefault());
+								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 								libraryConnectionProviders.put(library.getId(), connectionProvider);
 
 								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);

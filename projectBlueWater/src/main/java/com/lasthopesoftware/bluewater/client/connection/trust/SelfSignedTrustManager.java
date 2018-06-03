@@ -57,13 +57,11 @@ public class SelfSignedTrustManager implements X509TrustManager {
 			throw new CertificateException("Requires a non-null certificateFingerprint key in SHA-1 format to match.");
 		}
 
-		// Qe have a certKey defined. We should now examine the one we got from the server.
+		// We have a certKey defined. We should now examine the one we got from the server.
 		// They match? All is good. They don't, throw an exception.
 		try {
-			// Assume self-signed root is okay?
-			X509Certificate sslCert = chain[0];
-			final byte[] thumbprint = getThumbPrint(sslCert);
-			if (Arrays.equals(this.certificateFingerprint, thumbprint)) return;
+			// Assume self-signed root is okay
+			if (Arrays.equals(this.certificateFingerprint, getThumbPrint(chain[0]))) return;
 		} catch (NoSuchAlgorithmException e) {
 			throw new CertificateException("Unable to check self-signed certificate, unknown algorithm. " + e.toString());
 		}
