@@ -59,11 +59,14 @@ public class UrlScanner implements BuildUrlProviders {
 
 					final Integer httpsPort = info.getHttpsPort();
 					if (httpsPort != null) {
+						final String certificateFingerprint = info.getCertificateFingerprint();
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
 							remoteIp,
 							httpsPort,
-							Hex.decodeHex(info.getCertificateFingerprint())));
+							certificateFingerprint != null
+								? Hex.decodeHex(certificateFingerprint)
+								: new byte[0]));
 					}
 
 					for (String ip : info.getLocalIps()) {
