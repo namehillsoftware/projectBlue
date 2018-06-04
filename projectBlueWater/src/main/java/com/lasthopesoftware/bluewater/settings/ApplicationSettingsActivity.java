@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.PlaybackEngineTypeSelectionView;
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
@@ -56,15 +57,29 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 			new PlaybackEngineTypeChangedBroadcaster(this));
 
 		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
-			new SelectedPlaybackEngineTypeAccess(this);
+			new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup());
 
 		final PlaybackEngineTypeSelectionView playbackEngineTypeSelectionView =
 			new PlaybackEngineTypeSelectionView(this);
 
 		final RadioGroup playbackEngineOptions = findViewById(R.id.playbackEngineOptions);
+
+		for(int i = 0; i < playbackEngineOptions.getChildCount(); i++)
+			playbackEngineOptions.getChildAt(i).setEnabled(false);
+
 		playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections()
 			.forEach(playbackEngineOptions::addView);
-		playbackEngineOptions.check(selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().ordinal());
+
+		selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType()
+			.eventually(LoopedInPromise.response(t -> {
+				playbackEngineOptions.check(t.ordinal());
+
+				for(int i = 0; i < playbackEngineOptions.getChildCount(); i++)
+					playbackEngineOptions.getChildAt(i).setEnabled(true);
+
+				return null;
+			}, this));
+
 		playbackEngineOptions
 			.setOnCheckedChangeListener((group, checkedId) -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]));
 

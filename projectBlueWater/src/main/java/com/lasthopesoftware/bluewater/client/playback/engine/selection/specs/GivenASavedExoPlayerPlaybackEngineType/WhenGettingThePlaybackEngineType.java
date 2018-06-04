@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
@@ -11,6 +12,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -21,7 +24,7 @@ public class WhenGettingThePlaybackEngineType {
 	private PlaybackEngineType playbackEngineType;
 
 	@Before
-	public void before() {
+	public void before() throws ExecutionException, InterruptedException {
 		final PlaybackEngineTypeSelectionPersistence playbackEngineTypeSelectionPersistence =
 			new PlaybackEngineTypeSelectionPersistence(
 				RuntimeEnvironment.application,
@@ -34,7 +37,7 @@ public class WhenGettingThePlaybackEngineType {
 				RuntimeEnvironment.application,
 				Promise::empty);
 
-		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType();
+		playbackEngineType = new FuturePromise<>(selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType()).get();
 	}
 
 	@Test

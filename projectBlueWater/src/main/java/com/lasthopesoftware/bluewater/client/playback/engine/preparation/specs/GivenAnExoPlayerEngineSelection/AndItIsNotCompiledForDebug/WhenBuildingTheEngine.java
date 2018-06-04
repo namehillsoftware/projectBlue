@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,14 +28,13 @@ public class WhenBuildingTheEngine {
 		final LookupSelectedPlaybackEngineType lookupSelectedPlaybackEngineType =
 			mock(LookupSelectedPlaybackEngineType.class);
 		when(lookupSelectedPlaybackEngineType.promiseSelectedPlaybackEngineType())
-			.thenReturn(PlaybackEngineType.ExoPlayer);
+			.thenReturn(new Promise<>(PlaybackEngineType.ExoPlayer));
 
 		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 			new PreparedPlaybackQueueFeederBuilder(
 				mock(Context.class),
 				mock(Handler.class),
 				mock(BestMatchUriProvider.class),
-				lookupSelectedPlaybackEngineType,
 				mock(Cache.class));
 
 		engine = playbackEngineBuilder.build(new Library());
