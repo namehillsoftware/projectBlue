@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preferences.specs.GivenATypicalPreferenceManagerAndBroadcaster;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenATypicalPreferenceManagerAndBroadcaster;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,9 +7,9 @@ import android.content.IntentFilter;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineTypeSelectionPersistence;
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 
 import org.junit.Before;
 import org.junit.Test;

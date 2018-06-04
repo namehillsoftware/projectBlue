@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preferences.specs.GivenASavedMediaPlayerPlaybackEngineType;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenASavedMediaPlayerPlaybackEngineType;
 
 import android.preference.PreferenceManager;
 
 import com.lasthopesoftware.bluewater.ApplicationConstants;
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 
 import org.junit.Before;
 import org.junit.Test;

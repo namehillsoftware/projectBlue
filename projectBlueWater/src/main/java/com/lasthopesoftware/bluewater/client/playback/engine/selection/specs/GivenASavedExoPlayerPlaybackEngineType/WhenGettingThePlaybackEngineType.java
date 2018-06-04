@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preferences.specs.GivenASavedExoPlayerPlaybackEngineType;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenASavedExoPlayerPlaybackEngineType;
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.PlaybackEngineTypeSelectionPersistence;
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.SelectedPlaybackEngineTypeAccess;
-import com.lasthopesoftware.bluewater.client.playback.engine.preferences.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 
 import org.junit.Before;
 import org.junit.Test;
