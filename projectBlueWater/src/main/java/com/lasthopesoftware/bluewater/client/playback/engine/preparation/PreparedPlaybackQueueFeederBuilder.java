@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.preferences.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.mediaplayer.preparation.MediaPlayerPlayableFilePreparationSourceProvider;
 
 public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlaybackQueueFeeder {
 
@@ -34,21 +33,11 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 
 	@Override
 	public IPlayableFilePreparationSourceProvider build(Library library) {
-		switch (playbackEngineTypeLookup.getSelectedPlaybackEngineType()) {
-			case ExoPlayer:
-				return new ExoPlayerPlayableFilePreparationSourceProvider(
-					context,
-					handler,
-					bestMatchUriProvider,
-					library,
-					cache);
-			case MediaPlayer:
-				return new MediaPlayerPlayableFilePreparationSourceProvider(
-					context,
-					bestMatchUriProvider,
-					library);
-		}
-
-		return null;
+		return new ExoPlayerPlayableFilePreparationSourceProvider(
+			context,
+			handler,
+			bestMatchUriProvider,
+			library,
+			cache);
 	}
 }

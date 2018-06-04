@@ -25,7 +25,7 @@ public class WhenGettingThePlaybackEngineType {
 	}
 
 	@Test
-	public void thenThePlaybackEngineTypeIsMediaPlayer() {
-		assertThat(playbackEngineType).isEqualTo(PlaybackEngineType.MediaPlayer);
+	public void thenThePlaybackEngineTypeIsExoPlayer() {
+		assertThat(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer);
 	}
 }
