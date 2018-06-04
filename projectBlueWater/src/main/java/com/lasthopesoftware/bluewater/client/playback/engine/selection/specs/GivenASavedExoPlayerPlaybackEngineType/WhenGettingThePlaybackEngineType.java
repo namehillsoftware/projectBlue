@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,9 +30,11 @@ public class WhenGettingThePlaybackEngineType {
 		playbackEngineTypeSelectionPersistence.selectPlaybackEngine(PlaybackEngineType.ExoPlayer);
 
 		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
-			new SelectedPlaybackEngineTypeAccess(RuntimeEnvironment.application);
+			new SelectedPlaybackEngineTypeAccess(
+				RuntimeEnvironment.application,
+				Promise::empty);
 
-		playbackEngineType = selectedPlaybackEngineTypeAccess.getSelectedPlaybackEngineType();
+		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType();
 	}
 
 	@Test

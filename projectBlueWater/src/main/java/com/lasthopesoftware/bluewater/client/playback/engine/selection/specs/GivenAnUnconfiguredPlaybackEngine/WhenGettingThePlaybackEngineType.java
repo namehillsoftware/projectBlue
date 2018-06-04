@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.Gi
 
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -19,9 +20,11 @@ public class WhenGettingThePlaybackEngineType {
 	@Before
 	public void before() {
 		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
-			new SelectedPlaybackEngineTypeAccess(RuntimeEnvironment.application);
+			new SelectedPlaybackEngineTypeAccess(
+				RuntimeEnvironment.application,
+				() -> new Promise<>(PlaybackEngineType.ExoPlayer));
 
-		playbackEngineType = selectedPlaybackEngineTypeAccess.getSelectedPlaybackEngineType();
+		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType();
 	}
 
 	@Test

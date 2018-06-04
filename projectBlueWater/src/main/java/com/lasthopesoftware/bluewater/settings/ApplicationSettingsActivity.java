@@ -64,7 +64,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		final RadioGroup playbackEngineOptions = findViewById(R.id.playbackEngineOptions);
 		playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections()
 			.forEach(playbackEngineOptions::addView);
-		playbackEngineOptions.check(selectedPlaybackEngineTypeAccess.getSelectedPlaybackEngineType().ordinal());
+		playbackEngineOptions.check(selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().ordinal());
 		playbackEngineOptions
 			.setOnCheckedChangeListener((group, checkedId) -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]));
 

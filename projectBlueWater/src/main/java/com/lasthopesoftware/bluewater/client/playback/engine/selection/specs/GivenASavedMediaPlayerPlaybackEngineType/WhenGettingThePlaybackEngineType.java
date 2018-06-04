@@ -5,6 +5,7 @@ import android.preference.PreferenceManager;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,9 +28,11 @@ public class WhenGettingThePlaybackEngineType {
 			.apply();
 
 		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
-			new SelectedPlaybackEngineTypeAccess(RuntimeEnvironment.application);
+			new SelectedPlaybackEngineTypeAccess(
+				RuntimeEnvironment.application,
+				() -> new Promise<>(PlaybackEngineType.ExoPlayer));
 
-		playbackEngineType = selectedPlaybackEngineTypeAccess.getSelectedPlaybackEngineType();
+		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType();
 	}
 
 	@Test
