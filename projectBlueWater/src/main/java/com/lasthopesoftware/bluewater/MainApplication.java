@@ -93,7 +93,7 @@ public class MainApplication extends Application {
 						AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
 							if (urlProvider == null) return;
 
-							ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
 							final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
 							final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);

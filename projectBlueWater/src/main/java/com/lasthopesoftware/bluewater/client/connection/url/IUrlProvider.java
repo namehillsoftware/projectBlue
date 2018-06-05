@@ -7,4 +7,5 @@ public interface IUrlProvider {
 	String getUrl(String... params);
 	String getBaseUrl();
 	String getAuthCode();
+	byte[] getCertificateFingerprint();
 }

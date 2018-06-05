@@ -748,6 +748,7 @@ implements OnAudioFocusChangeListener
 				new PreparedPlaybackQueueFeederBuilder(
 					this,
 					handler,
+					connectionProvider,
 					new BestMatchUriProvider(
 						library,
 						new StoredFileUriProvider(

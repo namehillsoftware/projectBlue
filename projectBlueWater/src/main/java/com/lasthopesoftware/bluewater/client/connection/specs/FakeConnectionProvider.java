@@ -10,10 +10,15 @@ import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -58,7 +63,26 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	}
 
 	@Override
+	public X509TrustManager getTrustManager() {
+		return mock(X509TrustManager.class);
+	}
+
+	@Override
+	public SSLSocketFactory getSslSocketFactory() {
+		return mock(SSLSocketFactory.class);
+	}
+
+	@Override
 	public IUrlProvider getUrlProvider() {
-		return new MediaServerUrlProvider(null, "test", 80);
+		try {
+			return new MediaServerUrlProvider(null, "test", 80);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public HostnameVerifier getHostnameVerifier() {
+		return mock(HostnameVerifier.class);
 	}
 }
