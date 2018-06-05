@@ -40,12 +40,12 @@ public class SelectedPlaybackEngineTypeAccess implements LookupSelectedPlaybackE
 						ApplicationConstants.PreferenceConstants.playbackEngine,
 						t.name())
 					.apply();
-				return null;
-			})
-			.then(n -> PlaybackEngineType.valueOf(preferences
-				.getString(
-					ApplicationConstants.PreferenceConstants.playbackEngine,
-					PlaybackEngineType.ExoPlayer.name())));
+
+				return PlaybackEngineType.valueOf(preferences
+					.getString(
+						ApplicationConstants.PreferenceConstants.playbackEngine,
+						PlaybackEngineType.ExoPlayer.name()));
+			});
 
 	}
 }
