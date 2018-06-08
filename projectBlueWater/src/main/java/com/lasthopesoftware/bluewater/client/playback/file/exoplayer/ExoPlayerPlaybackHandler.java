@@ -16,8 +16,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +31,16 @@ implements
 	Player.EventListener,
 	Runnable
 {
+	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter =
+		new Lazy<>(() ->
+			new PeriodFormatterBuilder()
+				.appendMinutes()
+				.appendSeparator(":")
+				.minimumPrintedDigits(2)
+				.maximumParsedDigits(2)
+				.appendSeconds()
+				.toFormatter());
+
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final ExoPlayer exoPlayer;
@@ -123,7 +136,12 @@ implements
 		logger.debug("Playback state has changed to " + playbackState);
 
 		if (isPlaying && playbackState == Player.STATE_IDLE) {
-			logger.warn("The player was playing, but it transitioned to idle! Restarting the player...");
+			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
+
+			logger.warn(
+				"The player was playing, but it transitioned to idle! " +
+				"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + duration.toPeriod().toString(formatter) + ". " +
+				"Restarting the player...");
 			pause();
 			exoPlayer.setPlayWhenReady(true);
 		}
@@ -147,11 +165,10 @@ implements
 
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
-		handlePlaybackError(error);
+		handlePlaybackError();
 	}
 
-	private void handlePlaybackError(Throwable error) {
-		logger.error("A player error has occurred", error);
+	private void handlePlaybackError() {
 	}
 
 	@Override

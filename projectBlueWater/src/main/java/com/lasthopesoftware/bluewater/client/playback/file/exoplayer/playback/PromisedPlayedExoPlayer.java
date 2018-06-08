@@ -14,6 +14,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.Ex
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.EOFException;
 
@@ -23,6 +25,8 @@ extends
 implements
 	PlayedFile,
 	Player.EventListener {
+
+	private static final Logger logger = LoggerFactory.getLogger(PromisedPlayedExoPlayer.class);
 
 	private final ExoPlayer exoPlayer;
 	private final ExoPlayerFileProgressReader progressReader;
@@ -75,13 +79,16 @@ implements
 
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
+		removeListener();
+
 		if (error.getCause() instanceof EOFException) {
-			removeListener();
+			logger.warn("The file ended unexpectedly. Completing playback", error);
 			resolve(this);
 			return;
 		}
 
-		removeListener();
+		logger.error("A player error has occurred", error);
+
 		reject(new ExoPlayerException(handler, error));
 	}
 
