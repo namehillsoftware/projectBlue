@@ -164,12 +164,7 @@ implements
 	}
 
 	@Override
-	public void onPlayerError(ExoPlaybackException error) {
-		handlePlaybackError();
-	}
-
-	private void handlePlaybackError() {
-	}
+	public void onPlayerError(ExoPlaybackException error) {}
 
 	@Override
 	public void onPositionDiscontinuity(int reason) {
