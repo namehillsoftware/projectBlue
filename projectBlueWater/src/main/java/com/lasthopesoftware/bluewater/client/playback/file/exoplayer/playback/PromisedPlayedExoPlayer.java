@@ -10,6 +10,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 
 import org.joda.time.Duration;
@@ -24,24 +25,19 @@ implements
 	Player.EventListener {
 
 	private final ExoPlayer exoPlayer;
+	private final ExoPlayerFileProgressReader progressReader;
 	private final ExoPlayerPlaybackHandler handler;
-	private Duration fileProgress = Duration.ZERO;
 
-	public PromisedPlayedExoPlayer(ExoPlayer exoPlayer, ExoPlayerPlaybackHandler handler) {
+	public PromisedPlayedExoPlayer(ExoPlayer exoPlayer, ExoPlayerFileProgressReader progressReader, ExoPlayerPlaybackHandler handler) {
 		this.exoPlayer = exoPlayer;
+		this.progressReader = progressReader;
 		this.handler = handler;
 		this.exoPlayer.addListener(this);
 	}
 
 	@Override
 	public Duration getProgress() {
-		if (!exoPlayer.getPlayWhenReady()) return fileProgress;
-
-		final long currentPosition = exoPlayer.getCurrentPosition();
-
-		return currentPosition != fileProgress.getMillis()
-			? (fileProgress = Duration.millis(currentPosition))
-			: fileProgress;
+		return progressReader.getProgress();
 	}
 
 	@Override

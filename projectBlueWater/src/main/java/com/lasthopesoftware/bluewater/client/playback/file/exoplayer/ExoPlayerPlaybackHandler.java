@@ -42,7 +42,10 @@ implements
 	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> exoPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
 		@Override
 		protected ProgressingPromise<Duration, PlayedFile> create() {
-			return new PromisedPlayedExoPlayer(exoPlayer, ExoPlayerPlaybackHandler.this);
+			return new PromisedPlayedExoPlayer(
+				exoPlayer,
+				lazyFileProgressReader.getObject(),
+				ExoPlayerPlaybackHandler.this);
 		}
 	};
 
