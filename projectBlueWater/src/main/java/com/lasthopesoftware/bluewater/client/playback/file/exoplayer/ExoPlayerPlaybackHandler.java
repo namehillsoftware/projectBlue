@@ -10,11 +10,8 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback.PromisedPlayedExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.PromisedPlayedFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -45,29 +42,7 @@ implements
 	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> exoPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
 		@Override
 		protected ProgressingPromise<Duration, PlayedFile> create() {
-			final ExoPlayerPlaybackCompletedNotifier completedNotifier = new ExoPlayerPlaybackCompletedNotifier();
-			exoPlayer.addListener(completedNotifier);
-
-			final ExoPlayerPlaybackErrorNotifier errorNotifier = new ExoPlayerPlaybackErrorNotifier(ExoPlayerPlaybackHandler.this);
-			exoPlayer.addListener(errorNotifier);
-
-			final PromisedPlayedFile<ExoPlayerException> promisedPlayedFile = new PromisedPlayedFile<>(
-				lazyFileProgressReader.getObject(),
-				completedNotifier,
-				errorNotifier);
-
-			promisedPlayedFile
-				.then(p -> {
-					exoPlayer.removeListener(completedNotifier);
-					exoPlayer.removeListener(errorNotifier);
-					return null;
-				}, e -> {
-					exoPlayer.removeListener(completedNotifier);
-					exoPlayer.removeListener(errorNotifier);
-					return null;
-				});
-
-			return promisedPlayedFile;
+			return new PromisedPlayedExoPlayer(exoPlayer, ExoPlayerPlaybackHandler.this);
 		}
 	};
 

@@ -14,6 +14,7 @@ import org.mockito.stubbing.Answer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,7 +49,7 @@ public class WhenPlaybackCompletes {
 		Stream.of(eventListeners).forEach(e -> e.onPlayerStateChanged(false, Player.
 			STATE_ENDED));
 
-		countDownLatch.await();
+		countDownLatch.await(1, TimeUnit.SECONDS);
 	}
 
 	@Test
