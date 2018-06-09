@@ -53,8 +53,7 @@
                 android:orientation="vertical"
                 android:gravity="center_horizontal"
                 android:layout_margin="10dp"
-                android:id="@+id/notificationSettingsContainer"
-                android:visibility="">
+                android:id="@+id/notificationSettingsContainer">
                 <TextView
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"

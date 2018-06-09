@@ -35,6 +35,7 @@ public class PlaybackStartingNotificationBuilder {
 				.setMediaSession(mediaSessionCompat.getSessionToken()))
 			.setOngoing(true)
 			.setSound(null)
+			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
 			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 			.setContentIntent(buildNowPlayingActivityIntent())
 			.setShowWhen(false)
