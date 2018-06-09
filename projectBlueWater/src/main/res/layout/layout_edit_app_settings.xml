@@ -54,18 +54,22 @@
                 android:gravity="center_horizontal"
                 android:layout_margin="10dp"
                 android:id="@+id/notificationSettingsContainer"
-                android:visibility="gone">
+                android:visibility="">
                 <TextView
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:layout_marginBottom="10dp"
                     android:text="@string/notification_settings"/>
+
                 <Button
                     android:id="@+id/modifyNotificationSettingsButton"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:text="@string/modify_notification_settings" />
+                    android:text="@string/modify_notification_settings"
+                    android:drawableEnd="@drawable/open_external"/>
             </LinearLayout>
 
             <LinearLayout

@@ -96,6 +96,8 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 		updateServerList();
 
+		notificationSettingsContainer.findView().setVisibility(View.GONE);
+
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
 
 		notificationSettingsContainer.findView().setVisibility(View.VISIBLE);
