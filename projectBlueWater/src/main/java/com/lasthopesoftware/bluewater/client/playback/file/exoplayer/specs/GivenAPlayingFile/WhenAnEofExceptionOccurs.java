@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile;
 
-import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
@@ -12,9 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.EOFException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -24,18 +21,20 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenAnErrorOccurs {
+public class WhenAnEofExceptionOccurs {
+
 	private static ExoPlayerException exoPlayerException;
-	private static List<Player.EventListener> eventListener = new ArrayList<>();
+	private static Player.EventListener eventListener;
+	private static boolean isComplete;
 
 	@BeforeClass
-	public static void context() throws InterruptedException {
+	public static void before() throws InterruptedException {
 		final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
 		when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
 		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 		doAnswer((Answer<Void>) invocation -> {
-			eventListener.add(invocation.getArgument(0));
+			eventListener = invocation.getArgument(0);
 			return null;
 		}).when(mockExoPlayer).addListener(any());
 
@@ -44,26 +43,31 @@ public class WhenAnErrorOccurs {
 		exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
 			.eventually(PlayingFile::promisePlayedFile)
 			.then(
-				p -> null,
+				p -> isComplete = true,
 				e -> {
 					if (e instanceof ExoPlayerException) {
 						exoPlayerException = (ExoPlayerException)e;
 					}
 
-					return null;
+					return isComplete = false;
 				})
 			.then(v -> {
 				countDownLatch.countDown();
 				return null;
 			});
 
-		Stream.of(eventListener).forEach(e -> e.onPlayerError(ExoPlaybackException.createForSource(new IOException())));
+		eventListener.onPlayerError(ExoPlaybackException.createForSource(new EOFException()));
 
 		countDownLatch.await(1, TimeUnit.SECONDS);
 	}
 
 	@Test
-	public void thenThePlaybackErrorIsCorrect() {
-		assertThat(exoPlayerException.getCause()).isInstanceOf(ExoPlaybackException.class);
+	public void thenPlaybackCompletes() {
+		assertThat(isComplete).isTrue();
+	}
+
+	@Test
+	public void thenNoPlaybackErrorOccurs() {
+		assertThat(exoPlayerException).isNull();
 	}
 }

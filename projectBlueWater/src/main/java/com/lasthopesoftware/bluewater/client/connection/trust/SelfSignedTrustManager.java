@@ -63,7 +63,7 @@ public class SelfSignedTrustManager implements X509TrustManager {
 			// Assume self-signed root is okay
 			if (Arrays.equals(this.certificateFingerprint, getThumbPrint(chain[0]))) return;
 		} catch (NoSuchAlgorithmException e) {
-			throw new CertificateException("Unable to check self-signed certificate, unknown algorithm. " + e.toString());
+			throw new CertificateException("Unable to check self-signed certificate, unknown algorithm. ", e);
 		}
 
 		fallbackTrustManager.checkServerTrusted(chain, authType);
