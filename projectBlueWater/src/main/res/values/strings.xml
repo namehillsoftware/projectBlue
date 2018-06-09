@@ -90,4 +90,6 @@
     <string name="title_activity_about">About %1$s</string>
     <string name="aboutAppText">%1$s\n\nVersion: %2$s (%3$s)\n\n\n\nCopyright © %4$s %5$s</string>
     <string name="playbackEngine">Playback Engine</string>
+    <string name="notification_settings">Notification Settings:</string>
+    <string name="modify_notification_settings">Modify Notification Settings</string>
 </resources>

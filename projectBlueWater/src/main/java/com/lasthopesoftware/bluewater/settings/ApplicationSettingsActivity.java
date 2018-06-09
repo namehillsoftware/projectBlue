@@ -1,12 +1,16 @@
 package com.lasthopesoftware.bluewater.settings;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
@@ -32,12 +36,19 @@ import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySel
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
+import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
+	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
 	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.listLoadingProgress);
 	private final LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.loadedListView);
+	private final LazyViewFinder<LinearLayout> notificationSettingsContainer = new LazyViewFinder<>(this, R.id.notificationSettingsContainer);
+	private final LazyViewFinder<Button> modifyNotificationSettingsButton = new LazyViewFinder<>(this, R.id.modifyNotificationSettingsButton);
 	private final SettingsMenu settingsMenu = new SettingsMenu(this, new AboutTitleBuilder(this));
 
 	@Override
@@ -84,6 +95,16 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 			.setOnCheckedChangeListener((group, checkedId) -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]));
 
 		updateServerList();
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+
+		notificationSettingsContainer.findView().setVisibility(View.VISIBLE);
+		modifyNotificationSettingsButton.findView().setOnClickListener(v -> {
+			final Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+			intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+			intent.putExtra(Settings.EXTRA_CHANNEL_ID, lazyChannelConfiguration.getObject().getChannelId());
+			startActivity(intent);
+		});
 	}
 
 	@Override

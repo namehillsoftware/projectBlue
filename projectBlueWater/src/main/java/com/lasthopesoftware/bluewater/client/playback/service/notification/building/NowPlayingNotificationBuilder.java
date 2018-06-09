@@ -66,6 +66,7 @@ implements
 
 				final NotificationCompat.Builder builder = mediaStyleNotificationSetup.getMediaStyleNotification();
 				builder
+					.setSound(null)
 					.setOngoing(isPlaying)
 					.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 					.setContentIntent(buildNowPlayingActivityIntent())
