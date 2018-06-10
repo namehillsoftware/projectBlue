@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.items.list.DemoableItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
@@ -54,7 +53,7 @@ import tourguide.tourguide.TourGuide;
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
-	private static final String isTutorialShownPreference = MagicPropertyBuilder.buildMagicPropertyName(DemoableItemListAdapter.class, "TUTORIAL_SHOWN");
+	private static final String isTutorialShownPreference = MagicPropertyBuilder.buildMagicPropertyName(ApplicationSettingsActivity.class, "isTutorialShownPreference");
 
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
 	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.listLoadingProgress);
@@ -131,8 +130,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 					.setDescription(String.format(getString(R.string.notification_settings_tutorial), getString(R.string.app_name)))
 					.setBackgroundColor(displayColor))
 				.setOverlay(new Overlay())
-				.playOn(modifyNotificationSettingsButton.findView())
-				.motionType(TourGuide.MotionType.CLICK_ONLY);
+				.playOn(modifyNotificationSettingsButton.findView());
 
 		modifyNotificationSettingsButton.findView().setOnClickListener(v -> {
 			tourGuide.cleanUp();
