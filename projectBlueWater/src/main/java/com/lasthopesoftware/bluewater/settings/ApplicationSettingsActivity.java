@@ -127,7 +127,10 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 				.setPointer(new Pointer().setColor(displayColor))
 				.setToolTip(new ToolTip()
 					.setTitle(getString(R.string.notification_settings_tutorial_title))
-					.setDescription(String.format(getString(R.string.notification_settings_tutorial), getString(R.string.app_name)))
+					.setDescription(String.format(
+						getString(R.string.notification_settings_tutorial),
+						getString(R.string.modify_notification_settings),
+						getString(R.string.app_name)))
 					.setBackgroundColor(displayColor))
 				.setOverlay(new Overlay())
 				.playOn(modifyNotificationSettingsButton.findView());
@@ -137,6 +140,8 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 			launchNotificationSettings();
 		});
+
+		sharedPreferences.edit().putBoolean(isTutorialShownPreference, true).apply();
 	}
 
 	@Override
