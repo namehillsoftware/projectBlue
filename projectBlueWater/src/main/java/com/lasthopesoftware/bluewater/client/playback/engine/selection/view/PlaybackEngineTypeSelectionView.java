@@ -28,11 +28,7 @@ public class PlaybackEngineTypeSelectionView {
 				ViewGroup.LayoutParams.MATCH_PARENT,
 				ViewGroup.LayoutParams.WRAP_CONTENT));
 
-		String playbackEngineName = playbackEngineType.name();
-		if (playbackEngineType == PlaybackEngineType.ExoPlayer)
-			playbackEngineName += " (Beta)";
-
-		radioButton.setText(playbackEngineName);
+		radioButton.setText(playbackEngineType.name());
 		radioButton.setId(playbackEngineType.ordinal());
 
 		return radioButton;
