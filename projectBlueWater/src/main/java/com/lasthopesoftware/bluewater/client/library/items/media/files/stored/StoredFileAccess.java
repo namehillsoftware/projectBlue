@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.sy
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDrive;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -39,6 +40,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	private final Context context;
 	private final Library library;
+	private final LookupSyncDrive lookupSyncDrive;
 	private final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
@@ -65,9 +67,16 @@ public final class StoredFileAccess implements IStoredFileAccess {
 							.setFilter("WHERE id = @id")
 							.buildQuery());
 
-	public StoredFileAccess(Context context, Library library, GetAllStoredFilesInLibrary getAllStoredFilesInLibrary, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+	public StoredFileAccess(
+		Context context,
+		Library library,
+		LookupSyncDrive lookupSyncDrive,
+		GetAllStoredFilesInLibrary getAllStoredFilesInLibrary,
+		CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+
 		this.context = context;
 		this.library = library;
+		this.lookupSyncDrive = lookupSyncDrive;
 		this.getAllStoredFilesInLibrary = getAllStoredFilesInLibrary;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
@@ -225,33 +234,34 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 					return cachedFilePropertiesProvider
 						.promiseFileProperties(serviceFile)
-						.then(fileProperties -> {
-							String fullPath = library.getSyncDir(context).getPath();
+						.eventually(fileProperties -> lookupSyncDrive.promiseSyncDrive(library)
+							.then(syncDrive -> {
+								String fullPath = syncDrive.getPath();
 
-							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
-							if (artist == null)
-								artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+								String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+								if (artist == null)
+									artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
-							if (artist != null)
-								fullPath = FilenameUtils.concat(fullPath, artist);
+								if (artist != null)
+									fullPath = FilenameUtils.concat(fullPath, artist);
 
-							final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
-							if (album != null)
-								fullPath = FilenameUtils.concat(fullPath, album);
+								final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+								if (album != null)
+									fullPath = FilenameUtils.concat(fullPath, album);
 
-							String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
-							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+								String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
+								fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
-							final int extensionIndex = fileName.lastIndexOf('.');
-							if (extensionIndex > -1)
-								fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
+								final int extensionIndex = fileName.lastIndexOf('.');
+								if (extensionIndex > -1)
+									fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
 
-							// The media player library apparently bombs on colons, so let's cleanse it of colons (tee-hee)
-							fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
-							storedFile.setPath(fullPath);
+								// The media player library apparently bombs on colons, so let's cleanse it of colons (tee-hee)
+								fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
+								storedFile.setPath(fullPath);
 
-							return storedFile;
-						});
+								return storedFile;
+							}));
 				})
 				.eventually(storedFile -> new QueuedPromise<>(() -> {
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {

@@ -62,6 +62,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
@@ -725,6 +726,7 @@ implements OnAudioFocusChangeListener
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			this,
 			library,
+			new SyncDriveLookup(this),
 			lazyAllStoredFilesInLibrary.getObject(),
 			cachedFilePropertiesProvider);
 

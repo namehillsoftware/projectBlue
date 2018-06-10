@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
@@ -101,7 +102,12 @@ public class MainApplication extends Application {
 							final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
 							final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(context);
-							final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, getAllStoredFilesInLibrary, cachedFilePropertiesProvider);
+							final StoredFileAccess storedFileAccess = new StoredFileAccess(
+								context,
+								library,
+								new SyncDriveLookup(context),
+								getAllStoredFilesInLibrary,
+								cachedFilePropertiesProvider);
 							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 							if (fileKey == -1) return;
 

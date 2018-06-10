@@ -65,6 +65,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -328,7 +329,12 @@ public class SyncService extends Service {
 								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
 								final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
-								final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, getAllStoredFilesInLibrary, cachedFilePropertiesProvider);
+								final StoredFileAccess storedFileAccess = new StoredFileAccess(
+									context,
+									library,
+									new SyncDriveLookup(this),
+									getAllStoredFilesInLibrary,
+									cachedFilePropertiesProvider);
 
 								final LibrarySyncHandler librarySyncHandler =
 									new LibrarySyncHandler(library,

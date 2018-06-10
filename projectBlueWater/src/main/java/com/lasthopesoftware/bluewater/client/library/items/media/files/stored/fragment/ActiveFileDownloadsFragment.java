@@ -33,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.St
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
@@ -83,7 +84,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 				final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 				final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(activity);
 
-				final StoredFileAccess storedFileAccess = new StoredFileAccess(activity, library, getAllStoredFilesInLibrary, cachedFilePropertiesProvider);
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(
+					activity,
+					library,
+					new SyncDriveLookup(activity),
+					getAllStoredFilesInLibrary,
+					cachedFilePropertiesProvider);
 				storedFileAccess.getDownloadingStoredFiles()
 					.eventually(LoopedInPromise.response(perform(storedFiles -> {
 						final List<StoredFile> localStoredFiles =
