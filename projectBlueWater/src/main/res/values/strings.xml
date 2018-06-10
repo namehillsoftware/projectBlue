@@ -92,4 +92,6 @@
     <string name="playbackEngine">Playback Engine</string>
     <string name="notification_settings">Notification Settings:</string>
     <string name="modify_notification_settings">Modify in System Settings</string>
+    <string name="notification_settings_tutorial_title">Notification Settings</string>
+    <string name="notification_settings_tutorial">Getting sounds when playback changes? Click on "Modify in System Settings" and then change the importance of %1$s to "Medium" to disable playback sounds.</string>
 </resources>
