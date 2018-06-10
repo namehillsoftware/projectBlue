@@ -30,7 +30,8 @@ public class MediaStyleNotificationSetup implements SetupMediaStyleNotifications
 			.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
 				.setCancelButtonIntent(PlaybackService.pendingKillService(context))
 				.setMediaSession(mediaSessionCompat.getSessionToken())
-				.setShowActionsInCompactView(1));
+				.setShowActionsInCompactView(1)
+				.setShowCancelButton(true));
 		return builder;
 	}
 }

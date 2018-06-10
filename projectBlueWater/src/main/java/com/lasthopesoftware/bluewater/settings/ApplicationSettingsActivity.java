@@ -1,12 +1,19 @@
 package com.lasthopesoftware.bluewater.settings;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
@@ -30,14 +37,29 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
+import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
+
+import tourguide.tourguide.Overlay;
+import tourguide.tourguide.Pointer;
+import tourguide.tourguide.ToolTip;
+import tourguide.tourguide.TourGuide;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
+	private static final String isTutorialShownPreference = MagicPropertyBuilder.buildMagicPropertyName(ApplicationSettingsActivity.class, "isTutorialShownPreference");
+
+	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
 	private final LazyViewFinder<ProgressBar> progressBar = new LazyViewFinder<>(this, R.id.listLoadingProgress);
 	private final LazyViewFinder<ListView> serverListView = new LazyViewFinder<>(this, R.id.loadedListView);
+	private final LazyViewFinder<LinearLayout> notificationSettingsContainer = new LazyViewFinder<>(this, R.id.notificationSettingsContainer);
+	private final LazyViewFinder<Button> modifyNotificationSettingsButton = new LazyViewFinder<>(this, R.id.modifyNotificationSettingsButton);
 	private final SettingsMenu settingsMenu = new SettingsMenu(this, new AboutTitleBuilder(this));
 
 	@Override
@@ -84,6 +106,42 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 			.setOnCheckedChangeListener((group, checkedId) -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]));
 
 		updateServerList();
+
+		notificationSettingsContainer.findView().setVisibility(View.GONE);
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+
+		notificationSettingsContainer.findView().setVisibility(View.VISIBLE);
+
+		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		final boolean wasTutorialShown = sharedPreferences.getBoolean(isTutorialShownPreference, false);
+		if (wasTutorialShown) {
+			modifyNotificationSettingsButton.findView().setOnClickListener(v -> launchNotificationSettings());
+			return;
+		}
+
+		final int displayColor = getColor(R.color.clearstream_blue);
+
+		final TourGuide tourGuide =
+			TourGuide.init(this).with(TourGuide.Technique.CLICK)
+				.setPointer(new Pointer().setColor(displayColor))
+				.setToolTip(new ToolTip()
+					.setTitle(getString(R.string.notification_settings_tutorial_title))
+					.setDescription(String.format(
+						getString(R.string.notification_settings_tutorial),
+						getString(R.string.modify_notification_settings),
+						getString(R.string.app_name)))
+					.setBackgroundColor(displayColor))
+				.setOverlay(new Overlay())
+				.playOn(modifyNotificationSettingsButton.findView());
+
+		modifyNotificationSettingsButton.findView().setOnClickListener(v -> {
+			tourGuide.cleanUp();
+
+			launchNotificationSettings();
+		});
+
+		sharedPreferences.edit().putBoolean(isTutorialShownPreference, true).apply();
 	}
 
 	@Override
@@ -101,6 +159,14 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		return settingsMenu.handleSettingsMenuClicks(item);
+	}
+
+	@RequiresApi(api = Build.VERSION_CODES.O)
+	private void launchNotificationSettings() {
+		final Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+		intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+		intent.putExtra(Settings.EXTRA_CHANNEL_ID, lazyChannelConfiguration.getObject().getChannelId());
+		startActivity(intent);
 	}
 
 	private void updateServerList() {
