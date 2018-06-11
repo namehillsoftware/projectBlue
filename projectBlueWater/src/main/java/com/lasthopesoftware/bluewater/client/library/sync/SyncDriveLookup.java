@@ -1,19 +1,21 @@
 package com.lasthopesoftware.bluewater.client.library.sync;
 
-import android.content.Context;
-import android.os.Environment;
-
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.storage.directories.GetPrivateDrives;
+import com.lasthopesoftware.storage.directories.GetPublicDrives;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 
 public class SyncDriveLookup implements LookupSyncDrive {
-	private final Context context;
+	private final GetPublicDrives publicDrives;
+	private final GetPrivateDrives privateDrives;
 
-	public SyncDriveLookup(Context context) {
-		this.context = context;
+	public SyncDriveLookup(GetPublicDrives publicDrives, GetPrivateDrives privateDrives) {
+
+		this.publicDrives = publicDrives;
+		this.privateDrives = privateDrives;
 	}
 
 	@Override
@@ -26,13 +28,14 @@ public class SyncDriveLookup implements LookupSyncDrive {
 	}
 
 	private Stream<File> getExternalFilesDirectoriesStream(Library library) {
-		switch (library.getSyncedFileLocation()) {
-			case EXTERNAL:
-				return Stream.of(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC));
-			case INTERNAL:
-				return Stream.of(context.getExternalFilesDirs(Environment.DIRECTORY_MUSIC))
-					.map(f -> new File(f, library.getId() > -1 ? String.valueOf(library.getId()) : ""));
-		}
+//		switch (library.getSyncedFileLocation()) {
+//			case EXTERNAL:
+//				return Stream.of(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC));
+//			case INTERNAL:
+//				final String libraryId = library.getId() > -1 ? String.valueOf(library.getId()) : "";
+//				return Stream.of(context.getExternalFilesDirs(Environment.DIRECTORY_MUSIC))
+//					.map(f -> new File(f, libraryId));
+//		}
 
 		return Stream.empty();
 	}
