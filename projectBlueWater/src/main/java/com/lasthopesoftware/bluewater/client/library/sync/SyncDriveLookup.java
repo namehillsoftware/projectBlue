@@ -35,10 +35,10 @@ public class SyncDriveLookup implements LookupSyncDrive {
 		switch (library.getSyncedFileLocation()) {
 			case EXTERNAL:
 				return publicDrives.promisePublicDrives();
-//			case INTERNAL:
-//				final String libraryId = library.getId() > -1 ? String.valueOf(library.getId()) : "";
-//				return Stream.of(context.getExternalFilesDirs(Environment.DIRECTORY_MUSIC))
-//					.map(f -> new File(f, libraryId));
+			case INTERNAL:
+				final String libraryId = library.getId() > -1 ? String.valueOf(library.getId()) : "";
+				return privateDrives.promisePrivateDrives()
+					.then(files -> files.map(f -> new File(f, libraryId)));
 		}
 
 		return new Promise<>(Stream.empty());
