@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenAnInternalStoragePreference;
+package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenAnInternalStoragePreference.AndTheLibraryHasAnId;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
@@ -36,11 +36,12 @@ public class WhenLookingUpTheSyncDrive {
 
 		file = new FuturePromise<>(
 			syncDriveLookup.promiseSyncDrive(new Library()
+				.setId(14)
 				.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL))).get();
 	}
 
 	@Test
 	public void thenTheDriveIsTheOneWithTheMostSpace() {
-		assertThat(file.getPath()).isEqualTo("/storage/0/my-private-sd-card");
+		assertThat(file.getPath()).isEqualTo("/storage/0/my-private-sd-card/14");
 	}
 }

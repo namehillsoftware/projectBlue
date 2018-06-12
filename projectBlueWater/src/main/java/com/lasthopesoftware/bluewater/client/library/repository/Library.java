@@ -217,8 +217,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return this;
 	}
 
-	public void setId(int id) {
+	public Library setId(int id) {
 		this.id = id;
+		return this;
 	}
 
 	@Override
