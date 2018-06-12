@@ -74,6 +74,8 @@ import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.storage.directories.PrivateDriveLookup;
+import com.lasthopesoftware.storage.directories.PublicDriveLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
@@ -332,7 +334,9 @@ public class SyncService extends Service {
 								final StoredFileAccess storedFileAccess = new StoredFileAccess(
 									context,
 									library,
-									new SyncDriveLookup(this),
+									new SyncDriveLookup(
+										new PublicDriveLookup(),
+										new PrivateDriveLookup(context)),
 									getAllStoredFilesInLibrary,
 									cachedFilePropertiesProvider);
 

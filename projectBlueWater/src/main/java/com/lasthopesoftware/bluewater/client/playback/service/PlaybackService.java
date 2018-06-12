@@ -110,6 +110,8 @@ import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.storage.directories.PrivateDriveLookup;
+import com.lasthopesoftware.storage.directories.PublicDriveLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -726,7 +728,9 @@ implements OnAudioFocusChangeListener
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			this,
 			library,
-			new SyncDriveLookup(this),
+			new SyncDriveLookup(
+				new PublicDriveLookup(),
+				new PrivateDriveLookup(this)),
 			lazyAllStoredFilesInLibrary.getObject(),
 			cachedFilePropertiesProvider);
 

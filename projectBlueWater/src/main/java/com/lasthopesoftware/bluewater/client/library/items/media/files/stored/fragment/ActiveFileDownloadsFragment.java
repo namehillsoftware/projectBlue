@@ -37,6 +37,8 @@ import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.lasthopesoftware.storage.directories.PrivateDriveLookup;
+import com.lasthopesoftware.storage.directories.PublicDriveLookup;
 
 import java.util.List;
 
@@ -87,7 +89,9 @@ public class ActiveFileDownloadsFragment extends Fragment {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(
 					activity,
 					library,
-					new SyncDriveLookup(activity),
+					new SyncDriveLookup(
+						new PublicDriveLookup(),
+						new PrivateDriveLookup(activity)),
 					getAllStoredFilesInLibrary,
 					cachedFilePropertiesProvider);
 				storedFileAccess.getDownloadingStoredFiles()

@@ -40,6 +40,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.compilation.DebugFlag;
+import com.lasthopesoftware.storage.directories.PrivateDriveLookup;
+import com.lasthopesoftware.storage.directories.PublicDriveLookup;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -105,7 +107,9 @@ public class MainApplication extends Application {
 							final StoredFileAccess storedFileAccess = new StoredFileAccess(
 								context,
 								library,
-								new SyncDriveLookup(context),
+								new SyncDriveLookup(
+									new PublicDriveLookup(),
+									new PrivateDriveLookup(context)),
 								getAllStoredFilesInLibrary,
 								cachedFilePropertiesProvider);
 							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
