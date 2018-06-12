@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenAnExternalStoragePreference;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.lasthopesoftware.storage.directories.specs.FakePrivateDriveLookup;
-import com.lasthopesoftware.storage.directories.specs.FakePublicDriveLookup;
+import com.lasthopesoftware.storage.directories.specs.FakePrivateDirectoryLookup;
+import com.lasthopesoftware.storage.directories.specs.FakePublicDirectoryLookup;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,22 +20,22 @@ public class WhenLookingUpTheSyncDrive {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final FakePublicDriveLookup publicDrives = new FakePublicDriveLookup();
+		final FakePublicDirectoryLookup publicDrives = new FakePublicDirectoryLookup();
 		publicDrives.addDirectory("", 1);
 		publicDrives.addDirectory("", 2);
 		publicDrives.addDirectory("", 3);
 		publicDrives.addDirectory("/storage/0/my-big-sd-card", 4);
 
-		final FakePrivateDriveLookup fakePrivateDriveLookup = new FakePrivateDriveLookup();
-		fakePrivateDriveLookup.addDirectory("fake-private-path", 3);
-		fakePrivateDriveLookup.addDirectory("/fake-private-path", 5);
+		final FakePrivateDirectoryLookup fakePrivateDirectoryLookup = new FakePrivateDirectoryLookup();
+		fakePrivateDirectoryLookup.addDirectory("fake-private-path", 3);
+		fakePrivateDirectoryLookup.addDirectory("/fake-private-path", 5);
 
-		final SyncDriveLookup syncDriveLookup = new SyncDriveLookup(
+		final SyncDirectoryLookup syncDirectoryLookup = new SyncDirectoryLookup(
 			publicDrives,
-			fakePrivateDriveLookup);
+			fakePrivateDirectoryLookup);
 
 		file = new FuturePromise<>(
-			syncDriveLookup.promiseSyncDrive(new Library()
+			syncDirectoryLookup.promiseSyncDrive(new Library()
 				.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL))).get();
 	}
 

@@ -32,7 +32,7 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
@@ -40,8 +40,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.compilation.DebugFlag;
-import com.lasthopesoftware.storage.directories.PrivateDriveLookup;
-import com.lasthopesoftware.storage.directories.PublicDriveLookup;
+import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
+import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -107,9 +107,9 @@ public class MainApplication extends Application {
 							final StoredFileAccess storedFileAccess = new StoredFileAccess(
 								context,
 								library,
-								new SyncDriveLookup(
-									new PublicDriveLookup(),
-									new PrivateDriveLookup(context)),
+								new SyncDirectoryLookup(
+									new PublicDirectoryLookup(),
+									new PrivateDirectoryLookup(context)),
 								getAllStoredFilesInLibrary,
 								cachedFilePropertiesProvider);
 							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);

@@ -7,7 +7,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 
-public class PublicDriveLookup implements GetPublicDrives {
+public class PublicDirectoryLookup implements GetPublicDirectories {
 	@Override
 	public Promise<Stream<File>> promisePublicDrives() {
 		return new Promise<>(Stream

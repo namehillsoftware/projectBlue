@@ -5,6 +5,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 
-public interface GetPrivateDrives {
+public interface GetPrivateDirectories {
 	Promise<Stream<File>> promisePrivateDrives();
 }

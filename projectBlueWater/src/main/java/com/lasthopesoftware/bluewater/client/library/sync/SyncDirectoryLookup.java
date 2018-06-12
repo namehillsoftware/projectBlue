@@ -2,17 +2,17 @@ package com.lasthopesoftware.bluewater.client.library.sync;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.storage.directories.GetPrivateDrives;
-import com.lasthopesoftware.storage.directories.GetPublicDrives;
+import com.lasthopesoftware.storage.directories.GetPrivateDirectories;
+import com.lasthopesoftware.storage.directories.GetPublicDirectories;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 
-public class SyncDriveLookup implements LookupSyncDrive {
-	private final GetPublicDrives publicDrives;
-	private final GetPrivateDrives privateDrives;
+public class SyncDirectoryLookup implements LookupSyncDirectory {
+	private final GetPublicDirectories publicDrives;
+	private final GetPrivateDirectories privateDrives;
 
-	public SyncDriveLookup(GetPublicDrives publicDrives, GetPrivateDrives privateDrives) {
+	public SyncDirectoryLookup(GetPublicDirectories publicDrives, GetPrivateDirectories privateDrives) {
 		this.publicDrives = publicDrives;
 		this.privateDrives = privateDrives;
 	}

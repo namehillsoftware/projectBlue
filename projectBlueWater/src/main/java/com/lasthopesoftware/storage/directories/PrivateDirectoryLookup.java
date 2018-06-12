@@ -8,10 +8,10 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 
-public class PrivateDriveLookup implements GetPrivateDrives {
+public class PrivateDirectoryLookup implements GetPrivateDirectories {
 	private final Context context;
 
-	public PrivateDriveLookup(Context context) {
+	public PrivateDirectoryLookup(Context context) {
 		this.context = context;
 	}
 

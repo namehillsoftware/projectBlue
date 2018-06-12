@@ -65,7 +65,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
-import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -74,8 +74,8 @@ import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
-import com.lasthopesoftware.storage.directories.PrivateDriveLookup;
-import com.lasthopesoftware.storage.directories.PublicDriveLookup;
+import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
+import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
@@ -334,9 +334,9 @@ public class SyncService extends Service {
 								final StoredFileAccess storedFileAccess = new StoredFileAccess(
 									context,
 									library,
-									new SyncDriveLookup(
-										new PublicDriveLookup(),
-										new PrivateDriveLookup(context)),
+									new SyncDirectoryLookup(
+										new PublicDirectoryLookup(),
+										new PrivateDirectoryLookup(context)),
 									getAllStoredFilesInLibrary,
 									cachedFilePropertiesProvider);
 

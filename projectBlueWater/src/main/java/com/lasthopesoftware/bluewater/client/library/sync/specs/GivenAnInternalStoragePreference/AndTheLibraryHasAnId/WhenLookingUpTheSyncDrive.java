@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenAnInternalStoragePreference.AndTheLibraryHasAnId;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.lasthopesoftware.storage.directories.specs.FakePrivateDriveLookup;
-import com.lasthopesoftware.storage.directories.specs.FakePublicDriveLookup;
+import com.lasthopesoftware.storage.directories.specs.FakePrivateDirectoryLookup;
+import com.lasthopesoftware.storage.directories.specs.FakePublicDirectoryLookup;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,22 +20,22 @@ public class WhenLookingUpTheSyncDrive {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final FakePrivateDriveLookup fakePrivateDriveLookup = new FakePrivateDriveLookup();
-		fakePrivateDriveLookup.addDirectory("", 1);
-		fakePrivateDriveLookup.addDirectory("", 2);
-		fakePrivateDriveLookup.addDirectory("", 3);
-		fakePrivateDriveLookup.addDirectory("/storage/0/my-private-sd-card", 10);
+		final FakePrivateDirectoryLookup fakePrivateDirectoryLookup = new FakePrivateDirectoryLookup();
+		fakePrivateDirectoryLookup.addDirectory("", 1);
+		fakePrivateDirectoryLookup.addDirectory("", 2);
+		fakePrivateDirectoryLookup.addDirectory("", 3);
+		fakePrivateDirectoryLookup.addDirectory("/storage/0/my-private-sd-card", 10);
 
-		final FakePublicDriveLookup publicDrives = new FakePublicDriveLookup();
+		final FakePublicDirectoryLookup publicDrives = new FakePublicDirectoryLookup();
 		publicDrives.addDirectory("fake-private-path", 12);
 		publicDrives.addDirectory("/fake-private-path", 5);
 
-		final SyncDriveLookup syncDriveLookup = new SyncDriveLookup(
+		final SyncDirectoryLookup syncDirectoryLookup = new SyncDirectoryLookup(
 			publicDrives,
-			fakePrivateDriveLookup);
+			fakePrivateDirectoryLookup);
 
 		file = new FuturePromise<>(
-			syncDriveLookup.promiseSyncDrive(new Library()
+			syncDirectoryLookup.promiseSyncDrive(new Library()
 				.setId(14)
 				.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL))).get();
 	}

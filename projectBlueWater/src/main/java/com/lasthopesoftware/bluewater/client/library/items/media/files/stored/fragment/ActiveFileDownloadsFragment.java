@@ -33,12 +33,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.St
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.sync.SyncDriveLookup;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-import com.lasthopesoftware.storage.directories.PrivateDriveLookup;
-import com.lasthopesoftware.storage.directories.PublicDriveLookup;
+import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
+import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 
 import java.util.List;
 
@@ -89,9 +89,9 @@ public class ActiveFileDownloadsFragment extends Fragment {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(
 					activity,
 					library,
-					new SyncDriveLookup(
-						new PublicDriveLookup(),
-						new PrivateDriveLookup(activity)),
+					new SyncDirectoryLookup(
+						new PublicDirectoryLookup(),
+						new PrivateDirectoryLookup(activity)),
 					getAllStoredFilesInLibrary,
 					cachedFilePropertiesProvider);
 				storedFileAccess.getDownloadingStoredFiles()
