@@ -33,8 +33,12 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public final class StoredFileAccess implements IStoredFileAccess {
+
+	private static final Executor storedFileAccessExecutor = Executors.newSingleThreadExecutor();
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
@@ -104,7 +108,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return getStoredFile(repositoryAccessHelper, serviceServiceFile);
 			}
-		}, RepositoryAccessHelper.databaseExecutor);
+		}, storedFileAccessExecutor);
 	}
 
 	@Override
@@ -117,12 +121,12 @@ public final class StoredFileAccess implements IStoredFileAccess {
 					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, false)
 					.fetch(StoredFile.class);
 			}
-		}, RepositoryAccessHelper.databaseExecutor);
+		}, storedFileAccessExecutor);
 	}
 
 	@Override
 	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
-		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+		storedFileAccessExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 
@@ -144,7 +148,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	@Override
 	public void addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
-		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+		storedFileAccessExecutor.execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 				if (storedFile == null) {
@@ -198,7 +202,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 				return storedFile;
 			}
-		}, RepositoryAccessHelper.databaseExecutor)
+		}, storedFileAccessExecutor)
 			.eventually(storedFile -> {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 					return new Promise<>(storedFile);
@@ -268,7 +272,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 						updateStoredFile(repositoryAccessHelper, storedFile);
 						return storedFile;
 					}
-				}, RepositoryAccessHelper.databaseExecutor));
+				}, storedFileAccessExecutor));
 	}
 
 	@Override
