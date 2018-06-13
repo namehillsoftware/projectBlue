@@ -37,6 +37,8 @@ public class SyncDirectoryLookup implements LookupSyncDirectory {
 				final String libraryId = String.valueOf(library.getId());
 				return promisedPrivateDrives
 					.then(files -> files.map(f -> new File(f, libraryId)));
+			case CUSTOM:
+				return new Promise<>(Stream.of(new File(library.getCustomSyncedFilesPath())));
 		}
 
 		return new Promise<>(Stream.empty());
