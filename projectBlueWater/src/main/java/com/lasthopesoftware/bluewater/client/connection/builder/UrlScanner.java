@@ -51,22 +51,24 @@ public class UrlScanner implements BuildUrlProviders {
 
 					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
 
-					final Integer httpsPort = info.getHttpsPort();
-					if (httpsPort != null) {
-						final String certificateFingerprint = info.getCertificateFingerprint();
+					if (!library.isLocalOnly()) {
+						final Integer httpsPort = info.getHttpsPort();
+						if (httpsPort != null) {
+							final String certificateFingerprint = info.getCertificateFingerprint();
+							mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
+								authKey,
+								remoteIp,
+								httpsPort,
+								certificateFingerprint != null
+									? decodeHex(certificateFingerprint.toCharArray())
+									: new byte[0]));
+						}
+
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
 							authKey,
 							remoteIp,
-							httpsPort,
-							certificateFingerprint != null
-								? decodeHex(certificateFingerprint.toCharArray())
-								: new byte[0]));
+							httpPort));
 					}
-
-					mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-						authKey,
-						remoteIp,
-						httpPort));
 
 					for (String ip : info.getLocalIps()) {
 						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
