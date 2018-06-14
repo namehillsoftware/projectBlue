@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.settings;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -16,6 +15,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.settings.SettingsMenu;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.lazyj.Lazy;
+import com.obsez.android.lib.filechooser.ChooserDialog;
 
 import java.util.ArrayList;
 
@@ -39,6 +40,8 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 
 public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
+
+	private static final int selectDirectoryResultId = 93;
 
 	private final LazyViewFinder<Button> saveButton = new LazyViewFinder<>(this, R.id.btnConnect);
 	private final LazyViewFinder<EditText> txtAccessCode = new LazyViewFinder<>(this, R.id.txtAccessCode);
@@ -49,6 +52,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	private final LazyViewFinder<RadioGroup> rgSyncFileOptions = new LazyViewFinder<>(this, R.id.rgSyncFileOptions);
 	private final LazyViewFinder<CheckBox> chkIsUsingExistingFiles = new LazyViewFinder<>(this, R.id.chkIsUsingExistingFiles);
 	private final LazyViewFinder<CheckBox> chkIsUsingLocalConnectionForSync = new LazyViewFinder<>(this, R.id.chkIsUsingLocalConnectionForSync);
+	private final LazyViewFinder<ImageButton> selectDirectoryButton = new LazyViewFinder<>(this, R.id.selectDirectoryButton);
 
 	private final Lazy<IApplicationWritePermissionsRequirementsProvider> applicationWritePermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationWritePermissionsRequirementsProvider(this));
 	private final Lazy<IApplicationReadPermissionsRequirementsProvider> applicationReadPermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationReadPermissionsRequirementsProvider(this));
@@ -84,25 +88,24 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		        library.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM);
 		        break;
         }
+
         library.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked());
         library.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked());
 
         final ArrayList<String> permissionsToRequest = new ArrayList<>(2);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-	        if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(library))
-		        permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+		if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(library))
+			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
 
-	        if (applicationWritePermissionsRequirementsProviderLazy.getObject().isWritePermissionsRequiredForLibrary(library))
-		        permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+		if (applicationWritePermissionsRequirementsProviderLazy.getObject().isWritePermissionsRequiredForLibrary(library))
+			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-	        if (permissionsToRequest.size() > 0) {
-		        final String[] permissionsToRequestArray = permissionsToRequest.toArray(new String[permissionsToRequest.size()]);
-		        ActivityCompat.requestPermissions(EditClientSettingsActivity.this, permissionsToRequestArray, permissionsRequestInteger);
+		if (permissionsToRequest.size() > 0) {
+			final String[] permissionsToRequestArray = permissionsToRequest.toArray(new String[permissionsToRequest.size()]);
+			ActivityCompat.requestPermissions(EditClientSettingsActivity.this, permissionsToRequestArray, permissionsRequestInteger);
 
-		        return;
-	        }
-        }
+			return;
+		}
 
 		saveLibraryAndFinish();
     };
@@ -114,6 +117,14 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         saveButton.findView().setOnClickListener(connectionButtonListener);
+
+		selectDirectoryButton.findView().setOnClickListener(v ->
+			new ChooserDialog().with(this)
+				.withFilter(true, false)
+				.withStartFile("/storage")
+				.withChosenListener((path, pathFile) -> txtSyncPath.findView().setText(path))
+				.build()
+				.show());
 	}
 
 	@Override
@@ -133,6 +144,17 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		super.onNewIntent(intent);
 
 		initializeLibrary(intent);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode != selectDirectoryResultId) {
+			super.onActivityResult(requestCode, resultCode, data);
+			return;
+		}
+
+		final String uri = data.getDataString();
+		txtSyncPath.findView().setText(uri);
 	}
 
 	@Override

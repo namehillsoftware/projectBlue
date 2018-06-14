@@ -729,7 +729,7 @@ implements OnAudioFocusChangeListener
 			this,
 			library,
 			new SyncDirectoryLookup(
-				new PublicDirectoryLookup(),
+				new PublicDirectoryLookup(this),
 				new PrivateDirectoryLookup(this)),
 			lazyAllStoredFilesInLibrary.getObject(),
 			cachedFilePropertiesProvider);

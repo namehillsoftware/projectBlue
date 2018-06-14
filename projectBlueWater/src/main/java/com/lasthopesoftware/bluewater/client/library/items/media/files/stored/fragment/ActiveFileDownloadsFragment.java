@@ -90,7 +90,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 					activity,
 					library,
 					new SyncDirectoryLookup(
-						new PublicDirectoryLookup(),
+						new PublicDirectoryLookup(activity),
 						new PrivateDirectoryLookup(activity)),
 					getAllStoredFilesInLibrary,
 					cachedFilePropertiesProvider);

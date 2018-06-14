@@ -335,7 +335,7 @@ public class SyncService extends Service {
 									context,
 									library,
 									new SyncDirectoryLookup(
-										new PublicDirectoryLookup(),
+										new PublicDirectoryLookup(context),
 										new PrivateDirectoryLookup(context)),
 									getAllStoredFilesInLibrary,
 									cachedFilePropertiesProvider);
