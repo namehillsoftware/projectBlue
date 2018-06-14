@@ -55,7 +55,8 @@ final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, C
 
 					File directoryToDelete = systemFile.getParentFile();
 					while (directoryToDelete != null) {
-						if (directoryToDelete.list().length == 0) {
+						final String[] directoryList = directoryToDelete.list();
+						if (directoryList != null && directoryList.length == 0) {
 							if (!directoryToDelete.delete()) return null;
 						}
 						directoryToDelete = directoryToDelete.getParentFile();
