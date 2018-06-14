@@ -71,6 +71,8 @@ public final class StoredFileAccess implements IStoredFileAccess {
 							.setFilter("WHERE id = @id")
 							.buildQuery());
 
+	private static final char[] reservedChars = "|\\?*<\":>+[]'".toCharArray();
+
 	public StoredFileAccess(
 		Context context,
 		Library library,
@@ -260,8 +262,11 @@ public final class StoredFileAccess implements IStoredFileAccess {
 								if (extensionIndex > -1)
 									fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
 
-								// The media player library apparently bombs on colons, so let's cleanse it of colons (tee-hee)
-								fullPath = FilenameUtils.concat(fullPath, fileName).replace(':', '_');
+								fullPath = FilenameUtils.concat(fullPath, fileName);
+
+								for (char c : reservedChars)
+									fullPath = fullPath.replace(c, '_');
+
 								storedFile.setPath(fullPath);
 
 								return storedFile;
