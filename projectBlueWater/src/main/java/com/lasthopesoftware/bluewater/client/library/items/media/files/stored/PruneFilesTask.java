@@ -50,7 +50,16 @@ final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, C
 					if (lazyServiceIdsToKeep.getObject().contains(storedFile.getServiceId())) return null;
 
 					storedFileAccess.deleteStoredFile(storedFile);
-					systemFile.delete();
+
+					if (!systemFile.delete()) return null;
+
+					File directoryToDelete = systemFile.getParentFile();
+					while (directoryToDelete != null) {
+						if (directoryToDelete.list().length == 0) {
+							if (!directoryToDelete.delete()) return null;
+						}
+						directoryToDelete = directoryToDelete.getParentFile();
+					}
 					return null;
 				}, pruneFilesExecutor));
 		

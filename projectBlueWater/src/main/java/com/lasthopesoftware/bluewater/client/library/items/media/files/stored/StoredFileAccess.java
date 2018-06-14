@@ -332,7 +332,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 
 	void deleteStoredFile(final StoredFile storedFile) {
-		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+		storedFileAccessExecutor.execute(() -> {
 			try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 
