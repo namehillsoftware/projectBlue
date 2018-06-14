@@ -122,14 +122,27 @@
                     android:layout_height="wrap_content"
                     android:text="@string/rbCustomLocation"/>
             </RadioGroup>
-            <EditText
-                android:id="@+id/txtSyncPath"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:enabled="false"
-                android:inputType="textUri"
-                android:hint="@string/lbl_sync_path"/>
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal"
+				android:weightSum="1.0">
+				<EditText
+					android:id="@+id/txtSyncPath"
+					android:layout_width="0dp"
+					android:layout_weight="1"
+					android:layout_height="wrap_content"
+					android:ems="10"
+					android:enabled="false"
+					android:inputType="textUri"
+					android:gravity="start|left|center_vertical"
+					android:hint="@string/lbl_sync_path"/>
+				<ImageButton
+					android:id="@+id/selectDirectoryButton"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:src="@drawable/open_files"/>
+			</LinearLayout>
             <CheckBox
                 android:id="@+id/chkIsUsingLocalConnectionForSync"
                 android:layout_width="fill_parent"
