@@ -262,7 +262,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 								if (extensionIndex > -1)
 									fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
 
-								fullPath = FilenameUtils.concat(fullPath, fileName);
+								fullPath = FilenameUtils.concat(fullPath, fileName).trim();
 
 								for (char c : reservedChars)
 									fullPath = fullPath.replace(c, '_');
