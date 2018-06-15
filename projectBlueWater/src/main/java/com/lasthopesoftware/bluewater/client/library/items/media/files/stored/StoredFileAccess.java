@@ -249,11 +249,11 @@ public final class StoredFileAccess implements IStoredFileAccess {
 									artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
 								if (artist != null)
-									fullPath = FilenameUtils.concat(fullPath, artist);
+									fullPath = FilenameUtils.concat(fullPath, artist).trim();
 
 								final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
 								if (album != null)
-									fullPath = FilenameUtils.concat(fullPath, album);
+									fullPath = FilenameUtils.concat(fullPath, album).trim();
 
 								String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
 								fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
