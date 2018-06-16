@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 public final class StoredFileAccess implements IStoredFileAccess {
 
@@ -70,6 +71,8 @@ public final class StoredFileAccess implements IStoredFileAccess {
 							.addSetter(StoredFileEntityInformation.isDownloadCompleteColumnName)
 							.setFilter("WHERE id = @id")
 							.buildQuery());
+
+	private static final Lazy<Pattern> reservedCharactersPattern = new Lazy<>(() -> Pattern.compile("[|?*<\":>+\\[\\]'/]"));
 
 	public StoredFileAccess(
 		Context context,
@@ -276,7 +279,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	private static String replaceReservedCharsAndPath(String path) {
-		return path.replaceAll("[|?*<\":>+\\[\\]'/]", "_");
+		return reservedCharactersPattern.getObject().matcher(path).replaceAll("_");
 	}
 
 	@Override
