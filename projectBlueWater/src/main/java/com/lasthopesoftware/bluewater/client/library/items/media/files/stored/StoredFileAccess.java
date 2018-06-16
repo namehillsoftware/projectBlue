@@ -71,8 +71,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 							.setFilter("WHERE id = @id")
 							.buildQuery());
 
-	private static final char[] reservedChars = "|\\?*<\":>+[]'".toCharArray();
-
 	public StoredFileAccess(
 		Context context,
 		Library library,
@@ -249,11 +247,11 @@ public final class StoredFileAccess implements IStoredFileAccess {
 									artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 
 								if (artist != null)
-									fullPath = FilenameUtils.concat(fullPath, artist).trim();
+									fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(artist.trim()));
 
 								final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
 								if (album != null)
-									fullPath = FilenameUtils.concat(fullPath, album).trim();
+									fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(album.trim()));
 
 								String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
 								fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
@@ -263,9 +261,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 									fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
 
 								fullPath = FilenameUtils.concat(fullPath, fileName).trim();
-
-								for (char c : reservedChars)
-									fullPath = fullPath.replace(c, '_');
 
 								storedFile.setPath(fullPath);
 
@@ -278,6 +273,10 @@ public final class StoredFileAccess implements IStoredFileAccess {
 						return storedFile;
 					}
 				}, storedFileAccessExecutor));
+	}
+
+	private static String replaceReservedCharsAndPath(String path) {
+		return path.replaceAll("[|?*<\":>+\\[\\]'/]", "_");
 	}
 
 	@Override
@@ -334,7 +333,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 			closeableTransaction.setTransactionSuccessful();
 		}
 	}
-
 
 	void deleteStoredFile(final StoredFile storedFile) {
 		storedFileAccessExecutor.execute(() -> {
