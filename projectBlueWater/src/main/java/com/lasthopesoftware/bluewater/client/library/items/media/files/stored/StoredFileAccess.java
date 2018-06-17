@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
 import android.content.Context;
 import android.database.SQLException;
-import android.net.Uri;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -150,27 +149,27 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public void addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
-		storedFileAccessExecutor.execute(() -> {
+	public Promise<Void> addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
+		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 				if (storedFile == null) {
 					storedFile =
-							repositoryAccessHelper
-									.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.storedMediaIdColumnName + " = @" + StoredFileEntityInformation.storedMediaIdColumnName)
-									.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, mediaFileId)
-									.fetchFirst(StoredFile.class);
+						repositoryAccessHelper
+							.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.storedMediaIdColumnName + " = @" + StoredFileEntityInformation.storedMediaIdColumnName)
+							.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, mediaFileId)
+							.fetchFirst(StoredFile.class);
 
 					if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath))
-						return;
+						return null;
 				}
 
 				if (storedFile == null) {
 					storedFile =
-							repositoryAccessHelper
-									.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.pathColumnName + " = @" + StoredFileEntityInformation.pathColumnName)
-									.addParameter(StoredFileEntityInformation.pathColumnName, filePath)
-									.fetchFirst(StoredFile.class);
+						repositoryAccessHelper
+							.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.pathColumnName + " = @" + StoredFileEntityInformation.pathColumnName)
+							.addParameter(StoredFileEntityInformation.pathColumnName, filePath)
+							.fetchFirst(StoredFile.class);
 				}
 
 				if (storedFile == null) {
@@ -178,12 +177,15 @@ public final class StoredFileAccess implements IStoredFileAccess {
 					storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
 					storedFile.setIsOwner(false);
 					storedFile.setIsDownloadComplete(true);
+					storedFile.setPath(filePath);
 				}
 
 				storedFile.setStoredMediaId(mediaFileId);
 				updateStoredFile(repositoryAccessHelper, storedFile);
+
+				return null;
 			}
-		});
+		}, storedFileAccessExecutor);
 	}
 
 	@Override
@@ -196,23 +198,20 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
-				if (storedFile == null) {
-					logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
-					createStoredFile(repositoryAccessHelper, serviceFile);
-					storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
-				}
+				final StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
+				if (storedFile != null) return storedFile;
 
-				return storedFile;
+				logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
+				createStoredFile(repositoryAccessHelper, serviceFile);
+				return getStoredFile(repositoryAccessHelper, serviceFile);
 			}
 		}, storedFileAccessExecutor)
 			.eventually(storedFile -> {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 					return new Promise<>(storedFile);
 
-				final Promise<Uri> fileUriPromise = mediaFileUriProvider.promiseFileUri(serviceFile);
-
-				return fileUriPromise
+				return mediaFileUriProvider
+					.promiseFileUri(serviceFile)
 					.eventually(localUri -> {
 						if (localUri == null)
 							return new Promise<>(storedFile);

@@ -22,7 +22,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
@@ -89,8 +88,7 @@ public class MainApplication extends Application {
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
 				final int libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
-				if (libraryId < 0)
-					return;
+				if (libraryId < 0) return;
 
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
@@ -98,20 +96,6 @@ public class MainApplication extends Application {
 						AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
 							if (urlProvider == null) return;
 
-							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-							final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
-							final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
-
-							final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(context);
-							final StoredFileAccess storedFileAccess = new StoredFileAccess(
-								context,
-								library,
-								new SyncDirectoryLookup(
-									new PublicDirectoryLookup(context),
-									new PrivateDirectoryLookup(context)),
-								getAllStoredFilesInLibrary,
-								cachedFilePropertiesProvider);
 							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 							if (fileKey == -1) return;
 
@@ -120,6 +104,20 @@ public class MainApplication extends Application {
 
 							final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
 							if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
+
+							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+							final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+							final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
+
+							final StoredFileAccess storedFileAccess = new StoredFileAccess(
+								context,
+								library,
+								new SyncDirectoryLookup(
+									new PublicDirectoryLookup(context),
+									new PrivateDirectoryLookup(context)),
+								new StoredFilesCollection(context),
+								cachedFilePropertiesProvider);
 
 							storedFileAccess.addMediaFile(new ServiceFile(fileKey), mediaFileId, mediaFilePath);
 					})));
