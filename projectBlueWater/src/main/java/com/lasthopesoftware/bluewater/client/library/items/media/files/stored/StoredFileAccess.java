@@ -156,8 +156,12 @@ public final class StoredFileAccess implements IStoredFileAccess {
 				if (storedFile == null) {
 					storedFile =
 						repositoryAccessHelper
-							.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.storedMediaIdColumnName + " = @" + StoredFileEntityInformation.storedMediaIdColumnName)
+							.mapSql(
+								selectFromStoredFiles +
+								" WHERE " + StoredFileEntityInformation.storedMediaIdColumnName + " = @" + StoredFileEntityInformation.storedMediaIdColumnName +
+								" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
 							.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, mediaFileId)
+							.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
 							.fetchFirst(StoredFile.class);
 
 					if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath))
@@ -167,8 +171,12 @@ public final class StoredFileAccess implements IStoredFileAccess {
 				if (storedFile == null) {
 					storedFile =
 						repositoryAccessHelper
-							.mapSql(selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.pathColumnName + " = @" + StoredFileEntityInformation.pathColumnName)
+							.mapSql(
+								selectFromStoredFiles +
+								" WHERE " + StoredFileEntityInformation.pathColumnName + " = @" + StoredFileEntityInformation.pathColumnName +
+								" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
 							.addParameter(StoredFileEntityInformation.pathColumnName, filePath)
+							.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
 							.fetchFirst(StoredFile.class);
 				}
 
