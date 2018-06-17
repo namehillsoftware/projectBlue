@@ -127,8 +127,8 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public void markStoredFileAsDownloaded(final StoredFile storedFile) {
-		storedFileAccessExecutor.execute(() -> {
+	public Promise<StoredFile> markStoredFileAsDownloaded(final StoredFile storedFile) {
+		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 
@@ -145,7 +145,8 @@ public final class StoredFileAccess implements IStoredFileAccess {
 			}
 
 			storedFile.setIsDownloadComplete(true);
-		});
+			return storedFile;
+		}, storedFileAccessExecutor);
 	}
 
 	@Override
@@ -153,32 +154,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
-				if (storedFile == null) {
-					storedFile =
-						repositoryAccessHelper
-							.mapSql(
-								selectFromStoredFiles +
-								" WHERE " + StoredFileEntityInformation.storedMediaIdColumnName + " = @" + StoredFileEntityInformation.storedMediaIdColumnName +
-								" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
-							.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, mediaFileId)
-							.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
-							.fetchFirst(StoredFile.class);
-
-					if (storedFile != null && storedFile.getPath() != null && storedFile.getPath().equals(filePath))
-						return null;
-				}
-
-				if (storedFile == null) {
-					storedFile =
-						repositoryAccessHelper
-							.mapSql(
-								selectFromStoredFiles +
-								" WHERE " + StoredFileEntityInformation.pathColumnName + " = @" + StoredFileEntityInformation.pathColumnName +
-								" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
-							.addParameter(StoredFileEntityInformation.pathColumnName, filePath)
-							.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
-							.fetchFirst(StoredFile.class);
-				}
 
 				if (storedFile == null) {
 					createStoredFile(repositoryAccessHelper, serviceFile);
@@ -198,12 +173,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	@Override
 	public Promise<StoredFile> createOrUpdateFile(final ServiceFile serviceFile) {
-		final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
-		final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
-
-		final MediaFileUriProvider mediaFileUriProvider =
-			new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
-
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				final StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
@@ -214,75 +183,81 @@ public final class StoredFileAccess implements IStoredFileAccess {
 				return getStoredFile(repositoryAccessHelper, serviceFile);
 			}
 		}, storedFileAccessExecutor)
-			.eventually(storedFile -> {
-				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
-					return new Promise<>(storedFile);
+		.eventually(storedFile -> {
+			if (storedFile.getPath() != null || !library.isUsingExistingFiles())
+				return new Promise<>(storedFile);
 
-				return mediaFileUriProvider
-					.promiseFileUri(serviceFile)
-					.eventually(localUri -> {
-						if (localUri == null)
-							return new Promise<>(storedFile);
+			final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
+			final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
 
-						storedFile.setPath(localUri.getPath());
-						storedFile.setIsDownloadComplete(true);
-						storedFile.setIsOwner(false);
-						try {
-							final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, serviceFile, externalStorageReadPermissionsArbitrator);
-							return
-								mediaFileIdProvider
-									.getMediaId()
-									.then(mediaId -> {
-										storedFile.setStoredMediaId(mediaId);
-										return storedFile;
-									});
-						} catch (IOException e) {
-							logger.error("Error retrieving media serviceFile ID", e);
-							return new Promise<>(storedFile);
-						}
-					});
-				})
-				.eventually(storedFile -> {
-					if (storedFile.getPath() != null)
+			final MediaFileUriProvider mediaFileUriProvider =
+				new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
+
+			return mediaFileUriProvider
+				.promiseFileUri(serviceFile)
+				.eventually(localUri -> {
+					if (localUri == null)
 						return new Promise<>(storedFile);
 
-					return cachedFilePropertiesProvider
-						.promiseFileProperties(serviceFile)
-						.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDrive(library)
-							.then(syncDrive -> {
-								String fullPath = syncDrive.getPath();
-
-								String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
-								if (artist == null)
-									artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-
-								if (artist != null)
-									fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(artist.trim()));
-
-								final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
-								if (album != null)
-									fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(album.trim()));
-
-								String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
-								fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
-
-								final int extensionIndex = fileName.lastIndexOf('.');
-								if (extensionIndex > -1)
-									fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
-
-								fullPath = FilenameUtils.concat(fullPath, fileName).trim();
-
-								storedFile.setPath(fullPath);
-
-								return storedFile;
-							}));
-				})
-				.eventually(storedFile -> new QueuedPromise<>(() -> {
-					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-						updateStoredFile(repositoryAccessHelper, storedFile);
-						return storedFile;
+					storedFile.setPath(localUri.getPath());
+					storedFile.setIsDownloadComplete(true);
+					storedFile.setIsOwner(false);
+					try {
+						final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, serviceFile, externalStorageReadPermissionsArbitrator);
+						return
+							mediaFileIdProvider
+								.getMediaId()
+								.then(mediaId -> {
+									storedFile.setStoredMediaId(mediaId);
+									return storedFile;
+								});
+					} catch (IOException e) {
+						logger.error("Error retrieving media serviceFile ID", e);
+						return new Promise<>(storedFile);
 					}
-				}, storedFileAccessExecutor));
+				});
+			})
+			.eventually(storedFile -> {
+				if (storedFile.getPath() != null)
+					return new Promise<>(storedFile);
+
+				return cachedFilePropertiesProvider
+					.promiseFileProperties(serviceFile)
+					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDrive(library)
+						.then(syncDrive -> {
+							String fullPath = syncDrive.getPath();
+
+							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+							if (artist == null)
+								artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+
+							if (artist != null)
+								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(artist.trim()));
+
+							final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+							if (album != null)
+								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(album.trim()));
+
+							String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
+							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+
+							final int extensionIndex = fileName.lastIndexOf('.');
+							if (extensionIndex > -1)
+								fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
+
+							fullPath = FilenameUtils.concat(fullPath, fileName).trim();
+
+							storedFile.setPath(fullPath);
+
+							return storedFile;
+						}));
+			})
+			.eventually(storedFile -> new QueuedPromise<>(() -> {
+				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
+					updateStoredFile(repositoryAccessHelper, storedFile);
+					return storedFile;
+				}
+			}, storedFileAccessExecutor));
 	}
 
 	private static String replaceReservedCharsAndPath(String path) {

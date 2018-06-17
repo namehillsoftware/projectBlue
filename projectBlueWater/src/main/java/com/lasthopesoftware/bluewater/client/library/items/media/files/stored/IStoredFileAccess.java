@@ -15,7 +15,7 @@ public interface IStoredFileAccess {
 
 	Promise<List<StoredFile>> getDownloadingStoredFiles();
 
-	void markStoredFileAsDownloaded(StoredFile storedFile);
+	Promise<StoredFile> markStoredFileAsDownloaded(StoredFile storedFile);
 
 	Promise<Void> addMediaFile(ServiceFile serviceFile, int mediaFileId, String filePath);
 
