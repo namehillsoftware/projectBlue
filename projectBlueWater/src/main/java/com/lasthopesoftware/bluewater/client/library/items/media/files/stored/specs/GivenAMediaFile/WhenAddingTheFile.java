@@ -26,7 +26,7 @@ public class WhenAddingTheFile extends AndroidContext {
 	public void before() throws ExecutionException, InterruptedException {
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			RuntimeEnvironment.application,
-			new Library(),
+			new Library().setId(15),
 			mock(LookupSyncDirectory.class),
 			mock(GetAllStoredFilesInLibrary.class),
 			mock(CachedFilePropertiesProvider.class));
@@ -37,6 +37,21 @@ public class WhenAddingTheFile extends AndroidContext {
 			"a-test-path")).get();
 
 		storedFile = new FuturePromise<>(storedFileAccess.getStoredFile(new ServiceFile(3))).get();
+	}
+
+	@Test
+	public void thenTheLibraryIdIsCorrect() {
+		assertThat(storedFile.getLibraryId()).isEqualTo(15);
+	}
+
+	@Test
+	public void thenThisLibraryDoesNotOwnTheFile() {
+		assertThat(storedFile.isOwner()).isFalse();
+	}
+
+	@Test
+	public void thenTheDownloadIsMarkedComplete() {
+		assertThat(storedFile.isDownloadComplete()).isTrue();
 	}
 
 	@Test

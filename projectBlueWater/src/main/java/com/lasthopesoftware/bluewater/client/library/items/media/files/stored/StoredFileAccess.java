@@ -174,10 +174,10 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 				if (storedFile == null) {
 					createStoredFile(repositoryAccessHelper, serviceFile);
-					storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
-					storedFile.setIsOwner(false);
-					storedFile.setIsDownloadComplete(true);
-					storedFile.setPath(filePath);
+					storedFile = getStoredFile(repositoryAccessHelper, serviceFile)
+						.setIsOwner(false)
+						.setIsDownloadComplete(true)
+						.setPath(filePath);
 				}
 
 				storedFile.setStoredMediaId(mediaFileId);
