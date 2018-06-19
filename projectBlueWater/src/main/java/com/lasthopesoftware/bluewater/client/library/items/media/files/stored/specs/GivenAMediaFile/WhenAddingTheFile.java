@@ -31,12 +31,12 @@ public class WhenAddingTheFile extends AndroidContext {
 			mock(GetAllStoredFilesInLibrary.class),
 			mock(CachedFilePropertiesProvider.class));
 
-		new FuturePromise<>(storedFileAccess.addMediaFile(
-			new ServiceFile(3),
-			14,
-			"a-test-path")).get();
-
-		storedFile = new FuturePromise<>(storedFileAccess.getStoredFile(new ServiceFile(3))).get();
+		storedFile = new FuturePromise<>(
+			storedFileAccess.addMediaFile(
+				new ServiceFile(3),
+				14,
+				"a-test-path")
+				.eventually(v -> storedFileAccess.getStoredFile(new ServiceFile(3)))).get();
 	}
 
 	@Test
