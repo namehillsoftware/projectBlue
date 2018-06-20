@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -29,7 +31,6 @@ import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibr
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.events.LibraryChosenEventReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
@@ -44,6 +45,7 @@ import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFra
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
@@ -82,7 +84,37 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		}
 	};
 
-	private CreateAndHold<ISelectedBrowserLibraryProvider> lazySelectedBrowserLibraryProvider = new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
+	private final CreateAndHold<ActionBarDrawerToggle> drawerToggle = new AbstractSynchronousLazy<ActionBarDrawerToggle>() {
+		@Override
+		protected ActionBarDrawerToggle create() {
+			final CharSequence selectViewTitle = getText(R.string.select_view_title);
+			return new ActionBarDrawerToggle(
+				BrowseLibraryActivity.this,                  /* host Activity */
+				drawerLayout.findView(),         /* DrawerLayout object */
+				R.string.drawer_open,  /* "open drawer" description */
+				R.string.drawer_close  /* "close drawer" description */
+			) {
+				/** Called when a drawer has settled in a completely closed state. */
+				@Override
+				public void onDrawerClosed(View view) {
+					super.onDrawerClosed(view);
+					getSupportActionBar().setTitle(oldTitle);
+					invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
+				}
+
+				/** Called when a drawer has settled in a completely open state. */
+				@Override
+				public void onDrawerOpened(View drawerView) {
+					super.onDrawerOpened(drawerView);
+					oldTitle = getSupportActionBar().getTitle();
+					getSupportActionBar().setTitle(selectViewTitle);
+					invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
+				}
+			};
+		}
+	};
+
+	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySelectedBrowserLibraryProvider = new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 		@Override
 		protected ISelectedBrowserLibraryProvider create() {
 			return new SelectedBrowserLibraryProvider(
@@ -91,18 +123,23 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		}
 	};
 
-	private CreateAndHold<LibraryChosenEventReceiver> lazyLibraryChosenEventReceiver = new Lazy<>(() -> new LibraryChosenEventReceiver(this));
+	private final BroadcastReceiver libraryChosenEventReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final int chosenLibrary = intent.getIntExtra(LibrarySelectionKey.chosenLibraryKey, -1);
+			if (chosenLibrary >= 0)
+				finishAffinity();
+		}
+	};
 
-	private CreateAndHold<LocalBroadcastManager> lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
+	private final CreateAndHold<LocalBroadcastManager> lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
 
 	private Fragment activeFragment;
 
-	private ActionBarDrawerToggle drawerToggle = null;
-
-	private CharSequence oldTitle;
+	private CharSequence oldTitle = getTitle();
 	private boolean isStopped = false;
 
 	@Override
@@ -124,7 +161,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		setContentView(R.layout.activity_browse_library);
 
 		lazyLocalBroadcastManager.getObject().registerReceiver(
-			lazyLibraryChosenEventReceiver.getObject(),
+			libraryChosenEventReceiver,
 			new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout));
@@ -137,34 +174,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		final DrawerLayout drawerLayout = this.drawerLayout.findView();
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
-		oldTitle = getTitle();
-		final CharSequence selectViewTitle = getText(R.string.select_view_title);
-		drawerToggle = new ActionBarDrawerToggle(
-                this,                  /* host Activity */
-				drawerLayout,         /* DrawerLayout object */
-                R.string.drawer_open,  /* "open drawer" description */
-                R.string.drawer_close  /* "close drawer" description */
-		) {
-			 /** Called when a drawer has settled in a completely closed state. */
-			@Override
-            public void onDrawerClosed(View view) {
-                super.onDrawerClosed(view);
-				getSupportActionBar().setTitle(oldTitle);
-                invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
-            }
-
-            /** Called when a drawer has settled in a completely open state. */
-			@Override
-            public void onDrawerOpened(View drawerView) {
-                super.onDrawerOpened(drawerView);
-                oldTitle = getSupportActionBar().getTitle();
-				getSupportActionBar().setTitle(selectViewTitle);
-                invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
-            }
-
-		};
-
-		drawerLayout.setDrawerListener(drawerToggle);
+		drawerLayout.addDrawerListener(drawerToggle.getObject());
 
 		specialLibraryItemsListView.findView().setOnItemClickListener((parent, view, position, id) -> updateSelectedView(Library.ViewType.DownloadView, 0));
 	}
@@ -283,7 +293,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	private void updateSelectedView(final Library.ViewType selectedViewType, final int selectedViewKey) {
 		drawerLayout.findView().closeDrawer(GravityCompat.START);
-		drawerToggle.syncState();
+		drawerToggle.getObject().syncState();
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
@@ -305,20 +315,20 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		return drawerToggle != null && drawerToggle.onOptionsItemSelected(item) || ViewUtils.handleMenuClicks(this, item);
+		return drawerToggle.isCreated() && drawerToggle.getObject().onOptionsItemSelected(item) || ViewUtils.handleMenuClicks(this, item);
 	}
 
 	@Override
     protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
         // Sync the toggle state after onRestoreInstanceState has occurred.
-        if (drawerToggle != null) drawerToggle.syncState();
+        if (drawerToggle.isCreated()) drawerToggle.getObject().syncState();
     }
 
 	@Override
     public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-        if (drawerToggle != null) drawerToggle.onConfigurationChanged(newConfig);
+        if (drawerToggle.isCreated()) drawerToggle.getObject().onConfigurationChanged(newConfig);
     }
 
 	private void showProgressBar() {
