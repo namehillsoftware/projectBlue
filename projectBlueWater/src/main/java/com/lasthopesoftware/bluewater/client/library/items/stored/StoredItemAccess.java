@@ -104,10 +104,10 @@ public final class StoredItemAccess implements IStoredItemAccess {
     }
 
     private static boolean isItemMarkedForSync(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
-        return getStoredList(helper, library, item, itemType) != null;
+        return getStoredItem(helper, library, item, itemType) != null;
     }
 
-    private static StoredItem getStoredList(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
+    private  static StoredItem getStoredItem(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
             return
                 helper
                     .mapSql(
