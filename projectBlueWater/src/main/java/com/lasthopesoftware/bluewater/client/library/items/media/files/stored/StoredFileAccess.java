@@ -101,10 +101,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 		return getStoredFileTask(serviceServiceFile);
 	}
 
-	private Promise<Collection<StoredFile>> promiseAllStoredFilesInLibrary() {
-		return getAllStoredFilesInLibrary.promiseAllStoredFiles(library);
-	}
-
 	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -134,9 +130,9 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 					repositoryAccessHelper
 							.mapSql(
-									" UPDATE " + StoredFileEntityInformation.tableName +
-											" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
-											" WHERE id = @id")
+								" UPDATE " + StoredFileEntityInformation.tableName +
+								" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
+								" WHERE id = @id")
 							.addParameter("id", storedFile.getId())
 							.execute();
 
@@ -266,7 +262,8 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	@Override
 	public Promise<Collection<Void>> pruneStoredFiles(final Set<ServiceFile> serviceFilesToKeep) {
-		return promiseAllStoredFilesInLibrary().eventually(new PruneFilesTask(this, serviceFilesToKeep));
+		return getAllStoredFilesInLibrary.promiseAllStoredFiles(library)
+			.eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}
 
 	private StoredFile getStoredFile(RepositoryAccessHelper helper, ServiceFile serviceFile) {

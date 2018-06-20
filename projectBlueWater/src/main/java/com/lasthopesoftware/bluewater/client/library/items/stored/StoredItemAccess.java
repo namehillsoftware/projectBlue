@@ -107,7 +107,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
         return getStoredList(helper, library, item, itemType) != null;
     }
 
-    private  static StoredItem getStoredList(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
+    private static StoredItem getStoredList(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
             return
                 helper
                     .mapSql(
