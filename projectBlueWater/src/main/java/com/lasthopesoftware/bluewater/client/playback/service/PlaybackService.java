@@ -547,8 +547,16 @@ implements OnAudioFocusChangeListener
 	@Override
 	public final void onCreate() {
 		registerRemoteClientControl();
+
 		localBroadcastManagerLazy.getObject()
-			.registerReceiver(onPlaybackEngineChanged, new IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged));
+			.registerReceiver(
+				onPlaybackEngineChanged,
+				new IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged));
+
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(
+				onLibraryChanged,
+				new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
 	}
 
 	@Override
@@ -632,8 +640,6 @@ implements OnAudioFocusChangeListener
 				.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 				.then(perform(m -> actOnIntent(intentToRun)))
 				.excuse(UnhandledRejectionHandler);
-
-			localBroadcastManagerLazy.getObject().registerReceiver(onLibraryChanged, new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
 
 			return;
 		}
