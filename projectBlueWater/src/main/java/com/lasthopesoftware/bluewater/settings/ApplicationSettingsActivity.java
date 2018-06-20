@@ -19,7 +19,6 @@ import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 
-import com.annimon.stream.Collectors;
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
@@ -185,7 +184,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 				serverListView.findView().setAdapter(
 					new ServerListAdapter(
 						this,
-						Stream.of(libraries).sortBy(Library::getId).collect(Collectors.toList()),
+						Stream.of(libraries).sortBy(Library::getId).toList(),
 						selectedBrowserLibrary.isPresent() ? selectedBrowserLibrary.get() : null,
 						new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
 
