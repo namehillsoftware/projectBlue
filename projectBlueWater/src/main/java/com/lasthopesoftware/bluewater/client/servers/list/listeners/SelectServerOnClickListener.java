@@ -26,7 +26,7 @@ public class SelectServerOnClickListener implements View.OnClickListener {
 		browserLibrarySelection.selectBrowserLibrary(library.getId());
 
 		final Intent browseLibraryIntent = new Intent(context, BrowseLibraryActivity.class);
-		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
 		context.startActivity(browseLibraryIntent);
 	}
 }

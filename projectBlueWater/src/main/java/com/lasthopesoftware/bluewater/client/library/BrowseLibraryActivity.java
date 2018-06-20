@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library;
 
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -27,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibr
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.events.LibraryChosenEventReceiver;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
@@ -40,6 +43,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
+import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
@@ -48,6 +52,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.LoggerFactory;
 
@@ -72,19 +77,23 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private final LazyViewFinder<ProgressBar> loadingViewsProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingViews);
 	private final CreateAndHold<LibraryRepository> lazyLibraryRepository = new AbstractSynchronousLazy<LibraryRepository>() {
 		@Override
-		protected LibraryRepository create() throws Exception {
+		protected LibraryRepository create() {
 			return new LibraryRepository(BrowseLibraryActivity.this);
 		}
 	};
 
 	private CreateAndHold<ISelectedBrowserLibraryProvider> lazySelectedBrowserLibraryProvider = new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 		@Override
-		protected ISelectedBrowserLibraryProvider create() throws Exception {
+		protected ISelectedBrowserLibraryProvider create() {
 			return new SelectedBrowserLibraryProvider(
 				new SelectedBrowserLibraryIdentifierProvider(BrowseLibraryActivity.this),
 				lazyLibraryRepository.getObject());
 		}
 	};
+
+	private CreateAndHold<LibraryChosenEventReceiver> lazyLibraryChosenEventReceiver = new Lazy<>(() -> new LibraryChosenEventReceiver(this));
+
+	private CreateAndHold<LocalBroadcastManager> lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -113,6 +122,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
         }
 
 		setContentView(R.layout.activity_browse_library);
+
+		lazyLocalBroadcastManager.getObject().registerReceiver(
+			lazyLibraryChosenEventReceiver.getObject(),
+			new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout));
 
