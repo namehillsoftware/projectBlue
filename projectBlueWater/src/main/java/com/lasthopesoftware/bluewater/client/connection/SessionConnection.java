@@ -135,19 +135,10 @@ public class SessionConnection {
 	}
 
 	public static void refresh(final Context context) {
-		refresh(context, -1);
-	}
-
-	private static void refresh(final Context context, final int timeout) {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final Promise<Boolean> promisedConnectionTest =
-			timeout > 0
-				? ConnectionTester.doTest(sessionConnectionProvider, timeout)
-				: ConnectionTester.doTest(sessionConnectionProvider);
-
-		promisedConnectionTest
+		ConnectionTester.doTest(sessionConnectionProvider)
 			.then(result -> {
 				if (!result) build(context);
 
