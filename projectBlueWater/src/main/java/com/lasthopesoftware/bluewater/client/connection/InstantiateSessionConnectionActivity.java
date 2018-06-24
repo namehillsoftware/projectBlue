@@ -30,14 +30,14 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	private final Lazy<Intent> selectServerIntent = new Lazy<Intent>(() -> new Intent(this, ApplicationSettingsActivity.class));
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
-		protected Intent create() throws Exception {
+		protected Intent create() {
 			final Intent browseLibraryIntent = new Intent(InstantiateSessionConnectionActivity.this, BrowseLibraryActivity.class);
 			browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 			return browseLibraryIntent;
 		}
 	};
 
-	private LocalBroadcastManager localBroadcastManager;
+	private final Lazy<LocalBroadcastManager> localBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
 
 	private final BroadcastReceiver buildSessionConnectionReceiver = new BroadcastReceiver() {
 		@Override
@@ -60,22 +60,24 @@ public class InstantiateSessionConnectionActivity extends Activity {
 		
 		return true;
 	}
+
+	public static void startNewConnection(final Context context) {
+		context.startActivity(new Intent(context, InstantiateSessionConnectionActivity.class));
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_status);
 
-		localBroadcastManager = LocalBroadcastManager.getInstance(this);
-
-		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
+		localBroadcastManager.getObject().registerReceiver(buildSessionConnectionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		handleBuildStatusChange(SessionConnection.build(this));
 	}
 	
 	private void handleBuildStatusChange(int status) {
 		if (BuildingSessionConnectionStatus.completeConditions.contains(status))
-			localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver);
+			localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
 
 		final TextView lblConnectionStatusView = lblConnectionStatus.findView();
 		switch (status) {
