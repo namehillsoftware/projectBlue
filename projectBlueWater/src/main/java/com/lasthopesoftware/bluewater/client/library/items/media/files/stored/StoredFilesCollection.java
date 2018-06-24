@@ -23,7 +23,7 @@ public class StoredFilesCollection implements GetAllStoredFilesInLibrary {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return repositoryAccessHelper
-					.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " + @" + StoredFileEntityInformation.libraryIdColumnName)
+					.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
 					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
 					.fetch(StoredFile.class);
 			}
