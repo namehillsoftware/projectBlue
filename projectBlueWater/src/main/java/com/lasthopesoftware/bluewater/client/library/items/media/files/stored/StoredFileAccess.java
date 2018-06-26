@@ -168,7 +168,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<StoredFile> createOrUpdateFile(final ServiceFile serviceFile) {
+	public Promise<StoredFile> promiseStoredFileUpsert(final ServiceFile serviceFile) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				final StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);

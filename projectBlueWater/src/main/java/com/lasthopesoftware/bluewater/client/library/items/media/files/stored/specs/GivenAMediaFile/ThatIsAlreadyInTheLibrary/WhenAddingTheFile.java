@@ -52,7 +52,7 @@ public class WhenAddingTheFile extends AndroidContext {
 
 		new FuturePromise<>(
 			storedFileAccess
-				.createOrUpdateFile(new ServiceFile(3))
+				.promiseStoredFileUpsert(new ServiceFile(3))
 				.eventually(storedFileAccess::markStoredFileAsDownloaded)).get();
 
 		new FuturePromise<>(storedFileAccess.addMediaFile(

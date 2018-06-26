@@ -109,7 +109,7 @@ public class LibrarySyncHandler {
 							return new Promise<>((StoredFile) null);
 
 						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileAccess
-							.createOrUpdateFile(serviceFile)
+							.promiseStoredFileUpsert(serviceFile)
 							.then(storedFile -> {
 								if (storedFile != null && !storedFile.isDownloadComplete())
 									storedFileDownloader.queueFileForDownload(serviceFile, storedFile);

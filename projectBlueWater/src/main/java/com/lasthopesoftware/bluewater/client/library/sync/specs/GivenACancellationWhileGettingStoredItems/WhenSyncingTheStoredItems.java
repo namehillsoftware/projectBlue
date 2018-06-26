@@ -70,7 +70,7 @@ public class WhenSyncingTheStoredItems {
 
 		storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(anySet())).thenReturn(new Promise<>(Collections.emptyList()));
-		when(storedFileAccess.createOrUpdateFile(any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
+		when(storedFileAccess.promiseStoredFileUpsert(any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
