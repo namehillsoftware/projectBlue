@@ -15,7 +15,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,7 +50,6 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	private final LazyViewFinder<RadioGroup> rgSyncFileOptions = new LazyViewFinder<>(this, R.id.rgSyncFileOptions);
 	private final LazyViewFinder<CheckBox> chkIsUsingExistingFiles = new LazyViewFinder<>(this, R.id.chkIsUsingExistingFiles);
 	private final LazyViewFinder<CheckBox> chkIsUsingLocalConnectionForSync = new LazyViewFinder<>(this, R.id.chkIsUsingLocalConnectionForSync);
-	private final LazyViewFinder<ImageButton> selectDirectoryButton = new LazyViewFinder<>(this, R.id.selectDirectoryButton);
 
 	private final Lazy<IApplicationWritePermissionsRequirementsProvider> applicationWritePermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationWritePermissionsRequirementsProvider(this));
 	private final Lazy<IApplicationReadPermissionsRequirementsProvider> applicationReadPermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationReadPermissionsRequirementsProvider(this));
