@@ -125,12 +125,11 @@ public class SessionConnection {
 											});
 								});
 						});
-			})
-			.excuse(e -> {
+			}, e -> {
 				logger.error("There was an error building the session connection", e);
 				doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
 
-				return null;
+				return Promise.empty();
 			});
 	}
 
