@@ -32,7 +32,6 @@ import com.lasthopesoftware.bluewater.settings.SettingsMenu;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.lazyj.Lazy;
-import com.obsez.android.lib.filechooser.ChooserDialog;
 
 import java.util.ArrayList;
 
@@ -117,14 +116,6 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         saveButton.findView().setOnClickListener(connectionButtonListener);
-
-		selectDirectoryButton.findView().setOnClickListener(v ->
-			new ChooserDialog().with(this)
-				.withFilter(true, false)
-				.withStartFile("/storage")
-				.withChosenListener((path, pathFile) -> txtSyncPath.findView().setText(path))
-				.build()
-				.show());
 	}
 
 	@Override
