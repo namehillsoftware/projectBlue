@@ -93,18 +93,18 @@ public final class StoredFileAccess implements IStoredFileAccess {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return getStoredFile(repositoryAccessHelper, storedFileId);
 			}
-		}, RepositoryAccessHelper.databaseExecutor);
+		}, storedFileAccessExecutor);
 	}
 
 	@Override
-	public Promise<StoredFile> getStoredFile(final ServiceFile serviceServiceFile) {
-		return getStoredFileTask(serviceServiceFile);
+	public Promise<StoredFile> getStoredFile(final ServiceFile serviceFile) {
+		return getStoredFileTask(serviceFile);
 	}
 
-	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceServiceFile) {
+	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceFile) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				return getStoredFile(repositoryAccessHelper, serviceServiceFile);
+				return getStoredFile(repositoryAccessHelper, serviceFile);
 			}
 		}, storedFileAccessExecutor);
 	}
