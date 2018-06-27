@@ -38,7 +38,9 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.CachedAudioFileUriProvider;
@@ -383,6 +385,15 @@ implements OnAudioFocusChangeListener
 		}
 	};
 
+	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySelectedLibraryProvider = new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
+		@Override
+		protected ISelectedBrowserLibraryProvider create() {
+			return new SelectedBrowserLibraryProvider(
+				new SelectedBrowserLibraryIdentifierProvider(PlaybackService.this),
+				new LibraryRepository(PlaybackService.this));
+		}
+	};
+
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
 
@@ -638,8 +649,8 @@ implements OnAudioFocusChangeListener
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			stopNotification();
 
-			lazyLibraryRepository.getObject()
-				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
+			lazySelectedLibraryProvider.getObject()
+				.getBrowserLibrary()
 				.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 				.then(perform(m -> actOnIntent(intentToRun)))
 				.excuse(UnhandledRejectionHandler);
@@ -733,7 +744,6 @@ implements OnAudioFocusChangeListener
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			this,
-			library,
 			new SyncDirectoryLookup(
 				new PublicDirectoryLookup(this),
 				new PrivateDirectoryLookup(this)),
@@ -763,6 +773,7 @@ implements OnAudioFocusChangeListener
 					new BestMatchUriProvider(
 						library,
 						new StoredFileUriProvider(
+							lazySelectedLibraryProvider.getObject(),
 							storedFileAccess,
 							arbitratorForOs),
 						new CachedAudioFileUriProvider(

@@ -332,7 +332,6 @@ public class SyncService extends Service {
 
 								final StoredFileAccess storedFileAccess = new StoredFileAccess(
 									context,
-									library,
 									new SyncDirectoryLookup(
 										new PublicDirectoryLookup(context),
 										new PrivateDirectoryLookup(context)),

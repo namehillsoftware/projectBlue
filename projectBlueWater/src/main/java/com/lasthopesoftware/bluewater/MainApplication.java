@@ -112,14 +112,13 @@ public class MainApplication extends Application {
 
 							final StoredFileAccess storedFileAccess = new StoredFileAccess(
 								context,
-								library,
 								new SyncDirectoryLookup(
 									new PublicDirectoryLookup(context),
 									new PrivateDirectoryLookup(context)),
 								new StoredFilesCollection(context),
 								cachedFilePropertiesProvider);
 
-							storedFileAccess.addMediaFile(new ServiceFile(fileKey), mediaFileId, mediaFilePath);
+							storedFileAccess.addMediaFile(library, new ServiceFile(fileKey), mediaFileId, mediaFilePath);
 					})));
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));

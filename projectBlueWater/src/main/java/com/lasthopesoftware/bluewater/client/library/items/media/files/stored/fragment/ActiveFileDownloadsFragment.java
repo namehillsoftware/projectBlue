@@ -88,7 +88,6 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(
 					activity,
-					library,
 					new SyncDirectoryLookup(
 						new PublicDirectoryLookup(activity),
 						new PrivateDirectoryLookup(activity)),

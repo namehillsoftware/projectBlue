@@ -45,22 +45,24 @@ public class WhenAddingTheFile extends AndroidContext {
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			RuntimeEnvironment.application,
-			new Library().setId(15),
 			mockSyncDrive,
 			mock(GetAllStoredFilesInLibrary.class),
 			cachedFilesPropertiesProvider);
 
+		final Library library = new Library().setId(15);
+
 		new FuturePromise<>(
 			storedFileAccess
-				.promiseStoredFileUpsert(new ServiceFile(3))
+				.promiseStoredFileUpsert(library, new ServiceFile(3))
 				.eventually(storedFileAccess::markStoredFileAsDownloaded)).get();
 
 		new FuturePromise<>(storedFileAccess.addMediaFile(
+			library,
 			new ServiceFile(3),
 			14,
 			"/a-path/a/a/a-test-path")).get();
 
-		storedFile = new FuturePromise<>(storedFileAccess.getStoredFile(new ServiceFile(3))).get();
+		storedFile = new FuturePromise<>(storedFileAccess.getStoredFile(library, new ServiceFile(3))).get();
 	}
 
 	@Test

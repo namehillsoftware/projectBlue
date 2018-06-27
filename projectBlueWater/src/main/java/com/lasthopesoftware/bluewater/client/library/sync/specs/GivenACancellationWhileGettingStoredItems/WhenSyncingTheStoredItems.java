@@ -69,8 +69,8 @@ public class WhenSyncingTheStoredItems {
 		when(writePossibleArbitrator.isFileWritePossible(any())).thenReturn(true);
 
 		storedFileAccess = mock(IStoredFileAccess.class);
-		when(storedFileAccess.pruneStoredFiles(anySet())).thenReturn(new Promise<>(Collections.emptyList()));
-		when(storedFileAccess.promiseStoredFileUpsert(any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
+		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(new Promise<>(Collections.emptyList()));
+		when(storedFileAccess.promiseStoredFileUpsert(any(), any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
@@ -108,6 +108,6 @@ public class WhenSyncingTheStoredItems {
 
 	@Test
 	public void thenFilesAreNotPruned() {
-		verify(storedFileAccess, never()).pruneStoredFiles(anySet());
+		verify(storedFileAccess, never()).pruneStoredFiles(any(), anySet());
 	}
 }

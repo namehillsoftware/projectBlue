@@ -26,17 +26,19 @@ public class WhenAddingTheFile extends AndroidContext {
 	public void before() throws ExecutionException, InterruptedException {
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			RuntimeEnvironment.application,
-			new Library().setId(15),
 			mock(LookupSyncDirectory.class),
 			mock(GetAllStoredFilesInLibrary.class),
 			mock(CachedFilePropertiesProvider.class));
 
+		final Library library = new Library().setId(15);
+
 		storedFile = new FuturePromise<>(
 			storedFileAccess.addMediaFile(
+				library,
 				new ServiceFile(3),
 				14,
 				"a-test-path")
-				.eventually(v -> storedFileAccess.getStoredFile(new ServiceFile(3)))).get();
+				.eventually(v -> storedFileAccess.getStoredFile(library, new ServiceFile(3)))).get();
 	}
 
 	@Test

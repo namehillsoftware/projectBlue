@@ -43,7 +43,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
 	private final Context context;
-	private final Library library;
 	private final LookupSyncDirectory lookupSyncDirectory;
 	private final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary;
 	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
@@ -75,13 +74,11 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 	public StoredFileAccess(
 		Context context,
-		Library library,
 		LookupSyncDirectory lookupSyncDirectory,
 		GetAllStoredFilesInLibrary getAllStoredFilesInLibrary,
 		CachedFilePropertiesProvider cachedFilePropertiesProvider) {
 
 		this.context = context;
-		this.library = library;
 		this.lookupSyncDirectory = lookupSyncDirectory;
 		this.getAllStoredFilesInLibrary = getAllStoredFilesInLibrary;
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
@@ -97,14 +94,14 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<StoredFile> getStoredFile(final ServiceFile serviceFile) {
-		return getStoredFileTask(serviceFile);
+	public Promise<StoredFile> getStoredFile(Library library, final ServiceFile serviceFile) {
+		return getStoredFileTask(library, serviceFile);
 	}
 
-	private Promise<StoredFile> getStoredFileTask(final ServiceFile serviceFile) {
+	private Promise<StoredFile> getStoredFileTask(Library library, final ServiceFile serviceFile) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				return getStoredFile(repositoryAccessHelper, serviceFile);
+				return getStoredFile(library, repositoryAccessHelper, serviceFile);
 			}
 		}, storedFileAccessExecutor);
 	}
@@ -146,14 +143,14 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<Void> addMediaFile(final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
+	public Promise<Void> addMediaFile(Library library, final ServiceFile serviceFile, final int mediaFileId, final String filePath) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
+				StoredFile storedFile = getStoredFile(library, repositoryAccessHelper, serviceFile);
 
 				if (storedFile == null) {
-					createStoredFile(repositoryAccessHelper, serviceFile);
-					storedFile = getStoredFile(repositoryAccessHelper, serviceFile)
+					createStoredFile(library, repositoryAccessHelper, serviceFile);
+					storedFile = getStoredFile(library, repositoryAccessHelper, serviceFile)
 						.setIsOwner(false)
 						.setIsDownloadComplete(true)
 						.setPath(filePath);
@@ -168,15 +165,15 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<StoredFile> promiseStoredFileUpsert(final ServiceFile serviceFile) {
+	public Promise<StoredFile> promiseStoredFileUpsert(Library library, final ServiceFile serviceFile) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				final StoredFile storedFile = getStoredFile(repositoryAccessHelper, serviceFile);
+				final StoredFile storedFile = getStoredFile(library, repositoryAccessHelper, serviceFile);
 				if (storedFile != null) return storedFile;
 
 				logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
-				createStoredFile(repositoryAccessHelper, serviceFile);
-				return getStoredFile(repositoryAccessHelper, serviceFile);
+				createStoredFile(library, repositoryAccessHelper, serviceFile);
+				return getStoredFile(library, repositoryAccessHelper, serviceFile);
 			}
 		}, storedFileAccessExecutor)
 		.eventually(storedFile -> {
@@ -261,12 +258,12 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<Collection<Void>> pruneStoredFiles(final Set<ServiceFile> serviceFilesToKeep) {
+	public Promise<Collection<Void>> pruneStoredFiles(Library library, final Set<ServiceFile> serviceFilesToKeep) {
 		return getAllStoredFilesInLibrary.promiseAllStoredFiles(library)
 			.eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}
 
-	private StoredFile getStoredFile(RepositoryAccessHelper helper, ServiceFile serviceFile) {
+	private StoredFile getStoredFile(Library library, RepositoryAccessHelper helper, ServiceFile serviceFile) {
 		return
 			helper
 				.mapSql(
@@ -287,7 +284,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 				.fetchFirst(StoredFile.class);
 	}
 
-	private void createStoredFile(RepositoryAccessHelper repositoryAccessHelper, ServiceFile serviceFile) {
+	private void createStoredFile(Library library, RepositoryAccessHelper repositoryAccessHelper, ServiceFile serviceFile) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
 					.mapSql(insertSql.getObject())
