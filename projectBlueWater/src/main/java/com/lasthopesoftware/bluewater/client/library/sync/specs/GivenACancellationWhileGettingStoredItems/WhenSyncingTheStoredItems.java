@@ -69,7 +69,7 @@ public class WhenSyncingTheStoredItems {
 		when(writePossibleArbitrator.isFileWritePossible(any())).thenReturn(true);
 
 		storedFileAccess = mock(IStoredFileAccess.class);
-		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(new Promise<>(Collections.emptyList()));
+		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 		when(storedFileAccess.promiseStoredFileUpsert(any(), any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(

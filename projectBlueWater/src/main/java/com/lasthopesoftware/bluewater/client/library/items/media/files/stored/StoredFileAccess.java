@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -258,7 +257,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<Collection<Void>> pruneStoredFiles(Library library, final Set<ServiceFile> serviceFilesToKeep) {
+	public Promise<Void> pruneStoredFiles(Library library, final Set<ServiceFile> serviceFilesToKeep) {
 		return getAllStoredFilesInLibrary.promiseAllStoredFiles(library)
 			.eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}

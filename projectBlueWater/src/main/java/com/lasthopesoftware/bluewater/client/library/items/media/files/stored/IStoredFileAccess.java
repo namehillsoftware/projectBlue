@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -22,5 +21,5 @@ public interface IStoredFileAccess {
 
 	Promise<StoredFile> promiseStoredFileUpsert(Library library, ServiceFile serviceFile);
 
-	Promise<Collection<Void>> pruneStoredFiles(Library library, Set<ServiceFile> serviceFilesToKeep);
+	Promise<Void> pruneStoredFiles(Library library, Set<ServiceFile> serviceFilesToKeep);
 }

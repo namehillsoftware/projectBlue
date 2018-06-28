@@ -13,12 +13,8 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAcc
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
-import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
-import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -57,14 +53,8 @@ public class WhenSyncingTheStoredItems {
 
 		final FakeFileConnectionProvider fakeConnectionProvider = new FakeFileConnectionProvider();
 
-		final IFileReadPossibleArbitrator readPossibleArbitrator = mock(IFileReadPossibleArbitrator.class);
-		when(readPossibleArbitrator.isFileReadPossible(any())).thenReturn(true);
-
-		final IFileWritePossibleArbitrator writePossibleArbitrator = mock(IFileWritePossibleArbitrator.class);
-		when(writePossibleArbitrator.isFileWritePossible(any())).thenReturn(true);
-
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
-		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(new Promise<>(Collections.emptyList()));
+		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 		when(storedFileAccess.promiseStoredFileUpsert(any(), any())).thenAnswer((e) -> new Promise<>(new StoredFile(e.getArgument(0), 1, e.getArgument(1), "fake-file-name", true)));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
@@ -76,11 +66,11 @@ public class WhenSyncingTheStoredItems {
 				fakeConnectionProvider,
 				storedFileAccess,
 				new ServiceFileUriQueryParamsProvider(),
-				readPossibleArbitrator,
-				writePossibleArbitrator,
+				f -> true,
+				f -> true,
 				(i, f) -> {}),
-			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
-			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
+			f -> false,
+			f -> false);
 
 		librarySyncHandler.setOnFileDownloaded(jobResult -> storedFileJobResults.add(jobResult.storedFile));
 
