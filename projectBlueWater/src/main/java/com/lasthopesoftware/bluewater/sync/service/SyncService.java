@@ -50,7 +50,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaFileIdProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.upserts.StoredFileUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemsChecker;
@@ -64,6 +69,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
@@ -260,6 +266,12 @@ public class SyncService extends Service {
 
 	private final CreateAndHold<StoredFilesChecker> lazyStoredFilesChecker = new Lazy<>(() -> new StoredFilesChecker(new StoredFilesCounter(this)));
 
+	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> lazyOsReadPermissions = new Lazy<>(() -> new ExternalStorageReadPermissionsArbitratorForOs(this));
+
+	private final CreateAndHold<LookupSyncDirectory> lazySyncDirectoryLookup = new Lazy<>(() -> new SyncDirectoryLookup(
+		new PublicDirectoryLookup(this),
+		new PrivateDirectoryLookup(this)));
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -332,16 +344,32 @@ public class SyncService extends Service {
 
 								final StoredFileAccess storedFileAccess = new StoredFileAccess(
 									context,
-									new SyncDirectoryLookup(
-										new PublicDirectoryLookup(context),
-										new PrivateDirectoryLookup(context)),
-									new StoredFilesCollection(context),
+									new StoredFilesCollection(context));
+
+								final MediaQueryCursorProvider cursorProvider = new MediaQueryCursorProvider(
+									context,
 									cachedFilePropertiesProvider);
+
+								final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
+									context,
+									new MediaFileUriProvider(
+										context,
+										cursorProvider,
+										lazyOsReadPermissions.getObject(),
+										library,
+										true),
+									new MediaFileIdProvider(
+										cursorProvider,
+										lazyOsReadPermissions.getObject()),
+									new StoredFileQuery(context),
+									cachedFilePropertiesProvider,
+									lazySyncDirectoryLookup.getObject());
 
 								final LibrarySyncHandler librarySyncHandler =
 									new LibrarySyncHandler(library,
 										new StoredItemServiceFileCollector(storedItemAccess, new FileProvider(new FileStringListProvider(connectionProvider))),
 										storedFileAccess,
+										storedFileUpdater,
 										new StoredFileDownloader(
 											lazyStoredFileSystemFileProducer.getObject(),
 											connectionProvider,

@@ -20,25 +20,16 @@ import android.widget.RelativeLayout;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
-import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
-import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 
 import java.util.List;
 
@@ -80,19 +71,10 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		selectedBrowserLibraryProvider
 			.getBrowserLibrary()
 			.then(perform(library -> {
-				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
-				final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
-				final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(activity);
-
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(
 					activity,
-					new SyncDirectoryLookup(
-						new PublicDirectoryLookup(activity),
-						new PrivateDirectoryLookup(activity)),
-					getAllStoredFilesInLibrary,
-					cachedFilePropertiesProvider);
+					new StoredFilesCollection(activity));
+
 				storedFileAccess.getDownloadingStoredFiles()
 					.eventually(LoopedInPromise.response(perform(storedFiles -> {
 						final List<StoredFile> localStoredFiles =

@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 import static com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess.storedFileAccessExecutor;
 
-public class StoredFileUpdater {
+public class StoredFileUpdater implements UpdateStoredFiles {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileUpdater.class);
 
@@ -77,6 +77,7 @@ public class StoredFileUpdater {
 		this.lookupSyncDirectory = lookupSyncDirectory;
 	}
 
+	@Override
 	public Promise<StoredFile> promiseStoredFileUpdate(Library library, ServiceFile serviceFile) {
 		return storedFiles.promiseStoredFile(library, serviceFile)
 			.eventually(storedFile -> storedFile != null
@@ -105,18 +106,16 @@ public class StoredFileUpdater {
 						storedFile.setIsOwner(false);
 						return
 							mediaFileIdProvider
-								.getMediaId()
+								.getMediaId(serviceFile)
 								.then(mediaId -> {
 									storedFile.setStoredMediaId(mediaId);
 									return storedFile;
 								});
 					});
 			})
-			.eventually(storedFile -> {
-				if (storedFile.getPath() != null)
-					return new Promise<>(storedFile);
-
-				return cachedFilePropertiesProvider
+			.eventually(storedFile -> storedFile.getPath() != null
+				? new Promise<>(storedFile)
+				: cachedFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(library)
 						.then(syncDrive -> {
@@ -145,8 +144,7 @@ public class StoredFileUpdater {
 							storedFile.setPath(fullPath);
 
 							return storedFile;
-						}));
-			})
+						})))
 			.eventually(storedFile -> new QueuedPromise<>(() -> {
 				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 					updateStoredFile(repositoryAccessHelper, storedFile);

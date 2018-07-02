@@ -38,7 +38,7 @@ public class WhenUpdatingTheFile extends AndroidContext {
 			.thenReturn(Promise.empty());
 
 		final MediaFileIdProvider mediaFileIdProvider = mock(MediaFileIdProvider.class);
-		when(mediaFileIdProvider.getMediaId())
+		when(mediaFileIdProvider.getMediaId(any()))
 			.thenReturn(Promise.empty());
 
 		final FakeCachedFilesPropertiesProvider filePropertiesProvider = new FakeCachedFilesPropertiesProvider();

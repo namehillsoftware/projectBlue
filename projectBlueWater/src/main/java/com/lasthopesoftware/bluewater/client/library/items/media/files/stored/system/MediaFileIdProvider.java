@@ -20,16 +20,14 @@ public class MediaFileIdProvider implements ImmediateResponse<Cursor, Integer> {
 	private static final String audioIdKey = MediaStore.Audio.keyFor("audio_id");
 
 	private final IMediaQueryCursorProvider mediaQueryCursorProvider;
-	private final ServiceFile serviceFile;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 
-	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, ServiceFile serviceFile, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
+	public MediaFileIdProvider(IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
 		this.mediaQueryCursorProvider = mediaQueryCursorProvider;
-		this.serviceFile = serviceFile;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
-	public Promise<Integer> getMediaId() {
+	public Promise<Integer> getMediaId(ServiceFile serviceFile) {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return new Promise<>(-1);
 

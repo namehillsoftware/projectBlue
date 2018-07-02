@@ -19,7 +19,5 @@ public interface IStoredFileAccess {
 
 	Promise<Void> addMediaFile(Library library, ServiceFile serviceFile, int mediaFileId, String filePath);
 
-	Promise<StoredFile> promiseStoredFileUpsert(Library library, ServiceFile serviceFile);
-
 	Promise<Void> pruneStoredFiles(Library library, Set<ServiceFile> serviceFilesToKeep);
 }

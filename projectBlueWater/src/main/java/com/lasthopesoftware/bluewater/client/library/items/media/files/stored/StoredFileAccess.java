@@ -4,28 +4,18 @@ import android.content.Context;
 import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaFileIdProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
-import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
-import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
 
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.regex.Pattern;
 
 public final class StoredFileAccess implements IStoredFileAccess {
 
@@ -42,9 +31,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
 	private final Context context;
-	private final LookupSyncDirectory lookupSyncDirectory;
 	private final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary;
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
 
 	private static final String selectFromStoredFiles = "SELECT * FROM " + StoredFileEntityInformation.tableName;
 
@@ -69,18 +56,12 @@ public final class StoredFileAccess implements IStoredFileAccess {
 							.setFilter("WHERE id = @id")
 							.buildQuery());
 
-	private static final Lazy<Pattern> reservedCharactersPattern = new Lazy<>(() -> Pattern.compile("[|?*<\":>+\\[\\]'/]"));
-
 	public StoredFileAccess(
 		Context context,
-		LookupSyncDirectory lookupSyncDirectory,
-		GetAllStoredFilesInLibrary getAllStoredFilesInLibrary,
-		CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+		GetAllStoredFilesInLibrary getAllStoredFilesInLibrary) {
 
 		this.context = context;
-		this.lookupSyncDirectory = lookupSyncDirectory;
 		this.getAllStoredFilesInLibrary = getAllStoredFilesInLibrary;
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
 	@Override
@@ -161,94 +142,6 @@ public final class StoredFileAccess implements IStoredFileAccess {
 				return null;
 			}
 		}, storedFileAccessExecutor);
-	}
-
-	@Override
-	public Promise<StoredFile> promiseStoredFileUpsert(Library library, final ServiceFile serviceFile) {
-		return new QueuedPromise<>(() -> {
-			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				final StoredFile storedFile = getStoredFile(library, repositoryAccessHelper, serviceFile);
-				if (storedFile != null) return storedFile;
-
-				logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
-				createStoredFile(library, repositoryAccessHelper, serviceFile);
-				return getStoredFile(library, repositoryAccessHelper, serviceFile);
-			}
-		}, storedFileAccessExecutor)
-		.eventually(storedFile -> {
-			if (storedFile.getPath() != null || !library.isUsingExistingFiles())
-				return new Promise<>(storedFile);
-
-			final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator = new ExternalStorageReadPermissionsArbitratorForOs(context);
-			final IMediaQueryCursorProvider mediaQueryCursorProvider = new MediaQueryCursorProvider(context, cachedFilePropertiesProvider);
-
-			final MediaFileUriProvider mediaFileUriProvider =
-				new MediaFileUriProvider(context, mediaQueryCursorProvider, externalStorageReadPermissionsArbitrator, library, true);
-
-			return mediaFileUriProvider
-				.promiseFileUri(serviceFile)
-				.eventually(localUri -> {
-					if (localUri == null)
-						return new Promise<>(storedFile);
-
-					storedFile.setPath(localUri.getPath());
-					storedFile.setIsDownloadComplete(true);
-					storedFile.setIsOwner(false);
-					final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, serviceFile, externalStorageReadPermissionsArbitrator);
-					return
-						mediaFileIdProvider
-							.getMediaId()
-							.then(mediaId -> {
-								storedFile.setStoredMediaId(mediaId);
-								return storedFile;
-							});
-				});
-			})
-			.eventually(storedFile -> {
-				if (storedFile.getPath() != null)
-					return new Promise<>(storedFile);
-
-				return cachedFilePropertiesProvider
-					.promiseFileProperties(serviceFile)
-					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(library)
-						.then(syncDrive -> {
-							String fullPath = syncDrive.getPath();
-
-							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
-							if (artist == null)
-								artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-
-							if (artist != null)
-								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(artist.trim()));
-
-							final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
-							if (album != null)
-								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(album.trim()));
-
-							String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
-							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
-
-							final int extensionIndex = fileName.lastIndexOf('.');
-							if (extensionIndex > -1)
-								fileName = fileName.substring(0, extensionIndex + 1) + "mp3";
-
-							fullPath = FilenameUtils.concat(fullPath, fileName).trim();
-
-							storedFile.setPath(fullPath);
-
-							return storedFile;
-						}));
-			})
-			.eventually(storedFile -> new QueuedPromise<>(() -> {
-				try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-					updateStoredFile(repositoryAccessHelper, storedFile);
-					return storedFile;
-				}
-			}, storedFileAccessExecutor));
-	}
-
-	private static String replaceReservedCharsAndPath(String path) {
-		return reservedCharactersPattern.getObject().matcher(path).replaceAll("_");
 	}
 
 	@Override

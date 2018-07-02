@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.specs.GivenAMediaFile.ThatIsInAnotherLibrary;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
 
@@ -26,9 +24,7 @@ public class WhenAddingTheFile extends AndroidContext {
 	public void before() throws ExecutionException, InterruptedException {
 		new FuturePromise<>(new StoredFileAccess(
 			RuntimeEnvironment.application,
-			mock(LookupSyncDirectory.class),
-			mock(GetAllStoredFilesInLibrary.class),
-			mock(CachedFilePropertiesProvider.class))
+			mock(GetAllStoredFilesInLibrary.class))
 			.addMediaFile(
 				new Library().setId(13),
 				new ServiceFile(3),
@@ -38,9 +34,7 @@ public class WhenAddingTheFile extends AndroidContext {
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			RuntimeEnvironment.application,
-			mock(LookupSyncDirectory.class),
-			mock(GetAllStoredFilesInLibrary.class),
-			mock(CachedFilePropertiesProvider.class));
+			mock(GetAllStoredFilesInLibrary.class));
 
 		new FuturePromise<>(storedFileAccess.addMediaFile(
 			new Library().setId(15),

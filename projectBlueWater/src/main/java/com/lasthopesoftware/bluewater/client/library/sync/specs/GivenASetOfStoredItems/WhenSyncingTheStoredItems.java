@@ -55,12 +55,12 @@ public class WhenSyncingTheStoredItems {
 
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
-		when(storedFileAccess.promiseStoredFileUpsert(any(), any())).thenAnswer((e) -> new Promise<>(new StoredFile(e.getArgument(0), 1, e.getArgument(1), "fake-file-name", true)));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
 			new StoredItemServiceFileCollector(storedItemAccessMock, mockFileProvider),
 			storedFileAccess,
+			(Library l, ServiceFile sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
 			new StoredFileDownloader(
 				new StoredFileSystemFileProducer(),
 				fakeConnectionProvider,

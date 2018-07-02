@@ -64,7 +64,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestM
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
@@ -112,8 +111,6 @@ import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
-import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
-import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -744,11 +741,7 @@ implements OnAudioFocusChangeListener
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
 			this,
-			new SyncDirectoryLookup(
-				new PublicDirectoryLookup(this),
-				new PrivateDirectoryLookup(this)),
-			lazyAllStoredFilesInLibrary.getObject(),
-			cachedFilePropertiesProvider);
+			lazyAllStoredFilesInLibrary.getObject());
 
 		final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
 			new ExternalStorageReadPermissionsArbitratorForOs(this);
