@@ -1,4 +1,6 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.upserts.specs.GivenATypicalLibrary.WithoutTheCorrectStoredFile.ButItExistsOnDisk;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.upserts.specs.GivenATypicalLibrary.WithoutTheStoredFile.AndTheStoredFileExists;
+
+import android.net.Uri;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -23,7 +25,6 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,12 +35,12 @@ public class WhenUpdatingTheFile extends AndroidContext {
 	@Override
 	public void before() throws ExecutionException, InterruptedException {
 		final MediaFileUriProvider mediaFileUriProvider = mock(MediaFileUriProvider.class);
-		when(mediaFileUriProvider.promiseFileUri(any()))
-			.thenReturn(Promise.empty());
+		when(mediaFileUriProvider.promiseFileUri(new ServiceFile(4)))
+			.thenReturn(new Promise<>(Uri.fromFile(new File("/custom-root/a-file.mp3"))));
 
 		final MediaFileIdProvider mediaFileIdProvider = mock(MediaFileIdProvider.class);
-		when(mediaFileIdProvider.getMediaId(any()))
-			.thenReturn(Promise.empty());
+		when(mediaFileIdProvider.getMediaId(new ServiceFile(4)))
+			.thenReturn(new Promise<>(12));
 
 		final FakeCachedFilesPropertiesProvider filePropertiesProvider = new FakeCachedFilesPropertiesProvider();
 		filePropertiesProvider.addFilePropertiesToCache(
@@ -61,7 +62,10 @@ public class WhenUpdatingTheFile extends AndroidContext {
 				() -> new Promise<>(Stream.empty())));
 
 		storedFile = new FuturePromise<>(storedFileUpdater.promiseStoredFileUpdate(
-			new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL),
+			new Library()
+				.setIsUsingExistingFiles(true)
+				.setId(14)
+				.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL),
 			new ServiceFile(4))).get();
 	}
 
@@ -73,12 +77,12 @@ public class WhenUpdatingTheFile extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheFileIsOwnedByTheLibrary() {
-		assertThat(storedFile.isOwner()).isTrue();
+	public void thenTheFileIsNotOwnedByTheLibrary() {
+		assertThat(storedFile.isOwner()).isFalse();
 	}
 
 	@Test
 	public void thenTheFilePathIsCorrect() {
-		assertThat(storedFile.getPath()).isEqualTo("/my-public-drive/14/artist/album/my-filename.mp3");
+		assertThat(storedFile.getPath()).isEqualTo("/custom-root/a-file.mp3");
 	}
 }
