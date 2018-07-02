@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.IStoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.UpdateStoredFiles;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
@@ -34,15 +35,24 @@ public class LibrarySyncHandler {
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final IServiceFilesToSyncCollector serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
+	private final UpdateStoredFiles storedFileUpdater;
 	private final IStoredFileDownloader storedFileDownloader;
 	private OneParameterAction<LibrarySyncHandler> onQueueProcessingCompleted;
 
 	private final CancellationProxy cancellationProxy = new CancellationProxy();
 
-	public LibrarySyncHandler(Library library, IServiceFilesToSyncCollector serviceFilesToSyncCollector, IStoredFileAccess storedFileAccess, IStoredFileDownloader storedFileDownloader, ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider, ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
+	public LibrarySyncHandler(
+		Library library,
+		IServiceFilesToSyncCollector serviceFilesToSyncCollector,
+		IStoredFileAccess storedFileAccess,
+		UpdateStoredFiles storedFileUpdater,
+		IStoredFileDownloader storedFileDownloader,
+		ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider,
+		ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
 		this.library = library;
 		this.serviceFilesToSyncCollector = serviceFilesToSyncCollector;
 		this.storedFileAccess = storedFileAccess;
+		this.storedFileUpdater = storedFileUpdater;
 		this.storedFileDownloader = storedFileDownloader;
 		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
 		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
@@ -92,7 +102,7 @@ public class LibrarySyncHandler {
 		promisedServiceFilesToSync
 			.eventually(allServiceFilesToSync -> {
 				final HashSet<ServiceFile> serviceFilesSet = allServiceFilesToSync instanceof HashSet ? (HashSet<ServiceFile>)allServiceFilesToSync : new HashSet<>(allServiceFilesToSync);
-				final Promise<Collection<Void>> pruneFilesTask = storedFileAccess.pruneStoredFiles(serviceFilesSet);
+				final Promise<Void> pruneFilesTask = storedFileAccess.pruneStoredFiles(library, serviceFilesSet);
 				pruneFilesTask.excuse(perform(e -> logger.warn("There was an error pruning the files", e)));
 
 				return !cancellationProxy.isCancelled()
@@ -108,8 +118,8 @@ public class LibrarySyncHandler {
 						if (cancellationProxy.isCancelled())
 							return new Promise<>((StoredFile) null);
 
-						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileAccess
-							.createOrUpdateFile(serviceFile)
+						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileUpdater
+							.promiseStoredFileUpdate(library, serviceFile)
 							.then(storedFile -> {
 								if (storedFile != null && !storedFile.isDownloadComplete())
 									storedFileDownloader.queueFileForDownload(serviceFile, storedFile);

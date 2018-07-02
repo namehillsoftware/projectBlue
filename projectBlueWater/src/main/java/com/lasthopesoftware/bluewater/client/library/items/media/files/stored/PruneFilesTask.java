@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, Collection<Void>> {
+final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, Void> {
 	private static final ExecutorService pruneFilesExecutor = Executors.newSingleThreadExecutor();
 
 	private final Lazy<Set<Integer>> lazyServiceIdsToKeep;
@@ -27,33 +27,43 @@ final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, C
 	}
 
 	@Override
-	public Promise<Collection<Void>> promiseResponse(Collection<StoredFile> allStoredFiles) {
-		final Stream<Promise<Void>> pruneFilesPromises =
-			Stream.of(allStoredFiles)
-				.map(storedFile -> new QueuedPromise<Void>(() -> {
-					final String filePath = storedFile.getPath();
-					// It doesn't make sense to create a stored serviceFile without a serviceFile path
-					if (filePath == null) {
-						storedFileAccess.deleteStoredFile(storedFile);
-						return null;
-					}
-
-					final File systemFile = new File(filePath);
-
-					// Remove files that are marked as downloaded but the serviceFile doesn't actually exist
-					if (storedFile.isDownloadComplete() && !systemFile.exists()) {
-						storedFileAccess.deleteStoredFile(storedFile);
-						return null;
-					}
-
-					if (!storedFile.isOwner()) return null;
-					if (lazyServiceIdsToKeep.getObject().contains(storedFile.getServiceId())) return null;
-
+	public Promise<Void> promiseResponse(Collection<StoredFile> allStoredFiles) {
+		return new QueuedPromise<>(() -> {
+			for (StoredFile storedFile : allStoredFiles) {
+				final String filePath = storedFile.getPath();
+				// It doesn't make sense to create a stored serviceFile without a serviceFile path
+				if (filePath == null) {
 					storedFileAccess.deleteStoredFile(storedFile);
-					systemFile.delete();
-					return null;
-				}, pruneFilesExecutor));
-		
-		return Promise.whenAll(pruneFilesPromises.toList());
+					continue;
+				}
+
+				final File systemFile = new File(filePath);
+
+				// Remove files that are marked as downloaded but the serviceFile doesn't actually exist
+				if (storedFile.isDownloadComplete() && !systemFile.exists()) {
+					storedFileAccess.deleteStoredFile(storedFile);
+					continue;
+				}
+
+				if (!storedFile.isOwner()) continue;
+				if (lazyServiceIdsToKeep.getObject().contains(storedFile.getServiceId())) continue;
+
+				storedFileAccess.deleteStoredFile(storedFile);
+
+				if (!systemFile.delete()) continue;
+
+				File directoryToDelete = systemFile.getParentFile();
+				while (directoryToDelete != null) {
+					final String[] childList = directoryToDelete.list();
+					if (childList != null && childList.length > 0)
+						break;
+
+					if (!directoryToDelete.delete()) break;
+					directoryToDelete = directoryToDelete.getParentFile();
+				}
+			}
+
+			return null;
+		}, pruneFilesExecutor);
 	}
 }

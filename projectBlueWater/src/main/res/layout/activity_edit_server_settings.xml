@@ -122,14 +122,14 @@
                     android:layout_height="wrap_content"
                     android:text="@string/rbCustomLocation"/>
             </RadioGroup>
-            <EditText
-                android:id="@+id/txtSyncPath"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:enabled="false"
-                android:inputType="textUri"
-                android:hint="@string/lbl_sync_path"/>
+			<EditText
+				android:id="@+id/txtSyncPath"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:ems="10"
+				android:enabled="false"
+				android:inputType="textUri"
+				android:hint="@string/lbl_sync_path"/>
             <CheckBox
                 android:id="@+id/chkIsUsingLocalConnectionForSync"
                 android:layout_width="fill_parent"

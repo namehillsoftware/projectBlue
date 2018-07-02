@@ -12,19 +12,14 @@ import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestNotificationBuilder;
@@ -86,8 +81,7 @@ public class MainApplication extends Application {
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
 				final int libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
-				if (libraryId < 0)
-					return;
+				if (libraryId < 0) return;
 
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
@@ -95,13 +89,6 @@ public class MainApplication extends Application {
 						AccessConfigurationBuilder.buildConfiguration(context, library).then(perform(urlProvider -> {
 							if (urlProvider == null) return;
 
-							final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
-							final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-							final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
-							final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
-
-							final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(context);
-							final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, getAllStoredFilesInLibrary, cachedFilePropertiesProvider);
 							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 							if (fileKey == -1) return;
 
@@ -111,7 +98,11 @@ public class MainApplication extends Application {
 							final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
 							if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
-							storedFileAccess.addMediaFile(new ServiceFile(fileKey), mediaFileId, mediaFilePath);
+							final StoredFileAccess storedFileAccess = new StoredFileAccess(
+								context,
+								new StoredFilesCollection(context));
+
+							storedFileAccess.addMediaFile(library, new ServiceFile(fileKey), mediaFileId, mediaFilePath);
 					})));
 			}
 		}, new IntentFilter(MediaFileUriProvider.mediaFileFoundEvent));

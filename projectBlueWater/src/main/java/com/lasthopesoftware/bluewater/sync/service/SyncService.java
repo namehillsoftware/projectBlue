@@ -41,17 +41,21 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesChecker;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCounter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFileQuery;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaFileIdProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.StoredFileUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemsChecker;
@@ -65,6 +69,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.read
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
+import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -73,6 +79,8 @@ import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
+import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
@@ -94,6 +102,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
@@ -159,14 +168,14 @@ public class SyncService extends Service {
 
 	private PowerManager.WakeLock wakeLock;
 
-	private volatile int librariesProcessing;
+	private final AtomicInteger librariesProcessing = new AtomicInteger();
 
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
 	private final OneParameterAction<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
 		librarySyncHandlers.remove(librarySyncHandler);
 
-		if (--librariesProcessing == 0) finishSync();
+		if (librariesProcessing.decrementAndGet() == 0) finishSync();
 	};
 
 	private final OneParameterAction<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
@@ -257,6 +266,12 @@ public class SyncService extends Service {
 
 	private final CreateAndHold<StoredFilesChecker> lazyStoredFilesChecker = new Lazy<>(() -> new StoredFilesChecker(new StoredFilesCounter(this)));
 
+	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> lazyOsReadPermissions = new Lazy<>(() -> new ExternalStorageReadPermissionsArbitratorForOs(this));
+
+	private final CreateAndHold<LookupSyncDirectory> lazySyncDirectoryLookup = new Lazy<>(() -> new SyncDirectoryLookup(
+		new PublicDirectoryLookup(this),
+		new PrivateDirectoryLookup(this)));
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -290,9 +305,9 @@ public class SyncService extends Service {
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
 		lazyLibraryProvider.getObject().getAllLibraries().then(perform(libraries -> {
-			librariesProcessing += libraries.size();
+			librariesProcessing.set(libraries.size());
 
-			if (librariesProcessing == 0) {
+			if (librariesProcessing.get() == 0) {
 				finishSync();
 				return;
 			}
@@ -305,12 +320,11 @@ public class SyncService extends Service {
 				}
 
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-				final GetAllStoredFilesInLibrary getAllStoredFilesInLibrary = new StoredFilesCollection(context);
 				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, lazyStoredFilesChecker.getObject());
 
 				storedItemsChecker.promiseIsAnyStoredItemsOrFiles(library).eventually(isAny -> {
 					if (!isAny) {
-						if (--librariesProcessing == 0) finishSync();
+						if (librariesProcessing.decrementAndGet() == 0) finishSync();
 						return Promise.empty();
 					}
 
@@ -318,7 +332,7 @@ public class SyncService extends Service {
 						AccessConfigurationBuilder.buildConfiguration(context, library)
 							.then(perform(urlProvider -> {
 								if (urlProvider == null) {
-									if (--librariesProcessing == 0) finishSync();
+									if (librariesProcessing.decrementAndGet() == 0) finishSync();
 									return;
 								}
 
@@ -328,12 +342,34 @@ public class SyncService extends Service {
 								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
 								final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
-								final StoredFileAccess storedFileAccess = new StoredFileAccess(context, library, getAllStoredFilesInLibrary, cachedFilePropertiesProvider);
+								final StoredFileAccess storedFileAccess = new StoredFileAccess(
+									context,
+									new StoredFilesCollection(context));
+
+								final MediaQueryCursorProvider cursorProvider = new MediaQueryCursorProvider(
+									context,
+									cachedFilePropertiesProvider);
+
+								final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
+									context,
+									new MediaFileUriProvider(
+										context,
+										cursorProvider,
+										lazyOsReadPermissions.getObject(),
+										library,
+										true),
+									new MediaFileIdProvider(
+										cursorProvider,
+										lazyOsReadPermissions.getObject()),
+									new StoredFileQuery(context),
+									cachedFilePropertiesProvider,
+									lazySyncDirectoryLookup.getObject());
 
 								final LibrarySyncHandler librarySyncHandler =
 									new LibrarySyncHandler(library,
 										new StoredItemServiceFileCollector(storedItemAccess, new FileProvider(new FileStringListProvider(connectionProvider))),
 										storedFileAccess,
+										storedFileUpdater,
 										new StoredFileDownloader(
 											lazyStoredFileSystemFileProducer.getObject(),
 											connectionProvider,
@@ -363,7 +399,7 @@ public class SyncService extends Service {
 					return promiseLibrarySyncStarted;
 				})
 				.excuse(e -> {
-					if (--librariesProcessing == 0) finishSync();
+					if (librariesProcessing.decrementAndGet() == 0) finishSync();
 					return null;
 				});
 			}
