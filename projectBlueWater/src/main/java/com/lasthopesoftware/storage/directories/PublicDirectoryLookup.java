@@ -19,11 +19,8 @@ public class PublicDirectoryLookup implements GetPublicDirectories {
 
 	@Override
 	public Promise<Stream<File>> promisePublicDrives() {
-		final Stream<File> publicDirectory = Stream.of(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC));
 		return Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP
-			? new Promise<>(publicDirectory)
-			: new Promise<>(Stream.concat(
-				publicDirectory,
-				Stream.of(context.getExternalMediaDirs())));
+			? new Promise<>(Stream.of(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)))
+			: new Promise<>(Stream.of(context.getExternalMediaDirs()));
 	}
 }
