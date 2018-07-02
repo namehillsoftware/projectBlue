@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;

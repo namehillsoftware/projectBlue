@@ -18,7 +18,7 @@ public class SyncDirectoryLookup implements LookupSyncDirectory {
 	}
 
 	@Override
-	public Promise<File> promiseSyncDrive(Library library) {
+	public Promise<File> promiseSyncDirectory(Library library) {
 		return getExternalFilesDirectoriesStream(library)
 			.then(files ->
 				files.sortBy(File::getFreeSpace)
@@ -29,18 +29,21 @@ public class SyncDirectoryLookup implements LookupSyncDirectory {
 	private Promise<Stream<File>> getExternalFilesDirectoriesStream(Library library) {
 		switch (library.getSyncedFileLocation()) {
 			case EXTERNAL:
-				return publicDrives.promisePublicDrives();
+				return promiseDirectoriesWithLibrary(library, publicDrives.promisePublicDrives());
 			case INTERNAL:
-				final Promise<Stream<File>> promisedPrivateDrives = privateDrives.promisePrivateDrives();
-				if (library.getId() < 0) return promisedPrivateDrives;
-
-				final String libraryId = String.valueOf(library.getId());
-				return promisedPrivateDrives
-					.then(files -> files.map(f -> new File(f, libraryId)));
+				return promiseDirectoriesWithLibrary(library, privateDrives.promisePrivateDrives());
 			case CUSTOM:
 				return new Promise<>(Stream.of(new File(library.getCustomSyncedFilesPath())));
 		}
 
 		return new Promise<>(Stream.empty());
+	}
+
+	private static Promise<Stream<File>> promiseDirectoriesWithLibrary(Library library, Promise<Stream<File>> promisedDirectories) {
+		if (library.getId() < 0) return promisedDirectories;
+
+		final String libraryId = String.valueOf(library.getId());
+		return promisedDirectories
+			.then(files -> files.map(f -> new File(f, libraryId)));
 	}
 }

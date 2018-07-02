@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval;
 
 import android.content.Context;
 

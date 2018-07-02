@@ -6,5 +6,5 @@ import com.namehillsoftware.handoff.promises.Promise;
 import java.io.File;
 
 public interface LookupSyncDirectory {
-	Promise<File> promiseSyncDrive(Library library);
+	Promise<File> promiseSyncDirectory(Library library);
 }

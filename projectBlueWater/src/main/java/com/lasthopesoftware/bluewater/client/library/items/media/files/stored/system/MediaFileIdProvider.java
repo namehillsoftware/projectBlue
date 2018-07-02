@@ -11,8 +11,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 /**
  * Created by david on 6/13/16.
  */
@@ -31,7 +29,7 @@ public class MediaFileIdProvider implements ImmediateResponse<Cursor, Integer> {
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
-	public Promise<Integer> getMediaId() throws IOException {
+	public Promise<Integer> getMediaId() {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return new Promise<>(-1);
 
@@ -42,7 +40,7 @@ public class MediaFileIdProvider implements ImmediateResponse<Cursor, Integer> {
 	}
 
 	@Override
-	public Integer respond(Cursor cursor) throws Exception {
+	public Integer respond(Cursor cursor) {
 		if (cursor == null) return -1;
 
 		try {

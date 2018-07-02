@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.specs.GivenATypicalLibrary;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.specs.GivenATypicalLibrary;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;

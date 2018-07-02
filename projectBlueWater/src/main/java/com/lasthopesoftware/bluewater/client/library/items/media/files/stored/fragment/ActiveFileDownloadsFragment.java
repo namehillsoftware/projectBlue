@@ -28,11 +28,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;

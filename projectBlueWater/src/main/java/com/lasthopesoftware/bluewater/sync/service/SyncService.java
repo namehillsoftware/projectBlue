@@ -45,12 +45,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesChecker;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCounter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemsChecker;

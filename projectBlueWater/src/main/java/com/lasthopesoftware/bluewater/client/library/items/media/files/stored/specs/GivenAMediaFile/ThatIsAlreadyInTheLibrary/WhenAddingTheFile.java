@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeCachedFilesPropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -40,7 +40,7 @@ public class WhenAddingTheFile extends AndroidContext {
 			}});
 
 		final LookupSyncDirectory mockSyncDrive = mock(LookupSyncDirectory.class);
-		when(mockSyncDrive.promiseSyncDrive(any()))
+		when(mockSyncDrive.promiseSyncDirectory(any()))
 			.thenReturn(new Promise<>(new File("/a-path")));
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(

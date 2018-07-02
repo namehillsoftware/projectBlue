@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.IMediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaFileIdProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
@@ -28,7 +29,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 public final class StoredFileAccess implements IStoredFileAccess {
 
-	private static final Executor storedFileAccessExecutor = Executors.newSingleThreadExecutor();
+	public static final Executor storedFileAccessExecutor = Executors.newSingleThreadExecutor();
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
@@ -194,19 +194,14 @@ public final class StoredFileAccess implements IStoredFileAccess {
 					storedFile.setPath(localUri.getPath());
 					storedFile.setIsDownloadComplete(true);
 					storedFile.setIsOwner(false);
-					try {
-						final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, serviceFile, externalStorageReadPermissionsArbitrator);
-						return
-							mediaFileIdProvider
-								.getMediaId()
-								.then(mediaId -> {
-									storedFile.setStoredMediaId(mediaId);
-									return storedFile;
-								});
-					} catch (IOException e) {
-						logger.error("Error retrieving media serviceFile ID", e);
-						return new Promise<>(storedFile);
-					}
+					final MediaFileIdProvider mediaFileIdProvider = new MediaFileIdProvider(mediaQueryCursorProvider, serviceFile, externalStorageReadPermissionsArbitrator);
+					return
+						mediaFileIdProvider
+							.getMediaId()
+							.then(mediaId -> {
+								storedFile.setStoredMediaId(mediaId);
+								return storedFile;
+							});
 				});
 			})
 			.eventually(storedFile -> {
@@ -215,7 +210,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 				return cachedFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
-					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDrive(library)
+					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(library)
 						.then(syncDrive -> {
 							String fullPath = syncDrive.getPath();
 
