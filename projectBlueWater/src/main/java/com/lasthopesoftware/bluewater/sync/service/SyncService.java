@@ -55,7 +55,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaFileIdProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.upserts.StoredFileUpdater;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.StoredFileUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemsChecker;

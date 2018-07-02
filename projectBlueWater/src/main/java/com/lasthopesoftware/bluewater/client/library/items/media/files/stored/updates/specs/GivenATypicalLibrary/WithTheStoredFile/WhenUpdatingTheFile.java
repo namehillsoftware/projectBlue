@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.upserts.specs.GivenATypicalLibrary.WithoutTheStoredFile;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.specs.GivenATypicalLibrary.WithTheStoredFile;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaFileIdProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.upserts.StoredFileUpdater;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.StoredFileUpdater;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -60,16 +60,13 @@ public class WhenUpdatingTheFile extends AndroidContext {
 				() -> new Promise<>(Stream.of(new File("/my-public-drive"))),
 				() -> new Promise<>(Stream.empty())));
 
+		new FuturePromise<>(storedFileUpdater.promiseStoredFileUpdate(
+			new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL),
+			new ServiceFile(4))).get();
+
 		storedFile = new FuturePromise<>(storedFileUpdater.promiseStoredFileUpdate(
 			new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL),
 			new ServiceFile(4))).get();
-	}
-
-	@Test
-	public void thenTheFileIsInsertedIntoTheDatabase() throws ExecutionException, InterruptedException {
-		assertThat(new FuturePromise<>(
-			new StoredFileQuery(RuntimeEnvironment.application).promiseStoredFile(
-				new Library().setId(14), new ServiceFile(4))).get()).isNotNull();
 	}
 
 	@Test

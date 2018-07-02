@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.upserts;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;

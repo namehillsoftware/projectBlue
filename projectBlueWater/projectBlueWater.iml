@@ -183,7 +183,6 @@
     <orderEntry type="library" name="Gradle: joda-time:joda-time:2.9.9@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.ow2.asm:asm-commons:5.0.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.apache.maven:maven-profile:2.2.1@jar" level="project" />
-    <orderEntry type="library" name="Gradle: com.github.angads25:filepicker-1.1.1" level="project" />
     <orderEntry type="library" name="Gradle: com.android.support:support-compat-26.1.0" level="project" />
     <orderEntry type="library" name="Gradle: net.i2p.android.ext:floatingactionbutton-1.9.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: net.bytebuddy:byte-buddy-agent:1.8.5@jar" level="project" />
