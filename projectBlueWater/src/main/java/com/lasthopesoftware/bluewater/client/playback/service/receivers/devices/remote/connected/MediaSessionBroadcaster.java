@@ -163,18 +163,18 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 	}
 
 	@IntDef(flag=true, value={
-		PlaybackState.ACTION_STOP,
-		PlaybackState.ACTION_PAUSE,
-		PlaybackState.ACTION_PLAY,
-		PlaybackState.ACTION_REWIND,
-		PlaybackState.ACTION_SKIP_TO_PREVIOUS,
-		PlaybackState.ACTION_SKIP_TO_NEXT,
-		PlaybackState.ACTION_FAST_FORWARD,
-		PlaybackState.ACTION_SET_RATING,
-		PlaybackState.ACTION_SEEK_TO,
-		PlaybackState.ACTION_PLAY_PAUSE,
-		PlaybackState.ACTION_PLAY_FROM_MEDIA_ID,
-		PlaybackState.ACTION_PLAY_FROM_SEARCH,
-		PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM})
+		(int)PlaybackState.ACTION_STOP,
+		(int)PlaybackState.ACTION_PAUSE,
+		(int)PlaybackState.ACTION_PLAY,
+		(int)PlaybackState.ACTION_REWIND,
+		(int)PlaybackState.ACTION_SKIP_TO_PREVIOUS,
+		(int)PlaybackState.ACTION_SKIP_TO_NEXT,
+		(int)PlaybackState.ACTION_FAST_FORWARD,
+		(int)PlaybackState.ACTION_SET_RATING,
+		(int)PlaybackState.ACTION_SEEK_TO,
+		(int)PlaybackState.ACTION_PLAY_PAUSE,
+		(int)PlaybackState.ACTION_PLAY_FROM_MEDIA_ID,
+		(int)PlaybackState.ACTION_PLAY_FROM_SEARCH,
+		(int)PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM})
 	private @interface Actions {}
 }
