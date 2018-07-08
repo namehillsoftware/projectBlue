@@ -27,14 +27,18 @@ import java.util.concurrent.ExecutionException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class WhenBuildingTheNotification extends AndroidContext {
 
-	private static Lazy<Bitmap> expectedBitmap = new Lazy<>(() -> {
+	private static final Lazy<Bitmap> expectedBitmap = new Lazy<>(() -> {
 		final Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
 		return Bitmap.createBitmap(1, 1, conf);
 	});
+
+	private static final NotificationCompat.Builder spiedBuilder = spy(new NotificationCompat.Builder(RuntimeEnvironment.application, "test"));
 
 	private static NotificationCompat.Builder builder;
 
@@ -57,7 +61,7 @@ public class WhenBuildingTheNotification extends AndroidContext {
 
 		final NowPlayingNotificationBuilder npBuilder = new NowPlayingNotificationBuilder(
 			RuntimeEnvironment.application,
-			() -> new NotificationCompat.Builder(RuntimeEnvironment.application, "test"),
+			() -> spiedBuilder,
 			connectionProvider,
 			new CachedFilePropertiesProvider(
 				connectionProvider,
@@ -90,6 +94,6 @@ public class WhenBuildingTheNotification extends AndroidContext {
 
 	@Test
 	public void thenTheNotificationBitmapIsCorrect() {
-		assertThat(builder.mLargeIcon).isEqualTo(expectedBitmap.getObject());
+		verify(spiedBuilder).setLargeIcon(expectedBitmap.getObject());
 	}
 }
