@@ -122,10 +122,12 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 	static final String DATE_CREATED = "Date Created";
 	static final String DATE_IMPORTED = "Date Imported";
 	static final String DATE_MODIFIED = "Date Modified";
-	static final String FILE_SIZE = "ServiceFile Size";
+	static final String DATE_TAGGED = "Date Tagged";
+	static final String DATE_FIRST_RATED = "Date First Rated";
+	static final String FILE_SIZE = "File Size";
 	public static final String AUDIO_ANALYSIS_INFO = "Audio Analysis Info";
 	public static final String GET_COVER_ART_INFO = "Get Cover Art Info";
-	public static final String IMAGE_FILE = "Image ServiceFile";
+	public static final String IMAGE_FILE = "Image File";
 	public static final String KEY = "Key";
 	public static final String STACK_FILES = "Stack Files";
 	public static final String STACK_TOP = "Stack Top";
