@@ -46,11 +46,11 @@ playlist.promiseFirstFile()
 
 # Installation
 
-Handoff is currently available via [Jitpack](https://jitpack.io/#danrien/handoff). For example, in order to include it in your Gradle project, use the following in your dependencies section:
+Handoff is currently available via [Jitpack](https://jitpack.io/#namehillsoftware/handoff). For example, in order to include it in your Gradle project, use the following in your dependencies section:
 
 ```gradle
 dependencies {
-    implementation 'com.github.danrien:handoff:0.7.0'
+    implementation 'com.github.namehillsoftware:handoff:0.7.0'
 }
 ```
 
