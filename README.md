@@ -157,15 +157,13 @@ Errors fall through like they would in a try/catch in synchronous, traditional J
 
 ```java
 playlist.promiseFirstFile()
-  .then(
-	f -> { // Perform another action immediately with the result - this continues on the same thread the result was returned on
-		// perform action
-		throw new IOException("Uh oh!"); // return null to represent Void
-  	})
-  .then(
-	o -> {
-		// Code here won't be executed
-	})
+  .then(f -> { // Perform another action immediately with the result - this continues on the same thread the result was returned on
+	// perform action
+	throw new IOException("Uh oh!"); // return null to represent Void
+  })
+  .then(o -> {
+	// Code here won't be executed
+  })
   .excuse(error -> {
 		Logger.error("An error occured!", error); // Log some error, continue on as normal
 		
