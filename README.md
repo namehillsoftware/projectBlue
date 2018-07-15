@@ -165,13 +165,13 @@ playlist.promiseFirstFile()
 	// Code here won't be executed
   })
   .excuse(error -> {
-		Logger.error("An error occured!", error); // Log some error, continue on as normal
-		
-		if (error instanceof IOException)
-			Logger.error("It was an IO Error too!");
-		
-		return null;
-  	});
+	Logger.error("An error occured!", error); // Log some error, continue on as normal
+	
+	if (error instanceof IOException)
+		Logger.error("It was an IO Error too!");
+	
+	return null;
+  });
 ```
 
 Once trapped in a method chain, that error will go away within that method chain.
