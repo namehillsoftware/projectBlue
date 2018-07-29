@@ -21,6 +21,8 @@ public class NotificationChannelActivator implements ActivateChannel {
 			channelConfiguration.getChannelName(),
 			channelConfiguration.getChannelImportance());
 
+		channel.setSound(null, null);
+
 		channel.setDescription(channelConfiguration.getChannelDescription());
 
 		notificationManager.createNotificationChannel(channel);

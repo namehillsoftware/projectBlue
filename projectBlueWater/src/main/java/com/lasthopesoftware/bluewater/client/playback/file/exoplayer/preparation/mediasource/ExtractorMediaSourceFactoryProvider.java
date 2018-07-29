@@ -12,7 +12,7 @@ import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -26,6 +26,7 @@ import okhttp3.OkHttpClient;
 public class ExtractorMediaSourceFactoryProvider {
 
 	private final Context context;
+	private final IConnectionProvider connectionProvider;
 	private final Library library;
 	private final Cache cache;
 
@@ -48,6 +49,8 @@ public class ExtractorMediaSourceFactoryProvider {
 				new OkHttpClient.Builder()
 					.readTimeout(45, TimeUnit.SECONDS)
 					.retryOnConnectionFailure(false)
+					.sslSocketFactory(connectionProvider.getSslSocketFactory(), connectionProvider.getTrustManager())
+					.hostnameVerifier(connectionProvider.getHostnameVerifier())
 					.build(),
 				Util.getUserAgent(context, context.getString(R.string.app_name)),
 				null);
@@ -68,8 +71,9 @@ public class ExtractorMediaSourceFactoryProvider {
 		}
 	};
 
-	public ExtractorMediaSourceFactoryProvider(Context context, Library library, IDiskCacheDirectoryProvider diskCacheDirectory, Cache cache) {
+	public ExtractorMediaSourceFactoryProvider(Context context, IConnectionProvider connectionProvider, Library library, Cache cache) {
 		this.context = context;
+		this.connectionProvider = connectionProvider;
 		this.library = library;
 		this.cache = cache;
 	}

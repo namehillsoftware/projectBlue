@@ -13,6 +13,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionInfo;
  */
 public class IoCommon {
 	public static final String FileUriScheme = "file";
+	public static final String httpUriScheme = "http";
+	public static final String httpsUriScheme = "https";
 
 	public static boolean isWifiConnected(Context context) {
 		return ConnectionInfo.getConnectionType(context) == ConnectivityManager.TYPE_WIFI;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Music Canoe</string>
+    <string name="app_name">project blue</string>
     <string name="company_name">Name Hill Software</string>
     <string name="copyright_year">2015</string>
     <string name="layout_settings">Settings</string>
@@ -39,7 +39,7 @@
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
     <string name="title_svc_now_playing">%1$s Now Playing</string>
     <string name="lbl_something_went_wrong">Something went wrong! Attempting to reconnect.</string>
-    <string name="lbl_starting_service">Starting %1$s</string>
+    <string name="lbl_starting_playback">Starting Playback</string>
     <string name="title_activity_wait_for_connection">Waiting For Connection</string>
     <string name="btn_view_song_details">View Song Details</string>
     <string name="lbl_loading">Loading&#8230;</string>
@@ -90,4 +90,8 @@
     <string name="title_activity_about">About %1$s</string>
     <string name="aboutAppText">%1$s\n\nVersion: %2$s (%3$s)\n\n\n\nCopyright © %4$s %5$s</string>
     <string name="playbackEngine">Playback Engine</string>
+    <string name="notification_settings">Notification Settings:</string>
+    <string name="modify_notification_settings">Modify in System Settings</string>
+    <string name="notification_settings_tutorial_title">Notification Settings</string>
+    <string name="notification_settings_tutorial">Getting sounds when playback changes? Click on \'%1$s\' and then change the importance of %2$s to "Medium" to disable playback sounds.</string>
 </resources>

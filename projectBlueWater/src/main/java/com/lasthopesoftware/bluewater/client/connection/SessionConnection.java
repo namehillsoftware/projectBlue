@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.connection.helpers.ConnectionTester;
+import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.completeConditions;
-import static com.lasthopesoftware.bluewater.client.connection.SessionConnection.BuildingSessionConnectionStatus.runningConditions;
-
 public class SessionConnection {
 
 	public static final String buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcast");
@@ -34,12 +31,14 @@ public class SessionConnection {
 	public static final String refreshSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
 	public static final String isRefreshSuccessfulStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
-	private static volatile boolean isRunning;
-	private static volatile int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
-
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
 
+	private static final Object buildingConnectionPromiseSync = new Object();
+
+	private static int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
 	private static ConnectionProvider sessionConnectionProvider;
+	private static Promise<Void> buildingConnectionPromise;
+	private static int selectedLibraryId;
 
 	public static ConnectionProvider getSessionConnectionProvider() {
 		return sessionConnectionProvider;
@@ -48,20 +47,39 @@ public class SessionConnection {
 	public static boolean isBuilt() {
 		return sessionConnectionProvider != null;
 	}
-	
-	public static synchronized int build(final Context context) {
-		if (isRunning) return buildingStatus;
-		
-		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
-		final ISelectedLibraryIdentifierProvider libraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
 
+	public static int build(final Context context) {
+		final ISelectedLibraryIdentifierProvider libraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
+		final int newSelectedLibraryId = libraryIdentifierProvider.getSelectedLibraryId();
+		synchronized (buildingConnectionPromiseSync) {
+			if (buildingConnectionPromise != null) {
+				if (selectedLibraryId == newSelectedLibraryId) return buildingStatus;
+
+				selectedLibraryId = newSelectedLibraryId;
+			}
+
+			buildingConnectionPromise = (buildingConnectionPromise != null
+				? buildingConnectionPromise.eventually(v -> promiseBuiltSessionConnection(context, newSelectedLibraryId))
+				: promiseBuiltSessionConnection(context, newSelectedLibraryId)).then(v -> {
+					synchronized (buildingConnectionPromiseSync) {
+						if (selectedLibraryId == newSelectedLibraryId)
+							buildingConnectionPromise = null;
+						return null;
+					}
+				});
+
+			return buildingStatus;
+		}
+	}
+
+	private static Promise<Void> promiseBuiltSessionConnection(final Context context, final int selectedLibraryId) {
 		final LibraryRepository libraryRepository = new LibraryRepository(context);
-		libraryRepository
-			.getLibrary(libraryIdentifierProvider.getSelectedLibraryId())
+		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
+		return libraryRepository
+			.getLibrary(selectedLibraryId)
 			.eventually(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
-					isRunning = false;
 					return Promise.empty();
 				}
 
@@ -106,32 +124,20 @@ public class SessionConnection {
 												return null;
 											});
 								});
-							});
-				})
-				.excuse(e -> {
-					logger.error("There was an error building the session connection", e);
-					doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+						});
+			}, e -> {
+				logger.error("There was an error building the session connection", e);
+				doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
 
-					return null;
-				});
-		
-		return buildingStatus;
+				return Promise.empty();
+			});
 	}
 
 	public static void refresh(final Context context) {
-		refresh(context, -1);
-	}
-
-	private static void refresh(final Context context, final int timeout) {
 		if (sessionConnectionProvider == null)
 			throw new NullPointerException("The session connection needs to be built first.");
 
-		final Promise<Boolean> promisedConnectionTest =
-			timeout > 0
-				? ConnectionTester.doTest(sessionConnectionProvider, timeout)
-				: ConnectionTester.doTest(sessionConnectionProvider);
-
-		promisedConnectionTest
+		ConnectionTester.doTest(sessionConnectionProvider)
 			.then(result -> {
 				if (!result) build(context);
 
@@ -142,20 +148,16 @@ public class SessionConnection {
 				return null;
 			});
 	}
-	
+
 	private static void doStateChange(final Context context, final int status) {
 		buildingStatus = status;
-		
-		if (runningConditions.contains(status)) isRunning = true;
 
 		final Intent broadcastIntent = new Intent(buildSessionBroadcast);
 		broadcastIntent.putExtra(buildSessionBroadcastStatus, status);
 		LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
-		
+
 		if (status == BuildingSessionConnectionStatus.BuildingSessionComplete)
 			LoggerFactory.getLogger(LibrarySession.class).info("Session started.");
-		
-		if (completeConditions.contains(status)) isRunning = false;
 	}
 
 	public static class BuildingSessionConnectionStatus {
@@ -170,7 +172,7 @@ public class SessionConnection {
 		private static final CreateAndHold<Set<Integer>> runningConditionsLazy =
 				new AbstractSynchronousLazy<Set<Integer>>() {
 					@Override
-					protected Set<Integer> create() throws Exception {
+					protected Set<Integer> create() {
 						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView)));
 					}
 				};
@@ -178,7 +180,7 @@ public class SessionConnection {
 		private static final CreateAndHold<Set<Integer>> completeConditionsLazy =
 				new AbstractSynchronousLazy<Set<Integer>>() {
 					@Override
-					protected Set<Integer> create() throws Exception {
+					protected Set<Integer> create() {
 						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete)));
 					}
 				};

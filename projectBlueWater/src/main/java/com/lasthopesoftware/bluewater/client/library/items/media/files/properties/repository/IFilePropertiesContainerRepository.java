@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 
 /**
@@ -7,7 +8,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
  */
 
 public interface IFilePropertiesContainerRepository {
-	FilePropertiesContainer getFilePropertiesContainer(UrlKeyHolder<Integer> key);
+	FilePropertiesContainer getFilePropertiesContainer(UrlKeyHolder<ServiceFile> key);
 
-	void putFilePropertiesContainer(UrlKeyHolder<Integer> key, FilePropertiesContainer filePropertiesContainer);
+	void putFilePropertiesContainer(UrlKeyHolder<ServiceFile> key, FilePropertiesContainer filePropertiesContainer);
 }
