@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
@@ -53,7 +52,6 @@ import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
 import ch.qos.logback.core.util.StatusPrinter;
 
-import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class MainApplication extends Application {
@@ -145,10 +143,6 @@ public class MainApplication extends Application {
 		localBroadcastManager.registerReceiver(
 			new SessionConnectionRegistrationsMaintainer(localBroadcastManager, connectionDependentReceiverRegistrations),
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
-
-		registerReceiver(
-			new AudioBecomingNoisyReceiver(),
-			new IntentFilter(ACTION_AUDIO_BECOMING_NOISY));
 	}
 
 	private void initializeLogging() {
