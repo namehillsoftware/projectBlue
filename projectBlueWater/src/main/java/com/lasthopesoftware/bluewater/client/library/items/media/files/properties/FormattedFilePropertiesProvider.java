@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;
@@ -60,22 +61,24 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	private static final Lazy<Set<String>> dateTimeProperties =
 			new Lazy<>(() -> Collections.unmodifiableSet(
 					new HashSet<>(
-							Arrays.asList(new String[] {
-									LAST_PLAYED,
-									LAST_SKIPPED,
-									DATE_CREATED,
-									DATE_IMPORTED,
-									DATE_MODIFIED}))));
+							Arrays.asList(
+								LAST_PLAYED,
+								LAST_SKIPPED,
+								DATE_CREATED,
+								DATE_IMPORTED,
+								DATE_MODIFIED,
+								DATE_TAGGED,
+								DATE_FIRST_RATED))));
 	
 	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
 		super(connectionProvider, filePropertiesContainerProvider);
 	}
 
 	@Override
-	public Promise<Map<String, String>> promiseFileProperties(int fileKey) {
+	public Promise<Map<String, String>> promiseFileProperties(ServiceFile serviceFile) {
 		return
 			super
-				.promiseFileProperties(fileKey)
+				.promiseFileProperties(serviceFile)
 				.then(FormattedFilePropertiesProvider::buildFormattedReadonlyProperties);
 	}
 
@@ -110,8 +113,8 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		}
 		
 		if (FILE_SIZE.equals(name)) {
-			final double filesizeBytes = Math.ceil(Long.valueOf(value).doubleValue() / 1024 / 1024 * 100) / 100;
-			return String.valueOf(filesizeBytes) + " MB";
+			final double fileSizeBytes = Math.ceil(Long.valueOf(value).doubleValue() / 1024 / 1024 * 100) / 100;
+			return String.valueOf(fileSizeBytes) + " MB";
 		}
 		
 		if (DURATION.equals(name)) {

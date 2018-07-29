@@ -72,7 +72,7 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
 		cachedFilePropertiesProvider
-			.promiseFileProperties(serviceFile.getKey())
+			.promiseFileProperties(serviceFile)
 			.eventually(LoopedInPromise.response(fileProperties -> {
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);

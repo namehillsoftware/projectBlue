@@ -21,8 +21,8 @@ public class FilePropertiesStorage {
 	private final IConnectionProvider connectionProvider;
 	private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
 
-	public static void storeFileProperty(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, int fileKey, String property, String value, boolean isFormatted) {
-		AbstractProvider.providerExecutor.execute(() -> new FilePropertiesStorageWriter(connectionProvider, filePropertiesContainerRepository, fileKey, property, value, isFormatted).prepareMessage());
+	public static void storeFileProperty(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, ServiceFile serviceFile, String property, String value, boolean isFormatted) {
+		AbstractProvider.providerExecutor.execute(() -> new FilePropertiesStorageWriter(connectionProvider, filePropertiesContainerRepository, serviceFile, property, value, isFormatted).prepareMessage());
 	}
 
 	public FilePropertiesStorage(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository) {
@@ -35,7 +35,7 @@ public class FilePropertiesStorage {
 			new FilePropertiesStorageWriter(
 				connectionProvider,
 				filePropertiesContainerRepository,
-				serviceFile.getKey(),
+				serviceFile,
 				property,
 				value,
 				isFormatted),
@@ -47,15 +47,15 @@ public class FilePropertiesStorage {
 		private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FilePropertiesStorageWriter.class);
 		private final IConnectionProvider connectionProvider;
 		private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
-		private final int fileKey;
+		private final ServiceFile serviceFile;
 		private final String property;
 		private final String value;
 		private final boolean isFormatted;
 
-		FilePropertiesStorageWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, int fileKey, String property, String value, boolean isFormatted) {
+		FilePropertiesStorageWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, ServiceFile serviceFile, String property, String value, boolean isFormatted) {
 			this.connectionProvider = connectionProvider;
 			this.filePropertiesContainerRepository = filePropertiesContainerRepository;
-			this.fileKey = fileKey;
+			this.serviceFile = serviceFile;
 			this.property = property;
 			this.value = value;
 			this.isFormatted = isFormatted;
@@ -68,7 +68,7 @@ public class FilePropertiesStorage {
 			try {
 				final HttpURLConnection connection = connectionProvider.getConnection(
 					"File/SetInfo",
-					"File=" + String.valueOf(fileKey),
+					"File=" + String.valueOf(serviceFile.getKey()),
 					"Field=" + property,
 					"Value=" + value,
 					"formatted=" + (isFormatted ? "1" : "0"));
@@ -84,7 +84,7 @@ public class FilePropertiesStorage {
 
 			RevisionChecker.promiseRevision(connectionProvider)
 				.then(revision -> {
-					final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), fileKey);
+					final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
 					final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder);
 
 					if (filePropertiesContainer.revision == revision) filePropertiesContainer.updateProperty(property, value);
@@ -92,7 +92,7 @@ public class FilePropertiesStorage {
 					return null;
 				})
 				.excuse(e -> {
-					logger.warn(fileKey + "'s property cache item " + property + " was not updated with the new value of " + value, e);
+					logger.warn(serviceFile.getKey() + "'s property cache item " + property + " was not updated with the new value of " + value, e);
 					return null;
 				});
 

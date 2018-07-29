@@ -15,13 +15,11 @@ public class RemoteControlReceiver extends BroadcastReceiver {
 	    if (event.getAction() != KeyEvent.ACTION_UP) return;
 	    
 	    switch (event.getKeyCode()) {
-	        case KeyEvent.KEYCODE_MEDIA_STOP:
-	            PlaybackService.pause(context);
-	            break;
 	        case KeyEvent.KEYCODE_MEDIA_PLAY:
 	        	PlaybackService.play(context);
 	        	break;
-	        case KeyEvent.KEYCODE_MEDIA_PAUSE:
+			case KeyEvent.KEYCODE_MEDIA_STOP:
+			case KeyEvent.KEYCODE_MEDIA_PAUSE:
 	        	PlaybackService.pause(context);
 	        	break;
 	        case KeyEvent.KEYCODE_HEADSETHOOK:

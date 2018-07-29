@@ -1,14 +1,11 @@
 package com.lasthopesoftware.bluewater.client.library.repository;
 
-import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Environment;
 import android.support.annotation.Keep;
 
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -184,24 +181,6 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return this;
 	}
 
-	public File getSyncDir(Context context) {
-		return syncedFileLocation != SyncedFileLocation.CUSTOM ? buildSyncDir(context, syncedFileLocation) : new File(customSyncedFilesPath);
-	}
-
-	private File buildSyncDir(Context context, SyncedFileLocation syncedFileLocation) {
-		File parentSyncDir = null;
-		switch (syncedFileLocation) {
-			case EXTERNAL:
-				parentSyncDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-				break;
-			case INTERNAL:
-				parentSyncDir = new File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), id > -1 ? String.valueOf(id) : "");
-				break;
-		}
-
-		return parentSyncDir;
-	}
-
 	public SyncedFileLocation getSyncedFileLocation() {
 		return syncedFileLocation;
 	}
@@ -238,8 +217,9 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return this;
 	}
 
-	public void setId(int id) {
+	public Library setId(int id) {
 		this.id = id;
+		return this;
 	}
 
 	@Override
@@ -265,9 +245,8 @@ public class Library implements IEntityCreator, IEntityUpdater {
 
 		public static final Set<SyncedFileLocation> ExternalDiskAccessSyncLocations = Collections.unmodifiableSet(
 				new HashSet<>(
-						Arrays.asList(new SyncedFileLocation[] {
-								SyncedFileLocation.EXTERNAL,
-								SyncedFileLocation.CUSTOM })));
+						Arrays.asList(SyncedFileLocation.EXTERNAL,
+							SyncedFileLocation.CUSTOM)));
 	}
 
 	public enum ViewType {

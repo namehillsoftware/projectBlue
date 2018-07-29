@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import android.util.LruCache;
 
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.lazyj.Lazy;
 
@@ -12,11 +13,11 @@ public class FilePropertyCache implements IFilePropertiesContainerRepository {
 
 	private static final int maxSize = 500;
 
-	private final LruCache<UrlKeyHolder<Integer>, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
+	private final LruCache<UrlKeyHolder<ServiceFile>, FilePropertiesContainer> propertiesCache = new LruCache<>(maxSize);
 	private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
 	@Override
-	public FilePropertiesContainer getFilePropertiesContainer(UrlKeyHolder<Integer> key) {
+	public FilePropertiesContainer getFilePropertiesContainer(UrlKeyHolder<ServiceFile> key) {
 		final Lock readLock = readWriteLock.readLock();
 		readLock.lock();
 		try {
@@ -27,7 +28,7 @@ public class FilePropertyCache implements IFilePropertiesContainerRepository {
 	}
 
 	@Override
-	public void putFilePropertiesContainer(UrlKeyHolder<Integer> key, FilePropertiesContainer filePropertiesContainer) {
+	public void putFilePropertiesContainer(UrlKeyHolder<ServiceFile> key, FilePropertiesContainer filePropertiesContainer) {
 		final Lock writeLock = readWriteLock.writeLock();
 		writeLock.lock();
 		try {

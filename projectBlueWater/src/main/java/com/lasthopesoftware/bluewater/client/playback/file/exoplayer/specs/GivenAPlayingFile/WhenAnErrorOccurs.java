@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile;
 
+import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
@@ -12,6 +13,8 @@ import org.junit.Test;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenAnErrorOccurs {
 	private static ExoPlayerException exoPlayerException;
-	private static Player.EventListener eventListener;
+	private static List<Player.EventListener> eventListener = new ArrayList<>();
 
 	@BeforeClass
 	public static void context() throws InterruptedException {
@@ -32,7 +35,7 @@ public class WhenAnErrorOccurs {
 		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
 		when(mockExoPlayer.getDuration()).thenReturn(100L);
 		doAnswer((Answer<Void>) invocation -> {
-			eventListener = invocation.getArgument(0);
+			eventListener.add(invocation.getArgument(0));
 			return null;
 		}).when(mockExoPlayer).addListener(any());
 
@@ -54,7 +57,7 @@ public class WhenAnErrorOccurs {
 				return null;
 			});
 
-		eventListener.onPlayerError(ExoPlaybackException.createForSource(new IOException()));
+		Stream.of(eventListener).forEach(e -> e.onPlayerError(ExoPlaybackException.createForSource(new IOException())));
 
 		countDownLatch.await(1, TimeUnit.SECONDS);
 	}

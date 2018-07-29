@@ -69,13 +69,13 @@ public class WhenSyncingTheStoredItems {
 		when(writePossibleArbitrator.isFileWritePossible(any())).thenReturn(true);
 
 		storedFileAccess = mock(IStoredFileAccess.class);
-		when(storedFileAccess.pruneStoredFiles(anySet())).thenReturn(new Promise<>(Collections.emptyList()));
-		when(storedFileAccess.createOrUpdateFile(any())).thenAnswer((e) -> new Promise<>(new StoredFile(new Library(), 1, e.getArgument(1), "fake-file-name", true)));
+		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
 			new StoredItemServiceFileCollector(deferredStoredItemAccess, mockFileProvider),
 			storedFileAccess,
+			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
 			new StoredFileDownloader(
 				new StoredFileSystemFileProducer(),
 				fakeConnectionProvider,
@@ -108,6 +108,6 @@ public class WhenSyncingTheStoredItems {
 
 	@Test
 	public void thenFilesAreNotPruned() {
-		verify(storedFileAccess, never()).pruneStoredFiles(anySet());
+		verify(storedFileAccess, never()).pruneStoredFiles(any(), anySet());
 	}
 }

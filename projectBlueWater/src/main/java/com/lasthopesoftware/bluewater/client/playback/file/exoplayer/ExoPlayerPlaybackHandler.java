@@ -10,17 +10,17 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback.PromisedPlayedExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier;
-import com.lasthopesoftware.bluewater.client.playback.file.progress.PromisedPlayedFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +31,16 @@ implements
 	Player.EventListener,
 	Runnable
 {
+	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter =
+		new Lazy<>(() ->
+			new PeriodFormatterBuilder()
+				.appendMinutes()
+				.appendSeparator(":")
+				.minimumPrintedDigits(2)
+				.maximumParsedDigits(2)
+				.appendSeconds()
+				.toFormatter());
+
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final ExoPlayer exoPlayer;
@@ -45,29 +55,10 @@ implements
 	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> exoPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
 		@Override
 		protected ProgressingPromise<Duration, PlayedFile> create() {
-			final ExoPlayerPlaybackCompletedNotifier completedNotifier = new ExoPlayerPlaybackCompletedNotifier();
-			exoPlayer.addListener(completedNotifier);
-
-			final ExoPlayerPlaybackErrorNotifier errorNotifier = new ExoPlayerPlaybackErrorNotifier(ExoPlayerPlaybackHandler.this);
-			exoPlayer.addListener(errorNotifier);
-
-			final PromisedPlayedFile<ExoPlayerException> promisedPlayedFile = new PromisedPlayedFile<>(
+			return new PromisedPlayedExoPlayer(
+				exoPlayer,
 				lazyFileProgressReader.getObject(),
-				completedNotifier,
-				errorNotifier);
-
-			promisedPlayedFile
-				.then(p -> {
-					exoPlayer.removeListener(completedNotifier);
-					exoPlayer.removeListener(errorNotifier);
-					return null;
-				}, e -> {
-					exoPlayer.removeListener(completedNotifier);
-					exoPlayer.removeListener(errorNotifier);
-					return null;
-				});
-
-			return promisedPlayedFile;
+				ExoPlayerPlaybackHandler.this);
 		}
 	};
 
@@ -145,7 +136,12 @@ implements
 		logger.debug("Playback state has changed to " + playbackState);
 
 		if (isPlaying && playbackState == Player.STATE_IDLE) {
-			logger.warn("The player was playing, but it transitioned to idle! Restarting the player...");
+			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
+
+			logger.warn(
+				"The player was playing, but it transitioned to idle! " +
+				"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + duration.toPeriod().toString(formatter) + ". " +
+				"Restarting the player...");
 			pause();
 			exoPlayer.setPlayWhenReady(true);
 		}
@@ -168,13 +164,7 @@ implements
 	}
 
 	@Override
-	public void onPlayerError(ExoPlaybackException error) {
-		handlePlaybackError(error);
-	}
-
-	private void handlePlaybackError(Throwable error) {
-		logger.error("A player error has occurred", error);
-	}
+	public void onPlayerError(ExoPlaybackException error) {}
 
 	@Override
 	public void onPositionDiscontinuity(int reason) {

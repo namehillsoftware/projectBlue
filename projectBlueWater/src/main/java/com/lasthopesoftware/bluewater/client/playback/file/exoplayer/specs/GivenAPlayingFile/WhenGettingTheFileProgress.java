@@ -4,12 +4,15 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -22,15 +25,14 @@ public class WhenGettingTheFileProgress {
 	private static Duration duration;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 		final ExoPlayer mockMediaPlayer = mock(ExoPlayer.class);
 		when(mockMediaPlayer.getPlayWhenReady()).thenReturn(true);
 		when(mockMediaPlayer.getCurrentPosition()).thenReturn(75L);
 		when(mockMediaPlayer.getDuration()).thenReturn(101L);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		final ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockMediaPlayer);
-		exoPlayerPlaybackHandler
+		new FuturePromise<>(exoPlayerPlaybackHandler
 			.promisePlayback()
 			.then(p -> {
 				final ProgressingPromise<Duration, PlayedFile> returnPromise = p.promisePlayedFile();
@@ -39,15 +41,8 @@ public class WhenGettingTheFileProgress {
 
 				duration = p.getDuration();
 
-				countDownLatch.countDown();
-
 				return null;
-			}, e -> {
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+			}, e -> null)).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test
