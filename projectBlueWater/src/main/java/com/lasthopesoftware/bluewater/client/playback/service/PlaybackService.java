@@ -89,6 +89,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.PlaybackStartingNotificationBuilder;
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy;
@@ -134,6 +135,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.schedulers.RxThreadFactory;
 import io.reactivex.internal.schedulers.SingleScheduler;
 
+import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackService
@@ -391,6 +393,8 @@ implements OnAudioFocusChangeListener
 		}
 	};
 
+	private final CreateAndHold<AudioBecomingNoisyReceiver> lazyAudioBecomingNoisyReceiver = new Lazy<>(AudioBecomingNoisyReceiver::new);
+
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
 
@@ -516,6 +520,10 @@ implements OnAudioFocusChangeListener
 		wakeLock.acquire();
 
 		registerRemoteClientControl();
+
+		registerReceiver(
+			lazyAudioBecomingNoisyReceiver.getObject(),
+			new IntentFilter(ACTION_AUDIO_BECOMING_NOISY));
         
 		areListenersRegistered = true;
 	}
@@ -549,6 +557,9 @@ implements OnAudioFocusChangeListener
 			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
 		if (onPollingCancelledListener.isCreated())
 			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
+
+		if (lazyAudioBecomingNoisyReceiver.isCreated())
+			unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject());
 		
 		areListenersRegistered = false;
 	}
