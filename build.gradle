@@ -17,6 +17,8 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 apply plugin: 'com.cinnober.gradle.semver-git'
 
+ext.snapshotSuffix = "SNAPSHOT+<dirty><sha>"
+
 group = "com.namehillsoftware"
 archivesBaseName = "handoff"
 version = project.version
@@ -49,3 +51,57 @@ task sourcesJar(type: Jar) {
 artifacts {
     archives sourcesJar
 }
+
+if (!hasProperty("sonatypeUsername")) {
+    sonatypeUsername = ""
+}
+
+if (!hasProperty("sonatypePassword")) {
+    sonatypePassword = ""
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+
+            pom.project {
+//                name 'lazy-j'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'Embarassingly Simple Lazy Instantiation Library'
+                url 'http://www.namehillsoftware.com/'
+
+                scm {
+                    connection 'https://github.com/namehillsoftware/handoff.git'
+                    developerConnection 'https://github.com/namehillsoftware/handoff.git'
+                    url 'https://github.com/namehillsoftware/handoff'
+                }
+
+                licenses {
+                    license {
+                        url 'https://github.com/namehillsoftware/handoff/blob/master/LICENSE'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'david'
+//                        name 'David Vedvick'
+                        email 'dvedvick@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+uploadArchives.setEnabled(!version.endsWith("SNAPSHOT"))
