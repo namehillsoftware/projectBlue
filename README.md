@@ -44,7 +44,7 @@ playlist.promiseFirstFile()
     });
 ```
 
-# Installation
+## Installation
 
 Handoff is currently available via [Jitpack](https://jitpack.io/#namehillsoftware/handoff). For example, in order to include it in your Gradle project, use the following in your dependencies section:
 
@@ -54,9 +54,9 @@ dependencies {
 }
 ```
 
-# Usage
+## Usage
 
-## Promise Creation
+### Promise Creation
 
 Handoff makes it easy to make any asynchronous process a promise. The `Promise` class can be extended:
 
@@ -97,7 +97,7 @@ When the resolution is already known, an overloaded Promise constructor is avail
 
 Promises can also be combined using `Promise.whenAll(Promise<Resolution> promises...)` which will resolve when all promises complete, and `Promise.whenAny(Promise<Resolution> promises...)` which will resolve when the first promise completes.
 
-## Continuations
+### Continuations
 
 Continuations are where Promises really shine. Promise-style continuations allow asynchronous control flow to be much more imperative in nature. A simple continuation on the same thread as the promise code use the `then` convention, as shown above:
 
@@ -151,7 +151,7 @@ playlist.promiseFirstFile()
     })
 ```
 
-## Errors
+### Errors
 
 Errors fall through like they would in a try/catch in synchronous, traditional Java. Errors are not strongly typed:
 
