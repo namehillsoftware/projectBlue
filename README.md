@@ -99,7 +99,7 @@ Promises can also be combined using `Promise.whenAll(Promise<Resolution> promise
 
 ### Continuations
 
-Continuations are where Promises really shine. Promise-style continuations allow asynchronous control flow to be much more imperative in nature. A simple continuation on the same thread as the promise code use the `then` convention, as shown above:
+Continuations are where Promises really shine. Promise-style continuations allow asynchronous control flow to be much more imperative in nature. In order to continue execution on the same thread as the promise was delivered on, use the `then` convention:
 
 ```java
 playlist.promiseFirstFile()
@@ -109,7 +109,7 @@ playlist.promiseFirstFile()
     });
 ```
 
-If it is need for a function to execute whether or not the promise is resolve, then the overloaded method of `then` can be used:
+If it is needed for a function to execute whether the promise is resolved or rejected, the overloaded method of `then` can be used:
 
 ```java
 playlist.promiseFirstFile()
