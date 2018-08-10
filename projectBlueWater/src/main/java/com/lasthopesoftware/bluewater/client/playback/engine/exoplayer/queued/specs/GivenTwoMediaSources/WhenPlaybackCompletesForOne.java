@@ -10,10 +10,10 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.upstream.Allocator;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.MediaSourceQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.specs.FakeExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.specs.FakeMediaSource;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.specs.FakeTimeline;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
 
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 public class WhenPlaybackCompletesForOne extends AndroidContext {
 
 	private static final FakeMediaSource fakeMediaSource = new FakeMediaSource(
-		Timeline.EMPTY,
+		new FakeTimeline(1),
 		null,
 		TrackGroupArray.EMPTY);
 	private static final MediaSource mockMediaSourceTwo = mock(MediaSource.class);
@@ -41,10 +41,10 @@ public class WhenPlaybackCompletesForOne extends AndroidContext {
 
 	@Override
 	public void before() throws Exception {
+		new FuturePromise<>(mediaSourceQueue.enqueueMediaSource(fakeMediaSource)).get();
 		final MediaPeriod mediaPeriod = fakeMediaSource.createPeriod(
 			new MediaSource.MediaPeriodId(0),
 			null);
-		new FuturePromise<>(mediaSourceQueue.enqueueMediaSource(fakeMediaSource)).get();
 		new FuturePromise<>(mediaSourceQueue.enqueueMediaSource(mockMediaSourceTwo)).get();
 
 		mediaSourceQueue.prepareSource(exoPlayer, true, (source, timeline, manifest) -> {});
