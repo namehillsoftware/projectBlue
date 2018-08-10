@@ -293,10 +293,12 @@ public class MediaSourceQueue extends CompositeMediaSource<MediaSourceQueue.Medi
 
 	private void addMediaSourceInternal(MediaSourceHolder newMediaSourceHolder) {
 
-		final MediaSourceHolder previousHolder = mediaSourceHolders.getLast();
-		newMediaSourceHolder.reset(
-			previousHolder.firstWindowIndexInChild + previousHolder.timeline.getWindowCount(),
-			previousHolder.firstPeriodIndexInChild + previousHolder.timeline.getPeriodCount());
+		if (!mediaSourceHolders.isEmpty()) {
+			final MediaSourceHolder previousHolder = mediaSourceHolders.getLast();
+			newMediaSourceHolder.reset(
+				previousHolder.firstWindowIndexInChild + previousHolder.timeline.getWindowCount(),
+				previousHolder.firstPeriodIndexInChild + previousHolder.timeline.getPeriodCount());
+		}
 
 		mediaSourceHolders.offer(newMediaSourceHolder);
 		prepareChildSource(newMediaSourceHolder, newMediaSourceHolder.mediaSource);
