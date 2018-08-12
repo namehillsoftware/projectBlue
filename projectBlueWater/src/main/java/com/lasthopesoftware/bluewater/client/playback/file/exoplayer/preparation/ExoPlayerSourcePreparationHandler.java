@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPl
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager;
-import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
 import org.slf4j.Logger;
@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
 class ExoPlayerSourcePreparationHandler
+extends
+	Promise<PreparedPlayableFile>
 implements
 	Player.EventListener,
 	MediaSourceEventListener,
@@ -36,21 +38,18 @@ implements
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerSourcePreparationHandler.class);
 
 	private final ExoPlayer exoPlayer;
-	private final Messenger<PreparedPlayableFile> messenger;
 	private final MediaCodecAudioRenderer[] audioRenderers;
 	private final BufferingExoPlayer bufferingExoPlayer;
 	private final long prepareAt;
-	private final CancellationToken cancellationToken;
+	private final CancellationToken cancellationToken = new CancellationToken();
 
 	private boolean isResolved;
 
-	ExoPlayerSourcePreparationHandler(ExoPlayer exoPlayer, MediaCodecAudioRenderer[] audioRenderers, BufferingExoPlayer bufferingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
+	ExoPlayerSourcePreparationHandler(ExoPlayer exoPlayer, MediaCodecAudioRenderer[] audioRenderers, BufferingExoPlayer bufferingExoPlayer, long prepareAt) {
 		this.exoPlayer = exoPlayer;
-		this.messenger = messenger;
 		this.audioRenderers = audioRenderers;
 		this.bufferingExoPlayer = bufferingExoPlayer;
 		this.prepareAt = prepareAt;
-		this.cancellationToken = cancellationToken;
 	}
 
 	@Override
@@ -100,7 +99,7 @@ implements
 
 		exoPlayer.removeListener(this);
 
-		messenger.sendRejection(new CancellationException());
+		reject(new CancellationException());
 	}
 
 	@Override
@@ -129,7 +128,7 @@ implements
 
 		exoPlayer.removeListener(this);
 
-		messenger.sendRejection(new PlaybackException(new EmptyPlaybackHandler(0), error));
+		reject(new PlaybackException(new EmptyPlaybackHandler(0), error));
 	}
 
 	@Override
@@ -145,7 +144,7 @@ implements
 		isResolved = true;
 
 		exoPlayer.removeListener(this);
-		messenger.sendResolution(
+		resolve(
 			new PreparedPlayableFile(
 				new ExoPlayerPlaybackHandler(exoPlayer),
 				new AudioTrackVolumeManager(exoPlayer, audioRenderers),

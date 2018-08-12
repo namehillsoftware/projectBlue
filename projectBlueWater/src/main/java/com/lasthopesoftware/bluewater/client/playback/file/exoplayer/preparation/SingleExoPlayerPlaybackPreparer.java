@@ -20,11 +20,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-
-import java.util.concurrent.CancellationException;
 
 public class SingleExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
@@ -50,50 +47,37 @@ public class SingleExoPlayerPlaybackPreparer implements PlayableFilePreparationS
 	@Override
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return bestMatchUriProvider.promiseFileUri(serviceFile)
-			.eventually(uri ->
-				new Promise<>(messenger -> {
-					final CancellationToken cancellationToken = new CancellationToken();
-					messenger.cancellationRequested(cancellationToken);
+			.eventually(uri -> {
+				final Renderer[] renderers =
+					renderersFactory.createRenderers(
+						handler,
+						null,
+						DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
+						lazyTextOutputLogger.getObject(),
+						lazyMetadataOutputLogger.getObject(),
+						null);
 
-					if (cancellationToken.isCancelled()) {
-						messenger.sendRejection(new CancellationException());
-						return;
-					}
+				final BufferingExoPlayer bufferingExoPlayer = new BufferingExoPlayer();
 
-					final Renderer[] renderers =
-						renderersFactory.createRenderers(
-							handler,
-							null,
-							DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
-							lazyTextOutputLogger.getObject(),
-							lazyMetadataOutputLogger.getObject(),
-							null);
+				final ExoPlayerSourcePreparationHandler exoPlayerPreparationHandler = new ExoPlayerSourcePreparationHandler(
+					exoPlayer,
+					Stream.of(renderers)
+						.filter(r -> r instanceof MediaCodecAudioRenderer)
+						.toArray(MediaCodecAudioRenderer[]::new),
+					bufferingExoPlayer,
+					preparedAt);
 
-					final BufferingExoPlayer bufferingExoPlayer = new BufferingExoPlayer();
+				final MediaSource mediaSource =
+					extractorMediaSourceFactoryProvider
+						.getFactory(uri)
+						.createMediaSource(uri);
 
-					final ExoPlayerSourcePreparationHandler exoPlayerPreparationHandler =
-						new ExoPlayerSourcePreparationHandler(
-							exoPlayer,
-							Stream.of(renderers)
-								.filter(r -> r instanceof MediaCodecAudioRenderer)
-								.toArray(MediaCodecAudioRenderer[]::new),
-							bufferingExoPlayer,
-							preparedAt,
-							messenger,
-							cancellationToken);
+				mediaSource.addEventListener(handler, exoPlayerPreparationHandler);
+				exoPlayer.addListener(exoPlayerPreparationHandler);
 
-					exoPlayer.addListener(exoPlayerPreparationHandler);
+				mediaSourcesQueue.enqueueMediaSource(mediaSource);
 
-					if (cancellationToken.isCancelled()) return;
-
-					final MediaSource mediaSource =
-						extractorMediaSourceFactoryProvider
-							.getFactory(uri)
-							.createMediaSource(uri);
-
-					mediaSource.addEventListener(handler, exoPlayerPreparationHandler);
-
-					mediaSourcesQueue.enqueueMediaSource(mediaSource);
-				}));
+				return exoPlayerPreparationHandler;
+			});
 	}
 }
