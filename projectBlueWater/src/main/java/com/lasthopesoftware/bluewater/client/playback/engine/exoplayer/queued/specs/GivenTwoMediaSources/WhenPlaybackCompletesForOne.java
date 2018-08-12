@@ -7,7 +7,6 @@ import android.os.Message;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlayerMessage;
 import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.MediaSourceQueue;
@@ -41,15 +40,13 @@ public class WhenPlaybackCompletesForOne extends AndroidContext {
 
 	@Override
 	public void before() throws Exception {
-		new FuturePromise<>(mediaSourceQueue.enqueueMediaSource(fakeMediaSource)).get();
-		final MediaPeriod mediaPeriod = fakeMediaSource.createPeriod(
-			new MediaSource.MediaPeriodId(0),
-			null);
+		final MediaSource promisedMediaSource = new FuturePromise<>(mediaSourceQueue.enqueueMediaSource(fakeMediaSource)).get();
 		new FuturePromise<>(mediaSourceQueue.enqueueMediaSource(mockMediaSourceTwo)).get();
 
-		mediaSourceQueue.prepareSource(exoPlayer, true, (source, timeline, manifest) -> {});
+		final MediaSource.SourceInfoRefreshListener listener = (source, timeline, manifest) -> {};
+		mediaSourceQueue.prepareSource(exoPlayer, true, listener);
 
-		fakeMediaSource.releasePeriod(mediaPeriod);
+		promisedMediaSource.releaseSource(listener);
 	}
 
 	@Test
