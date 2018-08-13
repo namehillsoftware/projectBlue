@@ -59,25 +59,24 @@ public class SingleExoPlayerPlaybackPreparer implements PlayableFilePreparationS
 
 				final BufferingExoPlayer bufferingExoPlayer = new BufferingExoPlayer();
 
-				final ExoPlayerSourcePreparationHandler exoPlayerPreparationHandler = new ExoPlayerSourcePreparationHandler(
+				final MediaSource mediaSource =
+					extractorMediaSourceFactoryProvider
+						.getFactory(uri)
+						.createMediaSource(uri);
+
+				final PreparedMediaSourcePromise preparedMediaSourcePromise = new PreparedMediaSourcePromise(
 					exoPlayer,
+					mediaSource,
+					handler,
 					Stream.of(renderers)
 						.filter(r -> r instanceof MediaCodecAudioRenderer)
 						.toArray(MediaCodecAudioRenderer[]::new),
 					bufferingExoPlayer,
 					preparedAt);
 
-				final MediaSource mediaSource =
-					extractorMediaSourceFactoryProvider
-						.getFactory(uri)
-						.createMediaSource(uri);
-
-				mediaSource.addEventListener(handler, exoPlayerPreparationHandler);
-				exoPlayer.addListener(exoPlayerPreparationHandler);
-
 				mediaSourcesQueue.enqueueMediaSource(mediaSource);
 
-				return exoPlayerPreparationHandler;
+				return preparedMediaSourcePromise;
 			});
 	}
 }

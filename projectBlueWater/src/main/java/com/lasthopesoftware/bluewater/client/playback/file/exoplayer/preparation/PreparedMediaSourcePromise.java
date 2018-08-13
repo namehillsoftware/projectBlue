@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
+import android.os.Handler;
 import android.support.annotation.Nullable;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -27,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
-class ExoPlayerSourcePreparationHandler
+class PreparedMediaSourcePromise
 extends
 	Promise<PreparedPlayableFile>
 implements
@@ -35,9 +36,10 @@ implements
 	MediaSourceEventListener,
 	Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerSourcePreparationHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(PreparedMediaSourcePromise.class);
 
 	private final ExoPlayer exoPlayer;
+	private final MediaSource mediaSource;
 	private final MediaCodecAudioRenderer[] audioRenderers;
 	private final BufferingExoPlayer bufferingExoPlayer;
 	private final long prepareAt;
@@ -45,11 +47,15 @@ implements
 
 	private boolean isResolved;
 
-	ExoPlayerSourcePreparationHandler(ExoPlayer exoPlayer, MediaCodecAudioRenderer[] audioRenderers, BufferingExoPlayer bufferingExoPlayer, long prepareAt) {
+	PreparedMediaSourcePromise(ExoPlayer exoPlayer, MediaSource mediaSource, Handler handler, MediaCodecAudioRenderer[] audioRenderers, BufferingExoPlayer bufferingExoPlayer, long prepareAt) {
 		this.exoPlayer = exoPlayer;
+		this.mediaSource = mediaSource;
 		this.audioRenderers = audioRenderers;
 		this.bufferingExoPlayer = bufferingExoPlayer;
 		this.prepareAt = prepareAt;
+
+		mediaSource.addEventListener(handler, this);
+		exoPlayer.addListener(this);
 	}
 
 	@Override
