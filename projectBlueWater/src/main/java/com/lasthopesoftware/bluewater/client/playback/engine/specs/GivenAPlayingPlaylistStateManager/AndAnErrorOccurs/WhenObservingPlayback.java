@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
@@ -57,8 +58,9 @@ public class WhenObservingPlayback {
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
 		final PlaybackEngine playbackEngine = new PlaybackEngine(
-			fakePlaybackPreparerProvider,
-			fakePlaybackPreparerProvider,
+			new PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider,
+				fakePlaybackPreparerProvider),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));

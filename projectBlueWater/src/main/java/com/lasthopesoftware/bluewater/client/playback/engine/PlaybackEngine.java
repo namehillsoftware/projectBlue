@@ -10,8 +10,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCo
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPreparedPlaybackQueueConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
@@ -59,10 +57,10 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	private OnPlaybackCompleted onPlaybackCompleted;
 	private OnPlaylistReset onPlaylistReset;
 
-	public PlaybackEngine(IPlayableFilePreparationSourceProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration configuration, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
+	public PlaybackEngine(PreparedPlaybackQueueResourceManagement preparedPlaybackQueueResourceManagement, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
-		preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(playbackPreparerProvider, configuration);
+		this.preparedPlaybackQueueResourceManagement = preparedPlaybackQueueResourceManagement;
 		this.playbackBootstrapper = playbackBootstrapper;
 	}
 
@@ -377,7 +375,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
 		isPlaying = false;
 
 		onPlaybackStarted = null;
@@ -391,7 +389,5 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 		positionedPlayingFile = null;
 		playlist = null;
-
-		preparedPlaybackQueueResourceManagement.close();
 	}
 }

@@ -69,6 +69,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
@@ -411,6 +412,7 @@ implements OnAudioFocusChangeListener
 	private RemoteControlProxy remoteControlProxy;
 	private PlaybackNotificationRouter playbackNotificationRouter;
 	private NowPlayingNotificationBuilder nowPlayingNotificationBuilder;
+	private PreparedPlaybackQueueResourceManagement preparedPlaybackQueueResourceManagement;
 
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
@@ -794,10 +796,14 @@ implements OnAudioFocusChangeListener
 
 			final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
 
+			preparedPlaybackQueueResourceManagement.close();
+			preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(
+				preparationSourceProvider,
+				preparationSourceProvider);
+
 			playbackEngine =
 				new PlaybackEngine(
-					preparationSourceProvider,
-					preparationSourceProvider,
+					preparedPlaybackQueueResourceManagement,
 					QueueProviders.providers(),
 					new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
 					playlistPlaybackBootstrapper);
@@ -1143,6 +1149,14 @@ implements OnAudioFocusChangeListener
 				playbackEngine.close();
 			} catch (Exception e) {
 				logger.warn("There was an error closing the prepared playback queue", e);
+			}
+		}
+
+		if (preparedPlaybackQueueResourceManagement != null) {
+			try {
+				preparedPlaybackQueueResourceManagement.close();
+			} catch (IOException e) {
+				logger.error("There was an error closing the playback queue resource manager", e);
 			}
 		}
 
