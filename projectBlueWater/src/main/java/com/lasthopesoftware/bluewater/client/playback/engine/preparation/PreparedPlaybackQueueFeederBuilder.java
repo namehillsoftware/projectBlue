@@ -9,8 +9,9 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.QueueMediaSources;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.SingleExoPlayerSourcePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.single.SingleExoPlayerSourcePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlaybackQueueFeeder {
@@ -22,6 +23,7 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 	private final ExoPlayer exoPlayer;
 	private final QueueMediaSources mediaSourcesQueue;
 	private final RenderersFactory renderersFactory;
+	private final ManagePlayableFileVolume playableFileVolumeManager;
 
 	public PreparedPlaybackQueueFeederBuilder(
 		LookupSelectedPlaybackEngineType selectedPlaybackEngineTypeLookup,
@@ -30,7 +32,7 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 		ExtractorMediaSourceFactoryProvider mediaSourceFactoryProvider,
 		ExoPlayer exoPlayer,
 		QueueMediaSources mediaSourcesQueue,
-		RenderersFactory renderersFactory) {
+		RenderersFactory renderersFactory, ManagePlayableFileVolume playableFileVolumeManager) {
 
 		this.selectedPlaybackEngineTypeLookup = selectedPlaybackEngineTypeLookup;
 		this.handler = handler;
@@ -39,6 +41,7 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 		this.exoPlayer = exoPlayer;
 		this.mediaSourcesQueue = mediaSourcesQueue;
 		this.renderersFactory = renderersFactory;
+		this.playableFileVolumeManager = playableFileVolumeManager;
 	}
 
 	@Override
@@ -59,7 +62,7 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 							mediaSourceFactoryProvider,
 							exoPlayer,
 							mediaSourcesQueue,
-							renderersFactory);
+							playableFileVolumeManager);
 					default:
 						return null;
 				}

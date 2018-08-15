@@ -35,6 +35,9 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.Renderer;
+import com.google.android.exoplayer2.RenderersFactory;
+import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.cache.Cache;
@@ -110,6 +113,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
+import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -428,6 +432,8 @@ implements OnAudioFocusChangeListener
 	};
 
 	private final CreateAndHold<AudioBecomingNoisyReceiver> lazyAudioBecomingNoisyReceiver = new Lazy<>(AudioBecomingNoisyReceiver::new);
+
+	private final CreateAndHold<RenderersFactory> lazyRenderersFactory = new Lazy<>(() -> new DefaultRenderersFactory(this));
 
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
@@ -811,16 +817,16 @@ implements OnAudioFocusChangeListener
 					library,
 					cache);
 
-				final DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this);
+				final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
+					handler,
+					null,
+					DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
+					lazyTextOutputLogger.getObject(),
+					lazyMetadataOutputLogger.getObject(),
+					null);
 
 				exoPlayer = ExoPlayerFactory.newInstance(
-					renderersFactory.createRenderers(
-						handler,
-						null,
-						DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
-						lazyTextOutputLogger.getObject(),
-						lazyMetadataOutputLogger.getObject(),
-						null),
+					renderers,
 					trackSelector.getObject(),
 					loadControl.getObject());
 
@@ -851,7 +857,12 @@ implements OnAudioFocusChangeListener
 						extractorMediaSourceFactoryProvider,
 						exoPlayer,
 						mediaSourceQueue,
-						renderersFactory);
+						lazyRenderersFactory.getObject(),
+						new AudioTrackVolumeManager(
+							exoPlayer,
+							Stream.of(renderers)
+								.filter(r -> r instanceof MediaCodecAudioRenderer)
+								.toArray(MediaCodecAudioRenderer[]::new)));
 
 				return playbackEngineBuilder.build(library);
 			})

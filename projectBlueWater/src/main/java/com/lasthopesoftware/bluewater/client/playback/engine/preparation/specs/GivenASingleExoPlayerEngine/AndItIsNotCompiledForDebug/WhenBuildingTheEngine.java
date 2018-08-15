@@ -10,8 +10,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.Qu
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.SingleExoPlayerSourcePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.single.SingleExoPlayerSourcePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -43,7 +44,8 @@ public class WhenBuildingTheEngine {
 				mock(ExtractorMediaSourceFactoryProvider.class),
 				mock(ExoPlayer.class),
 				mock(QueueMediaSources.class),
-				mock(RenderersFactory.class));
+				mock(RenderersFactory.class),
+				mock(ManagePlayableFileVolume.class));
 
 		engine = new FuturePromise<>(playbackEngineBuilder.build(new Library())).get();
 	}

@@ -1,14 +1,14 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.single;
 
 import android.os.Handler;
 
 import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.RenderersFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.QueueMediaSources;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 
 
 public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayableFilePreparationSourceProvider {
@@ -16,7 +16,7 @@ public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayable
 	private final Handler handler;
 	private final BestMatchUriProvider bestMatchUriProvider;
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
-	private final RenderersFactory renderersFactory;
+	private final ManagePlayableFileVolume playableFileVolumeManager;
 	private final ExoPlayer exoPlayer;
 	private final QueueMediaSources mediaSourcesQueue;
 
@@ -26,14 +26,14 @@ public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayable
 		ExtractorMediaSourceFactoryProvider mediaSourceFactoryProvider,
 		ExoPlayer exoPlayer,
 		QueueMediaSources mediaSourcesQueue,
-		RenderersFactory renderersFactory) {
+		ManagePlayableFileVolume playableFileVolumeManager) {
 
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 		this.extractorMediaSourceFactoryProvider = mediaSourceFactoryProvider;
-		this.renderersFactory = renderersFactory;
 		this.exoPlayer = exoPlayer;
 		this.mediaSourcesQueue = mediaSourcesQueue;
+		this.playableFileVolumeManager = playableFileVolumeManager;
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayable
 			exoPlayer,
 			extractorMediaSourceFactoryProvider,
 			mediaSourcesQueue,
-			renderersFactory,
+			playableFileVolumeManager,
 			handler,
 			bestMatchUriProvider);
 	}

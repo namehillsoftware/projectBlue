@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.single;
 
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -8,7 +8,6 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -18,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 
@@ -40,17 +39,17 @@ implements
 
 	private final ExoPlayer exoPlayer;
 	private final MediaSource mediaSource;
-	private final MediaCodecAudioRenderer[] audioRenderers;
+	private final ManagePlayableFileVolume audioTrackVolumeManager;
 	private final BufferingExoPlayer bufferingExoPlayer;
 	private final long prepareAt;
 	private final CancellationToken cancellationToken = new CancellationToken();
 
 	private boolean isResolved;
 
-	PreparedMediaSourcePromise(ExoPlayer exoPlayer, MediaSource mediaSource, Handler handler, MediaCodecAudioRenderer[] audioRenderers, BufferingExoPlayer bufferingExoPlayer, long prepareAt) {
+	PreparedMediaSourcePromise(ExoPlayer exoPlayer, MediaSource mediaSource, Handler handler, ManagePlayableFileVolume audioTrackVolumeManager, BufferingExoPlayer bufferingExoPlayer, long prepareAt) {
 		this.exoPlayer = exoPlayer;
 		this.mediaSource = mediaSource;
-		this.audioRenderers = audioRenderers;
+		this.audioTrackVolumeManager = audioTrackVolumeManager;
 		this.bufferingExoPlayer = bufferingExoPlayer;
 		this.prepareAt = prepareAt;
 
@@ -149,11 +148,12 @@ implements
 	private void resolvePlayerAsPrepared() {
 		isResolved = true;
 
+		mediaSource.removeEventListener(this);
 		exoPlayer.removeListener(this);
 		resolve(
 			new PreparedPlayableFile(
 				new ExoPlayerPlaybackHandler(exoPlayer),
-				new AudioTrackVolumeManager(exoPlayer, audioRenderers),
+				audioTrackVolumeManager,
 				bufferingExoPlayer));
 	}
 }
