@@ -38,7 +38,7 @@ public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayable
 
 	@Override
 	public int getMaxQueueSize() {
-		return Integer.MAX_VALUE;
+		return 5;
 	}
 
 	@Override

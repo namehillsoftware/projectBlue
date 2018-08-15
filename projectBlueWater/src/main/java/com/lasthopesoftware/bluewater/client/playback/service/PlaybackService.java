@@ -824,6 +824,10 @@ implements OnAudioFocusChangeListener
 					trackSelector.getObject(),
 					loadControl.getObject());
 
+				final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
+
+				exoPlayer.prepare(mediaSourceQueue);
+
 				final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 					new PreparedPlaybackQueueFeederBuilder(
 						new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup()),
@@ -846,7 +850,7 @@ implements OnAudioFocusChangeListener
 							remoteFileUriProvider),
 						extractorMediaSourceFactoryProvider,
 						exoPlayer,
-						new MediaSourceQueue(),
+						mediaSourceQueue,
 						renderersFactory);
 
 				return playbackEngineBuilder.build(library);
