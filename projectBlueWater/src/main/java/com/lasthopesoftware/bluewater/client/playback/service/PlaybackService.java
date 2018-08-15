@@ -852,7 +852,9 @@ implements OnAudioFocusChangeListener
 				return playbackEngineBuilder.build(library);
 			})
 			.then(preparationSourceProvider -> {
-				preparedPlaybackQueueResourceManagement.close();
+				if (preparedPlaybackQueueResourceManagement != null)
+					preparedPlaybackQueueResourceManagement.close();
+
 				preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(
 					preparationSourceProvider,
 					preparationSourceProvider);

@@ -15,14 +15,9 @@ import java.io.IOException;
 
 public class MediaSourceQueue implements MediaSource, QueueMediaSources {
 
-	private final ConcatenatingMediaSource concatenatingMediaSource;
+	private final ConcatenatingMediaSource concatenatingMediaSource = new ConcatenatingMediaSource();
 
 	private volatile Promise<?> activePromise;
-
-	public MediaSourceQueue() {
-		super();
-		concatenatingMediaSource = new ConcatenatingMediaSource();
-	}
 
 	@Override
 	public final Promise<MediaSource> enqueueMediaSource(MediaSource mediaSource) {
