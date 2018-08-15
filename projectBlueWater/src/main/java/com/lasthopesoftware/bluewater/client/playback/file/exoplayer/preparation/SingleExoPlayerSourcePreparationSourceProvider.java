@@ -11,21 +11,26 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 
 
-public class MediaSourcePreparationSourceProvider implements IPlayableFilePreparationSourceProvider {
+public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayableFilePreparationSourceProvider {
 
 	private final Handler handler;
 	private final BestMatchUriProvider bestMatchUriProvider;
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
 	private final ExoPlayer exoPlayer;
-	private QueueMediaSources mediaSourcesQueue;
+	private final QueueMediaSources mediaSourcesQueue;
 
-	public MediaSourcePreparationSourceProvider(Handler handler, BestMatchUriProvider bestMatchUriProvider, ExtractorMediaSourceFactoryProvider mediaSourceFactoryProvider, ExoPlayer exoPlayer, QueueMediaSources mediaSourcesQueue, RenderersFactory renderersFactory) {
+	public SingleExoPlayerSourcePreparationSourceProvider(
+		Handler handler,
+		BestMatchUriProvider bestMatchUriProvider,
+		ExtractorMediaSourceFactoryProvider mediaSourceFactoryProvider,
+		ExoPlayer exoPlayer,
+		QueueMediaSources mediaSourcesQueue,
+		RenderersFactory renderersFactory) {
+
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
-
 		this.extractorMediaSourceFactoryProvider = mediaSourceFactoryProvider;
-
 		this.renderersFactory = renderersFactory;
 		this.exoPlayer = exoPlayer;
 		this.mediaSourcesQueue = mediaSourcesQueue;

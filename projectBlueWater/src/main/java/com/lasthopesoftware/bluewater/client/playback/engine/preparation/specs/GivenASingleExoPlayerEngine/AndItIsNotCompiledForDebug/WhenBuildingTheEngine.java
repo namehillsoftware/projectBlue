@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenAnExoPlayerEngineSelection;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenASingleExoPlayerEngine.AndItIsNotCompiledForDebug;
 
 import android.os.Handler;
 
@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.Qu
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.SingleExoPlayerSourcePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -33,7 +33,7 @@ public class WhenBuildingTheEngine {
 		final LookupSelectedPlaybackEngineType lookupSelectedPlaybackEngineType =
 			mock(LookupSelectedPlaybackEngineType.class);
 		when(lookupSelectedPlaybackEngineType.promiseSelectedPlaybackEngineType())
-			.thenReturn(new Promise<>(PlaybackEngineType.ExoPlayer));
+			.thenReturn(new Promise<>(PlaybackEngineType.SingleExoPlayer));
 
 		final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 			new PreparedPlaybackQueueFeederBuilder(
@@ -49,7 +49,7 @@ public class WhenBuildingTheEngine {
 	}
 
 	@Test
-	public void thenAnExoPlayerEngineIsBuilt() {
-		assertThat(engine).isInstanceOf(ExoPlayerPlayableFilePreparationSourceProvider.class);
+	public void thenASingleExoPlayerEngineIsBuilt() {
+		assertThat(engine).isInstanceOf(SingleExoPlayerSourcePreparationSourceProvider.class);
 	}
 }
