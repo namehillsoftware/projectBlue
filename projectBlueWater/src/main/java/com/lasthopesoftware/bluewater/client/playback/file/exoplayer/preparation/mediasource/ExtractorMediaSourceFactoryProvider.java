@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 
-public class ExtractorMediaSourceFactoryProvider {
+public class ExtractorMediaSourceFactoryProvider implements ProvideMediaSourceFactories {
 
 	private final Context context;
 	private final IConnectionProvider connectionProvider;
@@ -78,6 +78,7 @@ public class ExtractorMediaSourceFactoryProvider {
 		this.cache = cache;
 	}
 
+	@Override
 	public ExtractorMediaSource.Factory getFactory(Uri uri) {
 		return uri.getScheme().equalsIgnoreCase(IoCommon.FileUriScheme)
 			? lazyFileExtractorFactory.getObject()
