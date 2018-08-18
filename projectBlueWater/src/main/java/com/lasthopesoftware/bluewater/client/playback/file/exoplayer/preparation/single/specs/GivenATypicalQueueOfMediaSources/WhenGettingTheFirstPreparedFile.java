@@ -50,13 +50,13 @@ public class WhenGettingTheFirstPreparedFile extends AndroidContext {
 				new Handler(),
 				(sf) -> new Promise<>(Uri.EMPTY));
 
-		final FuturePromise<PreparedPlayableFile> preparedPlayableFilePromise = new FuturePromise<>(exoPlayerPlaybackPreparer.promisePreparedPlaybackFile(
+		final Promise<PreparedPlayableFile> preparedPlayableFilePromise = exoPlayerPlaybackPreparer.promisePreparedPlaybackFile(
 			new ServiceFile(4),
-			0));
+			0);
 
 		Stream.of(eventListener).forEach(e -> e.onPlayerStateChanged(true, Player.STATE_READY));
 
-		preparedPlayableFile = preparedPlayableFilePromise.get();
+		preparedPlayableFile = new FuturePromise<>(preparedPlayableFilePromise).get();
 	}
 
 	@Test
