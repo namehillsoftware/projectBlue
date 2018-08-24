@@ -49,12 +49,6 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 		return this.selectedPlaybackEngineTypeLookup.promiseSelectedPlaybackEngineType()
 			.then(playbackEngineType -> {
 				switch (playbackEngineType) {
-					case ExoPlayer:
-						return new ExoPlayerPlayableFilePreparationSourceProvider(
-							handler,
-							bestMatchUriProvider,
-							mediaSourceFactoryProvider,
-							renderersFactory);
 					case SingleExoPlayer:
 						return new SingleExoPlayerSourcePreparationSourceProvider(
 							handler,
@@ -63,8 +57,13 @@ public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlayback
 							exoPlayer,
 							mediaSourcesQueue,
 							playableFileVolumeManager);
+					case ExoPlayer:
 					default:
-						return null;
+						return new ExoPlayerPlayableFilePreparationSourceProvider(
+							handler,
+							bestMatchUriProvider,
+							mediaSourceFactoryProvider,
+							renderersFactory);
 				}
 			});
 	}

@@ -76,9 +76,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProv
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderingEventListener;
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.MetadataOutputLogger;
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.TextOutputLogger;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events.AudioRenderingEventListener;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events.MetadataOutputLogger;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events.TextOutputLogger;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.MediaSourceQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;

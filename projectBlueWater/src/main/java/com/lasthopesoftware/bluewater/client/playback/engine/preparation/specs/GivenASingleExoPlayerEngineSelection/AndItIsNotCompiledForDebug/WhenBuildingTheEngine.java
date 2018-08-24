@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenASingleExoPlayerEngine.AndItIsNotCompiledForDebug;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenASingleExoPlayerEngineSelection.AndItIsNotCompiledForDebug;
 
 import android.os.Handler;
 
