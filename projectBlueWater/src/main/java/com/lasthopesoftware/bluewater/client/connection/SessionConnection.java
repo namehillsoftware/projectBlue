@@ -35,10 +35,10 @@ public class SessionConnection {
 
 	private static final Object buildingConnectionPromiseSync = new Object();
 
-	private static int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
-	private static ConnectionProvider sessionConnectionProvider;
-	private static Promise<Void> buildingConnectionPromise;
-	private static int selectedLibraryId;
+	private static volatile int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
+	private static volatile ConnectionProvider sessionConnectionProvider;
+	private static volatile Promise<Void> buildingConnectionPromise;
+	private static volatile int selectedLibraryId;
 
 	public static ConnectionProvider getSessionConnectionProvider() {
 		return sessionConnectionProvider;
