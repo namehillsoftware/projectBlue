@@ -66,6 +66,15 @@ public class SessionConnection {
 							buildingConnectionPromise = null;
 						return null;
 					}
+				}, e -> {
+					logger.error("There was an error building the session connection", e);
+					doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+
+					synchronized (buildingConnectionPromiseSync) {
+						if (selectedLibraryId == newSelectedLibraryId)
+							buildingConnectionPromise = null;
+						return null;
+					}
 				});
 
 			return buildingStatus;
@@ -125,11 +134,6 @@ public class SessionConnection {
 											});
 								});
 						});
-			}, e -> {
-				logger.error("There was an error building the session connection", e);
-				doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-
-				return Promise.empty();
 			});
 	}
 
