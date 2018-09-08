@@ -11,8 +11,8 @@ import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
@@ -83,7 +83,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	}
 
 	@Override
-	public Void respond(List<ServiceFile> serviceFiles) throws Throwable {
+	public Void respond(List<ServiceFile> serviceFiles) {
 		if (serviceFiles == null) return null;
 
 		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

@@ -8,7 +8,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +45,7 @@ public class SessionConnectionRegistrationsMaintainer extends BroadcastReceiver 
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
 		Stream.of(registeredReceivers).forEach(localBroadcastManager::unregisterReceiver);
 	}
 }

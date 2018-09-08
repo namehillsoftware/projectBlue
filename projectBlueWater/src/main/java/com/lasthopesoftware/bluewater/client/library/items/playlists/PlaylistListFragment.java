@@ -13,7 +13,7 @@ import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
@@ -38,8 +38,8 @@ public class PlaylistListFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final RelativeLayout itemListLayout = (RelativeLayout) inflater.inflate(R.layout.activity_view_items, container, false);
 
-		final ListView playlistView = (ListView) itemListLayout.findViewById(R.id.lvItems);
-		final ProgressBar loadingView = (ProgressBar) itemListLayout.findViewById(R.id.pbLoadingItems);
+		final ListView playlistView = itemListLayout.findViewById(R.id.lvItems);
+		final ProgressBar loadingView = itemListLayout.findViewById(R.id.pbLoadingItems);
 
 		playlistView.setVisibility(View.INVISIBLE);
 
