@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Keep
@@ -220,6 +221,34 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	public Library setId(int id) {
 		this.id = id;
 		return this;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Library library = (Library) o;
+		return id == library.id &&
+			isLocalOnly == library.isLocalOnly &&
+			isRepeating == library.isRepeating &&
+			nowPlayingId == library.nowPlayingId &&
+			nowPlayingProgress == library.nowPlayingProgress &&
+			selectedView == library.selectedView &&
+			isUsingExistingFiles == library.isUsingExistingFiles &&
+			isSyncLocalConnectionsOnly == library.isSyncLocalConnectionsOnly &&
+			Objects.equals(libraryName, library.libraryName) &&
+			Objects.equals(accessCode, library.accessCode) &&
+			Objects.equals(authKey, library.authKey) &&
+			selectedViewType == library.selectedViewType &&
+			Objects.equals(savedTracksString, library.savedTracksString) &&
+			Objects.equals(customSyncedFilesPath, library.customSyncedFilesPath) &&
+			syncedFileLocation == library.syncedFileLocation;
+	}
+
+	@Override
+	public int hashCode() {
+
+		return Objects.hash(id, libraryName, accessCode, authKey, isLocalOnly, isRepeating, nowPlayingId, nowPlayingProgress, selectedViewType, selectedView, savedTracksString, customSyncedFilesPath, syncedFileLocation, isUsingExistingFiles, isSyncLocalConnectionsOnly);
 	}
 
 	@Override
