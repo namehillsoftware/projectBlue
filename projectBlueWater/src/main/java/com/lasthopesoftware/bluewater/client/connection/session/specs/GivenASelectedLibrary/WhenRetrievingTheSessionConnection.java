@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLive
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
@@ -39,6 +40,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 			RuntimeEnvironment.application,
 			() -> 2,
 			libraryProvider,
+			mock(ILibraryStorage.class),
 			liveUrlProvider);
 
 		connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();

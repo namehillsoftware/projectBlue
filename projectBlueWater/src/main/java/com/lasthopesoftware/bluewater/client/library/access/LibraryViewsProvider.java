@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.access;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
 import com.lasthopesoftware.providers.AbstractProvider;
@@ -26,10 +26,10 @@ public class LibraryViewsProvider implements CancellableMessageWriter<List<Item>
     private static List<Item> cachedFileSystemItems;
     private static Integer revision;
 
-    private final ConnectionProvider connectionProvider;
+    private final IConnectionProvider connectionProvider;
 	private final Integer serverRevision;
 
-	public static Promise<List<Item>> provide(ConnectionProvider connectionProvider) {
+	public static Promise<List<Item>> provide(IConnectionProvider connectionProvider) {
 		return
 			RevisionChecker.promiseRevision(connectionProvider)
 				.eventually(serverRevision -> {
@@ -42,13 +42,13 @@ public class LibraryViewsProvider implements CancellableMessageWriter<List<Item>
 				});
     }
 
-    private LibraryViewsProvider(ConnectionProvider connectionProvider, Integer serverRevision) {
+    private LibraryViewsProvider(IConnectionProvider connectionProvider, Integer serverRevision) {
         this.connectionProvider = connectionProvider;
 		this.serverRevision = serverRevision;
 	}
 
 	@Override
-	public List<Item> prepareMessage(CancellationToken cancellationToken) throws Throwable {
+	public List<Item> prepareMessage(CancellationToken cancellationToken) {
 		if (cancellationToken.isCancelled()) return null;
 
 		try {

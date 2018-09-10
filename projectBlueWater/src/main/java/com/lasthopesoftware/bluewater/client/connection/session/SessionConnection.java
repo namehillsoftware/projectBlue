@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -47,6 +48,7 @@ public class SessionConnection {
 	private final Context context;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
+	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
 
 	public static ConnectionProvider getSessionConnectionProvider() {
@@ -57,10 +59,27 @@ public class SessionConnection {
 		return sessionConnectionProvider != null;
 	}
 
-	public SessionConnection(Context context, ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider, ProvideLiveUrl liveUrlProvider) {
+	public static void refresh(final Context context) {
+		if (sessionConnectionProvider == null)
+			throw new NullPointerException("The session connection needs to be built first.");
+
+		ConnectionTester.doTest(sessionConnectionProvider)
+			.then(result -> {
+				if (!result) build(context);
+
+				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
+				refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
+				LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
+
+				return null;
+			});
+	}
+
+	public SessionConnection(Context context, ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider, ILibraryStorage libraryStorage, ProvideLiveUrl liveUrlProvider) {
 		this.context = context;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
+		this.libraryStorage = libraryStorage;
 		this.liveUrlProvider = liveUrlProvider;
 	}
 
@@ -74,12 +93,12 @@ public class SessionConnection {
 			}
 
 			buildingConnectionPromise = (buildingConnectionPromise != null
-				? buildingConnectionPromise.eventually(v -> promiseBuiltSessionConnection(context, newSelectedLibraryId))
-				: promiseBuiltSessionConnection(context, newSelectedLibraryId)).then(v -> {
+				? buildingConnectionPromise.eventually(v -> promiseBuiltSessionConnection(newSelectedLibraryId))
+				: promiseBuiltSessionConnection(newSelectedLibraryId)).then(c -> {
 				synchronized (buildingConnectionPromiseSync) {
 					if (selectedLibraryId == newSelectedLibraryId)
 						buildingConnectionPromise = null;
-					return null;
+					return c;
 				}
 			}, e -> {
 				logger.error("There was an error building the session connection", e);
@@ -94,6 +113,61 @@ public class SessionConnection {
 		}
 
 		return buildingConnectionPromise;
+	}
+
+	private Promise<IConnectionProvider> promiseBuiltSessionConnection(final int selectedLibraryId) {
+		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
+		return libraryProvider
+			.getLibrary(selectedLibraryId)
+			.eventually(library -> {
+				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
+					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
+					return Promise.empty();
+				}
+
+				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
+
+				return
+					liveUrlProvider
+						.promiseLiveUrl(library)
+						.eventually(urlProvider -> {
+							if (urlProvider == null) {
+								doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+								return Promise.empty();
+							}
+
+							final IConnectionProvider localConnectionProvider = sessionConnectionProvider = new ConnectionProvider(urlProvider);
+
+							if (library.getSelectedView() >= 0) {
+								doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+								return new Promise<>(localConnectionProvider);
+							}
+
+							doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+
+							return LibraryViewsProvider
+								.provide(localConnectionProvider)
+								.eventually(libraryViews -> {
+									if (libraryViews == null || libraryViews.size() == 0) {
+										doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+										return new Promise<>(localConnectionProvider);
+									}
+
+									doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+									final int selectedView = libraryViews.get(0).getKey();
+									library.setSelectedView(selectedView);
+									library.setSelectedViewType(Library.ViewType.StandardServerView);
+
+									return
+										libraryStorage
+											.saveLibrary(library)
+											.then(savedLibrary -> {
+												doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+												return localConnectionProvider;
+											});
+								});
+						});
+			});
 	}
 
 	public static int build(final Context context) {
@@ -182,22 +256,6 @@ public class SessionConnection {
 											});
 								});
 						});
-			});
-	}
-
-	public static void refresh(final Context context) {
-		if (sessionConnectionProvider == null)
-			throw new NullPointerException("The session connection needs to be built first.");
-
-		ConnectionTester.doTest(sessionConnectionProvider)
-			.then(result -> {
-				if (!result) build(context);
-
-				final Intent refreshBroadcastIntent = new Intent(refreshSessionBroadcast);
-				refreshBroadcastIntent.putExtra(isRefreshSuccessfulStatus, result);
-				LocalBroadcastManager.getInstance(context).sendBroadcast(refreshBroadcastIntent);
-
-				return null;
 			});
 	}
 
