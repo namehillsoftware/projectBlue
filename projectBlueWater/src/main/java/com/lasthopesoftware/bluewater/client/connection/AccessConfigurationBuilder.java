@@ -1,15 +1,16 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
 import android.content.Context;
-import android.net.NetworkInfo;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -31,9 +32,8 @@ public class AccessConfigurationBuilder {
 	};
 
 	public static Promise<IUrlProvider> buildConfiguration(final Context context, final Library library) {
-		final NetworkInfo networkInfo = ConnectionInfo.getActiveNetworkInfo(context);
-		return networkInfo != null && networkInfo.isConnected()
-			? lazyUrlScanner.getObject().promiseBuiltUrlProvider(library)
-			: Promise.empty();
+		return new LiveUrlProvider(
+			new ActiveNetworkFinder(context),
+			lazyUrlScanner.getObject()).promiseLiveUrl(library);
 	}
 }
