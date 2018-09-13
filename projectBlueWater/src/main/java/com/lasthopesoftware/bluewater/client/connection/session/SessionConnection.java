@@ -12,7 +12,8 @@ import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.access.views.ProvideLibraryViews;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -48,6 +49,7 @@ public class SessionConnection {
 	private final Context context;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
+	private final ProvideLibraryViews libraryViewsProvider;
 	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
 
@@ -75,10 +77,11 @@ public class SessionConnection {
 			});
 	}
 
-	public SessionConnection(Context context, ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider, ILibraryStorage libraryStorage, ProvideLiveUrl liveUrlProvider) {
+	public SessionConnection(Context context, ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider, ProvideLibraryViews libraryViewsProvider, ILibraryStorage libraryStorage, ProvideLiveUrl liveUrlProvider) {
 		this.context = context;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
+		this.libraryViewsProvider = libraryViewsProvider;
 		this.libraryStorage = libraryStorage;
 		this.liveUrlProvider = liveUrlProvider;
 	}
@@ -86,30 +89,13 @@ public class SessionConnection {
 	public Promise<IConnectionProvider> promiseSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 		synchronized (buildingConnectionPromiseSync) {
-			if (buildingConnectionPromise != null) {
-				if (selectedLibraryId == newSelectedLibraryId) return buildingConnectionPromise;
+			if (selectedLibraryId == newSelectedLibraryId) return buildingConnectionPromise;
 
-				selectedLibraryId = newSelectedLibraryId;
-			}
+			selectedLibraryId = newSelectedLibraryId;
 
-			buildingConnectionPromise = (buildingConnectionPromise != null
+			buildingConnectionPromise = buildingConnectionPromise != null
 				? buildingConnectionPromise.eventually(v -> promiseBuiltSessionConnection(newSelectedLibraryId))
-				: promiseBuiltSessionConnection(newSelectedLibraryId)).then(c -> {
-				synchronized (buildingConnectionPromiseSync) {
-					if (selectedLibraryId == newSelectedLibraryId)
-						buildingConnectionPromise = null;
-					return c;
-				}
-			}, e -> {
-				logger.error("There was an error building the session connection", e);
-				doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-
-				synchronized (buildingConnectionPromiseSync) {
-					if (selectedLibraryId == newSelectedLibraryId)
-						buildingConnectionPromise = null;
-					return null;
-				}
-			});
+				: promiseBuiltSessionConnection(newSelectedLibraryId);
 		}
 
 		return buildingConnectionPromise;
@@ -145,8 +131,8 @@ public class SessionConnection {
 
 							doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
-							return LibraryViewsProvider
-								.provide(localConnectionProvider)
+							return libraryViewsProvider
+								.promiseLibraryViewsFromConnection(localConnectionProvider)
 								.eventually(libraryViews -> {
 									if (libraryViews == null || libraryViews.size() == 0) {
 										doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);

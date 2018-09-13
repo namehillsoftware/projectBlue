@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLive
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
@@ -14,6 +14,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -28,7 +29,9 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 	@Override
 	public void before() throws ExecutionException, InterruptedException {
 
-		final Library library = new Library().setId(2);
+		final Library library = new Library()
+			.setId(2)
+			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
 		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
@@ -40,7 +43,8 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 			RuntimeEnvironment.application,
 			() -> 2,
 			libraryProvider,
-			mock(ILibraryStorage.class),
+			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
+			Promise::new,
 			liveUrlProvider);
 
 		connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
@@ -48,6 +52,6 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.getUrlProvider().getBaseUrl()).isEqualTo("http://my-fake-url");
+		assertThat(connectionProvider.getUrlProvider()).isEqualTo(urlProvider);
 	}
 }
