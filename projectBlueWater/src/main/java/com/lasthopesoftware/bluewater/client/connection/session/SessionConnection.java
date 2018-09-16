@@ -93,12 +93,10 @@ public class SessionConnection {
 
 			selectedLibraryId = newSelectedLibraryId;
 
-			buildingConnectionPromise = buildingConnectionPromise != null
+			return buildingConnectionPromise = buildingConnectionPromise != null
 				? buildingConnectionPromise.eventually(v -> promiseBuiltSessionConnection(newSelectedLibraryId))
 				: promiseBuiltSessionConnection(newSelectedLibraryId);
 		}
-
-		return buildingConnectionPromise;
 	}
 
 	private Promise<IConnectionProvider> promiseBuiltSessionConnection(final int selectedLibraryId) {
@@ -113,46 +111,44 @@ public class SessionConnection {
 
 				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
 
-				return
-					liveUrlProvider
-						.promiseLiveUrl(library)
-						.eventually(urlProvider -> {
-							if (urlProvider == null) {
-								doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
-								return Promise.empty();
-							}
+				return liveUrlProvider
+					.promiseLiveUrl(library)
+					.eventually(urlProvider -> {
+						if (urlProvider == null) {
+							doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+							return Promise.empty();
+						}
 
-							final IConnectionProvider localConnectionProvider = sessionConnectionProvider = new ConnectionProvider(urlProvider);
+						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider);
 
-							if (library.getSelectedView() >= 0) {
-								doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
-								return new Promise<>(localConnectionProvider);
-							}
+						if (library.getSelectedView() >= 0) {
+							doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+							return new Promise<>(localConnectionProvider);
+						}
 
-							doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+						doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 
-							return libraryViewsProvider
-								.promiseLibraryViewsFromConnection(localConnectionProvider)
-								.eventually(libraryViews -> {
-									if (libraryViews == null || libraryViews.size() == 0) {
-										doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-										return new Promise<>(localConnectionProvider);
-									}
+						return libraryViewsProvider
+							.promiseLibraryViewsFromConnection(localConnectionProvider)
+							.eventually(libraryViews -> {
+								if (libraryViews == null || libraryViews.size() == 0) {
+									doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+									return new Promise<>(localConnectionProvider);
+								}
 
-									doStateChange(context, BuildingSessionConnectionStatus.GettingView);
-									final int selectedView = libraryViews.get(0).getKey();
-									library.setSelectedView(selectedView);
-									library.setSelectedViewType(Library.ViewType.StandardServerView);
+								doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+								final int selectedView = libraryViews.get(0).getKey();
+								library.setSelectedView(selectedView);
+								library.setSelectedViewType(Library.ViewType.StandardServerView);
 
-									return
-										libraryStorage
-											.saveLibrary(library)
-											.then(savedLibrary -> {
-												doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
-												return localConnectionProvider;
-											});
-								});
-						});
+								return libraryStorage
+									.saveLibrary(library)
+									.then(savedLibrary -> {
+										doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+										return localConnectionProvider;
+									});
+							});
+					});
 			});
 	}
 
