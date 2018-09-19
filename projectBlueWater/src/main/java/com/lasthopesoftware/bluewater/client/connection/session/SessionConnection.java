@@ -103,7 +103,7 @@ public class SessionConnection {
 			selectedLibraryId = newSelectedLibraryId;
 
 			return buildingSessionConnectionPromise = buildingSessionConnectionPromise
-				.eventually(v -> promiseBuiltSessionConnection(newSelectedLibraryId));
+				.eventually($ -> promiseBuiltSessionConnection(newSelectedLibraryId));
 		}
 	}
 
