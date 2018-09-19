@@ -39,19 +39,22 @@ public class SessionConnection {
 	public static final String isRefreshSuccessfulStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
-
 	private static final Object buildingConnectionPromiseSync = new Object();
 
 	private static volatile int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
 	private static volatile ConnectionProvider sessionConnectionProvider;
-	private static volatile Promise<IConnectionProvider> buildingConnectionPromise;
-	private static volatile int selectedLibraryId;
+	private static volatile Promise<IConnectionProvider> staticBuildingSessionConnectionPromise;
+	private static volatile int staticSelectedLibraryId;
+
 	private final Context context;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
 	private final ProvideLibraryViews libraryViewsProvider;
 	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
+
+	private volatile Promise<IConnectionProvider> buildingSessionConnectionPromise = Promise.empty();
+	private volatile int selectedLibraryId = -1;
 
 	public static ConnectionProvider getSessionConnectionProvider() {
 		return sessionConnectionProvider;
@@ -77,7 +80,13 @@ public class SessionConnection {
 			});
 	}
 
-	public SessionConnection(Context context, ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider, ProvideLibraryViews libraryViewsProvider, ILibraryStorage libraryStorage, ProvideLiveUrl liveUrlProvider) {
+	public SessionConnection(
+		Context context,
+		ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider,
+		ILibraryProvider libraryProvider,
+		ProvideLibraryViews libraryViewsProvider,
+		ILibraryStorage libraryStorage,
+		ProvideLiveUrl liveUrlProvider) {
 		this.context = context;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
@@ -89,13 +98,12 @@ public class SessionConnection {
 	public Promise<IConnectionProvider> promiseSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 		synchronized (buildingConnectionPromiseSync) {
-			if (selectedLibraryId == newSelectedLibraryId) return buildingConnectionPromise;
+			if (selectedLibraryId == newSelectedLibraryId) return buildingSessionConnectionPromise;
 
 			selectedLibraryId = newSelectedLibraryId;
 
-			return buildingConnectionPromise = buildingConnectionPromise != null
-				? buildingConnectionPromise.eventually(v -> promiseBuiltSessionConnection(newSelectedLibraryId))
-				: promiseBuiltSessionConnection(newSelectedLibraryId);
+			return buildingSessionConnectionPromise = buildingSessionConnectionPromise
+				.eventually(v -> promiseBuiltSessionConnection(newSelectedLibraryId));
 		}
 	}
 
@@ -156,18 +164,18 @@ public class SessionConnection {
 		final ISelectedLibraryIdentifierProvider libraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
 		final int newSelectedLibraryId = libraryIdentifierProvider.getSelectedLibraryId();
 		synchronized (buildingConnectionPromiseSync) {
-			if (buildingConnectionPromise != null) {
-				if (selectedLibraryId == newSelectedLibraryId) return buildingStatus;
+			if (staticBuildingSessionConnectionPromise != null) {
+				if (staticSelectedLibraryId == newSelectedLibraryId) return buildingStatus;
 
-				selectedLibraryId = newSelectedLibraryId;
+				staticSelectedLibraryId = newSelectedLibraryId;
 			}
 
-			buildingConnectionPromise = (buildingConnectionPromise != null
-				? buildingConnectionPromise.eventually(v -> promiseBuiltSessionConnection(context, newSelectedLibraryId))
+			staticBuildingSessionConnectionPromise = (staticBuildingSessionConnectionPromise != null
+				? staticBuildingSessionConnectionPromise.eventually(v -> promiseBuiltSessionConnection(context, newSelectedLibraryId))
 				: promiseBuiltSessionConnection(context, newSelectedLibraryId)).then(v -> {
 					synchronized (buildingConnectionPromiseSync) {
-						if (selectedLibraryId == newSelectedLibraryId)
-							buildingConnectionPromise = null;
+						if (staticSelectedLibraryId == newSelectedLibraryId)
+							staticBuildingSessionConnectionPromise = null;
 						return null;
 					}
 				}, e -> {
@@ -175,8 +183,8 @@ public class SessionConnection {
 					doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
 
 					synchronized (buildingConnectionPromiseSync) {
-						if (selectedLibraryId == newSelectedLibraryId)
-							buildingConnectionPromise = null;
+						if (staticSelectedLibraryId == newSelectedLibraryId)
+							staticBuildingSessionConnectionPromise = null;
 						return null;
 					}
 				});
