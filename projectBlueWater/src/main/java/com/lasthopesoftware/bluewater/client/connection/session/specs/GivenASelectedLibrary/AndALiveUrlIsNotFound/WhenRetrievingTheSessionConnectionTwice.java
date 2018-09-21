@@ -28,7 +28,6 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 
 	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static IConnectionProvider connectionProvider;
-	private static IConnectionProvider secondConnectionProvider;
 
 	@Override
 	public void before() throws ExecutionException, InterruptedException {
@@ -42,9 +41,8 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
-			.thenReturn(
-				new Promise<>(new IOException()),
-				new Promise<>(firstUrlProvider));
+			.thenReturn(new Promise<>(new IOException("An error!")))
+			.thenReturn(new Promise<>(firstUrlProvider));
 
 		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
@@ -58,19 +56,22 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 				Promise::new,
 				liveUrlProvider);
 
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
-			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
+			connectionProvider = new FuturePromise<>(
+				sessionConnection.promiseSessionConnection()
+					.eventually(
+						c -> sessionConnection.promiseSessionConnection(),
+						e -> sessionConnection.promiseSessionConnection())).get();
 		}
 	}
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(secondConnectionProvider).isEqualTo(connectionProvider);
+		assertThat(connectionProvider.getUrlProvider()).isEqualTo(firstUrlProvider);
 	}
 
 	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
 
-		public int selectedLibraryId;
+		int selectedLibraryId;
 
 		@Override
 		public int getSelectedLibraryId() {

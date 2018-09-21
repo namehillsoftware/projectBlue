@@ -98,7 +98,14 @@ public class SessionConnection {
 	public Promise<IConnectionProvider> promiseSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 		synchronized (buildingConnectionPromiseSync) {
-			if (selectedLibraryId == newSelectedLibraryId) return buildingSessionConnectionPromise;
+			if (selectedLibraryId == newSelectedLibraryId) {
+				return buildingSessionConnectionPromise = buildingSessionConnectionPromise.eventually(
+					Promise::new,
+					e -> {
+						selectedLibraryId = -1;
+						return promiseSessionConnection();
+					});
+			}
 
 			selectedLibraryId = newSelectedLibraryId;
 
