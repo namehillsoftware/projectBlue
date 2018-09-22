@@ -102,8 +102,9 @@ public class SessionConnection {
 				return buildingSessionConnectionPromise = buildingSessionConnectionPromise.eventually(
 					Promise::new,
 					e -> {
-						selectedLibraryId = -1;
-						return promiseSessionConnection();
+						synchronized (buildingConnectionPromiseSync) {
+							return buildingSessionConnectionPromise = promiseBuiltSessionConnection(selectedLibraryId);
+						}
 					});
 			}
 

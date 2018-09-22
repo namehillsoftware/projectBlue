@@ -47,7 +47,6 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
-			fakeSelectedLibraryProvider.selectedLibraryId = 2;
 			final SessionConnection sessionConnection = new SessionConnection(
 				RuntimeEnvironment.application,
 				fakeSelectedLibraryProvider,
@@ -71,7 +70,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 
 	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
 
-		int selectedLibraryId;
+		final int selectedLibraryId = 2;
 
 		@Override
 		public int getSelectedLibraryId() {
