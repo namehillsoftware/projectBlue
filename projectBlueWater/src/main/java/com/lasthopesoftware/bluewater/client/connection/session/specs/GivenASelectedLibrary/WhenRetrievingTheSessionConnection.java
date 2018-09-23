@@ -75,7 +75,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 	}
 
 	@Test
-	public void thenGettingLibraryFailedIsBroadcast() {
+	public void thenGettingLibraryIsBroadcast() {
 		Assertions.assertThat(Stream.of(broadcastRecorder.recordedIntents).map(i -> i.getIntExtra(buildSessionBroadcastStatus, -1)).toList())
 			.containsExactly(
 				GettingLibrary,
