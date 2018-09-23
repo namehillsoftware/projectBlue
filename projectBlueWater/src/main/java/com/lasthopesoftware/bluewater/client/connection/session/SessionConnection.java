@@ -152,7 +152,6 @@ public class SessionConnection {
 									return new Promise<>(localConnectionProvider);
 								}
 
-								doStateChange(context, BuildingSessionConnectionStatus.GettingView);
 								final int selectedView = libraryViews.get(0).getKey();
 								library.setSelectedView(selectedView);
 								library.setSelectedViewType(Library.ViewType.StandardServerView);
