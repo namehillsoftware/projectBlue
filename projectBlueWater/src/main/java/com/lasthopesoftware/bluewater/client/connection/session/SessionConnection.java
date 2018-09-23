@@ -159,6 +159,9 @@ public class SessionConnection {
 										return localConnectionProvider;
 									});
 							});
+					}, e -> {
+						doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+						return new Promise<>(e);
 					});
 			});
 	}
