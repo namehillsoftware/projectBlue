@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenANullLibrary.AndTheSelectedLibraryChanges;
+package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary.AndGettingALiveUrlThrowsAnException;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
@@ -16,11 +16,11 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,16 +37,16 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(anyInt())).thenReturn(Promise.empty());
 		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
-		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(firstUrlProvider));
+		when(liveUrlProvider.promiseLiveUrl(library))
+			.thenReturn(new Promise<>(new IOException("An error!")))
+			.thenReturn(new Promise<>(firstUrlProvider));
 
 		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
-			fakeSelectedLibraryProvider.selectedLibraryId = -1;
 			final SessionConnection sessionConnection = new SessionConnection(
 				RuntimeEnvironment.application,
 				fakeSelectedLibraryProvider,
@@ -55,11 +55,11 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 				Promise::new,
 				liveUrlProvider);
 
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
-
-			fakeSelectedLibraryProvider.selectedLibraryId = 2;
-
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
+			connectionProvider = new FuturePromise<>(
+				sessionConnection.promiseSessionConnection()
+					.eventually(
+						c -> sessionConnection.promiseSessionConnection(),
+						e -> sessionConnection.promiseSessionConnection())).get();
 		}
 	}
 
@@ -70,7 +70,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 
 	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
 
-		int selectedLibraryId;
+		final int selectedLibraryId = 2;
 
 		@Override
 		public int getSelectedLibraryId() {

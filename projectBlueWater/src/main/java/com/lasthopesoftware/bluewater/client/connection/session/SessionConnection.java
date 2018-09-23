@@ -100,7 +100,13 @@ public class SessionConnection {
 		synchronized (buildingConnectionPromiseSync) {
 			if (selectedLibraryId == newSelectedLibraryId) {
 				return buildingSessionConnectionPromise = buildingSessionConnectionPromise.eventually(
-					Promise::new,
+					c -> {
+						if (c != null) return new Promise<>(c);
+
+						synchronized (buildingConnectionPromiseSync) {
+							return buildingSessionConnectionPromise = promiseBuiltSessionConnection(selectedLibraryId);
+						}
+					},
 					e -> {
 						synchronized (buildingConnectionPromiseSync) {
 							return buildingSessionConnectionPromise = promiseBuiltSessionConnection(selectedLibraryId);
