@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.access.views.ProvideLibraryViews;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -265,7 +264,7 @@ public class SessionConnection {
 		LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
 
 		if (status == BuildingSessionConnectionStatus.BuildingSessionComplete)
-			LoggerFactory.getLogger(LibrarySession.class).info("Session started.");
+			logger.info("Session started.");
 	}
 
 	public static class BuildingSessionConnectionStatus {
