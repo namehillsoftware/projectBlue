@@ -164,6 +164,9 @@ public class SessionConnection {
 						doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
 						return new Promise<>(e);
 					});
+			}, e -> {
+				doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
+				return new Promise<>(e);
 			});
 	}
 
