@@ -159,6 +159,9 @@ public class SessionConnection {
 										doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
 										return localConnectionProvider;
 									});
+							}, e -> {
+								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+								return new Promise<>(e);
 							});
 					}, e -> {
 						doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
