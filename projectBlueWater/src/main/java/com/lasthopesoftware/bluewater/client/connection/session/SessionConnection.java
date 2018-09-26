@@ -146,7 +146,7 @@ public class SessionConnection {
 							.eventually(libraryViews -> {
 								if (libraryViews == null || libraryViews.size() == 0) {
 									doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
-									return new Promise<>(localConnectionProvider);
+									return Promise.empty();
 								}
 
 								final int selectedView = libraryViews.get(0).getKey();
