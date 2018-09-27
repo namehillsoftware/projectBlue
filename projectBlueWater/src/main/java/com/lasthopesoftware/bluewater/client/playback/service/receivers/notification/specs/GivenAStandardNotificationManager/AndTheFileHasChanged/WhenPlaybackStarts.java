@@ -4,13 +4,9 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
 
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
@@ -50,26 +46,12 @@ public class WhenPlaybackStarts extends AndroidContext {
 				new PlaybackNotificationsConfiguration("",43),
 				notificationContentBuilder));
 
-		final LocalPlaybackBroadcaster localPlaybackBroadcaster =
-			new LocalPlaybackBroadcaster(RuntimeEnvironment.application);
-
-		LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
-			.registerReceiver(
-				playbackNotificationRouter,
-				Stream.of(playbackNotificationRouter.registerForIntents())
-					.reduce(new IntentFilter(), (intentFilter, action) -> {
-						intentFilter.addAction(action);
-						return intentFilter;
-					}));
-
-		{
-			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
-			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
-			playbackNotificationRouter
-				.onReceive(
-					RuntimeEnvironment.application,
-					playlistChangeIntent);
-		}
+		final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
+		playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
+		playbackNotificationRouter
+			.onReceive(
+				RuntimeEnvironment.application,
+				playlistChangeIntent);
 
 		playbackNotificationRouter
 			.onReceive(
