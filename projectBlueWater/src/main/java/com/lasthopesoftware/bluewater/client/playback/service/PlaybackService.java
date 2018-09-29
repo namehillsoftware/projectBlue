@@ -458,6 +458,14 @@ implements OnAudioFocusChangeListener
 		}
 	};
 
+	private final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
+			handleBuildConnectionStatusChange(buildStatus);
+		}
+	};
+
 	private final ImmediateResponse<Throwable, Void> UnhandledRejectionHandler = (e) -> {
 		uncaughtExceptionHandler(e);
 		return null;
@@ -494,6 +502,11 @@ implements OnAudioFocusChangeListener
 		return notificationBuilder
 			.setSmallIcon(R.drawable.clearstream_logo_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+	}
+
+	private void stopNotificationIfNotPlaying() {
+		if (!isPlaying)
+			stopNotification();
 	}
 
 	private void stopNotification() {
@@ -578,6 +591,11 @@ implements OnAudioFocusChangeListener
 			.registerReceiver(
 				onLibraryChanged,
 				new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
+
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(
+				buildSessionReceiver,
+				new IntentFilter(SessionConnection.buildSessionBroadcast));
 	}
 
 	@Override
@@ -591,41 +609,17 @@ implements OnAudioFocusChangeListener
 			return START_NOT_STICKY;
 		}
 
-		if ((playbackEngine == null || !playbackEngine.isPlaying()) && Action.playbackStartingActions.contains(action))
-			notifyStartingService();
+		if (playbackEngine != null) {
+			actOnIntent(intent);
+			return START_NOT_STICKY;
+		}
 
-		final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
-				handleBuildConnectionStatusChange(buildStatus);
-			}
-		};
-
-		localBroadcastManagerLazy.getObject().registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
-
-		SessionConnection.getInstance(this).promiseSessionConnection()
-			.eventually(LoopedInPromise.response(perform(c -> {
-				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
-				stopNotification();
-
-				if (c == null) return;
-
-				if (playbackEngine != null) {
-					actOnIntent(intent);
-					return;
-				}
-
-				lazySelectedLibraryProvider.getObject()
-					.getBrowserLibrary()
-					.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-					.then(perform(m -> actOnIntent(intent)))
-					.excuse(UnhandledRejectionHandler);
-
-			}), this), LoopedInPromise.response(perform(e-> {
-				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
-				stopSelf(startId);
-			}), this));
+		notifyStartingService();
+		lazySelectedLibraryProvider.getObject()
+			.getBrowserLibrary()
+			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
+			.then(perform(m -> actOnIntent(intent)))
+			.excuse(UnhandledRejectionHandler);
 
 		return START_NOT_STICKY;
 	}
@@ -810,16 +804,6 @@ implements OnAudioFocusChangeListener
 		String action = intent.getAction();
 		if (action == null) return;
 
-		if (action.equals(Action.repeating)) {
-			playbackEngine.playRepeatedly();
-			return;
-		}
-
-		if (action.equals(Action.completing)) {
-			playbackEngine.playToCompletion();
-			return;
-		}
-
 		if (action.equals(Action.launchMusicService)) {
 			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (playlistPosition < 0) return;
@@ -848,6 +832,19 @@ implements OnAudioFocusChangeListener
 
 		if (action.equals(Action.pause)) {
 			pausePlayback(true);
+			return;
+		}
+
+		if (!Action.playbackStartingActions.contains(action))
+			stopNotificationIfNotPlaying();
+
+		if (action.equals(Action.repeating)) {
+			playbackEngine.playRepeatedly();
+			return;
+		}
+
+		if (action.equals(Action.completing)) {
+			playbackEngine.playToCompletion();
 			return;
 		}
 
@@ -1221,7 +1218,8 @@ implements OnAudioFocusChangeListener
 			addFileToPlaylist,
 			removeFileAtPositionFromPlaylist));
 
-		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(launchMusicService,
+		private static final Set<String> playbackStartingActions = new HashSet<>(Arrays.asList(
+			launchMusicService,
 			play,
 			togglePlayPause));
 
