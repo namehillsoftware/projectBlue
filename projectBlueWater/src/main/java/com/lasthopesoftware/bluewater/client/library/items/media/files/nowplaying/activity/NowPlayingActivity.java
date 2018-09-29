@@ -275,7 +275,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		updateKeepScreenOnStatus();
 
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) initializeView();
+		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+			.eventually(LoopedInPromise.response(perform(restore -> {
+				if (!restore) initializeView();
+			}), messageHandler.getObject()));
 	}
 
 	@Override
@@ -381,7 +384,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					final ServiceFile serviceFile = np.playlist.get(playlistPosition);
 
 					final long filePosition =
-						viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey()))
+						viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 							? viewStructure.filePosition
 							: 0;
 

@@ -16,6 +16,8 @@ import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
 
@@ -51,15 +53,17 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	 * Returns true if the session needs to be restored,
 	 * false if it doesn't
 	 */
-	public static boolean restoreSessionConnection(final Activity activity) {
-		// Check to see that a URL can still be built
-		if (SessionConnection.isBuilt()) return false;
-		
-		final Intent intent = new Intent(activity, InstantiateSessionConnectionActivity.class);
-		intent.setAction(START_ACTIVITY_FOR_RETURN);
-		activity.startActivityForResult(intent, ACTIVITY_ID);
-		
-		return true;
+	public static Promise<Boolean> restoreSessionConnection(final Activity activity) {
+		return SessionConnection.getInstance(activity).promiseSessionConnection()
+			.eventually(LoopedInPromise.response(c -> {
+				if (c != null) return false;
+
+				final Intent intent = new Intent(activity, InstantiateSessionConnectionActivity.class);
+				intent.setAction(START_ACTIVITY_FOR_RETURN);
+				activity.startActivityForResult(intent, ACTIVITY_ID);
+
+				return true;
+			}, activity));
 	}
 
 	public static void startNewConnection(final Context context) {

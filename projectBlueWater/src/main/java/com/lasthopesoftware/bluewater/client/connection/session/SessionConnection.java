@@ -60,7 +60,6 @@ public class SessionConnection {
 	};
 
 	private static volatile SessionConnection sessionConnectionInstance;
-	private static volatile ConnectionProvider sessionConnectionProvider;
 
 	private final LocalBroadcastManager localBroadcastManager;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
@@ -73,25 +72,19 @@ public class SessionConnection {
 	private volatile Promise<IConnectionProvider> buildingSessionConnectionPromise = Promise.empty();
 	private volatile int selectedLibraryId = -1;
 
-	public static ConnectionProvider getSessionConnectionProvider() {
-		return sessionConnectionProvider;
-	}
-
-	public static boolean isBuilt() {
-		return sessionConnectionProvider != null;
-	}
-
 	public static synchronized SessionConnection getInstance(Context context) {
 		if (sessionConnectionInstance != null) return sessionConnectionInstance;
 
+		final Context applicationContext = context.getApplicationContext();
+
 		return sessionConnectionInstance = new SessionConnection(
-			LocalBroadcastManager.getInstance(context),
-			new SelectedBrowserLibraryIdentifierProvider(context),
-			new LibraryRepository(context),
+			LocalBroadcastManager.getInstance(applicationContext),
+			new SelectedBrowserLibraryIdentifierProvider(applicationContext),
+			new LibraryRepository(applicationContext),
 			new LibraryViewsProvider(),
-			new LibraryRepository(context),
+			new LibraryRepository(applicationContext),
 			new LiveUrlProvider(
-				new ActiveNetworkFinder(context),
+				new ActiveNetworkFinder(applicationContext),
 				lazyUrlScanner.getObject()),
 			new ConnectionTester(Duration.standardSeconds(30)));
 	}

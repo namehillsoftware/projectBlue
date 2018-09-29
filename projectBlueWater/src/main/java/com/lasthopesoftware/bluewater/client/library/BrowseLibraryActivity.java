@@ -183,7 +183,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	public void onStart() {
 		super.onStart();
 
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) startLibrary();
+		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+			.eventually(LoopedInPromise.response(perform(restore -> {
+				if (!restore) startLibrary();
+			}), this));
 	}
 
 	@Override

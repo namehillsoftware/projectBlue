@@ -593,23 +593,7 @@ implements OnAudioFocusChangeListener
 
 		if ((playbackEngine == null || !playbackEngine.isPlaying()) && Action.playbackStartingActions.contains(action))
 			notifyStartingService();
-		
-		if (SessionConnection.isBuilt()) {
-			if (playbackEngine != null) {
-				actOnIntent(intent);
-				return START_NOT_STICKY;
-			}
 
-			lazyLibraryRepository.getObject()
-				.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
-				.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-				.then(perform(m -> actOnIntent(intent)))
-				.excuse(UnhandledRejectionHandler);
-
-			return START_NOT_STICKY;
-		}
-
-		// TODO this should probably be its own service soon
 		final BroadcastReceiver buildSessionReceiver  = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {

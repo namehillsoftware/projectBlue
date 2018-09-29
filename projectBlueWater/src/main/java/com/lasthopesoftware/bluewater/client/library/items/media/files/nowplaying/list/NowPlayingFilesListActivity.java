@@ -26,11 +26,12 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.namehillsoftware.handoff.promises.response.ImmediateAction;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class NowPlayingFilesListActivity extends AppCompatActivity implements IItemListViewContainer {
 	
@@ -54,7 +55,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 			protected PromisedResponse<NowPlaying, Void> create() {
 				return
 					LoopedInPromise.response(
-						ImmediateAction.perform(
+						perform(
 							new OnGetLibraryNowComplete(
 								NowPlayingFilesListActivity.this,
 								fileListView.findView(),
@@ -94,10 +95,13 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	public void onStart() {
 		super.onStart();
 		
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) return;
-		
-		fileListView.findView().setVisibility(View.INVISIBLE);
-		mLoadingProgressBar.findView().setVisibility(View.VISIBLE);
+		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+			.eventually(LoopedInPromise.response(perform(restore -> {
+				if (!restore) return;
+
+				fileListView.findView().setVisibility(View.INVISIBLE);
+				mLoadingProgressBar.findView().setVisibility(View.VISIBLE);
+			}), this));
 	}
 	
 	@Override
