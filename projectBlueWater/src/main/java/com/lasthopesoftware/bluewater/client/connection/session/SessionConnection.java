@@ -198,16 +198,7 @@ public class SessionConnection {
 			});
 	}
 
-	private void doStateChange(int status) {
-		doStateChange(localBroadcastManager, status);
-	}
-
-	private static void doStateChange(final Context context, final int status) {
-		doStateChange(LocalBroadcastManager.getInstance(context), status);
-	}
-
-	private static void doStateChange(LocalBroadcastManager localBroadcastManager, final int status) {
-
+	private void doStateChange(final int status) {
 		final Intent broadcastIntent = new Intent(buildSessionBroadcast);
 		broadcastIntent.putExtra(buildSessionBroadcastStatus, status);
 		localBroadcastManager.sendBroadcast(broadcastIntent);

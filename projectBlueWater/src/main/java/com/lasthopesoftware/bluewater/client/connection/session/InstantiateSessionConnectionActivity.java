@@ -79,13 +79,21 @@ public class InstantiateSessionConnectionActivity extends Activity {
 
 		SessionConnection.getInstance(this)
 			.promiseSessionConnection()
-			.then(c -> {
+			.eventually(LoopedInPromise.response(c -> {
+				if (c == null)
+					launchActivityDelayed(selectServerIntent.getObject());
+				else if (getIntent() == null || !START_ACTIVITY_FOR_RETURN.equals(getIntent().getAction()))
+					launchActivityDelayed(browseLibraryIntent.getObject());
+				else
+					finish();
+
+				localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
+				return Promise.empty();
+			}, this), LoopedInPromise.response(e-> {
+				launchActivityDelayed(selectServerIntent.getObject());
 				localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
 				return null;
-			}, e-> {
-				localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
-				return null;
-			});
+			}, this));
 	}
 	
 	private void handleBuildStatusChange(int status) {
@@ -96,28 +104,21 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			return;
 		case BuildingSessionConnectionStatus.GettingLibraryFailed:
 			lblConnectionStatusView.setText(R.string.lbl_please_connect_to_valid_server);
-			launchActivityDelayed(selectServerIntent.getObject());
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnection:
 			lblConnectionStatusView.setText(R.string.lbl_connecting_to_server_library);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 			lblConnectionStatusView.setText(R.string.lbl_error_connecting_try_again);
-			launchActivityDelayed(selectServerIntent.getObject());
 			return;
 		case BuildingSessionConnectionStatus.GettingView:
 			lblConnectionStatusView.setText(R.string.lbl_getting_library_views);
 			return;
 		case BuildingSessionConnectionStatus.GettingViewFailed:
 			lblConnectionStatusView.setText(R.string.lbl_library_no_views);
-			launchActivityDelayed(selectServerIntent.getObject());
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			lblConnectionStatusView.setText(R.string.lbl_connected);
-			if (getIntent() == null || !START_ACTIVITY_FOR_RETURN.equals(getIntent().getAction()))
-				launchActivityDelayed(browseLibraryIntent.getObject());
-			else
-				finish();
 		}
 	}
 	

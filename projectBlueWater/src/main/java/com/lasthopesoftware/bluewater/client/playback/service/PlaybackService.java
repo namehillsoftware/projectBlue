@@ -606,11 +606,13 @@ implements OnAudioFocusChangeListener
 
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.then(perform(c -> {
-				lazySelectedLibraryProvider.getObject()
-					.getBrowserLibrary()
-					.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-					.then(perform(m -> actOnIntent(intent)))
-					.excuse(UnhandledRejectionHandler);
+				if (c != null) {
+					lazySelectedLibraryProvider.getObject()
+						.getBrowserLibrary()
+						.eventually(this::initializePlaybackPlaylistStateManagerSerially)
+						.then(perform(m -> actOnIntent(intent)))
+						.excuse(UnhandledRejectionHandler);
+				}
 
 				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
 			}), perform(e-> {

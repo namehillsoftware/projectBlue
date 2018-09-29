@@ -21,7 +21,7 @@
 
         <!-- Begin Connection intents -->
         <activity
-            android:name=".client.connection.InstantiateSessionConnectionActivity"
+            android:name=".client.connection.session.InstantiateSessionConnectionActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:noHistory="true">
