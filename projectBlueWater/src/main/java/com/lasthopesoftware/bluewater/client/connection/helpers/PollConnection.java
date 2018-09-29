@@ -99,7 +99,7 @@ public class PollConnection {
 					localBroadcastManager.registerReceiver(buildSessionBroadcastReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 					localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
 
-					SessionConnection.refresh(mContext);
+					SessionConnection.getInstance(mContext).promiseTestedSessionConnection();
 				}
 
 				return null;
