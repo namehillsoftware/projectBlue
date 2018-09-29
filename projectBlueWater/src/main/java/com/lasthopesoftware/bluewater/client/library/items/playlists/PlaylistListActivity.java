@@ -85,19 +85,17 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 			return null;
 		}, this);
 
-		PlaylistsProvider
-			.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
-			.eventually(onPlaylistProviderComplete)
-			.excuse(new HandleViewIoException(PlaylistListActivity.this, new Runnable() {
+		final Runnable playlistFillAction = new Runnable() {
+			@Override
+			public void run() {
+				SessionConnection.getInstance(PlaylistListActivity.this).promiseSessionConnection()
+					.eventually(c -> PlaylistsProvider.promisePlaylists(c, playlistId))
+					.eventually(onPlaylistProviderComplete)
+					.excuse(new HandleViewIoException(PlaylistListActivity.this, this));
+			}
+		};
 
-				@Override
-				public void run() {
-					PlaylistsProvider
-						.promisePlaylists(SessionConnection.getSessionConnectionProvider(), playlistId)
-						.eventually(onPlaylistProviderComplete)
-						.excuse(new HandleViewIoException(PlaylistListActivity.this, this));
-				}
-			}));
+		playlistFillAction.run();
 	}
 	
 	@Override

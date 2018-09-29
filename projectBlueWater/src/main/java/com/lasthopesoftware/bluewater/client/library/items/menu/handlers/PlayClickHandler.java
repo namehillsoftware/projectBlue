@@ -21,10 +21,11 @@ public final class PlayClickHandler extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(final View v) {
-	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
-				.promiseFileStringList(FileListParameters.Options.None, item.getFileListParameters())
-			    .then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
-			    .excuse(new OnGetFileStringListForClickErrorListener(v, this));
+    	SessionConnection.getInstance(v.getContext()).promiseSessionConnection()
+			.then(FileStringListProvider::new)
+			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.None, item.getFileListParameters()))
+			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
+			.excuse(new OnGetFileStringListForClickErrorListener(v, this));
 
         super.onClick(v);
     }

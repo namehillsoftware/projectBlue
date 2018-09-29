@@ -63,19 +63,17 @@ public class PlaylistListFragment extends Fragment {
 							new StoredItemAccess(activity, library),
 							library), activity);
 
-				PlaylistsProvider
-					.promisePlaylists(SessionConnection.getSessionConnectionProvider())
-					.eventually(listResolvedPromise)
-					.excuse(new HandleViewIoException(activity, new Runnable() {
+				final Runnable playlistFillAction = new Runnable() {
+					@Override
+					public void run() {
+						SessionConnection.getInstance(activity).promiseSessionConnection()
+							.eventually(PlaylistsProvider::promisePlaylists)
+							.eventually(listResolvedPromise)
+							.excuse(new HandleViewIoException(activity, this));
+					}
+				};
 
-						@Override
-						public void run() {
-							PlaylistsProvider
-								.promisePlaylists(SessionConnection.getSessionConnectionProvider())
-								.eventually(listResolvedPromise)
-								.excuse(new HandleViewIoException(activity, this));
-						}
-					}));
+				playlistFillAction.run();
 			}));
 
 		return itemListLayout;

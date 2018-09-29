@@ -21,8 +21,9 @@ public final class ShuffleClickHandler extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(View v) {
-	    (new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
-			.promiseFileStringList(FileListParameters.Options.Shuffled, item.getFileListParameters())
+		SessionConnection.getInstance(v.getContext()).promiseSessionConnection()
+			.then(FileStringListProvider::new)
+			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.Shuffled, item.getFileListParameters()))
 			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
 			.excuse(new OnGetFileStringListForClickErrorListener(v, this));
 

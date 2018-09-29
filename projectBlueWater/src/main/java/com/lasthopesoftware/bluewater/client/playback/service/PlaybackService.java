@@ -34,7 +34,6 @@ import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
@@ -683,132 +682,132 @@ implements OnAudioFocusChangeListener
 				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
 				lazyLibraryRepository.getObject());
 
-		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
+			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
+			if (remoteControlProxy != null)
+				localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
-		cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
-		if (remoteControlProxy != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
+			final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
+			remoteControlProxy =
+				new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
+					new MediaSessionBroadcaster(
+						this,
+						cachedFilePropertiesProvider,
+						imageProvider,
+						lazyMediaSession.getObject()) :
+					new RemoteControlClientBroadcaster(
+						this,
+						cachedFilePropertiesProvider,
+						imageProvider,
+						remoteControlClient.getObject()));
 
-		final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
-		remoteControlProxy =
-			new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
-				new MediaSessionBroadcaster(
+			localBroadcastManagerLazy
+				.getObject()
+				.registerReceiver(
+					remoteControlProxy,
+					Stream.of(remoteControlProxy.registerForIntents())
+						.reduce(new IntentFilter(), (intentFilter, action) -> {
+							intentFilter.addAction(action);
+							return intentFilter;
+						}));
+
+			if (playbackNotificationRouter != null)
+				localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
+
+			if (nowPlayingNotificationBuilder != null)
+				nowPlayingNotificationBuilder.close();
+
+			playbackNotificationRouter =
+				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 					this,
-					cachedFilePropertiesProvider,
-					imageProvider,
-					lazyMediaSession.getObject()) :
-				new RemoteControlClientBroadcaster(
-					this,
-					cachedFilePropertiesProvider,
-					imageProvider,
-					remoteControlClient.getObject()));
+					notificationManagerLazy.getObject(),
+					lazyPlaybackNotificationsConfiguration.getObject(),
+					nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
+						this,
+						lazyMediaStyleNotificationSetup.getObject(),
+						connectionProvider,
+						cachedFilePropertiesProvider,
+						imageProvider)));
 
-		localBroadcastManagerLazy
-			.getObject()
-			.registerReceiver(
-				remoteControlProxy,
-				Stream.of(remoteControlProxy.registerForIntents())
-					.reduce(new IntentFilter(), (intentFilter, action) -> {
-						intentFilter.addAction(action);
-						return intentFilter;
-					}));
+			localBroadcastManagerLazy
+				.getObject()
+				.registerReceiver(
+					playbackNotificationRouter,
+					Stream.of(playbackNotificationRouter.registerForIntents())
+						.reduce(new IntentFilter(), (intentFilter, action) -> {
+							intentFilter.addAction(action);
+							return intentFilter;
+						}));
 
-		if (playbackNotificationRouter != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
+			if (playlistPlaybackBootstrapper != null)
+				playlistPlaybackBootstrapper.close();
 
-		if (nowPlayingNotificationBuilder != null)
-			nowPlayingNotificationBuilder.close();
+			playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
+				lazyPlaylistVolumeManager.getObject(),
+				new PlaybackHandlerVolumeControllerFactory(
+					new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
 
-		playbackNotificationRouter =
-			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
+			final StoredFileAccess storedFileAccess = new StoredFileAccess(
 				this,
-				notificationManagerLazy.getObject(),
-				lazyPlaybackNotificationsConfiguration.getObject(),
-				nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
-					this,
-					lazyMediaStyleNotificationSetup.getObject(),
-					connectionProvider,
-					cachedFilePropertiesProvider,
-					imageProvider)));
+				lazyAllStoredFilesInLibrary.getObject());
 
-		localBroadcastManagerLazy
-			.getObject()
-			.registerReceiver(
-				playbackNotificationRouter,
-				Stream.of(playbackNotificationRouter.registerForIntents())
-					.reduce(new IntentFilter(), (intentFilter, action) -> {
-						intentFilter.addAction(action);
-						return intentFilter;
-					}));
+			final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
+				new ExternalStorageReadPermissionsArbitratorForOs(this);
 
-		if (playlistPlaybackBootstrapper != null)
-			playlistPlaybackBootstrapper.close();
+			final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
+				connectionProvider,
+				new ServiceFileUriQueryParamsProvider());
 
-		playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
-			lazyPlaylistVolumeManager.getObject(),
-			new PlaybackHandlerVolumeControllerFactory(
-				new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
+			final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
+			if (cache != null)
+				cache.release();
+			cache = new SimpleCache(
+				new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
+				new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
 
-		final StoredFileAccess storedFileAccess = new StoredFileAccess(
-			this,
-			lazyAllStoredFilesInLibrary.getObject());
-
-		final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
-			new ExternalStorageReadPermissionsArbitratorForOs(this);
-
-		final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
-			connectionProvider,
-			new ServiceFileUriQueryParamsProvider());
-
-		final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
-		if (cache != null)
-			cache.release();
-		cache = new SimpleCache(
-			new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
-			new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
-
-		return extractorHandler.getObject().then(handler -> {
-			final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
-				new PreparedPlaybackQueueFeederBuilder(
-					this,
-					handler,
-					connectionProvider,
-					new BestMatchUriProvider(
-						library,
-						new StoredFileUriProvider(
-							lazySelectedLibraryProvider.getObject(),
-							storedFileAccess,
-							arbitratorForOs),
-						new CachedAudioFileUriProvider(
-							remoteFileUriProvider,
-							new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
-						new MediaFileUriProvider(
-							this,
-							new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
-							arbitratorForOs,
+			return extractorHandler.getObject().then(handler -> {
+				final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
+					new PreparedPlaybackQueueFeederBuilder(
+						this,
+						handler,
+						connectionProvider,
+						new BestMatchUriProvider(
 							library,
-							false),
-						remoteFileUriProvider),
-					cache);
+							new StoredFileUriProvider(
+								lazySelectedLibraryProvider.getObject(),
+								storedFileAccess,
+								arbitratorForOs),
+							new CachedAudioFileUriProvider(
+								remoteFileUriProvider,
+								new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+							new MediaFileUriProvider(
+								this,
+								new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+								arbitratorForOs,
+								library,
+								false),
+							remoteFileUriProvider),
+						cache);
 
-			final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
+				final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
 
-			playbackEngine =
-				new PlaybackEngine(
-					preparationSourceProvider,
-					preparationSourceProvider,
-					QueueProviders.providers(),
-					new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
-					playlistPlaybackBootstrapper);
+				playbackEngine =
+					new PlaybackEngine(
+						preparationSourceProvider,
+						preparationSourceProvider,
+						QueueProviders.providers(),
+						new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
+						playlistPlaybackBootstrapper);
 
-			playbackEngine
-				.setOnPlaybackStarted(this::handlePlaybackStarted)
-				.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
-				.setOnPlaylistError(this::uncaughtExceptionHandler)
-				.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
-				.setOnPlaylistReset(this::broadcastResetPlaylist);
+				playbackEngine
+					.setOnPlaybackStarted(this::handlePlaybackStarted)
+					.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
+					.setOnPlaylistError(this::uncaughtExceptionHandler)
+					.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
+					.setOnPlaylistReset(this::broadcastResetPlaylist);
 
-			return playbackEngine;
+				return playbackEngine;
+			});
 		});
 	}
 	

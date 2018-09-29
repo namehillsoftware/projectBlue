@@ -98,21 +98,19 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}, handler);
 
 		getSelectedBrowserLibrary()
-			.eventually(LoopedInPromise.response(activeLibrary ->
-				ItemProvider
-					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.eventually(onGetVisibleViewsCompleteListener)
-					.excuse(new HandleViewIoException(getContext(), new Runnable() {
+			.then(perform(activeLibrary -> {
+				final Runnable fillItemsAction = new Runnable() {
+					@Override
+					public void run() {
+						SessionConnection.getInstance(getContext()).promiseSessionConnection()
+							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
+							.eventually(onGetVisibleViewsCompleteListener)
+							.excuse(new HandleViewIoException(getContext(), this));
+					}
+				};
 
-						@Override
-						public void run() {
-							ItemProvider
-								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.eventually(onGetVisibleViewsCompleteListener)
-								.excuse(new HandleViewIoException(getContext(), this));
-						}
-					})), handler));
-
+				fillItemsAction.run();
+			}));
 
 		return tabbedItemsLayout;
 	}

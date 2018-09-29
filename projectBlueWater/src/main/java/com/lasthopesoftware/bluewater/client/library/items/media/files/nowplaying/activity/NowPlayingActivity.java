@@ -26,7 +26,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -163,17 +162,19 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 	};
 
-	private final CreateAndHold<ImageProvider> lazyImageProvider = new AbstractSynchronousLazy<ImageProvider>() {
+	private final CreateAndHold<Promise<ImageProvider>> lazyImageProvider = new AbstractSynchronousLazy<Promise<ImageProvider>>() {
 		@Override
-		protected ImageProvider create() {
-			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+		protected Promise<ImageProvider> create() {
+			return SessionConnection.getInstance(NowPlayingActivity.this).promiseSessionConnection()
+				.then(connectionProvider -> {
+					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
-			return new ImageProvider(
-				NowPlayingActivity.this,
-				connectionProvider,
-				new AndroidDiskCacheDirectoryProvider(NowPlayingActivity.this),
-				new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)));
+					return new ImageProvider(
+						NowPlayingActivity.this,
+						connectionProvider,
+						new AndroidDiskCacheDirectoryProvider(NowPlayingActivity.this),
+						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)));
+				});
 		}
 	};
 
@@ -308,19 +309,17 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.eventually(LoopedInPromise.response(np -> {
-				final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
-
-				final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-				final long filePosition =
-					connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
+			.eventually(np -> SessionConnection.getInstance(NowPlayingActivity.this)
+				.promiseSessionConnection()
+				.eventually(LoopedInPromise.response(connectionProvider -> {
+					final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
+					final long filePosition = connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 						? viewStructure.filePosition
 						: np.filePosition;
 
-				setView(serviceFile, filePosition);
-
-				return null;
-			}, messageHandler.getObject()))
+					setView(serviceFile, filePosition);
+					return null;
+				}, messageHandler.getObject())))
 			.excuse(perform(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
@@ -374,59 +373,64 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private void setView(final int playlistPosition) {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
-			.eventually(LoopedInPromise.response(np -> {
-				if (playlistPosition >= np.playlist.size()) return null;
+			.eventually(np -> SessionConnection.getInstance(this)
+				.promiseSessionConnection()
+				.eventually(LoopedInPromise.response(connectionProvider -> {
+					if (playlistPosition >= np.playlist.size()) return null;
 
-				final ServiceFile serviceFile = np.playlist.get(playlistPosition);
+					final ServiceFile serviceFile = np.playlist.get(playlistPosition);
 
-				final long filePosition =
-					viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey()))
-						? viewStructure.filePosition
-						: 0;
+					final long filePosition =
+						viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey()))
+							? viewStructure.filePosition
+							: 0;
 
-				setView(serviceFile, filePosition);
+					setView(serviceFile, filePosition);
 
-				return null;
-			}, messageHandler.getObject()))
+					return null;
+				}, messageHandler.getObject())))
 			.excuse(perform(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
 	private void setView(final ServiceFile serviceFile, final long initialFilePosition) {
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(SessionConnection.getSessionConnectionProvider().getUrlProvider().getBaseUrl(), serviceFile.getKey());
+		SessionConnection.getInstance(this).promiseSessionConnection()
+			.eventually(LoopedInPromise.response(perform(connectionProvider -> {
+				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey());
 
-		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
-			viewStructure.release();
-			viewStructure = null;
-		}
-		
-		if (viewStructure == null)
-			viewStructure = new ViewStructure(urlKeyHolder, serviceFile);
-		
-		final ViewStructure localViewStructure = viewStructure;
+				if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
+					viewStructure.release();
+					viewStructure = null;
+				}
 
-		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
+				if (viewStructure == null)
+					viewStructure = new ViewStructure(urlKeyHolder, serviceFile);
 
-		loadingProgressBar.findView().setVisibility(View.VISIBLE);
-		nowPlayingImage.setVisibility(View.INVISIBLE);
+				final ViewStructure localViewStructure = viewStructure;
 
-		setNowPlayingImage(localViewStructure, serviceFile);
+				final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
 
-		if (localViewStructure.fileProperties != null) {
-			setFileProperties(serviceFile, initialFilePosition, localViewStructure.fileProperties);
-			return;
-		}
+				loadingProgressBar.findView().setVisibility(View.VISIBLE);
+				nowPlayingImage.setVisibility(View.INVISIBLE);
 
-		disableViewWithMessage(R.string.lbl_loading);
+				setNowPlayingImage(localViewStructure, serviceFile);
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
-		filePropertiesProvider
-			.promiseFileProperties(serviceFile)
-			.eventually(LoopedInPromise.response(fileProperties -> {
-				localViewStructure.fileProperties = fileProperties;
-				setFileProperties(serviceFile, initialFilePosition, fileProperties);
-				return null;
-			}, messageHandler.getObject()))
-			.excuse(e -> LoopedInPromise.<Throwable, Boolean>response(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()).promiseResponse(e));
+				if (localViewStructure.fileProperties != null) {
+					setFileProperties(serviceFile, initialFilePosition, localViewStructure.fileProperties);
+					return;
+				}
+
+				disableViewWithMessage(R.string.lbl_loading);
+
+				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance());
+				filePropertiesProvider
+					.promiseFileProperties(serviceFile)
+					.eventually(LoopedInPromise.response(fileProperties -> {
+						localViewStructure.fileProperties = fileProperties;
+						setFileProperties(serviceFile, initialFilePosition, fileProperties);
+						return null;
+					}, messageHandler.getObject()))
+					.excuse(e -> LoopedInPromise.<Throwable, Boolean>response(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()).promiseResponse(e));
+			}), messageHandler.getObject()));
 	}
 
 	private void setNowPlayingImage(ViewStructure viewStructure, ServiceFile serviceFile) {
@@ -437,7 +441,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (viewStructure.promisedNowPlayingImage == null) {
 			viewStructure.promisedNowPlayingImage =
-				lazyImageProvider.getObject().promiseFileBitmap(serviceFile);
+				lazyImageProvider.getObject().eventually(provider -> provider.promiseFileBitmap(serviceFile));
 		}
 
 		viewStructure.promisedNowPlayingImage
@@ -496,7 +500,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 				return;
 
 			final String stringRating = String.valueOf(Math.round(newRating));
-			FilePropertiesStorage.storeFileProperty(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance(), serviceFile, FilePropertiesProvider.RATING, stringRating, false);
+			SessionConnection.getInstance(this).promiseSessionConnection()
+				.then(perform(c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, FilePropertiesProvider.RATING, stringRating, false)));
 			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
 		});
 
