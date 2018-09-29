@@ -138,10 +138,9 @@ public class SessionConnection {
 			return buildingSessionConnectionPromise = buildingSessionConnectionPromise
 				.eventually(c -> c != null
 					? connectionTester.promiseIsConnectionPossible(c)
-						.then(result -> {
-							if (result) return c;
-							return null;
-						})
+						.eventually(result -> result
+							? new Promise<>(c)
+							: promiseBuiltSessionConnection(selectedLibraryId))
 					: promiseBuiltSessionConnection(selectedLibraryId));
 		}
 	}
