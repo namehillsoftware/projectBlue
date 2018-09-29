@@ -17,36 +17,37 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 
 public class ClickItemListener implements OnItemClickListener {
 
-	private final ArrayList<Item> mItems;
-	private final Context mContext;
+	private final ArrayList<Item> items;
+	private final Context context;
 
 	public ClickItemListener(Context context, ArrayList<Item> items) {
-		mContext = context;
-        mItems = items;
+		this.context = context;
+        this.items = items;
 	}
 	
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        final Item item = mItems.get(position);
+        final Item item = items.get(position);
 
-        ItemProvider.provide(SessionConnection.getSessionConnectionProvider(), item.getKey())
+		SessionConnection.getInstance(context).promiseSessionConnection()
+			.eventually(c -> ItemProvider.provide(c, item.getKey()))
             .then(perform(items -> {
 				if (items == null) return;
 
 				if (items.size() > 0) {
-					final Intent itemlistIntent = new Intent(mContext, ItemListActivity.class);
+					final Intent itemlistIntent = new Intent(context, ItemListActivity.class);
 					itemlistIntent.putExtra(ItemListActivity.KEY, item.getKey());
 					itemlistIntent.putExtra(ItemListActivity.VALUE, item.getValue());
-					mContext.startActivity(itemlistIntent);
+					context.startActivity(itemlistIntent);
 
 					return;
 				}
 
-				final Intent fileListIntent = new Intent(mContext, FileListActivity.class);
+				final Intent fileListIntent = new Intent(context, FileListActivity.class);
 				fileListIntent.putExtra(FileListActivity.KEY, item.getKey());
 				fileListIntent.putExtra(FileListActivity.VALUE, item.getValue());
 				fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
-				mContext.startActivity(fileListIntent);
+				context.startActivity(fileListIntent);
 			}));
 	}
 

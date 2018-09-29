@@ -20,7 +20,6 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -137,13 +136,12 @@ public class FileDetailsActivity extends AppCompatActivity {
         imgFileThumbnailBuilder.getObject().setVisibility(View.INVISIBLE);
         pbLoadingFileThumbnail.findView().setVisibility(View.VISIBLE);
 
-        final FormattedFilePropertiesProvider formattedFilePropertiesProvider = new FormattedFilePropertiesProvider(SessionConnection.getSessionConnectionProvider(), FilePropertyCache.getInstance());
-
         fileNameTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
-		formattedFilePropertiesProvider
-			.promiseFileProperties(new ServiceFile(fileKey))
+		SessionConnection.getInstance(this).promiseSessionConnection()
+			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance()))
+			.eventually(f -> f.promiseFileProperties(new ServiceFile(fileKey)))
 			.eventually(LoopedInPromise.response(perform(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
@@ -195,14 +193,15 @@ public class FileDetailsActivity extends AppCompatActivity {
 //		getRatingsTask.onError(new HandleViewIoException(this, onConnectionRegainedListener));
 //		getRatingsTask.execute();
 
-		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
+		SessionConnection.getInstance(this).promiseSessionConnection()
+			.eventually(connectionProvider -> {
+				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+				final CachedFilePropertiesProvider cachedFilePropertiesProvider =
+					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-			new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
-
-        new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider)
-			.promiseFileBitmap(new ServiceFile(fileKey))
+				return new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider)
+					.promiseFileBitmap(new ServiceFile(fileKey));
+			})
 			.eventually(bitmap ->
 				bitmap != null
 					? new Promise<>(bitmap)

@@ -81,21 +81,21 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 		final PromisedResponse<List<Item>, Void> itemProviderComplete = LoopedInPromise.response(this, this);
 
-        final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider
-			.promiseItems()
-			.eventually(itemProviderComplete)
-			.excuse(
-				new HandleViewIoException(this,
-					new Runnable() {
-						@Override
-						public void run() {
-							itemProvider
-								.promiseItems()
-								.eventually(itemProviderComplete)
-								.excuse(new HandleViewIoException(ItemListActivity.this, this));
-						}
-					}));
+		final Runnable fillItemsRunnable = new Runnable() {
+
+			@Override
+			public void run() {
+				SessionConnection.getInstance(ItemListActivity.this).promiseSessionConnection()
+					.eventually(c -> {
+						final ItemProvider itemProvider = new ItemProvider(c, mItemId);
+						return itemProvider.promiseItems();
+					})
+					.eventually(itemProviderComplete)
+					.excuse(new HandleViewIoException(ItemListActivity.this, this));
+			}
+		};
+
+		fillItemsRunnable.run();
     }
 
 	@Override

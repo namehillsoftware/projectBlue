@@ -7,7 +7,12 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
+import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
@@ -18,10 +23,12 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +47,19 @@ public class SessionConnection {
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
 	private static final Object buildingConnectionPromiseSync = new Object();
 
+	private static final int buildConnectionTimeoutTime = 10000;
+
+	private static final CreateAndHold<BuildUrlProviders> lazyUrlScanner = new AbstractSynchronousLazy<BuildUrlProviders>() {
+		@Override
+		protected BuildUrlProviders create() {
+			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
+			final ConnectionTester connectionTester = new ConnectionTester(Duration.millis(buildConnectionTimeoutTime));
+
+			return new UrlScanner(connectionTester, serverLookup);
+		}
+	};
+
+	private static volatile SessionConnection sessionConnectionInstance;
 	private static volatile int buildingStatus = BuildingSessionConnectionStatus.GettingLibrary;
 	private static volatile ConnectionProvider sessionConnectionProvider;
 	private static volatile Promise<IConnectionProvider> staticBuildingSessionConnectionPromise;
@@ -77,6 +97,20 @@ public class SessionConnection {
 
 				return null;
 			});
+	}
+
+	public static synchronized SessionConnection getInstance(Context context) {
+		if (sessionConnectionInstance != null) return sessionConnectionInstance;
+
+		return sessionConnectionInstance = new SessionConnection(
+			context,
+			new SelectedBrowserLibraryIdentifierProvider(context),
+			new LibraryRepository(context),
+			new LibraryViewsProvider(),
+			new LibraryRepository(context),
+			new LiveUrlProvider(
+				new ActiveNetworkFinder(context),
+				lazyUrlScanner.getObject()));
 	}
 
 	public SessionConnection(

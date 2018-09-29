@@ -615,21 +615,30 @@ implements OnAudioFocusChangeListener
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				final int buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1);
-				handleBuildConnectionStatusChange(buildStatus, intent);
-
-				if (BuildingSessionConnectionStatus.completeConditions.contains(buildStatus))
-					localBroadcastManagerLazy.getObject().unregisterReceiver(this);
+				handleBuildConnectionStatusChange(buildStatus);
 			}
 		};
 
 		localBroadcastManagerLazy.getObject().registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
-		handleBuildConnectionStatusChange(SessionConnection.build(this), intent);
+		SessionConnection.getInstance(this).promiseSessionConnection()
+			.then(perform(c -> {
+				lazySelectedLibraryProvider.getObject()
+					.getBrowserLibrary()
+					.eventually(this::initializePlaybackPlaylistStateManagerSerially)
+					.then(perform(m -> actOnIntent(intent)))
+					.excuse(UnhandledRejectionHandler);
+
+				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+			}), perform(e-> {
+				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+				stopSelf(startId);
+			}));
 
 		return START_NOT_STICKY;
 	}
 	
-	private void handleBuildConnectionStatusChange(final int status, final Intent intentToRun) {
+	private void handleBuildConnectionStatusChange(final int status) {
 		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
@@ -638,31 +647,21 @@ implements OnAudioFocusChangeListener
 			break;
 		case BuildingSessionConnectionStatus.GettingLibraryFailed:
 			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
-			stopSelf(startId);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnection:
 			notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
 			break;
 		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
-			stopSelf(startId);
 			return;
 		case BuildingSessionConnectionStatus.GettingView:
 			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
 			break;
 		case BuildingSessionConnectionStatus.GettingViewFailed:
 			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
-			stopSelf(startId);
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			stopNotification();
-
-			lazySelectedLibraryProvider.getObject()
-				.getBrowserLibrary()
-				.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-				.then(perform(m -> actOnIntent(intentToRun)))
-				.excuse(UnhandledRejectionHandler);
-
 			return;
 		}
 		notifyNotificationManager(notifyBuilder);

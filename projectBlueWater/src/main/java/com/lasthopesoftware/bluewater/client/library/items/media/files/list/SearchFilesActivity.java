@@ -77,20 +77,19 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
 		final PromisedResponse<List<ServiceFile>, Void> onSearchFilesComplete = LoopedInPromise.response(this, this);
 
-        new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
-			.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
-            .eventually(onSearchFilesComplete)
-            .excuse(new HandleViewIoException(this, new Runnable() {
+		final Runnable fillFileListAction = new Runnable() {
+			@Override
+			public void run() {
+				SessionConnection.getInstance(SearchFilesActivity.this).promiseSessionConnection()
+					.then(FileStringListProvider::new)
+					.then(FileProvider::new)
+					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query)))
+					.eventually(onSearchFilesComplete)
+					.excuse(new HandleViewIoException(SearchFilesActivity.this, this));
+			}
+		};
 
-					@Override
-					public void run() {
-						new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()))
-							.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query))
-							.eventually(onSearchFilesComplete)
-							.excuse(new HandleViewIoException(SearchFilesActivity.this, this));
-					}
-				})
-            );
+		fillFileListAction.run();
 	}
 
 	@Override

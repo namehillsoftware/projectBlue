@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.widget.TextView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -69,36 +68,38 @@ public class FileNameTextViewSetter {
 
 			textView.setText(R.string.lbl_loading);
 
-			final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+			SessionConnection.getInstance(textView.getContext()).promiseSessionConnection()
+				.eventually(connectionProvider -> {
+					if (cancellationProxy.isCancelled()) {
+						messenger.sendResolution(null);
+					}
 
-			if (cancellationProxy.isCancelled()) {
-				messenger.sendResolution(null);
-				return;
-			}
+					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+					final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
-			final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
+					final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
 
-			cancellationProxy.doCancel(filePropertiesPromise);
+					cancellationProxy.doCancel(filePropertiesPromise);
 
-			filePropertiesPromise.eventually(LoopedInPromise.response(properties -> {
-				final String fileName = properties.get(FilePropertiesProvider.NAME);
+					return filePropertiesPromise;
+				})
+				.eventually(LoopedInPromise.response(properties -> {
+					final String fileName = properties.get(FilePropertiesProvider.NAME);
 
-				if (fileName != null)
-					textView.setText(fileName);
+					if (fileName != null)
+						textView.setText(fileName);
 
-				messenger.sendResolution(null);
-				return null;
-			}, handler))
-			.excuse(e -> {
-				if (!(e instanceof CancellationException))
-					logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
+					messenger.sendResolution(null);
+					return null;
+				}, handler))
+				.excuse(e -> {
+					if (!(e instanceof CancellationException))
+						logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
 
-				messenger.sendResolution(null);
+					messenger.sendResolution(null);
 
-				return null;
-			});
+					return null;
+				});
 		}
 	}
 }

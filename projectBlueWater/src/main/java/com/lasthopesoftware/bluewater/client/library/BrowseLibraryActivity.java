@@ -275,7 +275,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		final Runnable getLibraryViewsRunnable = new Runnable() {
 			@Override
 			public void run() {
-				LibraryViewsProvider.provide(SessionConnection.getSessionConnectionProvider())
+				SessionConnection.getInstance(BrowseLibraryActivity.this)
+					.promiseSessionConnection()
+					.eventually(LibraryViewsProvider::provide)
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
 			}

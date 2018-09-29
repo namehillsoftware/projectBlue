@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.access;
 
 import android.util.LruCache;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
@@ -39,13 +39,13 @@ public class ItemProvider {
 
     private final int itemKey;
 
-	private final ConnectionProvider connectionProvider;
+	private final IConnectionProvider connectionProvider;
 
-	public static Promise<List<Item>> provide(ConnectionProvider connectionProvider, int itemKey) {
+	public static Promise<List<Item>> provide(IConnectionProvider connectionProvider, int itemKey) {
 		return new ItemProvider(connectionProvider, itemKey).promiseItems();
 	}
 	
-	public ItemProvider(ConnectionProvider connectionProvider, int itemKey) {
+	public ItemProvider(IConnectionProvider connectionProvider, int itemKey) {
 		this.connectionProvider = connectionProvider;
         this.itemKey = itemKey;
 	}

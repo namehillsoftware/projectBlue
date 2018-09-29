@@ -65,21 +65,21 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
 
-		final String[] parameters = (getIntent().getAction().equals(VIEW_PLAYLIST_FILES) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
+		final String[] parameters = (VIEW_PLAYLIST_FILES.equals(getIntent().getAction()) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
 
-		getNewFileProvider()
-			.promiseFiles(FileListParameters.Options.None, parameters)
-			.eventually(onFileProviderComplete)
-			.excuse(new HandleViewIoException(this, new Runnable() {
+		final Runnable fillFileListAction = new Runnable() {
+			@Override
+			public void run() {
+				SessionConnection.getInstance(FileListActivity.this).promiseSessionConnection()
+					.then(FileStringListProvider::new)
+					.then(FileProvider::new)
+					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, parameters))
+					.eventually(onFileProviderComplete)
+					.excuse(new HandleViewIoException(FileListActivity.this, this));
+			}
+		};
 
-					@Override
-					public void run() {
-						getNewFileProvider()
-							.promiseFiles(FileListParameters.Options.None, parameters)
-							.eventually(onFileProviderComplete)
-							.excuse(new HandleViewIoException(FileListActivity.this, this));
-					}
-				}));
+		fillFileListAction.run();
 	}
 
 	@Override
@@ -105,10 +105,6 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 		return null;
 	}
 
-	private FileProvider getNewFileProvider() {
-		return new FileProvider(new FileStringListProvider(SessionConnection.getSessionConnectionProvider()));
-	}
-	
 	@Override
 	public void onStart() {
 		super.onStart();

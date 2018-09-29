@@ -73,13 +73,18 @@ public class InstantiateSessionConnectionActivity extends Activity {
 
 		localBroadcastManager.getObject().registerReceiver(buildSessionConnectionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
-		handleBuildStatusChange(SessionConnection.build(this));
+		SessionConnection.getInstance(this)
+			.promiseSessionConnection()
+			.then(c -> {
+				localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
+				return null;
+			}, e-> {
+				localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
+				return null;
+			});
 	}
 	
 	private void handleBuildStatusChange(int status) {
-		if (BuildingSessionConnectionStatus.completeConditions.contains(status))
-			localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
-
 		final TextView lblConnectionStatusView = lblConnectionStatus.findView();
 		switch (status) {
 		case BuildingSessionConnectionStatus.GettingLibrary:
