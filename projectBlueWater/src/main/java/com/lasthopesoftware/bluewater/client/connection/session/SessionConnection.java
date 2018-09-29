@@ -141,7 +141,8 @@ public class SessionConnection {
 						.eventually(result -> result
 							? new Promise<>(c)
 							: promiseBuiltSessionConnection(selectedLibraryId))
-					: promiseBuiltSessionConnection(selectedLibraryId));
+					: promiseBuiltSessionConnection(selectedLibraryId),
+				e -> promiseBuiltSessionConnection(selectedLibraryId));
 		}
 	}
 
