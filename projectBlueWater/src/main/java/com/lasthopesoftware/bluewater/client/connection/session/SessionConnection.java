@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLive
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -71,6 +72,7 @@ public class SessionConnection {
 	private final ProvideLibraryViews libraryViewsProvider;
 	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
+	private final TestConnections connectionTester;
 
 	private volatile Promise<IConnectionProvider> buildingSessionConnectionPromise = Promise.empty();
 	private volatile int selectedLibraryId = -1;
@@ -110,7 +112,8 @@ public class SessionConnection {
 			new LibraryRepository(context),
 			new LiveUrlProvider(
 				new ActiveNetworkFinder(context),
-				lazyUrlScanner.getObject()));
+				lazyUrlScanner.getObject()),
+			new ConnectionTester(Duration.standardSeconds(30)));
 	}
 
 	public SessionConnection(
@@ -119,13 +122,28 @@ public class SessionConnection {
 		ILibraryProvider libraryProvider,
 		ProvideLibraryViews libraryViewsProvider,
 		ILibraryStorage libraryStorage,
-		ProvideLiveUrl liveUrlProvider) {
+		ProvideLiveUrl liveUrlProvider,
+		TestConnections connectionTester) {
 		this.localBroadcastManager = localBroadcastManager;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
 		this.libraryViewsProvider = libraryViewsProvider;
 		this.libraryStorage = libraryStorage;
 		this.liveUrlProvider = liveUrlProvider;
+		this.connectionTester = connectionTester;
+	}
+
+	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
+		synchronized (buildingConnectionPromiseSync) {
+			return buildingSessionConnectionPromise = buildingSessionConnectionPromise
+				.eventually(c -> c != null
+					? connectionTester.promiseIsConnectionPossible(c)
+						.then(result -> {
+							if (result) return c;
+							return null;
+						})
+					: promiseBuiltSessionConnection(selectedLibraryId));
+		}
 	}
 
 	public Promise<IConnectionProvider> promiseSessionConnection() {

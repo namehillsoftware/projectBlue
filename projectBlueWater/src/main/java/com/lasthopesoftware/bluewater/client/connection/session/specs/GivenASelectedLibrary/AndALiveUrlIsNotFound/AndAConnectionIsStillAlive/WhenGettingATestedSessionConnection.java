@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary.AndALiveUrlIsNotFound;
+package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary.AndALiveUrlIsNotFound.AndAConnectionIsStillAlive;
 
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
@@ -8,10 +8,11 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.specs.SessionConnectionReservation;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -28,19 +29,22 @@ import java.util.concurrent.ExecutionException;
 
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnection;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnectionFailed;
+import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
+import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingView;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenRetrievingTheSessionConnection extends AndroidContext {
+public class WhenGettingATestedSessionConnection extends AndroidContext {
 
 	private static final BroadcastRecorder broadcastRecorder = new BroadcastRecorder();
+	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static IConnectionProvider connectionProvider;
 
 	@Override
-	public void before() throws InterruptedException, ExecutionException, IllegalAccessException, InstantiationException, InvocationTargetException {
+	public void before() throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException, InvocationTargetException {
 
 		final Library library = new Library()
 			.setId(2)
@@ -50,7 +54,11 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
-		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(Promise.empty());
+		when(liveUrlProvider.promiseLiveUrl(library))
+			.thenReturn(Promise.empty())
+			.thenReturn(new Promise<>(firstUrlProvider));
+
+		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
 		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
 		localBroadcastManager.registerReceiver(
@@ -60,20 +68,24 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
 				localBroadcastManager,
-				() -> 2,
+				fakeSelectedLibraryProvider,
 				libraryProvider,
 				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 				Promise::new,
 				liveUrlProvider,
-				mock(TestConnections.class));
+				c -> new Promise<>(false));
 
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
+			connectionProvider = new FuturePromise<>(
+				sessionConnection.promiseSessionConnection()
+					.eventually(
+						c -> sessionConnection.promiseTestedSessionConnection(),
+						e -> sessionConnection.promiseTestedSessionConnection())).get();
 		}
 	}
 
 	@Test
-	public void thenAConnectionProviderIsNotReturned() {
-		assertThat(connectionProvider).isNull();
+	public void thenTheConnectionIsCorrect() {
+		assertThat(connectionProvider.getUrlProvider()).isEqualTo(firstUrlProvider);
 	}
 
 	@Test
@@ -82,6 +94,20 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 			.containsExactly(
 				GettingLibrary,
 				BuildingConnection,
-				BuildingConnectionFailed);
+				BuildingConnectionFailed,
+				GettingLibrary,
+				BuildingConnection,
+				GettingView,
+				BuildingSessionComplete);
+	}
+
+	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
+
+		final int selectedLibraryId = 2;
+
+		@Override
+		public int getSelectedLibraryId() {
+			return selectedLibraryId;
+		}
 	}
 }
