@@ -605,8 +605,9 @@ implements OnAudioFocusChangeListener
 		localBroadcastManagerLazy.getObject().registerReceiver(buildSessionReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		SessionConnection.getInstance(this).promiseSessionConnection()
-			.then(perform(c -> {
+			.eventually(LoopedInPromise.response(perform(c -> {
 				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+				stopNotification();
 
 				if (c == null) return;
 
@@ -621,10 +622,10 @@ implements OnAudioFocusChangeListener
 					.then(perform(m -> actOnIntent(intent)))
 					.excuse(UnhandledRejectionHandler);
 
-			}), perform(e-> {
+			}), this), LoopedInPromise.response(perform(e-> {
 				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
 				stopSelf(startId);
-			}));
+			}), this));
 
 		return START_NOT_STICKY;
 	}
@@ -633,27 +634,24 @@ implements OnAudioFocusChangeListener
 		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
 		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
-		case BuildingSessionConnectionStatus.GettingLibrary:
-			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
-			break;
-		case BuildingSessionConnectionStatus.GettingLibraryFailed:
-			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
-			return;
-		case BuildingSessionConnectionStatus.BuildingConnection:
-			notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
-			break;
-		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
-			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
-			return;
-		case BuildingSessionConnectionStatus.GettingView:
-			notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
-			break;
-		case BuildingSessionConnectionStatus.GettingViewFailed:
-			Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
-			return;
-		case BuildingSessionConnectionStatus.BuildingSessionComplete:
-			stopNotification();
-			return;
+			case BuildingSessionConnectionStatus.GettingLibrary:
+				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
+				break;
+			case BuildingSessionConnectionStatus.GettingLibraryFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
+				return;
+			case BuildingSessionConnectionStatus.BuildingConnection:
+				notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
+				break;
+			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
+				return;
+			case BuildingSessionConnectionStatus.GettingView:
+				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
+				break;
+			case BuildingSessionConnectionStatus.GettingViewFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
+				return;
 		}
 		notifyNotificationManager(notifyBuilder);
 	}
