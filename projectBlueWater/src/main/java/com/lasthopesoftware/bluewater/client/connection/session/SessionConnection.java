@@ -65,7 +65,7 @@ public class SessionConnection {
 	private static volatile Promise<IConnectionProvider> staticBuildingSessionConnectionPromise;
 	private static volatile int staticSelectedLibraryId;
 
-	private final Context context;
+	private final LocalBroadcastManager localBroadcastManager;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
 	private final ProvideLibraryViews libraryViewsProvider;
@@ -103,7 +103,7 @@ public class SessionConnection {
 		if (sessionConnectionInstance != null) return sessionConnectionInstance;
 
 		return sessionConnectionInstance = new SessionConnection(
-			context,
+			LocalBroadcastManager.getInstance(context),
 			new SelectedBrowserLibraryIdentifierProvider(context),
 			new LibraryRepository(context),
 			new LibraryViewsProvider(),
@@ -114,13 +114,13 @@ public class SessionConnection {
 	}
 
 	public SessionConnection(
-		Context context,
+		LocalBroadcastManager localBroadcastManager,
 		ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider,
 		ILibraryProvider libraryProvider,
 		ProvideLibraryViews libraryViewsProvider,
 		ILibraryStorage libraryStorage,
 		ProvideLiveUrl liveUrlProvider) {
-		this.context = context;
+		this.localBroadcastManager = localBroadcastManager;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
 		this.libraryViewsProvider = libraryViewsProvider;
@@ -147,39 +147,39 @@ public class SessionConnection {
 	}
 
 	private Promise<IConnectionProvider> promiseBuiltSessionConnection(final int selectedLibraryId) {
-		doStateChange(context, BuildingSessionConnectionStatus.GettingLibrary);
+		doStateChange(BuildingSessionConnectionStatus.GettingLibrary);
 		return libraryProvider
 			.getLibrary(selectedLibraryId)
 			.eventually(library -> {
 				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
-					doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
+					doStateChange(BuildingSessionConnectionStatus.GettingLibraryFailed);
 					return Promise.empty();
 				}
 
-				doStateChange(context, BuildingSessionConnectionStatus.BuildingConnection);
+				doStateChange(BuildingSessionConnectionStatus.BuildingConnection);
 
 				return liveUrlProvider
 					.promiseLiveUrl(library)
 					.eventually(urlProvider -> {
 						if (urlProvider == null) {
-							doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+							doStateChange(BuildingSessionConnectionStatus.BuildingConnectionFailed);
 							return Promise.empty();
 						}
 
 						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider);
 
 						if (library.getSelectedView() >= 0) {
-							doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+							doStateChange(BuildingSessionConnectionStatus.BuildingSessionComplete);
 							return new Promise<>(localConnectionProvider);
 						}
 
-						doStateChange(context, BuildingSessionConnectionStatus.GettingView);
+						doStateChange(BuildingSessionConnectionStatus.GettingView);
 
 						return libraryViewsProvider
 							.promiseLibraryViewsFromConnection(localConnectionProvider)
 							.eventually(libraryViews -> {
 								if (libraryViews == null || libraryViews.size() == 0) {
-									doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+									doStateChange(BuildingSessionConnectionStatus.GettingViewFailed);
 									return Promise.empty();
 								}
 
@@ -190,21 +190,25 @@ public class SessionConnection {
 								return libraryStorage
 									.saveLibrary(library)
 									.then(savedLibrary -> {
-										doStateChange(context, BuildingSessionConnectionStatus.BuildingSessionComplete);
+										doStateChange(BuildingSessionConnectionStatus.BuildingSessionComplete);
 										return localConnectionProvider;
 									});
 							}, e -> {
-								doStateChange(context, BuildingSessionConnectionStatus.GettingViewFailed);
+								doStateChange(BuildingSessionConnectionStatus.GettingViewFailed);
 								return new Promise<>(e);
 							});
 					}, e -> {
-						doStateChange(context, BuildingSessionConnectionStatus.BuildingConnectionFailed);
+						doStateChange(BuildingSessionConnectionStatus.BuildingConnectionFailed);
 						return new Promise<>(e);
 					});
 			}, e -> {
-				doStateChange(context, BuildingSessionConnectionStatus.GettingLibraryFailed);
+				doStateChange(BuildingSessionConnectionStatus.GettingLibraryFailed);
 				return new Promise<>(e);
 			});
+	}
+
+	private void doStateChange(int status) {
+		doStateChange(localBroadcastManager, status);
 	}
 
 	public static int build(final Context context) {
@@ -297,11 +301,15 @@ public class SessionConnection {
 	}
 
 	private static void doStateChange(final Context context, final int status) {
+		doStateChange(LocalBroadcastManager.getInstance(context), status);
+	}
+
+	private static void doStateChange(LocalBroadcastManager localBroadcastManager, final int status) {
 		buildingStatus = status;
 
 		final Intent broadcastIntent = new Intent(buildSessionBroadcast);
 		broadcastIntent.putExtra(buildSessionBroadcastStatus, status);
-		LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+		localBroadcastManager.sendBroadcast(broadcastIntent);
 
 		if (status == BuildingSessionConnectionStatus.BuildingSessionComplete)
 			logger.info("Session started.");

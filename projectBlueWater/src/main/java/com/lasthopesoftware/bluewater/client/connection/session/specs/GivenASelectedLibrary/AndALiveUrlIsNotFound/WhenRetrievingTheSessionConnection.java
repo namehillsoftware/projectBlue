@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
+import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -20,6 +21,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
@@ -37,7 +39,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 	private static IConnectionProvider connectionProvider;
 
 	@Override
-	public void before() throws InterruptedException, ExecutionException {
+	public void before() throws InterruptedException, ExecutionException, IllegalAccessException, InstantiationException, InvocationTargetException {
 
 		final Library library = new Library()
 			.setId(2)
@@ -49,13 +51,14 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(Promise.empty());
 
-		LocalBroadcastManager.getInstance(RuntimeEnvironment.application).registerReceiver(
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
+		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
-				RuntimeEnvironment.application,
+				localBroadcastManager,
 				() -> 2,
 				libraryProvider,
 				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),

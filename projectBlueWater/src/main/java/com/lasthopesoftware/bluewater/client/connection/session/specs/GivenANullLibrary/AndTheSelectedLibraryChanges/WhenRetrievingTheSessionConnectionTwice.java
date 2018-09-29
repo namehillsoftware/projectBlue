@@ -10,12 +10,14 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
@@ -30,7 +32,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 	private static IConnectionProvider connectionProvider;
 
 	@Override
-	public void before() throws ExecutionException, InterruptedException {
+	public void before() throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException, InvocationTargetException {
 
 		final Library library = new Library()
 			.setId(2)
@@ -48,7 +50,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			fakeSelectedLibraryProvider.selectedLibraryId = -1;
 			final SessionConnection sessionConnection = new SessionConnection(
-				RuntimeEnvironment.application,
+				ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application),
 				fakeSelectedLibraryProvider,
 				libraryProvider,
 				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
