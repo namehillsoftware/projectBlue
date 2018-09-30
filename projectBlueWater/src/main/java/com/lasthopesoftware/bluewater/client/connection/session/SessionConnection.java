@@ -128,9 +128,17 @@ public class SessionConnection {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 		synchronized (buildingConnectionPromiseSync) {
 			if (selectedLibraryId == newSelectedLibraryId) {
-				return buildingSessionConnectionPromise = buildingSessionConnectionPromise.eventually(
-					c -> c != null ? new Promise<>(c) : promiseBuiltSessionConnectionOnThreadPool(newSelectedLibraryId),
-					e -> promiseBuiltSessionConnectionOnThreadPool(newSelectedLibraryId));
+				return buildingSessionConnectionPromise.eventually(c -> {
+					if (c != null) return new Promise<>(c);
+
+					synchronized (buildingConnectionPromiseSync) {
+						return buildingSessionConnectionPromise = promiseBuiltSessionConnectionOnThreadPool(selectedLibraryId);
+					}
+				}, e-> {
+					synchronized (buildingConnectionPromiseSync) {
+						return buildingSessionConnectionPromise = promiseBuiltSessionConnectionOnThreadPool(selectedLibraryId);
+					}
+				});
 			}
 
 			selectedLibraryId = newSelectedLibraryId;
