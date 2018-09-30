@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
@@ -37,8 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class SessionConnection {
 
@@ -61,8 +58,6 @@ public class SessionConnection {
 			return new UrlScanner(connectionTester, serverLookup);
 		}
 	};
-
-	private static final Executor resolutionThreadPool = Executors.newCachedThreadPool();
 
 	private static volatile SessionConnection sessionConnectionInstance;
 
@@ -118,9 +113,9 @@ public class SessionConnection {
 					? connectionTester.promiseIsConnectionPossible(c)
 						.eventually(result -> result
 							? new Promise<>(c)
-							: promiseBuiltSessionConnectionOnThreadPool(selectedLibraryId))
-					: promiseBuiltSessionConnectionOnThreadPool(selectedLibraryId),
-				e -> promiseBuiltSessionConnectionOnThreadPool(selectedLibraryId));
+							: promiseBuiltSessionConnection(selectedLibraryId))
+					: promiseBuiltSessionConnection(selectedLibraryId),
+				e -> promiseBuiltSessionConnection(selectedLibraryId));
 		}
 	}
 
@@ -132,11 +127,11 @@ public class SessionConnection {
 					if (c != null) return new Promise<>(c);
 
 					synchronized (buildingConnectionPromiseSync) {
-						return buildingSessionConnectionPromise = promiseBuiltSessionConnectionOnThreadPool(selectedLibraryId);
+						return buildingSessionConnectionPromise = promiseBuiltSessionConnection(selectedLibraryId);
 					}
 				}, e-> {
 					synchronized (buildingConnectionPromiseSync) {
-						return buildingSessionConnectionPromise = promiseBuiltSessionConnectionOnThreadPool(selectedLibraryId);
+						return buildingSessionConnectionPromise = promiseBuiltSessionConnection(selectedLibraryId);
 					}
 				});
 			}
@@ -145,13 +140,9 @@ public class SessionConnection {
 
 			return buildingSessionConnectionPromise = buildingSessionConnectionPromise
 				.eventually(
-					$ -> promiseBuiltSessionConnectionOnThreadPool(newSelectedLibraryId),
-					$ -> promiseBuiltSessionConnectionOnThreadPool(newSelectedLibraryId));
+					$ -> promiseBuiltSessionConnection(newSelectedLibraryId),
+					$ -> promiseBuiltSessionConnection(newSelectedLibraryId));
 		}
-	}
-
-	private Promise<IConnectionProvider> promiseBuiltSessionConnectionOnThreadPool(final int selectedLibraryId) {
-		return promiseBuiltSessionConnection(selectedLibraryId).eventually(c -> new QueuedPromise<>(() -> c, resolutionThreadPool));
 	}
 
 	private Promise<IConnectionProvider> promiseBuiltSessionConnection(final int selectedLibraryId) {
