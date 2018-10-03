@@ -25,8 +25,8 @@ public class ConnectionTester implements TestConnections {
 		return doTest(connectionProvider, stdTimeoutTime);
 	}
 
-	public static Promise<Boolean> doTest(final IConnectionProvider connectionProvider, final int timeout) {
-		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
+	private static Promise<Boolean> doTest(final IConnectionProvider connectionProvider, final int timeout) {
+		return new ConnectionTester(Duration.millis(timeout)).promiseIsConnectionPossible(connectionProvider);
 	}
 
 	private final int timeout;
@@ -37,10 +37,10 @@ public class ConnectionTester implements TestConnections {
 
 	@Override
 	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
-		return doTest(connectionProvider, timeout);
+		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider), AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	private static boolean doTestSynchronously(final IConnectionProvider connectionProvider, final int timeout) {
+	private boolean doTestSynchronously(final IConnectionProvider connectionProvider) {
 		try {
 
 			final HttpURLConnection conn = connectionProvider.getConnection("Alive");

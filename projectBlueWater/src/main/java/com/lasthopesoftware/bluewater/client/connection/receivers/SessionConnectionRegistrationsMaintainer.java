@@ -7,8 +7,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -36,16 +35,20 @@ public class SessionConnectionRegistrationsMaintainer extends BroadcastReceiver 
 
 		Stream.of(registeredReceivers).forEach(localBroadcastManager::unregisterReceiver);
 
-		final IConnectionProvider connectionProvider = SessionConnection.getSessionConnectionProvider();
-		registeredReceivers = Stream.of(connectionDependentReceiverRegistrations).map(registration -> {
-			final BroadcastReceiver receiver = registration.registerWithConnectionProvider(connectionProvider);
-			Stream.of(registration.forIntents()).forEach(i -> localBroadcastManager.registerReceiver(receiver, i));
-			return  receiver;
-		}).collect(Collectors.toList());
+		SessionConnection.getInstance(context)
+			.promiseSessionConnection()
+			.then(connectionProvider -> {
+				registeredReceivers = Stream.of(connectionDependentReceiverRegistrations).map(registration -> {
+					final BroadcastReceiver receiver = registration.registerWithConnectionProvider(connectionProvider);
+					Stream.of(registration.forIntents()).forEach(i -> localBroadcastManager.registerReceiver(receiver, i));
+					return  receiver;
+				}).collect(Collectors.toList());
+				return null;
+			});
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
 		Stream.of(registeredReceivers).forEach(localBroadcastManager::unregisterReceiver);
 	}
 }

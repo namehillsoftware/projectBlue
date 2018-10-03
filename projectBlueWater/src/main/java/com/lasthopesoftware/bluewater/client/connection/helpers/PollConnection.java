@@ -7,7 +7,7 @@ import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
@@ -99,7 +99,7 @@ public class PollConnection {
 					localBroadcastManager.registerReceiver(buildSessionBroadcastReceiver, new IntentFilter(SessionConnection.buildSessionBroadcast));
 					localBroadcastManager.registerReceiver(refreshBroadcastReceiver, new IntentFilter(SessionConnection.refreshSessionBroadcast));
 
-					SessionConnection.refresh(mContext);
+					SessionConnection.getInstance(mContext).promiseTestedSessionConnection();
 				}
 
 				return null;

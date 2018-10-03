@@ -8,11 +8,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
@@ -27,11 +26,12 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.namehillsoftware.handoff.promises.response.ImmediateAction;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class NowPlayingFilesListActivity extends AppCompatActivity implements IItemListViewContainer {
 	
@@ -41,7 +41,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	private final CreateAndHold<INowPlayingRepository> lazyNowPlayingRepository =
 		new AbstractSynchronousLazy<INowPlayingRepository>() {
 			@Override
-			protected INowPlayingRepository create() throws Exception {
+			protected INowPlayingRepository create() {
 				final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingFilesListActivity.this);
 				final SelectedBrowserLibraryIdentifierProvider selectedBrowserLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingFilesListActivity.this);
 				final ISpecificLibraryProvider specificLibraryProvider = new SpecificLibraryProvider(selectedBrowserLibraryIdentifierProvider.getSelectedLibraryId(), libraryRepository);
@@ -52,10 +52,10 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	private final CreateAndHold<PromisedResponse<NowPlaying, Void>> lazyDispatchedLibraryCompleteResolution =
 		new AbstractSynchronousLazy<PromisedResponse<NowPlaying, Void>>() {
 			@Override
-			protected PromisedResponse<NowPlaying, Void> create() throws Exception {
+			protected PromisedResponse<NowPlaying, Void> create() {
 				return
 					LoopedInPromise.response(
-						ImmediateAction.perform(
+						perform(
 							new OnGetLibraryNowComplete(
 								NowPlayingFilesListActivity.this,
 								fileListView.findView(),
@@ -79,7 +79,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
         
         this.setTitle(R.string.title_view_now_playing_files);
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
 
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
@@ -95,10 +95,13 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	public void onStart() {
 		super.onStart();
 		
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) return;
-		
-		fileListView.findView().setVisibility(View.INVISIBLE);
-		mLoadingProgressBar.findView().setVisibility(View.VISIBLE);
+		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+			.eventually(LoopedInPromise.response(perform(restore -> {
+				if (!restore) return;
+
+				fileListView.findView().setVisibility(View.INVISIBLE);
+				mLoadingProgressBar.findView().setVisibility(View.VISIBLE);
+			}), this));
 	}
 	
 	@Override

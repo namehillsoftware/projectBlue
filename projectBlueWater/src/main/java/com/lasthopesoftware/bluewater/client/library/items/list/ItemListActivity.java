@@ -7,13 +7,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
@@ -50,7 +49,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
 		new AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
 			@Override
-			protected ISelectedBrowserLibraryProvider create() throws Exception {
+			protected ISelectedBrowserLibraryProvider create() {
 				return new SelectedBrowserLibraryProvider(
 					new SelectedBrowserLibraryIdentifierProvider(ItemListActivity.this),
 					new LibraryRepository(ItemListActivity.this));
@@ -78,29 +77,29 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
         setTitle(getIntent().getStringExtra(VALUE));
 
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton((RelativeLayout) findViewById(R.id.rlViewItems));
+		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
 
 		final PromisedResponse<List<Item>, Void> itemProviderComplete = LoopedInPromise.response(this, this);
 
-        final ItemProvider itemProvider = new ItemProvider(SessionConnection.getSessionConnectionProvider(), mItemId);
-        itemProvider
-			.promiseItems()
-			.eventually(itemProviderComplete)
-			.excuse(
-				new HandleViewIoException(this,
-					new Runnable() {
-						@Override
-						public void run() {
-							itemProvider
-								.promiseItems()
-								.eventually(itemProviderComplete)
-								.excuse(new HandleViewIoException(ItemListActivity.this, this));
-						}
-					}));
+		final Runnable fillItemsRunnable = new Runnable() {
+
+			@Override
+			public void run() {
+				SessionConnection.getInstance(ItemListActivity.this).promiseSessionConnection()
+					.eventually(c -> {
+						final ItemProvider itemProvider = new ItemProvider(c, mItemId);
+						return itemProvider.promiseItems();
+					})
+					.eventually(itemProviderComplete)
+					.excuse(new HandleViewIoException(ItemListActivity.this, this));
+			}
+		};
+
+		fillItemsRunnable.run();
     }
 
 	@Override
-	public Void respond(List<Item> items) throws Throwable {
+	public Void respond(List<Item> items) {
 		if (items == null) return null;
 
 		ItemListActivity.this.BuildItemListView(items);

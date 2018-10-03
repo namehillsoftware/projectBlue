@@ -11,12 +11,12 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
+import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -25,6 +25,8 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.junit.Test;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
+
+import java.lang.reflect.InvocationTargetException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -43,7 +45,7 @@ public class WhenTheFileChanges extends AndroidContext {
 	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
 
 	@Override
-	public void before() {
+	public void before() throws InvocationTargetException, InstantiationException, IllegalAccessException {
 		final NotificationCompat.Builder firstBuilder = mock(NotificationCompat.Builder.class);
 		when(firstBuilder.build()).thenReturn(new Notification());
 		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
@@ -61,10 +63,9 @@ public class WhenTheFileChanges extends AndroidContext {
 				new PlaybackNotificationsConfiguration("",43),
 				notificationContentBuilder));
 
-		final LocalPlaybackBroadcaster localPlaybackBroadcaster =
-			new LocalPlaybackBroadcaster(RuntimeEnvironment.application);
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
 
-		LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
+		localBroadcastManager
 			.registerReceiver(
 				playbackNotificationRouter,
 				Stream.of(playbackNotificationRouter.registerForIntents())
