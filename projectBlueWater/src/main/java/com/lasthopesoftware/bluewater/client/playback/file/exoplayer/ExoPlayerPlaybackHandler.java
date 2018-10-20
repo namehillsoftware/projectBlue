@@ -16,11 +16,8 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Duration;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,16 +28,6 @@ implements
 	Player.EventListener,
 	Runnable
 {
-	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter =
-		new Lazy<>(() ->
-			new PeriodFormatterBuilder()
-				.appendMinutes()
-				.appendSeparator(":")
-				.minimumPrintedDigits(2)
-				.maximumParsedDigits(2)
-				.appendSeconds()
-				.toFormatter());
-
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final ExoPlayer exoPlayer;
@@ -62,8 +49,6 @@ implements
 		}
 	};
 
-	private boolean isPlaying;
-
 	private Duration duration = Duration.ZERO;
 
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
@@ -73,7 +58,6 @@ implements
 
 	private void pause() {
 		exoPlayer.stop();
-		isPlaying = false;
 	}
 
 	@Override
@@ -104,13 +88,11 @@ implements
 	@Override
 	public Promise<PlayingFile> promisePlayback() {
 		exoPlayer.setPlayWhenReady(true);
-		isPlaying = true;
 		return new Promise<>(this);
 	}
 
 	@Override
 	public void close() {
-		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
 		exoPlayer.release();
@@ -135,20 +117,7 @@ implements
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
 		logger.debug("Playback state has changed to " + playbackState);
 
-		if (isPlaying && playbackState == Player.STATE_IDLE) {
-			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
-
-			logger.warn(
-				"The player was playing, but it transitioned to idle! " +
-				"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + duration.toPeriod().toString(formatter) + ". " +
-				"Restarting the player...");
-			pause();
-			exoPlayer.setPlayWhenReady(true);
-		}
-
 		if (playbackState != Player.STATE_ENDED) return;
-
-		isPlaying = false;
 
 		exoPlayer.removeListener(this);
 	}

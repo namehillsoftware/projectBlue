@@ -12,8 +12,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPl
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +28,17 @@ extends
 implements
 	PlayedFile,
 	Player.EventListener {
+
+
+	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter =
+		new Lazy<>(() ->
+			new PeriodFormatterBuilder()
+				.appendMinutes()
+				.appendSeparator(":")
+				.minimumPrintedDigits(2)
+				.maximumParsedDigits(2)
+				.appendSeconds()
+				.toFormatter());
 
 	private static final Logger logger = LoggerFactory.getLogger(PromisedPlayedExoPlayer.class);
 
@@ -61,6 +75,33 @@ implements
 
 	@Override
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+		logger.debug("Playback state has changed to " + playbackState);
+
+		if (playbackState == Player.STATE_IDLE) {
+			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
+
+			final Duration progress = getProgress();
+
+			logger.warn(
+				"The player was playing, but it transitioned to idle! " +
+					"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
+
+			if (playWhenReady) {
+				logger.warn("The file is set to playWhenReady, waiting for playback to resume.");
+				return;
+			}
+
+			if (progress.equals(handler.getDuration())) {
+				logger.warn("The file was completed, triggering playback completed");
+				removeListener();
+				resolve(this);
+				return;
+			}
+
+			handler.promisePause();
+			exoPlayer.setPlayWhenReady(true);
+		}
+
 		if (playbackState != Player.STATE_ENDED) return;
 
 		removeListener();
