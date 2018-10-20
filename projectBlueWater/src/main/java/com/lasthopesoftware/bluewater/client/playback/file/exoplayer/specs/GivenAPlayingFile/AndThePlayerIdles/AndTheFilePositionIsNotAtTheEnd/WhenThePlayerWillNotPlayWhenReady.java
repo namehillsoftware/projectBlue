@@ -5,6 +5,7 @@ import com.google.android.exoplayer2.Player;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -36,9 +37,10 @@ public class WhenThePlayerWillNotPlayWhenReady {
 		}).when(mockExoPlayer).addListener(any());
 
 		ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
+		final Promise<Boolean> playbackPromise = exoPlayerPlaybackHandler.promisePlayback().eventually(PlayingFile::promisePlayedFile)
+				.then(p -> isComplete = true);
 		try {
-			new FuturePromise<>(exoPlayerPlaybackHandler.promisePlayback().eventually(PlayingFile::promisePlayedFile)
-				.then(p -> isComplete = true)).get(1, TimeUnit.SECONDS);
+			new FuturePromise<>(playbackPromise).get(1, TimeUnit.SECONDS);
 		} catch (TimeoutException ignored) {
 		}
 
