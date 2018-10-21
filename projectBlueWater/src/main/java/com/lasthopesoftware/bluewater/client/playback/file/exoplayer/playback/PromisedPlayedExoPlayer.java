@@ -1,10 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback;
 
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
@@ -13,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPl
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -69,28 +64,34 @@ implements
 
 	@Override
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-		logger.debug("Playback state has changed to " + playbackState);
-
 		if (playbackState == Player.STATE_IDLE) {
 			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
 
 			final Duration progress = getProgress();
 
-			logger.warn(
-				"The player was playing, but it transitioned to idle! " +
-					"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
-
 			if (playWhenReady) {
+				logger.warn(
+						"The player was playing, but it transitioned to idle! " +
+								"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
+
 				logger.warn("The file is set to playWhenReady, waiting for playback to resume.");
 				return;
 			}
 
-			if (progress.equals(handler.getDuration())) {
+			if (progress.getMillis() == handler.getDuration().getMillis()) {
+				logger.warn(
+						"The player was playing, but it transitioned to idle! " +
+								"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
+
 				logger.warn("The file was completed, triggering playback completed");
 				removeListener();
 				resolve(this);
 				return;
 			}
+
+			logger.warn(
+					"The player was playing, but it transitioned to idle! " +
+							"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
 
 			logger.warn("The player was idled without stopping playback! Restarting the player.");
 			handler.promisePause()
