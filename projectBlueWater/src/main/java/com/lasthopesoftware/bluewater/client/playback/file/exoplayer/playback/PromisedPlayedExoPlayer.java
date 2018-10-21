@@ -59,19 +59,13 @@ implements
 	}
 
 	@Override
-	public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-
-	}
+	public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {}
 
 	@Override
-	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-	}
+	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
 
 	@Override
-	public void onLoadingChanged(boolean isLoading) {
-
-	}
+	public void onLoadingChanged(boolean isLoading) {}
 
 	@Override
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
@@ -98,8 +92,13 @@ implements
 				return;
 			}
 
-			handler.promisePause();
-			exoPlayer.setPlayWhenReady(true);
+			logger.warn("The player was idled without stopping playback! Restarting the player.");
+			handler.promisePause()
+				.then(p -> {
+					p.promisePlayback();
+					return null;
+				});
+			return;
 		}
 
 		if (playbackState != Player.STATE_ENDED) return;
@@ -109,14 +108,10 @@ implements
 	}
 
 	@Override
-	public void onRepeatModeChanged(int repeatMode) {
-
-	}
+	public void onRepeatModeChanged(int repeatMode) {}
 
 	@Override
-	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-	}
+	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
 
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
@@ -134,19 +129,13 @@ implements
 	}
 
 	@Override
-	public void onPositionDiscontinuity(int reason) {
-
-	}
+	public void onPositionDiscontinuity(int reason) {}
 
 	@Override
-	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-	}
+	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
 
 	@Override
-	public void onSeekProcessed() {
-
-	}
+	public void onSeekProcessed() {}
 
 	private void removeListener() {
 		exoPlayer.removeListener(this);

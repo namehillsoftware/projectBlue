@@ -39,12 +39,13 @@ public class WhenThePlayerWillPlayWhenReady {
 		ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
 		final Promise<Boolean> playbackPromise = exoPlayerPlaybackHandler.promisePlayback().eventually(PlayingFile::promisePlayedFile)
 				.then(p -> isComplete = true);
+
+		eventListener.onPlayerStateChanged(true, Player.STATE_IDLE);
+
 		try {
 			new FuturePromise<>(playbackPromise).get(1, TimeUnit.SECONDS);
 		} catch (TimeoutException ignored) {
 		}
-
-		eventListener.onPlayerStateChanged(true, Player.STATE_IDLE);
 	}
 
 	@Test
