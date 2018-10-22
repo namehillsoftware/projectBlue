@@ -69,36 +69,18 @@ implements
 
 			final Duration progress = getProgress();
 
-			if (playWhenReady) {
-				logger.warn(
-						"The player was playing, but it transitioned to idle! " +
-								"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
+			logger.warn(
+					"The player was playing, but it transitioned to idle! " +
+							"Playback progress: " + progress.toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
 
+			if (playWhenReady) {
 				logger.warn("The file is set to playWhenReady, waiting for playback to resume.");
 				return;
 			}
 
-			if (progress.getMillis() == handler.getDuration().getMillis()) {
-				logger.warn(
-						"The player was playing, but it transitioned to idle! " +
-								"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
-
-				logger.warn("The file was completed, triggering playback completed");
-				removeListener();
-				resolve(this);
-				return;
-			}
-
-			logger.warn(
-					"The player was playing, but it transitioned to idle! " +
-							"Playback progress: " + getProgress().toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
-
-			logger.warn("The player was idled without stopping playback! Restarting the player.");
-			handler.promisePause()
-				.then(p -> {
-					p.promisePlayback();
-					return null;
-				});
+			logger.warn("The file is not set to playWhenReady, triggering playback completed");
+			removeListener();
+			resolve(this);
 			return;
 		}
 

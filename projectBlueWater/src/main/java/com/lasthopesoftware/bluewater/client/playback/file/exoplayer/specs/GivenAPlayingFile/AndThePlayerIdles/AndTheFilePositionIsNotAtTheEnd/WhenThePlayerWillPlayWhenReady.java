@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
@@ -18,17 +17,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class WhenThePlayerWillPlayWhenReady {
 	private static final Collection<Player.EventListener> eventListeners = new ArrayList<>();
-	private static final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);;
+	private static final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
 	private static boolean isComplete;
 
 	@BeforeClass
@@ -55,6 +49,6 @@ public class WhenThePlayerWillPlayWhenReady {
 
 	@Test
 	public void thenPlaybackIsNotRestarted() {
-		verify(mockExoPlayer, times(2)).setPlayWhenReady(true);
+		verify(mockExoPlayer, times(1)).setPlayWhenReady(true);
 	}
 }
