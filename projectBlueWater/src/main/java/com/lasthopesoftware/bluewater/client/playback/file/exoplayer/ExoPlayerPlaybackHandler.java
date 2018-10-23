@@ -1,10 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer;
 
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
@@ -16,7 +12,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +44,8 @@ implements
 		}
 	};
 
+	private boolean isPlaying;
+
 	private Duration duration = Duration.ZERO;
 
 	public ExoPlayerPlaybackHandler(ExoPlayer exoPlayer) {
@@ -57,6 +54,7 @@ implements
 	}
 
 	private void pause() {
+		isPlaying = false;
 		exoPlayer.stop();
 	}
 
@@ -87,12 +85,14 @@ implements
 
 	@Override
 	public Promise<PlayingFile> promisePlayback() {
+		isPlaying = true;
 		exoPlayer.setPlayWhenReady(true);
 		return new Promise<>(this);
 	}
 
 	@Override
 	public void close() {
+		isPlaying = false;
 		exoPlayer.setPlayWhenReady(false);
 		exoPlayer.stop();
 		exoPlayer.release();
@@ -118,6 +118,8 @@ implements
 		logger.debug("Playback state has changed to " + playbackState);
 
 		if (playbackState != Player.STATE_ENDED) return;
+
+		isPlaying = false;
 
 		exoPlayer.removeListener(this);
 	}
@@ -153,5 +155,9 @@ implements
 	@Override
 	public void run() {
 		close();
+	}
+
+	public boolean isPlaying() {
+		return isPlaying;
 	}
 }

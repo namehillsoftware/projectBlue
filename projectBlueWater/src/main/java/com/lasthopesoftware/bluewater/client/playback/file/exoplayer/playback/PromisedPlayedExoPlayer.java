@@ -64,7 +64,7 @@ implements
 
 	@Override
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-		if (playbackState == Player.STATE_IDLE) {
+		if (playbackState == Player.STATE_IDLE && handler.isPlaying()) {
 			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
 
 			final Duration progress = getProgress();
@@ -72,6 +72,7 @@ implements
 			logger.warn(
 					"The player was playing, but it transitioned to idle! " +
 							"Playback progress: " + progress.toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
+
 
 			if (playWhenReady) {
 				logger.warn("The file is set to playWhenReady, waiting for playback to resume.");
