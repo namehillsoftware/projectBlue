@@ -17,10 +17,14 @@ group = "com.namehillsoftware"
 archivesBaseName = "handoff"
 version = project.version
 
-sourceCompatibility = JavaVersion.VERSION_1_7
-targetCompatibility = JavaVersion.VERSION_1_7
-
 sourceSets {
+    main {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_1_7
+            targetCompatibility = JavaVersion.VERSION_1_7
+        }
+    }
+
     test {
         java {
             srcDir 'src/specs/java'
@@ -57,6 +61,11 @@ artifacts {
     archives sourcesJar
 }
 
+signing {
+    required { gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
 if (!hasProperty("sonatypeUsername")) {
     sonatypeUsername = ""
 }
@@ -79,10 +88,10 @@ uploadArchives {
             }
 
             pom.project {
-//                name 'lazy-j'
+//                name 'handoff'
                 packaging 'jar'
                 // optionally artifactId can be defined here
-                description 'Embarassingly Simple Lazy Instantiation Library'
+                description 'Promises Library for Java'
                 url 'http://www.namehillsoftware.com/'
 
                 scm {
@@ -108,5 +117,3 @@ uploadArchives {
         }
     }
 }
-
-uploadArchives.setEnabled(!version.endsWith("SNAPSHOT"))
