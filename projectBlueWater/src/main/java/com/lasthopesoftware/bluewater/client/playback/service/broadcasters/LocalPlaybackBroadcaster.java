@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
-import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -9,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
     private final LocalBroadcastManager localBroadcastManager;
 
-    public LocalPlaybackBroadcaster(Context context) {
-        localBroadcastManager = LocalBroadcastManager.getInstance(context);
+    public LocalPlaybackBroadcaster(LocalBroadcastManager localBroadcastManager) {
+        this.localBroadcastManager = localBroadcastManager;
     }
 
     @Override

@@ -1,10 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback;
 
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
@@ -12,8 +8,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPl
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
-
+import com.namehillsoftware.lazyj.Lazy;
 import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +23,17 @@ extends
 implements
 	PlayedFile,
 	Player.EventListener {
+
+
+	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter =
+		new Lazy<>(() ->
+			new PeriodFormatterBuilder()
+				.appendMinutes()
+				.appendSeparator(":")
+				.minimumPrintedDigits(2)
+				.maximumParsedDigits(2)
+				.appendSeconds()
+				.toFormatter());
 
 	private static final Logger logger = LoggerFactory.getLogger(PromisedPlayedExoPlayer.class);
 
@@ -45,22 +54,37 @@ implements
 	}
 
 	@Override
-	public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-
-	}
+	public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {}
 
 	@Override
-	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-	}
+	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
 
 	@Override
-	public void onLoadingChanged(boolean isLoading) {
-
-	}
+	public void onLoadingChanged(boolean isLoading) {}
 
 	@Override
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+		if (playbackState == Player.STATE_IDLE && handler.isPlaying()) {
+			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
+
+			final Duration progress = getProgress();
+
+			logger.warn(
+					"The player was playing, but it transitioned to idle! " +
+							"Playback progress: " + progress.toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
+
+
+			if (playWhenReady) {
+				logger.warn("The file is set to playWhenReady, waiting for playback to resume.");
+				return;
+			}
+
+			logger.warn("The file is not set to playWhenReady, triggering playback completed");
+			removeListener();
+			resolve(this);
+			return;
+		}
+
 		if (playbackState != Player.STATE_ENDED) return;
 
 		removeListener();
@@ -68,14 +92,10 @@ implements
 	}
 
 	@Override
-	public void onRepeatModeChanged(int repeatMode) {
-
-	}
+	public void onRepeatModeChanged(int repeatMode) {}
 
 	@Override
-	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-	}
+	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
 
 	@Override
 	public void onPlayerError(ExoPlaybackException error) {
@@ -93,19 +113,13 @@ implements
 	}
 
 	@Override
-	public void onPositionDiscontinuity(int reason) {
-
-	}
+	public void onPositionDiscontinuity(int reason) {}
 
 	@Override
-	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-	}
+	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
 
 	@Override
-	public void onSeekProcessed() {
-
-	}
+	public void onSeekProcessed() {}
 
 	private void removeListener() {
 		exoPlayer.removeListener(this);

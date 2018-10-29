@@ -25,12 +25,12 @@ import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
@@ -183,7 +183,10 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	public void onStart() {
 		super.onStart();
 
-		if (!InstantiateSessionConnectionActivity.restoreSessionConnection(this)) startLibrary();
+		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+			.eventually(LoopedInPromise.response(perform(restore -> {
+				if (!restore) startLibrary();
+			}), this));
 	}
 
 	@Override
@@ -275,7 +278,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		final Runnable getLibraryViewsRunnable = new Runnable() {
 			@Override
 			public void run() {
-				LibraryViewsProvider.provide(SessionConnection.getSessionConnectionProvider())
+				SessionConnection.getInstance(BrowseLibraryActivity.this)
+					.promiseSessionConnection()
+					.eventually(LibraryViewsProvider::provide)
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
 			}

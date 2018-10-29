@@ -15,7 +15,7 @@ import android.widget.ViewAnimator;
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
@@ -49,9 +49,9 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final RelativeLayout tabbedItemsLayout = (RelativeLayout) inflater.inflate(R.layout.tabbed_library_items_layout, container, false);
 
-		viewPager = (ViewPager) tabbedItemsLayout.findViewById(R.id.libraryViewPager);
-		final RelativeLayout tabbedLibraryViewsContainer = (RelativeLayout) tabbedItemsLayout.findViewById(R.id.tabbedLibraryViewsContainer);
-		final PagerSlidingTabStrip libraryViewsTabs = (PagerSlidingTabStrip) tabbedItemsLayout.findViewById(R.id.tabsLibraryViews);
+		viewPager = tabbedItemsLayout.findViewById(R.id.libraryViewPager);
+		final RelativeLayout tabbedLibraryViewsContainer = tabbedItemsLayout.findViewById(R.id.tabbedLibraryViewsContainer);
+		final PagerSlidingTabStrip libraryViewsTabs = tabbedItemsLayout.findViewById(R.id.tabsLibraryViews);
 		libraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 			@Override
 			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -69,7 +69,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}
 		});
 
-		final ProgressBar loadingView = (ProgressBar) tabbedItemsLayout.findViewById(R.id.pbLoadingTabbedItems);
+		final ProgressBar loadingView = tabbedItemsLayout.findViewById(R.id.pbLoadingTabbedItems);
 
 		tabbedLibraryViewsContainer.setVisibility(View.INVISIBLE);
 		loadingView.setVisibility(View.VISIBLE);
@@ -98,21 +98,19 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}, handler);
 
 		getSelectedBrowserLibrary()
-			.eventually(LoopedInPromise.response(activeLibrary ->
-				ItemProvider
-					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.eventually(onGetVisibleViewsCompleteListener)
-					.excuse(new HandleViewIoException(getContext(), new Runnable() {
+			.then(perform(activeLibrary -> {
+				final Runnable fillItemsAction = new Runnable() {
+					@Override
+					public void run() {
+						SessionConnection.getInstance(getContext()).promiseSessionConnection()
+							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
+							.eventually(onGetVisibleViewsCompleteListener)
+							.excuse(new HandleViewIoException(getContext(), this));
+					}
+				};
 
-						@Override
-						public void run() {
-							ItemProvider
-								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.eventually(onGetVisibleViewsCompleteListener)
-								.excuse(new HandleViewIoException(getContext(), this));
-						}
-					})), handler));
-
+				fillItemsAction.run();
+			}));
 
 		return tabbedItemsLayout;
 	}

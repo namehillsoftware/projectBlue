@@ -12,7 +12,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
@@ -74,19 +74,18 @@ public class ItemListFragment extends Fragment {
 					return null;
 				}, activity);
 
-				ItemProvider
-					.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-					.eventually(onGetVisibleViewsCompleteListener)
-					.excuse(new HandleViewIoException(activity, new Runnable() {
+				final Runnable fillItemsRunnable = new Runnable() {
 
-						@Override
-						public void run() {
-							ItemProvider
-								.provide(SessionConnection.getSessionConnectionProvider(), activeLibrary.getSelectedView())
-								.eventually(onGetVisibleViewsCompleteListener)
-								.excuse(new HandleViewIoException(activity, this));
-						}
-					}));
+					@Override
+					public void run() {
+						SessionConnection.getInstance(activity).promiseSessionConnection()
+							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
+							.eventually(onGetVisibleViewsCompleteListener)
+							.excuse(new HandleViewIoException(activity, this));
+					}
+				};
+
+				fillItemsRunnable.run();
 	    }));
 
         return layout;
@@ -112,19 +111,18 @@ public class ItemListFragment extends Fragment {
 					new StoredItemAccess(activity, library),
 					library), activity);
 
-				ItemProvider
-					.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-					.eventually(onGetLibraryViewItemResultsComplete)
-					.excuse(new HandleViewIoException(activity, new Runnable() {
+				final Runnable fillItemsRunnable = new Runnable() {
 
-						@Override
-						public void run() {
-							ItemProvider
-								.provide(SessionConnection.getSessionConnectionProvider(), category.getKey())
-								.eventually(onGetLibraryViewItemResultsComplete)
-								.excuse(new HandleViewIoException(activity, this));
-						}
-					}));
+					@Override
+					public void run() {
+						SessionConnection.getInstance(activity).promiseSessionConnection()
+							.eventually(c -> ItemProvider.provide(c, category.getKey()))
+							.eventually(onGetLibraryViewItemResultsComplete)
+							.excuse(new HandleViewIoException(activity, this));
+					}
+				};
+
+				fillItemsRunnable.run();
 			}));
 
 		return listView;

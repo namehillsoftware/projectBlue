@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -72,7 +73,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		storedItemAccess.resolveStoredItems();
 
-		countDownLatch.await();
+		countDownLatch.await(1, TimeUnit.SECONDS);
 	}
 
 	@Test

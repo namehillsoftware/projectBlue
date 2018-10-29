@@ -15,7 +15,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class WhenReceivingTheBroadcast extends AndroidContext {
 
-	private static final ActivityController<BrowseLibraryActivity> activityController = Robolectric.buildActivity(BrowseLibraryActivity.class).create().start().resume();
+	private static final ActivityController<BrowseLibraryActivity> activityController = Robolectric.buildActivity(BrowseLibraryActivity.class).create();
 
 	@Override
 	public void before() {
