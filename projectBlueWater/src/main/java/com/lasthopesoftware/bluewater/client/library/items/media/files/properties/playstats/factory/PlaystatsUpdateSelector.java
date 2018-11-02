@@ -18,7 +18,7 @@ public class PlaystatsUpdateSelector {
 	public PlaystatsUpdateSelector(IConnectionProvider connectionProvider, IFilePropertiesProvider filePropertiesProvider, FilePropertiesStorage filePropertiesStorage, IProgramVersionProvider programVersionProvider) {
 		lazyPlaystatsUpdate = new AbstractSynchronousLazy<Promise<IPlaystatsUpdate>>() {
 			@Override
-			protected Promise<IPlaystatsUpdate> create() throws Exception {
+			protected Promise<IPlaystatsUpdate> create() {
 				return programVersionProvider.promiseServerVersion()
 					.then(programVersion -> programVersion != null && programVersion.major >= 22
 						? new PlayedFilePlayStatsUpdater(connectionProvider)
