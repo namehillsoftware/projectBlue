@@ -8,26 +8,33 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.CreateAndHold;
 
 public class PlaystatsUpdateSelector {
 
-	private final CreateAndHold<Promise<IPlaystatsUpdate>> lazyPlaystatsUpdate;
+	private final IConnectionProvider connectionProvider;
+	private final IFilePropertiesProvider filePropertiesProvider;
+	private final FilePropertiesStorage filePropertiesStorage;
+	private final IProgramVersionProvider programVersionProvider;
+
+	private volatile Promise<IPlaystatsUpdate> promisedPlaystatsUpdater = Promise.empty();
 
 	public PlaystatsUpdateSelector(IConnectionProvider connectionProvider, IFilePropertiesProvider filePropertiesProvider, FilePropertiesStorage filePropertiesStorage, IProgramVersionProvider programVersionProvider) {
-		lazyPlaystatsUpdate = new AbstractSynchronousLazy<Promise<IPlaystatsUpdate>>() {
-			@Override
-			protected Promise<IPlaystatsUpdate> create() throws Exception {
-				return programVersionProvider.promiseServerVersion()
-					.then(programVersion -> programVersion != null && programVersion.major >= 22
-						? new PlayedFilePlayStatsUpdater(connectionProvider)
-						: new FilePropertiesPlayStatsUpdater(filePropertiesProvider, filePropertiesStorage));
-			}
-		};
+		this.connectionProvider = connectionProvider;
+		this.filePropertiesProvider = filePropertiesProvider;
+		this.filePropertiesStorage = filePropertiesStorage;
+		this.programVersionProvider = programVersionProvider;
 	}
 
-	public Promise<IPlaystatsUpdate> promisePlaystatsUpdater() {
-		return lazyPlaystatsUpdate.getObject();
+	public synchronized Promise<IPlaystatsUpdate> promisePlaystatsUpdater() {
+		return promisedPlaystatsUpdater = promisedPlaystatsUpdater.eventually(
+				u -> u != null ? new Promise<>(u) : promiseNewPlaystatsUpdater(),
+				e -> promiseNewPlaystatsUpdater());
+	}
+
+	private Promise<IPlaystatsUpdate> promiseNewPlaystatsUpdater() {
+		return programVersionProvider.promiseServerVersion()
+			.then(programVersion -> programVersion != null && programVersion.major >= 22
+					? new PlayedFilePlayStatsUpdater(connectionProvider)
+					: new FilePropertiesPlayStatsUpdater(filePropertiesProvider, filePropertiesStorage));
 	}
 }
