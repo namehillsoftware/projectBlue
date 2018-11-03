@@ -7,13 +7,14 @@ import com.namehillsoftware.handoff.promises.Promise;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgramVersionProvider implements IProgramVersionProvider {
 
 	private final Object syncObject = new Object();
 	private final IConnectionProvider connectionProvider;
 
-	private volatile int serverVersionThreads;
+	private final AtomicInteger serverVersionThreads = new AtomicInteger();
 
 	public ProgramVersionProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
@@ -22,7 +23,7 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 	@Override
 	public Promise<SemanticVersion> promiseServerVersion() {
 		return new Promise<>((messenger) ->
-			new Thread("server-version-thread-" + serverVersionThreads++) {
+			new Thread("server-version-thread-" + serverVersionThreads.getAndIncrement()) {
 				@Override
 				public void run() {
 					try {
@@ -71,7 +72,7 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 							}
 						}
 					} finally {
-						--serverVersionThreads;
+						serverVersionThreads.decrementAndGet();
 					}
 				}
 		}.start());
