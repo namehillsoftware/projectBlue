@@ -3,11 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +28,6 @@ public class UpdatePlayStatsOnPlaybackCompleteReceiver extends BroadcastReceiver
 		playstatsUpdateSelector
 			.promisePlaystatsUpdater()
 			.eventually(updater -> updater.promisePlaystatsUpdate(new ServiceFile(fileKey)))
-			.excuse(perform(e -> logger.error("There was an error updating the playstats for the file with key " + fileKey)));
+			.excuse(perform(e -> logger.error("There was an error updating the playstats for the file with key " + fileKey, e)));
 	}
 }
