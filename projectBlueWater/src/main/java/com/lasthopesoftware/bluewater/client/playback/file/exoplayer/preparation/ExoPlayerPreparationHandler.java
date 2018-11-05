@@ -76,7 +76,12 @@ implements
 			return;
 		}
 
-		if (exoPlayer.getCurrentPosition() < prepareAt) {
+		final long currentPosition = exoPlayer.getCurrentPosition();
+		if (currentPosition < prepareAt) {
+			if (currentPosition < 0) {
+				logger.warn("Player was prepared with a negative current position of " + currentPosition + "!");
+			}
+
 			exoPlayer.seekTo(prepareAt);
 			return;
 		}
