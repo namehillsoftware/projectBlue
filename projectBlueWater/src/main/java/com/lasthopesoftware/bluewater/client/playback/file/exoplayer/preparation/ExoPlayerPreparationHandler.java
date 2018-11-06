@@ -72,6 +72,11 @@ implements
 		if (isResolved || cancellationToken.isCancelled()) return;
 
 		if (playbackState != Player.STATE_READY) {
+			if (playbackState == Player.STATE_BUFFERING) {
+				logger.info("Player went into the buffering state.");
+				return;
+			}
+
 			logger.warn("Player went into state " + playbackStateToString(playbackState) + " before it was prepared!");
 			return;
 		}
