@@ -1,5 +1,20 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
+
 plugins {
     id "com.cinnober.gradle.semver-git" version "2.2.2"
+    id "com.jfrog.bintray" version "1.8.1"
+}
+
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+    apply plugin: 'java'
 }
 
 repositories {
@@ -10,6 +25,8 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
 apply plugin: 'com.cinnober.gradle.semver-git'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
 
 ext.snapshotSuffix = "SNAPSHOT+<dirty><sha>"
 
@@ -67,52 +84,64 @@ signing {
 }
 
 if (!hasProperty("sonatypeUsername")) {
-    sonatypeUsername = ""
+    bintrayUser = System.getenv('BINTRAY_USER')
 }
 
-if (!hasProperty("sonatypePassword")) {
-    sonatypePassword = ""
+if (!hasProperty("bintrayApiKey")) {
+    bintrayApiKey = System.getenv('BINTRAY_API_KEY')
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+bintray {
+    user = bintrayUser
+    key = bintrayApiKey 
+    configurations = ['archives']
+    pkg {
+        repo = 'maven'
+        name = 'handoff'
+        userOrg = bintrayUser
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/namehillsoftware/handoff.git'
+    }
+    version {
+        name = project.version
+        released = new Date()
+    }
+}
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
+def pomConfig = {
+    description = 'Promises Library for Java'
+    url = 'http://www.namehillsoftware.com/'
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
+    scm {
+        connection = 'https://github.com/namehillsoftware/handoff.git'
+        developerConnection = 'https://github.com/namehillsoftware/handoff.git'
+        url = 'https://github.com/namehillsoftware/handoff'
+    }
 
-            pom.project {
-//                name 'handoff'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'Promises Library for Java'
-                url 'http://www.namehillsoftware.com/'
+    licenses {
+        license {
+            url = 'https://github.com/namehillsoftware/handoff/blob/master/LICENSE'
+        }
+    }
 
-                scm {
-                    connection 'https://github.com/namehillsoftware/handoff.git'
-                    developerConnection 'https://github.com/namehillsoftware/handoff.git'
-                    url 'https://github.com/namehillsoftware/handoff'
-                }
+    developers {
+        developer {
+            id = 'david'
+            name = 'David Vedvick'
+            email = 'dvedvick@gmail.com'
+        }
+    }
+}
 
-                licenses {
-                    license {
-                        url 'https://github.com/namehillsoftware/handoff/blob/master/LICENSE'
-                    }
-                }
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar
 
-                developers {
-                    developer {
-                        id 'david'
-//                        name 'David Vedvick'
-                        email 'dvedvick@gmail.com'
-                    }
-                }
+            pom.withXml {
+                def root = asNode()
+                root.children().last() + pomConfig
             }
         }
     }
