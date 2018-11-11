@@ -1,5 +1,21 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '2.2.2'
+    }
+}
+
 plugins {
-    id "com.cinnober.gradle.semver-git" version "2.2.2"
+    id "com.jfrog.bintray" version "1.8.1"
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+    apply plugin: 'java'
 }
 
 repositories {
@@ -9,13 +25,13 @@ repositories {
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
-apply plugin: 'com.cinnober.gradle.semver-git'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
 
-ext.snapshotSuffix = "SNAPSHOT+<dirty><sha>"
+ext.snapshotSuffix = "SNAPSHOT+<sha>"
 
 group = "com.namehillsoftware"
 archivesBaseName = "handoff"
-version = project.version
 
 sourceSets {
     main {
@@ -61,59 +77,75 @@ artifacts {
     archives sourcesJar
 }
 
-signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+
+    developers {
+        developer {
+            id 'david'
+            name 'David Vedvick'
+            email 'dvedvick@gmail.com'
+        }
+    }
+
+    scm {
+        url 'https://github.com/namehillsoftware/handoff'
+    }
 }
 
-if (!hasProperty("sonatypeUsername")) {
-    sonatypeUsername = ""
-}
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar
 
-if (!hasProperty("sonatypePassword")) {
-    sonatypePassword = ""
-}
+            groupId 'com.namehillsoftware'
+            artifactId 'handoff'
+            version project.version
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
-
-            pom.project {
-//                name 'handoff'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'Promises Library for Java'
-                url 'http://www.namehillsoftware.com/'
-
-                scm {
-                    connection 'https://github.com/namehillsoftware/handoff.git'
-                    developerConnection 'https://github.com/namehillsoftware/handoff.git'
-                    url 'https://github.com/namehillsoftware/handoff'
-                }
-
-                licenses {
-                    license {
-                        url 'https://github.com/namehillsoftware/handoff/blob/master/LICENSE'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'david'
-//                        name 'David Vedvick'
-                        email 'dvedvick@gmail.com'
-                    }
-                }
+            pom.withXml {
+                def root = asNode()
+                root.children().last() + pomConfig
             }
         }
     }
 }
+
+if (!hasProperty('bintrayUser') || bintrayUser == null || bintrayUser.isEmpty()) {
+    logger.lifecycle('Setting bintray user to ' + System.getenv('BINTRAY_USER'))
+    bintrayUser = System.getenv('BINTRAY_USER')
+}
+
+if (!hasProperty('bintrayApiKey') || bintrayApiKey == null || bintrayApiKey.isEmpty()) {
+    bintrayApiKey = System.getenv('BINTRAY_API_KEY')
+}
+
+bintray {
+    user = bintrayUser
+    key = bintrayApiKey
+    configurations = ['archives']
+    publications = ['MyPublication']
+    pkg {
+        repo = 'maven'
+        name = 'handoff'
+        userOrg = bintrayUser
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/namehillsoftware/handoff.git'
+    }
+    version {
+        name = project.version
+        released = new Date()
+        gpg {
+            sign = true
+        }
+    }
+}
+
+apply plugin: 'com.cinnober.gradle.semver-git'
+version = project.version
