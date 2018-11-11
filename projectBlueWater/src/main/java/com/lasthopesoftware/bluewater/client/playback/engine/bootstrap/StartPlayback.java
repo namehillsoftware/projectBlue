@@ -5,6 +5,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 
 import java.io.IOException;
 
-public interface IStartPlayback {
+public interface StartPlayback {
 	IActivePlayer startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException;
 }

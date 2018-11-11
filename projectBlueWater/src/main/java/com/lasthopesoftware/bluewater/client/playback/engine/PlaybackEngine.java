@@ -5,7 +5,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback;
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.StartPlayback;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged;
@@ -21,7 +21,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.runnables.OneParameterAction;
-
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observables.ConnectableObservable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import io.reactivex.disposables.Disposable;
-import io.reactivex.observables.ConnectableObservable;
-
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineBroadcaster, AutoCloseable {
@@ -40,7 +38,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	private static final Logger logger = LoggerFactory.getLogger(PlaybackEngine.class);
 
 	private final PreparedPlaybackQueueResourceManagement preparedPlaybackQueueResourceManagement;
-	private final IStartPlayback playbackBootstrapper;
+	private final StartPlayback playbackBootstrapper;
 	private final INowPlayingRepository nowPlayingRepository;
 	private final Map<Boolean, IPositionedFileQueueProvider> positionedFileQueueProviders;
 
@@ -57,7 +55,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	private OnPlaybackCompleted onPlaybackCompleted;
 	private OnPlaylistReset onPlaylistReset;
 
-	public PlaybackEngine(PreparedPlaybackQueueResourceManagement preparedPlaybackQueueResourceManagement, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, IStartPlayback playbackBootstrapper) {
+	public PlaybackEngine(PreparedPlaybackQueueResourceManagement preparedPlaybackQueueResourceManagement, Iterable<IPositionedFileQueueProvider> positionedFileQueueProviders, INowPlayingRepository nowPlayingRepository, StartPlayback playbackBootstrapper) {
 		this.nowPlayingRepository = nowPlayingRepository;
 		this.positionedFileQueueProviders = Stream.of(positionedFileQueueProviders).collect(Collectors.toMap(IPositionedFileQueueProvider::isRepeating, fp -> fp));
 		this.preparedPlaybackQueueResourceManagement = preparedPlaybackQueueResourceManagement;

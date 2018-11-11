@@ -60,6 +60,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProv
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.StartAndClosePlayback;
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.exoplayer.ExoPlayerCreator;
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.exoplayer.ExoPlayerPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events.AudioRenderingEventListener;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events.MetadataOutputLogger;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events.TextOutputLogger;
@@ -421,7 +424,7 @@ implements OnAudioFocusChangeListener
 	private PositionedPlayingFile positionedPlayingFile;
 	private boolean isPlaying;
 	private Disposable filePositionSubscription;
-	private PlaylistPlaybackBootstrapper playlistPlaybackBootstrapper;
+	private StartAndClosePlayback playlistPlaybackBootstrapper;
 	private RemoteControlProxy remoteControlProxy;
 	private PlaybackNotificationRouter playbackNotificationRouter;
 	private NowPlayingNotificationBuilder nowPlayingNotificationBuilder;
@@ -684,7 +687,10 @@ implements OnAudioFocusChangeListener
 				lazyLibraryRepository.getObject());
 
 		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
-			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
+			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
+				connectionProvider,
+				FilePropertyCache.getInstance(),
+				new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 			if (remoteControlProxy != null)
 				localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
@@ -767,13 +773,19 @@ implements OnAudioFocusChangeListener
 				new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
 
 			return extractorHandler.getObject().eventually(handler -> {
+				if (playlistPlaybackBootstrapper != null)
+					playlistPlaybackBootstrapper.close();
+
+				playlistPlaybackBootstrapper = new ExoPlayerPlaybackBootstrapper(new ExoPlayerCreator(handler, lazyRenderersFactory.getObject()));
+
 					final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
 						this,
 						connectionProvider,
 						library,
 						cache);
 
-					final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(handler ,
+					final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
+						handler,
 				null,
 						DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
 						lazyTextOutputLogger.getObject(),
@@ -790,7 +802,7 @@ implements OnAudioFocusChangeListener
 					exoPlayer.prepare(mediaSourceQueue);
 					final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 						new PreparedPlaybackQueueFeederBuilder(
-							new SelectedPlaybackEngineTypeAccess(this,new DefaultPlaybackEngineLookup()),
+							new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup()),
 							handler,
 							new BestMatchUriProvider(
 								library,
@@ -819,8 +831,7 @@ implements OnAudioFocusChangeListener
 									.toArray(MediaCodecAudioRenderer[]::new)));
 
 				return playbackEngineBuilder.build(library);
-			})
-			.then(preparationSourceProvider -> {
+			}).then(preparationSourceProvider -> {
 				if (preparedPlaybackQueueResourceManagement != null)
 					preparedPlaybackQueueResourceManagement.close();
 
@@ -1172,8 +1183,13 @@ implements OnAudioFocusChangeListener
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
 
-		if (playlistPlaybackBootstrapper != null)
-			playlistPlaybackBootstrapper.close();
+		if (playlistPlaybackBootstrapper != null) {
+			try {
+				playlistPlaybackBootstrapper.close();
+			} catch (IOException e) {
+				logger.error("There was an error closing the playback bootstrapper", e);
+			}
+		}
 
 		if (playbackEngine != null) {
 			try {
@@ -1184,11 +1200,7 @@ implements OnAudioFocusChangeListener
 		}
 
 		if (preparedPlaybackQueueResourceManagement != null) {
-			try {
-				preparedPlaybackQueueResourceManagement.close();
-			} catch (IOException e) {
-				logger.error("There was an error closing the playback queue resource manager", e);
-			}
+			preparedPlaybackQueueResourceManagement.close();
 		}
 
 		if (areListenersRegistered) unregisterListeners();

@@ -2,13 +2,11 @@ package com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.exoplaye
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.IActivePlayer;
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback;
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.StartAndClosePlayback;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.ActiveExoPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 
-import java.io.Closeable;
-
-public class ExoPlayerPlaybackBootstrapper implements IStartPlayback, Closeable {
+public class ExoPlayerPlaybackBootstrapper implements StartAndClosePlayback {
 	private final CreateExoPlayers exoPlayerCreator;
 
 	private ExoPlayer exoPlayer;

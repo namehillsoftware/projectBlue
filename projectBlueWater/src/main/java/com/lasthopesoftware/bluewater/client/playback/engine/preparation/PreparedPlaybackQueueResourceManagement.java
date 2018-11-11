@@ -4,7 +4,6 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 public class PreparedPlaybackQueueResourceManagement implements Closeable {
 	private final IPlayableFilePreparationSourceProvider playbackPreparerProvider;
@@ -17,7 +16,7 @@ public class PreparedPlaybackQueueResourceManagement implements Closeable {
 		this.preparedPlaybackQueueConfiguration = preparedPlaybackQueueConfiguration;
 	}
 
-	public PreparedPlayableFileQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) throws IOException {
+	public PreparedPlayableFileQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) {
 		close();
 
 		return preparedPlaybackQueue =
@@ -35,7 +34,7 @@ public class PreparedPlaybackQueueResourceManagement implements Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		if (preparedPlaybackQueue != null)
 			preparedPlaybackQueue.close();
 	}
