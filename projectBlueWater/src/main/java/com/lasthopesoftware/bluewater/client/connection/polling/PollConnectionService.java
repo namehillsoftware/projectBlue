@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -14,6 +13,8 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.joda.time.Duration;
 
 import java.util.HashSet;
+
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PollConnectionService extends Service {
 
@@ -72,33 +73,34 @@ public class PollConnectionService extends Service {
 			for (Runnable onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.run();
 		}
 
-		promisePolledSessionConnection(1000);
+		pollSessionConnection(1000);
 	}
 
-	private Promise<IConnectionProvider> promisePolledSessionConnection(int connectionTime) {
+	private void pollSessionConnection(int connectionTime) {
 		if (isCancelled) {
 			for (Runnable onCancelListener : mUniqueOnCancelListeners) onCancelListener.run();
 
 			stopSelf();
 
-			return Promise.empty();
+			return;
 		}
 
 		final int nextConnectionTime = connectionTime < 32000 ? connectionTime * 2 : connectionTime;
-		return SessionConnection.getInstance(this)
+		SessionConnection.getInstance(this)
 			.promiseTestedSessionConnection(Duration.millis(connectionTime))
-			.eventually(
-				c -> {
-					if (c == null) return promisePolledSessionConnection(nextConnectionTime);
+			.then(
+				perform(c -> {
+					if (c == null) {
+						pollSessionConnection(nextConnectionTime);
+						return;
+					}
 
 					for (Runnable onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.run();
 
 					// Let on cancelled clear the completed listeners
 					stopSelf();
-
-					return Promise.empty();
-				},
-				e -> promisePolledSessionConnection(nextConnectionTime));
+				}),
+				perform(e -> pollSessionConnection(nextConnectionTime)));
 	}
 
 	public synchronized void stopPolling() {
