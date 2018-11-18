@@ -571,11 +571,6 @@ implements OnAudioFocusChangeListener
 			.registerReceiver(
 				onLibraryChanged,
 				new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
-
-		localBroadcastManagerLazy.getObject()
-			.registerReceiver(
-				buildSessionReceiver,
-				new IntentFilter(SessionConnection.buildSessionBroadcast));
 	}
 
 	@Override
@@ -646,7 +641,14 @@ implements OnAudioFocusChangeListener
 				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
 				lazyLibraryRepository.getObject());
 
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(
+				buildSessionReceiver,
+				new IntentFilter(SessionConnection.buildSessionBroadcast));
+
 		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
+			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+
 			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 			if (remoteControlProxy != null)
 				localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
@@ -772,6 +774,9 @@ implements OnAudioFocusChangeListener
 
 				return playbackEngine;
 			});
+		}, e -> {
+			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+			return Promise.empty();
 		});
 	}
 	
