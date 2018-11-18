@@ -37,7 +37,9 @@ public class ConnectionTester implements TestConnections {
 			if (conn == null) return Boolean.FALSE;
 
 			try {
-				conn.setConnectTimeout((int) timeout.getMillis());
+				final int timeoutMillis = (int) timeout.getMillis();
+				conn.setConnectTimeout(timeoutMillis);
+				conn.setReadTimeout(timeoutMillis);
 
 				final InputStream is = conn.getInputStream();
 				try {
