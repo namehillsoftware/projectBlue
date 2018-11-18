@@ -1,11 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity;
 
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
+import android.content.*;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.os.Build;
@@ -17,17 +12,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageButton;
-import android.widget.ImageView;
+import android.widget.*;
 import android.widget.ImageView.ScaleType;
-import android.widget.ProgressBar;
-import android.widget.RatingBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
-import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -57,7 +46,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
@@ -202,7 +190,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(PlaylistEvents.onPlaylistChange));
 		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionBroadcaster.trackPositionUpdate));
 
-		PollConnection.Instance.get(this).addOnConnectionLostListener(onConnectionLostListener);
+		PollConnectionService.addOnConnectionLostListener(onConnectionLostListener);
 
 		setNowPlayingBackgroundBitmap();
 
@@ -574,17 +562,22 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 	
 	private void resetViewOnReconnect(final ServiceFile serviceFile, final long position) {
-		PollConnection.Instance.get(this).addOnConnectionRegainedListener(() -> {
-			if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
+		PollConnectionService.Instance.promise(this).then(s -> {
+			s.addOnConnectionRegainedListener(() -> {
+				if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
 
-			if (viewStructure.promisedNowPlayingImage != null) {
-				viewStructure.promisedNowPlayingImage.cancel();
-				viewStructure.promisedNowPlayingImage = null;
-			}
+				if (viewStructure.promisedNowPlayingImage != null) {
+					viewStructure.promisedNowPlayingImage.cancel();
+					viewStructure.promisedNowPlayingImage = null;
+				}
 
-			setView(serviceFile, position);
+				setView(serviceFile, position);
+			});
+
+			WaitForConnectionDialog.show(this);
+
+			return null;
 		});
-		WaitForConnectionDialog.show(this);
 	}
 
 	private void disableViewWithMessage(@StringRes int messageId) {
@@ -612,7 +605,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.unregisterReceiver(onPlaybackChangedReceiver);
 		localBroadcastManager.unregisterReceiver(onTrackPositionChanged);
 
-		PollConnection.Instance.get(this).removeOnConnectionLostListener(onConnectionLostListener);
+		PollConnectionService.removeOnConnectionLostListener(onConnectionLostListener);
 	}
 
 	private static class ViewStructure {

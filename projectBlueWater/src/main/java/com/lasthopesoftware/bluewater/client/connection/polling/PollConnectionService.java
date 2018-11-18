@@ -1,10 +1,18 @@
-package com.lasthopesoftware.bluewater.client.connection.helpers;
+package com.lasthopesoftware.bluewater.client.connection.polling;
 
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.AsyncTask;
+import android.os.IBinder;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.shared.GenericBinder;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 import org.joda.time.Duration;
 
 import java.util.HashSet;
@@ -12,44 +20,63 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PollConnection {
-	
-	private static final ExecutorService pollService = Executors.newSingleThreadExecutor(); 
+public class PollConnectionService extends Service {
 
-	private final Context context;
+	private static final ExecutorService pollService = Executors.newSingleThreadExecutor();
+
+	private static final HashSet<Runnable> mUniqueOnConnectionLostListeners = new HashSet<>();
+
+	private final Lazy<GenericBinder<PollConnectionService>> lazyBinder = new Lazy<>(() -> new GenericBinder<>(this));
 
 	private final CreateAndHold<WaitForConnectionTask> lazyTask = new AbstractSynchronousLazy<WaitForConnectionTask>() {
 		@Override
 		protected WaitForConnectionTask create() {
-			return new WaitForConnectionTask(context);
+			return new WaitForConnectionTask(PollConnectionService.this);
 		}
 	};
-	
-	private static final HashSet<Runnable> mUniqueOnConnectionLostListeners = new HashSet<>();
-	
-	private PollConnection(Context context) {
-		this.context = context;
-	}
-	
-	public synchronized void startPolling() {
-		if (lazyTask.getObject().getStatus() == AsyncTask.Status.PENDING) lazyTask.getObject().executeOnExecutor(pollService);
-	}
-	
-	public synchronized void stopPolling() {
-		if (lazyTask.isCreated())
-			lazyTask.getObject().cancel(true);
+
+	public static class Instance {
+		public static Promise<PollConnectionService> promise(Context context) {
+			return new Promise<>(m -> context.bindService(new Intent(context, PollConnectionService.class), new ServiceConnection() {
+
+				@Override
+				public void onServiceConnected(ComponentName name, IBinder service) {
+					m.sendResolution(((PollConnectionService)(((GenericBinder<?>)service).getService())));
+				}
+
+				@Override
+				public void onServiceDisconnected(ComponentName name) {
+				}
+			}, BIND_AUTO_CREATE));
+		}
 	}
 
-	private synchronized boolean isFinished() {
-		return lazyTask.isCreated() && lazyTask.getObject().getStatus() == AsyncTask.Status.FINISHED;
-	}
-	
 	/* Differs from the normal on start listener in that it uses a static list that will be re-populated when a new Poll Connection task starts.
 	 */
-	public void addOnConnectionLostListener(Runnable listener) {
+	public static void addOnConnectionLostListener(Runnable listener) {
 		synchronized(mUniqueOnConnectionLostListeners) {
 			mUniqueOnConnectionLostListeners.add(listener);
 		}
+	}
+
+	public static void removeOnConnectionLostListener(Runnable listener) {
+		synchronized(mUniqueOnConnectionLostListeners) {
+			mUniqueOnConnectionLostListeners.remove(listener);
+		}
+	}
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		return lazyBinder.getObject();
+	}
+
+	public synchronized void startPolling() {
+		if (lazyTask.getObject().getStatus() == AsyncTask.Status.PENDING) lazyTask.getObject().executeOnExecutor(pollService);
+	}
+
+	public synchronized void stopPolling() {
+		if (lazyTask.isCreated())
+			lazyTask.getObject().cancel(true);
 	}
 
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is runWith
@@ -57,34 +84,19 @@ public class PollConnection {
 	public void addOnConnectionRegainedListener(Runnable listener) {
 		lazyTask.getObject().addOnConnectionRegainedListener(listener);
 	}
-	
+
 	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is runWith
 	 */
 	public void addOnPollingCancelledListener(Runnable listener) {
 		lazyTask.getObject().addOnPollingCancelledListener(listener);
 	}
 
-	public void removeOnConnectionLostListener(Runnable listener) {
-		synchronized(mUniqueOnConnectionLostListeners) {
-			mUniqueOnConnectionLostListeners.remove(listener);
-		}
-	}
-
 	public void removeOnConnectionRegainedListener(Runnable listener) {
 		lazyTask.getObject().removeOnConnectionRegainedListener(listener);
 	}
-	
+
 	public void removeOnPollingCancelledListener(Runnable listener) {
 		lazyTask.getObject().removeOnPollingCancelledListener(listener);
-	}
-
-	public static class Instance {
-		private static PollConnection instance = null;
-		
-		public static synchronized PollConnection get(Context context) {
-			if (instance == null || instance.isFinished()) instance = new PollConnection(context);
-			return instance;
-		}
 	}
 
 	private static class WaitForConnectionTask extends AsyncTask<String, Void, Void> {
@@ -132,19 +144,19 @@ public class PollConnection {
 				mIsRefreshing.set(true);
 
 				SessionConnection.getInstance(context).promiseTestedSessionConnection(Duration.millis(mConnectionTime))
-					.then(c -> {
-						if (c == null) {
+						.then(c -> {
+							if (c == null) {
+								if (mConnectionTime < 32000) mConnectionTime *= 2;
+								return null;
+							}
+							mIsRefreshing.set(false);
+							mIsConnectionRestored.set(true);
+							return null;
+						})
+						.excuse(e -> {
 							if (mConnectionTime < 32000) mConnectionTime *= 2;
 							return null;
-						}
-						mIsRefreshing.set(false);
-						mIsConnectionRestored.set(true);
-						return null;
-					})
-					.excuse(e -> {
-						if (mConnectionTime < 32000) mConnectionTime *= 2;
-						return null;
-					});
+						});
 			}
 
 			return null;

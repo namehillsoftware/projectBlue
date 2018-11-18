@@ -4,11 +4,7 @@ package com.lasthopesoftware.bluewater.client.playback.service;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
@@ -16,11 +12,7 @@ import android.media.RemoteControlClient;
 import android.media.session.MediaSession;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.IBinder;
-import android.os.PowerManager;
+import android.os.*;
 import android.os.Process;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
@@ -28,13 +20,12 @@ import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
-
 import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
@@ -69,20 +60,12 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayab
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
+import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.*;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup;
@@ -117,7 +100,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.schedulers.RxThreadFactory;
+import io.reactivex.internal.schedulers.SingleScheduler;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,12 +114,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Observable;
-import io.reactivex.Scheduler;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.schedulers.RxThreadFactory;
-import io.reactivex.internal.schedulers.SingleScheduler;
 
 import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
 import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
@@ -564,11 +545,10 @@ implements OnAudioFocusChangeListener
 			wakeLock = null;
 		}
 
-		final PollConnection pollConnection = PollConnection.Instance.get(this);
 		if (connectionRegainedListener.isCreated())
-			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
+			PollConnectionService.Instance.promise(this).then(perform(s -> s.removeOnConnectionRegainedListener(connectionRegainedListener.getObject())));
 		if (onPollingCancelledListener.isCreated())
-			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
+			PollConnectionService.Instance.promise(this).then(perform(s -> s.removeOnConnectionRegainedListener(onPollingCancelledListener.getObject())));
 
 		if (lazyAudioBecomingNoisyReceiver.isCreated())
 			unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject());
@@ -880,7 +860,7 @@ implements OnAudioFocusChangeListener
 		}
 
 		if (action.equals(Action.stopWaitingForConnection)) {
-        	PollConnection.Instance.get(this).stopPolling();
+        	PollConnectionService.Instance.promise(this).then(perform(PollConnectionService::stopPolling));
 			return;
 		}
 
@@ -1003,12 +983,14 @@ implements OnAudioFocusChangeListener
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
 		notifyBackground(builder);
 
-		final PollConnection checkConnection = PollConnection.Instance.get(this);
+		PollConnectionService.Instance.promise(this).then(checkConnection -> {
+			checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
+			checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
 
-		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
-		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
-		
-		checkConnection.startPolling();
+			checkConnection.startPolling();
+
+			return null;
+		});
 	}
 
 	private void closeAndRestartPlaylistManager() {

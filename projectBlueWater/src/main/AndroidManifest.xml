@@ -149,7 +149,7 @@
                 android:exported="false">
         </service>
         <service
-                android:name=".client.connection.helpers.PollConnectionService"
+                android:name=".client.connection.polling.PollConnectionService"
                 android:enabled="true"
                 android:exported="true">
         </service>
