@@ -2,16 +2,26 @@ package com.lasthopesoftware.bluewater.client.connection;
 
 import android.app.AlertDialog;
 import android.content.Context;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 public class WaitForConnectionDialog {
 
-	private static AlertDialog _instance = null;
+	private static CreateAndHold<Runnable> lazyDismissalInstance = new AbstractSynchronousLazy<Runnable>() {
+		@Override
+		protected Runnable create() {
+			return () -> {
+				if (instance.isShowing()) instance.dismiss();
+			};
+		}
+	};
+
+	private static AlertDialog instance = null;
 	
 	public synchronized static AlertDialog show(final Context context) {
-		if (_instance != null && _instance.isShowing()) return _instance;
+		if (instance != null && instance.isShowing()) return instance;
 
 		final String message = String.format(context.getString(R.string.lbl_attempting_to_reconnect), context.getString(R.string.app_name));
 		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -22,22 +32,27 @@ public class WaitForConnectionDialog {
 			dialog.dismiss();
 		});
 
-		_instance = builder.create();
-		_instance.setOnShowListener(dialog -> {
-			PollConnection.Instance.get(context).addOnConnectionRegainedListener(() -> {
-				if (_instance.isShowing()) _instance.dismiss();
+		instance = builder.create();
+		instance.setOnShowListener(dialog -> {
+			PollConnection.Instance.get(context).addOnConnectionRegainedListener(lazyDismissalInstance.getObject());
+
+			PollConnection.Instance.get(context).addOnPollingCancelledListener(lazyDismissalInstance.getObject());
+
+			instance.setOnDismissListener(dialogInterface -> {
+				PollConnection.Instance.get(context).removeOnConnectionRegainedListener(lazyDismissalInstance.getObject());
+				PollConnection.Instance.get(context).removeOnPollingCancelledListener(lazyDismissalInstance.getObject());
 			});
 
-			PollConnection.Instance.get(context).addOnPollingCancelledListener(() -> {
-				if (_instance.isShowing()) _instance.dismiss();
+			instance.setOnCancelListener(dialogInterface -> {
+				PollConnection.Instance.get(context).removeOnConnectionRegainedListener(lazyDismissalInstance.getObject());
+				PollConnection.Instance.get(context).removeOnPollingCancelledListener(lazyDismissalInstance.getObject());
 			});
 
 			PollConnection.Instance.get(context).startPolling();
-
 		});
 
-		_instance.show();
+		instance.show();
 
-		return _instance;
+		return instance;
 	}
 }

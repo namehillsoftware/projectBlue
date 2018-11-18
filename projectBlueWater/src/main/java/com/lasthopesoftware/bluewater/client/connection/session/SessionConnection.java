@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.session;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
@@ -27,24 +26,17 @@ import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SessionConnection {
 
 	public static final String buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcast");
 	public static final String buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcastStatus");
-	public static final String refreshSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
-	public static final String isRefreshSuccessfulStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
 	private static final Object buildingConnectionPromiseSync = new Object();
@@ -55,7 +47,7 @@ public class SessionConnection {
 		@Override
 		protected BuildUrlProviders create() {
 			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
-			final ConnectionTester connectionTester = new ConnectionTester(Duration.millis(buildConnectionTimeoutTime));
+			final ConnectionTester connectionTester = new ConnectionTester();
 
 			return new UrlScanner(connectionTester, serverLookup);
 		}
@@ -88,7 +80,7 @@ public class SessionConnection {
 			new LiveUrlProvider(
 				new ActiveNetworkFinder(applicationContext),
 				lazyUrlScanner.getObject()),
-			new ConnectionTester(Duration.standardSeconds(30)));
+			new ConnectionTester());
 	}
 
 	public SessionConnection(
@@ -108,7 +100,7 @@ public class SessionConnection {
 		this.connectionTester = connectionTester;
 	}
 
-	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
+	public Promise<IConnectionProvider> promiseTestedSessionConnection(Duration timeout) {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
 		synchronized (buildingConnectionPromiseSync) {
@@ -119,7 +111,7 @@ public class SessionConnection {
 
 			final Promise<IConnectionProvider> promisedTestConnectionProvider = cachedPromisedProvider
 				.eventually(c -> c != null
-					? connectionTester.promiseIsConnectionPossible(c)
+					? connectionTester.promiseIsConnectionPossible(c, timeout)
 						.eventually(result -> result
 							? new Promise<>(c)
 							: promiseUpdatedCachedConnection(newSelectedLibraryId))
@@ -146,13 +138,13 @@ public class SessionConnection {
 
 			final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
 
-			final Promise<IConnectionProvider> subsequentlyPromisedConnectionProvider = cachedPromisedProvider.eventually(
+			final Promise<IConnectionProvider> nextPromisedConnectionProvider = cachedPromisedProvider.eventually(
 				c -> c != null ? new Promise<>(c) : promiseUpdatedCachedConnection(newSelectedLibraryId),
 				e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
 
-			promisedConnectionProvidersCache.put(newSelectedLibraryId, subsequentlyPromisedConnectionProvider);
+			promisedConnectionProvidersCache.put(newSelectedLibraryId, nextPromisedConnectionProvider);
 
-			return subsequentlyPromisedConnectionProvider;
+			return nextPromisedConnectionProvider;
 		}
 	}
 
@@ -243,24 +235,5 @@ public class SessionConnection {
 		public static final int GettingView = 5;
 		public static final int GettingViewFailed = 6;
 		public static final int BuildingSessionComplete = 7;
-
-		private static final CreateAndHold<Set<Integer>> runningConditionsLazy =
-				new AbstractSynchronousLazy<Set<Integer>>() {
-					@Override
-					protected Set<Integer> create() {
-						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView)));
-					}
-				};
-
-		private static final CreateAndHold<Set<Integer>> completeConditionsLazy =
-				new AbstractSynchronousLazy<Set<Integer>>() {
-					@Override
-					protected Set<Integer> create() {
-						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete)));
-					}
-				};
-
-		static final Set<Integer> runningConditions = runningConditionsLazy.getObject();
-		public static final Set<Integer> completeConditions = completeConditionsLazy.getObject();
 	}
 }

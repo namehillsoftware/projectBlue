@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.connection.testing;
 
 import android.os.AsyncTask;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,30 +15,21 @@ import java.net.HttpURLConnection;
 
 public class ConnectionTester implements TestConnections {
 
-	private static final int stdTimeoutTime = 30000;
+	private static final Duration stdTimeoutTime = Duration.millis(30000);
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
-	public static Promise<Boolean> doTest(IConnectionProvider connectionProvider) {
-		return doTest(connectionProvider, stdTimeoutTime);
-	}
-
-	private static Promise<Boolean> doTest(final IConnectionProvider connectionProvider, final int timeout) {
-		return new ConnectionTester(Duration.millis(timeout)).promiseIsConnectionPossible(connectionProvider);
-	}
-
-	private final int timeout;
-
-	public ConnectionTester(Duration timeout) {
-		this.timeout = (int)timeout.getMillis();
+	@Override
+	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
+		return promiseIsConnectionPossible(connectionProvider, stdTimeoutTime);
 	}
 
 	@Override
-	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
-		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider), AsyncTask.THREAD_POOL_EXECUTOR);
+	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider, Duration timeout) {
+		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
-	private boolean doTestSynchronously(final IConnectionProvider connectionProvider) {
+	private boolean doTestSynchronously(final IConnectionProvider connectionProvider, Duration timeout) {
 		try {
 
 			final HttpURLConnection conn = connectionProvider.getConnection("Alive");
@@ -48,7 +37,7 @@ public class ConnectionTester implements TestConnections {
 			if (conn == null) return Boolean.FALSE;
 
 			try {
-				conn.setConnectTimeout(timeout);
+				conn.setConnectTimeout((int) timeout.getMillis());
 
 				final InputStream is = conn.getInputStream();
 				try {
