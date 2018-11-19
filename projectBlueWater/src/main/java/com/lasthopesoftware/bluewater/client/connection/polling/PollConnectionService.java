@@ -17,7 +17,6 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-import java.io.Closeable;
 import java.util.HashSet;
 import java.util.concurrent.CancellationException;
 
@@ -26,11 +25,11 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 public class PollConnectionService extends Service {
 
 	public static Promise<IConnectionProvider> pollSessionConnection(Context context) {
-		return new Promise<CloseablePollConnectionService>(m -> context.bindService(new Intent(context, PollConnectionService.class), new ServiceConnection() {
+		return new Promise<PollConnectionServiceConnectionHolder>(m -> context.bindService(new Intent(context, PollConnectionService.class), new ServiceConnection() {
 
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
-				m.sendResolution(new CloseablePollConnectionService((PollConnectionService)(((GenericBinder<?>)service).getService()), context, this));
+				m.sendResolution(new PollConnectionServiceConnectionHolder((PollConnectionService)(((GenericBinder<?>)service).getService()), this));
 			}
 
 			@Override
@@ -38,10 +37,10 @@ public class PollConnectionService extends Service {
 			}
 		}, BIND_AUTO_CREATE)).eventually(s -> s.pollConnectionService.lazyConnectionPoller.getObject()
 			.then(c -> {
-				s.close();
+				context.unbindService(s.serviceConnection);
 				return c;
 			}, e -> {
-				s.close();
+				context.unbindService(s.serviceConnection);
 				throw e;
 			}));
 	}
@@ -111,21 +110,14 @@ public class PollConnectionService extends Service {
 				perform(e -> lazyHandler.getObject().postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime), connectionTime)));
 	}
 
-	private static class CloseablePollConnectionService implements Closeable {
+	private static class PollConnectionServiceConnectionHolder {
 
 		public final PollConnectionService pollConnectionService;
-		private final Context context;
-		private final ServiceConnection serviceConnection;
+		public final ServiceConnection serviceConnection;
 
-		private CloseablePollConnectionService(PollConnectionService pollConnectionService, Context context, ServiceConnection serviceConnection) {
+		private PollConnectionServiceConnectionHolder(PollConnectionService pollConnectionService, ServiceConnection serviceConnection) {
 			this.pollConnectionService = pollConnectionService;
-			this.context = context;
 			this.serviceConnection = serviceConnection;
-		}
-
-		@Override
-		public void close() {
-			context.unbindService(serviceConnection);
 		}
 	}
 }
