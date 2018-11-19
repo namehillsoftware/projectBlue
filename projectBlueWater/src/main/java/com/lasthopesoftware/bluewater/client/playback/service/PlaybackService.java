@@ -25,6 +25,7 @@ import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
@@ -113,6 +114,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
@@ -396,26 +398,33 @@ implements OnAudioFocusChangeListener
 	private PowerManager.WakeLock wakeLock = null;
 	private SimpleCache cache;
 
-	private final CreateAndHold<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
+	private Promise<IConnectionProvider> pollingSessionConnection;
+
+	private final CreateAndHold<ImmediateResponse<IConnectionProvider, Void>> connectionRegainedListener = new AbstractSynchronousLazy<ImmediateResponse<IConnectionProvider, Void>>() {
 		@Override
-		protected final Runnable create() {
-			return () -> {
+		protected final ImmediateResponse<IConnectionProvider, Void> create() {
+			return (c) -> {
 				if (playbackEngine == null) {
 					stopSelf(startId);
-					return;
+					return null;
 				}
 
 				playbackEngine.resume();
+
+				return null;
 			};
 		}
 	};
 
-	private final CreateAndHold<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
+	private final CreateAndHold<ImmediateResponse<Throwable, Void>> onPollingCancelledListener = new AbstractSynchronousLazy<ImmediateResponse<Throwable, Void>>() {
 		@Override
-		protected final Runnable create() {
-			return () -> {
-				unregisterListeners();
-				stopSelf(startId);
+		protected final ImmediateResponse<Throwable, Void> create() {
+			return (e) -> {
+				if (e instanceof CancellationException) {
+					unregisterListeners();
+					stopSelf(startId);
+				}
+				return null;
 			};
 		}
 	};
@@ -544,11 +553,6 @@ implements OnAudioFocusChangeListener
 			if (wakeLock.isHeld()) wakeLock.release();
 			wakeLock = null;
 		}
-
-		if (connectionRegainedListener.isCreated())
-			PollConnectionService.Instance.promise(this).then(perform(s -> s.removeOnConnectionRegainedListener(connectionRegainedListener.getObject())));
-		if (onPollingCancelledListener.isCreated())
-			PollConnectionService.Instance.promise(this).then(perform(s -> s.removeOnConnectionRegainedListener(onPollingCancelledListener.getObject())));
 
 		if (lazyAudioBecomingNoisyReceiver.isCreated())
 			unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject());
@@ -864,8 +868,8 @@ implements OnAudioFocusChangeListener
 			return;
 		}
 
-		if (action.equals(Action.stopWaitingForConnection)) {
-        	PollConnectionService.Instance.promise(this).then(perform(PollConnectionService::stopPolling));
+		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
+			pollingSessionConnection.cancel();
 			return;
 		}
 
@@ -988,14 +992,9 @@ implements OnAudioFocusChangeListener
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
 		notifyBackground(builder);
 
-		PollConnectionService.Instance.promise(this).then(checkConnection -> {
-			checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
-			checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
-
-			checkConnection.startPolling();
-
-			return null;
-		});
+		pollingSessionConnection = PollConnectionService.pollSessionConnection(this);
+		pollingSessionConnection
+			.then(connectionRegainedListener.getObject(), onPollingCancelledListener.getObject());
 	}
 
 	private void closeAndRestartPlaylistManager() {

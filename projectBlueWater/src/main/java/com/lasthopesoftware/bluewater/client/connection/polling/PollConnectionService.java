@@ -6,33 +6,33 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import org.joda.time.Duration;
 
 import java.util.HashSet;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
+import java.util.concurrent.CancellationException;
 
 public class PollConnectionService extends Service {
 
-	public static class Instance {
+	public static Promise<IConnectionProvider> pollSessionConnection(Context context) {
+		return new Promise<PollConnectionService>(m -> context.bindService(new Intent(context, PollConnectionService.class), new ServiceConnection() {
 
-		public static Promise<PollConnectionService> promise(Context context) {
-			return new Promise<>(m -> context.bindService(new Intent(context, PollConnectionService.class), new ServiceConnection() {
+			@Override
+			public void onServiceConnected(ComponentName name, IBinder service) {
+				m.sendResolution((PollConnectionService)(((GenericBinder<?>)service).getService()));
+			}
 
-				@Override
-				public void onServiceConnected(ComponentName name, IBinder service) {
-					m.sendResolution(((PollConnectionService)(((GenericBinder<?>)service).getService())));
-				}
-
-				@Override
-				public void onServiceDisconnected(ComponentName name) {
-				}
-			}, BIND_AUTO_CREATE));
-		}
+			@Override
+			public void onServiceDisconnected(ComponentName name) {
+			}
+		}, BIND_AUTO_CREATE)).eventually(c -> c.lazyConnectionPoller.getObject());
 	}
 
 	private static final HashSet<Runnable> mUniqueOnConnectionLostListeners = new HashSet<>();
@@ -53,85 +53,44 @@ public class PollConnectionService extends Service {
 
 	private final Lazy<GenericBinder<PollConnectionService>> lazyBinder = new Lazy<>(() -> new GenericBinder<>(this));
 
-	private final HashSet<Runnable> mUniqueOnConnectionRegainedListeners = new HashSet<>();
-	private final HashSet<Runnable> mUniqueOnCancelListeners = new HashSet<>();
+	private CreateAndHold<Promise<IConnectionProvider>> lazyConnectionPoller = new AbstractSynchronousLazy<Promise<IConnectionProvider>>() {
+		@Override
+		protected Promise<IConnectionProvider> create() {
+			return new Promise<>(m -> {
 
-	private boolean isPolling;
+				final CancellationToken cancellationToken = new CancellationToken();
+				m.cancellationRequested(cancellationToken);
 
-	private boolean isCancelled;
+				pollSessionConnection(cancellationToken, 1000);
+			});
+		}
+	};
 
 	@Override
 	public IBinder onBind(Intent intent) {
 		return lazyBinder.getObject();
 	}
 
-	public void startPolling() {
-		if (isPolling) return;
-		isPolling = true;
-
-		synchronized (mUniqueOnConnectionLostListeners) {
-			for (Runnable onConnectionLostListener : mUniqueOnConnectionLostListeners) onConnectionLostListener.run();
-		}
-
-		pollSessionConnection(1000);
-	}
-
-	private void pollSessionConnection(int connectionTime) {
-		if (isCancelled) {
-			for (Runnable onCancelListener : mUniqueOnCancelListeners) onCancelListener.run();
-
+	private Promise<IConnectionProvider> pollSessionConnection(CancellationToken cancellationToken, int connectionTime) {
+		if (cancellationToken.isCancelled()) {
 			stopSelf();
-
-			return;
+			return new Promise<>(new CancellationException("Polling the session connection was cancelled"));
 		}
 
 		final int nextConnectionTime = connectionTime < 32000 ? connectionTime * 2 : connectionTime;
-		SessionConnection.getInstance(this)
+		return SessionConnection.getInstance(this)
 			.promiseTestedSessionConnection(Duration.millis(connectionTime))
-			.then(
-				perform(c -> {
+			.eventually(
+				c -> {
 					if (c == null) {
-						pollSessionConnection(nextConnectionTime);
-						return;
+						return pollSessionConnection(cancellationToken, nextConnectionTime);
 					}
-
-					for (Runnable onConnectionRegainedListener : mUniqueOnConnectionRegainedListeners) onConnectionRegainedListener.run();
 
 					// Let on cancelled clear the completed listeners
 					stopSelf();
-				}),
-				perform(e -> pollSessionConnection(nextConnectionTime)));
-	}
 
-	public synchronized void stopPolling() {
-		isCancelled = true;
-	}
-
-	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is runWith
-	 */
-	public void addOnConnectionRegainedListener(Runnable listener) {
-		synchronized(mUniqueOnConnectionRegainedListeners) {
-			mUniqueOnConnectionRegainedListeners.add(listener);
-		}
-	}
-
-	/* Differs from the normal onCompleteListener in that the onCompleteListener list is emptied every time the Poll Connection Task is runWith
-	 */
-	public void addOnPollingCancelledListener(Runnable listener) {
-		synchronized(mUniqueOnCancelListeners) {
-			mUniqueOnCancelListeners.add(listener);
-		}
-	}
-
-	public void removeOnConnectionRegainedListener(Runnable listener) {
-		synchronized(mUniqueOnConnectionRegainedListeners) {
-			mUniqueOnConnectionRegainedListeners.remove(listener);
-		}
-	}
-
-	public void removeOnPollingCancelledListener(Runnable listener) {
-		synchronized(mUniqueOnCancelListeners) {
-			mUniqueOnCancelListeners.remove(listener);
-		}
+					return new Promise<>(c);
+				},
+				e -> pollSessionConnection(cancellationToken, nextConnectionTime));
 	}
 }

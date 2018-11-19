@@ -8,16 +8,17 @@ import android.widget.Button;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
+import com.namehillsoftware.handoff.promises.Promise;
+
+import java.util.concurrent.CancellationException;
 
 public class WaitForConnectionActivity extends Activity {
-	
-	public static void beginWaiting(final Context context, final Runnable onConnectionRegainedListener) {
-		PollConnectionService.Instance.promise(context)
-			.then(pollConnectionInstance -> {
-				pollConnectionInstance.addOnConnectionRegainedListener(onConnectionRegainedListener);
-				pollConnectionInstance.startPolling();
-				context.startActivity(new Intent(context, WaitForConnectionActivity.class));
 
+	public static void beginWaiting(final Context context, final Runnable onConnectionRegainedListener) {
+		context.startActivity(new Intent(context, WaitForConnectionActivity.class));
+		PollConnectionService.pollSessionConnection(context)
+			.then(c -> {
+				onConnectionRegainedListener.run();
 				return null;
 			});
 	}
@@ -29,22 +30,26 @@ public class WaitForConnectionActivity extends Activity {
 		
 		final Intent selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
 
-		PollConnectionService.Instance.promise(this)
-			.then(pollConnectionService -> {
-				pollConnectionService.addOnConnectionRegainedListener(this::finish);
+		Promise<IConnectionProvider> pollSessionConnection = PollConnectionService.pollSessionConnection(this);
+		final Button btnCancel = findViewById(R.id.btnCancel);
 
-				pollConnectionService.addOnPollingCancelledListener(() -> startActivity(selectServerIntent));
+		btnCancel.setOnClickListener(v -> {
+			pollSessionConnection.cancel();
+			startActivity(selectServerIntent);
+		});
 
-				final Button btnCancel = findViewById(R.id.btnCancel);
+		pollSessionConnection
+			.then(
+				c -> {
+					finish();
+					return null;
+				},
+				e -> {
+					if (e instanceof CancellationException) {
+						startActivity(selectServerIntent);
+					}
 
-				btnCancel.setOnClickListener(v -> {
-					pollConnectionService.stopPolling();
-					startActivity(selectServerIntent);
+					return null;
 				});
-
-				pollConnectionService.startPolling();
-
-				return null;
-			});
 	}
 }

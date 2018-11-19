@@ -562,22 +562,18 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 	
 	private void resetViewOnReconnect(final ServiceFile serviceFile, final long position) {
-		PollConnectionService.Instance.promise(this).then(s -> {
-			s.addOnConnectionRegainedListener(() -> {
-				if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
+		PollConnectionService.pollSessionConnection(this).then(perform(connectionProvider -> {
+			if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
 
-				if (viewStructure.promisedNowPlayingImage != null) {
-					viewStructure.promisedNowPlayingImage.cancel();
-					viewStructure.promisedNowPlayingImage = null;
-				}
+			if (viewStructure.promisedNowPlayingImage != null) {
+				viewStructure.promisedNowPlayingImage.cancel();
+				viewStructure.promisedNowPlayingImage = null;
+			}
 
-				setView(serviceFile, position);
-			});
+			setView(serviceFile, position);
 
 			WaitForConnectionDialog.show(this);
-
-			return null;
-		});
+		}));
 	}
 
 	private void disableViewWithMessage(@StringRes int messageId) {

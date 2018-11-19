@@ -19,10 +19,10 @@ public final class OnGetFileStringListForClickErrorListener implements Immediate
     @Override
     public Boolean respond(Throwable innerException) {
         if (innerException instanceof IOException) {
-            PollConnectionService.Instance.promise(mView.getContext())
-                .then(pollConnectionService -> {
-                    pollConnectionService.addOnConnectionRegainedListener(() -> mOnClickListener.onClick(mView));
-					WaitForConnectionDialog.show(mView.getContext());
+			WaitForConnectionDialog.show(mView.getContext());
+            PollConnectionService.pollSessionConnection(mView.getContext())
+                .then(c -> {
+                    mOnClickListener.onClick(mView);
                     return null;
                 });
             return true;
