@@ -4,13 +4,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.concurrent.CancellationException;
+
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class WaitForConnectionActivity extends Activity {
 
@@ -30,28 +31,21 @@ public class WaitForConnectionActivity extends Activity {
 		
 		final Intent selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
 
-		Promise<IConnectionProvider> pollSessionConnection = PollConnectionService.pollSessionConnection(this);
-		final Button btnCancel = findViewById(R.id.btnCancel);
+		final Promise<IConnectionProvider> pollSessionConnection = PollConnectionService.pollSessionConnection(this);
 
-		btnCancel.setOnClickListener(v -> {
+		findViewById(R.id.btnCancel).setOnClickListener(v -> {
 			pollSessionConnection.cancel();
 			startActivity(selectServerIntent);
+			finish();
 		});
 
 		pollSessionConnection
 			.then(
-				c -> {
-					finish();
-					return null;
-				},
-				e -> {
-					if (e instanceof CancellationException) {
-						startActivity(selectServerIntent);
-					} else {
-						finish();
-					}
+				perform(c -> finish()),
+				perform(e -> {
+					if (e instanceof CancellationException) startActivity(selectServerIntent);
 
-					return null;
-				});
+					finish();
+				}));
 	}
 }

@@ -27,7 +27,7 @@
                 android:noHistory="true">
         </activity>
         <activity
-                android:name=".client.connection.WaitForConnectionActivity"
+                android:name=".client.connection.polling.WaitForConnectionActivity"
                 android:label="@string/title_activity_wait_for_connection"
                 android:launchMode="singleTop"
                 android:noHistory="true">
