@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access;
 
 import android.view.View;
-import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
+import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.io.IOException;

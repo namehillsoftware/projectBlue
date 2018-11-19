@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection;
+package com.lasthopesoftware.bluewater.client.connection.polling;
 
 import android.app.Activity;
 import android.content.Context;
@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -47,6 +47,8 @@ public class WaitForConnectionActivity extends Activity {
 				e -> {
 					if (e instanceof CancellationException) {
 						startActivity(selectServerIntent);
+					} else {
+						finish();
 					}
 
 					return null;

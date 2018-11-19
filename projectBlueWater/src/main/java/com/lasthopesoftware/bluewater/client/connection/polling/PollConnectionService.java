@@ -86,7 +86,6 @@ public class PollConnectionService extends Service {
 						return pollSessionConnection(cancellationToken, nextConnectionTime);
 					}
 
-					// Let on cancelled clear the completed listeners
 					stopSelf();
 
 					return new Promise<>(c);

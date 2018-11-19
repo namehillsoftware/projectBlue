@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
 import android.content.Context;
-
+import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionActivity;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.io.IOException;

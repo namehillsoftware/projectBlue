@@ -15,8 +15,8 @@ import android.view.WindowManager;
 import android.widget.*;
 import android.widget.ImageView.ScaleType;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
+import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -571,9 +571,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 			}
 
 			setView(serviceFile, position);
-
-			WaitForConnectionDialog.show(this);
 		}));
+
+		WaitForConnectionDialog.show(this);
 	}
 
 	private void disableViewWithMessage(@StringRes int messageId) {
