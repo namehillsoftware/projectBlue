@@ -100,7 +100,7 @@ public class SessionConnection {
 		this.connectionTester = connectionTester;
 	}
 
-	public Promise<IConnectionProvider> promiseTestedSessionConnection(Duration timeout) {
+	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
 		synchronized (buildingConnectionPromiseSync) {
@@ -111,7 +111,7 @@ public class SessionConnection {
 
 			final Promise<IConnectionProvider> promisedTestConnectionProvider = cachedPromisedProvider
 				.eventually(c -> c != null
-					? connectionTester.promiseIsConnectionPossible(c, timeout)
+					? connectionTester.promiseIsConnectionPossible(c)
 						.eventually(result -> result
 							? new Promise<>(c)
 							: promiseUpdatedCachedConnection(newSelectedLibraryId))

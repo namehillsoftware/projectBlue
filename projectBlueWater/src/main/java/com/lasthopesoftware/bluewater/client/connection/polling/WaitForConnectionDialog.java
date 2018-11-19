@@ -12,9 +12,7 @@ public class WaitForConnectionDialog {
 	private static AlertHolder instance = null;
 	
 	public synchronized static void show(final Context context) {
-		if (instance != null && instance.isShowing()) return;
-
-		instance = new AlertHolder(context);
+		if (instance == null || !instance.isShowing()) instance = new AlertHolder(context);
 	}
 
 	private static class AlertHolder {

@@ -5,19 +5,22 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Handler;
 import android.os.IBinder;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
+import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-import org.joda.time.Duration;
 
 import java.util.HashSet;
 import java.util.concurrent.CancellationException;
+
+import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PollConnectionService extends Service {
 
@@ -35,33 +38,38 @@ public class PollConnectionService extends Service {
 		}, BIND_AUTO_CREATE)).eventually(c -> c.lazyConnectionPoller.getObject());
 	}
 
-	private static final HashSet<Runnable> mUniqueOnConnectionLostListeners = new HashSet<>();
+	private static final HashSet<Runnable> uniqueOnConnectionLostListeners = new HashSet<>();
 
 	/* Differs from the normal on start listener in that it uses a static list that will be re-populated when a new Poll Connection task starts.
 	 */
 	public static void addOnConnectionLostListener(Runnable listener) {
-		synchronized(mUniqueOnConnectionLostListeners) {
-			mUniqueOnConnectionLostListeners.add(listener);
+		synchronized(uniqueOnConnectionLostListeners) {
+			uniqueOnConnectionLostListeners.add(listener);
 		}
 	}
 
 	public static void removeOnConnectionLostListener(Runnable listener) {
-		synchronized(mUniqueOnConnectionLostListeners) {
-			mUniqueOnConnectionLostListeners.remove(listener);
+		synchronized(uniqueOnConnectionLostListeners) {
+			uniqueOnConnectionLostListeners.remove(listener);
 		}
 	}
 
 	private final Lazy<GenericBinder<PollConnectionService>> lazyBinder = new Lazy<>(() -> new GenericBinder<>(this));
 
+	private final Lazy<Handler> lazyHandler = new Lazy<>(() -> new Handler(getMainLooper()));
+
 	private CreateAndHold<Promise<IConnectionProvider>> lazyConnectionPoller = new AbstractSynchronousLazy<Promise<IConnectionProvider>>() {
 		@Override
 		protected Promise<IConnectionProvider> create() {
+			for (final Runnable connectionLostListener : uniqueOnConnectionLostListeners)
+				connectionLostListener.run();
+
 			return new Promise<>(m -> {
 
 				final CancellationToken cancellationToken = new CancellationToken();
 				m.cancellationRequested(cancellationToken);
 
-				pollSessionConnection(cancellationToken, 1000);
+				pollSessionConnection(m, cancellationToken, 1000);
 			});
 		}
 	};
@@ -71,25 +79,27 @@ public class PollConnectionService extends Service {
 		return lazyBinder.getObject();
 	}
 
-	private Promise<IConnectionProvider> pollSessionConnection(CancellationToken cancellationToken, int connectionTime) {
+	private void pollSessionConnection(Messenger<IConnectionProvider> messenger, CancellationToken cancellationToken, int connectionTime) {
 		if (cancellationToken.isCancelled()) {
+			messenger.sendRejection(new CancellationException("Polling the session connection was cancelled"));
 			stopSelf();
-			return new Promise<>(new CancellationException("Polling the session connection was cancelled"));
+
+			return;
 		}
 
 		final int nextConnectionTime = connectionTime < 32000 ? connectionTime * 2 : connectionTime;
-		return SessionConnection.getInstance(this)
-			.promiseTestedSessionConnection(Duration.millis(connectionTime))
-			.eventually(
-				c -> {
+		SessionConnection.getInstance(this)
+			.promiseTestedSessionConnection()
+			.then(
+				perform(c -> {
 					if (c == null) {
-						return pollSessionConnection(cancellationToken, nextConnectionTime);
+						lazyHandler.getObject().postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime), connectionTime);
+						return;
 					}
 
+					messenger.sendResolution(c);
 					stopSelf();
-
-					return new Promise<>(c);
-				},
-				e -> pollSessionConnection(cancellationToken, nextConnectionTime));
+				}),
+				perform(e -> lazyHandler.getObject().postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime), connectionTime)));
 	}
 }
