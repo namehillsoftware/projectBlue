@@ -25,17 +25,22 @@ import static com.namehillsoftware.handoff.promises.response.ImmediateAction.per
 public class PollConnectionService extends Service {
 
 	public static Promise<IConnectionProvider> pollSessionConnection(Context context) {
-		return new Promise<PollConnectionServiceConnectionHolder>(m -> context.bindService(new Intent(context, PollConnectionService.class), new ServiceConnection() {
+		final Promise<PollConnectionServiceConnectionHolder> promiseConnectedService =
+			new Promise<>(m -> context.bindService(new Intent(context, PollConnectionService.class), new ServiceConnection() {
 
-			@Override
-			public void onServiceConnected(ComponentName name, IBinder service) {
-				m.sendResolution(new PollConnectionServiceConnectionHolder((PollConnectionService)(((GenericBinder<?>)service).getService()), this));
-			}
+				@Override
+				public void onServiceConnected(ComponentName name, IBinder service) {
+					m.sendResolution(
+						new PollConnectionServiceConnectionHolder(
+							(PollConnectionService) (((GenericBinder<?>) service).getService()),
+							this));
+				}
 
-			@Override
-			public void onServiceDisconnected(ComponentName name) {
-			}
-		}, BIND_AUTO_CREATE)).eventually(s -> s.pollConnectionService.lazyConnectionPoller.getObject()
+				@Override
+				public void onServiceDisconnected(ComponentName name) {}
+			}, BIND_AUTO_CREATE));
+
+		return promiseConnectedService.eventually(s -> s.pollConnectionService.lazyConnectionPoller.getObject()
 			.then(c -> {
 				context.unbindService(s.serviceConnection);
 				return c;
@@ -112,8 +117,8 @@ public class PollConnectionService extends Service {
 
 	private static class PollConnectionServiceConnectionHolder {
 
-		public final PollConnectionService pollConnectionService;
-		public final ServiceConnection serviceConnection;
+		final PollConnectionService pollConnectionService;
+		final ServiceConnection serviceConnection;
 
 		private PollConnectionServiceConnectionHolder(PollConnectionService pollConnectionService, ServiceConnection serviceConnection) {
 			this.pollConnectionService = pollConnectionService;
