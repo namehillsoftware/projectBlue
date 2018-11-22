@@ -19,7 +19,6 @@ import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.assertj.core.api.Assertions;
-import org.joda.time.Duration;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -31,7 +30,6 @@ import static com.lasthopesoftware.bluewater.client.connection.session.SessionCo
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -63,7 +61,7 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		final TestConnections connectionsTester = mock(TestConnections.class);
-		when(connectionsTester.promiseIsConnectionPossible(any(), argThat(argument -> argument.equals(Duration.millis(1)))))
+		when(connectionsTester.promiseIsConnectionPossible(any()))
 				.thenReturn(new Promise<>(true));
 
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
@@ -78,7 +76,7 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 				connectionsTester);
 
 			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
-			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection(Duration.millis(1))).get();
+			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection()).get();
 		}
 	}
 

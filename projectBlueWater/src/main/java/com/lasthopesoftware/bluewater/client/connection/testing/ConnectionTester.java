@@ -21,12 +21,7 @@ public class ConnectionTester implements TestConnections {
 
 	@Override
 	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
-		return promiseIsConnectionPossible(connectionProvider, stdTimeoutTime);
-	}
-
-	@Override
-	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider, Duration timeout) {
-		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, timeout), AsyncTask.THREAD_POOL_EXECUTOR);
+		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, stdTimeoutTime), AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
 	private boolean doTestSynchronously(final IConnectionProvider connectionProvider, Duration timeout) {

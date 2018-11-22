@@ -19,7 +19,6 @@ import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.assertj.core.api.Assertions;
-import org.joda.time.Duration;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -75,8 +74,8 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 			connectionProvider = new FuturePromise<>(
 				sessionConnection.promiseSessionConnection()
 					.eventually(
-						c -> sessionConnection.promiseTestedSessionConnection(Duration.ZERO),
-						e -> sessionConnection.promiseTestedSessionConnection(Duration.ZERO))).get();
+						c -> sessionConnection.promiseTestedSessionConnection(),
+						e -> sessionConnection.promiseTestedSessionConnection())).get();
 		}
 	}
 

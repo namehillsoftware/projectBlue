@@ -40,6 +40,8 @@ public class WaitForConnectionDialog {
 
 			alertDialog = builder.create();
 
+			alertDialog.setInverseBackgroundForced(true);
+
 			alertDialog.setOnShowListener(dialog -> pollingSessionConnection
 				.eventually(LoopedInPromise.response(connectionProvider -> {
 					if (!isDismissed && alertDialog.isShowing()) alertDialog.dismiss();

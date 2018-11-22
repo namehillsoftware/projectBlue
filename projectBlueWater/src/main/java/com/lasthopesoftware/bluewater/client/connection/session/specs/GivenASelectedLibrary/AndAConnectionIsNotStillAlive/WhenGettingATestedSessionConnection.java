@@ -19,7 +19,6 @@ import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.assertj.core.api.Assertions;
-import org.joda.time.Duration;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -62,7 +61,7 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		final TestConnections testConnections = mock(TestConnections.class);
-		when(testConnections.promiseIsConnectionPossible(any(), any()))
+		when(testConnections.promiseIsConnectionPossible(any()))
 				.thenReturn(new Promise<>(false));
 
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
@@ -77,7 +76,7 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 				testConnections);
 
 			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
-			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection(Duration.ZERO)).get();
+			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection()).get();
 		}
 	}
 
