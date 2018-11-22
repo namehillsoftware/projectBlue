@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.EOFException;
+import java.net.ProtocolException;
 
 public class PromisedPlayedExoPlayer
 extends
@@ -105,6 +106,15 @@ implements
 			logger.warn("The file ended unexpectedly. Completing playback", error);
 			resolve(this);
 			return;
+		}
+
+		if (error.getCause() instanceof ProtocolException) {
+			final ProtocolException protocolException = (ProtocolException) error.getCause();
+			if (protocolException.getMessage() != null && protocolException.getMessage().contains("unexpected end of stream")) {
+				logger.warn("The stream ended unexpectedly, completing playback", error);
+				resolve(this);
+				return;
+			}
 		}
 
 		logger.error("A player error has occurred", error);
