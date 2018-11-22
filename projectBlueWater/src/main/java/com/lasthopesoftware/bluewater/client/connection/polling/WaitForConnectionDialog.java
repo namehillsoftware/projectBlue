@@ -23,7 +23,7 @@ public class WaitForConnectionDialog {
 		AlertHolder(Context context) {
 
 			final String message = String.format(context.getString(R.string.lbl_attempting_to_reconnect), context.getString(R.string.app_name));
-			final AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AppTheme);
+			final AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.DialogTheme);
 			builder.setCancelable(false);
 			builder.setTitle(context.getText(R.string.lbl_connection_lost_title)).setMessage(message).setCancelable(true);
 
