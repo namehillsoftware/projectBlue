@@ -94,8 +94,6 @@ public class PollConnectionService extends Service {
 	private void pollSessionConnection(Messenger<IConnectionProvider> messenger, CancellationToken cancellationToken, int connectionTime) {
 		if (cancellationToken.isCancelled()) {
 			messenger.sendRejection(new CancellationException("Polling the session connection was cancelled"));
-			stopSelf();
-
 			return;
 		}
 
@@ -104,15 +102,18 @@ public class PollConnectionService extends Service {
 			.promiseTestedSessionConnection()
 			.then(
 				perform(c -> {
-					if (c == null) {
-						lazyHandler.getObject().postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime), connectionTime);
+					if (c != null) {
+						messenger.sendResolution(c);
 						return;
 					}
 
-					messenger.sendResolution(c);
-					stopSelf();
+					lazyHandler.getObject()
+						.postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime),
+							connectionTime);
 				}),
-				perform(e -> lazyHandler.getObject().postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime), connectionTime)));
+				perform(e -> lazyHandler.getObject()
+					.postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime),
+						connectionTime)));
 	}
 
 	private static class PollConnectionServiceConnectionHolder {
