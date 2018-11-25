@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
 import android.content.Context;
-
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
@@ -14,7 +13,6 @@ import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-
 import org.joda.time.Duration;
 
 public class AccessConfigurationBuilder {
@@ -25,7 +23,7 @@ public class AccessConfigurationBuilder {
 		@Override
 		protected BuildUrlProviders create() {
 			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
-			final ConnectionTester connectionTester = new ConnectionTester(Duration.millis(buildConnectionTimeoutTime));
+			final ConnectionTester connectionTester = new ConnectionTester();
 
 			return new UrlScanner(connectionTester, serverLookup);
 		}

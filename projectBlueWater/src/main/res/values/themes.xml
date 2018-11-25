@@ -17,4 +17,13 @@
         <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
         <item name="searchViewStyle">@style/SearchViewStyle</item>
     </style>
+    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <!-- Main theme colors -->
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@color/clearstream_blue</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@color/clearstream_dark</item>
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
 </resources>
