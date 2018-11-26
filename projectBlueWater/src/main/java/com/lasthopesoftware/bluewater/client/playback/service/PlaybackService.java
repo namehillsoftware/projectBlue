@@ -29,7 +29,8 @@ import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
@@ -73,6 +74,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
+import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
@@ -130,6 +132,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
@@ -435,26 +438,33 @@ implements OnAudioFocusChangeListener
 	private PowerManager.WakeLock wakeLock = null;
 	private SimpleCache cache;
 
-	private final CreateAndHold<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
+	private Promise<IConnectionProvider> pollingSessionConnection;
+
+	private final CreateAndHold<ImmediateResponse<IConnectionProvider, Void>> connectionRegainedListener = new AbstractSynchronousLazy<ImmediateResponse<IConnectionProvider, Void>>() {
 		@Override
-		protected final Runnable create() {
-			return () -> {
+		protected final ImmediateResponse<IConnectionProvider, Void> create() {
+			return (c) -> {
 				if (playbackEngine == null) {
 					stopSelf(startId);
-					return;
+					return null;
 				}
 
 				playbackEngine.resume();
+
+				return null;
 			};
 		}
 	};
 
-	private final CreateAndHold<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
+	private final CreateAndHold<ImmediateResponse<Throwable, Void>> onPollingCancelledListener = new AbstractSynchronousLazy<ImmediateResponse<Throwable, Void>>() {
 		@Override
-		protected final Runnable create() {
-			return () -> {
-				unregisterListeners();
-				stopSelf(startId);
+		protected final ImmediateResponse<Throwable, Void> create() {
+			return (e) -> {
+				if (e instanceof CancellationException) {
+					unregisterListeners();
+					stopSelf(startId);
+				}
+				return null;
 			};
 		}
 	};
@@ -584,12 +594,6 @@ implements OnAudioFocusChangeListener
 			wakeLock = null;
 		}
 
-		final PollConnection pollConnection = PollConnection.Instance.get(this);
-		if (connectionRegainedListener.isCreated())
-			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
-		if (onPollingCancelledListener.isCreated())
-			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
-
 		if (lazyAudioBecomingNoisyReceiver.isCreated())
 			unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject());
 		
@@ -611,11 +615,6 @@ implements OnAudioFocusChangeListener
 			.registerReceiver(
 				onLibraryChanged,
 				new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
-
-		localBroadcastManagerLazy.getObject()
-			.registerReceiver(
-				buildSessionReceiver,
-				new IntentFilter(SessionConnection.buildSessionBroadcast));
 	}
 
 	@Override
@@ -686,11 +685,15 @@ implements OnAudioFocusChangeListener
 				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
 				lazyLibraryRepository.getObject());
 
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(
+				buildSessionReceiver,
+				new IntentFilter(SessionConnection.buildSessionBroadcast));
+
 		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
-			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
-				connectionProvider,
-				FilePropertyCache.getInstance(),
-				new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
+			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+
+			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 			if (remoteControlProxy != null)
 				localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
@@ -855,6 +858,9 @@ implements OnAudioFocusChangeListener
 
 				return playbackEngine;
 			});
+		}, e -> {
+			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+			return Promise.empty();
 		});
 	}
 	
@@ -942,8 +948,8 @@ implements OnAudioFocusChangeListener
 			return;
 		}
 
-		if (action.equals(Action.stopWaitingForConnection)) {
-        	PollConnection.Instance.get(this).stopPolling();
+		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
+			pollingSessionConnection.cancel();
 			return;
 		}
 
@@ -1066,12 +1072,9 @@ implements OnAudioFocusChangeListener
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
 		notifyBackground(builder);
 
-		final PollConnection checkConnection = PollConnection.Instance.get(this);
-
-		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
-		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
-		
-		checkConnection.startPolling();
+		pollingSessionConnection = PollConnectionService.pollSessionConnection(this);
+		pollingSessionConnection
+			.then(connectionRegainedListener.getObject(), onPollingCancelledListener.getObject());
 	}
 
 	private void closeAndRestartPlaylistManager() {
