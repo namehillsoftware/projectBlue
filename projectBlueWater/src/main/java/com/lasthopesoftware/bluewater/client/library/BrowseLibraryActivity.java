@@ -22,7 +22,6 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -52,16 +51,14 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -184,7 +181,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		super.onStart();
 
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-			.eventually(LoopedInPromise.response(perform(restore -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(restore -> {
 				if (!restore) startLibrary();
 			}), this));
 	}
@@ -210,7 +207,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.eventually(LoopedInPromise.response(perform(library -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				// No library, must bail out
 				if (library == null) {
 					finish();
@@ -236,7 +233,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		PromisedResponse<List<Item>, Void> onCompleteAction =
-			LoopedInPromise.response(perform(items -> {
+			LoopedInPromise.response(new VoidResponse<>(items -> {
 				if (isStopped || items == null) return;
 
 				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
@@ -302,7 +299,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.eventually(LoopedInPromise.response(perform(library -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);

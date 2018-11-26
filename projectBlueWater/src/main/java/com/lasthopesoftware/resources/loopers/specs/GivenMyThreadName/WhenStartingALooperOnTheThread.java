@@ -2,9 +2,7 @@ package com.lasthopesoftware.resources.loopers.specs.GivenMyThreadName;
 
 import android.os.Handler;
 import android.os.Looper;
-
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

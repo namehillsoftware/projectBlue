@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.servers.list.listeners;
 
 import android.view.View;
-
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.IBrowserLibrarySelection;

@@ -2,10 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.events.specs.GivenARandomB
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.specs.AndroidContext;
-
 import org.junit.Test;
 import org.robolectric.Robolectric;
 import org.robolectric.android.controller.ActivityController;

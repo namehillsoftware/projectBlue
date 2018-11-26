@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
-
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 
 /**

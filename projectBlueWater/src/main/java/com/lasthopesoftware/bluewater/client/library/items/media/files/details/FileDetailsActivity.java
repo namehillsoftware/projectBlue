@@ -15,7 +15,6 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
@@ -35,21 +34,14 @@ import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class FileDetailsActivity extends AppCompatActivity {
 
@@ -142,7 +134,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance()))
 			.eventually(f -> f.promiseFileProperties(new ServiceFile(fileKey)))
-			.eventually(LoopedInPromise.response(perform(fileProperties -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -206,7 +198,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				bitmap != null
 					? new Promise<>(bitmap)
 					: defaultImageProvider.getObject().promiseFileBitmap())
-			.eventually(LoopedInPromise.response(perform(result -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 
 				if (isDestroyed) {

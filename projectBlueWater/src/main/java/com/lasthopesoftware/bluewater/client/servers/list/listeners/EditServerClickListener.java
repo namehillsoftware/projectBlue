@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.servers.list.listeners;
 
 import android.app.Activity;
 import android.view.View;
-
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder;
 import com.lasthopesoftware.bluewater.client.settings.IEditClientSettingsActivityIntentBuilder;
 

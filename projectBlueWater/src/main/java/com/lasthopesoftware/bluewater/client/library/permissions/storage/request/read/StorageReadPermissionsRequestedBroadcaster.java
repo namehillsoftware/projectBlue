@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.permissions.storage.reques
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 
 /**

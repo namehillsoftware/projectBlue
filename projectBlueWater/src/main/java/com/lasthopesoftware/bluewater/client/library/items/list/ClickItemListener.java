@@ -5,15 +5,13 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.ArrayList;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ClickItemListener implements OnItemClickListener {
 
@@ -31,7 +29,7 @@ public class ClickItemListener implements OnItemClickListener {
 
 		SessionConnection.getInstance(context).promiseSessionConnection()
 			.eventually(c -> ItemProvider.provide(c, item.getKey()))
-            .then(perform(items -> {
+            .then(new VoidResponse<>(items -> {
 				if (items == null) return;
 
 				if (items.size() > 0) {

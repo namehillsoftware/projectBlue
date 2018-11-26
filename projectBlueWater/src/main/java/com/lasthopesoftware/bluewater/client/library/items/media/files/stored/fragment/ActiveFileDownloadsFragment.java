@@ -16,7 +16,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
@@ -30,10 +29,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ActiveFileDownloadsFragment extends Fragment {
 
@@ -70,13 +68,13 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		selectedBrowserLibraryProvider
 			.getBrowserLibrary()
-			.then(perform(library -> {
+			.then(new VoidResponse<>(library -> {
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(
 					activity,
 					new StoredFilesCollection(activity));
 
 				storedFileAccess.getDownloadingStoredFiles()
-					.eventually(LoopedInPromise.response(perform(storedFiles -> {
+					.eventually(LoopedInPromise.response(new VoidResponse<>(storedFiles -> {
 						final List<StoredFile> localStoredFiles =
 							Stream.of(storedFiles)
 								.filter(f -> f.getLibraryId() == library.getId())
@@ -127,7 +125,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 								storedFileAccess
 									.getStoredFile(storedFileId)
-									.eventually(LoopedInPromise.response(perform(storedFile -> {
+									.eventually(LoopedInPromise.response(new VoidResponse<>(storedFile -> {
 										if (storedFile == null || storedFile.getLibraryId() != library.getId())
 											return;
 

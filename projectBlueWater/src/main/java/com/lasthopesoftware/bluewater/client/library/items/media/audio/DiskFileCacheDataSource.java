@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.audio;
 
 import android.net.Uri;
-
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
@@ -10,13 +9,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.lasthopesoftware.resources.uri.PathAndQuery;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import okio.Buffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
-import okio.Buffer;
 
 
 public class DiskFileCacheDataSource implements DataSource {

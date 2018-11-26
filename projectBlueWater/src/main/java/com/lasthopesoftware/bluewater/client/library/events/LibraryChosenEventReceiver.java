@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.events;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 

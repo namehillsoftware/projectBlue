@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenAn
 
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

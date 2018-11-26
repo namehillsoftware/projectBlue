@@ -2,15 +2,10 @@ package com.lasthopesoftware.bluewater.client.library.repository;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.Keep;
-
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Keep
 public class Library implements IEntityCreator, IEntityUpdater {

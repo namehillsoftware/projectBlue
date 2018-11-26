@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -26,7 +25,7 @@ public class WhenProcessingTheJob {
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 
 	@BeforeClass
-	public static void before() throws StoredFileJobException, IOException {
+	public static void before() throws IOException {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 		when(fakeConnectionProvider.getConnection(any())).thenThrow(IOException.class);
 

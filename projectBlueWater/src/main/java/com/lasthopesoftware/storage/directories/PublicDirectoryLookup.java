@@ -3,7 +3,6 @@ package com.lasthopesoftware.storage.directories;
 import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
-
 import com.annimon.stream.Stream;
 import com.namehillsoftware.handoff.promises.Promise;
 

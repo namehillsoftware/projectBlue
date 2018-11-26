@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.view.KeyEvent;
-
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 
 public class RemoteControlReceiver extends BroadcastReceiver {

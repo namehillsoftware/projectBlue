@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.access;
 
 import android.content.Context;
 import android.database.SQLException;
-
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
@@ -13,7 +12,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +48,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Collection<Library> prepareMessage() throws Exception {
+		public Collection<Library> prepareMessage() {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return
 					repositoryAccessHelper
@@ -71,7 +69,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Library prepareMessage() throws Exception {
+		public Library prepareMessage() {
 			if (libraryId < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
@@ -139,7 +137,7 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 		}
 
 		@Override
-		public Library prepareMessage() throws Exception {
+		public Library prepareMessage() {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					final boolean isLibraryExists = library.getId() > -1;

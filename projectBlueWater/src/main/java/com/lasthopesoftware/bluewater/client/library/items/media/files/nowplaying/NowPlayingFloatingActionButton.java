@@ -8,17 +8,12 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
-
-/**
- * Created by david on 10/11/15.
- */
 public class NowPlayingFloatingActionButton extends FloatingActionButton {
     public static NowPlayingFloatingActionButton addNowPlayingFloatingActionButton(RelativeLayout container) {
         final NowPlayingFloatingActionButton nowPlayingFloatingActionButton = new NowPlayingFloatingActionButton(container.getContext());
@@ -56,7 +51,7 @@ public class NowPlayingFloatingActionButton extends FloatingActionButton {
         NowPlayingFileProvider
             .fromActiveLibrary(getContext())
             .getNowPlayingFile()
-            .then(perform(result -> {
+            .then(new VoidResponse<>(result -> {
                 isNowPlayingFileSet = result != null;
                 setVisibility(ViewUtils.getVisibility(isNowPlayingFileSet));
 

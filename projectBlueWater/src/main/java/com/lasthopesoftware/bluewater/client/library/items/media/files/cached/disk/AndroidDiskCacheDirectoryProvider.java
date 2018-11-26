@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.d
 
 import android.content.Context;
 import android.os.Environment;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
 
 import java.io.File;

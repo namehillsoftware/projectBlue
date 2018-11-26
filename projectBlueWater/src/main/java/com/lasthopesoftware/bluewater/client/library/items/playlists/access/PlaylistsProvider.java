@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists.access;
 
 import android.util.SparseArray;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
@@ -11,7 +10,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandl
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -83,7 +82,7 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 		playbackEngine
 			.skipToNext()
 			.eventually(p -> playbackEngine.skipToNext())
-			.then(perform(p -> playbackEngine.resume()))
+			.then(new VoidResponse<>(p -> playbackEngine.resume()))
 			.then(obs -> fakePlaybackPreparerProvider.deferredResolution.resolve())
 			.eventually(res -> nowPlayingRepository.getNowPlaying())
 			.then(np -> {

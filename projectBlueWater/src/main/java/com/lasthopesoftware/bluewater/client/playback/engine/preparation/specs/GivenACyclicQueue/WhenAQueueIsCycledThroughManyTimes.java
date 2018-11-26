@@ -10,9 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Cy
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import junit.framework.Assert;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,10 +19,7 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class WhenAQueueIsCycledThroughManyTimes {
 

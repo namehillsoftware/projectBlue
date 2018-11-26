@@ -2,9 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.access;
 
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers;
-
 import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.ArrayList;
@@ -18,8 +16,7 @@ class PlaylistXmlHandler extends DefaultHandler {
 	private String currentKey;
 	private StringBuilder valueSb;
 
-	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
-	{
+	public void startElement(String uri, String localName, String qName, Attributes attributes) {
 		currentValue = "";
 		valueSb = new StringBuilder();
 		if (qName.equalsIgnoreCase("item"))
@@ -29,11 +26,11 @@ class PlaylistXmlHandler extends DefaultHandler {
 			currentKey = attributes.getValue("Name");
 	}
 	
-	public void characters(char[] ch, int start, int length) throws SAXException {
+	public void characters(char[] ch, int start, int length) {
 		XmlParsingHelpers.HandleBadXml(valueSb, ch, start, length);
 	}
 	
-	public void endElement(String uri, String localName, String qName) throws SAXException {
+	public void endElement(String uri, String localName, String qName) {
 		if (valueSb != null) currentValue = valueSb.toString();
 		if (qName.equalsIgnoreCase("field")) {
 			if (currentKey.equalsIgnoreCase("id"))

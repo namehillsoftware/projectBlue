@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -6,7 +6,6 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.list.DemoableItemListAdapter;
@@ -17,13 +16,12 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
-
-import java.util.List;
-
 import tourguide.tourguide.Overlay;
 import tourguide.tourguide.Pointer;
 import tourguide.tourguide.ToolTip;
 import tourguide.tourguide.TourGuide;
+
+import java.util.List;
 
 public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ImmediateResponse<List<T>, Void> {
 

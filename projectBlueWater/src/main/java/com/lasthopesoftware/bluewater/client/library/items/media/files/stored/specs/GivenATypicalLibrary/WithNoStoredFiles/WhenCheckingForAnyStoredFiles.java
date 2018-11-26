@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.Co
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesChecker;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -3,7 +3,6 @@ package com.lasthopesoftware.resources.notifications.notificationchannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
-
 import com.lasthopesoftware.bluewater.R;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -18,14 +17,14 @@ public class SharedChannelProperties implements ChannelConfiguration {
 
 	private final CreateAndHold<String> lazyChannelName = new AbstractSynchronousLazy<String>() {
 		@Override
-		protected String create() throws Throwable {
+		protected String create() {
 			return context.getString(R.string.app_name);
 		}
 	};
 
 	private final CreateAndHold<String> lazyChannelDescription = new AbstractSynchronousLazy<String>() {
 		@Override
-		protected String create() throws Throwable {
+		protected String create() {
 			return String.format("Notifications for %1$s", lazyChannelName.getObject());
 		}
 	};

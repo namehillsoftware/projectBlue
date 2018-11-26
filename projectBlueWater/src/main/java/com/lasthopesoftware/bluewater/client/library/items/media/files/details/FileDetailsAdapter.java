@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.R;
 
 import java.util.List;
@@ -33,8 +32,8 @@ class FileDetailsAdapter extends ArrayAdapter<Entry<String, String>> {
 			
 			ViewHolder viewHolder = new ViewHolder();
 			
-			viewHolder.fileDetailName = (TextView) returnView.findViewById(R.id.tvFileDetailName);
-			viewHolder.fileDetailValue = (TextView) returnView.findViewById(R.id.tvFileDetailValue);
+			viewHolder.fileDetailName = returnView.findViewById(R.id.tvFileDetailName);
+			viewHolder.fileDetailValue = returnView.findViewById(R.id.tvFileDetailValue);
 			returnView.setTag(viewHolder);
 			
 			convertView = returnView;

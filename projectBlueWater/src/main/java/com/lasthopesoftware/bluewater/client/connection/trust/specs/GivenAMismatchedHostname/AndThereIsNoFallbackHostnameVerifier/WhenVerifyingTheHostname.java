@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.trust.specs.GivenAMismatchedHostname.AndThereIsNoFallbackHostnameVerifier;
 
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

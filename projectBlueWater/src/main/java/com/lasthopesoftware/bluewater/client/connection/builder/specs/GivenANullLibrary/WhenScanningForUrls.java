@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

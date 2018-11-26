@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access;
 
 import android.content.Context;
-
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
@@ -13,7 +12,7 @@ public final class OnGetFileStringListForClickCompleteListener implements Immedi
     }
 
     @Override
-    public Void respond(String result) throws Throwable {
+    public Void respond(String result) {
         PlaybackService.launchMusicService(mContext, result);
         return null;
     }

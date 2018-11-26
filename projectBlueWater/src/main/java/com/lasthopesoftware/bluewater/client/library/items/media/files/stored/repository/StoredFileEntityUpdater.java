@@ -2,10 +2,8 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.r
 
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 import com.namehillsoftware.artful.Artful;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

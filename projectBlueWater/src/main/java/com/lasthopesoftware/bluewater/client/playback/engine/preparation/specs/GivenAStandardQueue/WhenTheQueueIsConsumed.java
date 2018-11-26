@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.menu.listeners;
 
 import android.view.View;
-
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 /**
