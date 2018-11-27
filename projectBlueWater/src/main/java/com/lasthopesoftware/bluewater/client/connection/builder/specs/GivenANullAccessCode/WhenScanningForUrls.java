@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupSer
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

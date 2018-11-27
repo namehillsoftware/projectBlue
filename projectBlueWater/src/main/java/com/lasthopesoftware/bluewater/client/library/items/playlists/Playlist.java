@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.playlists;
 
 import android.util.SparseArray;
-
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;

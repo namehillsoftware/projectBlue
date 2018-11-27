@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.view.View;
 import android.widget.ImageButton;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;

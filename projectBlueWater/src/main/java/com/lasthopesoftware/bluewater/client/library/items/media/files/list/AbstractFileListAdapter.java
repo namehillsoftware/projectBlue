@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.list;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
 import java.util.List;

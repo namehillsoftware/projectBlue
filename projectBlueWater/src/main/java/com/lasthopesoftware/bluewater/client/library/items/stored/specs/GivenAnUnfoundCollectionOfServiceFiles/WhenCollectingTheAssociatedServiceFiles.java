@@ -9,18 +9,12 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAcc
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.assertj.core.api.Condition;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import static com.annimon.stream.Stream.concat;

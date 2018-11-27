@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 
@@ -25,7 +24,7 @@ class SelectViewAdapterBuilder {
 			convertView = layoutInflater.inflate(R.layout.layout_select_views, parent, false);
 		}
 
-		final TextView tvViewName = (TextView) convertView.findViewById(R.id.tvViewName);
+		final TextView tvViewName = convertView.findViewById(R.id.tvViewName);
 		tvViewName.setText(viewText);
 
 		final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(tvViewName.getLayoutParams());

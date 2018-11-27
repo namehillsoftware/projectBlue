@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.permissions.read;
 
 import android.support.annotation.NonNull;
-
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 /**

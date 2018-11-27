@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering;
 
 import android.support.annotation.Nullable;
-
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
@@ -10,7 +9,6 @@ import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

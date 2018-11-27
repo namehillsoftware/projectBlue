@@ -1,9 +1,7 @@
 package com.lasthopesoftware.storage.read.permissions.specs;
 
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
-
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 

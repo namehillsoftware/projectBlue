@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events;
 
 import com.google.android.exoplayer2.text.Cue;
 import com.google.android.exoplayer2.text.TextOutput;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

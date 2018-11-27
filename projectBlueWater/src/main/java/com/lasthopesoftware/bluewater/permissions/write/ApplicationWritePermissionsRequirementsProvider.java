@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.permissions.write;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;

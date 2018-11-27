@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.viewholder;
 
 import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
 import com.namehillsoftware.handoff.promises.Promise;
 

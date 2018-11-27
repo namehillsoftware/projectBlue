@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
 
 import java.util.List;

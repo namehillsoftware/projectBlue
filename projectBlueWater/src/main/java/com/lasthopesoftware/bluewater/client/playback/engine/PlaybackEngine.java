@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCo
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.*;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
@@ -20,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
@@ -30,8 +32,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineBroadcaster, AutoCloseable {
 
@@ -67,7 +67,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 		this.playlist = playlist;
 
-		updateLibraryPlaylistPositions(playlistPosition, filePosition).then(perform(this::resumePlaybackFromNowPlaying));
+		updateLibraryPlaylistPositions(playlistPosition, filePosition).then(new VoidResponse<>(this::resumePlaybackFromNowPlaying));
 	}
 
 	public Promise<PositionedFile> skipToNext() {

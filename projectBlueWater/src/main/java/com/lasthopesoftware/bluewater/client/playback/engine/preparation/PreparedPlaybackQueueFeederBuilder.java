@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
 import android.os.Handler;
-
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;

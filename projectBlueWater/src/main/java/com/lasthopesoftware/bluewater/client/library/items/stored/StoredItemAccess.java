@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored;
 
 import android.content.Context;
-
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;

@@ -43,6 +43,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -53,8 +54,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class NowPlayingActivity extends AppCompatActivity {
 
@@ -264,7 +263,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		updateKeepScreenOnStatus();
 
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-			.eventually(LoopedInPromise.response(perform(restore -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(restore -> {
 				if (!restore) initializeView();
 			}), messageHandler.getObject()));
 	}
@@ -311,7 +310,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 					setView(serviceFile, filePosition);
 					return null;
 				}, messageHandler.getObject())))
-			.excuse(perform(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
+			.excuse(new VoidResponse<>(error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error)));
 
 		bindService(new Intent(this, PlaybackService.class), new ServiceConnection() {
 
@@ -380,12 +379,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 					return null;
 				}, messageHandler.getObject())))
-			.excuse(perform(e -> logger.error("An error occurred while getting the Now Playing data", e)));
+			.excuse(new VoidResponse<>(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
 	
 	private void setView(final ServiceFile serviceFile, final long initialFilePosition) {
 		SessionConnection.getInstance(this).promiseSessionConnection()
-			.eventually(LoopedInPromise.response(perform(connectionProvider -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(connectionProvider -> {
 				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey());
 
 				if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
@@ -437,7 +436,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		viewStructure.promisedNowPlayingImage
 			.eventually(bitmap -> new LoopedInPromise<>(() -> setNowPlayingImage(bitmap), messageHandler.getObject()))
-			.excuse(perform(e -> {
+			.excuse(new VoidResponse<>(e -> {
 				if (e instanceof CancellationException) {
 					logger.info("Bitmap retrieval cancelled", e);
 					return;
@@ -492,7 +491,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 			final String stringRating = String.valueOf(Math.round(newRating));
 			SessionConnection.getInstance(this).promiseSessionConnection()
-				.then(perform(c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, FilePropertiesProvider.RATING, stringRating, false)));
+				.then(new VoidResponse<>(c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, FilePropertiesProvider.RATING, stringRating, false)));
 			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
 		});
 
@@ -562,7 +561,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 	
 	private void resetViewOnReconnect(final ServiceFile serviceFile, final long position) {
-		PollConnectionService.pollSessionConnection(this).then(perform(connectionProvider -> {
+		PollConnectionService.pollSessionConnection(this).then(new VoidResponse<>(connectionProvider -> {
 			if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;
 
 			if (viewStructure.promisedNowPlayingImage != null) {

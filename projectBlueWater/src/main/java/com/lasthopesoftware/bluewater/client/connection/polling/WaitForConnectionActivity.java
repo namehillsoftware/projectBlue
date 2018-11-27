@@ -8,10 +8,9 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.concurrent.CancellationException;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class WaitForConnectionActivity extends Activity {
 
@@ -41,8 +40,8 @@ public class WaitForConnectionActivity extends Activity {
 
 		pollSessionConnection
 			.then(
-				perform(c -> finish()),
-				perform(e -> {
+				new VoidResponse<>(c -> finish()),
+				new VoidResponse<>(e -> {
 					if (e instanceof CancellationException) startActivity(selectServerIntent);
 
 					finish();

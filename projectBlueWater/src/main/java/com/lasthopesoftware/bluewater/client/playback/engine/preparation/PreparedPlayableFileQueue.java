@@ -7,15 +7,15 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.ImmediateAction;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.ResponseAction;
-
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.locks.Lock;
@@ -153,7 +153,7 @@ implements
 			.preparedPlayableFile
 			.getBufferingPlaybackFile()
 			.promiseBufferedPlaybackFile()
-			.then(ImmediateAction.perform(this));
+			.then(new VoidResponse<>(this));
 
 		return new PositionedPlayableFile(
 			positionedPreparedPlayableFile.preparedPlayableFile.getPlaybackHandler(),

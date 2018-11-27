@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.view.Menu;
 import android.view.MenuItem;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.about.AboutActivity;
 import com.lasthopesoftware.bluewater.about.BuildAboutTitle;

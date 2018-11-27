@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.menu;
 
 import android.os.Handler;
 import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -14,7 +13,6 @@ import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

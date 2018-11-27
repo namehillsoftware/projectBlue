@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.image;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-
 import org.joda.time.Days;
 import org.joda.time.Duration;
 

@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,7 +22,7 @@ public class WhenSendingPlayedToServer {
 
 	@BeforeClass
 	public static void before() throws InterruptedException, IOException {
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);;
+		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
 
 		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
 		when(urlConnection.getResponseCode()).thenReturn(404);
@@ -55,7 +54,7 @@ public class WhenSendingPlayedToServer {
 	}
 
 	@Test
-	public void thenAnHttpResponseExceptionIsThrownWithTheResponseCode() throws IOException {
+	public void thenAnHttpResponseExceptionIsThrownWithTheResponseCode() {
 		assertThat(httpResponseException.getResponseCode()).isEqualTo(404);
 	}
 }

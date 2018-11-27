@@ -1,11 +1,9 @@
 package com.lasthopesoftware.bluewater.client.settings.specs;
 
 import android.content.Intent;
-
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity;
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder;
 import com.lasthopesoftware.resources.intents.IntentFactory;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

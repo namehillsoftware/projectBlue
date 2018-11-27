@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -14,11 +13,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackFileStartedScrobblerRegistration implements IConnectionDependentReceiverRegistration {
 
@@ -59,7 +57,7 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 
 			cachedFilePropertiesProvider
 				.promiseFileProperties(new ServiceFile(fileKey))
-				.then(perform(fileProperties -> {
+				.then(new VoidResponse<>(fileProperties -> {
 					final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 					final String name = fileProperties.get(FilePropertiesProvider.NAME);
 					final String album = fileProperties.get(FilePropertiesProvider.ALBUM);

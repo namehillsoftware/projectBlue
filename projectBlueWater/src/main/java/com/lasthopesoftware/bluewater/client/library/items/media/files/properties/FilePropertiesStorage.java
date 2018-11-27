@@ -10,7 +10,6 @@ import com.lasthopesoftware.providers.AbstractProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;

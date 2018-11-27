@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.uri;
 
 import android.net.Uri;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.slf4j.LoggerFactory;
 
 public class RemoteFileUriProvider implements IFileUriProvider {

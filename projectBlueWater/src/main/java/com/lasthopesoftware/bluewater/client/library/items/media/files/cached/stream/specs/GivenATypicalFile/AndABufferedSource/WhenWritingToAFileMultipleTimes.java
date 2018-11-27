@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.s
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.IDiskFileCachePersistence;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
-
+import okio.Buffer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -11,8 +11,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-
-import okio.Buffer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

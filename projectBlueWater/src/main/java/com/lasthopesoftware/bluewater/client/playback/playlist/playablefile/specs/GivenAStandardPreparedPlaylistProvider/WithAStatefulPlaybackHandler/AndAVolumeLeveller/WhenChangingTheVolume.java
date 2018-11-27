@@ -18,13 +18,11 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.Play
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import io.reactivex.Observable;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
-
-import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;

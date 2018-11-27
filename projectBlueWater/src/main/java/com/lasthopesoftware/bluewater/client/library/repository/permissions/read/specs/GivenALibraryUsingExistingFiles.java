@@ -2,9 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.repository.permissions.rea
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
-
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 

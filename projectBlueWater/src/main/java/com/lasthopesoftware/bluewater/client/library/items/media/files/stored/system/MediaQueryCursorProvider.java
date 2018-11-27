@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;

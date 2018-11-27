@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

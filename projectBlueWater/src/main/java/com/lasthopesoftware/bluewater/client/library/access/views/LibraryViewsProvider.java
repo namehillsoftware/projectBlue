@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
 import com.lasthopesoftware.providers.AbstractProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.audio.specs.GivenAFileLessThan1Megabyte;
 
 import android.net.Uri;
-
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
@@ -10,7 +9,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.re
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import okio.Buffer;
+import okio.BufferedSource;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,9 +19,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.io.IOException;
 import java.util.Random;
-
-import okio.Buffer;
-import okio.BufferedSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -76,7 +73,7 @@ public class WhenStreamingTheFileInOddChunks {
 				}
 
 				@Override
-				public void close() throws IOException {
+				public void close() {
 
 				}
 			});

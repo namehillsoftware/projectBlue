@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.content.Intent;
 import android.view.View;
-
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
