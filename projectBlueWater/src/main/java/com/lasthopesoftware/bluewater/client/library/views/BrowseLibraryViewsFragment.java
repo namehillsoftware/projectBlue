@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
-
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
@@ -29,10 +28,9 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class BrowseLibraryViewsFragment extends Fragment implements IItemListMenuChangeHandler {
 
@@ -98,7 +96,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}, handler);
 
 		getSelectedBrowserLibrary()
-			.then(perform(activeLibrary -> {
+			.then(new VoidResponse<>(activeLibrary -> {
 				final Runnable fillItemsAction = new Runnable() {
 					@Override
 					public void run() {
@@ -150,7 +148,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		outState.putInt(SAVED_SCROLL_POS, viewPager.getScrollY());
 
 		getSelectedBrowserLibrary()
-			.then(perform(library -> {
+			.then(new VoidResponse<>(library -> {
 				if (library != null)
 					outState.putInt(SAVED_SELECTED_VIEW, library.getSelectedView());
 			}));
@@ -163,7 +161,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		if (savedInstanceState == null || viewPager == null) return;
 
 		getSelectedBrowserLibrary()
-			.eventually(LoopedInPromise.response(perform(library -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
 				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
 

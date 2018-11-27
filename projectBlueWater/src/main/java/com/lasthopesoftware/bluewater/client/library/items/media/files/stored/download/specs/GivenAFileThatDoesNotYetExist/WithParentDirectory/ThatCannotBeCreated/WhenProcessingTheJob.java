@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

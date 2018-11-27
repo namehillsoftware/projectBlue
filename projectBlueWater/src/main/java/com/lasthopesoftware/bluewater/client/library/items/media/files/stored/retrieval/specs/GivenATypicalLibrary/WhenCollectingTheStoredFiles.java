@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
-
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 

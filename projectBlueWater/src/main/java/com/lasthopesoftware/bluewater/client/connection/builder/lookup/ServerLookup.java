@@ -2,10 +2,9 @@ package com.lasthopesoftware.bluewater.client.connection.builder.lookup;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.handoff.promises.Promise;
+import xmlwise.XmlElement;
 
 import java.util.Arrays;
-
-import xmlwise.XmlElement;
 
 public class ServerLookup implements LookupServers {
 

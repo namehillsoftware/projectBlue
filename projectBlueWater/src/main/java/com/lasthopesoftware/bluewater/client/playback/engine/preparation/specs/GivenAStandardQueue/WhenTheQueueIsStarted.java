@@ -9,9 +9,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import junit.framework.Assert;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 import static org.mockito.Mockito.mock;
 
 public class WhenTheQueueIsStarted {
@@ -61,7 +59,7 @@ public class WhenTheQueueIsStarted {
 	public void thenTheQueueStartsAtTheCorrectPosition() {
 		queue
 			.promiseNextPreparedPlaybackFile(0)
-			.then(perform(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
+			.then(new VoidResponse<>(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 
 	private static class MockResolveAction implements MessengerOperator<PreparedPlayableFile> {

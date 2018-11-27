@@ -2,13 +2,10 @@ package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-
-import org.joda.time.Duration;
-
 import io.reactivex.functions.Consumer;
+import org.joda.time.Duration;
 
 public class TrackPositionBroadcaster implements Consumer<Duration> {
 	private final LocalBroadcastManager localBroadcastManager;

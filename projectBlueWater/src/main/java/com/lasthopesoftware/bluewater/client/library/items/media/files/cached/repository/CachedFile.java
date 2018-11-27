@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.r
 
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.Keep;
-
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 

@@ -9,11 +9,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.Fa
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import io.reactivex.Observable;
 import org.junit.Before;
 import org.junit.Test;
-
-import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
 import android.support.annotation.NonNull;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 
 import java.io.File;

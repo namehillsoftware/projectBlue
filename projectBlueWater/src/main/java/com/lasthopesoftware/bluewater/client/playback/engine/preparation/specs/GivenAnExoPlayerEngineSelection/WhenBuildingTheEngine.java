@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import android.content.Context;
 import android.os.Handler;
-
 import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
@@ -12,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSel
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

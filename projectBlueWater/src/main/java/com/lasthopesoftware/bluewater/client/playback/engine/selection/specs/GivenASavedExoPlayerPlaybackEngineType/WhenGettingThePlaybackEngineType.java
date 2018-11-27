@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

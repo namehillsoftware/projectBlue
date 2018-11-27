@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository;
 
 import android.database.sqlite.SQLiteDatabase;
-
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 
 /**

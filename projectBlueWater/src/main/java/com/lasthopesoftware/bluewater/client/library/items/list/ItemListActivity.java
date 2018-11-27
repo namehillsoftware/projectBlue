@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ViewAnimator;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -29,13 +28,12 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
 
@@ -112,7 +110,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 	private void BuildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
-			.eventually(LoopedInPromise.response(perform(library -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
 				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
 

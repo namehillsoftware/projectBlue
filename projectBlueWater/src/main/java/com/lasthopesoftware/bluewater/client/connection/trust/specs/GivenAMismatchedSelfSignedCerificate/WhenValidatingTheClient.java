@@ -1,24 +1,20 @@
 package com.lasthopesoftware.bluewater.client.connection.trust.specs.GivenAMismatchedSelfSignedCerificate;
 
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
-
 import org.apache.tools.ant.filters.StringInputStream;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import javax.net.ssl.X509TrustManager;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class WhenValidatingTheClient {
 

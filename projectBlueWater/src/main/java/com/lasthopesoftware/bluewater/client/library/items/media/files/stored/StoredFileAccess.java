@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored;
 
 import android.content.Context;
 import android.database.SQLException;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
@@ -15,7 +14,6 @@ import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,7 +20,7 @@ public class WhenSendingPlayedToServer {
 
 	@BeforeClass
 	public static void before() throws InterruptedException, IOException {
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);;
+		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
 
 		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
 		when(urlConnection.getResponseCode()).thenReturn(200);
@@ -45,7 +44,7 @@ public class WhenSendingPlayedToServer {
 	}
 
 	@Test
-	public void thenTheFileIsUpdated() throws IOException {
+	public void thenTheFileIsUpdated() {
 		assertThat(functionEnded).isNull();
 	}
 }

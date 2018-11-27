@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.Give
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;

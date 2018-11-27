@@ -2,11 +2,10 @@ package com.lasthopesoftware.bluewater.shared;
 
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.util.HashMap;
-
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import java.io.InputStream;
+import java.util.HashMap;
 
 public class StandardRequest {
 

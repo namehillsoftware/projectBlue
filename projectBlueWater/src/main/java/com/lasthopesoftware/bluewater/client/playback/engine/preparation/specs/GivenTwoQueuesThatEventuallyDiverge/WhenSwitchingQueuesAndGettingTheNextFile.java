@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -32,7 +31,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 		new PositionedPlayableFile(6, mock(PlayableFile.class), new EmptyFileVolumeManager(),new ServiceFile(7)));
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() {
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
 		when(positionedFileQueue.poll())
 			.thenReturn(

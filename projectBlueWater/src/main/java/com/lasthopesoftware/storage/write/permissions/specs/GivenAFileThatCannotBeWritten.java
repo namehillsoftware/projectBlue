@@ -1,9 +1,7 @@
 package com.lasthopesoftware.storage.write.permissions.specs;
 
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
-
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 

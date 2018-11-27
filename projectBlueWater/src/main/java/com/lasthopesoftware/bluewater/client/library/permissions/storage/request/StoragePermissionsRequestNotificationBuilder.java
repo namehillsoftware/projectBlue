@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsPendingIntentBuilder;
 import com.lasthopesoftware.bluewater.client.settings.IEditClientSettingsPendingIntentBuilder;

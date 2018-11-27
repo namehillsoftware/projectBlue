@@ -10,9 +10,11 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
+import xmlwise.XmlElement;
+import xmlwise.XmlParseException;
+import xmlwise.Xmlwise;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,10 +24,6 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import xmlwise.XmlElement;
-import xmlwise.XmlParseException;
-import xmlwise.Xmlwise;
 
 public class FilePropertiesProvider implements IFilePropertiesProvider {
 

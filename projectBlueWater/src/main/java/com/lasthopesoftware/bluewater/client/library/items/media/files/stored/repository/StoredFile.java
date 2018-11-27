@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository;
 
 import android.support.annotation.Keep;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 

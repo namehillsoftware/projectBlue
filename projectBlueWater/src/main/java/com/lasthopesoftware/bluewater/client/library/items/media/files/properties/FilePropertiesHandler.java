@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties;
 
 import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers;
-
 import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.TreeMap;
@@ -14,18 +12,17 @@ class FilePropertiesHandler extends DefaultHandler {
 	private StringBuilder currentSb = null;
 	private String currentKey;
 	
-	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
-	{
+	public void startElement(String uri, String localName, String qName, Attributes attributes) {
 		currentSb = new StringBuilder();
 		if (qName.equalsIgnoreCase("field"))
 			currentKey = attributes.getValue("Name");
 	}
 	
-	public void characters(char[] ch, int start, int length) throws SAXException {
+	public void characters(char[] ch, int start, int length) {
 		XmlParsingHelpers.HandleBadXml(currentSb, ch, start, length);
 	}
 	
-	public void endElement(String uri, String localName, String qName) throws SAXException {
+	public void endElement(String uri, String localName, String qName) {
 //		if (sb != null) currentValue = sb.toString();
 		
 		if (qName.equalsIgnoreCase("field")) {

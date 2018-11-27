@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandle
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

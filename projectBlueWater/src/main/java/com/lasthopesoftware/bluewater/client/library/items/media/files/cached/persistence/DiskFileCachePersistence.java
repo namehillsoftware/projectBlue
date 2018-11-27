@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.p
 
 import android.content.Context;
 import android.database.SQLException;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.CacheFlusherTask;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.ICachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
@@ -15,7 +14,6 @@ import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

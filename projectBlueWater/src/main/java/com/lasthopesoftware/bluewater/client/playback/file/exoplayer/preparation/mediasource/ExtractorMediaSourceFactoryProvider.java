@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.content.Context;
 import android.net.Uri;
-
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSourceFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.extractor.mp3.Mp3Extractor;
@@ -18,10 +17,9 @@ import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+import okhttp3.OkHttpClient;
 
 import java.util.concurrent.TimeUnit;
-
-import okhttp3.OkHttpClient;
 
 public class ExtractorMediaSourceFactoryProvider {
 

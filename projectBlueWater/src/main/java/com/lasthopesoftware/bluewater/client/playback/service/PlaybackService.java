@@ -98,6 +98,7 @@ import com.lasthopesoftware.resources.notifications.notificationchannel.SharedCh
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -118,7 +119,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackService
 extends Service
@@ -403,29 +403,26 @@ implements OnAudioFocusChangeListener
 	private final CreateAndHold<ImmediateResponse<IConnectionProvider, Void>> connectionRegainedListener = new AbstractSynchronousLazy<ImmediateResponse<IConnectionProvider, Void>>() {
 		@Override
 		protected final ImmediateResponse<IConnectionProvider, Void> create() {
-			return (c) -> {
+			return new VoidResponse<>((c) -> {
 				if (playbackEngine == null) {
 					stopSelf(startId);
-					return null;
+					return;
 				}
 
 				playbackEngine.resume();
-
-				return null;
-			};
+			});
 		}
 	};
 
 	private final CreateAndHold<ImmediateResponse<Throwable, Void>> onPollingCancelledListener = new AbstractSynchronousLazy<ImmediateResponse<Throwable, Void>>() {
 		@Override
 		protected final ImmediateResponse<Throwable, Void> create() {
-			return (e) -> {
+			return new VoidResponse<>((e) -> {
 				if (e instanceof CancellationException) {
 					unregisterListeners();
 					stopSelf(startId);
 				}
-				return null;
-			};
+			});
 		}
 	};
 
@@ -508,7 +505,7 @@ implements OnAudioFocusChangeListener
 	private void notifyStartingService() {
 		lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
-			.then(perform(this::notifyForeground));
+			.then(new VoidResponse<>(this::notifyForeground));
 	}
 	
 	private void registerListeners() {
@@ -597,7 +594,7 @@ implements OnAudioFocusChangeListener
 		lazySelectedLibraryProvider.getObject()
 			.getBrowserLibrary()
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-			.then(perform(m -> actOnIntent(intent)))
+			.then(new VoidResponse<>(m -> actOnIntent(intent)))
 			.excuse(UnhandledRejectionHandler);
 
 		return START_NOT_STICKY;

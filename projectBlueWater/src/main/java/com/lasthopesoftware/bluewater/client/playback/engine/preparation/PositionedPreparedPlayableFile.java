@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
 import android.support.annotation.NonNull;
-
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 

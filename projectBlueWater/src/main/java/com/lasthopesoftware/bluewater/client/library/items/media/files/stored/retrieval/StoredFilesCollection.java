@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval;
 
 import android.content.Context;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;

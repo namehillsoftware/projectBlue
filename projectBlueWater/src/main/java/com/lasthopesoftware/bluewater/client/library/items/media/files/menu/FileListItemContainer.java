@@ -6,7 +6,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;

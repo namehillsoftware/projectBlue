@@ -3,9 +3,7 @@ package com.lasthopesoftware.bluewater.sync.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
-
 import org.slf4j.LoggerFactory;
 
 /**

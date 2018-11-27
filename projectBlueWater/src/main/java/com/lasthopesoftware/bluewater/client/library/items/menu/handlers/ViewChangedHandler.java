@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.widget.ViewAnimator;
-
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.OnAllMenusHidden;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.OnAnyMenuShown;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;

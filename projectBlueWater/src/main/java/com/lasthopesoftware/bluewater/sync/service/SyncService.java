@@ -1,15 +1,7 @@
 package com.lasthopesoftware.bluewater.sync.service;
 
-import android.app.AlarmManager;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.app.*;
+import android.content.*;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -19,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
-
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
@@ -41,11 +32,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesChecker;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFilesCounter;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.*;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
@@ -90,12 +77,12 @@ import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrato
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,8 +90,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class SyncService extends Service {
 
@@ -194,7 +179,7 @@ public class SyncService extends Service {
 		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
 		filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
-			.eventually(LoopedInPromise.response(perform(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
+			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
 			.excuse(e -> LoopedInPromise.response(exception -> {
 				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
 				return true;
@@ -304,7 +289,7 @@ public class SyncService extends Service {
 		setSyncNotificationText(null);
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
-		lazyLibraryProvider.getObject().getAllLibraries().then(perform(libraries -> {
+		lazyLibraryProvider.getObject().getAllLibraries().then(new VoidResponse<>(libraries -> {
 			librariesProcessing.set(libraries.size());
 
 			if (librariesProcessing.get() == 0) {
@@ -330,7 +315,7 @@ public class SyncService extends Service {
 
 					final Promise<Void> promiseLibrarySyncStarted =
 						AccessConfigurationBuilder.buildConfiguration(context, library)
-							.then(perform(urlProvider -> {
+							.then(new VoidResponse<>(urlProvider -> {
 								if (urlProvider == null) {
 									if (librariesProcessing.decrementAndGet() == 0) finishSync();
 									return;
@@ -393,7 +378,7 @@ public class SyncService extends Service {
 							}));
 
 					promiseLibrarySyncStarted
-						.excuse(perform(e ->
+						.excuse(new VoidResponse<>(e ->
 							logger.error("There was an error getting the URL for library ID " + library.getId(), e)));
 
 					return promiseLibrarySyncStarted;

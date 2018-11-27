@@ -4,13 +4,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -27,7 +25,7 @@ public class WhenActivatingTheChannel {
 	private static final CreateAndHold<NotificationManager> notificationManager = new Lazy<>(() -> (NotificationManager) RuntimeEnvironment.application.getSystemService(NOTIFICATION_SERVICE));
 	private static final CreateAndHold<String> channelId = new AbstractSynchronousLazy<String>() {
 		@Override
-		protected String create() throws Throwable {
+		protected String create() {
 			final NotificationChannelActivator activeNotificationChannelId =
 				new NotificationChannelActivator(notificationManager.getObject());
 

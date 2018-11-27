@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.view.View;
-
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;

@@ -10,7 +10,6 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
@@ -25,10 +24,9 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class ItemListFragment extends Fragment {
 
@@ -62,7 +60,7 @@ public class ItemListFragment extends Fragment {
 
     	libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(perform(activeLibrary -> {
+			.then(new VoidResponse<>(activeLibrary -> {
 				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(result -> {
 					if (result == null || result.size() == 0) return null;
 
@@ -100,7 +98,7 @@ public class ItemListFragment extends Fragment {
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
-			.then(perform(library -> {
+			.then(new VoidResponse<>(library -> {
 				PromisedResponse<List<Item>, Void> onGetLibraryViewItemResultsComplete = LoopedInPromise.response(new OnGetLibraryViewItemResultsComplete(
 					activity,
 					container,

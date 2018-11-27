@@ -2,12 +2,10 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.s
 
 import android.database.Cursor;
 import android.provider.MediaStore;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

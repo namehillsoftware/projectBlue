@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;

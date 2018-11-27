@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 
 import android.content.Context;
 import android.os.Handler;
-
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -88,7 +87,7 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 			}
 
 			@Override
-			public Promise<TNewResult> promiseResponse(TResult result) throws Throwable {
+			public Promise<TNewResult> promiseResponse(TResult result) {
 				this.result = result;
 				return new LoopedInPromise<>(this, handler);
 			}

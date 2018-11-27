@@ -3,8 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 public class PlaybackHandlerVolumeControllerFactory implements IPlaybackHandlerVolumeControllerFactory {
 
@@ -23,7 +22,7 @@ public class PlaybackHandlerVolumeControllerFactory implements IPlaybackHandlerV
 
 		maxFileVolumeProvider
 			.getMaxFileVolume(positionedPlayableFile.getServiceFile())
-			.then(perform(playbackHandlerMaxVolumeModifier::setMaxFileVolume));
+			.then(new VoidResponse<>(playbackHandlerMaxVolumeModifier::setMaxFileVolume));
 
 		return playbackHandlerMaxVolumeModifier;
 	}

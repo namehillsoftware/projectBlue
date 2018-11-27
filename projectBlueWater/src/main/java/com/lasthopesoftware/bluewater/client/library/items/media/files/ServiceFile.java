@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
 import android.support.annotation.NonNull;
-
 import com.lasthopesoftware.bluewater.shared.IIntKey;
 
 public final class ServiceFile implements IIntKey<ServiceFile> {

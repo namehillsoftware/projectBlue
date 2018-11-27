@@ -13,14 +13,13 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.HashSet;
 import java.util.concurrent.CancellationException;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PollConnectionService extends Service {
 
@@ -101,7 +100,7 @@ public class PollConnectionService extends Service {
 		SessionConnection.getInstance(this)
 			.promiseTestedSessionConnection()
 			.then(
-				perform(c -> {
+				new VoidResponse<>(c -> {
 					if (c != null) {
 						messenger.sendResolution(c);
 						return;
@@ -111,7 +110,7 @@ public class PollConnectionService extends Service {
 						.postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime),
 							connectionTime);
 				}),
-				perform(e -> lazyHandler.getObject()
+				new VoidResponse<>(e -> lazyHandler.getObject()
 					.postDelayed(() -> pollSessionConnection(messenger, cancellationToken, nextConnectionTime),
 						connectionTime)));
 	}

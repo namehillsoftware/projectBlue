@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository;
 
 import android.util.LruCache;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.lazyj.Lazy;

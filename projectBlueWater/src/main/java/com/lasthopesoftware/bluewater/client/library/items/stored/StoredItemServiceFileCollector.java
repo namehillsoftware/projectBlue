@@ -16,7 +16,7 @@ import com.namehillsoftware.handoff.promises.aggregation.CollectedResultsResolve
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
 import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
-
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +24,6 @@ import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
-
 
 public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollector {
 
@@ -63,7 +60,7 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 
 							final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 							serviceFileListPromise
-								.excuse(perform(e -> {
+								.excuse(new VoidResponse<>(e -> {
 									if (e instanceof FileNotFoundException) {
 										final IItem item = storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId);
 										logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");

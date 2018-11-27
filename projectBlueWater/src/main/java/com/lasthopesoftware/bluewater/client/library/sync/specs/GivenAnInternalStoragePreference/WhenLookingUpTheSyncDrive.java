@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.storage.directories.specs.FakePrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.specs.FakePublicDirectoryLookup;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

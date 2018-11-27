@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.specs.FakeDeferredStoredItemAccess;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

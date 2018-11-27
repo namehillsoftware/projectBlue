@@ -12,13 +12,7 @@ import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.RadioGroup;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.widget.*;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -30,11 +24,10 @@ import com.lasthopesoftware.bluewater.permissions.write.IApplicationWritePermiss
 import com.lasthopesoftware.bluewater.settings.SettingsMenu;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.ArrayList;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
@@ -167,7 +160,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(libraryId)
-			.eventually(LoopedInPromise.response(perform(result -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(result -> {
 				if (result == null) return;
 
 				library = result;

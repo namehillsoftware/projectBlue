@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
-
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 

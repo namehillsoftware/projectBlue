@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers;
 
 import android.widget.ViewAnimator;
-
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 

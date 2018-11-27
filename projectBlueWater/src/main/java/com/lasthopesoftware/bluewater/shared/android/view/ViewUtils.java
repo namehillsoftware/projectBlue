@@ -15,7 +15,6 @@ import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 

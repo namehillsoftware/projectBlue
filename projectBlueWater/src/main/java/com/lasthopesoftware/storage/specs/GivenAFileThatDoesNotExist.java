@@ -2,9 +2,7 @@ package com.lasthopesoftware.storage.specs;
 
 import com.lasthopesoftware.storage.RecursiveFileAssertionTester;
 import com.vedsoft.futures.callables.OneParameterFunction;
-
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,11 +11,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by david on 7/17/16.
