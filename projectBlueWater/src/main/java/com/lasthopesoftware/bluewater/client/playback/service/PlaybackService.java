@@ -629,7 +629,9 @@ implements OnAudioFocusChangeListener
 	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) throws Exception {
 		return playbackEnginePromise =
 			playbackEnginePromise != null
-				? playbackEnginePromise.eventually(e -> initializePlaybackPlaylistStateManager(library))
+				? playbackEnginePromise.eventually(
+					e -> initializePlaybackPlaylistStateManager(library),
+					e -> initializePlaybackPlaylistStateManager(library))
 				: initializePlaybackPlaylistStateManager(library);
 	}
 
@@ -777,7 +779,7 @@ implements OnAudioFocusChangeListener
 			});
 		}, e -> {
 			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
-			return Promise.empty();
+			return new Promise<>(e);
 		});
 	}
 	
