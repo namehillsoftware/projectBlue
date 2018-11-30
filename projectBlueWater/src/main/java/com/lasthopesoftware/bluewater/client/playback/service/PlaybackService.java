@@ -736,6 +736,9 @@ implements OnAudioFocusChangeListener
 				new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
+			if (connectionProvider == null)
+				throw new PlaybackEngineInitializationException("connectionProvider was null!");
+
 			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
 
 			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
@@ -865,7 +868,7 @@ implements OnAudioFocusChangeListener
 			});
 		}, e -> {
 			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
-			return new Promise<>(e);
+			throw e;
 		});
 	}
 
@@ -917,6 +920,11 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
+		if (exception instanceof PlaybackEngineInitializationException) {
+			handlePlaybackEngineInitializationException((PlaybackEngineInitializationException)exception);
+			return;
+		}
+
 		if (exception instanceof PreparationException) {
 			handlePreparationException((PreparationException)exception);
 			return;
@@ -933,6 +941,11 @@ implements OnAudioFocusChangeListener
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
+		stopNotification();
+	}
+
+	private void handlePlaybackEngineInitializationException(PlaybackEngineInitializationException exception) {
+		logger.error("There was an error initializing the playback engine", exception);
 		stopNotification();
 	}
 
