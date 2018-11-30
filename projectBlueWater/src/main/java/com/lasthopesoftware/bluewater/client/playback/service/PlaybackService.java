@@ -736,10 +736,10 @@ implements OnAudioFocusChangeListener
 				new IntentFilter(SessionConnection.buildSessionBroadcast));
 
 		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
+			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+
 			if (connectionProvider == null)
 				throw new PlaybackEngineInitializationException("connectionProvider was null!");
-
-			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
 
 			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 			if (remoteControlProxy != null)
