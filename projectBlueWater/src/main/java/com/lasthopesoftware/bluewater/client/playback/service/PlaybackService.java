@@ -599,37 +599,125 @@ implements OnAudioFocusChangeListener
 
 		return START_NOT_STICKY;
 	}
-	
-	private void handleBuildConnectionStatusChange(final int status) {
-		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
-		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
-		switch (status) {
-			case BuildingSessionConnectionStatus.GettingLibrary:
-				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
-				break;
-			case BuildingSessionConnectionStatus.GettingLibraryFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
-				return;
-			case BuildingSessionConnectionStatus.BuildingConnection:
-				notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
-				break;
-			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
-				return;
-			case BuildingSessionConnectionStatus.GettingView:
-				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
-				break;
-			case BuildingSessionConnectionStatus.GettingViewFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
-				return;
-		}
-		notifyNotificationManager(notifyBuilder);
-	}
 
+	private void actOnIntent(final Intent intent) {
+		if (intent == null) {
+			pausePlayback(true);
+			return;
+		}
+
+		String action = intent.getAction();
+		if (action == null) return;
+
+		if (action.equals(Action.launchMusicService)) {
+			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
+			if (playlistPosition < 0) return;
+
+			FileStringListUtilities
+				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
+				.then(playlist -> {
+					playbackEngine.startPlaylist(playlist, playlistPosition, 0);
+					NowPlayingActivity.startNowPlayingActivity(this);
+
+					return null;
+				});
+
+			return;
+		}
+
+		if (action.equals(Action.togglePlayPause))
+			action = isPlaying ? Action.pause : Action.play;
+
+		if (action.equals(Action.play)) {
+			isPlaying = true;
+			playbackEngine.resume();
+
+			return;
+		}
+
+		if (action.equals(Action.pause)) {
+			pausePlayback(true);
+			return;
+		}
+
+		if (!Action.playbackStartingActions.contains(action))
+			stopNotificationIfNotPlaying();
+
+		if (action.equals(Action.repeating)) {
+			playbackEngine.playRepeatedly();
+			return;
+		}
+
+		if (action.equals(Action.completing)) {
+			playbackEngine.playToCompletion();
+			return;
+		}
+
+		if (action.equals(Action.seekTo)) {
+			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
+			if (playlistPosition < 0) return;
+
+			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
+			if (filePosition < 0) return;
+
+			playbackEngine
+				.changePosition(playlistPosition, filePosition)
+				.then(this::broadcastChangedFile)
+				.excuse(UnhandledRejectionHandler);
+
+			return;
+		}
+
+		if (action.equals(Action.previous)) {
+			playbackEngine
+				.skipToPrevious()
+				.then(this::broadcastChangedFile)
+				.excuse(UnhandledRejectionHandler);
+			return;
+		}
+
+		if (action.equals(Action.next)) {
+			playbackEngine
+				.skipToNext()
+				.then(this::broadcastChangedFile)
+				.excuse(UnhandledRejectionHandler);
+			return;
+		}
+
+		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
+			pollingSessionConnection.cancel();
+			return;
+		}
+
+		if (action.equals(Action.addFileToPlaylist)) {
+			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
+			if (fileKey < 0) return;
+
+			playbackEngine
+				.addFile(new ServiceFile(fileKey))
+				.eventually(LoopedInPromise.response(library -> {
+					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
+					return library;
+				}, this))
+				.excuse(UnhandledRejectionHandler);
+
+			return;
+		}
+
+		if (action.equals(Action.removeFileAtPositionFromPlaylist)) {
+			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
+			if (filePosition < -1) return;
+
+			playbackEngine.removeFileAtPosition(filePosition).excuse(UnhandledRejectionHandler);
+		}
+	}
+	
 	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) throws Exception {
 		return playbackEnginePromise =
 			playbackEnginePromise != null
-				? playbackEnginePromise.eventually(e -> initializePlaybackPlaylistStateManager(library))
+				? playbackEnginePromise.eventually(
+					e -> initializePlaybackPlaylistStateManager(library),
+					e -> initializePlaybackPlaylistStateManager(library))
 				: initializePlaybackPlaylistStateManager(library);
 	}
 
@@ -649,6 +737,9 @@ implements OnAudioFocusChangeListener
 
 		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
 			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+
+			if (connectionProvider == null)
+				throw new PlaybackEngineInitializationException("connectionProvider was null!");
 
 			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 			if (remoteControlProxy != null)
@@ -777,122 +868,36 @@ implements OnAudioFocusChangeListener
 			});
 		}, e -> {
 			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
-			return Promise.empty();
+			throw e;
 		});
 	}
-	
-	private void actOnIntent(final Intent intent) {
-		if (intent == null) {
-			pausePlayback(true);
-			return;
+
+	private void handleBuildConnectionStatusChange(final int status) {
+		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
+		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
+		switch (status) {
+			case BuildingSessionConnectionStatus.GettingLibrary:
+				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
+				break;
+			case BuildingSessionConnectionStatus.GettingLibraryFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
+				return;
+			case BuildingSessionConnectionStatus.BuildingConnection:
+				notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
+				break;
+			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
+				return;
+			case BuildingSessionConnectionStatus.GettingView:
+				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
+				break;
+			case BuildingSessionConnectionStatus.GettingViewFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
+				return;
 		}
-		
-		String action = intent.getAction();
-		if (action == null) return;
-
-		if (action.equals(Action.launchMusicService)) {
-			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (playlistPosition < 0) return;
-
-			FileStringListUtilities
-				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
-				.then(playlist -> {
-					playbackEngine.startPlaylist(playlist, playlistPosition, 0);
-					NowPlayingActivity.startNowPlayingActivity(this);
-
-					return null;
-				});
-
-			return;
-        }
-
-		if (action.equals(Action.togglePlayPause))
-			action = isPlaying ? Action.pause : Action.play;
-
-		if (action.equals(Action.play)) {
-			isPlaying = true;
-        	playbackEngine.resume();
-
-        	return;
-        }
-
-		if (action.equals(Action.pause)) {
-			pausePlayback(true);
-			return;
-		}
-
-		if (!Action.playbackStartingActions.contains(action))
-			stopNotificationIfNotPlaying();
-
-		if (action.equals(Action.repeating)) {
-			playbackEngine.playRepeatedly();
-			return;
-		}
-
-		if (action.equals(Action.completing)) {
-			playbackEngine.playToCompletion();
-			return;
-		}
-
-		if (action.equals(Action.seekTo)) {
-			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (playlistPosition < 0) return;
-
-			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
-			if (filePosition < 0) return;
-
-			playbackEngine
-				.changePosition(playlistPosition, filePosition)
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-
-			return;
-		}
-
-		if (action.equals(Action.previous)) {
-			playbackEngine
-				.skipToPrevious()
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-			return;
-		}
-
-		if (action.equals(Action.next)) {
-			playbackEngine
-				.skipToNext()
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-			return;
-		}
-
-		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
-			pollingSessionConnection.cancel();
-			return;
-		}
-
-		if (action.equals(Action.addFileToPlaylist)) {
-			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (fileKey < 0) return;
-
-			playbackEngine
-				.addFile(new ServiceFile(fileKey))
-				.eventually(LoopedInPromise.response(library -> {
-					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
-					return library;
-				}, this))
-				.excuse(UnhandledRejectionHandler);
-
-			return;
-		}
-
-		if (action.equals(Action.removeFileAtPositionFromPlaylist)) {
-			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
-			if (filePosition < -1) return;
-
-			playbackEngine.removeFileAtPosition(filePosition).excuse(UnhandledRejectionHandler);
-		}
+		notifyNotificationManager(notifyBuilder);
 	}
-
+	
 	private void handlePlaybackStarted(PositionedPlayingFile positionedPlayableFile) {
 		isPlaying = true;
 		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted(positionedPlayableFile.asPositionedFile());
@@ -915,6 +920,11 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
+		if (exception instanceof PlaybackEngineInitializationException) {
+			handlePlaybackEngineInitializationException((PlaybackEngineInitializationException)exception);
+			return;
+		}
+
 		if (exception instanceof PreparationException) {
 			handlePreparationException((PreparationException)exception);
 			return;
@@ -931,6 +941,12 @@ implements OnAudioFocusChangeListener
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
+		stopNotification();
+	}
+
+	private void handlePlaybackEngineInitializationException(PlaybackEngineInitializationException exception) {
+		logger.error("There was an error initializing the playback engine", exception);
+		stopNotification();
 	}
 
 	private void handlePreparationException(PreparationException preparationException) {
@@ -1005,12 +1021,10 @@ implements OnAudioFocusChangeListener
 		lazyLibraryRepository.getObject()
 			.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-			.then(v -> {
+			.then(new VoidResponse<>(v -> {
 				if (isPlaying)
 					playbackEngine.resume();
-
-				return null;
-			})
+			}))
 			.excuse(UnhandledRejectionHandler);
 	}
 
