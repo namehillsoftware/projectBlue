@@ -22,7 +22,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -64,7 +63,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
 
-		final String[] parameters = (VIEW_PLAYLIST_FILES.equals(getIntent().getAction()) ? new Playlist(mItemId) : new Item(mItemId)).getFileListParameters();
+		final String[] parameters = new FileListParameters().getFileListParameters(new Item(mItemId));
 
 		final Runnable fillFileListAction = new Runnable() {
 			@Override

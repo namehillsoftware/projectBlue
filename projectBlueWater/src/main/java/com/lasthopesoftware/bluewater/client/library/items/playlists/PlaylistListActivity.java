@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.library.items.list.DemoableItemList
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.ItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
@@ -108,7 +109,14 @@ public class PlaylistListActivity extends AppCompatActivity implements IItemList
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.eventually(LoopedInPromise.response(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
-				final ItemListAdapter<Playlist> itemListAdapter = new DemoableItemListAdapter<>(this, R.id.tvStandard, playlist, new ItemListMenuChangeHandler(this), storedItemAccess, library);
+				final ItemListAdapter<Playlist> itemListAdapter = new DemoableItemListAdapter<>(
+					this,
+					R.id.tvStandard,
+					playlist,
+					new FileListParameters(),
+					new ItemListMenuChangeHandler(this),
+					storedItemAccess,
+					library);
 
 				final ListView localPlaylistView = playlistView.findView();
 				localPlaylistView.setAdapter(itemListAdapter);

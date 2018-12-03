@@ -56,7 +56,7 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
 						.map(storedItem -> {
 							final int serviceId = storedItem.getServiceId();
-							final String[] parameters = (storedItem.getItemType() == StoredItem.ItemType.ITEM ? new Item(serviceId) : new Playlist(serviceId)).getFileListParameters();
+							final String[] parameters = new FileListParameters().getFileListParameters(new Item(serviceId));
 
 							final Promise<List<ServiceFile>> serviceFileListPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 							serviceFileListPromise

@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibra
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
@@ -112,7 +113,14 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
-				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(this, R.id.tvStandard, items, new ItemListMenuChangeHandler(this), storedItemAccess, library);
+				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(
+					this,
+					R.id.tvStandard,
+					items,
+					new FileListParameters(),
+					new ItemListMenuChangeHandler(this),
+					storedItemAccess,
+					library);
 
 				final ListView localItemListView = this.itemListView.findView();
 				localItemListView.setAdapter(itemListAdapter);
