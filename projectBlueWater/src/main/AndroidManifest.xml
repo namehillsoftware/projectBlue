@@ -86,13 +86,6 @@
                     android:value="com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity"/>
         </activity>
         <activity
-                android:name=".client.library.items.playlists.PlaylistListActivity"
-                android:label="@string/title_activity_file_view">
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity"/>
-        </activity>
-        <activity
                 android:name=".client.library.items.media.files.list.SearchFilesActivity"
                 android:label="@string/title_activity_search_files"
                 android:launchMode="singleTop">

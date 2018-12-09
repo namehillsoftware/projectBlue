@@ -38,9 +38,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.ActiveFileDownloadsFragment;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistListFragment;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
+import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
@@ -289,7 +289,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
 		return (parent, view, position, id) -> {
 			final Item selectedItem = items.get(position);
-			updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
+			updateSelectedView(KnownViews.Playlists.equals(selectedItem.getValue())
+				? Library.ViewType.PlaylistView
+				: Library.ViewType.StandardServerView, selectedItem.getKey());
 		};
 	}
 
