@@ -23,7 +23,7 @@ public class FileListParameters implements IFileListParameterProvider {
 			newParams.add("Action=Serialize");
 			if (option == Options.Shuffled)
 				newParams.add("Shuffle=1");
-			return newParams.toArray(new String[newParams.size()]);
+			return newParams.toArray(new String[0]);
 		}
 	}
 }
