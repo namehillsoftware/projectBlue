@@ -2,18 +2,22 @@ package com.lasthopesoftware.bluewater.client.library.items.stored.specs.GivenAn
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.annimon.stream.Stream.concat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +32,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	private static List<ServiceFile> thirdItemExpectedFiles = Collections.emptyList();
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 
 		final IStoredItemAccess storedItemAccess =
 			new IStoredItemAccess() {
@@ -50,32 +54,22 @@ public class WhenCollectingTheAssociatedServiceFiles {
 				}
 			};
 
+		final FileListParameters fileListParameters = new FileListParameters();
+
 		final IFileProvider fileProvider = mock(IFileProvider.class);
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=1"))
+		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
 			.thenAnswer(e -> new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=2"))
+		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
 			.thenAnswer(e -> new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=3"))
+		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
 			.thenAnswer(e -> new Promise<>(thirdItemExpectedFiles));
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
 			fileProvider);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		serviceFileCollector
-			.promiseServiceFilesToSync()
-			.then(files -> {
-				collectedFiles = files;
-				countDownLatch.countDown();
-				return null;
-			})
-			.excuse(e -> {
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		collectedFiles = new FuturePromise<>(serviceFileCollector
+			.promiseServiceFilesToSync()).get(1000, TimeUnit.SECONDS);
 	}
 
 	@Test

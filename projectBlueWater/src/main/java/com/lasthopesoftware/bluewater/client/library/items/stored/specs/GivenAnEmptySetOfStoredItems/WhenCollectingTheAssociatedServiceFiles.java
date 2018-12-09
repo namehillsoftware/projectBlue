@@ -6,13 +6,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IF
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -22,7 +25,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	private static Collection<ServiceFile> collectedFiles;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 
 		final IStoredItemAccess storedItemAccess =
 			new IStoredItemAccess() {
@@ -47,20 +50,9 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			storedItemAccess,
 			fileProvider);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		serviceFileCollector
-			.promiseServiceFilesToSync()
-			.then(files -> {
-				collectedFiles = files;
-				countDownLatch.countDown();
-				return null;
-			})
-			.excuse(e -> {
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		collectedFiles =
+			new FuturePromise<>(serviceFileCollector
+			.promiseServiceFilesToSync()).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test
