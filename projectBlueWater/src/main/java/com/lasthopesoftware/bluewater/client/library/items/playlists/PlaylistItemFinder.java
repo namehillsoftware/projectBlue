@@ -10,12 +10,12 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.Collection;
 
-public class PlaylistItemsConverter implements ConvertPlaylistsToItems {
+public class PlaylistItemFinder implements FindPlaylistItem {
 
 	private final ProvideLibraryViews libraryViews;
 	private final ProvideItems itemProvider;
 
-	public PlaylistItemsConverter(ProvideLibraryViews libraryViews, ProvideItems itemProvider) {
+	public PlaylistItemFinder(ProvideLibraryViews libraryViews, ProvideItems itemProvider) {
 		this.libraryViews = libraryViews;
 		this.itemProvider = itemProvider;
 	}

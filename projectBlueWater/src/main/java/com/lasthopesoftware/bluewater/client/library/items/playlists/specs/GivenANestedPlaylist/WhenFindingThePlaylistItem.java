@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists.specs.Give
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ProvideItems;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistItemsConverter;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistItemFinder;
 import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
 import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViews;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenConvertingThePlaylistToAnItem {
+public class WhenFindingThePlaylistItem {
 
 	private static Item expectedItem;
 	private static Item item;
@@ -91,11 +91,11 @@ public class WhenConvertingThePlaylistToAnItem {
 				decoy,
 				expectedItem)));
 
-		final PlaylistItemsConverter playlistItemsConverter = new PlaylistItemsConverter(
+		final PlaylistItemFinder playlistItemFinder = new PlaylistItemFinder(
 			libraryViews,
 			itemProvider);
 
-		item = new FuturePromise<>(playlistItemsConverter.promiseItem(new Playlist(playlistId))).get();
+		item = new FuturePromise<>(playlistItemFinder.promiseItem(new Playlist(playlistId))).get();
 	}
 
 	@Test
