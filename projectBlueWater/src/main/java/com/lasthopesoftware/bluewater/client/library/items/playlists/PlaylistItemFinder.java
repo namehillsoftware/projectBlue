@@ -42,19 +42,18 @@ public class PlaylistItemFinder implements FindPlaylistItem {
 				if (possiblePlaylistItem.isPresent())
 					return new Promise<>(possiblePlaylistItem.get());
 
-				final Promise<Collection<Item>> aggregatedItems = Promise.whenAll(
+				final Promise<Collection<Item>> promiseAllChildren = Promise.whenAll(
 					Stream.of(items).map(i -> recursivelySearchForPlaylist(i, playlist)).toList());
 
-				return aggregatedItems
-					.then(i -> {
-						final Optional<Item> possiblyFoundItem = Stream.of(i)
-							.filter(item -> item != null)
-							.findFirst();
+				return promiseAllChildren.then(aggregatedItems -> {
+					final Optional<Item> possiblyFoundItem = Stream.of(aggregatedItems)
+						.filter(item -> item != null)
+						.findFirst();
 
-						return possiblyFoundItem.isPresent()
-							? possiblyFoundItem.get()
-							: null;
-					});
+					return possiblyFoundItem.isPresent()
+						? possiblyFoundItem.get()
+						: null;
+				});
 			});
 	}
 }
