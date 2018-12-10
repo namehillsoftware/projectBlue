@@ -86,8 +86,8 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 			public void run() {
 				SessionConnection.getInstance(ItemListActivity.this).promiseSessionConnection()
 					.eventually(c -> {
-						final ItemProvider itemProvider = new ItemProvider(c, mItemId);
-						return itemProvider.promiseItems();
+						final ItemProvider itemProvider = new ItemProvider(c);
+						return itemProvider.promiseItems(mItemId);
 					})
 					.eventually(itemProviderComplete)
 					.excuse(new HandleViewIoException(ItemListActivity.this, this));

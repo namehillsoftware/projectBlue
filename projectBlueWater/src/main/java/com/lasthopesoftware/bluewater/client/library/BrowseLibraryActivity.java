@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
@@ -41,6 +40,7 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistLis
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;

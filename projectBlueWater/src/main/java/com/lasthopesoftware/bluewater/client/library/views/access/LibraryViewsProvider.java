@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.access.views;
+package com.lasthopesoftware.bluewater.client.library.views.access;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.List;
 
-public class LibraryViewsProvider implements ProvideLibraryViews {
+public class LibraryViewsProvider implements ProvideLibraryViewsUsingConnection {
 
     private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
 

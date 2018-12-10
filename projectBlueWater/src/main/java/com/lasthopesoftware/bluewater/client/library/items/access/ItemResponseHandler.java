@@ -35,7 +35,7 @@ class ItemResponseHandler extends DefaultHandler {
 		final Item item = new Item(Integer.parseInt(currentValue), currentKey);
 
 		if (currentPlaylistId != null && !currentPlaylistId.isEmpty())
-			item.setPlaylistId(Integer.parseInt(currentPlaylistId));
+			item.withPlaylistId(Integer.parseInt(currentPlaylistId));
 
 		items.add(item);
 	}
