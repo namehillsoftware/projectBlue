@@ -15,8 +15,10 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
+import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
@@ -46,10 +48,12 @@ public class PlaylistListFragment extends Fragment {
 
 		final FragmentActivity activity = getActivity();
 
+		if (activity == null) return itemListLayout;
+
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.then(new VoidResponse<>(library -> {
-				final PromisedResponse<List<Playlist>, Void> listResolvedPromise =
+				final PromisedResponse<List<Item>, Void> listResolvedPromise =
 					LoopedInPromise.response(
 						new OnGetLibraryViewPlaylistResultsComplete(
 							activity,
@@ -58,6 +62,7 @@ public class PlaylistListFragment extends Fragment {
 							loadingView,
 							0,
 							itemListMenuChangeHandler,
+							FileListParameters.getInstance(),
 							new StoredItemAccess(activity, library),
 							library), activity);
 
@@ -65,7 +70,7 @@ public class PlaylistListFragment extends Fragment {
 					@Override
 					public void run() {
 						SessionConnection.getInstance(activity).promiseSessionConnection()
-							.eventually(PlaylistsProvider::promisePlaylists)
+							.eventually(c -> ItemProvider.provide(c, library.getSelectedView()))
 							.eventually(listResolvedPromise)
 							.excuse(new HandleViewIoException(activity, this));
 					}

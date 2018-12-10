@@ -1,9 +1,27 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters;
 
+import com.lasthopesoftware.bluewater.client.library.items.Item;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class FileListParameters {
+public class FileListParameters implements IFileListParameterProvider<Item> {
+
+	private static final CreateAndHold<FileListParameters> lazyFileListParameters = new Lazy<>(FileListParameters::new);
+
+	public static FileListParameters getInstance() {
+		return lazyFileListParameters.getObject();
+	}
+
+	private FileListParameters() {}
+
+	@Override
+	public String[] getFileListParameters(Item item) {
+		return new String[] {"Browse/Files", "ID=" + String.valueOf(item.getKey()), "Version=2"};
+	}
+
 	public enum Options {
 		None,
 		Shuffled
@@ -15,7 +33,7 @@ public class FileListParameters {
 			newParams.add("Action=Serialize");
 			if (option == Options.Shuffled)
 				newParams.add("Shuffle=1");
-			return newParams.toArray(new String[newParams.size()]);
+			return newParams.toArray(new String[0]);
 		}
 	}
 }

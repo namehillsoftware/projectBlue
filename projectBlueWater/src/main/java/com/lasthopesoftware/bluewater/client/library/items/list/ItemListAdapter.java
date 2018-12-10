@@ -15,11 +15,11 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
 import java.util.List;
 
-public class ItemListAdapter<T extends IItem & IFileListParameterProvider> extends ArrayAdapter<T> {
+public class ItemListAdapter<T extends IItem> extends ArrayAdapter<T> {
 
 	private final ListItemMenuBuilder<T> listItemMenuBuilder;
 
-	public ItemListAdapter(Activity activity, int resource, List<T> items, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
+	public ItemListAdapter(Activity activity, int resource, List<T> items, IFileListParameterProvider fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
 		super(activity, resource, items);
 
 		final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
@@ -27,7 +27,7 @@ public class ItemListAdapter<T extends IItem & IFileListParameterProvider> exten
 		viewChangedHandler.setOnAnyMenuShown(itemListMenuEvents);
 		viewChangedHandler.setOnViewChangedListener(itemListMenuEvents);
 
-		listItemMenuBuilder = new ListItemMenuBuilder<>(storedItemAccess, library);
+		listItemMenuBuilder = new ListItemMenuBuilder<>(storedItemAccess, library, fileListParameterProvider);
 		listItemMenuBuilder.setOnViewChangedListener(viewChangedHandler);
 	}
 

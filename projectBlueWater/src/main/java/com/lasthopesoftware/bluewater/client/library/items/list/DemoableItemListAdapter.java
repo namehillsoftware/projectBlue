@@ -20,7 +20,7 @@ import tourguide.tourguide.TourGuide;
 
 import java.util.List;
 
-public class DemoableItemListAdapter<T extends IItem & IFileListParameterProvider> extends ItemListAdapter<T> {
+public class DemoableItemListAdapter<T extends IItem> extends ItemListAdapter<T> {
 
 	private static final String PREFS_KEY = MagicPropertyBuilder.buildMagicPropertyName(DemoableItemListAdapter.class, "TUTORIAL_SHOWN");
 	private static final boolean DEBUGGING_TUTORIAL = false;
@@ -29,8 +29,8 @@ public class DemoableItemListAdapter<T extends IItem & IFileListParameterProvide
 
 	private boolean wasTutorialShown;
 
-	public DemoableItemListAdapter(Activity activity, int resource, List<T> items, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
-		super(activity, resource, items, itemListMenuEvents, storedItemAccess, library);
+	public DemoableItemListAdapter(Activity activity, int resource, List<T> items, IFileListParameterProvider fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
+		super(activity, resource, items, fileListParameterProvider, itemListMenuEvents, storedItemAccess, library);
 
 		this.activity = activity;
 		this.items = items;

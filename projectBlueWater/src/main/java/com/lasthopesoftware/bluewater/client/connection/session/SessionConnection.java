@@ -16,9 +16,9 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
-import com.lasthopesoftware.bluewater.client.library.access.views.ProvideLibraryViews;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViewsUsingConnection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -61,7 +61,7 @@ public class SessionConnection {
 	private final LocalBroadcastManager localBroadcastManager;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
-	private final ProvideLibraryViews libraryViewsProvider;
+	private final ProvideLibraryViewsUsingConnection libraryViewsProvider;
 	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
 	private final TestConnections connectionTester;
@@ -75,7 +75,7 @@ public class SessionConnection {
 			LocalBroadcastManager.getInstance(applicationContext),
 			new SelectedBrowserLibraryIdentifierProvider(applicationContext),
 			new LibraryRepository(applicationContext),
-			new LibraryViewsProvider(),
+			new LibraryViewsByConnectionProvider(),
 			new LibraryRepository(applicationContext),
 			new LiveUrlProvider(
 				new ActiveNetworkFinder(applicationContext),
@@ -87,7 +87,7 @@ public class SessionConnection {
 		LocalBroadcastManager localBroadcastManager,
 		ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider,
 		ILibraryProvider libraryProvider,
-		ProvideLibraryViews libraryViewsProvider,
+		ProvideLibraryViewsUsingConnection libraryViewsProvider,
 		ILibraryStorage libraryStorage,
 		ProvideLiveUrl liveUrlProvider,
 		TestConnections connectionTester) {

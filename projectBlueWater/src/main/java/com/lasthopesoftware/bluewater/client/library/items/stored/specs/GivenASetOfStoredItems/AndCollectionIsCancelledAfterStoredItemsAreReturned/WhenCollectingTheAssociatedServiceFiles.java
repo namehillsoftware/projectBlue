@@ -1,12 +1,15 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored.specs.GivenASetOfStoredItems.AndCollectionIsCancelledAfterStoredItemsAreReturned;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.library.items.stored.specs.FakeDeferredStoredItemAccess;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,8 +19,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -31,7 +35,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	private static Throwable exception;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, TimeoutException {
 
 		final FakeDeferredStoredItemAccess storedItemAccess = new FakeDeferredStoredItemAccess() {
 			@Override
@@ -43,36 +47,32 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			}
 		};
 
+		final FileListParameters fileListParameters = FileListParameters.getInstance();
+
 		final IFileProvider fileProvider = mock(IFileProvider.class);
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=1"))
-			.thenAnswer(e -> new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=2"))
-			.thenAnswer(e -> new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, "Browse/Files", "ID=3"))
-			.thenAnswer(e -> new Promise<>(thirdItemExpectedFiles));
+		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
+			.thenReturn(new Promise<>(firstItemExpectedFiles));
+		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
+			.thenReturn(new Promise<>(secondItemExpectedFiles));
+		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
+			.thenReturn(new Promise<>(thirdItemExpectedFiles));
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
+			mock(ConvertStoredPlaylistsToStoredItems.class),
 			fileProvider);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		final Promise<Collection<ServiceFile>> serviceFilesPromise = serviceFileCollector.promiseServiceFilesToSync();
-		serviceFilesPromise
-			.then(files -> {
-				countDownLatch.countDown();
-				return null;
-			})
-			.excuse(e -> {
-				exception = e;
-				countDownLatch.countDown();
-				return null;
-			});
 
 		serviceFilesPromise.cancel();
 
 		storedItemAccess.resolveStoredItems();
 
-		countDownLatch.await(1, TimeUnit.SECONDS);
+		try {
+			new FuturePromise<>(serviceFilesPromise).get(1, TimeUnit.SECONDS);
+		} catch (ExecutionException e) {
+			exception = e.getCause();
+		}
 	}
 
 	@Test

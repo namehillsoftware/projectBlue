@@ -1,11 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library.items;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 
 
-public class Item extends AbstractIntKeyStringValue implements IItem, IFileListParameterProvider {
+public class Item extends AbstractIntKeyStringValue implements IItem {
+
+	private int playlistId;
 
 	public Item(int key, String value) {
 		super(key, value);
@@ -20,16 +21,19 @@ public class Item extends AbstractIntKeyStringValue implements IItem, IFileListP
 	
 	public Item() {
 		super();
+	}
 
+	public int getPlaylistId() {
+		return playlistId;
+	}
+
+	public Item setPlaylistId(int playlistId) {
+		this.playlistId = playlistId;
+		return this;
 	}
 
 	@Override
     public int hashCode() {
         return getKey();
     }
-
-	@Override
-	public String[] getFileListParameters() {
-		return new String[] {"Browse/Files", "ID=" + String.valueOf(getKey())};
-	}
 }

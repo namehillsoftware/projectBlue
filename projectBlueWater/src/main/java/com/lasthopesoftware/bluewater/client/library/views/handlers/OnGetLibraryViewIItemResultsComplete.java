@@ -23,7 +23,7 @@ import tourguide.tourguide.TourGuide;
 
 import java.util.List;
 
-public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFileListParameterProvider> implements ImmediateResponse<List<T>, Void> {
+public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem> implements ImmediateResponse<List<T>, Void> {
 
 	private static final String PREFS_KEY = MagicPropertyBuilder.buildMagicPropertyName(OnGetLibraryViewIItemResultsComplete.class, "TUTORIAL_SHOWN");
 
@@ -35,16 +35,18 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
     private final int position;
     private final IItemListMenuChangeHandler itemListMenuChangeHandler;
     private final ViewGroup container;
+    private final IFileListParameterProvider fileListParameterProvider;
     private final StoredItemAccess storedItemAccess;
     private final Library library;
 
-    OnGetLibraryViewIItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, StoredItemAccess storedItemAccess, Library library) {
+    OnGetLibraryViewIItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
         this.listView = listView;
         this.activity = activity;
         this.loadingView = loadingView;
         this.position = position;
         this.itemListMenuChangeHandler = itemListMenuChangeHandler;
         this.container = container;
+        this.fileListParameterProvider = fileListParameterProvider;
         this.storedItemAccess = storedItemAccess;
         this.library = library;
     }
@@ -54,7 +56,7 @@ public abstract class OnGetLibraryViewIItemResultsComplete<T extends IItem & IFi
         if (result == null) return null;
 
         listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-        listView.setAdapter(new DemoableItemListAdapter<>(activity, R.id.tvStandard, result, itemListMenuChangeHandler, storedItemAccess, library));
+        listView.setAdapter(new DemoableItemListAdapter<>(activity, R.id.tvStandard, result, fileListParameterProvider, itemListMenuChangeHandler, storedItemAccess, library));
         loadingView.setVisibility(View.INVISIBLE);
         listView.setVisibility(View.VISIBLE);
 
