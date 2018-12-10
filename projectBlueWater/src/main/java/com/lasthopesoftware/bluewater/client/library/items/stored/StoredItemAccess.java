@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.stored;
 
 import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
@@ -34,16 +33,16 @@ public final class StoredItemAccess implements IStoredItemAccess {
     @Override
 	public void toggleSync(IItem item, boolean enable) {
 	    if (enable)
-            enableItemSync(item, getListType(item));
+            enableItemSync(item, StoredItemHelpers.getListType(item));
 	    else
-		    disableItemSync(item, getListType(item));
+		    disableItemSync(item, StoredItemHelpers.getListType(item));
     }
 
     @Override
 	public Promise<Boolean> isItemMarkedForSync(final IItem item) {
         return new QueuedPromise<>(() -> {
 	           try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-		            return isItemMarkedForSync(repositoryAccessHelper, library, item, getListType(item));
+		            return isItemMarkedForSync(repositoryAccessHelper, library, item, StoredItemHelpers.getListType(item));
 	           }
             }, RepositoryAccessHelper.databaseExecutor);
     }
@@ -102,7 +101,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
     }
 
-    private static boolean isItemMarkedForSync(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
+	private static boolean isItemMarkedForSync(RepositoryAccessHelper helper, Library library, IItem item, StoredItem.ItemType itemType) {
         return getStoredItem(helper, library, item, itemType) != null;
     }
 
@@ -119,8 +118,4 @@ public final class StoredItemAccess implements IStoredItemAccess {
                     .addParameter(StoredItem.itemTypeColumnName, itemType)
                     .fetchFirst(StoredItem.class);
     }
-
-	private static StoredItem.ItemType getListType(IItem item) {
-		return item instanceof Playlist ? StoredItem.ItemType.PLAYLIST : StoredItem.ItemType.ITEM;
-	}
 }
