@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class FileListParameters implements IFileListParameterProvider {
+public class FileListParameters implements IFileListParameterProvider<IItem> {
 
 	@Override
 	public String[] getFileListParameters(IItem item) {

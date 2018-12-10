@@ -5,6 +5,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.Collection;
 
-public interface IServiceFilesToSyncCollector {
+public interface CollectServiceFilesForSync {
 	Promise<Collection<ServiceFile>> promiseServiceFilesToSync();
 }

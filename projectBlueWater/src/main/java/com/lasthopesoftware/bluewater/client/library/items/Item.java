@@ -6,6 +6,8 @@ import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 public class Item extends AbstractIntKeyStringValue implements IItem {
 
+	private int playlistId;
+
 	public Item(int key, String value) {
 		super(key, value);
 
@@ -19,7 +21,14 @@ public class Item extends AbstractIntKeyStringValue implements IItem {
 	
 	public Item() {
 		super();
+	}
 
+	public int getPlaylistId() {
+		return playlistId;
+	}
+
+	public void setPlaylistId(int playlistId) {
+		this.playlistId = playlistId;
 	}
 
 	@Override

@@ -18,7 +18,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemProvider {
+public class ItemProvider implements ProvideItems {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
 
@@ -48,6 +48,7 @@ public class ItemProvider {
         this.itemKey = itemKey;
 	}
 
+	@Override
     public Promise<List<Item>> promiseItems() {
 		return
 			RevisionChecker.promiseRevision(connectionProvider)
@@ -68,20 +69,21 @@ public class ItemProvider {
 					}
 
 					final HttpURLConnection connection;
-					connection = connectionProvider.getConnection(LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
+					connection = connectionProvider.getConnection(
+						LibraryViewsProvider.browseLibraryParameter,
+						"ID=" + String.valueOf(itemKey),
+						"Version=2");
 
-					try {
-						try (InputStream is = connection.getInputStream()) {
-							final List<Item> items = ItemResponse.GetItems(is);
+					try (InputStream is = connection.getInputStream()) {
+						final List<Item> items = ItemResponse.GetItems(is);
 
-							final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
+						final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
 
-							synchronized (itemsCache) {
-								itemsCache.put(boxedItemKey, newItemHolder);
-							}
-
-							return items;
+						synchronized (itemsCache) {
+							itemsCache.put(boxedItemKey, newItemHolder);
 						}
+
+						return items;
 					} catch (IOException e) {
 						logger.error("There was an error getting the inputstream", e);
 						throw e;

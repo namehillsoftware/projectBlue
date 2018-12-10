@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.sync.IServiceFilesToSyncCollector;
+import com.lasthopesoftware.bluewater.client.library.sync.CollectServiceFilesForSync;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollector {
+public class StoredItemServiceFileCollector implements CollectServiceFilesForSync {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredItemServiceFileCollector.class);
 
@@ -48,6 +48,10 @@ public class StoredItemServiceFileCollector implements IServiceFilesToSyncCollec
 
 					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
 						.map(storedItem -> {
+							if (storedItem.getItemType() == StoredItem.ItemType.PLAYLIST) {
+
+							}
+
 							final int serviceId = storedItem.getServiceId();
 							//TODO migrate synchronized playlist ID's to item ID's
 							final Item item = new Item(serviceId);
