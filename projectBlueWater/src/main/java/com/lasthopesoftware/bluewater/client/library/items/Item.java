@@ -27,7 +27,7 @@ public class Item extends AbstractIntKeyStringValue implements IItem {
 		return playlistId;
 	}
 
-	public Item withPlaylistId(int playlistId) {
+	public Item setPlaylistId(int playlistId) {
 		this.playlistId = playlistId;
 		return this;
 	}

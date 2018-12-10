@@ -29,7 +29,7 @@ public class WhenFindingThePlaylistItem {
 		final Random random = new Random();
 		final int playlistId = random.nextInt();
 
-		expectedItem = new Item(random.nextInt()).withPlaylistId(playlistId);
+		expectedItem = new Item(random.nextInt()).setPlaylistId(playlistId);
 
 		final ProvideLibraryViews libraryViews = mock(ProvideLibraryViews.class);
 		when(libraryViews.promiseLibraryViews())
@@ -84,7 +84,7 @@ public class WhenFindingThePlaylistItem {
 				.thenReturn(new Promise<>(Collections.emptyList()));
 		}
 
-		final Item decoy = new Item(random.nextInt()).withPlaylistId(random.nextInt());
+		final Item decoy = new Item(random.nextInt()).setPlaylistId(random.nextInt());
 
 		when(itemProvider.promiseItems(secondLevelChosenItem.getKey()))
 			.thenReturn(new Promise<>(Arrays.asList(
@@ -109,7 +109,7 @@ public class WhenFindingThePlaylistItem {
 		for (int i = 0; i < numberOfChildren; ++i) {
 			final Item newItem = new Item(random.nextInt());
 			if (withPlaylistIds)
-				newItem.withPlaylistId(random.nextInt());
+				newItem.setPlaylistId(random.nextInt());
 			items.add(newItem);
 		}
 
