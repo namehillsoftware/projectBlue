@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
 import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViews;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import java.util.Collection;
+
 public class PlaylistItemsConverter implements ConvertPlaylistsToItems {
 
 	private final ProvideLibraryViews libraryViews;
@@ -35,15 +37,22 @@ public class PlaylistItemsConverter implements ConvertPlaylistsToItems {
 
 				final Optional<Item> possiblePlaylistItem = Stream.of(items).filter(i -> i.getPlaylistId() == playlist.getKey()).findFirst();
 
-				return possiblePlaylistItem.isPresent()
-					? new Promise<>(possiblePlaylistItem.get())
-					: Promise.whenAll(Stream.of(items).map(i -> recursivelySearchForPlaylist(i, playlist)).toList())
-						.then(i -> {
-							final Optional<Item> possiblyFoundItem = Stream.of(i).findFirst();
-							return possiblyFoundItem.isPresent()
-								? possiblyFoundItem.get()
-								: null;
-						});
+				if (possiblePlaylistItem.isPresent())
+					return new Promise<>(possiblePlaylistItem.get());
+
+				final Promise<Collection<Item>> aggregatedItems = Promise.whenAll(
+					Stream.of(items).map(i -> recursivelySearchForPlaylist(i, playlist)).toList());
+
+				return aggregatedItems
+					.then(i -> {
+						final Optional<Item> possiblyFoundItem = Stream.of(i)
+							.filter(item -> item != null)
+							.findFirst();
+
+						return possiblyFoundItem.isPresent()
+							? possiblyFoundItem.get()
+							: null;
+					});
 			});
 	}
 }

@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +38,9 @@ public class WhenConvertingThePlaylistToAnItem {
 				new Item(16, KnownViews.Playlists))));
 
 		final ProvideItems itemProvider = mock(ProvideItems.class);
+		when(itemProvider.promiseItems(anyInt()))
+			.thenReturn(new Promise<>(Collections.emptyList()));
+
 		setupItemProviderWithItems(
 			itemProvider,
 			random,
@@ -56,7 +60,7 @@ public class WhenConvertingThePlaylistToAnItem {
 		for (Item item : generatedItems) {
 			if (item.equals(firstLevelChosenItem)) continue;
 
-			setupItemProviderWithItems(
+			generatedItems = setupItemProviderWithItems(
 				itemProvider,
 				random,
 				item.getKey(),
@@ -80,9 +84,11 @@ public class WhenConvertingThePlaylistToAnItem {
 				.thenReturn(new Promise<>(Collections.emptyList()));
 		}
 
+		final Item decoy = new Item(random.nextInt()).withPlaylistId(random.nextInt());
+
 		when(itemProvider.promiseItems(secondLevelChosenItem.getKey()))
 			.thenReturn(new Promise<>(Arrays.asList(
-				new Item(random.nextInt()).withPlaylistId(random.nextInt()),
+				decoy,
 				expectedItem)));
 
 		final PlaylistItemsConverter playlistItemsConverter = new PlaylistItemsConverter(
