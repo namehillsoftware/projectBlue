@@ -4,7 +4,7 @@ import android.util.LruCache;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.providers.AbstractProvider;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -67,7 +67,7 @@ public class ItemProvider implements ProvideItems {
 
 					final HttpURLConnection connection;
 					connection = connectionProvider.getConnection(
-						LibraryViewsProvider.browseLibraryParameter,
+						LibraryViewsByConnectionProvider.browseLibraryParameter,
 						"ID=" + String.valueOf(itemKey),
 						"Version=2");
 

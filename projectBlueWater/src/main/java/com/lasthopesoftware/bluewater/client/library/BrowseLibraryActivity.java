@@ -40,7 +40,7 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistLis
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
@@ -277,7 +277,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			public void run() {
 				SessionConnection.getInstance(BrowseLibraryActivity.this)
 					.promiseSessionConnection()
-					.eventually(LibraryViewsProvider::provide)
+					.eventually(LibraryViewsByConnectionProvider::provide)
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
 			}

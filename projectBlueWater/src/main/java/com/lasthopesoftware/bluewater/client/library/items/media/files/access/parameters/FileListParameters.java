@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters;
 
-import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class FileListParameters implements IFileListParameterProvider<IItem> {
+public class FileListParameters implements IFileListParameterProvider<Item> {
 
 	@Override
-	public String[] getFileListParameters(IItem item) {
+	public String[] getFileListParameters(Item item) {
 		return new String[] {"Browse/Files", "ID=" + String.valueOf(item.getKey()), "Version=2"};
 	}
 

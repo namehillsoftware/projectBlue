@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
@@ -66,6 +67,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
+			mock(ConvertStoredPlaylistsToStoredItems.class),
 			fileProvider);
 
 		collectedFiles = new FuturePromise<>(serviceFileCollector

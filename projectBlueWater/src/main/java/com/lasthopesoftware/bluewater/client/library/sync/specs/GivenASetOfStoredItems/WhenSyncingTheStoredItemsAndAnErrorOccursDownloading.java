@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenASetOfStoredItems;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
@@ -12,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
@@ -45,10 +47,12 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 		final IStoredItemAccess storedItemAccessMock = mock(IStoredItemAccess.class);
 		when(storedItemAccessMock.promiseStoredItems())
 			.thenReturn(new Promise<>(Collections.singleton(
-				new StoredItem(1, 14, StoredItem.ItemType.PLAYLIST))));
+				new StoredItem(1, 14, StoredItem.ItemType.ITEM))));
+
+		final FileListParameters fileListParameters = new FileListParameters();
 
 		final IFileProvider mockFileProvider = mock(IFileProvider.class);
-		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
+		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(14))))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
 				new ServiceFile(2),
@@ -75,7 +79,7 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
-			new StoredItemServiceFileCollector(storedItemAccessMock, mockFileProvider),
+			new StoredItemServiceFileCollector(storedItemAccessMock, mock(ConvertStoredPlaylistsToStoredItems.class), mockFileProvider),
 			storedFileAccess,
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
 			new StoredFileDownloader(

@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViewsUsingConnection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
@@ -75,7 +75,7 @@ public class SessionConnection {
 			LocalBroadcastManager.getInstance(applicationContext),
 			new SelectedBrowserLibraryIdentifierProvider(applicationContext),
 			new LibraryRepository(applicationContext),
-			new LibraryViewsProvider(),
+			new LibraryViewsByConnectionProvider(),
 			new LibraryRepository(applicationContext),
 			new LiveUrlProvider(
 				new ActiveNetworkFinder(applicationContext),

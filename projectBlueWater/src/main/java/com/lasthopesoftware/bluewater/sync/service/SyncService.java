@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
@@ -43,9 +44,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.sy
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.StoredFileUpdater;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistItemFinder;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemsChecker;
+import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.StoredPlaylistItemsConverter;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestedBroadcast;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
@@ -58,6 +61,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.permissions.writ
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -352,7 +357,14 @@ public class SyncService extends Service {
 
 								final LibrarySyncHandler librarySyncHandler =
 									new LibrarySyncHandler(library,
-										new StoredItemServiceFileCollector(storedItemAccess, new FileProvider(new FileStringListProvider(connectionProvider))),
+										new StoredItemServiceFileCollector(
+											storedItemAccess,
+											new StoredPlaylistItemsConverter(
+												new PlaylistItemFinder(
+													new LibraryViewsProvider(connectionProvider, new LibraryViewsByConnectionProvider()),
+													new ItemProvider(connectionProvider)),
+												storedItemAccess),
+											new FileProvider(new FileStringListProvider(connectionProvider))),
 										storedFileAccess,
 										storedFileUpdater,
 										new StoredFileDownloader(
