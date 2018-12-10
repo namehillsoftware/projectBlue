@@ -117,7 +117,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 					this,
 					R.id.tvStandard,
 					items,
-					new FileListParameters(),
+					FileListParameters.getInstance(),
 					new ItemListMenuChangeHandler(this),
 					storedItemAccess,
 					library);

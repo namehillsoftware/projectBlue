@@ -1,11 +1,21 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters;
 
 import com.lasthopesoftware.bluewater.client.library.items.Item;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class FileListParameters implements IFileListParameterProvider<Item> {
+
+	private static final CreateAndHold<FileListParameters> lazyFileListParameters = new Lazy<>(FileListParameters::new);
+
+	public static FileListParameters getInstance() {
+		return lazyFileListParameters.getObject();
+	}
+
+	private FileListParameters() {}
 
 	@Override
 	public String[] getFileListParameters(Item item) {

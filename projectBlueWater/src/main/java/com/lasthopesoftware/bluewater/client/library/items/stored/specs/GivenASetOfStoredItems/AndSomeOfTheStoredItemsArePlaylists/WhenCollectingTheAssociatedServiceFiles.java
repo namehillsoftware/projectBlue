@@ -43,7 +43,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			new StoredItem(1, 3, StoredItem.ItemType.ITEM),
 			new StoredItem(1, 5, StoredItem.ItemType.PLAYLIST));
 
-		final FileListParameters fileListParameters = new FileListParameters();
+		final FileListParameters fileListParameters = FileListParameters.getInstance();
 		final IFileProvider fileProvider = mock(IFileProvider.class);
 		when(fileProvider.promiseFiles(any(), any()))
 			.thenReturn(new Promise<>(Collections.emptyList()));

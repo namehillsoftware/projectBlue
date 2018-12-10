@@ -63,7 +63,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
 
-		final String[] parameters = new FileListParameters().getFileListParameters(new Item(mItemId));
+		final String[] parameters = FileListParameters.getInstance().getFileListParameters(new Item(mItemId));
 
 		final Runnable fillFileListAction = new Runnable() {
 			@Override

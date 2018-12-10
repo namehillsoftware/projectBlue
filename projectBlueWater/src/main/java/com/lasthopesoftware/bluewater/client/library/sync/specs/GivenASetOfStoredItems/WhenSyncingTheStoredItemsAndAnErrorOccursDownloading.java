@@ -49,7 +49,7 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			.thenReturn(new Promise<>(Collections.singleton(
 				new StoredItem(1, 14, StoredItem.ItemType.ITEM))));
 
-		final FileListParameters fileListParameters = new FileListParameters();
+		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
 		final IFileProvider mockFileProvider = mock(IFileProvider.class);
 		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(14))))

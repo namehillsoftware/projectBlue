@@ -75,7 +75,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	private Promise<List<ServiceFile>> promiseServiceFiles(StoredItem storedItem, CancellationProxy cancellationProxy) {
 		final int serviceId = storedItem.getServiceId();
 		final Item item = new Item(serviceId);
-		final String[] parameters = new FileListParameters().getFileListParameters(item);
+		final String[] parameters = FileListParameters.getInstance().getFileListParameters(item);
 
 		final Promise<List<ServiceFile>> serviceFilesPromise =
 			fileProvider.promiseFiles(FileListParameters.Options.None, parameters);

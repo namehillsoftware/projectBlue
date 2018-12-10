@@ -107,7 +107,7 @@ public class ItemListFragment extends Fragment {
 					loadingView,
 					position,
 					itemListMenuChangeHandler,
-					new FileListParameters(),
+					FileListParameters.getInstance(),
 					new StoredItemAccess(activity, library),
 					library), activity);
 

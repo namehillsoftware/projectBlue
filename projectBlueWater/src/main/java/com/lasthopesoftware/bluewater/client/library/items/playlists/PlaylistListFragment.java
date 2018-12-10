@@ -62,7 +62,7 @@ public class PlaylistListFragment extends Fragment {
 							loadingView,
 							0,
 							itemListMenuChangeHandler,
-							new FileListParameters(),
+							FileListParameters.getInstance(),
 							new StoredItemAccess(activity, library),
 							library), activity);
 

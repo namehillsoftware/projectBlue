@@ -55,7 +55,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 				}
 			};
 
-		final FileListParameters fileListParameters = new FileListParameters();
+		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
 		final IFileProvider fileProvider = mock(IFileProvider.class);
 		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))

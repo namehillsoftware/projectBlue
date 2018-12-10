@@ -47,7 +47,7 @@ public class WhenSyncingTheStoredItems {
 		when(storedPlaylistsConverter.promiseConvertedStoredItem(argThat(a -> a.getServiceId() == 14 && a.getItemType() == StoredItem.ItemType.PLAYLIST)))
 			.thenReturn(new Promise<>(new StoredItem(0, 17, StoredItem.ItemType.ITEM)));
 
-		final FileListParameters fileListParameters = new FileListParameters();
+		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
 		final IFileProvider mockFileProvider = mock(IFileProvider.class);
 		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(17))))
