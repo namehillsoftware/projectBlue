@@ -27,7 +27,7 @@ public class LibrarySyncHandler {
 	private final Library library;
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
-	private final IServiceFilesToSyncCollector serviceFilesToSyncCollector;
+	private final CollectServiceFilesForSync serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
 	private final UpdateStoredFiles storedFileUpdater;
 	private final IStoredFileDownloader storedFileDownloader;
@@ -37,7 +37,7 @@ public class LibrarySyncHandler {
 
 	public LibrarySyncHandler(
 		Library library,
-		IServiceFilesToSyncCollector serviceFilesToSyncCollector,
+		CollectServiceFilesForSync serviceFilesToSyncCollector,
 		IStoredFileAccess storedFileAccess,
 		UpdateStoredFiles storedFileUpdater,
 		IStoredFileDownloader storedFileDownloader,

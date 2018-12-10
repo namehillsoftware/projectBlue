@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.view.View;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
@@ -10,19 +11,21 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
 
 public final class PlayClickHandler extends AbstractMenuClickHandler {
-    private final IFileListParameterProvider item;
+	private final IFileListParameterProvider fileListParameterProvider;
+	private final IItem item;
 
-    public PlayClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider item) {
+    public PlayClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider fileListParameterProvider, IItem item) {
         super(menuContainer);
+		this.fileListParameterProvider = fileListParameterProvider;
 
-	    this.item = item;
+		this.item = item;
     }
 
     @Override
     public void onClick(final View v) {
     	SessionConnection.getInstance(v.getContext()).promiseSessionConnection()
 			.then(FileStringListProvider::new)
-			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.None, item.getFileListParameters()))
+			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.None, fileListParameterProvider.getFileListParameters(item)))
 			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
 			.excuse(new OnGetFileStringListForClickErrorListener(v, this));
 

@@ -11,14 +11,14 @@ import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class ClickItemListener implements OnItemClickListener {
 
-	private final ArrayList<Item> items;
+	private final List<Item> items;
 	private final Context context;
 
-	public ClickItemListener(Context context, ArrayList<Item> items) {
+	public ClickItemListener(Context context, List<Item> items) {
 		this.context = context;
         this.items = items;
 	}
@@ -33,10 +33,10 @@ public class ClickItemListener implements OnItemClickListener {
 				if (items == null) return;
 
 				if (items.size() > 0) {
-					final Intent itemlistIntent = new Intent(context, ItemListActivity.class);
-					itemlistIntent.putExtra(ItemListActivity.KEY, item.getKey());
-					itemlistIntent.putExtra(ItemListActivity.VALUE, item.getValue());
-					context.startActivity(itemlistIntent);
+					final Intent itemListIntent = new Intent(context, ItemListActivity.class);
+					itemListIntent.putExtra(ItemListActivity.KEY, item.getKey());
+					itemListIntent.putExtra(ItemListActivity.VALUE, item.getValue());
+					context.startActivity(itemListIntent);
 
 					return;
 				}

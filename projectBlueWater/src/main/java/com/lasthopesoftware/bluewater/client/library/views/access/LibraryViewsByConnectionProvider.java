@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.access.views;
+package com.lasthopesoftware.bluewater.client.library.views.access;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
@@ -15,9 +15,9 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.List;
 
-public class LibraryViewsProvider implements ProvideLibraryViews {
+public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsingConnection {
 
-    private static final Logger logger = LoggerFactory.getLogger(LibraryViewsProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(LibraryViewsByConnectionProvider.class);
 
     public final static String browseLibraryParameter = "Browse/Children";
 
@@ -25,7 +25,7 @@ public class LibraryViewsProvider implements ProvideLibraryViews {
     private static Integer revision;
 
 	public static Promise<List<Item>> provide(IConnectionProvider connectionProvider) {
-		return new LibraryViewsProvider().promiseLibraryViewsFromConnection(connectionProvider);
+		return new LibraryViewsByConnectionProvider().promiseLibraryViewsFromConnection(connectionProvider);
     }
 
 	@Override

@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
+import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.library.items.stored.specs.FakeDeferredStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
@@ -65,7 +66,7 @@ public class WhenSyncingTheStoredItems {
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
-			new StoredItemServiceFileCollector(deferredStoredItemAccess, mockFileProvider),
+			new StoredItemServiceFileCollector(deferredStoredItemAccess, mock(ConvertStoredPlaylistsToStoredItems.class), mockFileProvider),
 			storedFileAccess,
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
 			new StoredFileDownloader(

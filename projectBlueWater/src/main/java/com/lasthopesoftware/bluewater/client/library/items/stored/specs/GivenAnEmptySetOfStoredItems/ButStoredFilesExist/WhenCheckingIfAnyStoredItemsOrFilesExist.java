@@ -4,12 +4,15 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.Ch
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemsChecker;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import edu.emory.mathcs.backport.java.util.Collections;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,7 +24,7 @@ public class WhenCheckingIfAnyStoredItemsOrFilesExist {
 	private static Boolean isAny;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 		final IStoredItemAccess storedItemAccess = mock(IStoredItemAccess.class);
 		when(storedItemAccess.promiseStoredItems())
 			.thenReturn(new Promise<>(Collections.emptyList()));
@@ -31,15 +34,9 @@ public class WhenCheckingIfAnyStoredItemsOrFilesExist {
 
 		final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, checkForAnyStoredFiles);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new Library())
-			.then(r -> {
-				isAny = r;
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		isAny =
+			new FuturePromise<>(storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new Library()))
+				.get(1, TimeUnit.SECONDS);
 	}
 
 	@Test

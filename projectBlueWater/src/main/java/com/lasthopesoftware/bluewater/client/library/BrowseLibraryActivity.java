@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
@@ -38,9 +37,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.ActiveFileDownloadsFragment;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistListFragment;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
+import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
@@ -277,7 +277,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			public void run() {
 				SessionConnection.getInstance(BrowseLibraryActivity.this)
 					.promiseSessionConnection()
-					.eventually(LibraryViewsProvider::provide)
+					.eventually(LibraryViewsByConnectionProvider::provide)
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
 			}
@@ -289,7 +289,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
 		return (parent, view, position, id) -> {
 			final Item selectedItem = items.get(position);
-			updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
+			updateSelectedView(KnownViews.Playlists.equals(selectedItem.getValue())
+				? Library.ViewType.PlaylistView
+				: Library.ViewType.StandardServerView, selectedItem.getKey());
 		};
 	}
 

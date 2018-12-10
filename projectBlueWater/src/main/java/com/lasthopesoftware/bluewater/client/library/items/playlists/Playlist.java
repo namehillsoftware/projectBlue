@@ -2,12 +2,11 @@ package com.lasthopesoftware.bluewater.client.library.items.playlists;
 
 import android.util.SparseArray;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 import java.util.ArrayList;
 
-public class Playlist extends AbstractIntKeyStringValue implements IItem, IFileListParameterProvider {
+public class Playlist extends AbstractIntKeyStringValue implements IItem {
 
 	private SparseArray<Playlist> mSubItems;
 	private Playlist mParent = null;
@@ -77,10 +76,5 @@ public class Playlist extends AbstractIntKeyStringValue implements IItem, IFileL
 	 */
 	public void setGroup(String mGroup) {
 		this.mGroup = mGroup;
-	}
-
-	@Override
-	public String[] getFileListParameters() {
-		return new String[] {"Playlist/Files", "Playlist=" + String.valueOf(getKey())};
 	}
 }

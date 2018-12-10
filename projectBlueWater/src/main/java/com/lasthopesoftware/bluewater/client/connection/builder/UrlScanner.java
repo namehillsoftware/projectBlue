@@ -10,7 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayDeque;
+import java.util.LinkedList;
 import java.util.Queue;
 
 public class UrlScanner implements BuildUrlProviders {
@@ -49,7 +49,7 @@ public class UrlScanner implements BuildUrlProviders {
 					final int httpPort = info.getHttpPort();
 					final String remoteIp = info.getRemoteIp();
 
-					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new ArrayDeque<>();
+					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new LinkedList<>();
 
 					if (!library.isLocalOnly()) {
 						final Integer httpsPort = info.getHttpsPort();
