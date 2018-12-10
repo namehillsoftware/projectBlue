@@ -35,7 +35,9 @@ public class PlaylistItemsConverter implements ConvertPlaylistsToItems {
 			.eventually(items -> {
 				if (items.isEmpty()) return Promise.empty();
 
-				final Optional<Item> possiblePlaylistItem = Stream.of(items).filter(i -> i.getPlaylistId() == playlist.getKey()).findFirst();
+				final Optional<Item> possiblePlaylistItem = Stream.of(items)
+					.filter(i -> i.getPlaylistId() == playlist.getKey())
+					.findFirst();
 
 				if (possiblePlaylistItem.isPresent())
 					return new Promise<>(possiblePlaylistItem.get());

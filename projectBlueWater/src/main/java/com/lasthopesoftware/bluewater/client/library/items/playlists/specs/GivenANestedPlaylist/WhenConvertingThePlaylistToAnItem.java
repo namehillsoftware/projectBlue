@@ -60,7 +60,7 @@ public class WhenConvertingThePlaylistToAnItem {
 		for (Item item : generatedItems) {
 			if (item.equals(firstLevelChosenItem)) continue;
 
-			generatedItems = setupItemProviderWithItems(
+			setupItemProviderWithItems(
 				itemProvider,
 				random,
 				item.getKey(),
