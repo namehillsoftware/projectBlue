@@ -32,6 +32,9 @@ public class ClickItemListener implements OnItemClickListener {
 	
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+		parent.setVisibility(ViewUtils.getVisibility(false));
+		loadingView.setVisibility(ViewUtils.getVisibility(true));
+
 		final Item item = items.get(position);
 
         final Context context = view.getContext();
@@ -60,6 +63,6 @@ public class ClickItemListener implements OnItemClickListener {
 				parent.setVisibility(ViewUtils.getVisibility(true));
 				loadingView.setVisibility(ViewUtils.getVisibility(false));
 				return null;
-			}, context, Duration.millis(100)));
+			}, context, Duration.standardSeconds(1)));
 	}
 }
