@@ -33,7 +33,6 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
@@ -101,7 +100,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 	public Void respond(List<Item> items) {
 		if (items == null) return null;
 
-		ItemListActivity.this.BuildItemListView(items);
+		buildItemListView(items);
 
 		itemListView.findView().setVisibility(View.VISIBLE);
 		pbLoading.findView().setVisibility(View.INVISIBLE);
@@ -109,7 +108,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 		return null;
 	}
 
-	private void BuildItemListView(final List<Item> items) {
+	private void buildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
@@ -124,7 +123,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 				final ListView localItemListView = this.itemListView.findView();
 				localItemListView.setAdapter(itemListAdapter);
-				localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
+				localItemListView.setOnItemClickListener(new ClickItemListener(items, pbLoading.findView()));
 				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 			}), this));
     }

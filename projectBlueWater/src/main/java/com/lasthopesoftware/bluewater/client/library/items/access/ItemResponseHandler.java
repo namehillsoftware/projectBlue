@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 class ItemResponseHandler extends DefaultHandler {
@@ -13,7 +13,7 @@ class ItemResponseHandler extends DefaultHandler {
 	private String currentKey;
 	private String currentPlaylistId;
 	
-	public final List<Item> items = new ArrayList<>();
+	public final List<Item> items = new LinkedList<>();
 
 	public void startElement(String uri, String localName, String qName, Attributes attributes) {
 		currentValue = "";

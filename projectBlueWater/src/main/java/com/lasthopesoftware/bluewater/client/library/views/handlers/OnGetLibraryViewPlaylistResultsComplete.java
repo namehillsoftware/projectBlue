@@ -17,12 +17,14 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
 
     private final ListView listView;
     private final Activity activity;
+	private final View loadingView;
 
-    public OnGetLibraryViewPlaylistResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
+	public OnGetLibraryViewPlaylistResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
         super(activity, container, listView, loadingView, position, itemListMenuChangeHandler, fileListParameterProvider, storedItemAccess, library);
 
         this.listView = listView;
         this.activity = activity;
+        this.loadingView = loadingView;
     }
 
     @Override
@@ -30,7 +32,7 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
         super.respond(result);
 
         if (result != null)
-            listView.setOnItemClickListener(new ClickItemListener(activity, result));
+            listView.setOnItemClickListener(new ClickItemListener(result, loadingView));
 
         return null;
     }
