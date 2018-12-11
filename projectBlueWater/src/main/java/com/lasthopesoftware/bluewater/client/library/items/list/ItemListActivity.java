@@ -100,7 +100,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 	public Void respond(List<Item> items) {
 		if (items == null) return null;
 
-		ItemListActivity.this.BuildItemListView(items);
+		buildItemListView(items);
 
 		itemListView.findView().setVisibility(View.VISIBLE);
 		pbLoading.findView().setVisibility(View.INVISIBLE);
@@ -108,7 +108,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 		return null;
 	}
 
-	private void BuildItemListView(final List<Item> items) {
+	private void buildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);

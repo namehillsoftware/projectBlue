@@ -10,11 +10,16 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class ClickItemListener implements OnItemClickListener {
+
+	private static final Logger logger = LoggerFactory.getLogger(ClickItemListener.class);
 
 	private final List<Item> items;
 	private final View loadingView;
@@ -36,9 +41,6 @@ public class ClickItemListener implements OnItemClickListener {
 		SessionConnection.getInstance(context).promiseSessionConnection()
 			.eventually(c -> ItemProvider.provide(c, item.getKey()))
             .then(new VoidResponse<>(items -> {
-				parent.setVisibility(ViewUtils.getVisibility(true));
-				loadingView.setVisibility(ViewUtils.getVisibility(false));
-
 				if (items == null) return;
 
 				if (items.size() > 0) {
@@ -55,9 +57,10 @@ public class ClickItemListener implements OnItemClickListener {
 				fileListIntent.putExtra(FileListActivity.VALUE, item.getValue());
 				fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
 				context.startActivity(fileListIntent);
-			}), new VoidResponse<>(e -> {
+			}), new VoidResponse<>(e -> logger.error("An error occurred getting nested items for item " + item.getKey(), e)))
+			.eventually(LoopedInPromise.response(new VoidResponse<>(v -> {
 				parent.setVisibility(ViewUtils.getVisibility(true));
 				loadingView.setVisibility(ViewUtils.getVisibility(false));
-			}));
+			}), context));
 	}
 }
