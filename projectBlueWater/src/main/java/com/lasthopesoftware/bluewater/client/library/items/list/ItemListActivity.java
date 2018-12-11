@@ -33,7 +33,6 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
@@ -124,7 +123,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 				final ListView localItemListView = this.itemListView.findView();
 				localItemListView.setAdapter(itemListAdapter);
-				localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
+				localItemListView.setOnItemClickListener(new ClickItemListener(this, items, pbLoading.findView()));
 				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 			}), this));
     }

@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,19 +19,21 @@ import java.util.List;
 public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemResultsComplete<Item> {
     private final ListView listView;
     private final Activity activity;
+    private final View loadingView;
 
     public OnGetLibraryViewItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
         super(activity, container, listView, loadingView, position, itemListMenuChangeHandler, fileListParameterProvider, storedItemAccess, library);
 
         this.listView = listView;
         this.activity = activity;
+        this.loadingView = loadingView;
     }
 
     @Override
     public Void respond(List<Item> result) {
         super.respond(result);
         if (result != null)
-            listView.setOnItemClickListener(new ClickItemListener(activity, result instanceof ArrayList ? (ArrayList<Item>) result : new ArrayList<>(result)));
+            listView.setOnItemClickListener(new ClickItemListener(activity, result, loadingView));
 
         return null;
     }
