@@ -32,7 +32,7 @@ public class OnGetLibraryViewPlaylistResultsComplete extends OnGetLibraryViewIIt
         super.respond(result);
 
         if (result != null)
-            listView.setOnItemClickListener(new ClickItemListener(activity, result, loadingView));
+            listView.setOnItemClickListener(new ClickItemListener(result, loadingView));
 
         return null;
     }

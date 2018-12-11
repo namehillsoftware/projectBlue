@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.list.File
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,20 +24,17 @@ public class ClickItemListener implements OnItemClickListener {
 
 	private final List<Item> items;
 	private final View loadingView;
-	private final Context context;
 
-	public ClickItemListener(Context context, List<Item> items, View loadingView) {
-		this.context = context;
-        this.items = items;
+	public ClickItemListener(List<Item> items, View loadingView) {
+		this.items = items;
 		this.loadingView = loadingView;
 	}
 	
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		parent.setVisibility(ViewUtils.getVisibility(false));
-		loadingView.setVisibility(ViewUtils.getVisibility(true));
+		final Item item = items.get(position);
 
-        final Item item = items.get(position);
+        final Context context = view.getContext();
 
 		SessionConnection.getInstance(context).promiseSessionConnection()
 			.eventually(c -> ItemProvider.provide(c, item.getKey()))
@@ -58,9 +56,10 @@ public class ClickItemListener implements OnItemClickListener {
 				fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
 				context.startActivity(fileListIntent);
 			}), new VoidResponse<>(e -> logger.error("An error occurred getting nested items for item " + item.getKey(), e)))
-			.eventually(LoopedInPromise.response(new VoidResponse<>(v -> {
+			.eventually(v -> new LoopedInPromise<>(() -> {
 				parent.setVisibility(ViewUtils.getVisibility(true));
 				loadingView.setVisibility(ViewUtils.getVisibility(false));
-			}), context));
+				return null;
+			}, context, Duration.millis(100)));
 	}
 }

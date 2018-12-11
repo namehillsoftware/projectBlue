@@ -123,7 +123,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 				final ListView localItemListView = this.itemListView.findView();
 				localItemListView.setAdapter(itemListAdapter);
-				localItemListView.setOnItemClickListener(new ClickItemListener(this, items, pbLoading.findView()));
+				localItemListView.setOnItemClickListener(new ClickItemListener(items, pbLoading.findView()));
 				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 			}), this));
     }
