@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -153,7 +153,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				lvFileDetails.findView().setVisibility(View.VISIBLE);
 			}), this))
 			.excuse(new HandleViewIoException(this, () -> setView(fileKey)))
-			.excuse(new UnexpectedExceptionToaster(this))
+			.excuse(new UnexpectedExceptionToasterResponse(this))
 			.then(new VoidResponse<>(v -> finish()));
 
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {

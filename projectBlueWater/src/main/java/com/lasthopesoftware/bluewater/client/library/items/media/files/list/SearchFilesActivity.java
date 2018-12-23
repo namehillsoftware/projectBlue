@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -87,7 +87,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query)))
 					.eventually(onSearchFilesComplete)
 					.excuse(new HandleViewIoException(SearchFilesActivity.this, this))
-					.excuse(new UnexpectedExceptionToaster(SearchFilesActivity.this))
+					.excuse(new UnexpectedExceptionToasterResponse(SearchFilesActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}
 		};

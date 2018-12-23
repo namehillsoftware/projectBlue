@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -91,7 +91,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 					})
 					.eventually(itemProviderComplete)
 					.excuse(new HandleViewIoException(ItemListActivity.this, this))
-					.excuse(new UnexpectedExceptionToaster(ItemListActivity.this))
+					.excuse(new UnexpectedExceptionToasterResponse(ItemListActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}
 		};

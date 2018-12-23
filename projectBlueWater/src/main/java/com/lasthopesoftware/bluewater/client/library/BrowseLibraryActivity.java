@@ -50,7 +50,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -282,7 +282,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					.eventually(LibraryViewsByConnectionProvider::provide)
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
-					.excuse(new UnexpectedExceptionToaster(BrowseLibraryActivity.this))
+					.excuse(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this))
 					.then(new VoidResponse<>(v -> {
 						ApplicationSettingsActivity.launch(BrowseLibraryActivity.this);
 						finish();

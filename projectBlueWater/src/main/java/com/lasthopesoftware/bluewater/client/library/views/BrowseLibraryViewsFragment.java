@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -110,7 +110,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(new HandleViewIoException(context, this))
-							.excuse(new UnexpectedExceptionToaster(context));
+							.excuse(new UnexpectedExceptionToasterResponse(context));
 					}
 				};
 
