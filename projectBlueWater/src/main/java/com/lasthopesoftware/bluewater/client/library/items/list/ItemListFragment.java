@@ -69,7 +69,7 @@ public class ItemListFragment extends Fragment {
 					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
 					final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-					layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
+					layout.addView(BuildStandardItemView(activity, category, pbLoading));
 
 					return null;
 				}, activity);
@@ -92,7 +92,7 @@ public class ItemListFragment extends Fragment {
         return layout;
     }
 
-	private ListView BuildStandardItemView(final Activity activity, final ViewGroup container, final int position, final IItem category, final View loadingView) {
+	private ListView BuildStandardItemView(final Activity activity, final IItem category, final View loadingView) {
 		final ListView listView = new ListView(activity);
     	listView.setVisibility(View.INVISIBLE);
 
@@ -104,10 +104,8 @@ public class ItemListFragment extends Fragment {
 			.then(new VoidResponse<>(library -> {
 				PromisedResponse<List<Item>, Void> onGetLibraryViewItemResultsComplete = LoopedInPromise.response(new OnGetLibraryViewItemResultsComplete(
 					activity,
-					container,
 					listView,
 					loadingView,
-					position,
 					itemListMenuChangeHandler,
 					FileListParameters.getInstance(),
 					new StoredItemAccess(activity, library),

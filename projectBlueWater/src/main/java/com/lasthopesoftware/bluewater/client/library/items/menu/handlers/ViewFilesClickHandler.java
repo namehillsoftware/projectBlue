@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.view.View;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
+
+import static com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity.startFileListActivity;
 
 /**
  * Created by david on 4/3/15.
@@ -18,7 +19,7 @@ public final class ViewFilesClickHandler extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(View v) {
-        FileListActivity.startFileListActivity(v.getContext(), item);
+        startFileListActivity(v.getContext(), item);
         super.onClick(v);
     }
 }

@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
-import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
+import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
@@ -56,12 +56,10 @@ public class PlaylistListFragment extends Fragment {
 			.then(new VoidResponse<>(library -> {
 				final PromisedResponse<List<Item>, Void> listResolvedPromise =
 					LoopedInPromise.response(
-						new OnGetLibraryViewPlaylistResultsComplete(
+						new OnGetLibraryViewItemResultsComplete(
 							activity,
-							container,
 							playlistView,
 							loadingView,
-							0,
 							itemListMenuChangeHandler,
 							FileListParameters.getInstance(),
 							new StoredItemAccess(activity, library),
