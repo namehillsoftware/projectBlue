@@ -16,7 +16,7 @@ public class HandleViewIoException implements ImmediateResponse<Throwable, Void>
 
 	@Override
 	public Void respond(Throwable e) throws Throwable {
-		if (ConnectionLostFilter.isConnectionLostException(e))
+		if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 			WaitForConnectionActivity.beginWaiting(context, onConnectionRegainedListener);
 
 		throw e;

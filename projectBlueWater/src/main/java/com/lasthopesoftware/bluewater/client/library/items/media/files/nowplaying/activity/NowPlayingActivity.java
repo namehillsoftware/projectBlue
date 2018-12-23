@@ -14,7 +14,7 @@ import android.view.WindowManager;
 import android.widget.*;
 import android.widget.ImageView.ScaleType;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionLostFilter;
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -510,7 +510,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 
 	private boolean handleIoException(ServiceFile serviceFile, long position, Throwable exception) {
-		if (ConnectionLostFilter.isConnectionLostException(exception)) {
+		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) {
 			resetViewOnReconnect(serviceFile, position);
 			return true;
 		}

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access;
 
 import android.view.View;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionLostFilter;
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -17,7 +17,7 @@ public final class OnGetFileStringListForClickErrorListener implements Immediate
 
     @Override
     public Void respond(Throwable innerException) throws Throwable {
-        if (ConnectionLostFilter.isConnectionLostException(innerException)) {
+        if (ConnectionLostExceptionFilter.isConnectionLostException(innerException)) {
 			WaitForConnectionDialog.show(mView.getContext());
             PollConnectionService.pollSessionConnection(mView.getContext())
                 .then(c -> {
