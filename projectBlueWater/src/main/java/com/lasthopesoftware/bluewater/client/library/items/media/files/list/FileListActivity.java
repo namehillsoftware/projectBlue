@@ -24,9 +24,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
 
@@ -73,7 +75,9 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 					.then(FileProvider::new)
 					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, parameters))
 					.eventually(onFileProviderComplete)
-					.excuse(new HandleViewIoException(FileListActivity.this, this));
+					.excuse(new HandleViewIoException(FileListActivity.this, this))
+					.excuse(new UnexpectedExceptionToaster(FileListActivity.this))
+					.then(new VoidResponse<>(v -> finish()));
 			}
 		};
 

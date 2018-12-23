@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.library.views;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -25,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -72,7 +75,10 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 		tabbedLibraryViewsContainer.setVisibility(View.INVISIBLE);
 		loadingView.setVisibility(View.VISIBLE);
 
-		final Handler handler = new Handler(getContext().getMainLooper());
+		final Context context = getContext();
+		if (context == null) return tabbedItemsLayout;
+
+		final Handler handler = new Handler(context.getMainLooper());
 
 		final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener =
 			LoopedInPromise.response((result) -> {
@@ -100,10 +106,11 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 				final Runnable fillItemsAction = new Runnable() {
 					@Override
 					public void run() {
-						SessionConnection.getInstance(getContext()).promiseSessionConnection()
+						SessionConnection.getInstance(context).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
-							.excuse(new HandleViewIoException(getContext(), this));
+							.excuse(new HandleViewIoException(context, this))
+							.excuse(new UnexpectedExceptionToaster(context));
 					}
 				};
 
@@ -139,7 +146,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 	}
 
 	@Override
-	public void onSaveInstanceState(final Bundle outState) {
+	public void onSaveInstanceState(@NonNull final Bundle outState) {
 		super.onSaveInstanceState(outState);
 
 		if (viewPager == null) return;

@@ -4,7 +4,10 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionActivity;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 
 public class HandleViewIoException implements ImmediateResponse<Throwable, Void> {
 	
@@ -17,10 +20,20 @@ public class HandleViewIoException implements ImmediateResponse<Throwable, Void>
 	}
 
 	@Override
-	public Void respond(Throwable e) {
-		if (e instanceof IOException)
+	public Void respond(Throwable e) throws Throwable {
+		if (isConnectionLostException(e))
 			WaitForConnectionActivity.beginWaiting(context, onConnectionRegainedListener);
 
-		return null;
+		throw e;
+	}
+
+	private boolean isConnectionLostException(Throwable error) {
+		return error instanceof IOException && isConnectionLostException((IOException)error);
+	}
+
+	private boolean isConnectionLostException(IOException ioException) {
+		return ioException instanceof SocketTimeoutException
+			|| ioException instanceof EOFException
+			|| ioException instanceof ConnectException;
 	}
 }

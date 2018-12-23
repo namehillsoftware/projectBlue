@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -72,7 +73,8 @@ public class PlaylistListFragment extends Fragment {
 						SessionConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, library.getSelectedView()))
 							.eventually(listResolvedPromise)
-							.excuse(new HandleViewIoException(activity, this));
+							.excuse(new HandleViewIoException(activity, this))
+							.excuse(new UnexpectedExceptionToaster(activity));
 					}
 				};
 

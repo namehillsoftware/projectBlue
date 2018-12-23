@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -80,7 +81,8 @@ public class ItemListFragment extends Fragment {
 						SessionConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
-							.excuse(new HandleViewIoException(activity, this));
+							.excuse(new HandleViewIoException(activity, this))
+							.excuse(new UnexpectedExceptionToaster(activity));
 					}
 				};
 
@@ -118,7 +120,8 @@ public class ItemListFragment extends Fragment {
 						SessionConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, category.getKey()))
 							.eventually(onGetLibraryViewItemResultsComplete)
-							.excuse(new HandleViewIoException(activity, this));
+							.excuse(new HandleViewIoException(activity, this))
+							.excuse(new UnexpectedExceptionToaster(activity));
 					}
 				};
 
