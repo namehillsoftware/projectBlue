@@ -53,11 +53,7 @@ public class ClickItemListener implements OnItemClickListener {
 					return;
 				}
 
-				final Intent fileListIntent = new Intent(context, FileListActivity.class);
-				fileListIntent.putExtra(FileListActivity.KEY, item.getKey());
-				fileListIntent.putExtra(FileListActivity.VALUE, item.getValue());
-				fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
-				context.startActivity(fileListIntent);
+				FileListActivity.startFileListActivity(context, item);
 			}), new VoidResponse<>(e -> logger.error("An error occurred getting nested items for item " + item.getKey(), e)))
 			.eventually(v -> new LoopedInPromise<>(() -> {
 				parent.setVisibility(ViewUtils.getVisibility(true));

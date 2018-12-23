@@ -1,6 +1,9 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.list;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,6 +15,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
@@ -22,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
@@ -34,12 +39,18 @@ import java.util.List;
 
 public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
 
-	public static final String KEY = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.key";
-	public static final String VALUE = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.value";
-	public static final String VIEW_ITEM_FILES = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.view_item_files";
-	public static final String VIEW_PLAYLIST_FILES = "com.lasthopesoftware.bluewater.servers.library.items.media.files.list.view_playlist_files";
-	
-	private int mItemId;
+	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(FileListActivity.class);
+	private static final String key = magicPropertyBuilder.buildProperty("key");
+	private static final String value = magicPropertyBuilder.buildProperty("value");
+
+	public static void startFileListActivity(Context context, IItem item) {
+		final Intent fileListIntent = new Intent(context, FileListActivity.class);
+		fileListIntent.putExtra(FileListActivity.key, item.getKey());
+		fileListIntent.putExtra(FileListActivity.value, item.getValue());
+		context.startActivity(fileListIntent);
+	}
+
+	private int itemId;
 
 	private LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 	private LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
@@ -51,21 +62,24 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		final ActionBar supportActionBar = getSupportActionBar();
+		if (supportActionBar != null)
+			supportActionBar.setDisplayHomeAsUpEnabled(true);
+
         setContentView(R.layout.activity_view_items);
 
         fileListView.findView().setVisibility(View.INVISIBLE);
         pbLoading.findView().setVisibility(View.VISIBLE);
-        if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
-        if (mItemId == 0) mItemId = this.getIntent().getIntExtra(KEY, 1);
+        if (savedInstanceState != null) itemId = savedInstanceState.getInt(key);
+        if (itemId == 0) itemId = this.getIntent().getIntExtra(key, 1);
 
-        setTitle(getIntent().getStringExtra(VALUE));
+        setTitle(getIntent().getStringExtra(value));
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
 
 		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
 
-		final String[] parameters = FileListParameters.getInstance().getFileListParameters(new Item(mItemId));
+		final String[] parameters = FileListParameters.getInstance().getFileListParameters(new Item(itemId));
 
 		final Runnable fillFileListAction = new Runnable() {
 			@Override
@@ -117,13 +131,13 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		super.onSaveInstanceState(savedInstanceState);
-		savedInstanceState.putInt(KEY, mItemId);
+		savedInstanceState.putInt(key, itemId);
 	}
 	
 	@Override
 	public void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
-		mItemId = savedInstanceState.getInt(KEY);
+		itemId = savedInstanceState.getInt(key);
 	}
 	
 	@Override
