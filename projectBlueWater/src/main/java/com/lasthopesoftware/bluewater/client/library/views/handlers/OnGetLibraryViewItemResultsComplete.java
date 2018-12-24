@@ -2,38 +2,52 @@ package com.lasthopesoftware.bluewater.client.library.views.handlers;
 
 import android.app.Activity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ListView;
+import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.ClickItemListener;
+import com.lasthopesoftware.bluewater.client.library.items.list.DemoableItemListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.util.List;
 
 /**
  * Created by david on 11/5/15.
  */
-public class OnGetLibraryViewItemResultsComplete extends OnGetLibraryViewIItemResultsComplete<Item> {
-    private final ListView listView;
-    private final Activity activity;
-    private final View loadingView;
+public class OnGetLibraryViewItemResultsComplete implements ImmediateResponse<List<Item>, Void> {
 
-    public OnGetLibraryViewItemResultsComplete(Activity activity, ViewGroup container, ListView listView, View loadingView, int position, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
-        super(activity, container, listView, loadingView, position, itemListMenuChangeHandler, fileListParameterProvider, storedItemAccess, library);
+	private final Activity activity;
+	private final ListView listView;
+	private final View loadingView;
+	private final IItemListMenuChangeHandler itemListMenuChangeHandler;
+	private final IFileListParameterProvider<Item> fileListParameterProvider;
+	private final StoredItemAccess storedItemAccess;
+	private final Library library;
 
-        this.listView = listView;
-        this.activity = activity;
+    public OnGetLibraryViewItemResultsComplete(Activity activity, ListView listView, View loadingView, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider<Item> fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
+		this.activity = activity;
+		this.listView = listView;
         this.loadingView = loadingView;
-    }
+		this.itemListMenuChangeHandler = itemListMenuChangeHandler;
+		this.fileListParameterProvider = fileListParameterProvider;
+		this.storedItemAccess = storedItemAccess;
+		this.library = library;
+	}
 
     @Override
     public Void respond(List<Item> result) {
-        super.respond(result);
-        if (result != null)
-            listView.setOnItemClickListener(new ClickItemListener(result, loadingView));
+        if (result == null) return null;
+
+        listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+        listView.setAdapter(new DemoableItemListAdapter<>(activity, R.id.tvStandard, result, fileListParameterProvider, itemListMenuChangeHandler, storedItemAccess, library));
+        loadingView.setVisibility(View.INVISIBLE);
+        listView.setVisibility(View.VISIBLE);
+        listView.setOnItemClickListener(new ClickItemListener(result, loadingView));
 
         return null;
     }

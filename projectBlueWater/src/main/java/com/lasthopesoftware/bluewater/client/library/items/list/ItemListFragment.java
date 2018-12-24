@@ -23,43 +23,46 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
 
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+
 public class ItemListFragment extends Fragment {
 
-    private static final String ARG_CATEGORY_POSITION = "category_position";
+	private static final String ARG_CATEGORY_POSITION = "category_position";
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
 	public static ItemListFragment getPreparedFragment(final int libraryViewId) {
-        final ItemListFragment returnFragment = new ItemListFragment();
-        final Bundle args = new Bundle();
-        args.putInt(ItemListFragment.ARG_CATEGORY_POSITION, libraryViewId);
-        returnFragment.setArguments(args);
-        return returnFragment;
-    }
+		final ItemListFragment returnFragment = new ItemListFragment();
+		final Bundle args = new Bundle();
+		args.putInt(ItemListFragment.ARG_CATEGORY_POSITION, libraryViewId);
+		returnFragment.setArguments(args);
+		return returnFragment;
+	}
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
-    	final Activity activity = getActivity();
+	@Override
+	public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
+		final Activity activity = getActivity();
 
-    	final RelativeLayout layout = new RelativeLayout(activity);
-    	layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+		final RelativeLayout layout = new RelativeLayout(activity);
+		layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-    	final ProgressBar pbLoading = new ProgressBar(activity, null, android.R.attr.progressBarStyleLarge);
-    	final RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    	pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-    	pbLoading.setLayoutParams(pbParams);
-    	layout.addView(pbLoading);
+		final ProgressBar pbLoading = new ProgressBar(activity, null, android.R.attr.progressBarStyleLarge);
+		final RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+		pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+		pbLoading.setLayoutParams(pbParams);
+		layout.addView(pbLoading);
 
 		final ILibraryProvider libraryProvider = new LibraryRepository(activity);
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(activity);
 
-    	libraryProvider
+		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.then(new VoidResponse<>(activeLibrary -> {
 				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(result -> {
@@ -68,7 +71,7 @@ public class ItemListFragment extends Fragment {
 					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
 					final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-					layout.addView(BuildStandardItemView(activity, container, categoryPosition, category, pbLoading));
+					layout.addView(BuildStandardItemView(activity, category, pbLoading));
 
 					return null;
 				}, activity);
@@ -80,19 +83,21 @@ public class ItemListFragment extends Fragment {
 						SessionConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
-							.excuse(new HandleViewIoException(activity, this));
+							.excuse(new HandleViewIoException(activity, this))
+							.excuse(forward())
+							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
 
 				fillItemsRunnable.run();
-	    }));
+			}));
 
-        return layout;
-    }
+		return layout;
+	}
 
-	private ListView BuildStandardItemView(final Activity activity, final ViewGroup container, final int position, final IItem category, final View loadingView) {
+	private ListView BuildStandardItemView(final Activity activity, final IItem category, final View loadingView) {
 		final ListView listView = new ListView(activity);
-    	listView.setVisibility(View.INVISIBLE);
+		listView.setVisibility(View.INVISIBLE);
 
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
 		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
@@ -102,10 +107,8 @@ public class ItemListFragment extends Fragment {
 			.then(new VoidResponse<>(library -> {
 				PromisedResponse<List<Item>, Void> onGetLibraryViewItemResultsComplete = LoopedInPromise.response(new OnGetLibraryViewItemResultsComplete(
 					activity,
-					container,
 					listView,
 					loadingView,
-					position,
 					itemListMenuChangeHandler,
 					FileListParameters.getInstance(),
 					new StoredItemAccess(activity, library),
@@ -118,7 +121,9 @@ public class ItemListFragment extends Fragment {
 						SessionConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, category.getKey()))
 							.eventually(onGetLibraryViewItemResultsComplete)
-							.excuse(new HandleViewIoException(activity, this));
+							.excuse(new HandleViewIoException(activity, this))
+							.excuse(forward())
+							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
 

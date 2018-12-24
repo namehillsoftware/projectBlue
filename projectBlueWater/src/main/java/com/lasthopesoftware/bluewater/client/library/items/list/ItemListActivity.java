@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -34,6 +35,8 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.List;
+
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
 
@@ -89,7 +92,10 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 						return itemProvider.promiseItems(mItemId);
 					})
 					.eventually(itemProviderComplete)
-					.excuse(new HandleViewIoException(ItemListActivity.this, this));
+					.excuse(new HandleViewIoException(ItemListActivity.this, this))
+					.excuse(forward())
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(ItemListActivity.this), ItemListActivity.this))
+					.then(new VoidResponse<>(v -> finish()));
 			}
 		};
 

@@ -29,7 +29,7 @@ public class DemoableItemListAdapter<T extends IItem> extends ItemListAdapter<T>
 
 	private boolean wasTutorialShown;
 
-	public DemoableItemListAdapter(Activity activity, int resource, List<T> items, IFileListParameterProvider fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
+	public DemoableItemListAdapter(Activity activity, int resource, List<T> items, IFileListParameterProvider<T> fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
 		super(activity, resource, items, fileListParameterProvider, itemListMenuEvents, storedItemAccess, library);
 
 		this.activity = activity;

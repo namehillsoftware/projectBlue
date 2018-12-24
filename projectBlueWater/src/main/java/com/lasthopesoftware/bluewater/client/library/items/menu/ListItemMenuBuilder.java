@@ -66,16 +66,16 @@ public final class ListItemMenuBuilder<T extends IItem> extends AbstractListItem
 
 	private final StoredItemAccess storedItemAccess;
 	private final Library library;
-	private final IFileListParameterProvider fileListParameterProvider;
+	private final IFileListParameterProvider<T> fileListParameterProvider;
 
-	public ListItemMenuBuilder(StoredItemAccess storedItemAccess, Library library, IFileListParameterProvider fileListParameterProvider) {
+	public ListItemMenuBuilder(StoredItemAccess storedItemAccess, Library library, IFileListParameterProvider<T> fileListParameterProvider) {
 		this.storedItemAccess = storedItemAccess;
 		this.library = library;
 		this.fileListParameterProvider = fileListParameterProvider;
 	}
 
 	@Override
-	public View getView(int position, IItem item, View convertView, ViewGroup parent) {
+	public View getView(int position, T item, View convertView, ViewGroup parent) {
 		NotifyOnFlipViewAnimator parentView = (NotifyOnFlipViewAnimator)convertView;
 		if (parentView == null) {
 		
@@ -108,8 +108,8 @@ public final class ListItemMenuBuilder<T extends IItem> extends AbstractListItem
 		
 		final ViewHolder viewHolder = (ViewHolder) parentView.getTag();
 		viewHolder.getTextView().setText(item.getValue());
-		viewHolder.getShuffleButton().setOnClickListener(new ShuffleClickHandler(parentView, fileListParameterProvider, item));
-		viewHolder.getPlayButton().setOnClickListener(new PlayClickHandler(parentView, fileListParameterProvider, item));
+		viewHolder.getShuffleButton().setOnClickListener(new ShuffleClickHandler<>(parentView, fileListParameterProvider, item));
+		viewHolder.getPlayButton().setOnClickListener(new PlayClickHandler<>(parentView, fileListParameterProvider, item));
 		viewHolder.getViewButton().setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
 		viewHolder.getSyncButton().setEnabled(false);

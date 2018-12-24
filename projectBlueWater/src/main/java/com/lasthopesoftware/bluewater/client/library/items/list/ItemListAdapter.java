@@ -19,7 +19,7 @@ public class ItemListAdapter<T extends IItem> extends ArrayAdapter<T> {
 
 	private final ListItemMenuBuilder<T> listItemMenuBuilder;
 
-	public ItemListAdapter(Activity activity, int resource, List<T> items, IFileListParameterProvider fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
+	ItemListAdapter(Activity activity, int resource, List<T> items, IFileListParameterProvider<T> fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
 		super(activity, resource, items);
 
 		final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();

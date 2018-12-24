@@ -9,10 +9,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 public class WaitForConnectionDialog {
 
-	private static AlertHolder instance = null;
-	
-	public synchronized static void show(final Context context) {
-		if (instance == null || !instance.isShowing()) instance = new AlertHolder(context);
+	public static void show(final Context context) {
+		new AlertHolder(context);
 	}
 
 	private static class AlertHolder {
@@ -54,10 +52,6 @@ public class WaitForConnectionDialog {
 				}, context)));
 
 			alertDialog.show();
-		}
-
-		boolean isShowing() {
-			return alertDialog.isShowing();
 		}
 	}
 }

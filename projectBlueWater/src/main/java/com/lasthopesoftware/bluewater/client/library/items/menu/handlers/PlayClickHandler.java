@@ -9,12 +9,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
-public final class PlayClickHandler extends AbstractMenuClickHandler {
-	private final IFileListParameterProvider fileListParameterProvider;
-	private final IItem item;
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
-    public PlayClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider fileListParameterProvider, IItem item) {
+public final class PlayClickHandler<TItem extends IItem> extends AbstractMenuClickHandler {
+	private final IFileListParameterProvider<TItem> fileListParameterProvider;
+	private final TItem item;
+
+    public PlayClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider<TItem> fileListParameterProvider, TItem item) {
         super(menuContainer);
 		this.fileListParameterProvider = fileListParameterProvider;
 
@@ -27,7 +31,9 @@ public final class PlayClickHandler extends AbstractMenuClickHandler {
 			.then(FileStringListProvider::new)
 			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.None, fileListParameterProvider.getFileListParameters(item)))
 			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
-			.excuse(new OnGetFileStringListForClickErrorListener(v, this));
+			.excuse(new OnGetFileStringListForClickErrorListener(v, this))
+			.excuse(forward())
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(v.getContext()), v.getContext()));
 
         super.onClick(v);
     }
