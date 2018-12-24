@@ -2,6 +2,7 @@ package com.lasthopesoftware.resources.loopers.specs.GivenMyThreadName;
 
 import android.os.Handler;
 import android.os.Looper;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,25 +19,9 @@ public class WhenStartingALooperOnTheThread {
 
 	private Looper looper;
 
-	private Throwable throwable;
-
 	@Before
 	public void context() throws Throwable {
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		HandlerThreadCreator.promiseNewHandlerThread("MyThreadName", 3)
-			.then(h -> {
-				looper = h.getLooper();
-				countDownLatch.countDown();
-				return null;
-			}, e -> {
-				throwable = e;
-				return null;
-			});
-
-		countDownLatch.await();
-
-		if (throwable != null)
-			throw throwable;
+		looper = new FuturePromise<>(HandlerThreadCreator.promiseNewHandlerThread("MyThreadName", 3)).get().getLooper();
 
 		final Handler handler = new Handler(looper);
 		final CountDownLatch countDownLatch1 = new CountDownLatch(1);
