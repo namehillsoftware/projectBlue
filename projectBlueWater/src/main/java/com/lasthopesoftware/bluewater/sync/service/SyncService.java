@@ -141,6 +141,8 @@ public class SyncService extends Service {
 			context.startService(intent);
 		} catch (IllegalStateException e) {
 			logger.warn("An illegal state exception occurred while trying to start the service", e);
+		} catch (SecurityException e) {
+			logger.warn("A security exception occurred while trying to start the service", e);
 		}
 	}
 
