@@ -110,7 +110,8 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(new HandleViewIoException(context, this))
-							.excuse(new UnexpectedExceptionToasterResponse(context));
+							.excuse(e -> e)
+							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(context), handler));
 					}
 				};
 

@@ -82,7 +82,8 @@ public class ItemListFragment extends Fragment {
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(new HandleViewIoException(activity, this))
-							.excuse(new UnexpectedExceptionToasterResponse(activity));
+							.excuse(e -> e)
+							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
 
@@ -119,7 +120,8 @@ public class ItemListFragment extends Fragment {
 							.eventually(c -> ItemProvider.provide(c, category.getKey()))
 							.eventually(onGetLibraryViewItemResultsComplete)
 							.excuse(new HandleViewIoException(activity, this))
-							.excuse(new UnexpectedExceptionToasterResponse(activity));
+							.excuse(e -> e)
+							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
 

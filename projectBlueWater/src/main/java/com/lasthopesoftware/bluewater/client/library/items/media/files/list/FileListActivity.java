@@ -90,7 +90,8 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, parameters))
 					.eventually(onFileProviderComplete)
 					.excuse(new HandleViewIoException(FileListActivity.this, this))
-					.excuse(new UnexpectedExceptionToasterResponse(FileListActivity.this))
+					.excuse(e -> e)
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(FileListActivity.this), FileListActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}
 		};

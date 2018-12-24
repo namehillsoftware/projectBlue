@@ -87,7 +87,8 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query)))
 					.eventually(onSearchFilesComplete)
 					.excuse(new HandleViewIoException(SearchFilesActivity.this, this))
-					.excuse(new UnexpectedExceptionToasterResponse(SearchFilesActivity.this))
+					.excuse(e -> e)
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(SearchFilesActivity.this), SearchFilesActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}
 		};

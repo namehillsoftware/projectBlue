@@ -91,7 +91,8 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 					})
 					.eventually(itemProviderComplete)
 					.excuse(new HandleViewIoException(ItemListActivity.this, this))
-					.excuse(new UnexpectedExceptionToasterResponse(ItemListActivity.this))
+					.excuse(e -> e)
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(ItemListActivity.this), ItemListActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}
 		};

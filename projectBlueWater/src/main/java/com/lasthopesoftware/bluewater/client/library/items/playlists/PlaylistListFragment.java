@@ -72,7 +72,8 @@ public class PlaylistListFragment extends Fragment {
 							.eventually(c -> ItemProvider.provide(c, library.getSelectedView()))
 							.eventually(listResolvedPromise)
 							.excuse(new HandleViewIoException(activity, this))
-							.excuse(new UnexpectedExceptionToasterResponse(activity));
+							.excuse(e -> e)
+							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
 

@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipView
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
 public final class PlayClickHandler<TItem extends IItem> extends AbstractMenuClickHandler {
 	private final IFileListParameterProvider<TItem> fileListParameterProvider;
@@ -29,7 +30,8 @@ public final class PlayClickHandler<TItem extends IItem> extends AbstractMenuCli
 			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.None, fileListParameterProvider.getFileListParameters(item)))
 			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
 			.excuse(new OnGetFileStringListForClickErrorListener(v, this))
-			.excuse(new UnexpectedExceptionToasterResponse(v.getContext()));
+			.excuse(e -> e)
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(v.getContext()), v.getContext()));
 
         super.onClick(v);
     }

@@ -282,7 +282,8 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					.eventually(LibraryViewsByConnectionProvider::provide)
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
-					.excuse(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this))
+					.excuse(e -> e)
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this), BrowseLibraryActivity.this))
 					.then(new VoidResponse<>(v -> {
 						ApplicationSettingsActivity.launch(BrowseLibraryActivity.this);
 						finish();

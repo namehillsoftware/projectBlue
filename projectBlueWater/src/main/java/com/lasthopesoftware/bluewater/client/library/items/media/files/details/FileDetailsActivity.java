@@ -153,7 +153,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 				lvFileDetails.findView().setVisibility(View.VISIBLE);
 			}), this))
 			.excuse(new HandleViewIoException(this, () -> setView(fileKey)))
-			.excuse(new UnexpectedExceptionToasterResponse(this))
+			.excuse(e -> e)
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
 			.then(new VoidResponse<>(v -> finish()));
 
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
