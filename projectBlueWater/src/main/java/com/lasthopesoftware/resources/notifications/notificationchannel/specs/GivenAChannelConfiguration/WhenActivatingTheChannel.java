@@ -16,7 +16,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.robolectric.Shadows.shadowOf;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 @RunWith(RobolectricTestRunner.class)
@@ -52,6 +51,12 @@ public class WhenActivatingTheChannel {
 			});
 		}
 	};
+	private static final CreateAndHold<NotificationChannel> notificationChannel = new AbstractSynchronousLazy<NotificationChannel>() {
+		@Override
+		protected NotificationChannel create() {
+			return notificationManager.getObject().getNotificationChannel(channelId.getObject());
+		}
+	};
 
 	@Test
 	public void thenTheReturnedChannelIdIsCorrect() {
@@ -60,33 +65,21 @@ public class WhenActivatingTheChannel {
 
 	@Test
 	public void thenTheChannelNameIsCorrect() {
-		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannels().get(0))
-			.getName())
-			.isEqualTo("a-name");
+		assertThat(notificationChannel.getObject().getName()).isEqualTo("a-name");
 	}
 
 	@Test
 	public void thenTheChannelIdIsCorrect() {
-		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannels().get(0))
-			.getId())
-			.isEqualTo("myActiveChannel");
+		assertThat(notificationChannel.getObject().getId()).isEqualTo("myActiveChannel");
 	}
 
 	@Test
 	public void thenTheChannelDescriptionIsCorrect() {
-		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannels().get(0))
-			.getDescription())
-			.isEqualTo("description");
+		assertThat(notificationChannel.getObject().getDescription()).isEqualTo("description");
 	}
 
 	@Test
 	public void thenTheChannelImportanceIsCorrect() {
-		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannels().get(0))
-			.getImportance())
-			.isEqualTo(4);
+		assertThat(notificationChannel.getObject().getImportance()).isEqualTo(4);
 	}
 }
