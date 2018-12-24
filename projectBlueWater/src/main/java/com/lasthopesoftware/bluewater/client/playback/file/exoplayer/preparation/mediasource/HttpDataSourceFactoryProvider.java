@@ -5,24 +5,21 @@ import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
 import java.util.concurrent.TimeUnit;
 
 public class HttpDataSourceFactoryProvider implements ProvideHttpDataSourceFactory {
 
 	private final Context context;
-	private final SSLSocketFactory sslSocketFactory;
-	private final X509TrustManager trustManager;
+	private final IConnectionProvider connectionProvider;
 
-	public HttpDataSourceFactoryProvider(Context context, SSLSocketFactory sslSocketFactory, X509TrustManager trustManager) {
+	public HttpDataSourceFactoryProvider(Context context, IConnectionProvider connectionProvider) {
 		this.context = context;
-		this.sslSocketFactory = sslSocketFactory;
-		this.trustManager = trustManager;
+		this.connectionProvider = connectionProvider;
 	}
 
 	@Override
@@ -35,10 +32,10 @@ public class HttpDataSourceFactoryProvider implements ProvideHttpDataSourceFacto
 					Request request = chain.request().newBuilder().addHeader("Connection", "close").build();
 					return chain.proceed(request);
 				})
-				.sslSocketFactory(sslSocketFactory, trustManager)
+				.sslSocketFactory(connectionProvider.getSslSocketFactory(), connectionProvider.getTrustManager())
+				.hostnameVerifier(connectionProvider.getHostnameVerifier())
 				.build(),
-			Util.getUserAgent(context, context.getString(R.string.app_name)),
-			null);
+			Util.getUserAgent(context, context.getString(R.string.app_name)));
 
 		final String authKey = library.getAuthKey();
 
