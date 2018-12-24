@@ -126,14 +126,22 @@ public class SyncService extends Service {
 		final Intent intent = new Intent(context, SyncService.class);
 		intent.setAction(doSyncAction);
 
-		context.startService(intent);
+		safelyStartService(context, intent);
 	}
 
 	public static void cancelSync(Context context) {
 		final Intent intent = new Intent(context, SyncService.class);
 		intent.setAction(cancelSyncAction);
 
-		context.startService(intent);
+		safelyStartService(context, intent);
+	}
+
+	private static void safelyStartService(Context context, Intent intent) {
+		try {
+			context.startService(intent);
+		} catch (IllegalStateException e) {
+			logger.warn("An illegal state exception occurred while trying to start the service", e);
+		}
 	}
 
 	private final Lazy<LocalBroadcastManager> localBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
