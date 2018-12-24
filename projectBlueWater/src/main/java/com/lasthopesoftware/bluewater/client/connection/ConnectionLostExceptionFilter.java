@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
+import javax.net.ssl.SSLException;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -15,6 +16,7 @@ public class ConnectionLostExceptionFilter {
 		return ioException instanceof SocketTimeoutException
 			|| ioException instanceof EOFException
 			|| ioException instanceof ConnectException
-			|| ioException instanceof UnknownHostException;
+			|| ioException instanceof UnknownHostException
+			|| ioException instanceof SSLException;
 	}
 }

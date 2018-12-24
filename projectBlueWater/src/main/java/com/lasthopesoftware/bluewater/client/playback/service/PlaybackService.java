@@ -139,7 +139,7 @@ implements OnAudioFocusChangeListener
 		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
 		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
 		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		context.startService(svcIntent);
+		safelyStartService(context, svcIntent);
 	}
 
 	public static void seekTo(final Context context, int filePos) {
@@ -150,11 +150,11 @@ implements OnAudioFocusChangeListener
 		final Intent svcIntent = getNewSelfIntent(context, Action.seekTo);
 		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
 		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
-		context.startService(svcIntent);
+		safelyStartService(context, svcIntent);
 	}
 
 	public static void play(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.play));
+		safelyStartService(context, getNewSelfIntent(context, Action.play));
 	}
 
 	public static PendingIntent pendingPlayingIntent(final Context context) {
@@ -168,7 +168,7 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void pause(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.pause));
+		safelyStartService(context, getNewSelfIntent(context, Action.pause));
 	}
 
 	public static PendingIntent pendingPauseIntent(final Context context) {
@@ -182,11 +182,11 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void togglePlayPause(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.togglePlayPause));
+		safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause));
 	}
 
 	public static void next(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.next));
+		safelyStartService(context, getNewSelfIntent(context, Action.next));
 	}
 
 	public static PendingIntent pendingNextIntent(final Context context) {
@@ -200,7 +200,7 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void previous(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.previous));
+		safelyStartService(context, getNewSelfIntent(context, Action.previous));
 	}
 
 	public static PendingIntent pendingPreviousIntent(final Context context) {
@@ -214,27 +214,27 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void setRepeating(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.repeating));
+		safelyStartService(context, getNewSelfIntent(context, Action.repeating));
 	}
 
 	public static void setCompleting(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.completing));
+		safelyStartService(context, getNewSelfIntent(context, Action.completing));
 	}
 
 	public static void addFileToPlaylist(final Context context, int fileKey) {
 		final Intent intent = getNewSelfIntent(context, Action.addFileToPlaylist);
 		intent.putExtra(Action.Bag.playlistPosition, fileKey);
-		context.startService(intent);
+		safelyStartService(context, intent);
 	}
 
 	public static void removeFileAtPositionFromPlaylist(final Context context, int filePosition) {
 		final Intent intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist);
 		intent.putExtra(Action.Bag.filePosition, filePosition);
-		context.startService(intent);
+		safelyStartService(context, intent);
 	}
 
 	public static void killService(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.killMusicService));
+		safelyStartService(context, getNewSelfIntent(context, Action.killMusicService));
 	}
 
 	public static PendingIntent pendingKillService(final Context context) {
@@ -245,6 +245,14 @@ implements OnAudioFocusChangeListener
 				context,
 				Action.killMusicService),
 			PendingIntent.FLAG_UPDATE_CURRENT);
+	}
+
+	private static void safelyStartService(Context context, Intent intent) {
+		try {
+			context.startService(intent);
+		} catch (IllegalStateException e) {
+			logger.warn("An illegal state exception occurred while trying to start the service", e);
+		}
 	}
 
 	/* End streamer intent helpers */
