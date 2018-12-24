@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderersFactory;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -36,9 +37,8 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
 		extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
-			context,
-			connectionProvider,
 			library,
+			new HttpDataSourceFactoryProvider(context, connectionProvider),
 			cache);
 
 		renderersFactory = new AudioRenderersFactory(context);

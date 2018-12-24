@@ -33,8 +33,7 @@ public class DiskFileCacheDataSourceFactory implements DataSource.Factory {
 		this.cacheStreamSupplier = cacheStreamSupplier;
 		httpDataSourceFactory = new OkHttpDataSourceFactory(
 			okHttpClient.getObject(),
-			Util.getUserAgent(context, context.getString(R.string.app_name)),
-			null);
+			Util.getUserAgent(context, context.getString(R.string.app_name)));
 
 		final String authKey = library.getAuthKey();
 

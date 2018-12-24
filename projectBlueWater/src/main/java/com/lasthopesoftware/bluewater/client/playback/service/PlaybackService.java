@@ -21,7 +21,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
 import com.annimon.stream.Stream;
-import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
@@ -1159,11 +1158,7 @@ implements OnAudioFocusChangeListener
 			filePositionSubscription.dispose();
 
 		if (cache != null) {
-			try {
-				cache.release();
-			} catch (Cache.CacheException e) {
-				logger.warn("There was an error releasing the cache", e);
-			}
+			cache.release();
 		}
 
 		if (nowPlayingNotificationBuilder != null)
