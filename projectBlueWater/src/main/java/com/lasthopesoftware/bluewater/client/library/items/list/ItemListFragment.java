@@ -30,6 +30,8 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
 
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+
 public class ItemListFragment extends Fragment {
 
 	private static final String ARG_CATEGORY_POSITION = "category_position";
@@ -82,7 +84,7 @@ public class ItemListFragment extends Fragment {
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(new HandleViewIoException(activity, this))
-							.excuse(e -> e)
+							.excuse(forward())
 							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
@@ -120,7 +122,7 @@ public class ItemListFragment extends Fragment {
 							.eventually(c -> ItemProvider.provide(c, category.getKey()))
 							.eventually(onGetLibraryViewItemResultsComplete)
 							.excuse(new HandleViewIoException(activity, this))
-							.excuse(e -> e)
+							.excuse(forward())
 							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};

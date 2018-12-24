@@ -62,6 +62,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
 	public static final String showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
@@ -282,7 +284,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					.eventually(LibraryViewsByConnectionProvider::provide)
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
-					.excuse(e -> e)
+					.excuse(forward())
 					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this), BrowseLibraryActivity.this))
 					.then(new VoidResponse<>(v -> {
 						ApplicationSettingsActivity.launch(BrowseLibraryActivity.this);

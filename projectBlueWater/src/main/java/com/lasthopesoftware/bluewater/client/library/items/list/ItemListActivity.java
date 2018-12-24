@@ -36,6 +36,8 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.List;
 
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(ItemListActivity.class);
@@ -91,7 +93,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 					})
 					.eventually(itemProviderComplete)
 					.excuse(new HandleViewIoException(ItemListActivity.this, this))
-					.excuse(e -> e)
+					.excuse(forward())
 					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(ItemListActivity.this), ItemListActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}

@@ -37,6 +37,8 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
 
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+
 public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(FileListActivity.class);
@@ -90,7 +92,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, parameters))
 					.eventually(onFileProviderComplete)
 					.excuse(new HandleViewIoException(FileListActivity.this, this))
-					.excuse(e -> e)
+					.excuse(forward())
 					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(FileListActivity.this), FileListActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}

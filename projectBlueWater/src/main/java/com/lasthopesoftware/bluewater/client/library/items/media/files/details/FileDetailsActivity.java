@@ -44,6 +44,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+
 public class FileDetailsActivity extends AppCompatActivity {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileDetailsActivity.class);
@@ -153,7 +155,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				lvFileDetails.findView().setVisibility(View.VISIBLE);
 			}), this))
 			.excuse(new HandleViewIoException(this, () -> setView(fileKey)))
-			.excuse(e -> e)
+			.excuse(forward())
 			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
 			.then(new VoidResponse<>(v -> finish()));
 
