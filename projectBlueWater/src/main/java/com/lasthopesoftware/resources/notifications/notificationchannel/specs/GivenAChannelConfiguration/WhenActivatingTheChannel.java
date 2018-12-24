@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import androidx.test.core.app.ApplicationProvider;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -12,7 +13,6 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -22,7 +22,7 @@ import static org.robolectric.Shadows.shadowOf;
 @RunWith(RobolectricTestRunner.class)
 public class WhenActivatingTheChannel {
 
-	private static final CreateAndHold<NotificationManager> notificationManager = new Lazy<>(() -> (NotificationManager) RuntimeEnvironment.application.getSystemService(NOTIFICATION_SERVICE));
+	private static final CreateAndHold<NotificationManager> notificationManager = new Lazy<>(() -> (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(NOTIFICATION_SERVICE));
 	private static final CreateAndHold<String> channelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() {
@@ -61,7 +61,7 @@ public class WhenActivatingTheChannel {
 	@Test
 	public void thenTheChannelNameIsCorrect() {
 		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannel(channelId.getObject()))
+			.getNotificationChannels().get(0))
 			.getName())
 			.isEqualTo("a-name");
 	}
@@ -69,7 +69,7 @@ public class WhenActivatingTheChannel {
 	@Test
 	public void thenTheChannelIdIsCorrect() {
 		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannel(channelId.getObject()))
+			.getNotificationChannels().get(0))
 			.getId())
 			.isEqualTo("myActiveChannel");
 	}
@@ -77,7 +77,7 @@ public class WhenActivatingTheChannel {
 	@Test
 	public void thenTheChannelDescriptionIsCorrect() {
 		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannel(channelId.getObject()))
+			.getNotificationChannels().get(0))
 			.getDescription())
 			.isEqualTo("description");
 	}
@@ -85,7 +85,7 @@ public class WhenActivatingTheChannel {
 	@Test
 	public void thenTheChannelImportanceIsCorrect() {
 		assertThat(((NotificationChannel)shadowOf(notificationManager.getObject())
-			.getNotificationChannel(channelId.getObject()))
+			.getNotificationChannels().get(0))
 			.getImportance())
 			.isEqualTo(4);
 	}
