@@ -4,15 +4,10 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
-import com.lasthopesoftware.providers.AbstractProvider;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.List;
 
 public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsingConnection {
@@ -37,34 +32,17 @@ public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsin
 							return new Promise<>(cachedFileSystemItems);
 					}
 
-					return new QueuedPromise<>((cancellationToken) -> {
-						if (cancellationToken.isCancelled()) return null;
+					return connectionProvider.promiseResponse(browseLibraryParameter)
+						.then(response -> {
+							final List<Item> items = ItemResponse.GetItems(response.body().byteStream());
 
-						try {
-							final HttpURLConnection connection = connectionProvider.getConnection(browseLibraryParameter);
-							try {
-								try (final InputStream is = connection.getInputStream()) {
-									final List<Item> items = ItemResponse.GetItems(is);
-
-									synchronized (browseLibraryParameter) {
-										revision = serverRevision;
-										cachedFileSystemItems = items;
-									}
-
-									return items;
-								} catch (IOException e) {
-									logger.error("There was an error getting the inputstream", e);
-									throw e;
-								}
-							} finally {
-								connection.disconnect();
+							synchronized (browseLibraryParameter) {
+								revision = serverRevision;
+								cachedFileSystemItems = items;
 							}
-						} catch (IOException ioe) {
-							logger.error("There was an error opening the connection", ioe);
-						}
 
-						return null;
-					}, AbstractProvider.providerExecutor);
+							return items;
+						});
 				});
 	}
 }

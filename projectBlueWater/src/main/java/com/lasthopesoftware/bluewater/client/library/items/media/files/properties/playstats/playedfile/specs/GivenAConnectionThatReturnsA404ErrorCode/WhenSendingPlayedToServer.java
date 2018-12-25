@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.Request;
 import okhttp3.Response;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,7 +25,7 @@ public class WhenSendingPlayedToServer {
 	public static void before() throws InterruptedException {
 		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
 
-		final Response response = new Response.Builder().code(404).build();
+		final Response response = new Response.Builder().request(new Request.Builder().url("").build()).code(404).build();
 
 		when(connectionProvider.promiseResponse("File/Played", "File=15", "FileType=Key"))
 			.thenReturn(new Promise<>(response));
