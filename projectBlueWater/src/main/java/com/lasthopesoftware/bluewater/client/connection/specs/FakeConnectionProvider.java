@@ -5,7 +5,10 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -59,6 +62,21 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		when(mockConnection.getResponseCode()).thenReturn(200);
 
 		return mockConnection;
+	}
+
+	@Override
+	public OkHttpClient getClient() {
+		return null;
+	}
+
+	@Override
+	public Promise<Response> promiseResponse(String... params) {
+		return null;
+	}
+
+	@Override
+	public Response getResponse(String... params) {
+		return null;
 	}
 
 	@Override
