@@ -1,17 +1,15 @@
 package com.lasthopesoftware.bluewater.sync;
 
-import android.app.AlarmManager;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.*;
 import android.net.wifi.WifiManager;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -70,8 +68,6 @@ import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsPr
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
-import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
@@ -92,15 +88,16 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static android.content.Context.NOTIFICATION_SERVICE;
-
 public class SyncWorker extends Worker {
+	private static final Logger logger = LoggerFactory.getLogger(SyncWorker.class);
 	public static final String onSyncStartEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onSyncStartEvent");
 	public static final String onSyncStopEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onSyncStopEvent");
 	public static final String onFileQueuedEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onFileQueuedEvent");
@@ -122,13 +119,29 @@ public class SyncWorker extends Worker {
 		}
 	};
 
-	private final Lazy<IStorageReadPermissionsRequestedBroadcast> storageReadPermissionsRequestedBroadcast = new Lazy<>(() -> new StorageReadPermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
-	private final Lazy<IStorageWritePermissionsRequestedBroadcaster> storageWritePermissionsRequestedBroadcast = new Lazy<>(() -> new StorageWritePermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
+	private final CreateAndHold<IStorageReadPermissionsRequestedBroadcast> storageReadPermissionsRequestedBroadcast = new Lazy<>(() -> new StorageReadPermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
+	private final CreateAndHold<IStorageWritePermissionsRequestedBroadcaster> storageWritePermissionsRequestedBroadcast = new Lazy<>(() -> new StorageWritePermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
 
-	private final Lazy<IStorageReadPermissionArbitratorForOs> storageReadPermissionArbitratorForOsLazy = new Lazy<>(() -> new ExternalStorageReadPermissionsArbitratorForOs(context));
-	private final Lazy<IStorageWritePermissionArbitratorForOs> storageWritePermissionArbitratorForOsLazy = new Lazy<>(() -> new ExternalStorageWritePermissionsArbitratorForOs(context));
+	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> storageReadPermissionArbitratorForOsLazy = new AbstractSynchronousLazy<IStorageReadPermissionArbitratorForOs>() {
+		@Override
+		protected IStorageReadPermissionArbitratorForOs create() {
+			return new ExternalStorageReadPermissionsArbitratorForOs(context);
+		}
+	};
 
-	private final Lazy<IScanMediaFileBroadcaster> scanMediaFileBroadcasterLazy = new Lazy<>(() -> new ScanMediaFileBroadcaster(context));
+	private final CreateAndHold<IStorageWritePermissionArbitratorForOs> storageWritePermissionArbitratorForOsLazy = new AbstractSynchronousLazy<IStorageWritePermissionArbitratorForOs>() {
+		@Override
+		protected IStorageWritePermissionArbitratorForOs create() {
+			return new ExternalStorageWritePermissionsArbitratorForOs(context);
+		}
+	};
+
+	private final CreateAndHold<IScanMediaFileBroadcaster> scanMediaFileBroadcasterLazy = new AbstractSynchronousLazy<IScanMediaFileBroadcaster>() {
+		@Override
+		protected IScanMediaFileBroadcaster create() {
+			return new ScanMediaFileBroadcaster(context);
+		}
+	};
 
 	private final Map<Integer, IConnectionProvider> libraryConnectionProviders = new ConcurrentHashMap<>();
 
@@ -152,9 +165,19 @@ public class SyncWorker extends Worker {
 
 	private final OneParameterAction<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
 
-	private final Lazy<String> downloadingStatusLabel = new Lazy<>(() -> context.getString(R.string.downloading_status_label));
+	private final CreateAndHold<String> downloadingStatusLabel = new AbstractSynchronousLazy<String>() {
+		@Override
+		protected String create() {
+			return context.getString(R.string.downloading_status_label);
+		}
+	};
 
-	private final CreateAndHold<ILibraryProvider> lazyLibraryProvider = new Lazy<ILibraryProvider>(() -> new LibraryRepository(context));
+	private final CreateAndHold<ILibraryProvider> lazyLibraryProvider = new AbstractSynchronousLazy<ILibraryProvider>() {
+		@Override
+		protected ILibraryProvider create() {
+			return new LibraryRepository(context);
+		}
+	};
 
 	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
 		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
@@ -166,11 +189,11 @@ public class SyncWorker extends Worker {
 		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
 
 		filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
-			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
+			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), context))
 			.excuse(e -> LoopedInPromise.response(exception -> {
-				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), getString(R.string.unknown_file)));
+				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)));
 				return true;
-			}, this).promiseResponse(e));
+			}, context).promiseResponse(e));
 	};
 
 	private final OneParameterAction<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
@@ -217,16 +240,26 @@ public class SyncWorker extends Worker {
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
 		protected final Intent create() {
-			final Intent browseLibraryIntent = new Intent(SyncService.this, BrowseLibraryActivity.class);
+			final Intent browseLibraryIntent = new Intent(context, BrowseLibraryActivity.class);
 			browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
 			browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 			return browseLibraryIntent;
 		}
 	};
 
-	private final CreateAndHold<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE));
+	private final CreateAndHold<NotificationManagerCompat> notificationManagerLazy = new AbstractSynchronousLazy<NotificationManagerCompat>() {
+		@Override
+		protected NotificationManagerCompat create() {
+			return NotificationManagerCompat.from(context);
+		}
+	};
 
-	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(context));
+	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new AbstractSynchronousLazy<ChannelConfiguration>() {
+		@Override
+		protected ChannelConfiguration create() {
+			return new SharedChannelProperties(context);
+		}
+	};
 	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() {
@@ -236,13 +269,29 @@ public class SyncWorker extends Worker {
 		}
 	};
 
-	private final CreateAndHold<StoredFilesChecker> lazyStoredFilesChecker = new Lazy<>(() -> new StoredFilesChecker(new StoredFilesCounter(this)));
+	private final CreateAndHold<StoredFilesChecker> lazyStoredFilesChecker = new AbstractSynchronousLazy<StoredFilesChecker>() {
+		@Override
+		protected StoredFilesChecker create() {
+			return new StoredFilesChecker(new StoredFilesCounter(context));
+		}
+	};
 
-	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> lazyOsReadPermissions = new Lazy<>(() -> new ExternalStorageReadPermissionsArbitratorForOs(this));
+	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> lazyOsReadPermissions = new AbstractSynchronousLazy<IStorageReadPermissionArbitratorForOs>() {
+		@Override
+		protected IStorageReadPermissionArbitratorForOs create() {
+			return new ExternalStorageReadPermissionsArbitratorForOs(context);
+		}
+	};
 
-	private final CreateAndHold<LookupSyncDirectory> lazySyncDirectoryLookup = new Lazy<>(() -> new SyncDirectoryLookup(
-		new PublicDirectoryLookup(context),
-		new PrivateDirectoryLookup(context)));
+	private final CreateAndHold<LookupSyncDirectory> lazySyncDirectoryLookup = new AbstractSynchronousLazy<LookupSyncDirectory>() {
+		@Override
+		protected LookupSyncDirectory create() {
+			return new SyncDirectoryLookup(
+				new PublicDirectoryLookup(context),
+				new PrivateDirectoryLookup(context));
+		}
+	};
+	private boolean isSyncRunning;
 
 	public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
 		super(context, workerParams);
@@ -254,10 +303,8 @@ public class SyncWorker extends Worker {
 	public Result doWork() {
 		if (!isDeviceStateValidForSync()) {
 			finishSync();
-			return result;
+			return Result.success();
 		}
-
-		final Context context = this;
 
 		logger.info("Starting sync.");
 
@@ -366,10 +413,10 @@ public class SyncWorker extends Worker {
 
 					return promiseLibrarySyncStarted;
 				})
-					.excuse(e -> {
-						if (librariesProcessing.decrementAndGet() == 0) finishSync();
-						return null;
-					});
+				.excuse(e -> {
+					if (librariesProcessing.decrementAndGet() == 0) finishSync();
+					return null;
+				});
 			}
 		}));
 
@@ -383,14 +430,14 @@ public class SyncWorker extends Worker {
 		if (isSyncOnWifiOnly) {
 			if (!IoCommon.isWifiConnected(this)) return false;
 
-			registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+			context.registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 		}
 
 		final boolean isSyncOnPowerOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false);
 		if (isSyncOnPowerOnly) {
-			if (!IoCommon.isPowerConnected(this)) return false;
+			if (!IoCommon.isPowerConnected(context)) return false;
 
-			registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+			context.registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
 		}
 
 		return true;
@@ -400,7 +447,7 @@ public class SyncWorker extends Worker {
 	private Notification buildSyncNotification(@Nullable String syncNotification) {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this, lazyActiveNotificationChannelId.getObject());
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
-		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
+		notifyBuilder.setContentTitle(context.getText(R.string.title_sync_files));
 		if (syncNotification != null)
 			notifyBuilder.setContentText(syncNotification);
 		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent.getObject(), 0));
@@ -413,7 +460,7 @@ public class SyncWorker extends Worker {
 	}
 
 	private void setSyncNotificationText(@Nullable String syncNotification) {
-		startForeground(notificationId, buildSyncNotification(syncNotification));
+		notificationManagerLazy.getObject().notify(notificationId, buildSyncNotification(syncNotification));
 	}
 
 	private void sendStoredFileBroadcast(@NonNull String action, @NonNull StoredFile storedFile) {
@@ -428,14 +475,6 @@ public class SyncWorker extends Worker {
 
 	private void finishSync() {
 		logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
-
-		// Set an alarm for the then time we runWith this bad boy
-		final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
-		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + syncInterval, pendingIntent);
-
-		stopForeground(true);
-		stopSelf();
 
 		isSyncRunning = false;
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStopEvent));
