@@ -4,6 +4,8 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import java.io.InputStream;
+
 public class ProgramVersionProvider implements IProgramVersionProvider {
 
 	private final IConnectionProvider connectionProvider;
@@ -19,7 +21,12 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 		if (serverVersion != null) return new Promise<>(serverVersion);
 
 		return connectionProvider.promiseResponse("Alive").then(response -> {
-			final StandardRequest standardRequest = StandardRequest.fromInputStream(response.body().byteStream());
+			final StandardRequest standardRequest;
+
+			try (final InputStream is = response.body().byteStream()) {
+				standardRequest = StandardRequest.fromInputStream(is);
+			}
+
 			if (standardRequest == null) {
 				return null;
 			}
