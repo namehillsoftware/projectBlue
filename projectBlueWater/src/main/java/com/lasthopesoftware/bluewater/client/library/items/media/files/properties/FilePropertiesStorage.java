@@ -27,7 +27,7 @@ public class FilePropertiesStorage {
 
 	public Promise<Void> promiseFileUpdate(ServiceFile serviceFile, String property, String value, boolean isFormatted) {
 		final Promise<Void> promisedUpdate = connectionProvider
-			.call("File/SetInfo",
+			.promiseResponse("File/SetInfo",
 				"File=" + String.valueOf(serviceFile.getKey()),
 				"Field=" + property,
 				"Value=" + value,

@@ -15,13 +15,13 @@ import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 
 public class StoredFileJob {
 
@@ -73,9 +73,9 @@ public class StoredFileJob {
 		if (parent != null && !parent.exists() && !parent.mkdirs())
 			throw new StorageCreatePathException(parent);
 
-		final HttpURLConnection connection;
+		final Response response;
 		try {
-			connection = connectionProvider.getConnection(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
+			response = connectionProvider.getResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
 		} catch (IOException e) {
 			logger.error("Error getting connection", e);
 			throw new StoredFileJobException(storedFile, e);
@@ -84,13 +84,7 @@ public class StoredFileJob {
 		if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
 		try {
-			final InputStream is;
-			try {
-				is = connection.getInputStream();
-			} catch (IOException ioe) {
-				logger.error("Error opening data connection", ioe);
-				throw new StoredFileJobException(storedFile, ioe);
-			}
+			final InputStream is = response.body().byteStream();
 
 			if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
@@ -110,12 +104,8 @@ public class StoredFileJob {
 					logger.error("Error closing input stream", e);
 				}
 			}
-		} catch (StoredFileJobException je) {
-			throw je;
 		} catch (Throwable t) {
 			throw new StoredFileJobException(storedFile, t);
-		} finally {
-			connection.disconnect();
 		}
 	}
 

@@ -114,7 +114,7 @@ public class ConnectionProvider implements IConnectionProvider {
 	}
 
 	@Override
-	public Promise<Response> call(String... params) {
+	public Promise<Response> promiseResponse(String... params) {
 		if (urlProvider == null) return null;
 
 		final URL url;
@@ -126,6 +126,16 @@ public class ConnectionProvider implements IConnectionProvider {
 
 		final Request request = new Request.Builder().url(url).build();
 		return new HttpPromisedResponse(lazyOkHttpClient.getObject().newCall(request));
+	}
+
+	@Override
+	public Response getResponse(String... params) throws IOException {
+		if (urlProvider == null) return null;
+
+		final URL url = new URL(urlProvider.getUrl(params));
+
+		final Request request = new Request.Builder().url(url).build();
+		return lazyOkHttpClient.getObject().newCall(request).execute();
 	}
 
 	@Override

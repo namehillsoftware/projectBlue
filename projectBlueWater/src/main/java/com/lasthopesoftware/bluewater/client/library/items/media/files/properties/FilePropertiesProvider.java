@@ -7,21 +7,16 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-import org.apache.commons.io.IOUtils;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import okhttp3.Response;
 import org.slf4j.LoggerFactory;
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,18 +42,19 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 				return new Promise<>(new HashMap<>(filePropertiesContainer.getProperties()));
 			}
 
-			return new QueuedPromise<>(new FilePropertiesWriter(connectionProvider, filePropertiesContainerProvider, serviceFile, revision), filePropertiesExecutor);
+			return connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.getKey())
+				.then(new FilePropertiesResponse(connectionProvider, filePropertiesContainerProvider, serviceFile, revision));
 		});
 	}
 
-	private static final class FilePropertiesWriter implements CancellableMessageWriter<Map<String, String>> {
+	private static final class FilePropertiesResponse implements ImmediateResponse<Response, Map<String, String>> {
 
 		private final IConnectionProvider connectionProvider;
 		private final ServiceFile serviceFile;
 		private final Integer serverRevision;
 		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 
-		private FilePropertiesWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ServiceFile serviceFile, Integer serverRevision) {
+		private FilePropertiesResponse(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ServiceFile serviceFile, Integer serverRevision) {
 			this.connectionProvider = connectionProvider;
 			this.serviceFile = serviceFile;
 			this.serverRevision = serverRevision;
@@ -66,39 +62,19 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		}
 
 		@Override
-		public Map<String, String> prepareMessage(CancellationToken cancellationToken) throws Throwable {
-			if (cancellationToken.isCancelled())
-				throw new CancellationException();
-
+		public Map<String, String> respond(Response response) throws Throwable {
 			try {
-				if (cancellationToken.isCancelled())
-					throw new CancellationException();
+				final XmlElement xml = Xmlwise.createXml(response.body().string());
+				final XmlElement parent = xml.get(0);
 
-				final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + serviceFile.getKey());
-				conn.setReadTimeout(45000);
-				try {
-					if (cancellationToken.isCancelled())
-						throw new CancellationException();
+				final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
+				for (XmlElement el : parent)
+					returnProperties.put(el.getAttribute("Name"), el.getValue());
 
-					try (InputStream is = conn.getInputStream()) {
-						if (cancellationToken.isCancelled())
-							throw new CancellationException();
+				final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
+				filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
 
-						final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-						final XmlElement parent = xml.get(0);
-
-						final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
-						for (XmlElement el : parent)
-							returnProperties.put(el.getAttribute("Name"), el.getValue());
-
-						final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
-						filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
-
-						return returnProperties;
-					}
-				} finally {
-					conn.disconnect();
-				}
+				return returnProperties;
 			} catch (IOException | XmlParseException e) {
 				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 				throw e;

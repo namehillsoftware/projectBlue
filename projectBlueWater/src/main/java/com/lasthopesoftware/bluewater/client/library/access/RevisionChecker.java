@@ -42,7 +42,7 @@ public class RevisionChecker {
             return new Promise<>(getCachedRevision(connectionProvider));
         }
 
-        return connectionProvider.call("Library/GetRevision")
+        return connectionProvider.promiseResponse("Library/GetRevision")
 			.then(response -> {
 				try (InputStream is = Objects.requireNonNull(response.body()).byteStream()) {
 					final StandardRequest standardRequest = StandardRequest.fromInputStream(is);

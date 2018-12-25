@@ -19,7 +19,7 @@ public class PlayedFilePlayStatsUpdater implements IPlaystatsUpdate {
 
 	@Override
 	public Promise<?> promisePlaystatsUpdate(ServiceFile serviceFile) {
-		return connectionProvider.call("File/Played", "File=" + serviceFile.getKey(), "FileType=Key")
+		return connectionProvider.promiseResponse("File/Played", "File=" + serviceFile.getKey(), "FileType=Key")
 			.then(response -> {
 				final int responseCode = response.code();
 				logger.info("api/v1/File/Played responded with a response code of " + responseCode);

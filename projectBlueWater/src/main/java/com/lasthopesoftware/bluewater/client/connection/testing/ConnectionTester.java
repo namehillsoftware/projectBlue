@@ -19,7 +19,7 @@ public class ConnectionTester implements TestConnections {
 
 	@Override
 	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
-		return connectionProvider.call("Alive").then(this::doTestSynchronously);
+		return connectionProvider.promiseResponse("Alive").then(this::doTestSynchronously);
 	}
 
 	private boolean doTestSynchronously(Response response) {

@@ -14,7 +14,8 @@ import java.net.HttpURLConnection;
 public interface IConnectionProvider {
 	HttpURLConnection getConnection(String... params) throws IOException;
 	OkHttpClient getClient();
-	Promise<Response> call(String... params);
+	Promise<Response> promiseResponse(String... params);
+	Response getResponse(String... params) throws IOException;
 	X509TrustManager getTrustManager();
 	SSLSocketFactory getSslSocketFactory();
 	IUrlProvider getUrlProvider();

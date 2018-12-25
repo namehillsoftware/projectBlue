@@ -57,7 +57,7 @@ public class ItemProvider implements ProvideItems {
 						return new Promise<>(itemHolder.items);
 					}
 
-					return connectionProvider.call(
+					return connectionProvider.promiseResponse(
 						LibraryViewsByConnectionProvider.browseLibraryParameter,
 						"ID=" + String.valueOf(itemKey),
 						"Version=2").then(response -> {

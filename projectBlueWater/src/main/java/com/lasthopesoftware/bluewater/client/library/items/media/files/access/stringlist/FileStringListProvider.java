@@ -16,7 +16,7 @@ public final class FileStringListProvider {
 
 	public Promise<String> promiseFileStringList(FileListParameters.Options option, String... params) {
 		return connectionProvider
-			.call(FileListParameters.Helpers.processParams(option, params))
+			.promiseResponse(FileListParameters.Helpers.processParams(option, params))
 			.then(response -> response.body().string());
 	}
 }
