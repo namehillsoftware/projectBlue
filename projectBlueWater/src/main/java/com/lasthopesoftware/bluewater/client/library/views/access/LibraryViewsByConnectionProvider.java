@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import java.io.InputStream;
 import java.util.List;
 
 public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsingConnection {
@@ -30,14 +31,16 @@ public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsin
 
 					return connectionProvider.promiseResponse(browseLibraryParameter)
 						.then(response -> {
-							final List<Item> items = ItemResponse.GetItems(response.body().byteStream());
+							try (final InputStream is = response.body().byteStream()) {
+								final List<Item> items = ItemResponse.GetItems(is);
 
-							synchronized (browseLibraryParameter) {
-								revision = serverRevision;
-								cachedFileSystemItems = items;
+								synchronized (browseLibraryParameter) {
+									revision = serverRevision;
+									cachedFileSystemItems = items;
+								}
+
+								return items;
 							}
-
-							return items;
 						});
 				});
 	}
