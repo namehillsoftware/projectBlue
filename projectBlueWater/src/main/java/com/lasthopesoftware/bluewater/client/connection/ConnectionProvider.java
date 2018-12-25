@@ -3,21 +3,45 @@ package com.lasthopesoftware.bluewater.client.connection;
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 public class ConnectionProvider implements IConnectionProvider {
 
 	private final IUrlProvider urlProvider;
+
+	private final CreateAndHold<OkHttpClient> lazyOkHttpClient = new AbstractSynchronousLazy<OkHttpClient>() {
+		@Override
+		protected OkHttpClient create() {
+			return new OkHttpClient.Builder()
+				.addNetworkInterceptor(chain -> {
+					Request request = chain.request().newBuilder()
+						.addHeader("Connection", "close")
+						.addHeader("Authorization", "basic " + urlProvider.getAuthCode()).build();
+					return chain.proceed(request);
+				})
+				.readTimeout(3, TimeUnit.MINUTES)
+				.connectTimeout(5, TimeUnit.SECONDS)
+				.sslSocketFactory(getSslSocketFactory(), getTrustManager())
+				.hostnameVerifier(getHostnameVerifier())
+				.build();
+		}
+	};
 
 	private final CreateAndHold<X509TrustManager> lazyTrustManager = new AbstractSynchronousLazy<X509TrustManager>() {
 		@Override
@@ -82,6 +106,26 @@ public class ConnectionProvider implements IConnectionProvider {
 			connection.setRequestProperty("Authorization", "basic " + authCode);
 
 		return connection;
+	}
+
+	@Override
+	public OkHttpClient getClient() {
+		return lazyOkHttpClient.getObject();
+	}
+
+	@Override
+	public Promise<Response> call(String... params) {
+		if (urlProvider == null) return null;
+
+		final URL url;
+		try {
+			url = new URL(urlProvider.getUrl(params));
+		} catch (MalformedURLException e) {
+			return new Promise<>(e);
+		}
+
+		final Request request = new Request.Builder().url(url).build();
+		return new HttpPromisedResponse(lazyOkHttpClient.getObject().newCall(request));
 	}
 
 	@Override

@@ -1,17 +1,15 @@
 package com.lasthopesoftware.bluewater.client.connection.testing;
 
-import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import okhttp3.Response;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 
 public class ConnectionTester implements TestConnections {
 
@@ -21,22 +19,12 @@ public class ConnectionTester implements TestConnections {
 
 	@Override
 	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
-		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, stdTimeoutTime), AsyncTask.THREAD_POOL_EXECUTOR);
+		return connectionProvider.call("Alive").then(this::doTestSynchronously);
 	}
 
-	private boolean doTestSynchronously(final IConnectionProvider connectionProvider, Duration timeout) {
-		try {
-
-			final HttpURLConnection conn = connectionProvider.getConnection("Alive");
-
-			if (conn == null) return Boolean.FALSE;
-
+	private boolean doTestSynchronously(Response response) {
 			try {
-				final int timeoutMillis = (int) timeout.getMillis();
-				conn.setConnectTimeout(timeoutMillis);
-				conn.setReadTimeout(timeoutMillis);
-
-				final InputStream is = conn.getInputStream();
+				final InputStream is = response.body().byteStream();
 				try {
 					final StandardRequest responseDao = StandardRequest.fromInputStream(is);
 
@@ -48,16 +36,9 @@ public class ConnectionTester implements TestConnections {
 						mLogger.error("Error closing connection, device failure?", e);
 					}
 				}
-			} catch (IOException e) {
-				mLogger.info("Unable to get input stream, connection does likely not exist", e);
 			} catch (IllegalArgumentException e) {
 				mLogger.warn("Illegal argument passed in", e);
-			} finally {
-				conn.disconnect();
 			}
-		} catch (IOException e) {
-			mLogger.warn("Error getting a connection", e);
-		}
 
 		return false;
 	}

@@ -3,17 +3,13 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.MessageWriter;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Objects;
 
-public class RevisionChecker implements MessageWriter<Integer> {
+public class RevisionChecker {
 	
 	private static final Integer badRevision = -1;
     private static final long checkedExpirationTime = 30000;
@@ -21,12 +17,10 @@ public class RevisionChecker implements MessageWriter<Integer> {
 	private static final Map<String, Integer> cachedRevisions = new HashMap<>();
 	private static final Map<String, Long> lastRevisions = new HashMap<>();
 
-	private static final ExecutorService revisionExecutor = Executors.newSingleThreadExecutor();
-
 	private final IConnectionProvider connectionProvider;
 
 	public static Promise<Integer> promiseRevision(IConnectionProvider connectionProvider) {
-		return new QueuedPromise<>(new RevisionChecker(connectionProvider), revisionExecutor);
+		return new RevisionChecker(connectionProvider).getRevision();
 	}
 
     private static Integer getCachedRevision(IConnectionProvider connectionProvider) {
@@ -41,22 +35,16 @@ public class RevisionChecker implements MessageWriter<Integer> {
 	    this.connectionProvider = connectionProvider;
     }
 
-	@Override
-	public Integer prepareMessage() throws Throwable {
-		return getRevision();
-	}
-
-	private Integer getRevision() {
+	private Promise<Integer> getRevision() {
 		final String baseServerUrl = connectionProvider.getUrlProvider().getBaseUrl();
 		final Long lastRevisionCheckedTime = lastRevisions.get(baseServerUrl);
         if (lastRevisionCheckedTime != null && !getCachedRevision(connectionProvider).equals(badRevision) && System.currentTimeMillis() - checkedExpirationTime < lastRevisionCheckedTime) {
-            return getCachedRevision(connectionProvider);
+            return new Promise<>(getCachedRevision(connectionProvider));
         }
 
-        try {
-            final HttpURLConnection conn = connectionProvider.getConnection("Library/GetRevision");
-            try {
-				try (InputStream is = conn.getInputStream()) {
+        return connectionProvider.call("Library/GetRevision")
+			.then(response -> {
+				try (InputStream is = Objects.requireNonNull(response.body()).byteStream()) {
 					final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
 					if (standardRequest == null)
 						return getCachedRevision(connectionProvider);
@@ -69,11 +57,6 @@ public class RevisionChecker implements MessageWriter<Integer> {
 					lastRevisions.put(baseServerUrl, System.currentTimeMillis());
 					return getCachedRevision(connectionProvider);
 				}
-            } finally {
-                conn.disconnect();
-            }
-        } catch (Exception e) {
-            return getCachedRevision(connectionProvider);
-        }
+			}, e -> getCachedRevision(connectionProvider));
     }
 }
