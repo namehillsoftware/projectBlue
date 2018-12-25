@@ -71,22 +71,9 @@ implements
 	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
 		if (isResolved || cancellationToken.isCancelled()) return;
 
-		if (playbackState != Player.STATE_READY) {
-			if (playbackState == Player.STATE_BUFFERING) {
-				logger.info("Player went into the buffering state.");
-				return;
-			}
+		if (playbackState != Player.STATE_READY) return;
 
-			logger.warn("Player went into state " + playbackStateToString(playbackState) + " before it was prepared!");
-			return;
-		}
-
-		final long currentPosition = exoPlayer.getCurrentPosition();
-		if (currentPosition < prepareAt) {
-			if (currentPosition < 0) {
-				logger.warn("Player was prepared with a negative current position of " + currentPosition + "!");
-			}
-
+		if (exoPlayer.getCurrentPosition() < prepareAt) {
 			exoPlayer.seekTo(prepareAt);
 			return;
 		}
@@ -130,15 +117,5 @@ implements
 		exoPlayer.stop();
 		exoPlayer.release();
 		messenger.sendRejection(new PlaybackException(new EmptyPlaybackHandler(0), error));
-	}
-
-	private static String playbackStateToString(int playbackState) {
-		switch (playbackState) {
-			case Player.STATE_BUFFERING: return "buffering";
-			case Player.STATE_ENDED: return "ended";
-			case Player.STATE_IDLE: return "idle";
-			case Player.STATE_READY: return "ready";
-			default: return "unknown";
-		}
 	}
 }
