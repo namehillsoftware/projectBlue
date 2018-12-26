@@ -40,6 +40,8 @@ public class FakeConnectionProvider implements IConnectionProvider {
 			return new Promise<>(getResponse(params));
 		} catch (IOException e) {
 			return new Promise<>(e);
+		} catch (RuntimeException e) {
+			return new Promise<>(e.getCause());
 		}
 	}
 
@@ -78,7 +80,8 @@ public class FakeConnectionProvider implements IConnectionProvider {
 			responseBuilder.body(new RealResponseBody(null, result.response.length, buffer));
 		} catch (IOException io) {
 			throw io;
-		} catch (Throwable ignored) {
+		} catch (Throwable error) {
+			throw new RuntimeException(error);
 		}
 
 		return responseBuilder.build();
@@ -109,8 +112,8 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	}
 
 	public static class ResponseTuple {
-		public final int code;
-		public final byte[] response;
+		final int code;
+		final byte[] response;
 
 		public ResponseTuple(int code, byte[] response) {
 			this.code = code;
