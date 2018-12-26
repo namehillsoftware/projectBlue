@@ -7,7 +7,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import okhttp3.Response;
 import org.slf4j.LoggerFactory;
 import xmlwise.XmlElement;
@@ -42,9 +44,24 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 				return new Promise<>(new HashMap<>(filePropertiesContainer.getProperties()));
 			}
 
-			return connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.getKey())
-				.then(new FilePropertiesResponse(connectionProvider, filePropertiesContainerProvider, serviceFile, revision));
+			return new FilePropertiesPromise(connectionProvider, filePropertiesContainerProvider, serviceFile, revision);
 		});
+	}
+
+	private static final class FilePropertiesPromise extends Promise<Map<String, String>> {
+
+		private FilePropertiesPromise(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ServiceFile serviceFile, Integer serverRevision) {
+
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			respondToCancellation(cancellationProxy);
+
+			final Promise<Response> filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.getKey());
+			cancellationProxy.doCancel(filePropertiesResponse);
+
+			filePropertiesResponse
+				.then(new FilePropertiesResponse(connectionProvider, filePropertiesContainerProvider, serviceFile, serverRevision))
+				.then(new VoidResponse<>(this::resolve), new VoidResponse<>(this::reject));
+		}
 	}
 
 	private static final class FilePropertiesResponse implements ImmediateResponse<Response, Map<String, String>> {
