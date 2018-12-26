@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
-import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -17,9 +16,7 @@ import okio.Buffer;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,7 +24,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 public class FakeConnectionProvider implements IConnectionProvider {
@@ -36,42 +32,6 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	public final void mapResponse(CarelessOneParameterFunction<String[], ResponseTuple> response, String... params) {
 		final HashSet<String> paramsSet = new HashSet<>(Arrays.asList(params));
 		mappedResponses.put(paramsSet, response);
-	}
-
-	@Override
-	public HttpURLConnection getConnection(String... params) throws IOException {
-		final HttpURLConnection mockConnection = mock(HttpURLConnection.class);
-		when(mockConnection.getResponseCode()).thenReturn(404);
-
-		CarelessOneParameterFunction<String[], ResponseTuple> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
-
-		if (mappedResponse == null) {
-			final Optional<Set<String>> optionalResponse = Stream.of(mappedResponses.keySet())
-				.filter(set -> Stream.of(set).allMatch(sp -> Stream.of(params).anyMatch(p -> p.matches(sp))))
-				.findFirst();
-
-			if (optionalResponse.isPresent())
-				mappedResponse = mappedResponses.get(optionalResponse.get());
-		}
-
-		if (mappedResponse == null) return mockConnection;
-
-		try {
-			final ResponseTuple entry = mappedResponse.resultFrom(params);
-			final ByteArrayInputStream inputStream = new ByteArrayInputStream(entry.response);
-			when(mockConnection.getInputStream()).thenReturn(inputStream);
-			when(mockConnection.getResponseCode()).thenReturn(entry.code);
-		} catch (Throwable throwable) {
-			when(mockConnection.getInputStream()).thenThrow(throwable);
-		}
-
-
-		return mockConnection;
-	}
-
-	@Override
-	public OkHttpClient getClient() {
-		return null;
 	}
 
 	@Override

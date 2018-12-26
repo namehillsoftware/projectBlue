@@ -12,7 +12,6 @@ import okhttp3.Response;
 
 import javax.net.ssl.*;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyManagementException;
@@ -83,34 +82,6 @@ public class ConnectionProvider implements IConnectionProvider {
 
 	public ConnectionProvider(IUrlProvider urlProvider) {
 		this.urlProvider = urlProvider;
-	}
-
-	@Override
-	public HttpURLConnection getConnection(String... params) throws IOException {
-		if (urlProvider == null) return null;
-
-		final URL url = new URL(urlProvider.getUrl(params));
-		final String authCode = urlProvider.getAuthCode();
-
-		final HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-		connection.setConnectTimeout(5000);
-		connection.setReadTimeout(180000);
-
-		if (connection instanceof HttpsURLConnection) {
-			final HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
-			httpsConnection.setSSLSocketFactory(lazySslSocketFactory.getObject());
-			httpsConnection.setHostnameVerifier(lazyHostnameVerifier.getObject());
-		}
-
-		if (authCode != null && !authCode.isEmpty())
-			connection.setRequestProperty("Authorization", "basic " + authCode);
-
-		return connection;
-	}
-
-	@Override
-	public OkHttpClient getClient() {
-		return lazyOkHttpClient.getObject();
 	}
 
 	@Override

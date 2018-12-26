@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistStateManager;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -23,9 +21,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,7 +38,7 @@ public class WhenChangingTracks {
 	private static Library library;
 
 	@BeforeClass
-	public static void before() throws IOException, InterruptedException {
+	public static void before() throws InterruptedException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		library = new Library();
@@ -60,16 +55,6 @@ public class WhenChangingTracks {
 
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).then(Promise::new);
-
-		final IUrlProvider urlProvider = mock(IUrlProvider.class);
-		when(urlProvider.getBaseUrl()).thenReturn("");
-
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-		when(connectionProvider.getUrlProvider()).thenReturn(urlProvider);
-
-		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
-		when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
-		when(connectionProvider.getConnection(any())).thenReturn(urlConnection);
 
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
 		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(4))))
