@@ -76,11 +76,15 @@ public class FakeConnectionProvider implements IConnectionProvider {
 
 	@Override
 	public Promise<Response> promiseResponse(String... params) {
-		return new Promise<>(getResponse(params));
+		try {
+			return new Promise<>(getResponse(params));
+		} catch (IOException e) {
+			return new Promise<>(e);
+		}
 	}
 
 	@Override
-	public Response getResponse(String... params) {
+	public Response getResponse(String... params) throws IOException {
 		final Request.Builder builder = new Request.Builder();
 		builder.url(getUrlProvider().getUrl(params));
 
@@ -112,6 +116,8 @@ public class FakeConnectionProvider implements IConnectionProvider {
 			buffer.write(result.response);
 			responseBuilder.code(result.code);
 			responseBuilder.body(new RealResponseBody(null, result.response.length, buffer));
+		} catch (IOException io) {
+			throw io;
 		} catch (Throwable ignored) {
 		}
 
