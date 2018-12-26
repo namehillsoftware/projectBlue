@@ -82,7 +82,7 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	@Override
 	public Response getResponse(String... params) {
 		final Request.Builder builder = new Request.Builder();
-		builder.url("http://fake-connection-url");
+		builder.url(getUrlProvider().getUrl(params));
 
 		final Response.Builder responseBuilder = new Response.Builder();
 		responseBuilder
