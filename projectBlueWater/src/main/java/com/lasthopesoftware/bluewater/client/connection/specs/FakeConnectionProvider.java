@@ -84,11 +84,14 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		final Request.Builder builder = new Request.Builder();
 		builder.url(getUrlProvider().getUrl(params));
 
+		final Buffer buffer = new Buffer();
+
 		final Response.Builder responseBuilder = new Response.Builder();
 		responseBuilder
 			.request(builder.build())
 			.protocol(Protocol.HTTP_1_1)
 			.message("Not Found")
+			.body(new RealResponseBody(null, 0, buffer))
 			.code(404);
 
 		CarelessOneParameterFunction<String[], ResponseTuple> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
@@ -106,13 +109,11 @@ public class FakeConnectionProvider implements IConnectionProvider {
 
 		try {
 			final ResponseTuple result = mappedResponse.resultFrom(params);
-			final Buffer buffer = new Buffer();
 			buffer.write(result.response);
 			responseBuilder.code(result.code);
 			responseBuilder.body(new RealResponseBody(null, result.response.length, buffer));
 		} catch (Throwable ignored) {
 		}
-
 
 		return responseBuilder.build();
 	}
