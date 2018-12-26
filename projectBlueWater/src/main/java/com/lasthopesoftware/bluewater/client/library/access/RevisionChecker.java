@@ -7,7 +7,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class RevisionChecker {
 	
@@ -44,7 +43,7 @@ public class RevisionChecker {
 
         return connectionProvider.promiseResponse("Library/GetRevision")
 			.then(response -> {
-				try (InputStream is = Objects.requireNonNull(response.body()).byteStream()) {
+				try (InputStream is = response.body().byteStream()) {
 					final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
 					if (standardRequest == null)
 						return getCachedRevision(connectionProvider);

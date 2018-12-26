@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,11 +26,8 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() throws IOException {
-		final HttpURLConnection connection = mock(HttpURLConnection.class);
-		when(connection.getInputStream()).thenThrow(IOException.class);
-
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-		when(fakeConnectionProvider.getConnection(any())).thenReturn(connection);
+		when(fakeConnectionProvider.getResponse(any())).thenThrow(IOException.class);
 
 		final StoredFileJob storedFileJob = new StoredFileJob(
 			$ -> {

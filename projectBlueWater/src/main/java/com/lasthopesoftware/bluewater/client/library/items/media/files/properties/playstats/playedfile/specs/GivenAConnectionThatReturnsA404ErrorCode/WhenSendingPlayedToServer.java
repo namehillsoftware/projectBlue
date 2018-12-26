@@ -1,21 +1,16 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.specs.GivenAConnectionThatReturnsA404ErrorCode;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenSendingPlayedToServer {
 
@@ -23,12 +18,7 @@ public class WhenSendingPlayedToServer {
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-
-		final Response response = new Response.Builder().request(new Request.Builder().url("").build()).code(404).build();
-
-		when(connectionProvider.promiseResponse("File/Played", "File=15", "FileType=Key"))
-			.thenReturn(new Promise<>(response));
+		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
 
 		final PlayedFilePlayStatsUpdater updater = new PlayedFilePlayStatsUpdater(connectionProvider);
 
