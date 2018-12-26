@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProv
 import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;
@@ -63,7 +64,8 @@ public class WhenBuildingTheNotification extends AndroidContext {
 				containerRepository,
 				new FilePropertiesProvider(
 					connectionProvider,
-					containerRepository)),
+					containerRepository,
+					ParsingScheduler.instance())),
 			imageProvider);
 
 		builder = new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), false)).get();

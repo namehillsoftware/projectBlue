@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.Collection;
@@ -30,7 +31,8 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 				FilePropertyCache.getInstance(),
 				new FilePropertiesProvider(
 					connectionProvider,
-					FilePropertyCache.getInstance()));
+					FilePropertyCache.getInstance(),
+					ParsingScheduler.instance()));
 
 		return new PlaybackFileChangedScrobbleDroidProxy(filePropertiesProvider, ScrobbleIntentProvider.getInstance());
 	}

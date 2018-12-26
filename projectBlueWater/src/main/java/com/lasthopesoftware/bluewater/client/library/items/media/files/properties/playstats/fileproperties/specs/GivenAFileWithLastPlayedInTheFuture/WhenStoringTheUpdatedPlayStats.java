@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -46,7 +47,7 @@ public class WhenStoringTheUpdatedPlayStats {
 			"File/GetInfo", "File=23");
 
 		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertiesContainer);
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertiesContainer, ParsingScheduler.instance());
 
 		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(filePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
 
