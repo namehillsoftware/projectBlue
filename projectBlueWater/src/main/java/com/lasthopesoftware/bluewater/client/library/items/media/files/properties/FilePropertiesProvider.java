@@ -19,16 +19,11 @@ import xmlwise.Xmlwise;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 	private final IConnectionProvider connectionProvider;
 	private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
-
-	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-
 
 	public FilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
 		this.connectionProvider = connectionProvider;

@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -81,32 +82,22 @@ public class ConnectionProvider implements IConnectionProvider {
 	};
 
 	public ConnectionProvider(IUrlProvider urlProvider) {
+		if (urlProvider == null) throw new IllegalArgumentException("urlProvider != null");
 		this.urlProvider = urlProvider;
 	}
 
 	@Override
 	public Promise<Response> promiseResponse(String... params) {
-		if (urlProvider == null) return null;
-
-		final URL url;
 		try {
-			url = new URL(urlProvider.getUrl(params));
+			return new HttpPromisedResponse(callServer(params));
 		} catch (MalformedURLException e) {
 			return new Promise<>(e);
 		}
-
-		final Request request = new Request.Builder().url(url).build();
-		return new HttpPromisedResponse(lazyOkHttpClient.getObject().newCall(request));
 	}
 
 	@Override
 	public Response getResponse(String... params) throws IOException {
-		if (urlProvider == null) return null;
-
-		final URL url = new URL(urlProvider.getUrl(params));
-
-		final Request request = new Request.Builder().url(url).build();
-		return lazyOkHttpClient.getObject().newCall(request).execute();
+		return callServer(params).execute();
 	}
 
 	@Override
@@ -128,4 +119,10 @@ public class ConnectionProvider implements IConnectionProvider {
 		return lazyHostnameVerifier.getObject();
 	}
 
+	private Call callServer(String... params) throws MalformedURLException {
+		final URL url = new URL(urlProvider.getUrl(params));
+
+		final Request request = new Request.Builder().url(url).build();
+		return lazyOkHttpClient.getObject().newCall(request);
+	}
 }
