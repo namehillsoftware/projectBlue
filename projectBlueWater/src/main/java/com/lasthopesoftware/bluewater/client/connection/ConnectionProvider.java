@@ -30,10 +30,14 @@ public class ConnectionProvider implements IConnectionProvider {
 		protected OkHttpClient create() {
 			return new OkHttpClient.Builder()
 				.addNetworkInterceptor(chain -> {
-					Request request = chain.request().newBuilder()
-						.addHeader("Connection", "close")
-						.addHeader("Authorization", "basic " + urlProvider.getAuthCode()).build();
-					return chain.proceed(request);
+					Request.Builder requestBuilder = chain.request().newBuilder().addHeader("Connection", "close");
+
+					final String authCode = urlProvider.getAuthCode();
+
+					if (authCode != null && !authCode.isEmpty())
+						requestBuilder.addHeader("Authorization", "basic " + urlProvider.getAuthCode());
+
+					return chain.proceed(requestBuilder.build());
 				})
 				.readTimeout(3, TimeUnit.MINUTES)
 				.connectTimeout(5, TimeUnit.SECONDS)
@@ -90,7 +94,7 @@ public class ConnectionProvider implements IConnectionProvider {
 	public Promise<Response> promiseResponse(String... params) {
 		try {
 			return new HttpPromisedResponse(callServer(params));
-		} catch (MalformedURLException e) {
+		} catch (Throwable e) {
 			return new Promise<>(e);
 		}
 	}
