@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.specs.GivenAFileWithLastPlayedBeforeNowAndSongsDuration.AndNumberPlaysIsNotPresent;
 
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeRevisionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -31,7 +32,7 @@ public class WhenStoringTheUpdatedPlayStats {
 		final long lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).getMillis()).getStandardSeconds();
 
 		connectionProvider.mapResponse((params) ->
-			("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
+			new FakeConnectionProvider.ResponseTuple(200, ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
 			"<MPL Version=\"2.0\" Title=\"MCWS - Files - 10936\" PathSeparator=\"\\\">\n" +
 				"<Item>\n" +
 					"<Field Name=\"Key\">23</Field>\n" +
@@ -41,7 +42,7 @@ public class WhenStoringTheUpdatedPlayStats {
 					"<Field Name=\"File Size\">2345088</Field>\n" +
 					"<Field Name=\"" + FilePropertiesProvider.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
 				"</Item>\n" +
-			"</MPL>\n").getBytes(),
+			"</MPL>\n").getBytes()),
 			"File/GetInfo", "File=23");
 
 		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
