@@ -59,9 +59,12 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 			final Promise<Response> filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.getKey());
 			cancellationProxy.doCancel(filePropertiesResponse);
 
-			filePropertiesResponse
-				.eventually(new FilePropertiesWriter(parsingScheduler, connectionProvider, filePropertiesContainerProvider, serviceFile, serverRevision))
-				.then(new VoidResponse<>(this::resolve), new VoidResponse<>(this::reject));
+			Promise<Map<String, String>> promisedProperties = filePropertiesResponse
+				.eventually(new FilePropertiesWriter(parsingScheduler, connectionProvider, filePropertiesContainerProvider, serviceFile, serverRevision));
+
+			cancellationProxy.doCancel(promisedProperties);
+
+			promisedProperties.then(new VoidResponse<>(this::resolve), new VoidResponse<>(this::reject));
 		}
 	}
 
@@ -85,6 +88,8 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 		@Override
 		public Map<String, String> prepareMessage(CancellationToken cancellationToken) throws Throwable {
+			if (cancellationToken.isCancelled()) return new HashMap<>();
+
 			try {
 				final XmlElement xml = Xmlwise.createXml(response.body().string());
 				final XmlElement parent = xml.get(0);
