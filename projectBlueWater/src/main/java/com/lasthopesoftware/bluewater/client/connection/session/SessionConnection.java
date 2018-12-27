@@ -27,12 +27,13 @@ import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-import org.joda.time.Duration;
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class SessionConnection {
 
@@ -47,7 +48,10 @@ public class SessionConnection {
 	private static final CreateAndHold<BuildUrlProviders> lazyUrlScanner = new AbstractSynchronousLazy<BuildUrlProviders>() {
 		@Override
 		protected BuildUrlProviders create() {
-			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
+			final OkHttpClient client = new OkHttpClient.Builder()
+				.connectTimeout(buildConnectionTimeoutTime, TimeUnit.MILLISECONDS)
+				.build();
+			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(client));
 			final ConnectionTester connectionTester = new ConnectionTester();
 
 			return new UrlScanner(connectionTester, serverLookup, OkHttpFactory.getInstance());

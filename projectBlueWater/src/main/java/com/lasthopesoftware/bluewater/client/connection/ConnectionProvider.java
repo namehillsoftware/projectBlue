@@ -26,7 +26,6 @@ public class ConnectionProvider implements IConnectionProvider {
 		}
 	};
 
-
 	public ConnectionProvider(IUrlProvider urlProvider, ProvideOkHttpClients okHttpClients) {
 		if (urlProvider == null) throw new IllegalArgumentException("urlProvider != null");
 		this.urlProvider = urlProvider;

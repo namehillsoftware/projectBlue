@@ -14,7 +14,9 @@ import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-import org.joda.time.Duration;
+import okhttp3.OkHttpClient;
+
+import java.util.concurrent.TimeUnit;
 
 public class AccessConfigurationBuilder {
 
@@ -23,7 +25,8 @@ public class AccessConfigurationBuilder {
 	private static final CreateAndHold<BuildUrlProviders> lazyUrlScanner = new AbstractSynchronousLazy<BuildUrlProviders>() {
 		@Override
 		protected BuildUrlProviders create() {
-			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
+			final OkHttpClient client = new OkHttpClient.Builder().connectTimeout(buildConnectionTimeoutTime, TimeUnit.MILLISECONDS).build();
+			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(client));
 			final ConnectionTester connectionTester = new ConnectionTester();
 
 			return new UrlScanner(connectionTester, serverLookup, OkHttpFactory.getInstance());

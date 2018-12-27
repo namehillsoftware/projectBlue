@@ -7,10 +7,10 @@ import okhttp3.Response;
 
 import java.io.IOException;
 
-class HttpPromisedResponse extends Promise<Response> implements Callback, Runnable {
+public class HttpPromisedResponse extends Promise<Response> implements Callback, Runnable {
 	private final Call call;
 
-	HttpPromisedResponse(Call call) {
+	public HttpPromisedResponse(Call call) {
 		this.call = call;
 		respondToCancellation(this);
 		call.enqueue(this);
