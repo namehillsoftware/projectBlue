@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -25,7 +26,7 @@ public class AccessConfigurationBuilder {
 			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
 			final ConnectionTester connectionTester = new ConnectionTester();
 
-			return new UrlScanner(connectionTester, serverLookup);
+			return new UrlScanner(connectionTester, serverLookup, OkHttpFactory.getInstance());
 		}
 	};
 

@@ -25,6 +25,7 @@ import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvicto
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
@@ -823,10 +824,6 @@ implements OnAudioFocusChangeListener
 			final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
 				new ExternalStorageReadPermissionsArbitratorForOs(this);
 
-			final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
-				connectionProvider,
-				new ServiceFileUriQueryParamsProvider());
-
 			final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
 			if (cache != null)
 				cache.release();
@@ -834,28 +831,35 @@ implements OnAudioFocusChangeListener
 				new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
 				new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
 
+			final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
+				connectionProvider,
+				new ServiceFileUriQueryParamsProvider());
+
+			final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(
+				library,
+				new StoredFileUriProvider(
+					lazySelectedLibraryProvider.getObject(),
+					storedFileAccess,
+					arbitratorForOs),
+				new CachedAudioFileUriProvider(
+					remoteFileUriProvider,
+					new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+				new MediaFileUriProvider(
+					this,
+					new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+					arbitratorForOs,
+					library,
+					false),
+				remoteFileUriProvider);
+
 			return extractorHandler.getObject().then(handler -> {
 				final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 					new PreparedPlaybackQueueFeederBuilder(
 						this,
 						handler,
 						connectionProvider,
-						new BestMatchUriProvider(
-							library,
-							new StoredFileUriProvider(
-								lazySelectedLibraryProvider.getObject(),
-								storedFileAccess,
-								arbitratorForOs),
-							new CachedAudioFileUriProvider(
-								remoteFileUriProvider,
-								new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
-							new MediaFileUriProvider(
-								this,
-								new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
-								arbitratorForOs,
-								library,
-								false),
-							remoteFileUriProvider),
+						OkHttpFactory.getInstance(),
+						bestMatchUriProvider,
 						cache);
 
 				final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);

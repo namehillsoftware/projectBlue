@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProv
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
@@ -49,7 +50,7 @@ public class SessionConnection {
 			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
 			final ConnectionTester connectionTester = new ConnectionTester();
 
-			return new UrlScanner(connectionTester, serverLookup);
+			return new UrlScanner(connectionTester, serverLookup, OkHttpFactory.getInstance());
 		}
 	};
 
@@ -65,6 +66,7 @@ public class SessionConnection {
 	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
 	private final TestConnections connectionTester;
+	private final OkHttpFactory okHttpFactory;
 
 	public static synchronized SessionConnection getInstance(Context context) {
 		if (sessionConnectionInstance != null) return sessionConnectionInstance;
@@ -80,7 +82,8 @@ public class SessionConnection {
 			new LiveUrlProvider(
 				new ActiveNetworkFinder(applicationContext),
 				lazyUrlScanner.getObject()),
-			new ConnectionTester());
+			new ConnectionTester(),
+			OkHttpFactory.getInstance());
 	}
 
 	public SessionConnection(
@@ -90,7 +93,8 @@ public class SessionConnection {
 		ProvideLibraryViewsUsingConnection libraryViewsProvider,
 		ILibraryStorage libraryStorage,
 		ProvideLiveUrl liveUrlProvider,
-		TestConnections connectionTester) {
+		TestConnections connectionTester,
+		OkHttpFactory okHttpFactory) {
 		this.localBroadcastManager = localBroadcastManager;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
@@ -98,6 +102,7 @@ public class SessionConnection {
 		this.libraryStorage = libraryStorage;
 		this.liveUrlProvider = liveUrlProvider;
 		this.connectionTester = connectionTester;
+		this.okHttpFactory = okHttpFactory;
 	}
 
 	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
@@ -177,7 +182,7 @@ public class SessionConnection {
 							return Promise.empty();
 						}
 
-						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider);
+						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider, okHttpFactory);
 
 						if (library.getSelectedView() >= 0) {
 							doStateChange(BuildingSessionConnectionStatus.BuildingSessionComplete);

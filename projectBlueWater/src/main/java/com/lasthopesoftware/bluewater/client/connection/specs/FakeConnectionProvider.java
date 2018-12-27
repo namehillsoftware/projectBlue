@@ -13,17 +13,12 @@ import okhttp3.Response;
 import okhttp3.internal.http.RealResponseBody;
 import okio.Buffer;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.mockito.Mockito.mock;
 
 
 public class FakeConnectionProvider implements IConnectionProvider {
@@ -88,27 +83,12 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	}
 
 	@Override
-	public X509TrustManager getTrustManager() {
-		return mock(X509TrustManager.class);
-	}
-
-	@Override
-	public SSLSocketFactory getSslSocketFactory() {
-		return mock(SSLSocketFactory.class);
-	}
-
-	@Override
 	public IUrlProvider getUrlProvider() {
 		try {
 			return new MediaServerUrlProvider(null, "test", 80);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public HostnameVerifier getHostnameVerifier() {
-		return mock(HostnameVerifier.class);
 	}
 
 	public static class ResponseTuple {

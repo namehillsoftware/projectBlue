@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
@@ -19,7 +20,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 public class ConnectionProvider implements IConnectionProvider {
 
@@ -28,22 +28,7 @@ public class ConnectionProvider implements IConnectionProvider {
 	private final CreateAndHold<OkHttpClient> lazyOkHttpClient = new AbstractSynchronousLazy<OkHttpClient>() {
 		@Override
 		protected OkHttpClient create() {
-			return new OkHttpClient.Builder()
-				.addNetworkInterceptor(chain -> {
-					Request.Builder requestBuilder = chain.request().newBuilder().addHeader("Connection", "close");
-
-					final String authCode = urlProvider.getAuthCode();
-
-					if (authCode != null && !authCode.isEmpty())
-						requestBuilder.addHeader("Authorization", "basic " + urlProvider.getAuthCode());
-
-					return chain.proceed(requestBuilder.build());
-				})
-				.readTimeout(3, TimeUnit.MINUTES)
-				.connectTimeout(5, TimeUnit.SECONDS)
-				.sslSocketFactory(getSslSocketFactory(), getTrustManager())
-				.hostnameVerifier(getHostnameVerifier())
-				.build();
+			return okHttpClients.getOkHttpClient(urlProvider);
 		}
 	};
 
@@ -84,10 +69,14 @@ public class ConnectionProvider implements IConnectionProvider {
 				: new AdditionalHostnameVerifier(new URL(urlProvider.getBaseUrl()).getHost(), defaultHostnameVerifier);
 		}
 	};
+	private final ProvideOkHttpClients okHttpClients;
 
-	public ConnectionProvider(IUrlProvider urlProvider) {
+	public ConnectionProvider(IUrlProvider urlProvider, ProvideOkHttpClients okHttpClients) {
 		if (urlProvider == null) throw new IllegalArgumentException("urlProvider != null");
 		this.urlProvider = urlProvider;
+
+		if (okHttpClients == null) throw new IllegalArgumentException("okHttpClients != null");
+		this.okHttpClients = okHttpClients;
 	}
 
 	@Override
@@ -104,23 +93,8 @@ public class ConnectionProvider implements IConnectionProvider {
 		return callServer(params).execute();
 	}
 
-	@Override
-	public X509TrustManager getTrustManager() {
-		return lazyTrustManager.getObject();
-	}
-
-	@Override
-	public SSLSocketFactory getSslSocketFactory() {
-		return lazySslSocketFactory.getObject();
-	}
-
 	public IUrlProvider getUrlProvider() {
 		return urlProvider;
-	}
-
-	@Override
-	public HostnameVerifier getHostnameVerifier() {
-		return lazyHostnameVerifier.getObject();
 	}
 
 	private Call callServer(String... params) throws MalformedURLException {

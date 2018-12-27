@@ -9,6 +9,7 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderersFactory;
@@ -32,13 +33,13 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
 
-	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, IConnectionProvider connectionProvider, BestMatchUriProvider bestMatchUriProvider, Library library, Cache cache) {
+	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, IConnectionProvider connectionProvider, ProvideOkHttpClients okHttpClients, BestMatchUriProvider bestMatchUriProvider, Library library, Cache cache) {
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
 		extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
 			library,
-			new HttpDataSourceFactoryProvider(context, connectionProvider),
+			new HttpDataSourceFactoryProvider(context, connectionProvider, okHttpClients),
 			cache);
 
 		renderersFactory = new AudioRenderersFactory(context);
