@@ -7,7 +7,7 @@ import okhttp3.Response;
 
 import java.io.IOException;
 
-public class HttpPromisedResponse extends Promise<Response> implements Callback, Runnable {
+class HttpPromisedResponse extends Promise<Response> implements Callback, Runnable {
 	private final Call call;
 
 	HttpPromisedResponse(Call call) {
