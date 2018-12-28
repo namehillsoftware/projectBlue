@@ -738,11 +738,6 @@ implements OnAudioFocusChangeListener
 		if (playbackEngine != null)
 			playbackEngine.close();
 
-		final SpecificLibraryProvider libraryProvider =
-			new SpecificLibraryProvider(
-				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
-				lazyLibraryRepository.getObject());
-
 		localBroadcastManagerLazy.getObject()
 			.registerReceiver(
 				buildSessionReceiver,
@@ -872,7 +867,11 @@ implements OnAudioFocusChangeListener
 						preparationSourceProvider,
 						preparationSourceProvider,
 						QueueProviders.providers(),
-						new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
+						new NowPlayingRepository(
+							new SpecificLibraryProvider(
+								lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
+								lazyLibraryRepository.getObject()),
+							lazyLibraryRepository.getObject()),
 						playlistPlaybackBootstrapper);
 
 				playbackEngine
