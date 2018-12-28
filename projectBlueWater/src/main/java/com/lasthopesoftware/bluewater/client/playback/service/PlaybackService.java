@@ -9,7 +9,6 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
-import android.media.session.MediaSession;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.*;
@@ -310,8 +309,8 @@ implements OnAudioFocusChangeListener
 					mediaSessionTag);
 
 				newMediaSession.setFlags(
-					MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
-					MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+					MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+					MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
 				newMediaSession.setCallback(new MediaSessionCallbackReceiver(PlaybackService.this));
 
