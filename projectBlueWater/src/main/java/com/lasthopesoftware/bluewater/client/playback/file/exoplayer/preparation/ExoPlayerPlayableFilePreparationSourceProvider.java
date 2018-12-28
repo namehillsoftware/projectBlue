@@ -7,15 +7,10 @@ import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.cache.Cache;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderersFactory;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -33,14 +28,11 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
 	private final RenderersFactory renderersFactory;
 
-	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, IConnectionProvider connectionProvider, ProvideOkHttpClients okHttpClients, BestMatchUriProvider bestMatchUriProvider, Library library, Cache cache) {
+	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider, BestMatchUriProvider bestMatchUriProvider) {
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
-		extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
-			library,
-			new HttpDataSourceFactoryProvider(context, connectionProvider, okHttpClients),
-			cache);
+		this.extractorMediaSourceFactoryProvider = extractorMediaSourceFactoryProvider;
 
 		renderersFactory = new AudioRenderersFactory(context);
 	}

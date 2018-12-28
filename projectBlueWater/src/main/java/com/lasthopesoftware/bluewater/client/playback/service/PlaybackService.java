@@ -63,6 +63,8 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
@@ -752,115 +754,116 @@ implements OnAudioFocusChangeListener
 			if (connectionProvider == null)
 				throw new PlaybackEngineInitializationException("connectionProvider was null!");
 
-			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(),
-				new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
-			if (remoteControlProxy != null)
-				localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
-
-			final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
-			remoteControlProxy =
-				new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
-					new MediaSessionBroadcaster(
-						this,
-						cachedFilePropertiesProvider,
-						imageProvider,
-						lazyMediaSession.getObject()) :
-					new RemoteControlClientBroadcaster(
-						this,
-						cachedFilePropertiesProvider,
-						imageProvider,
-						remoteControlClient.getObject()));
-
-			localBroadcastManagerLazy
-				.getObject()
-				.registerReceiver(
-					remoteControlProxy,
-					Stream.of(remoteControlProxy.registerForIntents())
-						.reduce(new IntentFilter(), (intentFilter, action) -> {
-							intentFilter.addAction(action);
-							return intentFilter;
-						}));
-
-			if (playbackNotificationRouter != null)
-				localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
-
-			if (nowPlayingNotificationBuilder != null)
-				nowPlayingNotificationBuilder.close();
-
-			playbackNotificationRouter =
-				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
-					this,
-					notificationManagerLazy.getObject(),
-					lazyPlaybackNotificationsConfiguration.getObject(),
-					nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
-						this,
-						lazyMediaStyleNotificationSetup.getObject(),
-						connectionProvider,
-						cachedFilePropertiesProvider,
-						imageProvider)));
-
-			localBroadcastManagerLazy
-				.getObject()
-				.registerReceiver(
-					playbackNotificationRouter,
-					Stream.of(playbackNotificationRouter.registerForIntents())
-						.reduce(new IntentFilter(), (intentFilter, action) -> {
-							intentFilter.addAction(action);
-							return intentFilter;
-						}));
-
-			if (playlistPlaybackBootstrapper != null)
-				playlistPlaybackBootstrapper.close();
-
-			playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
-				lazyPlaylistVolumeManager.getObject(),
-				new PlaybackHandlerVolumeControllerFactory(
-					new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
-
-			final StoredFileAccess storedFileAccess = new StoredFileAccess(
-				this,
-				lazyAllStoredFilesInLibrary.getObject());
-
-			final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
-				new ExternalStorageReadPermissionsArbitratorForOs(this);
-
-			final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
-			if (cache != null)
-				cache.release();
-			cache = new SimpleCache(
-				new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
-				new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
-
-			final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
-				connectionProvider,
-				new ServiceFileUriQueryParamsProvider());
-
-			final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(
-				library,
-				new StoredFileUriProvider(
-					lazySelectedLibraryProvider.getObject(),
-					storedFileAccess,
-					arbitratorForOs),
-				new CachedAudioFileUriProvider(
-					remoteFileUriProvider,
-					new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
-				new MediaFileUriProvider(
-					this,
-					new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
-					arbitratorForOs,
-					library,
-					false),
-				remoteFileUriProvider);
-
 			return extractorHandler.getObject().then(handler -> {
+				cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(),
+					new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
+				if (remoteControlProxy != null)
+					localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
+
+				final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
+				remoteControlProxy =
+					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
+						new MediaSessionBroadcaster(
+							this,
+							cachedFilePropertiesProvider,
+							imageProvider,
+							lazyMediaSession.getObject()) :
+						new RemoteControlClientBroadcaster(
+							this,
+							cachedFilePropertiesProvider,
+							imageProvider,
+							remoteControlClient.getObject()));
+
+				localBroadcastManagerLazy
+					.getObject()
+					.registerReceiver(
+						remoteControlProxy,
+						Stream.of(remoteControlProxy.registerForIntents())
+							.reduce(new IntentFilter(), (intentFilter, action) -> {
+								intentFilter.addAction(action);
+								return intentFilter;
+							}));
+
+				if (playbackNotificationRouter != null)
+					localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
+
+				if (nowPlayingNotificationBuilder != null)
+					nowPlayingNotificationBuilder.close();
+
+				playbackNotificationRouter =
+					new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
+						this,
+						notificationManagerLazy.getObject(),
+						lazyPlaybackNotificationsConfiguration.getObject(),
+						nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
+							this,
+							lazyMediaStyleNotificationSetup.getObject(),
+							connectionProvider,
+							cachedFilePropertiesProvider,
+							imageProvider)));
+
+				localBroadcastManagerLazy
+					.getObject()
+					.registerReceiver(
+						playbackNotificationRouter,
+						Stream.of(playbackNotificationRouter.registerForIntents())
+							.reduce(new IntentFilter(), (intentFilter, action) -> {
+								intentFilter.addAction(action);
+								return intentFilter;
+							}));
+
+				if (playlistPlaybackBootstrapper != null)
+					playlistPlaybackBootstrapper.close();
+
+				playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
+					lazyPlaylistVolumeManager.getObject(),
+					new PlaybackHandlerVolumeControllerFactory(
+						new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
+
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(
+					this,
+					lazyAllStoredFilesInLibrary.getObject());
+
+				final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
+					new ExternalStorageReadPermissionsArbitratorForOs(this);
+
+				final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
+				if (cache != null)
+					cache.release();
+				cache = new SimpleCache(
+					new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
+					new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
+
+				final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
+					connectionProvider,
+					new ServiceFileUriQueryParamsProvider());
+
+				final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(
+					library,
+					new StoredFileUriProvider(
+						lazySelectedLibraryProvider.getObject(),
+						storedFileAccess,
+						arbitratorForOs),
+					new CachedAudioFileUriProvider(
+						remoteFileUriProvider,
+						new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+					new MediaFileUriProvider(
+						this,
+						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+						arbitratorForOs,
+						library,
+						false),
+					remoteFileUriProvider);
+
 				final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 					new PreparedPlaybackQueueFeederBuilder(
 						this,
 						handler,
-						connectionProvider,
-						OkHttpFactory.getInstance(),
-						bestMatchUriProvider,
-						cache);
+						new ExtractorMediaSourceFactoryProvider(
+							library,
+							new HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
+							cache),
+						bestMatchUriProvider);
 
 				final IPlayableFilePreparationSourceProvider preparationSourceProvider = playbackEngineBuilder.build(library);
 
