@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fak
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,17 +40,17 @@ public class WhenChangingTracks {
 	private static Library library;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, ExecutionException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		library = new Library();
 		library.setId(1);
-		library.setSavedTracksString(FileStringListUtilities.serializeFileStringList(Arrays.asList(
+		library.setSavedTracksString(new FuturePromise<>(FileStringListUtilities.promiseSerializedFileStringList(Arrays.asList(
 			new ServiceFile(1),
 			new ServiceFile(2),
 			new ServiceFile(3),
 			new ServiceFile(4),
-			new ServiceFile(5))));
+			new ServiceFile(5)))).get());
 
 		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
 		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));

@@ -756,13 +756,13 @@ implements OnAudioFocusChangeListener
 
 				final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
 				remoteControlProxy =
-					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
-						new MediaSessionBroadcaster(
+					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+						? new MediaSessionBroadcaster(
 							this,
 							cachedFilePropertiesProvider,
 							imageProvider,
-							lazyMediaSession.getObject()) :
-						new RemoteControlClientBroadcaster(
+							lazyMediaSession.getObject())
+						: new RemoteControlClientBroadcaster(
 							this,
 							cachedFilePropertiesProvider,
 							imageProvider,
