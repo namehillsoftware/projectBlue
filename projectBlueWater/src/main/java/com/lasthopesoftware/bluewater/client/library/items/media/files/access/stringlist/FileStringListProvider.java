@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.ResponseBody;
 
 public final class FileStringListProvider {
 	private final IConnectionProvider connectionProvider;
@@ -14,6 +15,15 @@ public final class FileStringListProvider {
 	public Promise<String> promiseFileStringList(FileListParameters.Options option, String... params) {
 		return connectionProvider
 			.promiseResponse(FileListParameters.Helpers.processParams(option, params))
-			.then(response -> response.body().string());
+			.then(response -> {
+				final ResponseBody body = response.body();
+				if (body == null) return null;
+
+				try {
+					return body.string();
+				} finally {
+					body.close();
+				}
+			});
 	}
 }

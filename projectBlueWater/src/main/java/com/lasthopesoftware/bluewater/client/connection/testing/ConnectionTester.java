@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,10 @@ public class ConnectionTester implements TestConnections {
 	}
 
 	private boolean doTestSynchronously(Response response) {
-		try (final InputStream is = response.body().byteStream()) {
+		final ResponseBody body = response.body();
+		if (body == null) return false;
+
+		try (final InputStream is = body.byteStream()) {
 			final StandardRequest responseDao = StandardRequest.fromInputStream(is);
 
 			return responseDao != null && responseDao.isStatus();
@@ -28,6 +32,8 @@ public class ConnectionTester implements TestConnections {
 			mLogger.error("Error closing connection, device failure?", e);
 		} catch (IllegalArgumentException e) {
 			mLogger.warn("Illegal argument passed in", e);
+		} finally {
+			body.close();
 		}
 
 		return false;

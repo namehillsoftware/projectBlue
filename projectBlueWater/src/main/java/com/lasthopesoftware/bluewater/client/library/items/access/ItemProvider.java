@@ -7,11 +7,13 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 
 public class ItemProvider implements ProvideItems {
@@ -61,20 +63,25 @@ public class ItemProvider implements ProvideItems {
 						LibraryViewsByConnectionProvider.browseLibraryParameter,
 						"ID=" + String.valueOf(itemKey),
 						"Version=2").then(response -> {
-						try (InputStream is = response.body().byteStream()) {
-							final List<Item> items = ItemResponse.GetItems(is);
+							final ResponseBody body = response.body();
+							if (body == null) return Collections.emptyList();
 
-							final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
+							try (final InputStream is = body.byteStream()) {
+								final List<Item> items = ItemResponse.GetItems(is);
 
-							synchronized (itemsCache) {
-								itemsCache.put(boxedItemKey, newItemHolder);
+								final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
+
+								synchronized (itemsCache) {
+									itemsCache.put(boxedItemKey, newItemHolder);
+								}
+
+								return items;
+							} catch (IOException e) {
+								logger.error("There was an error getting the inputstream", e);
+								throw e;
+							} finally {
+								body.close();
 							}
-
-							return items;
-						} catch (IOException e) {
-							logger.error("There was an error getting the inputstream", e);
-							throw e;
-						}
 					});
 				});
 	}

@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.namehillsoftware.handoff.promises.Promise;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 import xmlwise.XmlElement;
 import xmlwise.Xmlwise;
 
@@ -23,6 +24,15 @@ public class ServerInfoXmlRequest implements RequestServerInfoXml {
 			.build();
 
 		return new HttpPromisedResponse(client.newCall(request))
-			.then(response -> Xmlwise.createXml(response.body().string()));
+			.then(response -> {
+				final ResponseBody body = response.body();
+				if (body == null) return null;
+
+				try {
+					return Xmlwise.createXml(body.string());
+				} finally {
+					body.close();
+				}
+			});
 	}
 }

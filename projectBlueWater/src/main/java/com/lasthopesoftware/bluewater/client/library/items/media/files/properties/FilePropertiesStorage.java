@@ -33,8 +33,13 @@ public class FilePropertiesStorage {
 				"Value=" + value,
 				"formatted=" + (isFormatted ? "1" : "0"))
 			.then(new VoidResponse<>(response -> {
-				final int responseCode = response.code();
-				logger.info("api/v1/File/SetInfo responded with a response code of " + responseCode);
+				try {
+					final int responseCode = response.code();
+					logger.info("api/v1/File/SetInfo responded with a response code of " + responseCode);
+				} finally {
+					if (response.body() != null)
+						response.body().close();
+				}
 			}));
 
 		promisedUpdate.excuse(new VoidResponse<>(ioe -> logger.error("There was an error opening the connection", ioe)));

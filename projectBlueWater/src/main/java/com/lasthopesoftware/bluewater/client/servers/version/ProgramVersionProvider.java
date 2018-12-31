@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.servers.version;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.ResponseBody;
 
 import java.io.InputStream;
 
@@ -21,10 +22,14 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 		if (serverVersion != null) return new Promise<>(serverVersion);
 
 		return connectionProvider.promiseResponse("Alive").then(response -> {
-			final StandardRequest standardRequest;
+			final ResponseBody body = response.body();
+			if (body == null) return null;
 
-			try (final InputStream is = response.body().byteStream()) {
+			final StandardRequest standardRequest;
+			try (final InputStream is = body.byteStream()) {
 				standardRequest = StandardRequest.fromInputStream(is);
+			} finally {
+				body.close();
 			}
 
 			if (standardRequest == null) {

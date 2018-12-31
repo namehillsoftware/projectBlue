@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.ResponseBody;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -43,7 +44,10 @@ public class RevisionChecker {
 
         return connectionProvider.promiseResponse("Library/GetRevision")
 			.then(response -> {
-				try (InputStream is = response.body().byteStream()) {
+				final ResponseBody body = response.body();
+				if (body == null) return getCachedRevision(connectionProvider);
+
+				try (final InputStream is = body.byteStream()) {
 					final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
 					if (standardRequest == null)
 						return getCachedRevision(connectionProvider);
@@ -55,6 +59,8 @@ public class RevisionChecker {
 					cachedRevisions.put(baseServerUrl, Integer.valueOf(revisionValue));
 					lastRevisions.put(baseServerUrl, System.currentTimeMillis());
 					return getCachedRevision(connectionProvider);
+				} finally {
+					body.close();
 				}
 			}, e -> getCachedRevision(connectionProvider));
     }

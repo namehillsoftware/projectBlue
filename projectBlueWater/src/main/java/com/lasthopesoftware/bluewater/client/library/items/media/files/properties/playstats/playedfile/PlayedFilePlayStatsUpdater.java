@@ -21,13 +21,18 @@ public class PlayedFilePlayStatsUpdater implements IPlaystatsUpdate {
 	public Promise<?> promisePlaystatsUpdate(ServiceFile serviceFile) {
 		return connectionProvider.promiseResponse("File/Played", "File=" + serviceFile.getKey(), "FileType=Key")
 			.then(response -> {
-				final int responseCode = response.code();
-				logger.info("api/v1/File/Played responded with a response code of " + responseCode);
+				try {
+					final int responseCode = response.code();
+					logger.info("api/v1/File/Played responded with a response code of " + responseCode);
 
-				if (responseCode < 200 || responseCode >= 300)
-					throw new HttpResponseException(responseCode);
+					if (responseCode < 200 || responseCode >= 300)
+						throw new HttpResponseException(responseCode);
 
-				return null;
+					return null;
+				} finally {
+					if (response.body() != null)
+						response.body().close();
+				}
 			});
 	}
 }

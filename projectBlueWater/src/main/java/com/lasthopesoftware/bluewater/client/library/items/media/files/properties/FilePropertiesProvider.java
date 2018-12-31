@@ -15,6 +15,7 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationTok
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.LoggerFactory;
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
@@ -90,8 +91,11 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 		public Map<String, String> prepareMessage(CancellationToken cancellationToken) throws Throwable {
 			if (cancellationToken.isCancelled()) return new HashMap<>();
 
+			final ResponseBody body = response.body();
+			if (body == null) return new HashMap<>();
+
 			try {
-				final XmlElement xml = Xmlwise.createXml(response.body().string());
+				final XmlElement xml = Xmlwise.createXml(body.string());
 				final XmlElement parent = xml.get(0);
 
 				final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
@@ -105,6 +109,8 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 			} catch (IOException | XmlParseException e) {
 				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 				throw e;
+			} finally {
+				body.close();
 			}
 		}
 

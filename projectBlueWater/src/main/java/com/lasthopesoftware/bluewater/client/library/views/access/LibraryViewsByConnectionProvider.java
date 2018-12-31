@@ -5,8 +5,10 @@ import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
 import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.ResponseBody;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 
 public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsingConnection {
@@ -31,7 +33,10 @@ public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsin
 
 					return connectionProvider.promiseResponse(browseLibraryParameter)
 						.then(response -> {
-							try (final InputStream is = response.body().byteStream()) {
+							final ResponseBody body = response.body();
+							if (body == null) return Collections.emptyList();
+
+							try (final InputStream is = body.byteStream()) {
 								final List<Item> items = ItemResponse.GetItems(is);
 
 								synchronized (browseLibraryParameter) {
@@ -40,6 +45,8 @@ public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsin
 								}
 
 								return items;
+							} finally {
+								body.close();
 							}
 						});
 				});

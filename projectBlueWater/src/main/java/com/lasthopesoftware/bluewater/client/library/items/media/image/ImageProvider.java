@@ -25,6 +25,7 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,23 +159,31 @@ public class ImageProvider {
 
 	private static Promise<Bitmap> promiseImage(IConnectionProvider connectionProvider, String uniqueKey, DiskFileCache imageDiskCache, int fileKey) {
 		return connectionProvider.promiseResponse("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff")
-			.then(response -> response.body().bytes())
-			.eventually(
-				imageBytes -> new QueuedPromise<>(new RemoteImageAccessWriter(uniqueKey, imageDiskCache, imageBytes), imageAccessExecutor),
-				e -> {
-					if (e instanceof FileNotFoundException) {
-						logger.warn("Image not found!");
-						return Promise.empty();
-					}
+			.eventually(response -> {
+				final ResponseBody body = response.body();
+				if (body == null) return Promise.empty();
 
-					if (e instanceof IOException) {
-						logger.error("There was an error getting the connection for images", e);
-						return Promise.empty();
-					}
+				try {
+					return new QueuedPromise<>(
+						new RemoteImageAccessWriter(uniqueKey, imageDiskCache, body.bytes()),
+						imageAccessExecutor);
+				} finally {
+					body.close();
+				}
+			}, e -> {
+				if (e instanceof FileNotFoundException) {
+					logger.warn("Image not found!");
+					return Promise.empty();
+				}
 
-					logger.error(e.toString(), e);
-					return new Promise<>(e);
-				});
+				if (e instanceof IOException) {
+					logger.error("There was an error getting the connection for images", e);
+					return Promise.empty();
+				}
+
+				logger.error(e.toString(), e);
+				return new Promise<>(e);
+			});
 	}
 
 	private static class ImageMemoryWriter implements CancellableMessageWriter<Bitmap> {
