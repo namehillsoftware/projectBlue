@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -135,7 +136,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
 		SessionConnection.getInstance(this).promiseSessionConnection()
-			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance()))
+			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance(), ParsingScheduler.instance()))
 			.eventually(f -> f.promiseFileProperties(new ServiceFile(fileKey)))
 			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
@@ -195,7 +196,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 			.eventually(connectionProvider -> {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+						new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
 				return new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider)
 					.promiseFileBitmap(new ServiceFile(fileKey));

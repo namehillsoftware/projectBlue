@@ -25,12 +25,11 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-import org.apache.commons.io.IOUtils;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
@@ -141,28 +140,50 @@ public class ImageProvider {
 												cachedFilesProvider,
 												diskFileAccessTimeUpdater);
 
-										final Promise<File> cachedFilePromise = imageDiskCache.promiseCachedFile(uniqueKey);
-
-										final Promise<Bitmap> cachedSuccessTask =
-											cachedFilePromise
-												.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor))
-												.eventually(imageBitmap -> imageBitmap != null ? new Promise<>(imageBitmap) : new QueuedPromise<>(new RemoteImageAccessWriter(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
-
-										final Promise<Bitmap> cachedErrorTask =
-											cachedFilePromise
-												.excuse(e -> {
-													logger.warn("There was an error getting the file from the cache!", e);
-													return e;
-												})
-												.eventually(e -> new QueuedPromise<>(new RemoteImageAccessWriter(uniqueKey, imageDiskCache, connectionProvider, serviceFile.getKey()), imageAccessExecutor));
-
-										return Promise.whenAny(cachedSuccessTask, cachedErrorTask);
+										return imageDiskCache.promiseCachedFile(uniqueKey)
+											.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor))
+											.eventually(imageBitmap -> imageBitmap != null
+													? new Promise<>(imageBitmap)
+													: promiseImage(connectionProvider, uniqueKey, imageDiskCache, serviceFile.getKey()),
+												error -> {
+													logger.warn("There was an error getting the file from the cache!", error);
+													return promiseImage(connectionProvider, uniqueKey, imageDiskCache, serviceFile.getKey());
+												});
 									});
 							});
 					});
 
 			promiseProxy.proxy(promisedBitmap);
 		}
+	}
+
+	private static Promise<Bitmap> promiseImage(IConnectionProvider connectionProvider, String uniqueKey, DiskFileCache imageDiskCache, int fileKey) {
+		return connectionProvider.promiseResponse("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff")
+			.eventually(response -> {
+				final ResponseBody body = response.body();
+				if (body == null) return Promise.empty();
+
+				try {
+					return new QueuedPromise<>(
+						new RemoteImageAccessWriter(uniqueKey, imageDiskCache, body.bytes()),
+						imageAccessExecutor);
+				} finally {
+					body.close();
+				}
+			}, e -> {
+				if (e instanceof FileNotFoundException) {
+					logger.warn("Image not found!");
+					return Promise.empty();
+				}
+
+				if (e instanceof IOException) {
+					logger.error("There was an error getting the connection for images", e);
+					return Promise.empty();
+				}
+
+				logger.error(e.toString(), e);
+				return new Promise<>(e);
+			});
 	}
 
 	private static class ImageMemoryWriter implements CancellableMessageWriter<Bitmap> {
@@ -222,68 +243,29 @@ public class ImageProvider {
 
 		private final String uniqueKey;
 		private final DiskFileCache imageDiskCache;
-		private final IConnectionProvider connectionProvider;
-		private final int fileKey;
+		private final byte[] imageBytes;
 
-		private RemoteImageAccessWriter(String uniqueKey, DiskFileCache imageDiskCache, IConnectionProvider connectionProvider, int fileKey) {
+		private RemoteImageAccessWriter(String uniqueKey, DiskFileCache imageDiskCache, byte[] imageBytes) {
 			this.uniqueKey = uniqueKey;
 			this.imageDiskCache = imageDiskCache;
-			this.connectionProvider = connectionProvider;
-			this.fileKey = fileKey;
+			this.imageBytes = imageBytes;
 		}
 
 		@Override
-		public Bitmap prepareMessage(CancellationToken cancellationToken) throws Throwable {
-			try {
-				final HttpURLConnection connection = connectionProvider.getConnection("File/GetImage", "File=" + String.valueOf(fileKey), "Type=Full", "Pad=1", "Format=" + IMAGE_FORMAT, "FillTransparency=ffffff");
-				try {
-					// Connection failed to build
-					if (connection == null)	return null;
+		public Bitmap prepareMessage(CancellationToken cancellationToken) {
+			imageDiskCache
+				.put(uniqueKey, imageBytes)
+				.excuse(ioe -> {
+					logger.error("Error writing serviceFile!", ioe);
+					return null;
+				});
 
-					byte[] imageBytes;
-					try {
-						if (cancellationToken.isCancelled())
-							throw new CancellationException(cancellationMessage);
+			putBitmapIntoMemory(uniqueKey, imageBytes);
 
-						try (InputStream is = connection.getInputStream()) {
-							imageBytes = IOUtils.toByteArray(is);
-						} catch (InterruptedIOException interruptedIoException) {
-							logger.warn("Copying the input stream to a byte array was interrupted", interruptedIoException);
-							throw interruptedIoException;
-						}
+			if (cancellationToken.isCancelled())
+				throw new CancellationException(cancellationMessage);
 
-						if (imageBytes.length == 0) {
-							return null;
-						}
-					} catch (FileNotFoundException fe) {
-						logger.warn("Image not found!");
-						return null;
-					}
-
-					imageDiskCache
-						.put(uniqueKey, imageBytes)
-						.excuse(ioe -> {
-							logger.error("Error writing serviceFile!", ioe);
-							return null;
-						});
-
-					putBitmapIntoMemory(uniqueKey, imageBytes);
-
-					if (cancellationToken.isCancelled())
-						throw new CancellationException(cancellationMessage);
-
-					return getBitmapFromBytes(imageBytes);
-				} catch (Exception e) {
-					logger.error(e.toString(), e);
-					throw e;
-				} finally {
-					if (connection != null)
-						connection.disconnect();
-				}
-			} catch (IOException e) {
-				logger.error("There was an error getting the connection for images", e);
-				throw e;
-			}
+			return getBitmapFromBytes(imageBytes);
 		}
 	}
 

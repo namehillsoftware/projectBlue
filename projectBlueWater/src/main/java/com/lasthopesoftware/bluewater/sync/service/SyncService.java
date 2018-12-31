@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -71,6 +72,7 @@ import com.lasthopesoftware.bluewater.sync.receivers.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
@@ -191,7 +193,9 @@ public class SyncService extends Service {
 		if (connectionProvider == null) return;
 
 		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+		final CachedFilePropertiesProvider filePropertiesProvider =
+			new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+				new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
 		filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
 			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), this))
@@ -336,10 +340,11 @@ public class SyncService extends Service {
 									return;
 								}
 
-								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, OkHttpFactory.getInstance());
 								libraryConnectionProviders.put(library.getId(), connectionProvider);
 
-								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+								final FilePropertiesProvider filePropertiesProvider =
+									new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance());
 								final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
 								final StoredFileAccess storedFileAccess = new StoredFileAccess(

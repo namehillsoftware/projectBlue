@@ -5,38 +5,57 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.internal.http.RealResponseBody;
+import okio.Buffer;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 
 public class FakeConnectionProvider implements IConnectionProvider {
-	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], byte[]>> mappedResponses = new HashMap<>();
+	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], ResponseTuple>> mappedResponses = new HashMap<>();
 
-	public final void mapResponse(CarelessOneParameterFunction<String[], byte[]> response, String... params) {
+	public final void mapResponse(CarelessOneParameterFunction<String[], ResponseTuple> response, String... params) {
 		final HashSet<String> paramsSet = new HashSet<>(Arrays.asList(params));
 		mappedResponses.put(paramsSet, response);
 	}
 
 	@Override
-	public HttpURLConnection getConnection(String... params) throws IOException {
-		final HttpURLConnection mockConnection = mock(HttpURLConnection.class);
-		when(mockConnection.getResponseCode()).thenReturn(404);
+	public Promise<Response> promiseResponse(String... params) {
+		try {
+			return new Promise<>(getResponse(params));
+		} catch (IOException e) {
+			return new Promise<>(e);
+		} catch (RuntimeException e) {
+			return new Promise<>(e.getCause());
+		}
+	}
 
-		CarelessOneParameterFunction<String[], byte[]> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
+	@Override
+	public Response getResponse(String... params) throws IOException {
+		final Request.Builder builder = new Request.Builder();
+		builder.url(getUrlProvider().getUrl(params));
+
+		final Buffer buffer = new Buffer();
+
+		final Response.Builder responseBuilder = new Response.Builder();
+		responseBuilder
+			.request(builder.build())
+			.protocol(Protocol.HTTP_1_1)
+			.message("Not Found")
+			.body(new RealResponseBody(null, 0, buffer))
+			.code(404);
+
+		CarelessOneParameterFunction<String[], ResponseTuple> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
 
 		if (mappedResponse == null) {
 			final Optional<Set<String>> optionalResponse = Stream.of(mappedResponses.keySet())
@@ -47,28 +66,20 @@ public class FakeConnectionProvider implements IConnectionProvider {
 				mappedResponse = mappedResponses.get(optionalResponse.get());
 		}
 
-		if (mappedResponse == null) return mockConnection;
+		if (mappedResponse == null) return responseBuilder.build();
 
 		try {
-			final ByteArrayInputStream inputStream = new ByteArrayInputStream(mappedResponse.resultFrom(params));
-			when(mockConnection.getInputStream()).thenReturn(inputStream);
-		} catch (Throwable throwable) {
-			when(mockConnection.getInputStream()).thenThrow(throwable);
+			final ResponseTuple result = mappedResponse.resultFrom(params);
+			buffer.write(result.response);
+			responseBuilder.code(result.code);
+			responseBuilder.body(new RealResponseBody(null, result.response.length, buffer));
+		} catch (IOException io) {
+			throw io;
+		} catch (Throwable error) {
+			throw new RuntimeException(error);
 		}
 
-		when(mockConnection.getResponseCode()).thenReturn(200);
-
-		return mockConnection;
-	}
-
-	@Override
-	public X509TrustManager getTrustManager() {
-		return mock(X509TrustManager.class);
-	}
-
-	@Override
-	public SSLSocketFactory getSslSocketFactory() {
-		return mock(SSLSocketFactory.class);
+		return responseBuilder.build();
 	}
 
 	@Override
@@ -80,8 +91,13 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		}
 	}
 
-	@Override
-	public HostnameVerifier getHostnameVerifier() {
-		return mock(HostnameVerifier.class);
+	public static class ResponseTuple {
+		final int code;
+		final byte[] response;
+
+		public ResponseTuple(int code, byte[] response) {
+			this.code = code;
+			this.response = response;
+		}
 	}
 }

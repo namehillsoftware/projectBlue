@@ -1,17 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection;
 
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
+import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.Response;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 
 public interface IConnectionProvider {
-	HttpURLConnection getConnection(String... params) throws IOException;
-	X509TrustManager getTrustManager();
-	SSLSocketFactory getSslSocketFactory();
+	Promise<Response> promiseResponse(String... params);
+	Response getResponse(String... params) throws IOException;
 	IUrlProvider getUrlProvider();
-	HostnameVerifier getHostnameVerifier();
 }

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenSecu
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -42,7 +43,8 @@ public class WhenScanningForUrls {
 
 		final UrlScanner urlScanner = new UrlScanner(
 			connectionTester,
-			serverLookup);
+			serverLookup,
+			OkHttpFactory.getInstance());
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()

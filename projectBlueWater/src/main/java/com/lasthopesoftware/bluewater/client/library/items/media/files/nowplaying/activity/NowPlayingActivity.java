@@ -43,6 +43,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -157,7 +158,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 						NowPlayingActivity.this,
 						connectionProvider,
 						new AndroidDiskCacheDirectoryProvider(NowPlayingActivity.this),
-						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)));
+						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+							new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance())));
 				});
 		}
 	};
@@ -408,7 +410,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				disableViewWithMessage();
 
-				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance());
+				final FilePropertiesProvider filePropertiesProvider =
+					new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance());
 				filePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually(LoopedInPromise.response(fileProperties -> {
