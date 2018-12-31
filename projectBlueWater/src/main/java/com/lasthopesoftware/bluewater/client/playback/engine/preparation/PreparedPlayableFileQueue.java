@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -43,14 +43,14 @@ implements
 		this.configuration = configuration;
 		this.playbackPreparer = playbackPreparer;
 		this.positionedFileQueue = positionedFileQueue;
-		bufferingMediaPlayerPromises = new ArrayDeque<>(configuration.getMaxQueueSize());
+		bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 	}
 
 	public PreparedPlayableFileQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
 		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
-			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ArrayDeque<>(configuration.getMaxQueueSize());
+			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 			PositionedPreparingFile positionedPreparingFile;
 			while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null) {
