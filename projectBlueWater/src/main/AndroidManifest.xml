@@ -127,19 +127,9 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".sync.receivers.SyncAlarmBroadcastReceiver">
-            <intent-filter>
-                <action android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.doScheduledSync"/>
-            </intent-filter>
-        </receiver>
 
         <service
                 android:name=".client.playback.service.PlaybackService"
-                android:enabled="true"
-                android:exported="false">
-        </service>
-        <service
-                android:name=".sync.service.SyncService"
                 android:enabled="true"
                 android:exported="false">
         </service>

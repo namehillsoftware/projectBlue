@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.sync.SyncWorker;
-import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
@@ -89,7 +88,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 						onFileDownloadedReceiver = new BroadcastReceiver() {
 							@Override
 							public void onReceive(Context context, Intent intent) {
-								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
+								final int storedFileId = intent.getIntExtra(SyncWorker.storedFileEventKey, -1);
 
 								for (StoredFile storedFile : localStoredFiles) {
 									if (storedFile.getId() != storedFileId) continue;
@@ -149,7 +148,9 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		final CharSequence startSyncLabel = activity.getText(R.string.start_sync_button);
 		final CharSequence stopSyncLabel = activity.getText(R.string.stop_sync_button);
 
-		toggleSyncButton.setText(!SyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
+		SyncWorker.promiseIsSyncing()
+			.eventually(LoopedInPromise.response(
+				new VoidResponse<>(isSyncing -> toggleSyncButton.setText(!isSyncing ? startSyncLabel : stopSyncLabel)), activity));
 
 		if (onSyncStartedReceiver != null)
 			localBroadcastManager.unregisterReceiver(onSyncStartedReceiver);

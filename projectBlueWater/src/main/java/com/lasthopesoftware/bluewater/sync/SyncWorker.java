@@ -118,6 +118,48 @@ public class SyncWorker extends ListenableWorker {
 
 	private static final String workName = magicPropertyBuilder.buildProperty("");
 
+	public static Operation syncImmediately() {
+		final OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class).build();
+		return WorkManager.getInstance().enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest);
+	}
+
+	public static Operation scheduleSync() {
+		final PeriodicWorkRequest.Builder periodicWorkRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, 3, TimeUnit.HOURS);
+		return WorkManager.getInstance()
+			.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build());
+	}
+
+	public static Promise<Boolean> promiseIsSyncing() {
+		return promiseWorkInfos()
+			.then(workInfos -> Stream.of(workInfos).anyMatch(wi -> wi.getState() == WorkInfo.State.RUNNING));
+	}
+
+	public static Promise<Boolean> promiseIsScheduled() {
+		return promiseWorkInfos()
+			.then(workInfos -> Stream.of(workInfos).anyMatch(wi -> wi.getState() == WorkInfo.State.ENQUEUED));
+	}
+
+	public static Operation cancel() {
+		return WorkManager.getInstance().cancelUniqueWork(workName);
+	}
+
+	private static Promise<List<WorkInfo>> promiseWorkInfos() {
+		return new Promise<>(m -> {
+			final ListenableFuture<List<WorkInfo>> workInfosByName = WorkManager.getInstance().getWorkInfosForUniqueWork(workName);
+			m.cancellationRequested(() -> workInfosByName.cancel(false));
+			workInfosByName.addListener(() -> {
+				try {
+					m.sendResolution(workInfosByName.get());
+				} catch (ExecutionException e) {
+					final Throwable cause = e.getCause();
+					m.sendRejection(cause != null ? cause : e);
+				} catch (InterruptedException e) {
+					m.sendRejection(e);
+				}
+			}, AsyncTask.THREAD_POOL_EXECUTOR);
+		});
+	}
+
 	private static final int notificationId = 23;
 
 	private final Context context;
@@ -309,48 +351,6 @@ public class SyncWorker extends ListenableWorker {
 				new PrivateDirectoryLookup(context));
 		}
 	};
-
-	public static Operation syncImmediately() {
-		final OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class).build();
-		return WorkManager.getInstance().enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest);
-	}
-
-	public static Operation scheduleSync() {
-		final PeriodicWorkRequest.Builder periodicWorkRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, 3, TimeUnit.HOURS);
-		return WorkManager.getInstance()
-			.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build());
-	}
-
-	public static Promise<Boolean> promiseIsSyncing() {
-		return promiseWorkInfos()
-			.then(workInfos -> Stream.of(workInfos).anyMatch(wi -> wi.getState() == WorkInfo.State.RUNNING));
-	}
-
-	public static Promise<Boolean> promiseIsScheduled() {
-		return promiseWorkInfos()
-			.then(workInfos -> Stream.of(workInfos).anyMatch(wi -> wi.getState() == WorkInfo.State.ENQUEUED));
-	}
-
-	public static Operation cancel() {
-		return WorkManager.getInstance().cancelUniqueWork(workName);
-	}
-
-	private static Promise<List<WorkInfo>> promiseWorkInfos() {
-		return new Promise<>(m -> {
-			final ListenableFuture<List<WorkInfo>> workInfosByName = WorkManager.getInstance().getWorkInfosForUniqueWork(workName);
-			m.cancellationRequested(() -> workInfosByName.cancel(false));
-			workInfosByName.addListener(() -> {
-				try {
-					m.sendResolution(workInfosByName.get());
-				} catch (ExecutionException e) {
-					final Throwable cause = e.getCause();
-					m.sendRejection(cause != null ? cause : e);
-				} catch (InterruptedException e) {
-					m.sendRejection(e);
-				}
-			}, AsyncTask.THREAD_POOL_EXECUTOR);
-		});
-	}
 
 	public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
 		super(context, workerParams);
