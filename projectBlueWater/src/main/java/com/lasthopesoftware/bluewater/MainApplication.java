@@ -69,7 +69,7 @@ public class MainApplication extends Application {
 
 		WorkManager.initialize(this, new Configuration.Builder().build());
 		SyncWorker.promiseIsScheduled()
-			.then(isScheduled -> isScheduled
+			.then(isScheduled -> !isScheduled
 				? SyncWorker.scheduleSync()
 				: null);
 	}
