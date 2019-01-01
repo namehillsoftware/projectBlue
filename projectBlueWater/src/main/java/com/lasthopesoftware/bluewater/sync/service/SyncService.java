@@ -116,10 +116,6 @@ public class SyncService extends Service {
 
 	private static volatile boolean isSyncRunning;
 
-	public static boolean isSyncScheduled(Context context) {
-		return PendingIntent.getBroadcast(context, 0, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_NO_CREATE) != null;
-	}
-
 	public static boolean isSyncRunning() {
 		return isSyncRunning;
 	}

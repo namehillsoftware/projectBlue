@@ -5,13 +5,13 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.*;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import androidx.work.ListenableWorker;
-import androidx.work.WorkerParameters;
+import androidx.work.*;
 import com.annimon.stream.Stream;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -95,20 +95,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
 public class SyncWorker extends ListenableWorker {
 	private static final Logger logger = LoggerFactory.getLogger(SyncWorker.class);
-	public static final String onSyncStartEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onSyncStartEvent");
-	public static final String onSyncStopEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onSyncStopEvent");
-	public static final String onFileQueuedEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onFileQueuedEvent");
-	public static final String onFileDownloadingEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onFileDownloadingEvent");
-	public static final String onFileDownloadedEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onFileDownloadedEvent");
-	public static final String storedFileEventKey = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "storedFileEventKey");
+
+	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(SyncWorker.class);
+
+	public static final String onSyncStartEvent = magicPropertyBuilder.buildProperty("onSyncStartEvent");
+	public static final String onSyncStopEvent = magicPropertyBuilder.buildProperty("onSyncStopEvent");
+	public static final String onFileQueuedEvent = magicPropertyBuilder.buildProperty("onFileQueuedEvent");
+	public static final String onFileDownloadingEvent = magicPropertyBuilder.buildProperty("onFileDownloadingEvent");
+	public static final String onFileDownloadedEvent = magicPropertyBuilder.buildProperty("onFileDownloadedEvent");
+	public static final String storedFileEventKey = magicPropertyBuilder.buildProperty("storedFileEventKey");
+
+	private static final String workName = magicPropertyBuilder.buildProperty("");
 
 	private static final int notificationId = 23;
 
@@ -302,6 +310,48 @@ public class SyncWorker extends ListenableWorker {
 		}
 	};
 
+	public static Operation syncImmediately() {
+		final OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class).build();
+		return WorkManager.getInstance().enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest);
+	}
+
+	public static Operation scheduleSync() {
+		final PeriodicWorkRequest.Builder periodicWorkRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, 3, TimeUnit.HOURS);
+		return WorkManager.getInstance()
+			.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build());
+	}
+
+	public static Promise<Boolean> promiseIsSyncing() {
+		return promiseWorkInfos()
+			.then(workInfos -> Stream.of(workInfos).anyMatch(wi -> wi.getState() == WorkInfo.State.RUNNING));
+	}
+
+	public static Promise<Boolean> promiseIsScheduled() {
+		return promiseWorkInfos()
+			.then(workInfos -> Stream.of(workInfos).anyMatch(wi -> wi.getState() == WorkInfo.State.ENQUEUED));
+	}
+
+	public static Operation cancel() {
+		return WorkManager.getInstance().cancelUniqueWork(workName);
+	}
+
+	private static Promise<List<WorkInfo>> promiseWorkInfos() {
+		return new Promise<>(m -> {
+			final ListenableFuture<List<WorkInfo>> workInfosByName = WorkManager.getInstance().getWorkInfosForUniqueWork(workName);
+			m.cancellationRequested(() -> workInfosByName.cancel(false));
+			workInfosByName.addListener(() -> {
+				try {
+					m.sendResolution(workInfosByName.get());
+				} catch (ExecutionException e) {
+					final Throwable cause = e.getCause();
+					m.sendRejection(cause != null ? cause : e);
+				} catch (InterruptedException e) {
+					m.sendRejection(e);
+				}
+			}, AsyncTask.THREAD_POOL_EXECUTOR);
+		});
+	}
+
 	public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
 		super(context, workerParams);
 		this.context = context;
@@ -312,7 +362,6 @@ public class SyncWorker extends ListenableWorker {
 	public ListenableFuture<Result> startWork() {
 		if (!isDeviceStateValidForSync()) {
 			finishSync();
-			settableFuture.set(Result.success());
 			return settableFuture;
 		}
 

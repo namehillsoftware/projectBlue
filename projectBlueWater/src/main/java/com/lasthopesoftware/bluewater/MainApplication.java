@@ -10,6 +10,8 @@ import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
+import androidx.work.Configuration;
+import androidx.work.WorkManager;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -39,7 +41,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
-import com.lasthopesoftware.bluewater.sync.service.SyncService;
+import com.lasthopesoftware.bluewater.sync.SyncWorker;
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.Lazy;
@@ -65,8 +67,11 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
-		// Kick off a serviceFile sync if one isn't scheduled on start-up
-		if (!SyncService.isSyncScheduled(this)) SyncService.doSync(this);
+		WorkManager.initialize(this, new Configuration.Builder().build());
+		SyncWorker.promiseIsScheduled()
+			.then(isScheduled -> isScheduled
+				? SyncWorker.scheduleSync()
+				: null);
 	}
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {

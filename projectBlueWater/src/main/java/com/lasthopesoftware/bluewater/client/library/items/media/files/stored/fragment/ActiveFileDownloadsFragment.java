@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.bluewater.sync.SyncWorker;
 import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
@@ -108,7 +109,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							}
 						};
 
-						localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncService.onFileDownloadedEvent));
+						localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncWorker.onFileDownloadedEvent));
 
 						if (onFileQueuedReceiver != null)
 							localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
@@ -116,7 +117,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 						onFileQueuedReceiver = new BroadcastReceiver() {
 							@Override
 							public void onReceive(Context context, Intent intent) {
-								final int storedFileId = intent.getIntExtra(SyncService.storedFileEventKey, -1);
+								final int storedFileId = intent.getIntExtra(SyncWorker.storedFileEventKey, -1);
 								if (storedFileId == -1) return;
 
 								for (StoredFile storedFile : localStoredFiles) {
@@ -135,7 +136,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							}
 						};
 
-						localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncService.onFileQueuedEvent));
+						localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncWorker.onFileQueuedEvent));
 
 						listView.setAdapter(activeFileDownloadsAdapter);
 
@@ -160,7 +161,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 			}
 		};
 
-		localBroadcastManager.registerReceiver(onSyncStartedReceiver, new IntentFilter(SyncService.onSyncStartEvent));
+		localBroadcastManager.registerReceiver(onSyncStartedReceiver, new IntentFilter(SyncWorker.onSyncStartEvent));
 
 		if (onSyncStoppedReceiver != null)
 			localBroadcastManager.unregisterReceiver(onSyncStoppedReceiver);
@@ -172,13 +173,16 @@ public class ActiveFileDownloadsFragment extends Fragment {
 			}
 		};
 
-		localBroadcastManager.registerReceiver(onSyncStoppedReceiver, new IntentFilter(SyncService.onSyncStopEvent));
+		localBroadcastManager.registerReceiver(onSyncStoppedReceiver, new IntentFilter(SyncWorker.onSyncStopEvent));
 
 		toggleSyncButton.setOnClickListener(v -> {
-			if (SyncService.isSyncRunning())
-				SyncService.cancelSync(v.getContext());
-			else
-				SyncService.doSync(v.getContext());
+			SyncWorker.promiseIsSyncing()
+				.then(new VoidResponse<>(isSyncing -> {
+					if (isSyncing)
+						SyncWorker.syncImmediately();
+					else
+						SyncWorker.cancel();
+				}));
 		});
 
 		toggleSyncButton.setEnabled(true);
