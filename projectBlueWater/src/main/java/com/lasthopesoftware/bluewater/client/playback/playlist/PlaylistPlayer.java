@@ -95,6 +95,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void pause() {
 		synchronized (stateChangeSync) {
 			lastStateChangePromise = lastStateChangePromise
@@ -104,6 +105,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void resume() {
 		synchronized (stateChangeSync) {

@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandle
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -44,7 +45,7 @@ public class WhenRequestingVolumeManagement {
 				put(FilePropertiesProvider.VolumeLevelR128, "-13.5");
 			}}));
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, repository);
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, repository, ParsingScheduler.instance());
 
 		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
 			new CachedFilePropertiesProvider(

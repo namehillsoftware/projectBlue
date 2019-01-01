@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
+import com.lasthopesoftware.resources.scheduling.ScheduleParsingWork;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;
 import org.joda.time.DateTime;
@@ -64,8 +65,8 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 								DATE_TAGGED,
 								DATE_FIRST_RATED))));
 	
-	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
-		super(connectionProvider, filePropertiesContainerProvider);
+	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
+		super(connectionProvider, filePropertiesContainerProvider, parsingScheduler);
 	}
 
 	@Override

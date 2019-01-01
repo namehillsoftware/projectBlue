@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
@@ -17,10 +18,12 @@ public class UrlScanner implements BuildUrlProviders {
 
 	private final TestConnections connectionTester;
 	private final LookupServers serverLookup;
+	private final ProvideOkHttpClients okHttpClients;
 
-	public UrlScanner(TestConnections connectionTester, LookupServers serverLookup) {
+	public UrlScanner(TestConnections connectionTester, LookupServers serverLookup, ProvideOkHttpClients okHttpClients) {
 		this.connectionTester = connectionTester;
 		this.serverLookup = serverLookup;
+		this.okHttpClients = okHttpClients;
 	}
 
 	@Override
@@ -41,7 +44,7 @@ public class UrlScanner implements BuildUrlProviders {
 			return new Promise<>(e);
 		}
 
-		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider))
+		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider, okHttpClients))
 			.eventually(isValid -> isValid
 				? new Promise<>(mediaServerUrlProvider)
 				: serverLookup.promiseServerInformation(library)
@@ -86,7 +89,7 @@ public class UrlScanner implements BuildUrlProviders {
 		if (urlProvider == null) return Promise.empty();
 
 		return connectionTester
-			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider))
+			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider, okHttpClients))
 			.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls));
 	}
 

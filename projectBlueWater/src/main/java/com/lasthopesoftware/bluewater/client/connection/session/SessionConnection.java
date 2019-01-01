@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProv
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
@@ -26,12 +27,13 @@ import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-import org.joda.time.Duration;
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class SessionConnection {
 
@@ -46,10 +48,13 @@ public class SessionConnection {
 	private static final CreateAndHold<BuildUrlProviders> lazyUrlScanner = new AbstractSynchronousLazy<BuildUrlProviders>() {
 		@Override
 		protected BuildUrlProviders create() {
-			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
+			final OkHttpClient client = new OkHttpClient.Builder()
+				.connectTimeout(buildConnectionTimeoutTime, TimeUnit.MILLISECONDS)
+				.build();
+			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(client));
 			final ConnectionTester connectionTester = new ConnectionTester();
 
-			return new UrlScanner(connectionTester, serverLookup);
+			return new UrlScanner(connectionTester, serverLookup, OkHttpFactory.getInstance());
 		}
 	};
 
@@ -65,6 +70,7 @@ public class SessionConnection {
 	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
 	private final TestConnections connectionTester;
+	private final OkHttpFactory okHttpFactory;
 
 	public static synchronized SessionConnection getInstance(Context context) {
 		if (sessionConnectionInstance != null) return sessionConnectionInstance;
@@ -80,7 +86,8 @@ public class SessionConnection {
 			new LiveUrlProvider(
 				new ActiveNetworkFinder(applicationContext),
 				lazyUrlScanner.getObject()),
-			new ConnectionTester());
+			new ConnectionTester(),
+			OkHttpFactory.getInstance());
 	}
 
 	public SessionConnection(
@@ -90,7 +97,8 @@ public class SessionConnection {
 		ProvideLibraryViewsUsingConnection libraryViewsProvider,
 		ILibraryStorage libraryStorage,
 		ProvideLiveUrl liveUrlProvider,
-		TestConnections connectionTester) {
+		TestConnections connectionTester,
+		OkHttpFactory okHttpFactory) {
 		this.localBroadcastManager = localBroadcastManager;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
@@ -98,6 +106,7 @@ public class SessionConnection {
 		this.libraryStorage = libraryStorage;
 		this.liveUrlProvider = liveUrlProvider;
 		this.connectionTester = connectionTester;
+		this.okHttpFactory = okHttpFactory;
 	}
 
 	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
@@ -177,7 +186,7 @@ public class SessionConnection {
 							return Promise.empty();
 						}
 
-						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider);
+						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider, okHttpFactory);
 
 						if (library.getSelectedView() >= 0) {
 							doStateChange(BuildingSessionConnectionStatus.BuildingSessionComplete);
