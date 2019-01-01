@@ -1,24 +1,26 @@
 package com.lasthopesoftware.bluewater.sync;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.*;
 import android.net.wifi.WifiManager;
-import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import androidx.work.Worker;
+import androidx.work.ListenableWorker;
 import androidx.work.WorkerParameters;
 import com.annimon.stream.Stream;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -71,6 +73,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
@@ -96,7 +99,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SyncWorker extends Worker {
+import static android.content.Context.NOTIFICATION_SERVICE;
+
+public class SyncWorker extends ListenableWorker {
 	private static final Logger logger = LoggerFactory.getLogger(SyncWorker.class);
 	public static final String onSyncStartEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onSyncStartEvent");
 	public static final String onSyncStopEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onSyncStopEvent");
@@ -105,12 +110,9 @@ public class SyncWorker extends Worker {
 	public static final String onFileDownloadedEvent = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "onFileDownloadedEvent");
 	public static final String storedFileEventKey = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "storedFileEventKey");
 
-	private static final String doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "doSyncAction");
-	private static final String cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(SyncWorker.class, "cancelSyncAction");
-	private static final long syncInterval = 3 * 60 * 60 * 1000; // 3 hours
+	private static final int notificationId = 23;
 
 	private final Context context;
-	private PowerManager.WakeLock wakeLock;
 
 	private final CreateAndHold<LocalBroadcastManager> localBroadcastManager = new AbstractSynchronousLazy<LocalBroadcastManager>() {
 		@Override
@@ -157,6 +159,8 @@ public class SyncWorker extends Worker {
 
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
+	private final SettableFuture<Result> settableFuture = SettableFuture.create();
+
 	private final OneParameterAction<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
 		librarySyncHandlers.remove(librarySyncHandler);
 
@@ -179,21 +183,27 @@ public class SyncWorker extends Worker {
 		}
 	};
 
-	private final OneParameterAction<StoredFile> storedFileDownloadingAction = storedFile -> {
-		sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
+	private final CreateAndHold<OneParameterAction<StoredFile>> storedFileDownloadingAction = new AbstractSynchronousLazy<OneParameterAction<StoredFile>>() {
+		@Override
+		protected OneParameterAction<StoredFile> create() {
+			return storedFile -> {
+				sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
 
-		final IConnectionProvider connectionProvider = libraryConnectionProviders.get(storedFile.getLibraryId());
-		if (connectionProvider == null) return;
+				final IConnectionProvider connectionProvider = libraryConnectionProviders.get(storedFile.getLibraryId());
+				if (connectionProvider == null) return;
 
-		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+					new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
-		filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
-			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), context))
-			.excuse(e -> LoopedInPromise.response(exception -> {
-				setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)));
-				return true;
-			}, context).promiseResponse(e));
+				filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
+					.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), context))
+					.excuse(e -> LoopedInPromise.response(exception -> {
+						setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)));
+						return true;
+					}, context).promiseResponse(e));
+			};
+		}
 	};
 
 	private final OneParameterAction<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
@@ -247,10 +257,10 @@ public class SyncWorker extends Worker {
 		}
 	};
 
-	private final CreateAndHold<NotificationManagerCompat> notificationManagerLazy = new AbstractSynchronousLazy<NotificationManagerCompat>() {
+	private final CreateAndHold<NotificationManager> notificationManagerLazy = new AbstractSynchronousLazy<NotificationManager>() {
 		@Override
-		protected NotificationManagerCompat create() {
-			return NotificationManagerCompat.from(context);
+		protected NotificationManager create() {
+			return (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 		}
 	};
 
@@ -291,7 +301,6 @@ public class SyncWorker extends Worker {
 				new PrivateDirectoryLookup(context));
 		}
 	};
-	private boolean isSyncRunning;
 
 	public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
 		super(context, workerParams);
@@ -300,15 +309,15 @@ public class SyncWorker extends Worker {
 
 	@NonNull
 	@Override
-	public Result doWork() {
+	public ListenableFuture<Result> startWork() {
 		if (!isDeviceStateValidForSync()) {
 			finishSync();
-			return Result.success();
+			settableFuture.set(Result.success());
+			return settableFuture;
 		}
 
 		logger.info("Starting sync.");
 
-		isSyncRunning = true;
 		setSyncNotificationText(null);
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
 
@@ -344,10 +353,10 @@ public class SyncWorker extends Worker {
 									return;
 								}
 
-								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider);
+								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, OkHttpFactory.getInstance());
 								libraryConnectionProviders.put(library.getId(), connectionProvider);
 
-								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache);
+								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance());
 								final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
 
 								final StoredFileAccess storedFileAccess = new StoredFileAccess(
@@ -397,7 +406,7 @@ public class SyncWorker extends Worker {
 										lazyLibraryStorageWritePermissionsRequirementsProvider.getObject());
 
 								librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
-								librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction);
+								librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction.getObject());
 								librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
 								librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
 								librarySyncHandler.setOnFileReadError(storedFileReadErrorAction);
@@ -420,15 +429,15 @@ public class SyncWorker extends Worker {
 			}
 		}));
 
-		return Result.success();
+		return settableFuture;
 	}
 
 	private boolean isDeviceStateValidForSync() {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
 		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
 		if (isSyncOnWifiOnly) {
-			if (!IoCommon.isWifiConnected(this)) return false;
+			if (!IoCommon.isWifiConnected(context)) return false;
 
 			context.registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 		}
@@ -445,12 +454,12 @@ public class SyncWorker extends Worker {
 
 	@NonNull
 	private Notification buildSyncNotification(@Nullable String syncNotification) {
-		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this, lazyActiveNotificationChannelId.getObject());
+		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(context, lazyActiveNotificationChannelId.getObject());
 		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
 		notifyBuilder.setContentTitle(context.getText(R.string.title_sync_files));
 		if (syncNotification != null)
 			notifyBuilder.setContentText(syncNotification);
-		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent.getObject(), 0));
+		notifyBuilder.setContentIntent(PendingIntent.getActivity(context, 0, browseLibraryIntent.getObject(), 0));
 
 		notifyBuilder.setOngoing(true);
 
@@ -474,9 +483,8 @@ public class SyncWorker extends Worker {
 	}
 
 	private void finishSync() {
-		logger.info("Finishing sync. Scheduling next sync for " + syncInterval + "ms from now.");
+		settableFuture.set(Result.success());
 
-		isSyncRunning = false;
 		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStopEvent));
 	}
 }
