@@ -432,6 +432,11 @@ public class SyncWorker extends ListenableWorker {
 		return settableFuture;
 	}
 
+	@Override
+	public void onStopped() {
+		cancelSync();
+	}
+
 	private boolean isDeviceStateValidForSync() {
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
