@@ -53,10 +53,12 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class MainApplication extends Application {
-	
+
 	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
 	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
+
+	private static boolean isWorkManagerInitialized;
 	
 	@SuppressLint("DefaultLocale")
 	@Override
@@ -67,10 +69,14 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
-		WorkManager.initialize(this, new Configuration.Builder().build());
+		if (!isWorkManagerInitialized) {
+			WorkManager.initialize(this, new Configuration.Builder().build());
+			isWorkManagerInitialized = true;
+		}
+
 		SyncWorker.promiseIsScheduled()
 			.then(isScheduled -> !isScheduled
-				? SyncWorker.scheduleSync()
+				? SyncWorker.scheduleSync(this)
 				: null);
 	}
 

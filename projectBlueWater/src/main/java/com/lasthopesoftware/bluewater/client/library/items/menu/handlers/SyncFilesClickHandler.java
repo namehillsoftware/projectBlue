@@ -28,7 +28,7 @@ public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 		mIsSynced = !mIsSynced;
 		mSyncListManager.toggleSync(mItem, mIsSynced);
 
-		SyncWorker.syncImmediately();
+		SyncWorker.syncImmediately(v.getContext());
 
 		super.onClick(v);
 	}

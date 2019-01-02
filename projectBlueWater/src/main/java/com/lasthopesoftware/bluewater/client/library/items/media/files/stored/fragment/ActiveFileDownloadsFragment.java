@@ -180,7 +180,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 			SyncWorker.promiseIsSyncing()
 				.then(new VoidResponse<>(isSyncing -> {
 					if (isSyncing)
-						SyncWorker.syncImmediately();
+						SyncWorker.syncImmediately(activity);
 					else
 						SyncWorker.cancel();
 				}));

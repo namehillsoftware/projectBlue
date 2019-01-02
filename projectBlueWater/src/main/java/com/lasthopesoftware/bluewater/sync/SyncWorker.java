@@ -118,15 +118,25 @@ public class SyncWorker extends ListenableWorker {
 
 	private static final String workName = magicPropertyBuilder.buildProperty("");
 
-	public static Operation syncImmediately() {
-		final OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class).build();
-		return WorkManager.getInstance().enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest);
+	public static Operation syncImmediately(Context context) {
+		final OneTimeWorkRequest.Builder oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class);
+		oneTimeWorkRequest.setConstraints(constraints());
+		return WorkManager.getInstance().enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build());
 	}
 
-	public static Operation scheduleSync() {
+	public static Operation scheduleSync(Context context) {
 		final PeriodicWorkRequest.Builder periodicWorkRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, 3, TimeUnit.HOURS);
 		return WorkManager.getInstance()
 			.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build());
+	}
+
+	private static Constraints constraints() {
+		final Constraints.Builder builder = new Constraints.Builder();
+		builder
+			.setRequiredNetworkType(NetworkType.UNMETERED)
+			.setRequiresCharging(true);
+
+		return builder.build();
 	}
 
 	public static Promise<Boolean> promiseIsSyncing() {
@@ -150,10 +160,7 @@ public class SyncWorker extends ListenableWorker {
 			workInfosByName.addListener(() -> {
 				try {
 					m.sendResolution(workInfosByName.get());
-				} catch (ExecutionException e) {
-					final Throwable cause = e.getCause();
-					m.sendRejection(cause != null ? cause : e);
-				} catch (InterruptedException e) {
+				} catch (ExecutionException | InterruptedException e) {
 					m.sendRejection(e);
 				}
 			}, AsyncTask.THREAD_POOL_EXECUTOR);
@@ -381,9 +388,7 @@ public class SyncWorker extends ListenableWorker {
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 
 			for (final Library library : libraries) {
-				if (library.isSyncLocalConnectionsOnly()) {
-					library.setLocalOnly(true);
-				}
+				if (library.isSyncLocalConnectionsOnly()) library.setLocalOnly(true);
 
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
 				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, lazyStoredFilesChecker.getObject());
