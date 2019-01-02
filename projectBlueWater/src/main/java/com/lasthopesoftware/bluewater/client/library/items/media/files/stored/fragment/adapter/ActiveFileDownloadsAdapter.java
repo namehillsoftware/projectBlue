@@ -13,11 +13,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.list.Abst
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 
-import java.util.List;
+import java.util.Collection;
 
 public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
-	public ActiveFileDownloadsAdapter(Context context, List<StoredFile> storedFiles) {
+	public ActiveFileDownloadsAdapter(Context context, Collection<StoredFile> storedFiles) {
 		super(context, R.id.tvStandard, Stream.of(storedFiles).map(s -> new ServiceFile(s.getServiceId())).collect(Collectors.toList()));
 	}
 

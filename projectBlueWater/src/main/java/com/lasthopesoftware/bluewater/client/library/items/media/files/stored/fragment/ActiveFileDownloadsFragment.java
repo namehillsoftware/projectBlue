@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.sync.SyncWorker;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
-import java.util.List;
+import java.util.Map;
 
 public class ActiveFileDownloadsFragment extends Fragment {
 
@@ -60,6 +60,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		progressBar.setVisibility(View.VISIBLE);
 
 		final FragmentActivity activity = getActivity();
+		if (activity == null) return viewFileslayout;
 
 		final LibraryRepository libraryRepository = new LibraryRepository(activity);
 		final SelectedBrowserLibraryProvider selectedBrowserLibraryProvider = new SelectedBrowserLibraryProvider(
@@ -75,12 +76,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 				storedFileAccess.getDownloadingStoredFiles()
 					.eventually(LoopedInPromise.response(new VoidResponse<>(storedFiles -> {
-						final List<StoredFile> localStoredFiles =
+						final Map<Integer, StoredFile> localStoredFiles =
 							Stream.of(storedFiles)
 								.filter(f -> f.getLibraryId() == library.getId())
-								.collect(Collectors.toList());
+								.collect(Collectors.toMap(StoredFile::getId));
 
-						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(activity, localStoredFiles);
+						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(activity, localStoredFiles.values());
 
 						if (onFileDownloadedReceiver != null)
 							localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
@@ -90,21 +91,11 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							public void onReceive(Context context, Intent intent) {
 								final int storedFileId = intent.getIntExtra(SyncWorker.storedFileEventKey, -1);
 
-								for (StoredFile storedFile : localStoredFiles) {
-									if (storedFile.getId() != storedFileId) continue;
+								final StoredFile storedFile = localStoredFiles.get(storedFileId);
+								if (storedFile == null) return;
 
-									final List<ServiceFile> serviceFiles = activeFileDownloadsAdapter.getFiles();
-									for (ServiceFile serviceFile : serviceFiles) {
-										if (serviceFile.getKey() != storedFile.getServiceId())
-											continue;
-
-										activeFileDownloadsAdapter.remove(serviceFile);
-										serviceFiles.remove(serviceFile);
-										break;
-									}
-
-									break;
-								}
+								activeFileDownloadsAdapter.remove(new ServiceFile(storedFile.getServiceId()));
+								localStoredFiles.remove(storedFileId);
 							}
 						};
 
@@ -119,9 +110,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								final int storedFileId = intent.getIntExtra(SyncWorker.storedFileEventKey, -1);
 								if (storedFileId == -1) return;
 
-								for (StoredFile storedFile : localStoredFiles) {
-									if (storedFile.getId() == storedFileId) return;
-								}
+								if (localStoredFiles.containsKey(storedFileId)) return;
 
 								storedFileAccess
 									.getStoredFile(storedFileId)
@@ -129,7 +118,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 										if (storedFile == null || storedFile.getLibraryId() != library.getId())
 											return;
 
-										localStoredFiles.add(storedFile);
+										localStoredFiles.put(storedFileId, storedFile);
 										activeFileDownloadsAdapter.add(new ServiceFile(storedFile.getServiceId()));
 									}), activity));
 							}
@@ -176,15 +165,10 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		localBroadcastManager.registerReceiver(onSyncStoppedReceiver, new IntentFilter(SyncWorker.onSyncStopEvent));
 
-		toggleSyncButton.setOnClickListener(v -> {
-			SyncWorker.promiseIsSyncing()
-				.then(new VoidResponse<>(isSyncing -> {
-					if (isSyncing)
-						SyncWorker.syncImmediately(activity);
-					else
-						SyncWorker.cancel();
-				}));
-		});
+		toggleSyncButton.setOnClickListener(v -> SyncWorker.promiseIsSyncing()
+			.then(isSyncing -> isSyncing
+				? SyncWorker.cancel()
+				: SyncWorker.syncImmediately(activity)));
 
 		toggleSyncButton.setEnabled(true);
 
