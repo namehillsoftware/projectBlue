@@ -3,8 +3,9 @@ package com.lasthopesoftware.bluewater.sync;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.*;
-import android.net.wifi.WifiManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -15,7 +16,6 @@ import androidx.work.*;
 import com.annimon.stream.Stream;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
@@ -67,9 +67,9 @@ import com.lasthopesoftware.bluewater.client.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.client.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
-import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.bluewater.sync.constraints.SyncWorkerConstraints;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
@@ -120,23 +120,20 @@ public class SyncWorker extends ListenableWorker {
 
 	public static Operation syncImmediately(Context context) {
 		final OneTimeWorkRequest.Builder oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class);
-		oneTimeWorkRequest.setConstraints(constraints());
+		oneTimeWorkRequest.setConstraints(constraints(context));
 		return WorkManager.getInstance().enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build());
 	}
 
 	public static Operation scheduleSync(Context context) {
 		final PeriodicWorkRequest.Builder periodicWorkRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, 3, TimeUnit.HOURS);
+		periodicWorkRequest.setConstraints(constraints(context));
 		return WorkManager.getInstance()
 			.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build());
 	}
 
-	private static Constraints constraints() {
-		final Constraints.Builder builder = new Constraints.Builder();
-		builder
-			.setRequiredNetworkType(NetworkType.UNMETERED)
-			.setRequiresCharging(true);
-
-		return builder.build();
+	private static Constraints constraints(Context context) {
+		final SharedPreferences manager = PreferenceManager.getDefaultSharedPreferences(context);
+		return new SyncWorkerConstraints(manager).getCurrentConstraints();
 	}
 
 	public static Promise<Boolean> promiseIsSyncing() {
@@ -280,30 +277,6 @@ public class SyncWorker extends ListenableWorker {
 			storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
 	};
 
-	private final AbstractSynchronousLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
-		@Override
-		protected final BroadcastReceiver create() {
-			return new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					if (!IoCommon.isWifiConnected(context)) cancelSync();
-				}
-			};
-		}
-	};
-
-	private final AbstractSynchronousLazy<BroadcastReceiver> onPowerDisconnectedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
-		@Override
-		public final BroadcastReceiver create() {
-			return new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					cancelSync();
-				}
-			};
-		}
-	};
-
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
 		protected final Intent create() {
@@ -367,11 +340,6 @@ public class SyncWorker extends ListenableWorker {
 	@NonNull
 	@Override
 	public ListenableFuture<Result> startWork() {
-		if (!isDeviceStateValidForSync()) {
-			finishSync();
-			return settableFuture;
-		}
-
 		logger.info("Starting sync.");
 
 		setSyncNotificationText(null);
@@ -489,26 +457,6 @@ public class SyncWorker extends ListenableWorker {
 	@Override
 	public void onStopped() {
 		cancelSync();
-	}
-
-	private boolean isDeviceStateValidForSync() {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-
-		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
-		if (isSyncOnWifiOnly) {
-			if (!IoCommon.isWifiConnected(context)) return false;
-
-			context.registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
-		}
-
-		final boolean isSyncOnPowerOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false);
-		if (isSyncOnPowerOnly) {
-			if (!IoCommon.isPowerConnected(context)) return false;
-
-			context.registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
-		}
-
-		return true;
 	}
 
 	@NonNull
