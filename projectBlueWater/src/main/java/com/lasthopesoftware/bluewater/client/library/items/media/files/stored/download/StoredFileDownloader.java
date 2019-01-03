@@ -9,12 +9,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
-import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.runnables.OneParameterAction;
@@ -117,22 +113,22 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 					if (onFileDownloading != null)
 						onFileDownloading.runWith(storedFile);
 
-					try {
-						final StoredFileJobResult storedFileJobResult = storedFileJob.processJob();
-
-						if (onFileDownloaded != null)
-							onFileDownloaded.runWith(storedFileJobResult);
-					} catch (StoredFileWriteException se) {
-						if (onFileWriteError != null)
-							onFileWriteError.runWith(se.getStoredFile());
-					} catch (StoredFileReadException se) {
-						if (onFileReadError != null)
-							onFileReadError.runWith(se.getStoredFile());
-					} catch (StoredFileJobException e) {
-						logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
-					} catch (StorageCreatePathException e) {
-						logger.error("There was an error creating the path for a file", e);
-					}
+//					try {
+//						final StoredFileJobResult storedFileJobResult = storedFileJob.processJob();
+//
+//						if (onFileDownloaded != null)
+//							onFileDownloaded.runWith(storedFileJobResult);
+//					} catch (StoredFileWriteException se) {
+//						if (onFileWriteError != null)
+//							onFileWriteError.runWith(se.getStoredFile());
+//					} catch (StoredFileReadException se) {
+//						if (onFileReadError != null)
+//							onFileReadError.runWith(se.getStoredFile());
+//					} catch (StoredFileJobException e) {
+//						logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
+//					} catch (StorageCreatePathException e) {
+//						logger.error("There was an error creating the path for a file", e);
+//					}
 				}
 			} finally {
 				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();

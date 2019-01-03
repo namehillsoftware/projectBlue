@@ -14,16 +14,22 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
+import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class StoredFileJob {
+
+	private static final Executor storedFileExecutor = Executors.newSingleThreadExecutor();
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJob.class);
 
@@ -54,59 +60,55 @@ public class StoredFileJob {
 		cancellationToken.run();
 	}
 
-	public StoredFileJobResult processJob() throws StoredFileJobException, StoredFileReadException, StoredFileWriteException, StorageCreatePathException {
+	public Promise<StoredFileJobResult> processJob() {
 		final File file = storedFileFileProvider.getFile(storedFile);
-		if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
+		if (cancellationToken.isCancelled()) return new Promise<>(getCancelledStoredFileJobResult(file));
 
 		if (file.exists()) {
 			if (!fileReadPossibleArbitrator.isFileReadPossible(file))
-				throw new StoredFileReadException(file, storedFile);
+				return new Promise<>(new StoredFileReadException(file, storedFile));
 
 			if (storedFile.isDownloadComplete())
-				return new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.AlreadyExists);
+				return new Promise<>(new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.AlreadyExists));
 		}
 
 		if (!fileWritePossibleArbitrator.isFileWritePossible(file))
-			throw new StoredFileWriteException(file, storedFile);
+			return new Promise<>(new StoredFileWriteException(file, storedFile));
 
 		final File parent = file.getParentFile();
 		if (parent != null && !parent.exists() && !parent.mkdirs())
-			throw new StorageCreatePathException(parent);
+			return new Promise<>(new StorageCreatePathException(parent));
 
-		final Response response;
-		try {
-			response = connectionProvider.getResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
-		} catch (IOException e) {
-			logger.error("Error getting connection", e);
-			throw new StoredFileJobException(storedFile, e);
-		}
+		return connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
+			.eventually(response -> new QueuedPromise<>((cancellationToken) -> {
+				final ResponseBody body = response.body();
+				if (body == null) return null;
 
-		if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
+				if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
-		try {
-			final InputStream is = response.body().byteStream();
+				try (final InputStream is = body.byteStream()) {
 
-			if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
+					if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file);
 
-			try {
-				this.fileStreamWriter.writeStreamToFile(is, file);
+					try {
+						this.fileStreamWriter.writeStreamToFile(is, file);
 
-				storedFileAccess.markStoredFileAsDownloaded(storedFile);
+						storedFileAccess.markStoredFileAsDownloaded(storedFile);
 
-				return new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.Downloaded);
-			} catch (IOException ioe) {
-				logger.error("Error writing file!", ioe);
-				throw new StoredFileWriteException(file, storedFile, ioe);
-			} finally {
-				try {
-					is.close();
-				} catch (IOException e) {
-					logger.error("Error closing input stream", e);
+						return new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.Downloaded);
+					} catch (IOException ioe) {
+						logger.error("Error writing file!", ioe);
+						throw new StoredFileWriteException(file, storedFile, ioe);
+					}
+				} catch (Throwable t) {
+					throw new StoredFileJobException(storedFile, t);
+				} finally {
+					body.close();
 				}
-			}
-		} catch (Throwable t) {
-			throw new StoredFileJobException(storedFile, t);
-		}
+			}, storedFileExecutor), error -> {
+				logger.error("Error getting connection", error);
+				return new Promise<>(new StoredFileJobException(storedFile, error));
+			});
 	}
 
 	public StoredFile getStoredFile() {

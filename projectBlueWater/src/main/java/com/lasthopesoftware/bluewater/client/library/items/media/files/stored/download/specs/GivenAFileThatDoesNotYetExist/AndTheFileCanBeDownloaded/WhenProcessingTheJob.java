@@ -6,14 +6,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -25,7 +25,7 @@ public class WhenProcessingTheJob {
 	private static StoredFileJobResult result;
 
 	@BeforeClass
-	public static void before() throws StoredFileJobException, IOException {
+	public static void before() throws ExecutionException, InterruptedException {
 		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
 		fakeConnectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(200, new byte[0]));
 
@@ -40,7 +40,7 @@ public class WhenProcessingTheJob {
 			new ServiceFile(1),
 			storedFile);
 
-		result = storedFileJob.processJob();
+		result = new FuturePromise<>(storedFileJob.processJob()).get();
 	}
 
 	@Test

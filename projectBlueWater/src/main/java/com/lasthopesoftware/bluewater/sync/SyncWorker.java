@@ -405,7 +405,8 @@ public class SyncWorker extends ListenableWorker {
 									lazySyncDirectoryLookup.getObject());
 
 								final LibrarySyncHandler librarySyncHandler =
-									new LibrarySyncHandler(library,
+									new LibrarySyncHandler(
+										library,
 										new StoredItemServiceFileCollector(
 											storedItemAccess,
 											new StoredPlaylistItemsConverter(

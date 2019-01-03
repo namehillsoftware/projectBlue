@@ -5,18 +5,17 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
-import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -27,7 +26,7 @@ public class WhenProcessingTheJob {
 	private static StoredFileReadException storedFileReadException;
 
 	@BeforeClass
-	public static void before() throws StoredFileJobException, StorageCreatePathException, StoredFileWriteException {
+	public static void before() throws InterruptedException {
 		final StoredFileJob storedFileJob = new StoredFileJob(
 			storedFile -> {
 				final File mockFile = mock(File.class);
@@ -44,9 +43,10 @@ public class WhenProcessingTheJob {
 			new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true));
 
 		try {
-			storedFileJob.processJob();
-		} catch (StoredFileReadException e) {
-			storedFileReadException = e;
+			new FuturePromise<>(storedFileJob.processJob()).get();
+		} catch (ExecutionException e) {
+			if (e.getCause() instanceof StoredFileReadException)
+				storedFileReadException = (StoredFileReadException)e.getCause();
 		}
 	}
 
