@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Queue;
 
 public final class StoredFileDownloader implements IStoredFileDownloader {
@@ -56,7 +56,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		isProcessing = true;
 
-		return new Promise<>(Collections.emptyList());
+		return Promise.whenAll(Stream.of(jobsQueue).map(storedFileJobs::promiseDownloadedStoredFile).toList());
 
 //		new Thread(() -> {
 //			try {
