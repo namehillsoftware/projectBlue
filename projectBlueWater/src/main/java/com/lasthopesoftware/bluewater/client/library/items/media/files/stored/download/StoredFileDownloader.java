@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
@@ -56,7 +57,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		isProcessing = true;
 
-		return Promise.whenAll(Stream.of(jobsQueue).map(storedFileJobs::promiseDownloadedStoredFile).toList());
+		return Promise.whenAll(Stream.of(jobsQueue).map(this::processStoredFileJob).toList());
 
 //		new Thread(() -> {
 //			try {
@@ -90,6 +91,20 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 //				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
 //			}
 //		}).start();
+	}
+
+	private Promise<StoredFileJobResult> processStoredFileJob(StoredFileJob storedFileJob) {
+		if (onFileDownloading != null)
+			onFileDownloading.runWith(storedFileJob.getStoredFile());
+
+		return storedFileJobs
+			.promiseDownloadedStoredFile(storedFileJob)
+			.then(sf -> {
+				if (onFileDownloaded != null)
+					onFileDownloaded.runWith(sf);
+
+				return sf;
+			});
 	}
 
 	@Override

@@ -13,13 +13,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class WhenProcessingTheQueue {
@@ -33,6 +30,8 @@ public class WhenProcessingTheQueue {
 		new StoredFileJob(new ServiceFile(114), new StoredFile()),
 		new StoredFileJob(new ServiceFile(92), new StoredFile())));
 
+	private static final List<StoredFile> downloadingStoredFiles = new ArrayList<>();
+	private static final List<StoredFileJobResult> downloadedStoredFiles = new ArrayList<>();
 	private static Collection<StoredFileJobResult> storedFileJobResults;
 
 	@BeforeClass
@@ -43,12 +42,31 @@ public class WhenProcessingTheQueue {
 				job.getStoredFile(),
 				StoredFileJobResultOptions.Downloaded)));
 
+		storedFileDownloader.setOnFileDownloading(downloadingStoredFiles::add);
+		storedFileDownloader.setOnFileDownloaded(downloadedStoredFiles::add);
+
 		storedFileJobResults = new FuturePromise<>(storedFileDownloader.process(storedFileJobs)).get();
 	}
 
 	@Test
 	public void thenTheFilesSuccessfullyDownload() {
+		assertThat(Stream.of(storedFileJobResults).map(r -> r.storedFile).toList())
+			.containsOnlyElementsOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
+	}
+
+	@Test
+	public void thenTheFilesAreAllMarkedAsSuccessfullyDownload() {
 		assertThat(Stream.of(storedFileJobResults).map(r -> r.storedFileJobResult).distinct().single())
 			.isEqualTo(StoredFileJobResultOptions.Downloaded);
+	}
+
+	@Test
+	public void thenAllTheFilesAreBroadcastAsDownloading() {
+		assertThat(downloadingStoredFiles).containsOnlyElementsOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
+	}
+
+	@Test
+	public void thenAllTheFilesAreBroadcastAsDownloaded() {
+		assertThat(downloadedStoredFiles).containsOnlyElementsOf(storedFileJobResults);
 	}
 }
