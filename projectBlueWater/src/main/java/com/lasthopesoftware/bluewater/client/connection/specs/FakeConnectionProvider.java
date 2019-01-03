@@ -40,8 +40,7 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		}
 	}
 
-	@Override
-	public Response getResponse(String... params) throws IOException {
+	private Response getResponse(String... params) throws IOException {
 		final Request.Builder builder = new Request.Builder();
 		builder.url(getUrlProvider().getUrl(params));
 

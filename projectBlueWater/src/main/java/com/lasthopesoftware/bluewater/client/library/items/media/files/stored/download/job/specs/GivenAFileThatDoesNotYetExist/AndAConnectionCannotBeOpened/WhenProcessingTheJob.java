@@ -29,10 +29,9 @@ public class WhenProcessingTheJob {
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 
 	@BeforeClass
-	public static void before() throws IOException, InterruptedException {
+	public static void before() throws InterruptedException {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 		when(fakeConnectionProvider.promiseResponse(any())).thenReturn(new Promise<>(new IOException()));
-		when(fakeConnectionProvider.getResponse(any())).thenThrow(IOException.class);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> {

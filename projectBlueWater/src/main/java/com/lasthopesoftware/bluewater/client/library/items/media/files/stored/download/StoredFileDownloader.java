@@ -48,7 +48,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	}
 
 	@Override
-	public Promise<Collection<StoredFileJobResult>> process(Queue<com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob> jobsQueue) {
+	public Promise<Collection<StoredFileJobResult>> process(Queue<StoredFileJob> jobsQueue) {
 		if (cancellationToken.isCancelled())
 			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
 

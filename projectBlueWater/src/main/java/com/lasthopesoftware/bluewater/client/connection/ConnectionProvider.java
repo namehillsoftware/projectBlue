@@ -10,7 +10,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -41,11 +40,6 @@ public class ConnectionProvider implements IConnectionProvider {
 		} catch (Throwable e) {
 			return new Promise<>(e);
 		}
-	}
-
-	@Override
-	public Response getResponse(String... params) throws IOException {
-		return callServer(params).execute();
 	}
 
 	public IUrlProvider getUrlProvider() {
