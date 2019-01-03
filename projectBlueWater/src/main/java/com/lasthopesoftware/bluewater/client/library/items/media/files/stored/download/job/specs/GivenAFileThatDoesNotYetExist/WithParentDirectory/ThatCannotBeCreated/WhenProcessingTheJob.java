@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatDoesNotYetExist.WithParentDirectory.ThatCannotBeCreated;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.specs.GivenAFileThatDoesNotYetExist.WithParentDirectory.ThatCannotBeCreated;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -28,7 +29,7 @@ public class WhenProcessingTheJob {
 	public static void before() throws InterruptedException {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 
-		final StoredFileJob storedFileJob = new StoredFileJob(
+		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> {
 				final File file = mock(File.class);
 				final File parentFile = mock(File.class);
@@ -42,12 +43,11 @@ public class WhenProcessingTheJob {
 			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> false,
 			f -> true,
-			(is, f) -> {},
-			new ServiceFile(1),
-			storedFile);
+			(is, f) -> {});
 
 		try {
-			new FuturePromise<>(storedFileJob.processJob()).get();
+			new FuturePromise<>(storedFileJobProcessor.promiseDownloadedStoredFile(
+				new StoredFileJob(new ServiceFile(1), storedFile))).get();
 		} catch (ExecutionException e) {
 			if (e.getCause() instanceof StorageCreatePathException)
 				storageCreatePathException = (StorageCreatePathException)e.getCause();

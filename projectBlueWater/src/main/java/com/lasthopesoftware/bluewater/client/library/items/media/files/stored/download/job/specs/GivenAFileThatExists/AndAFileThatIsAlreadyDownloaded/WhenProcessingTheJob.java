@@ -1,12 +1,13 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatExists.AndAFileThatIsAlreadyDownloaded;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.specs.GivenAFileThatExists.AndAFileThatIsAlreadyDownloaded;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -30,7 +31,7 @@ public class WhenProcessingTheJob {
 		final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 		storedFile.setIsDownloadComplete(true);
 
-		final StoredFileJob storedFileJob = new StoredFileJob(
+		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> {
 				final File mockFile = mock(File.class);
 				when(mockFile.exists()).thenReturn(true);
@@ -41,11 +42,10 @@ public class WhenProcessingTheJob {
 			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> true,
 			mock(IFileWritePossibleArbitrator.class),
-			(is, f) -> {},
-			new ServiceFile(1),
-			storedFile);
+			(is, f) -> {});
 
-		storedFileJobResult = new FuturePromise<>(storedFileJob.processJob()).get();
+		storedFileJobResult = new FuturePromise<>(storedFileJobProcessor.promiseDownloadedStoredFile(
+			new StoredFileJob(new ServiceFile(1), storedFile))).get();
 	}
 
 	@Test

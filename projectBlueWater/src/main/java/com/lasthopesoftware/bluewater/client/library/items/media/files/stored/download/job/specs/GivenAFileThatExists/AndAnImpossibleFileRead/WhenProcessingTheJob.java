@@ -1,11 +1,12 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatExists.AndAnImpossibleFileRead;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.specs.GivenAFileThatExists.AndAnImpossibleFileRead;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -27,7 +28,7 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
-		final StoredFileJob storedFileJob = new StoredFileJob(
+		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			storedFile -> {
 				final File mockFile = mock(File.class);
 				when(mockFile.exists()).thenReturn(true);
@@ -38,12 +39,13 @@ public class WhenProcessingTheJob {
 			mock(IServiceFileUriQueryParamsProvider.class),
 			mock(IFileReadPossibleArbitrator.class),
 			mock(IFileWritePossibleArbitrator.class),
-			(is, f) -> {},
-			new ServiceFile(1),
-			new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true));
+			(is, f) -> {});
 
 		try {
-			new FuturePromise<>(storedFileJob.processJob()).get();
+			new FuturePromise<>(storedFileJobProcessor.promiseDownloadedStoredFile(
+				new StoredFileJob(
+					new ServiceFile(1),
+					new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true)))).get();
 		} catch (ExecutionException e) {
 			if (e.getCause() instanceof StoredFileReadException)
 				storedFileReadException = (StoredFileReadException)e.getCause();

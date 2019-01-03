@@ -2,41 +2,32 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Queue;
-import java.util.Set;
 
 public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileDownloader.class);
+	@NonNull
+	private final ProcessStoredFileJobs storedFileJobs;
 
 	private boolean isProcessing;
-
-	@NonNull private final IStoredFileAccess storedFileAccess;
-	@NonNull private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
-	@NonNull private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
-	@NonNull private final IFileStreamWriter fileStreamWriter;
-	@NonNull private final IConnectionProvider connectionProvider;
-	@NonNull private final Set<Integer> queuedFileKeys = new HashSet<>();
-	@NonNull private final Queue<StoredFileJob> storedFileJobQueue = new LinkedList<>();
-	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileQueryUriParamsProvider;
-	@NonNull private final IStoredFileSystemFileProducer storedFileSystemFileProducer;
 
 	private OneParameterAction<StoredFile> onFileDownloading;
 	private OneParameterAction<StoredFileJobResult> onFileDownloaded;
@@ -47,53 +38,16 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	private final CancellationToken cancellationToken = new CancellationToken();
 
+	public StoredFileDownloader(@NonNull ProcessStoredFileJobs storedFileJobs) {
+		this.storedFileJobs = storedFileJobs;
+	}
+
 	public StoredFileDownloader(@NonNull IStoredFileSystemFileProducer storedFileSystemFileProducer, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileQueryUriParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
-		this.storedFileSystemFileProducer = storedFileSystemFileProducer;
-		this.connectionProvider = connectionProvider;
-		this.storedFileAccess = storedFileAccess;
-		this.serviceFileQueryUriParamsProvider = serviceFileQueryUriParamsProvider;
-		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
-		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
-		this.fileStreamWriter = fileStreamWriter;
+		storedFileJobs = null;
 	}
 
 	@Override
-	public void queueFileForDownload(@NonNull final ServiceFile serviceFile, @NonNull final StoredFile storedFile) {
-		if (isProcessing || cancellationToken.isCancelled())
-			throw new IllegalStateException("New files cannot be added to the queue after processing has began.");
-
-		final int fileKey = serviceFile.getKey();
-		if (!queuedFileKeys.add(fileKey)) return;
-
-		storedFileJobQueue.add(
-			new StoredFileJob(
-				storedFileSystemFileProducer,
-				connectionProvider,
-				storedFileAccess,
-				serviceFileQueryUriParamsProvider,
-				fileReadPossibleArbitrator,
-				fileWritePossibleArbitrator,
-				fileStreamWriter,
-				serviceFile,
-				storedFile));
-
-		if (onFileQueued != null)
-			onFileQueued.runWith(storedFile);
-	}
-
-	@Override
-	public void cancel() {
-		cancellationToken.run();
-
-		Stream.of(storedFileJobQueue).forEach(StoredFileJob::cancel);
-
-		if (isProcessing || onQueueProcessingCompleted == null) return;
-
-		onQueueProcessingCompleted.run();
-	}
-
-	@Override
-	public void process() {
+	public Promise<Collection<StoredFileJobResult>> process(Queue<com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob> jobsQueue) {
 		if (cancellationToken.isCancelled())
 			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
 
@@ -102,17 +56,19 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		isProcessing = true;
 
-		new Thread(() -> {
-			try {
-				StoredFileJob storedFileJob;
-				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
-					if (cancellationToken.isCancelled()) return;
+		return new Promise<>(Collections.emptyList());
 
-					final StoredFile storedFile = storedFileJob.getStoredFile();
-
-					if (onFileDownloading != null)
-						onFileDownloading.runWith(storedFile);
-
+//		new Thread(() -> {
+//			try {
+//				StoredFileJob storedFileJob;
+//				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
+//					if (cancellationToken.isCancelled()) return;
+//
+//					final StoredFile storedFile = storedFileJob.getStoredFile();
+//
+//					if (onFileDownloading != null)
+//						onFileDownloading.runWith(storedFile);
+//
 //					try {
 //						final StoredFileJobResult storedFileJobResult = storedFileJob.processJob();
 //
@@ -129,11 +85,11 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 //					} catch (StorageCreatePathException e) {
 //						logger.error("There was an error creating the path for a file", e);
 //					}
-				}
-			} finally {
-				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
-			}
-		}).start();
+//				}
+//			} finally {
+//				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
+//			}
+//		}).start();
 	}
 
 	@Override

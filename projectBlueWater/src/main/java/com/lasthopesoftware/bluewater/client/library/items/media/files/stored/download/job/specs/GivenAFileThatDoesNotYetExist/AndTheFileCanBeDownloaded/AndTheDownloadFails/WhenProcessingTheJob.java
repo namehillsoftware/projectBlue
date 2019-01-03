@@ -1,15 +1,14 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatDoesNotYetExist.AndAConnectionCannotBeOpened;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheDownloadFails;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,12 +26,11 @@ public class WhenProcessingTheJob {
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 
 	@BeforeClass
-	public static void before() throws IOException, InterruptedException {
-		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-		when(fakeConnectionProvider.promiseResponse(any())).thenReturn(new Promise<>(new IOException()));
-		when(fakeConnectionProvider.getResponse(any())).thenThrow(IOException.class);
+	public static void before() throws InterruptedException {
+		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
+		fakeConnectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(200, new byte[0]));
 
-		final StoredFileJob storedFileJob = new StoredFileJob(
+		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> {
 				final File file = mock(File.class);
 				final File parentFile = mock(File.class);
@@ -44,15 +41,14 @@ public class WhenProcessingTheJob {
 			},
 			fakeConnectionProvider,
 			mock(IStoredFileAccess.class),
-			mock(IServiceFileUriQueryParamsProvider.class),
+			f -> new String[0],
 			f -> false,
 			f -> true,
-			(is, f) -> {},
-			new ServiceFile(1),
-			storedFile);
+			(is, f) -> { throw new IOException(); });
 
 		try {
-			new FuturePromise<>(storedFileJob.processJob()).get();
+			new FuturePromise<>(storedFileJobProcessor.promiseDownloadedStoredFile(
+				new StoredFileJob(new ServiceFile(1), storedFile))).get();
 		} catch (ExecutionException e) {
 			if (e.getCause() instanceof StoredFileJobException)
 				storedFileJobException = (StoredFileJobException)e.getCause();

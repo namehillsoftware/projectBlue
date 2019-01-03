@@ -1,11 +1,12 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -29,18 +30,17 @@ public class WhenProcessingTheJob {
 		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
 		fakeConnectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(200, new byte[0]));
 
-		final StoredFileJob storedFileJob = new StoredFileJob(
+		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
 			fakeConnectionProvider,
 			storedFileAccess,
 			f -> new String[0],
 			f -> false,
 			f -> true,
-			(is, f) -> {},
-			new ServiceFile(1),
-			storedFile);
+			(is, f) -> {});
 
-		result = new FuturePromise<>(storedFileJob.processJob()).get();
+		result = new FuturePromise<>(storedFileJobProcessor.promiseDownloadedStoredFile(
+			new StoredFileJob(new ServiceFile(1), storedFile))).get();
 	}
 
 	@Test

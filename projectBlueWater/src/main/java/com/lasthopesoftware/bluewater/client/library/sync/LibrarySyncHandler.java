@@ -86,7 +86,7 @@ public class LibrarySyncHandler {
 	public void cancel() {
 		cancellationProxy.run();
 
-		storedFileDownloader.cancel();
+//		storedFileDownloader.cancel();
 	}
 
 	public void startSync() {
@@ -115,8 +115,8 @@ public class LibrarySyncHandler {
 						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileUpdater
 							.promiseStoredFileUpdate(library, serviceFile)
 							.then(storedFile -> {
-								if (storedFile != null && !storedFile.isDownloadComplete())
-									storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
+//								if (storedFile != null && !storedFile.isDownloadComplete())
+//									storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
 
 								return storedFile;
 							});
@@ -135,7 +135,7 @@ public class LibrarySyncHandler {
 			})
 			.then(vs -> {
 				if (!cancellationProxy.isCancelled())
-					storedFileDownloader.process();
+					storedFileDownloader.process(new LinkedList<>());
 				else
 					handleQueueProcessingCompleted();
 
