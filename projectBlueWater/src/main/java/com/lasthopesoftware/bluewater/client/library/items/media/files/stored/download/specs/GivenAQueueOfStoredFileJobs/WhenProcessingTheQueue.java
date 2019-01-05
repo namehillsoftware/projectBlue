@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAQueueOfStoredFileJobs;
 
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
@@ -7,14 +9,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -32,10 +32,10 @@ public class WhenProcessingTheQueue {
 
 	private static final List<StoredFile> downloadingStoredFiles = new ArrayList<>();
 	private static final List<StoredFileJobResult> downloadedStoredFiles = new ArrayList<>();
-	private static Collection<StoredFileJobResult> storedFileJobResults;
 
+	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
-	public static void before() throws ExecutionException, InterruptedException {
+	public static void before() {
 		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
 			job -> new Promise<>(new StoredFileJobResult(
 				mock(File.class),
@@ -43,20 +43,12 @@ public class WhenProcessingTheQueue {
 				StoredFileJobResultOptions.Downloaded)));
 
 		storedFileDownloader.setOnFileDownloading(downloadingStoredFiles::add);
-		storedFileDownloader.setOnFileDownloaded(downloadedStoredFiles::add);
-
-		storedFileJobResults = new FuturePromise<>(storedFileDownloader.process(storedFileJobs)).get();
-	}
-
-	@Test
-	public void thenTheFilesSuccessfullyDownload() {
-		assertThat(Stream.of(storedFileJobResults).map(r -> r.storedFile).toList())
-			.containsOnlyElementsOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
+		storedFileDownloader.process(storedFileJobs).blockingIterable().forEach(downloadedStoredFiles::add);
 	}
 
 	@Test
 	public void thenTheFilesAreAllMarkedAsSuccessfullyDownload() {
-		assertThat(Stream.of(storedFileJobResults).map(r -> r.storedFileJobResult).distinct().single())
+		assertThat(Stream.of(downloadedStoredFiles).map(r -> r.storedFileJobResult).distinct().single())
 			.isEqualTo(StoredFileJobResultOptions.Downloaded);
 	}
 
@@ -67,6 +59,7 @@ public class WhenProcessingTheQueue {
 
 	@Test
 	public void thenAllTheFilesAreBroadcastAsDownloaded() {
-		assertThat(downloadedStoredFiles).containsOnlyElementsOf(storedFileJobResults);
+		assertThat(Stream.of(downloadedStoredFiles).map(r -> r.storedFile).toList())
+			.containsOnlyElementsOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
 	}
 }

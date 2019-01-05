@@ -15,11 +15,13 @@ import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Queue;
 
 public final class StoredFileDownloader implements IStoredFileDownloader {
@@ -48,7 +50,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	}
 
 	@Override
-	public Promise<Collection<StoredFileJobResult>> process(Queue<StoredFileJob> jobsQueue) {
+	public Observable<StoredFileJobResult> process(Queue<StoredFileJob> jobsQueue) {
 		if (cancellationToken.isCancelled())
 			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
 
@@ -57,7 +59,10 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		isProcessing = true;
 
-		return Promise.whenAll(Stream.of(jobsQueue).map(this::processStoredFileJob).toList());
+		return Observable.create(emitter -> {
+			Promise.whenAll(Stream.of(jobsQueue).map(storedFileJob -> processStoredFileJob(storedFileJob, emitter)).toList())
+				.then(new VoidResponse<>(v -> emitter.onComplete()));
+		});
 
 //		new Thread(() -> {
 //			try {
@@ -93,17 +98,15 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 //		}).start();
 	}
 
-	private Promise<StoredFileJobResult> processStoredFileJob(StoredFileJob storedFileJob) {
+	private Promise<Void> processStoredFileJob(StoredFileJob storedFileJob, ObservableEmitter<StoredFileJobResult> emitter) {
 		if (onFileDownloading != null)
 			onFileDownloading.runWith(storedFileJob.getStoredFile());
 
 		return storedFileJobs
 			.promiseDownloadedStoredFile(storedFileJob)
 			.then(sf -> {
-				if (onFileDownloaded != null)
-					onFileDownloaded.runWith(sf);
-
-				return sf;
+				emitter.onNext(sf);
+				return null;
 			});
 	}
 
@@ -115,11 +118,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	@Override
 	public void setOnFileDownloading(@Nullable OneParameterAction<StoredFile> onFileDownloading) {
 		this.onFileDownloading = onFileDownloading;
-	}
-
-	@Override
-	public void setOnFileDownloaded(@Nullable OneParameterAction<StoredFileJobResult> onFileDownloaded) {
-		this.onFileDownloaded = onFileDownloaded;
 	}
 
 	@Override

@@ -58,7 +58,7 @@ public class LibrarySyncHandler {
 	}
 
 	public void setOnFileDownloaded(OneParameterAction<StoredFileJobResult> onFileDownloaded) {
-		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
+//		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 
 	public void setOnFileQueued(OneParameterAction<StoredFile> onFileQueued) {
