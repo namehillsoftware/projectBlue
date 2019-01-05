@@ -27,6 +27,7 @@ public class WhenProcessingTheQueue {
 
 	private static final Queue<StoredFileJob> storedFileJobs = new LinkedList<>(Arrays.asList(
 		new StoredFileJob(new ServiceFile(1), new StoredFile().setLibraryId(4).setServiceId(1)),
+		new StoredFileJob(new ServiceFile(2), new StoredFile().setLibraryId(4).setServiceId(2)),
 		new StoredFileJob(new ServiceFile(4), new StoredFile().setLibraryId(4).setServiceId(4)),
 		new StoredFileJob(new ServiceFile(5), new StoredFile().setLibraryId(4).setServiceId(5)),
 		new StoredFileJob(new ServiceFile(7), new StoredFile().setLibraryId(4).setServiceId(7)),
@@ -53,6 +54,8 @@ public class WhenProcessingTheQueue {
 				a.<StoredFileJob>getArgument(0).getStoredFile(),
 				StoredFileJobResultOptions.Downloaded)));
 		when(storedFileJobs.promiseDownloadedStoredFile(new StoredFileJob(new ServiceFile(7), new StoredFile().setLibraryId(4).setServiceId(7))))
+			.thenAnswer(a -> new Promise<>(new StoredFileJobException(a.<StoredFileJob>getArgument(0).getStoredFile(), new Exception())));
+		when(storedFileJobs.promiseDownloadedStoredFile(new StoredFileJob(new ServiceFile(2), new StoredFile().setLibraryId(4).setServiceId(2))))
 			.thenAnswer(a -> new Promise<>(new StoredFileJobException(a.<StoredFileJob>getArgument(0).getStoredFile(), new Exception())));
 
 		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(storedFileJobs);
