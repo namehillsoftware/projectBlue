@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
+import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
@@ -36,11 +37,9 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	private boolean isProcessing;
 
 	private OneParameterAction<StoredFile> onFileDownloading;
-	private OneParameterAction<StoredFileJobResult> onFileDownloaded;
 	private OneParameterAction<StoredFile> onFileQueued;
 	private OneParameterAction<StoredFile> onFileReadError;
 	private OneParameterAction<StoredFile> onFileWriteError;
-	private Runnable onQueueProcessingCompleted;
 
 	private final CancellationToken cancellationToken = new CancellationToken();
 
@@ -70,7 +69,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 		});
 
 //		new Thread(() -> {
-//			try {
 //				StoredFileJob storedFileJob;
 //				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
 //					if (cancellationToken.isCancelled()) return;
@@ -80,20 +78,11 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 //					if (onFileDownloading != null)
 //						onFileDownloading.runWith(storedFile);
 //
-//					try {
 //						final StoredFileJobResult storedFileJobResult = storedFileJob.processJob();
 //
 //						if (onFileDownloaded != null)
 //							onFileDownloaded.runWith(storedFileJobResult);
-//					} catch (StoredFileJobException e) {
-//						logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
-//					} catch (StorageCreatePathException e) {
-//						logger.error("There was an error creating the path for a file", e);
-//					}
 //				}
-//			} finally {
-//				if (onQueueProcessingCompleted != null) onQueueProcessingCompleted.run();
-//			}
 //		}).start();
 	}
 
@@ -121,6 +110,11 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 						return;
 					}
 
+					if (e instanceof StorageCreatePathException) {
+						logger.error("There was an error creating the path", e);
+						return;
+					}
+
 					emitter.onError(e);
 				}));
 	}
@@ -133,11 +127,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	@Override
 	public void setOnFileDownloading(@Nullable OneParameterAction<StoredFile> onFileDownloading) {
 		this.onFileDownloading = onFileDownloading;
-	}
-
-	@Override
-	public void setOnQueueProcessingCompleted(Runnable onQueueProcessingCompleted) {
-		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
 	@Override

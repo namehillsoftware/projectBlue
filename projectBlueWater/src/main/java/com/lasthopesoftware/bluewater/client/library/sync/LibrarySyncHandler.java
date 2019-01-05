@@ -50,7 +50,7 @@ public class LibrarySyncHandler {
 		this.storedFileDownloader = storedFileDownloader;
 		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
 		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
-		storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
+//		storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
 	}
 
 	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
