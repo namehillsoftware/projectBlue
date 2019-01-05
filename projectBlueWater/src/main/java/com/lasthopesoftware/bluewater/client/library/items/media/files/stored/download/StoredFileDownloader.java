@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
@@ -112,6 +113,11 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 					if (e instanceof StoredFileReadException) {
 						onFileReadError.runWith(((StoredFileReadException)e).getStoredFile());
+						return;
+					}
+
+					if (e instanceof StoredFileJobException) {
+						logger.error("There was an error downloading the stored file " + ((StoredFileJobException)e).getStoredFile(), e);
 						return;
 					}
 
