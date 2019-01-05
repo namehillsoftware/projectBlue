@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
@@ -83,9 +84,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 //
 //						if (onFileDownloaded != null)
 //							onFileDownloaded.runWith(storedFileJobResult);
-//					} catch (StoredFileReadException se) {
-//						if (onFileReadError != null)
-//							onFileReadError.runWith(se.getStoredFile());
 //					} catch (StoredFileJobException e) {
 //						logger.error("There was an error downloading the stored file " + e.getStoredFile(), e);
 //					} catch (StorageCreatePathException e) {
@@ -109,6 +107,11 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 				new VoidResponse<>(e -> {
 					if (e instanceof StoredFileWriteException) {
 						onFileWriteError.runWith(((StoredFileWriteException)e).getStoredFile());
+						return;
+					}
+
+					if (e instanceof StoredFileReadException) {
+						onFileReadError.runWith(((StoredFileReadException)e).getStoredFile());
 						return;
 					}
 
