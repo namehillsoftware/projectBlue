@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
@@ -61,7 +62,9 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		return Observable.create(emitter -> {
 			Promise.whenAll(Stream.of(jobsQueue).map(storedFileJob -> processStoredFileJob(storedFileJob, emitter)).toList())
-				.then(new VoidResponse<>(v -> emitter.onComplete()));
+				.then(
+					new VoidResponse<>(v -> emitter.onComplete()),
+					new VoidResponse<>(emitter::onError));
 		});
 
 //		new Thread(() -> {
@@ -80,9 +83,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 //
 //						if (onFileDownloaded != null)
 //							onFileDownloaded.runWith(storedFileJobResult);
-//					} catch (StoredFileWriteException se) {
-//						if (onFileWriteError != null)
-//							onFileWriteError.runWith(se.getStoredFile());
 //					} catch (StoredFileReadException se) {
 //						if (onFileReadError != null)
 //							onFileReadError.runWith(se.getStoredFile());
@@ -104,10 +104,16 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		return storedFileJobs
 			.promiseDownloadedStoredFile(storedFileJob)
-			.then(sf -> {
-				emitter.onNext(sf);
-				return null;
-			});
+			.then(
+				new VoidResponse<>(emitter::onNext),
+				new VoidResponse<>(e -> {
+					if (e instanceof StoredFileWriteException) {
+						onFileWriteError.runWith(((StoredFileWriteException)e).getStoredFile());
+						return;
+					}
+
+					emitter.onError(e);
+				}));
 	}
 
 	@Override

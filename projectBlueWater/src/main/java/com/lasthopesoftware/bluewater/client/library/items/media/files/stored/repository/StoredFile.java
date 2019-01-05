@@ -4,6 +4,8 @@ import android.support.annotation.Keep;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 
+import java.util.Objects;
+
 @Keep
 public final class StoredFile {
 
@@ -86,5 +88,20 @@ public final class StoredFile {
 	public StoredFile setIsOwner(boolean isOwner) {
 		this.isOwner = isOwner;
 		return this;
+	}
+
+
+	@Override
+	public final boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		StoredFile that = (StoredFile) o;
+		return libraryId == that.libraryId &&
+			serviceId == that.serviceId;
+	}
+
+	@Override
+	public final int hashCode() {
+		return Objects.hash(libraryId, serviceId);
 	}
 }
