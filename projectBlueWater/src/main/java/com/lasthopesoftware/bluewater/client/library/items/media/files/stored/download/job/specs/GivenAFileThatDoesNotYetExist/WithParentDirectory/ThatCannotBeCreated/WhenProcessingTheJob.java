@@ -45,7 +45,7 @@ public class WhenProcessingTheJob {
 
 		try {
 			storedFileJobProcessor.observeStoredFileDownload(
-				new StoredFileJob(new ServiceFile(1), storedFile)).blockingFirst();
+				new StoredFileJob(new ServiceFile(1), storedFile)).blockingSubscribe();
 		} catch (Throwable e) {
 			if (e.getCause() instanceof StorageCreatePathException)
 				storageCreatePathException = (StorageCreatePathException)e.getCause();

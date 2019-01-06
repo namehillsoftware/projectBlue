@@ -13,6 +13,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -21,7 +23,7 @@ public class WhenProcessingTheJob {
 
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 	private static final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
-	private static StoredFileJobStatus result;
+	private static List<StoredFileJobState> states = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() {
@@ -37,8 +39,10 @@ public class WhenProcessingTheJob {
 			f -> true,
 			(is, f) -> {});
 
-		result = storedFileJobProcessor.observeStoredFileDownload(
-			new StoredFileJob(new ServiceFile(1), storedFile)).blockingFirst();
+		for (final StoredFileJobStatus status : storedFileJobProcessor.observeStoredFileDownload(
+			new StoredFileJob(new ServiceFile(1), storedFile)).blockingIterable()) {
+			states.add(status.storedFileJobState);
+		}
 	}
 
 	@Test
@@ -47,7 +51,7 @@ public class WhenProcessingTheJob {
 	}
 
 	@Test
-	public void thenTheJobResultIsDownloaded() {
-		assertThat(result.storedFileJobState).isEqualTo(StoredFileJobState.Downloaded);
+	public void thenTheJobStatesProgressCorrectly() {
+		assertThat(states).containsExactly(StoredFileJobState.Downloading, StoredFileJobState.Downloaded);
 	}
 }

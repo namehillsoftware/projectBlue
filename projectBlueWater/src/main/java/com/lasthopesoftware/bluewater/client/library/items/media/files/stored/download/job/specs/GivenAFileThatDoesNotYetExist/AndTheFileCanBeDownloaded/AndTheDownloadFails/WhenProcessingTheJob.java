@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheDownloadFails;
 
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
@@ -23,6 +25,7 @@ public class WhenProcessingTheJob {
 	private static StoredFileJobException storedFileJobException;
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 
+	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
 	public static void before() {
 		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
@@ -46,7 +49,7 @@ public class WhenProcessingTheJob {
 
 		try {
 			storedFileJobProcessor.observeStoredFileDownload(
-				new StoredFileJob(new ServiceFile(1), storedFile)).blockingFirst();
+				new StoredFileJob(new ServiceFile(1), storedFile)).blockingSubscribe();
 		} catch (Throwable e) {
 			if (e.getCause() instanceof StoredFileJobException)
 				storedFileJobException = (StoredFileJobException)e.getCause();

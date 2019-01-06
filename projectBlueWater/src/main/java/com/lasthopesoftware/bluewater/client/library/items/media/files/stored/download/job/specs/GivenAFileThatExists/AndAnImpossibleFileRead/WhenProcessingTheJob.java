@@ -43,7 +43,7 @@ public class WhenProcessingTheJob {
 			storedFileJobProcessor.observeStoredFileDownload(
 				new StoredFileJob(
 					new ServiceFile(1),
-					new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true))).blockingFirst();
+					new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true))).blockingSubscribe();
 		} catch (Throwable e) {
 			if (e.getCause() instanceof StoredFileReadException)
 				storedFileReadException = (StoredFileReadException)e.getCause();

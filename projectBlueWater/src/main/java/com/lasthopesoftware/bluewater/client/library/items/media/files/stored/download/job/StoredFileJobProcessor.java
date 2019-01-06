@@ -72,6 +72,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 			return Observable.error(new StorageCreatePathException(parent));
 
 		return Observable.create(emitter -> {
+			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
+
 			final ServiceFile serviceFile = job.getServiceFile();
 			connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
 				.eventually(response -> new QueuedPromise<>((cancellationToken) -> {
@@ -105,7 +107,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 				})
 			.then(
 				new VoidResponse<>(emitter::onNext),
-				new VoidResponse<>(emitter::onError));
+				new VoidResponse<>(emitter::onError))
+			.then(new VoidResponse<>(v -> emitter.onComplete()));
 		});
 	}
 
