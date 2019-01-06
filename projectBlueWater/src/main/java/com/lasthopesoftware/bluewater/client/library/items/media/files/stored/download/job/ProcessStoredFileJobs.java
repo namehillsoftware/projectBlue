@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
-import com.namehillsoftware.handoff.promises.Promise;
+import io.reactivex.Observable;
 
 public interface ProcessStoredFileJobs {
-	Promise<StoredFileJobResult> promiseDownloadedStoredFile(StoredFileJob job);
+	Observable<StoredFileJobStatus> observeStoredFileDownload(StoredFileJob job);
 }

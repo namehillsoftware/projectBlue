@@ -7,8 +7,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
@@ -18,6 +16,8 @@ import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import io.reactivex.Observable;
 import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,59 +52,64 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 	}
 
 	@Override
-	public Promise<StoredFileJobResult> promiseDownloadedStoredFile(StoredFileJob job) {
+	public Observable<StoredFileJobStatus> observeStoredFileDownload(StoredFileJob job) {
 		final StoredFile storedFile = job.getStoredFile();
 		final File file = storedFileFileProvider.getFile(storedFile);
 
 		if (file.exists()) {
 			if (!fileReadPossibleArbitrator.isFileReadPossible(file))
-				return new Promise<>(new StoredFileReadException(file, storedFile));
+				return Observable.error(new StoredFileReadException(file, storedFile));
 
 			if (storedFile.isDownloadComplete())
-				return new Promise<>(new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.AlreadyExists));
+				return Observable.just(new StoredFileJobStatus(file, storedFile, StoredFileJobState.AlreadyExists));
 		}
 
 		if (!fileWritePossibleArbitrator.isFileWritePossible(file))
-			return new Promise<>(new StoredFileWriteException(file, storedFile));
+			return Observable.error(new StoredFileWriteException(file, storedFile));
 
 		final File parent = file.getParentFile();
 		if (parent != null && !parent.exists() && !parent.mkdirs())
-			return new Promise<>(new StorageCreatePathException(parent));
+			return Observable.error(new StorageCreatePathException(parent));
 
-		final ServiceFile serviceFile = job.getServiceFile();
-		return connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
-			.eventually(response -> new QueuedPromise<>((cancellationToken) -> {
-				final ResponseBody body = response.body();
-				if (body == null) return null;
-
-				if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
-
-				try (final InputStream is = body.byteStream()) {
+		return Observable.create(emitter -> {
+			final ServiceFile serviceFile = job.getServiceFile();
+			connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
+				.eventually(response -> new QueuedPromise<>((cancellationToken) -> {
+					final ResponseBody body = response.body();
+					if (body == null) return null;
 
 					if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
-					try {
-						this.fileStreamWriter.writeStreamToFile(is, file);
+					try (final InputStream is = body.byteStream()) {
 
-						storedFileAccess.markStoredFileAsDownloaded(storedFile);
+						if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
-						return new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.Downloaded);
-					} catch (IOException ioe) {
-						logger.error("Error writing file!", ioe);
-						throw new StoredFileWriteException(file, storedFile, ioe);
+						try {
+							this.fileStreamWriter.writeStreamToFile(is, file);
+
+							storedFileAccess.markStoredFileAsDownloaded(storedFile);
+
+							return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
+						} catch (IOException ioe) {
+							logger.error("Error writing file!", ioe);
+							throw new StoredFileWriteException(file, storedFile, ioe);
+						}
+					} catch (Throwable t) {
+						throw new StoredFileJobException(storedFile, t);
+					} finally {
+						body.close();
 					}
-				} catch (Throwable t) {
-					throw new StoredFileJobException(storedFile, t);
-				} finally {
-					body.close();
-				}
-			}, storedFileExecutor), error -> {
-				logger.error("Error getting connection", error);
-				return new Promise<>(new StoredFileJobException(storedFile, error));
-			});
+				}, storedFileExecutor), error -> {
+					logger.error("Error getting connection", error);
+					return new Promise<>(new StoredFileJobException(storedFile, error));
+				})
+			.then(
+				new VoidResponse<>(emitter::onNext),
+				new VoidResponse<>(emitter::onError));
+		});
 	}
 
-	private StoredFileJobResult getCancelledStoredFileJobResult(File file, StoredFile storedFile) {
-		return new StoredFileJobResult(file, storedFile, StoredFileJobResultOptions.Cancelled);
+	private StoredFileJobStatus getCancelledStoredFileJobResult(File file, StoredFile storedFile) {
+		return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Cancelled);
 	}
 }

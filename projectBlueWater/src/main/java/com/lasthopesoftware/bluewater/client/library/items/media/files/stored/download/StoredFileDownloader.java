@@ -13,16 +13,15 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
-import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +51,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	}
 
 	@Override
-	public Observable<StoredFileJobResult> process(Queue<StoredFileJob> jobsQueue) {
+	public Observable<StoredFileJobStatus> process(Queue<StoredFileJob> jobsQueue) {
 		if (cancellationToken.isCancelled())
 			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
 
@@ -61,62 +60,41 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		isProcessing = true;
 
-		return Observable.create(emitter -> {
-			Promise.whenAll(Stream.of(jobsQueue).map(storedFileJob -> processStoredFileJob(storedFileJob, emitter)).toList())
-				.then(
-					new VoidResponse<>(v -> emitter.onComplete()),
-					new VoidResponse<>(emitter::onError));
-		});
-
-//		new Thread(() -> {
-//				StoredFileJob storedFileJob;
-//				while ((storedFileJob = storedFileJobQueue.poll()) != null) {
-//					if (cancellationToken.isCancelled()) return;
-//
-//					final StoredFile storedFile = storedFileJob.getStoredFile();
-//
-//					if (onFileDownloading != null)
-//						onFileDownloading.runWith(storedFile);
-//
-//						final StoredFileJobResult storedFileJobResult = storedFileJob.processJob();
-//
-//						if (onFileDownloaded != null)
-//							onFileDownloaded.runWith(storedFileJobResult);
-//				}
-//		}).start();
+		return Observable.merge(Stream.of(jobsQueue).map(this::processStoredFileJob).toList())
+			.filter(storedFileJobStatus -> storedFileJobStatus.storedFileJobState != StoredFileJobState.None);
 	}
 
-	private Promise<Void> processStoredFileJob(StoredFileJob storedFileJob, ObservableEmitter<StoredFileJobResult> emitter) {
+	private Observable<StoredFileJobStatus> processStoredFileJob(StoredFileJob storedFileJob) {
 		if (onFileDownloading != null)
 			onFileDownloading.runWith(storedFileJob.getStoredFile());
 
 		return storedFileJobs
-			.promiseDownloadedStoredFile(storedFileJob)
-			.then(
-				new VoidResponse<>(emitter::onNext),
-				new VoidResponse<>(e -> {
-					if (e instanceof StoredFileWriteException) {
-						onFileWriteError.runWith(((StoredFileWriteException)e).getStoredFile());
-						return;
-					}
+			.observeStoredFileDownload(storedFileJob)
+			.onErrorReturn(e -> {
+				if (e instanceof StoredFileWriteException) {
+					onFileWriteError.runWith(((StoredFileWriteException) e).getStoredFile());
+					return StoredFileJobStatus.empty();
+				}
 
-					if (e instanceof StoredFileReadException) {
-						onFileReadError.runWith(((StoredFileReadException)e).getStoredFile());
-						return;
-					}
+				if (e instanceof StoredFileReadException) {
+					onFileReadError.runWith(((StoredFileReadException) e).getStoredFile());
+					return StoredFileJobStatus.empty();
+				}
 
-					if (e instanceof StoredFileJobException) {
-						logger.error("There was an error downloading the stored file " + ((StoredFileJobException)e).getStoredFile(), e);
-						return;
-					}
+				if (e instanceof StoredFileJobException) {
+					logger.error("There was an error downloading the stored file " + ((StoredFileJobException) e).getStoredFile(), e);
+					return StoredFileJobStatus.empty();
+				}
 
-					if (e instanceof StorageCreatePathException) {
-						logger.error("There was an error creating the path", e);
-						return;
-					}
+				if (e instanceof StorageCreatePathException) {
+					logger.error("There was an error creating the path", e);
+					return StoredFileJobStatus.empty();
+				}
 
-					emitter.onError(e);
-				}));
+				if (e instanceof Exception) throw (Exception) e;
+
+				throw new RuntimeException(e);
+			});
 	}
 
 	@Override

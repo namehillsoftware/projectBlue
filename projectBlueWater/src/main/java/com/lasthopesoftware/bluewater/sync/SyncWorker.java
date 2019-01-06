@@ -39,8 +39,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.*;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
@@ -260,10 +260,10 @@ public class SyncWorker extends ListenableWorker {
 		}
 	};
 
-	private final OneParameterAction<StoredFileJobResult> storedFileDownloadedAction = storedFileJobResult -> {
+	private final OneParameterAction<StoredFileJobStatus> storedFileDownloadedAction = storedFileJobResult -> {
 		sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobResult.storedFile);
 
-		if (storedFileJobResult.storedFileJobResult == StoredFileJobResultOptions.Downloaded)
+		if (storedFileJobResult.storedFileJobState == StoredFileJobState.Downloaded)
 			scanMediaFileBroadcasterLazy.getObject().sendScanMediaFileBroadcastForFile(storedFileJobResult.downloadedFile);
 	};
 

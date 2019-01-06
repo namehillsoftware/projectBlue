@@ -4,7 +4,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.IStoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.UpdateStoredFiles;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -57,7 +57,7 @@ public class LibrarySyncHandler {
 		storedFileDownloader.setOnFileDownloading(onFileDownloading);
 	}
 
-	public void setOnFileDownloaded(OneParameterAction<StoredFileJobResult> onFileDownloaded) {
+	public void setOnFileDownloaded(OneParameterAction<StoredFileJobStatus> onFileDownloaded) {
 //		storedFileDownloader.setOnFileDownloaded(onFileDownloaded);
 	}
 

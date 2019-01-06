@@ -5,13 +5,13 @@ import android.support.annotation.RequiresApi;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
-import com.namehillsoftware.handoff.promises.Promise;
+import io.reactivex.Observable;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -42,21 +42,21 @@ public class WhenProcessingTheQueue {
 		new StoredFile().setLibraryId(4).setServiceId(114)));
 
 	private static final List<StoredFile> downloadingStoredFiles = new ArrayList<>();
-	private static final List<StoredFileJobResult> downloadedStoredFiles = new ArrayList<>();
+	private static final List<StoredFileJobStatus> downloadedStoredFiles = new ArrayList<>();
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
 	public static void before() {
 		final ProcessStoredFileJobs storedFileJobs = mock(ProcessStoredFileJobs.class);
-		when(storedFileJobs.promiseDownloadedStoredFile(any()))
-			.thenAnswer(a -> new Promise<>(new StoredFileJobResult(
+		when(storedFileJobs.observeStoredFileDownload(any()))
+			.thenAnswer(a -> Observable.just(new StoredFileJobStatus(
 				mock(File.class),
 				a.<StoredFileJob>getArgument(0).getStoredFile(),
-				StoredFileJobResultOptions.Downloaded)));
-		when(storedFileJobs.promiseDownloadedStoredFile(new StoredFileJob(new ServiceFile(7), new StoredFile().setLibraryId(4).setServiceId(7))))
-			.thenAnswer(a -> new Promise<>(new StorageCreatePathException(mock(File.class))));
-		when(storedFileJobs.promiseDownloadedStoredFile(new StoredFileJob(new ServiceFile(92), new StoredFile().setLibraryId(4).setServiceId(92))))
-			.thenAnswer(a -> new Promise<>(new StorageCreatePathException(mock(File.class))));
+				StoredFileJobState.Downloaded)));
+		when(storedFileJobs.observeStoredFileDownload(new StoredFileJob(new ServiceFile(7), new StoredFile().setLibraryId(4).setServiceId(7))))
+			.thenAnswer(a -> Observable.error(new StorageCreatePathException(mock(File.class))));
+		when(storedFileJobs.observeStoredFileDownload(new StoredFileJob(new ServiceFile(92), new StoredFile().setLibraryId(4).setServiceId(92))))
+			.thenAnswer(a -> Observable.error(new StorageCreatePathException(mock(File.class))));
 
 		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(storedFileJobs);
 
@@ -66,8 +66,8 @@ public class WhenProcessingTheQueue {
 
 	@Test
 	public void thenTheCorrectFilesAreMarkedAsSuccessfullyDownload() {
-		assertThat(Stream.of(downloadedStoredFiles).map(r -> r.storedFileJobResult).distinct().single())
-			.isEqualTo(StoredFileJobResultOptions.Downloaded);
+		assertThat(Stream.of(downloadedStoredFiles).map(r -> r.storedFileJobState).distinct().single())
+			.isEqualTo(StoredFileJobState.Downloaded);
 	}
 
 	@Test

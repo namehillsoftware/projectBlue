@@ -4,19 +4,17 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResult;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileJobResultOptions;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -24,10 +22,10 @@ import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static StoredFileJobResult storedFileJobResult;
+	private static StoredFileJobStatus storedFileJobStatus;
 
 	@BeforeClass
-	public static void before() throws ExecutionException, InterruptedException {
+	public static void before() {
 		final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 		storedFile.setIsDownloadComplete(true);
 
@@ -44,12 +42,12 @@ public class WhenProcessingTheJob {
 			mock(IFileWritePossibleArbitrator.class),
 			(is, f) -> {});
 
-		storedFileJobResult = new FuturePromise<>(storedFileJobProcessor.promiseDownloadedStoredFile(
-			new StoredFileJob(new ServiceFile(1), storedFile))).get();
+		storedFileJobStatus = storedFileJobProcessor.observeStoredFileDownload(
+			new StoredFileJob(new ServiceFile(1), storedFile)).blockingFirst();
 	}
 
 	@Test
 	public void thenAnAlreadyExistsResultIsReturned() {
-		assertThat(storedFileJobResult.storedFileJobResult).isEqualTo(StoredFileJobResultOptions.AlreadyExists);
+		assertThat(storedFileJobStatus.storedFileJobState).isEqualTo(StoredFileJobState.AlreadyExists);
 	}
 }
