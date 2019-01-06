@@ -12,8 +12,6 @@ import java.util.Queue;
 public interface IStoredFileDownloader {
 	Observable<StoredFileJobStatus> process(Queue<StoredFileJob> jobsQueue);
 
-	void setOnFileQueued(@Nullable OneParameterAction<StoredFile> onFileQueued);
-
 	void setOnFileDownloading(@Nullable OneParameterAction<StoredFile> onFileDownloading);
 
 	void setOnFileReadError(@Nullable OneParameterAction<StoredFile> onFileReadError);

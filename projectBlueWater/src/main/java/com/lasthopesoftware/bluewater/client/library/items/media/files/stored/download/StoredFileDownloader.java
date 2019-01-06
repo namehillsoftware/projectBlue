@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.re
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
@@ -32,14 +31,9 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 	@NonNull
 	private final ProcessStoredFileJobs storedFileJobs;
 
-	private boolean isProcessing;
-
 	private OneParameterAction<StoredFile> onFileDownloading;
-	private OneParameterAction<StoredFile> onFileQueued;
 	private OneParameterAction<StoredFile> onFileReadError;
 	private OneParameterAction<StoredFile> onFileWriteError;
-
-	private final CancellationToken cancellationToken = new CancellationToken();
 
 	public StoredFileDownloader(@NonNull ProcessStoredFileJobs storedFileJobs) {
 		this.storedFileJobs = storedFileJobs;
@@ -51,14 +45,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	@Override
 	public Observable<StoredFileJobStatus> process(Queue<StoredFileJob> jobsQueue) {
-		if (cancellationToken.isCancelled())
-			throw new IllegalStateException("Processing cannot be started once the stored serviceFile downloader has been cancelled.");
-
-		if (isProcessing)
-			throw new IllegalStateException("Processing has already begun");
-
-		isProcessing = true;
-
 		return Observable.fromIterable(jobsQueue).flatMap(this::processStoredFileJob)
 			.filter(storedFileJobStatus -> storedFileJobStatus.storedFileJobState != StoredFileJobState.None);
 	}
@@ -96,11 +82,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 				throw new RuntimeException(e);
 			});
-	}
-
-	@Override
-	public void setOnFileQueued(@Nullable OneParameterAction<StoredFile> onFileQueued) {
-		this.onFileQueued = onFileQueued;
 	}
 
 	@Override
