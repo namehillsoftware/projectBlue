@@ -5,7 +5,6 @@ import android.support.annotation.RequiresApi;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
@@ -19,9 +18,7 @@ import java.io.File;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheQueue {
 
@@ -47,21 +44,29 @@ public class WhenProcessingTheQueue {
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
 	public static void before() {
-		final ProcessStoredFileJobs storedFileJobs = mock(ProcessStoredFileJobs.class);
-		when(storedFileJobs.observeStoredFileDownload(any()))
-			.thenAnswer(a -> Observable.just(new StoredFileJobStatus(
-				mock(File.class),
-				a.<StoredFileJob>getArgument(0).getStoredFile(),
-				StoredFileJobState.Downloaded)));
-		when(storedFileJobs.observeStoredFileDownload(new StoredFileJob(new ServiceFile(7), new StoredFile().setLibraryId(4).setServiceId(7))))
-			.thenAnswer(a -> Observable.error(new StorageCreatePathException(mock(File.class))));
-		when(storedFileJobs.observeStoredFileDownload(new StoredFileJob(new ServiceFile(92), new StoredFile().setLibraryId(4).setServiceId(92))))
-			.thenAnswer(a -> Observable.error(new StorageCreatePathException(mock(File.class))));
+		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(job -> {
+			if (Arrays.asList(7, 92).contains(job.getServiceFile().getKey()))
+				return Observable.concat(
+					Observable.just(
+						new StoredFileJobStatus(
+							mock(File.class),
+							job.getStoredFile(),
+							StoredFileJobState.Downloading)),
+					Observable.error(new StorageCreatePathException(mock(File.class))));
 
-		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(storedFileJobs);
+			return Observable.just(
+				new StoredFileJobStatus(
+					mock(File.class),
+					job.getStoredFile(),
+					StoredFileJobState.Downloading),
+				new StoredFileJobStatus(
+					mock(File.class),
+					job.getStoredFile(),
+					StoredFileJobState.Downloaded));
+		});
 
 		storedFileDownloader.setOnFileDownloading(downloadingStoredFiles::add);
-		storedFileDownloader.process(WhenProcessingTheQueue.storedFileJobs).blockingIterable().forEach(downloadedStoredFiles::add);
+		storedFileDownloader.process(storedFileJobs).blockingIterable().forEach(downloadedStoredFiles::add);
 	}
 
 	@Test

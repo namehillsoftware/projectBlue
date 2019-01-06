@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
@@ -60,16 +59,18 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 		isProcessing = true;
 
-		return Observable.merge(Stream.of(jobsQueue).map(this::processStoredFileJob).toList())
+		return Observable.fromIterable(jobsQueue).flatMap(this::processStoredFileJob)
 			.filter(storedFileJobStatus -> storedFileJobStatus.storedFileJobState != StoredFileJobState.None);
 	}
 
 	private Observable<StoredFileJobStatus> processStoredFileJob(StoredFileJob storedFileJob) {
-		if (onFileDownloading != null)
-			onFileDownloading.runWith(storedFileJob.getStoredFile());
-
 		return storedFileJobs
 			.observeStoredFileDownload(storedFileJob)
+			.doOnNext(j -> {
+				if (j.storedFileJobState == StoredFileJobState.Downloading)
+					onFileDownloading.runWith(j.storedFile);
+			})
+			.filter(j -> j.storedFileJobState != StoredFileJobState.Downloading)
 			.onErrorReturn(e -> {
 				if (e instanceof StoredFileWriteException) {
 					onFileWriteError.runWith(((StoredFileWriteException) e).getStoredFile());

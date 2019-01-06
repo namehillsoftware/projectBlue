@@ -104,4 +104,17 @@ public final class StoredFile {
 	public final int hashCode() {
 		return Objects.hash(libraryId, serviceId);
 	}
+
+	@Override
+	public String toString() {
+		return "StoredFile{" +
+			"id=" + id +
+			", libraryId=" + libraryId +
+			", storedMediaId=" + storedMediaId +
+			", serviceId=" + serviceId +
+			", isDownloadComplete=" + isDownloadComplete +
+			", path='" + path + '\'' +
+			", isOwner=" + isOwner +
+			'}';
+	}
 }

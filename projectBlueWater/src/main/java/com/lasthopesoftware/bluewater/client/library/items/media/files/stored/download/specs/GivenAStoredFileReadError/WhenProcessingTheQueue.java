@@ -51,12 +51,24 @@ public class WhenProcessingTheQueue {
 	public static void before() {
 		final ProcessStoredFileJobs storedFileJobs = mock(ProcessStoredFileJobs.class);
 		when(storedFileJobs.observeStoredFileDownload(any()))
-			.thenAnswer(a -> Observable.just(new StoredFileJobStatus(
-				mock(File.class),
-				a.<StoredFileJob>getArgument(0).getStoredFile(),
-				StoredFileJobState.Downloaded)));
+			.thenAnswer(a -> Observable.just(
+				new StoredFileJobStatus(
+					mock(File.class),
+					a.<StoredFileJob>getArgument(0).getStoredFile(),
+					StoredFileJobState.Downloading),
+				new StoredFileJobStatus(
+					mock(File.class),
+					a.<StoredFileJob>getArgument(0).getStoredFile(),
+					StoredFileJobState.Downloaded)));
 		when(storedFileJobs.observeStoredFileDownload(new StoredFileJob(new ServiceFile(7), new StoredFile().setLibraryId(4).setServiceId(7))))
-			.thenAnswer(a -> Observable.error(new StoredFileReadException(mock(File.class), a.<StoredFileJob>getArgument(0).getStoredFile())));
+			.thenAnswer(a ->
+				Observable.concat(
+					Observable.just(
+						new StoredFileJobStatus(
+							mock(File.class),
+							a.<StoredFileJob>getArgument(0).getStoredFile(),
+							StoredFileJobState.Downloading)),
+					Observable.error(new StoredFileReadException(mock(File.class), a.<StoredFileJob>getArgument(0).getStoredFile()))));
 
 		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(storedFileJobs);
 

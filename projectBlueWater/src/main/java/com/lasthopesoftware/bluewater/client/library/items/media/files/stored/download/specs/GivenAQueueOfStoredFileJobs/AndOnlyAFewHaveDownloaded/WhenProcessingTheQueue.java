@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAQueueOfStoredFileJobs;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAQueueOfStoredFileJobs.AndOnlyAFewHaveDownloaded;
 
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -35,9 +35,7 @@ public class WhenProcessingTheQueue {
 		new StoredFile().setServiceId(2).setLibraryId(1),
 		new StoredFile().setServiceId(4).setLibraryId(1),
 		new StoredFile().setServiceId(5).setLibraryId(1),
-		new StoredFile().setServiceId(7).setLibraryId(1),
-		new StoredFile().setServiceId(114).setLibraryId(1),
-		new StoredFile().setServiceId(92).setLibraryId(1)
+		new StoredFile().setServiceId(114).setLibraryId(1)
 	};
 
 	private static final List<StoredFile> downloadingStoredFiles = new ArrayList<>();
@@ -47,15 +45,24 @@ public class WhenProcessingTheQueue {
 	@BeforeClass
 	public static void before() {
 		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
-			job -> Observable.just(
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloading),
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloaded)));
+			job -> {
+				if (Arrays.asList(expectedStoredFiles).contains(job.getStoredFile()))
+					return Observable.just(
+						new StoredFileJobStatus(
+							mock(File.class),
+							job.getStoredFile(),
+							StoredFileJobState.Downloading),
+						new StoredFileJobStatus(
+							mock(File.class),
+							job.getStoredFile(),
+							StoredFileJobState.Downloaded));
+
+				return Observable.just(
+					new StoredFileJobStatus(
+						mock(File.class),
+						job.getStoredFile(),
+						StoredFileJobState.Downloading));
+			});
 
 		storedFileDownloader.setOnFileDownloading(downloadingStoredFiles::add);
 		storedFileDownloader.process(storedFileJobs).blockingIterable().forEach(downloadedStoredFiles::add);
@@ -69,7 +76,7 @@ public class WhenProcessingTheQueue {
 
 	@Test
 	public void thenAllTheFilesAreBroadcastAsDownloading() {
-		assertThat(downloadingStoredFiles).containsExactly(expectedStoredFiles);
+		assertThat(downloadingStoredFiles).containsExactly(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toArray(StoredFile[]::new));
 	}
 
 	@Test
