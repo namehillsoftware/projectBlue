@@ -15,9 +15,12 @@ import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,17 +77,33 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 		return Observable.create(emitter -> {
 			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+
+			emitter.setDisposable(new Disposable() {
+				@Override
+				public void dispose() {
+					cancellationProxy.run();
+				}
+
+				@Override
+				public boolean isDisposed() {
+					return cancellationProxy.isCancelled();
+				}
+			});
+
 			final ServiceFile serviceFile = job.getServiceFile();
-			connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
-				.eventually(response -> new QueuedPromise<>((cancellationToken) -> {
+			final Promise<Response> promisedResponse = connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
+			cancellationProxy.doCancel(promisedResponse);
+			promisedResponse
+				.eventually(response -> new QueuedPromise<>(() -> {
 					final ResponseBody body = response.body();
 					if (body == null) return null;
 
-					if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
+					if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
 					try (final InputStream is = body.byteStream()) {
 
-						if (cancellationToken.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
+						if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
 						try {
 							this.fileStreamWriter.writeStreamToFile(is, file);
