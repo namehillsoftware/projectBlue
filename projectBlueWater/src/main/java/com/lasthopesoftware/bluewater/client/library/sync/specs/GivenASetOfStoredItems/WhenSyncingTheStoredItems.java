@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServ
 import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.sync.LibrarySyncHandler;
-import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnectionProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import io.reactivex.Observable;
 import org.junit.BeforeClass;
@@ -58,8 +57,6 @@ public class WhenSyncingTheStoredItems {
 				new ServiceFile(4),
 				new ServiceFile(10))));
 
-		final FakeFileConnectionProvider fakeConnectionProvider = new FakeFileConnectionProvider();
-
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
@@ -77,12 +74,10 @@ public class WhenSyncingTheStoredItems {
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new StoredItemServiceFileCollector(storedItemAccessMock, storedPlaylistsConverter, mockFileProvider),
 			storedFileAccess,
-			(Library l, ServiceFile sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
+			(l, sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
 			storedFileDownloader,
 			f -> false,
 			f -> false);
-
-		librarySyncHandler.setOnFileDownloaded(jobResult -> storedFileJobResults.add(jobResult.storedFile));
 
 		storedFileJobResults = librarySyncHandler.observeLibrarySync(new Library()).map(j -> j.storedFile).toList().blockingGet();
 	}

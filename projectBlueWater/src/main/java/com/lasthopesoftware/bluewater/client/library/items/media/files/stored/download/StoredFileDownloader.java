@@ -53,7 +53,7 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 		return storedFileJobs
 			.observeStoredFileDownload(storedFileJob)
 			.doOnNext(j -> {
-				if (j.storedFileJobState == StoredFileJobState.Downloading)
+				if (onFileDownloading != null && j.storedFileJobState == StoredFileJobState.Downloading)
 					onFileDownloading.runWith(j.storedFile);
 			})
 			.filter(j -> j.storedFileJobState != StoredFileJobState.Downloading)
