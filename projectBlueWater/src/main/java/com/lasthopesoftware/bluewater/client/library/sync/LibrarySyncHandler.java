@@ -4,6 +4,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.IStoredFileDownloader;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.updates.UpdateStoredFiles;
@@ -14,7 +15,9 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.TwoParameterAction;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +27,6 @@ public class LibrarySyncHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
-	private final Library library;
 	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
 	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final CollectServiceFilesForSync serviceFilesToSyncCollector;
@@ -36,21 +38,18 @@ public class LibrarySyncHandler {
 	private final CancellationProxy cancellationProxy = new CancellationProxy();
 
 	public LibrarySyncHandler(
-		Library library,
 		CollectServiceFilesForSync serviceFilesToSyncCollector,
 		IStoredFileAccess storedFileAccess,
 		UpdateStoredFiles storedFileUpdater,
 		IStoredFileDownloader storedFileDownloader,
 		ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider,
 		ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
-		this.library = library;
 		this.serviceFilesToSyncCollector = serviceFilesToSyncCollector;
 		this.storedFileAccess = storedFileAccess;
 		this.storedFileUpdater = storedFileUpdater;
 		this.storedFileDownloader = storedFileDownloader;
 		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
 		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
-//		storedFileDownloader.setOnQueueProcessingCompleted(this::handleQueueProcessingCompleted);
 	}
 
 	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
@@ -69,19 +68,19 @@ public class LibrarySyncHandler {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
-	public void setOnFileReadError(TwoParameterAction<Library, StoredFile> onFileReadError) {
-		storedFileDownloader.setOnFileReadError(storedFile -> {
-			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
-				onFileReadError.runWith(library, storedFile);
-		});
-	}
-
-	public void setOnFileWriteError(TwoParameterAction<Library, StoredFile> onFileWriteError) {
-		storedFileDownloader.setOnFileWriteError(storedFile -> {
-			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
-				onFileWriteError.runWith(library, storedFile);
-		});
-	}
+//	public void setOnFileReadError(TwoParameterAction<Library, StoredFile> onFileReadError) {
+//		storedFileDownloader.setOnFileReadError(storedFile -> {
+//			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
+//				onFileReadError.runWith(library, storedFile);
+//		});
+//	}
+//
+//	public void setOnFileWriteError(OneParameterAction<Library, StoredFile> onFileWriteError) {
+//		storedFileDownloader.setOnFileWriteError(storedFile -> {
+//			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
+//				onFileWriteError.runWith(library, storedFile);
+//		});
+//	}
 
 	public void cancel() {
 		cancellationProxy.run();
@@ -89,11 +88,11 @@ public class LibrarySyncHandler {
 //		storedFileDownloader.cancel();
 	}
 
-	public void startSync() {
+	public Observable<StoredFileJobStatus> observeLibrarySync(Library library) {
 		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
 		cancellationProxy.doCancel(promisedServiceFilesToSync);
 
-		promisedServiceFilesToSync
+		return Observable.create(emitter -> promisedServiceFilesToSync
 			.eventually(allServiceFilesToSync -> {
 				final HashSet<ServiceFile> serviceFilesSet = allServiceFilesToSync instanceof HashSet ? (HashSet<ServiceFile>)allServiceFilesToSync : new HashSet<>(allServiceFilesToSync);
 				final Promise<Void> pruneFilesTask = storedFileAccess.pruneStoredFiles(library, serviceFilesSet);
@@ -107,18 +106,18 @@ public class LibrarySyncHandler {
 				if (cancellationProxy.isCancelled())
 					return new Promise<>(Collections.emptySet());
 
-				final List<Promise<StoredFile>> upsertFiles = Stream.of(allServiceFilesToSync)
+				final List<Promise<StoredFileJob>> upsertFiles = Stream.of(allServiceFilesToSync)
 					.map(serviceFile -> {
 						if (cancellationProxy.isCancelled())
-							return new Promise<>((StoredFile) null);
+							return new Promise<>((StoredFileJob) null);
 
-						final Promise<StoredFile> promiseDownloadedStoredFile = storedFileUpdater
+						final Promise<StoredFileJob> promiseDownloadedStoredFile = storedFileUpdater
 							.promiseStoredFileUpdate(library, serviceFile)
 							.then(storedFile -> {
-//								if (storedFile != null && !storedFile.isDownloadComplete())
-//									storedFileDownloader.queueFileForDownload(serviceFile, storedFile);
+								if (storedFile != null && !storedFile.isDownloadComplete())
+									return new StoredFileJob(serviceFile, storedFile);
 
-								return storedFile;
+								return null;
 							});
 
 						promiseDownloadedStoredFile
@@ -135,19 +134,41 @@ public class LibrarySyncHandler {
 			})
 			.then(vs -> {
 				if (!cancellationProxy.isCancelled())
-					storedFileDownloader.process(new LinkedList<>());
+					storedFileDownloader
+						.process(new LinkedList<>(vs))
+						.subscribe(new Observer<StoredFileJobStatus>() {
+							@Override
+							public void onSubscribe(Disposable d) {
+								emitter.setDisposable(d);
+							}
+
+							@Override
+							public void onNext(StoredFileJobStatus status) {
+								emitter.onNext(status);
+							}
+
+							@Override
+							public void onError(Throwable e) {
+								emitter.onError(e);
+							}
+
+							@Override
+							public void onComplete() {
+								emitter.onComplete();
+							}
+						});
 				else
-					handleQueueProcessingCompleted();
+					emitter.onComplete();
 
 				return null;
 			})
 			.excuse(e -> {
 				logger.warn("There was an error retrieving the files", e);
 
-				handleQueueProcessingCompleted();
+				emitter.onComplete();
 
 				return null;
-			});
+			}));
 	}
 
 	private void handleQueueProcessingCompleted() {

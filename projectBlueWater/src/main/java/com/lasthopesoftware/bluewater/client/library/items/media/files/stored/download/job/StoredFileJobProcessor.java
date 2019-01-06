@@ -124,10 +124,10 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 					logger.error("Error getting connection", error);
 					return new Promise<>(new StoredFileJobException(storedFile, error));
 				})
-			.then(
-				new VoidResponse<>(emitter::onNext),
-				new VoidResponse<>(emitter::onError))
-			.then(new VoidResponse<>(v -> emitter.onComplete()));
+				.then(
+					new VoidResponse<>(emitter::onNext),
+					new VoidResponse<>(emitter::onError))
+				.then(new VoidResponse<>(v -> emitter.onComplete()));
 		});
 	}
 

@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import io.reactivex.subjects.BehaviorSubject;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -39,6 +40,7 @@ public class WhenProcessingTheJob {
 			f -> true,
 			(is, f) -> {});
 
+		final BehaviorSubject<StoredFileJobStatus> subject = BehaviorSubject.create();
 		for (final StoredFileJobStatus status : storedFileJobProcessor.observeStoredFileDownload(
 			new StoredFileJob(new ServiceFile(1), storedFile)).blockingIterable()) {
 			states.add(status.storedFileJobState);

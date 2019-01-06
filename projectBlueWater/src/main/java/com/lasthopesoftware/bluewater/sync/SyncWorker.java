@@ -406,7 +406,6 @@ public class SyncWorker extends ListenableWorker {
 
 								final LibrarySyncHandler librarySyncHandler =
 									new LibrarySyncHandler(
-										library,
 										new StoredItemServiceFileCollector(
 											storedItemAccess,
 											new StoredPlaylistItemsConverter(
@@ -432,9 +431,7 @@ public class SyncWorker extends ListenableWorker {
 								librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction.getObject());
 								librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
 								librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
-								librarySyncHandler.setOnFileReadError(storedFileReadErrorAction);
-								librarySyncHandler.setOnFileWriteError(storedFileWriteErrorAction);
-								librarySyncHandler.startSync();
+								librarySyncHandler.observeLibrarySync(library);
 
 								librarySyncHandlers.add(librarySyncHandler);
 							}));

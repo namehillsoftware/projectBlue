@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenACancellationWhileGettingStoredItems;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
@@ -20,11 +20,13 @@ import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnecti
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,7 +39,7 @@ public class WhenSyncingTheStoredItems {
 	private static IStoredFileAccess storedFileAccess;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() {
 		final FakeDeferredStoredItemAccess deferredStoredItemAccess = new FakeDeferredStoredItemAccess() {
 			@Override
 			protected Collection<StoredItem> getStoredItems() {
@@ -64,34 +66,32 @@ public class WhenSyncingTheStoredItems {
 		storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
+		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
+			job -> Observable.just(
+				new StoredFileJobStatus(
+					mock(File.class),
+					job.getStoredFile(),
+					StoredFileJobState.Downloading),
+				new StoredFileJobStatus(
+					mock(File.class),
+					job.getStoredFile(),
+					StoredFileJobState.Downloaded)));
+
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			new Library(),
 			new StoredItemServiceFileCollector(deferredStoredItemAccess, mock(ConvertStoredPlaylistsToStoredItems.class), mockFileProvider),
 			storedFileAccess,
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
-			new StoredFileDownloader(
-				new StoredFileSystemFileProducer(),
-				fakeConnectionProvider,
-				storedFileAccess,
-				new ServiceFileUriQueryParamsProvider(),
-				readPossibleArbitrator,
-				writePossibleArbitrator,
-				(i, f) -> {}),
+			storedFileDownloader,
 			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
 			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
 
-		librarySyncHandler.setOnFileDownloaded(jobResult -> storedFileJobResults.add(jobResult.storedFile));
-
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		librarySyncHandler.setOnQueueProcessingCompleted(handler -> countDownLatch.countDown());
-
-		librarySyncHandler.startSync();
+		final Single<List<StoredFile>> syncedFiles = librarySyncHandler.observeLibrarySync(new Library()).map(j -> j.storedFile).toList();
 
 		librarySyncHandler.cancel();
 
 		deferredStoredItemAccess.resolveStoredItems();
 
-		countDownLatch.await();
+		storedFileJobResults = syncedFiles.blockingGet();
 	}
 
 	@Test
