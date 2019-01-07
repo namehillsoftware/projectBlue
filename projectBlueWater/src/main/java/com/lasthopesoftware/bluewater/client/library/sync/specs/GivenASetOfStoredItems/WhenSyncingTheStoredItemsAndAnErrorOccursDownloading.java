@@ -3,12 +3,13 @@ package com.lasthopesoftware.bluewater.client.library.sync.specs.GivenASetOfStor
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
@@ -22,11 +23,9 @@ import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnecti
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
-import io.reactivex.Observable;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,15 +78,14 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
 		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
-			job -> Observable.just(
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloading),
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloaded)));
+			new StoredFileJobProcessor(
+				new StoredFileSystemFileProducer(),
+				fakeConnectionProvider,
+				storedFileAccess,
+				new ServiceFileUriQueryParamsProvider(),
+				readPossibleArbitrator,
+				writePossibleArbitrator,
+				(i, f) -> {}));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new StoredItemServiceFileCollector(storedItemAccessMock, mock(ConvertStoredPlaylistsToStoredItems.class), mockFileProvider),

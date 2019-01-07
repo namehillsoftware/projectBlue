@@ -2,11 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
@@ -15,9 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
-import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
-import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
@@ -37,10 +30,6 @@ public final class StoredFileDownloader implements IStoredFileDownloader {
 
 	public StoredFileDownloader(@NonNull ProcessStoredFileJobs storedFileJobs) {
 		this.storedFileJobs = storedFileJobs;
-	}
-
-	public StoredFileDownloader(@NonNull IStoredFileSystemFileProducer storedFileSystemFileProducer, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileQueryUriParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
-		storedFileJobs = null;
 	}
 
 	@Override

@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.*;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
@@ -417,13 +418,15 @@ public class SyncWorker extends ListenableWorker {
 										storedFileAccess,
 										storedFileUpdater,
 										new StoredFileDownloader(
-											lazyStoredFileSystemFileProducer.getObject(),
-											connectionProvider,
-											storedFileAccess,
-											lazyServiceFileUriQueryParamsProvider.getObject(),
-											lazyFileReadPossibleArbitrator.getObject(),
-											lazyFileWritePossibleArbitrator.getObject(),
-											lazyFileStreamWriter.getObject()),
+											new StoredFileJobProcessor(
+												lazyStoredFileSystemFileProducer.getObject(),
+												connectionProvider,
+												storedFileAccess,
+												lazyServiceFileUriQueryParamsProvider.getObject(),
+												lazyFileReadPossibleArbitrator.getObject(),
+												lazyFileWritePossibleArbitrator.getObject(),
+												lazyFileStreamWriter.getObject()
+											)),
 										lazyLibraryStorageReadPermissionsRequirementsProvider.getObject(),
 										lazyLibraryStorageWritePermissionsRequirementsProvider.getObject());
 
