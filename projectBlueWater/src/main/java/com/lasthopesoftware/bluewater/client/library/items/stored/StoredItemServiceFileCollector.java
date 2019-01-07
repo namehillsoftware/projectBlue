@@ -1,25 +1,20 @@
 package com.lasthopesoftware.bluewater.client.library.items.stored;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.library.sync.CollectServiceFilesForSync;
+import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
-import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
-import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
+import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 
 public class StoredItemServiceFileCollector implements CollectServiceFilesForSync {
 
@@ -36,43 +31,24 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	}
 
 	@Override
-	public Promise<Collection<ServiceFile>> promiseServiceFilesToSync() {
-		return new Promise<>(serviceFileMessenger -> {
-			final CancellationProxy cancellationProxy = new CancellationProxy();
-			serviceFileMessenger.cancellationRequested(cancellationProxy);
+	public Observable<ServiceFile> streamServiceFilesToSync() {
+		return getStoredItemStream()
+			.flatMap(storedItem -> {
+				if (storedItem.getItemType() == StoredItem.ItemType.PLAYLIST) {
+					return ObservedPromise
+						.observe(storedPlaylistsToStoredItems.promiseConvertedStoredItem(storedItem))
+						.flatMap(this::getStoredFilesStream);
+				}
 
-			final Promise<Collection<StoredItem>> promisedStoredItems = storedItemAccess.promiseStoredItems();
-			cancellationProxy.doCancel(promisedStoredItems);
-
-			final Promise<Collection<List<ServiceFile>>> promisedServiceFileLists = promisedStoredItems
-				.eventually(storedItems -> {
-					if (cancellationProxy.isCancelled())
-						return new Promise<>(new CancellationException());
-
-					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
-						.map(storedItem -> {
-							if (storedItem.getItemType() == StoredItem.ItemType.PLAYLIST) {
-								return storedPlaylistsToStoredItems
-									.promiseConvertedStoredItem(storedItem)
-									.eventually(i -> promiseServiceFiles(i, cancellationProxy));
-							}
-
-							return promiseServiceFiles(storedItem, cancellationProxy);
-						});
-
-					return Promise.whenAll(mappedFileDataPromises.toList());
-				});
-
-			cancellationProxy.doCancel(promisedServiceFileLists);
-
-			promisedServiceFileLists
-				.<Collection<ServiceFile>>then(serviceFiles -> Stream.of(serviceFiles).flatMap(Stream::of).collect(Collectors.toSet()))
-				.then(new ResolutionProxy<>(serviceFileMessenger))
-				.excuse(new RejectionProxy(serviceFileMessenger));
-		});
+				return getStoredFilesStream(storedItem);
+			});
 	}
 
-	private Promise<List<ServiceFile>> promiseServiceFiles(StoredItem storedItem, CancellationProxy cancellationProxy) {
+	private Observable<StoredItem> getStoredItemStream() {
+		return ObservedPromise.observe(storedItemAccess.promiseStoredItems()).flatMap(Observable::fromIterable);
+	}
+
+	private Observable<ServiceFile> getStoredFilesStream(StoredItem storedItem) {
 		final int serviceId = storedItem.getServiceId();
 		final Item item = new Item(serviceId);
 		final String[] parameters = FileListParameters.getInstance().getFileListParameters(item);
@@ -80,17 +56,17 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		final Promise<List<ServiceFile>> serviceFilesPromise =
 			fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 
-		cancellationProxy.doCancel(serviceFilesPromise);
+//		cancellationProxy.doCancel(serviceFilesPromise);
 
-		return serviceFilesPromise
+		return ObservedPromise.observe(serviceFilesPromise
 			.then(f -> f, e -> {
 				if (e instanceof FileNotFoundException) {
 					logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
 					storedItemAccess.toggleSync(item, false);
-					return Collections.emptyList();
+					return Collections.<ServiceFile>emptyList();
 				}
 
 				throw e;
-			});
+			})).flatMap(Observable::fromIterable);
 	}
 }

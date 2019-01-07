@@ -62,7 +62,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			mock(ConvertStoredPlaylistsToStoredItems.class),
 			fileProvider);
 
-		final Promise<Collection<ServiceFile>> serviceFilesPromise = serviceFileCollector.promiseServiceFilesToSync();
+		final Promise<Collection<ServiceFile>> serviceFilesPromise = serviceFileCollector.streamServiceFilesToSync();
 
 		serviceFilesPromise.cancel();
 
