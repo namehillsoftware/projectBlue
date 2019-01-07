@@ -6,17 +6,17 @@ import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
-public class ObservedPromise<T> extends Observable<T> implements Disposable {
+public class StreamedPromise<T, S extends Iterable<T>> extends Observable<T> implements Disposable {
+
+	public static <T, S extends Iterable<T>> Observable<T> stream(Promise<S> promise) {
+		return new StreamedPromise<>(promise);
+	}
+
+	private final Promise<S> promise;
 
 	private volatile boolean isCancelled;
 
-	public static <T> Observable<T> observe(Promise<T> promise) {
-		return new ObservedPromise<>(promise);
-	}
-
-	private final Promise<T> promise;
-
-	private ObservedPromise(Promise<T> promise) {
+	private StreamedPromise(Promise<S> promise) {
 		this.promise = promise;
 	}
 
@@ -26,8 +26,8 @@ public class ObservedPromise<T> extends Observable<T> implements Disposable {
 
 		promise
 			.then(
-				new VoidResponse<>(t -> {
-					observer.onNext(t);
+				new VoidResponse<>(ts -> {
+					for (final T t : ts) observer.onNext(t);
 					observer.onComplete();
 				}),
 				new VoidResponse<>(observer::onError));

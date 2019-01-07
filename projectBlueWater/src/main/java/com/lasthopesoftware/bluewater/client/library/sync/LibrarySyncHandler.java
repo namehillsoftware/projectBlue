@@ -89,6 +89,9 @@ public class LibrarySyncHandler {
 	}
 
 	public Observable<StoredFileJobStatus> observeLibrarySync(Library library) {
+		serviceFilesToSyncCollector
+			.streamServiceFilesToSync()
+			.
 		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.streamServiceFilesToSync();
 		cancellationProxy.doCancel(promisedServiceFilesToSync);
 
@@ -130,7 +133,7 @@ public class LibrarySyncHandler {
 					})
 					.toList());
 			})
-			.then(vs -> {
+			.then(storedFiles -> {
 				if (!cancellationProxy.isCancelled())
 					storedFileDownloader
 						.process(new ArrayDeque<>(Stream.of(vs).filter(s -> s != null).toList()))
