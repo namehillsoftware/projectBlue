@@ -27,6 +27,8 @@ public class LibrarySyncHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
+	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
+	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final CollectServiceFilesForSync serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
 	private final UpdateStoredFiles storedFileUpdater;
@@ -46,6 +48,8 @@ public class LibrarySyncHandler {
 		this.storedFileAccess = storedFileAccess;
 		this.storedFileUpdater = storedFileUpdater;
 		this.storedFileDownloader = storedFileDownloader;
+		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
+		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
 	}
 
 	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
@@ -85,6 +89,7 @@ public class LibrarySyncHandler {
 	}
 
 	public Observable<StoredFileJobStatus> observeLibrarySync(Library library) {
+
 		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
 		cancellationProxy.doCancel(promisedServiceFilesToSync);
 
