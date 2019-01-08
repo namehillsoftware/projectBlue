@@ -27,8 +27,6 @@ public class LibrarySyncHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
-	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
-	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final CollectServiceFilesForSync serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
 	private final UpdateStoredFiles storedFileUpdater;
@@ -48,8 +46,6 @@ public class LibrarySyncHandler {
 		this.storedFileAccess = storedFileAccess;
 		this.storedFileUpdater = storedFileUpdater;
 		this.storedFileDownloader = storedFileDownloader;
-		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
-		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
 	}
 
 	public void setOnFileDownloading(OneParameterAction<StoredFile> onFileDownloading) {
@@ -68,14 +64,14 @@ public class LibrarySyncHandler {
 		this.onQueueProcessingCompleted = onQueueProcessingCompleted;
 	}
 
-//	public void setOnFileReadError(TwoParameterAction<Library, StoredFile> onFileReadError) {
+//	public void setOnFileReadError(OneParameterAction<StoredFile> onFileReadError) {
 //		storedFileDownloader.setOnFileReadError(storedFile -> {
 //			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
 //				onFileReadError.runWith(library, storedFile);
 //		});
 //	}
-//
-//	public void setOnFileWriteError(OneParameterAction<Library, StoredFile> onFileWriteError) {
+
+//	public void setOnFileWriteError(OneParameterAction<StoredFile> onFileWriteError) {
 //		storedFileDownloader.setOnFileWriteError(storedFile -> {
 //			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
 //				onFileWriteError.runWith(library, storedFile);

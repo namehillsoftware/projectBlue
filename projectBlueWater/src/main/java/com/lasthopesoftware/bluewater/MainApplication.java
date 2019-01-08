@@ -88,20 +88,20 @@ public class MainApplication extends Application {
 				final int libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 				if (libraryId < 0) return;
 
+				final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
+				if (fileKey == -1) return;
+
+				final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
+				if (mediaFileId == -1) return;
+
+				final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
+				if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
+
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
 					.eventually(library ->
 						AccessConfigurationBuilder.buildConfiguration(context, library).then(new VoidResponse<>(urlProvider -> {
 							if (urlProvider == null) return;
-
-							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
-							if (fileKey == -1) return;
-
-							final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
-							if (mediaFileId == -1) return;
-
-							final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
-							if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
 							final StoredFileAccess storedFileAccess = new StoredFileAccess(
 								context,

@@ -79,6 +79,8 @@ public class WhenSyncingTheStoredItems {
 			f -> false,
 			f -> false);
 
+		librarySyncHandler.
+
 		storedFileJobResults = librarySyncHandler.observeLibrarySync(new Library()).map(j -> j.storedFile).toList().blockingGet();
 	}
 

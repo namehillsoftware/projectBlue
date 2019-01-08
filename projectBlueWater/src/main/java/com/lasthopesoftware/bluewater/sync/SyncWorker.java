@@ -17,10 +17,14 @@ import com.annimon.stream.Stream;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
+import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
+import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
@@ -92,6 +96,7 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,6 +123,9 @@ public class SyncWorker extends ListenableWorker {
 	public static final String storedFileEventKey = magicPropertyBuilder.buildProperty("storedFileEventKey");
 
 	private static final String workName = magicPropertyBuilder.buildProperty("");
+	private final ILibraryProvider libraryProvider;
+	private final LocalBroadcastManager localBroadcastManager;
+	private final BuildUrlProviders urlProviders;
 
 	public static Operation syncImmediately(Context context) {
 		final OneTimeWorkRequest.Builder oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class);
@@ -169,15 +177,19 @@ public class SyncWorker extends ListenableWorker {
 
 	private final Context context;
 
-	private final CreateAndHold<LocalBroadcastManager> localBroadcastManager = new AbstractSynchronousLazy<LocalBroadcastManager>() {
+	private final CreateAndHold<IStorageReadPermissionsRequestedBroadcast> storageReadPermissionsRequestedBroadcast = new AbstractSynchronousLazy<IStorageReadPermissionsRequestedBroadcast>() {
 		@Override
-		protected LocalBroadcastManager create() {
-			return LocalBroadcastManager.getInstance(context);
+		protected IStorageReadPermissionsRequestedBroadcast create() {
+			return new StorageReadPermissionsRequestedBroadcaster(localBroadcastManager);
 		}
 	};
 
-	private final CreateAndHold<IStorageReadPermissionsRequestedBroadcast> storageReadPermissionsRequestedBroadcast = new Lazy<>(() -> new StorageReadPermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
-	private final CreateAndHold<IStorageWritePermissionsRequestedBroadcaster> storageWritePermissionsRequestedBroadcast = new Lazy<>(() -> new StorageWritePermissionsRequestedBroadcaster(localBroadcastManager.getObject()));
+	private final CreateAndHold<IStorageWritePermissionsRequestedBroadcaster> storageWritePermissionsRequestedBroadcast = new AbstractSynchronousLazy<IStorageWritePermissionsRequestedBroadcaster>() {
+		@Override
+		protected IStorageWritePermissionsRequestedBroadcaster create() {
+			return new StorageWritePermissionsRequestedBroadcaster(localBroadcastManager);
+		}
+	};
 
 	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> storageReadPermissionArbitratorForOsLazy = new AbstractSynchronousLazy<IStorageReadPermissionArbitratorForOs>() {
 		@Override
@@ -228,13 +240,6 @@ public class SyncWorker extends ListenableWorker {
 		@Override
 		protected String create() {
 			return context.getString(R.string.downloading_status_label);
-		}
-	};
-
-	private final CreateAndHold<ILibraryProvider> lazyLibraryProvider = new AbstractSynchronousLazy<ILibraryProvider>() {
-		@Override
-		protected ILibraryProvider create() {
-			return new LibraryRepository(context);
 		}
 	};
 
@@ -334,8 +339,28 @@ public class SyncWorker extends ListenableWorker {
 	};
 
 	public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+		this(
+			context,
+			workerParams,
+			new LibraryRepository(context),
+			LocalBroadcastManager.getInstance(context),
+			new UrlScanner(
+				new ConnectionTester(),
+				new ServerLookup(new ServerInfoXmlRequest(new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).build())),
+				OkHttpFactory.getInstance()));
+	}
+
+	public SyncWorker(
+		@NonNull Context context,
+		@NonNull WorkerParameters workerParams,
+		ILibraryProvider libraryProvider,
+		LocalBroadcastManager localBroadcastManager,
+		BuildUrlProviders urlProviders) {
 		super(context, workerParams);
 		this.context = context;
+		this.libraryProvider = libraryProvider;
+		this.localBroadcastManager = localBroadcastManager;
+		this.urlProviders = urlProviders;
 	}
 
 	@NonNull
@@ -344,9 +369,9 @@ public class SyncWorker extends ListenableWorker {
 		logger.info("Starting sync.");
 
 		setSyncNotificationText(null);
-		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStartEvent));
+		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
-		lazyLibraryProvider.getObject().getAllLibraries().then(new VoidResponse<>(libraries -> {
+		libraryProvider.getAllLibraries().then(new VoidResponse<>(libraries -> {
 			librariesProcessing.set(libraries.size());
 
 			if (librariesProcessing.get() == 0) {
@@ -369,7 +394,7 @@ public class SyncWorker extends ListenableWorker {
 					}
 
 					final Promise<Void> promiseLibrarySyncStarted =
-						AccessConfigurationBuilder.buildConfiguration(context, library)
+						urlProviders.promiseBuiltUrlProvider(library)
 							.then(new VoidResponse<>(urlProvider -> {
 								if (urlProvider == null) {
 									if (librariesProcessing.decrementAndGet() == 0) finishSync();
@@ -434,9 +459,11 @@ public class SyncWorker extends ListenableWorker {
 								librarySyncHandler.setOnFileDownloading(storedFileDownloadingAction.getObject());
 								librarySyncHandler.setOnFileDownloaded(storedFileDownloadedAction);
 								librarySyncHandler.setOnQueueProcessingCompleted(onLibrarySyncCompleteRunnable);
-								librarySyncHandler.observeLibrarySync(library);
-
-								librarySyncHandlers.add(librarySyncHandler);
+								librarySyncHandler
+									.observeLibrarySync(library)
+									.doOnComplete(() -> {
+										if (librariesProcessing.decrementAndGet() == 0) finishSync();
+									});
 							}));
 
 					promiseLibrarySyncStarted
@@ -483,7 +510,7 @@ public class SyncWorker extends ListenableWorker {
 	private void sendStoredFileBroadcast(@NonNull String action, @NonNull StoredFile storedFile) {
 		final Intent storedFileBroadcastIntent = new Intent(action);
 		storedFileBroadcastIntent.putExtra(storedFileEventKey, storedFile.getId());
-		localBroadcastManager.getObject().sendBroadcast(storedFileBroadcastIntent);
+		localBroadcastManager.sendBroadcast(storedFileBroadcastIntent);
 	}
 
 	private void cancelSync() {
@@ -493,6 +520,6 @@ public class SyncWorker extends ListenableWorker {
 	private void finishSync() {
 		settableFuture.set(Result.success());
 
-		localBroadcastManager.getObject().sendBroadcast(new Intent(onSyncStopEvent));
+		localBroadcastManager.sendBroadcast(new Intent(onSyncStopEvent));
 	}
 }
