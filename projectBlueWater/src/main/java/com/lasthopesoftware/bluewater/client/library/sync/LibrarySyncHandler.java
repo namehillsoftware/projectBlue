@@ -89,10 +89,7 @@ public class LibrarySyncHandler {
 	}
 
 	public Observable<StoredFileJobStatus> observeLibrarySync(Library library) {
-		serviceFilesToSyncCollector
-			.streamServiceFilesToSync()
-			.
-		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.streamServiceFilesToSync();
+		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
 		cancellationProxy.doCancel(promisedServiceFilesToSync);
 
 		return Observable.create(emitter -> promisedServiceFilesToSync
@@ -109,7 +106,7 @@ public class LibrarySyncHandler {
 				if (cancellationProxy.isCancelled())
 					return new Promise<>(Collections.emptySet());
 
-				return Promise.whenAll(Stream.of(allServiceFilesToSync)
+				final List<Promise<StoredFileJob>> upsertFiles = Stream.of(allServiceFilesToSync)
 					.map(serviceFile -> {
 						if (cancellationProxy.isCancelled())
 							return new Promise<>((StoredFileJob) null);
@@ -131,12 +128,14 @@ public class LibrarySyncHandler {
 
 						return promiseDownloadedStoredFile;
 					})
-					.toList());
+					.toList();
+
+				return Promise.whenAll(upsertFiles);
 			})
 			.then(storedFiles -> {
 				if (!cancellationProxy.isCancelled())
 					storedFileDownloader
-						.process(new ArrayDeque<>(Stream.of(vs).filter(s -> s != null).toList()))
+						.process(new LinkedList<>(storedFiles))
 						.subscribe(new Observer<StoredFileJobStatus>() {
 							@Override
 							public void onSubscribe(Disposable d) {
@@ -170,5 +169,10 @@ public class LibrarySyncHandler {
 
 				return null;
 			}));
+	}
+
+	private void handleQueueProcessingCompleted() {
+		if (onQueueProcessingCompleted != null)
+			onQueueProcessingCompleted.runWith(this);
 	}
 }

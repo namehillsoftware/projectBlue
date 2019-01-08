@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.client.library.sync;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import io.reactivex.Observable;
+import com.namehillsoftware.handoff.promises.Promise;
+
+import java.util.Collection;
 
 public interface CollectServiceFilesForSync {
-	Observable<ServiceFile> streamServiceFilesToSync();
+	Promise<Collection<ServiceFile>> promiseServiceFilesToSync();
 }

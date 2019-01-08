@@ -9,11 +9,15 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAcc
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.annimon.stream.Stream.concat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +32,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	private static List<ServiceFile> thirdItemExpectedFiles = givenARandomCollectionOfFiles();
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 
 		final IStoredItemAccess storedItemAccess = mock(IStoredItemAccess.class);
 		when(storedItemAccess.promiseStoredItems())
@@ -51,7 +55,9 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			mock(ConvertStoredPlaylistsToStoredItems.class),
 			fileProvider);
 
-		collectedFiles = serviceFileCollector.streamServiceFilesToSync().toList().blockingGet();
+		collectedFiles =
+			new FuturePromise<>(serviceFileCollector
+			.promiseServiceFilesToSync()).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test

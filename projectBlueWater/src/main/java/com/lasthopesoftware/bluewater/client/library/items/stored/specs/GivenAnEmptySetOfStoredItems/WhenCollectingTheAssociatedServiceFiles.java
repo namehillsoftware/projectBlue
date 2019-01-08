@@ -7,12 +7,16 @@ import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAcc
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -22,7 +26,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	private static Collection<ServiceFile> collectedFiles;
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 
 		final IStoredItemAccess storedItemAccess =
 			new IStoredItemAccess() {
@@ -49,7 +53,8 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			fileProvider);
 
 		collectedFiles =
-			serviceFileCollector.streamServiceFilesToSync().toList().blockingGet();
+			new FuturePromise<>(serviceFileCollector
+			.promiseServiceFilesToSync()).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test
