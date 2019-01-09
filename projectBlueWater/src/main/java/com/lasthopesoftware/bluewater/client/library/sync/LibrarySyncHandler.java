@@ -118,8 +118,8 @@ public class LibrarySyncHandler {
 
 						final Observable<StoredFileJobStatus> observeStoredFileDownload = this.storedFileJobsProcessor.observeStoredFileDownload(new StoredFileJob(serviceFile, storedFile));
 
-						if (onFileQueued != null)
-							onFileQueued.runWith(storedFile);
+//						if (onFileQueued != null)
+//							onFileQueued.runWith(storedFile);
 
 						return observeStoredFileDownload;
 					});
