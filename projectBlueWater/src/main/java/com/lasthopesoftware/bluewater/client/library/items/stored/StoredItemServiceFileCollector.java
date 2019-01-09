@@ -8,8 +8,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.library.sync.CollectServiceFilesForSync;
-import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
-import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
@@ -38,14 +36,26 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	}
 
 	@Override
-	public Observable<ServiceFile> streamServiceFilesToSync() {
-		return getStoredItemStream()
-			.flatMap(storedItem -> {
-				if (storedItem.getItemType() == StoredItem.ItemType.PLAYLIST) {
-					return StreamedPromise
-						.stream(storedPlaylistsToStoredItems.promiseConvertedStoredItem(storedItem))
-						.flatMap(this::getStoredFilesStream);
-				}
+	public Promise<Collection<ServiceFile>> promiseServiceFilesToSync() {
+		return new Promise<>(serviceFileMessenger -> {
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			serviceFileMessenger.cancellationRequested(cancellationProxy);
+
+			final Promise<Collection<StoredItem>> promisedStoredItems = storedItemAccess.promiseStoredItems();
+			cancellationProxy.doCancel(promisedStoredItems);
+
+			final Promise<Collection<List<ServiceFile>>> promisedServiceFileLists = promisedStoredItems
+				.eventually(storedItems -> {
+					if (cancellationProxy.isCancelled())
+						return new Promise<>(new CancellationException());
+
+					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
+						.map(storedItem -> {
+							if (storedItem.getItemType() == StoredItem.ItemType.PLAYLIST) {
+								return storedPlaylistsToStoredItems
+									.promiseConvertedStoredItem(storedItem)
+									.eventually(i -> promiseServiceFiles(i, cancellationProxy));
+							}
 
 							return promiseServiceFiles(storedItem, cancellationProxy);
 						});
