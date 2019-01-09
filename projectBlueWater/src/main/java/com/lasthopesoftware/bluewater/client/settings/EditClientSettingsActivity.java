@@ -64,7 +64,14 @@ public class EditClientSettingsActivity extends AppCompatActivity {
         }
 
         library.setAccessCode(txtAccessCode.findView().getText().toString());
-        library.setAuthKey(Base64.encodeToString((txtUserName.findView().getText().toString() + ":" + txtPassword.findView().getText().toString()).getBytes(), Base64.DEFAULT).trim());
+
+        final String userName = txtUserName.findView().getText().toString();
+        final String password = txtPassword.findView().getText().toString();
+        final String authKey = !userName.isEmpty() && !password.isEmpty()
+			? Base64.encodeToString((userName + ":" + password).getBytes(), Base64.DEFAULT).trim()
+			: "";
+		library.setAuthKey(authKey);
+
         library.setLocalOnly(chkLocalOnly.findView().isChecked());
         library.setCustomSyncedFilesPath(txtSyncPath.findView().getText().toString());
         switch (rgSyncFileOptions.findView().getCheckedRadioButtonId()) {
