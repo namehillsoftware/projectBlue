@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download;
 
 import android.support.annotation.Nullable;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import io.reactivex.Observable;

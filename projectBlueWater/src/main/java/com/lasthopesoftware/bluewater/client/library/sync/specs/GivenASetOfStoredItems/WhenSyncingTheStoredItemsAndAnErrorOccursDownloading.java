@@ -9,7 +9,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobProcessor;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobProcessor;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
@@ -23,6 +24,8 @@ import com.lasthopesoftware.bluewater.client.library.sync.specs.FakeFileConnecti
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -41,6 +44,7 @@ import static org.mockito.Mockito.when;
 public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 
 	private static List<StoredFile> storedFileJobResults = new ArrayList<>();
+	private static List<StoredFile> queuedStoredFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() {
@@ -88,14 +92,53 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				(i, f) -> {}));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
+			new Library(),
 			new StoredItemServiceFileCollector(storedItemAccessMock, mock(ConvertStoredPlaylistsToStoredItems.class), mockFileProvider),
 			storedFileAccess,
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
-			storedFileDownloader,
+			new StoredFileJobProcessor(
+				new StoredFileSystemFileProducer(),
+				fakeConnectionProvider,
+				storedFileAccess,
+				new ServiceFileUriQueryParamsProvider(),
+				readPossibleArbitrator,
+				writePossibleArbitrator,
+				(i, f) -> {}),
 			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
 			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
 
-		storedFileJobResults = librarySyncHandler.observeLibrarySync(new Library()).map(j -> j.storedFile).toList().blockingGet();
+		librarySyncHandler.setOnFileQueued(queuedStoredFiles::add);
+
+		librarySyncHandler.observeLibrarySync()
+			.filter(j -> j.storedFileJobState == StoredFileJobState.Downloaded)
+			.map(j -> j.storedFile)
+			.blockingSubscribe(new Observer<StoredFile>() {
+				@Override
+				public void onSubscribe(Disposable d) {
+
+				}
+
+				@Override
+				public void onNext(StoredFile storedFile) {
+					storedFileJobResults.add(storedFile);
+				}
+
+				@Override
+				public void onError(Throwable e) {
+
+				}
+
+				@Override
+				public void onComplete() {
+
+				}
+			});
+	}
+
+	@Test
+	public void thenTheFilesInTheStoredItemsAreQueued() {
+		assertThat(Stream.of(queuedStoredFiles).map(StoredFile::getServiceId).toList())
+			.containsExactly(1, 2, 4, 10);
 	}
 
 	@Test

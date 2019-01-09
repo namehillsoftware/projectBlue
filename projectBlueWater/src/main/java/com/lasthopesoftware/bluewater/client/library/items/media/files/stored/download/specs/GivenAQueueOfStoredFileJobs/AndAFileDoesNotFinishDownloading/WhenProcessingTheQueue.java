@@ -1,14 +1,16 @@
-package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAQueueOfStoredFileJobs;
+package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.specs.GivenAQueueOfStoredFileJobs.AndAFileDoesNotFinishDownloading;
 
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
+import com.namehillsoftware.handoff.promises.Promise;
 import io.reactivex.Observable;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,7 +19,9 @@ import java.io.File;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheQueue {
 
@@ -46,16 +50,20 @@ public class WhenProcessingTheQueue {
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
 	public static void before() {
+		final ProcessStoredFileJobs processStoredFileJobs = mock(ProcessStoredFileJobs.class);
+		when(processStoredFileJobs.observeStoredFileDownload(any()))
+			.thenAnswer(a -> new Promise<>(new StoredFileJobStatus(
+				mock(File.class),
+				a.<StoredFileJob>getArgument(0).getStoredFile(),
+				StoredFileJobState.Downloaded)));
+		when(processStoredFileJobs.observeStoredFileDownload(new StoredFileJob(new ServiceFile(5), new StoredFile().setLibraryId(4).setServiceId(5))))
+			.thenAnswer(a -> new Promise<>(m -> {}));
+		
 		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
-			job -> Observable.just(
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloading),
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloaded)));
+			job -> Observable.just(new StoredFileJobStatus(
+				mock(File.class),
+				job.getStoredFile(),
+				StoredFileJobState.Downloaded)));
 
 		storedFileDownloader.setOnFileDownloading(downloadingStoredFiles::add);
 		storedFileDownloader.process(storedFileJobs).blockingIterable().forEach(downloadedStoredFiles::add);

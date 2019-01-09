@@ -2,13 +2,13 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.stored.d
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileReadException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileWriteException;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.ProcessStoredFileJobs;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.ProcessStoredFileJobs;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.exceptions.StoredFileJobException;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.exceptions.StoredFileReadException;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.vedsoft.futures.runnables.OneParameterAction;

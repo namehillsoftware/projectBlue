@@ -6,9 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.StoredFileDownloader;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.items.stored.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
@@ -35,6 +34,7 @@ import static org.mockito.Mockito.when;
 public class WhenSyncingTheStoredItems {
 
 	private static List<StoredFile> storedFileJobResults = new ArrayList<>();
+	private static List<StoredFile> queuedStoredFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() {
@@ -60,7 +60,11 @@ public class WhenSyncingTheStoredItems {
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
-		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
+		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
+			new Library(),
+			new StoredItemServiceFileCollector(storedItemAccessMock, storedPlaylistsConverter, mockFileProvider),
+			storedFileAccess,
+			(l, sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
 			job -> Observable.just(
 				new StoredFileJobStatus(
 					mock(File.class),
@@ -69,17 +73,22 @@ public class WhenSyncingTheStoredItems {
 				new StoredFileJobStatus(
 					mock(File.class),
 					job.getStoredFile(),
-					StoredFileJobState.Downloaded)));
-
-		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			new StoredItemServiceFileCollector(storedItemAccessMock, storedPlaylistsConverter, mockFileProvider),
-			storedFileAccess,
-			(l, sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
-			storedFileDownloader,
+					StoredFileJobState.Downloaded)),
 			f -> false,
 			f -> false);
 
-		storedFileJobResults = librarySyncHandler.observeLibrarySync(new Library()).map(j -> j.storedFile).toList().blockingGet();
+		librarySyncHandler.setOnFileQueued(queuedStoredFiles::add);
+		storedFileJobResults = librarySyncHandler.observeLibrarySync()
+			.filter(j -> j.storedFileJobState == StoredFileJobState.Downloaded)
+			.map(j -> j.storedFile)
+			.toList()
+			.blockingGet();
+	}
+
+	@Test
+	public void thenTheFilesInTheStoredItemsAreQueued() {
+		assertThat(Stream.of(queuedStoredFiles).map(StoredFile::getServiceId).toList())
+			.containsExactly(1, 2, 4, 10);
 	}
 
 	@Test
