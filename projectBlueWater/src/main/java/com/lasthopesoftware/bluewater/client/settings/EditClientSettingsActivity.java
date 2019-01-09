@@ -33,7 +33,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	public static final String serverIdExtra = EditClientSettingsActivity.class.getCanonicalName() + ".serverIdExtra";
 
 	private static final int selectDirectoryResultId = 93;
-
+	private static final int permissionsRequestInteger = 1;
 	private final LazyViewFinder<Button> saveButton = new LazyViewFinder<>(this, R.id.btnConnect);
 	private final LazyViewFinder<EditText> txtAccessCode = new LazyViewFinder<>(this, R.id.txtAccessCode);
 	private final LazyViewFinder<EditText> txtUserName = new LazyViewFinder<>(this, R.id.txtUserName);
@@ -43,46 +43,47 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 	private final LazyViewFinder<RadioGroup> rgSyncFileOptions = new LazyViewFinder<>(this, R.id.rgSyncFileOptions);
 	private final LazyViewFinder<CheckBox> chkIsUsingExistingFiles = new LazyViewFinder<>(this, R.id.chkIsUsingExistingFiles);
 	private final LazyViewFinder<CheckBox> chkIsUsingLocalConnectionForSync = new LazyViewFinder<>(this, R.id.chkIsUsingLocalConnectionForSync);
-
 	private final Lazy<IApplicationWritePermissionsRequirementsProvider> applicationWritePermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationWritePermissionsRequirementsProvider(this));
 	private final Lazy<IApplicationReadPermissionsRequirementsProvider> applicationReadPermissionsRequirementsProviderLazy = new Lazy<>(() -> new ApplicationReadPermissionsRequirementsProvider(this));
-
 	private final Lazy<LibraryRepository> lazyLibraryProvider = new Lazy<>(() -> new LibraryRepository(EditClientSettingsActivity.this));
-
 	private final SettingsMenu settingsMenu = new SettingsMenu(this, new AboutTitleBuilder(this));
-
-	private static final int permissionsRequestInteger = 1;
-
 	private Library library;
 
 	private final OnClickListener connectionButtonListener = v -> {
-        saveButton.findView().setEnabled(false);
+		saveButton.findView().setEnabled(false);
 
-        if (library == null) {
-            library = new Library();
-            library.setNowPlayingId(-1);
-        }
+		if (library == null) {
+			library = new Library();
+			library.setNowPlayingId(-1);
+		}
 
-        library.setAccessCode(txtAccessCode.findView().getText().toString());
-        library.setAuthKey(Base64.encodeToString((txtUserName.findView().getText().toString() + ":" + txtPassword.findView().getText().toString()).getBytes(), Base64.DEFAULT).trim());
-        library.setLocalOnly(chkLocalOnly.findView().isChecked());
-        library.setCustomSyncedFilesPath(txtSyncPath.findView().getText().toString());
-        switch (rgSyncFileOptions.findView().getCheckedRadioButtonId()) {
-	        case R.id.rbPublicLocation:
-		        library.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL);
-		        break;
-	        case R.id.rbPrivateToApp:
-		        library.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL);
-		        break;
-	        case R.id.rbCustomLocation:
-		        library.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM);
-		        break;
-        }
+		library.setAccessCode(txtAccessCode.findView().getText().toString());
 
-        library.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked());
-        library.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked());
+		final String userName = txtUserName.findView().getText().toString();
+		final String password = txtPassword.findView().getText().toString();
+		final String authKey = !userName.isEmpty() && !password.isEmpty()
+			? Base64.encodeToString((userName + ":" + password).getBytes(), Base64.DEFAULT).trim()
+			: "";
+		library.setAuthKey(authKey);
 
-        final ArrayList<String> permissionsToRequest = new ArrayList<>(2);
+		library.setLocalOnly(chkLocalOnly.findView().isChecked());
+		library.setCustomSyncedFilesPath(txtSyncPath.findView().getText().toString());
+		switch (rgSyncFileOptions.findView().getCheckedRadioButtonId()) {
+			case R.id.rbPublicLocation:
+				library.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL);
+				break;
+			case R.id.rbPrivateToApp:
+				library.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL);
+				break;
+			case R.id.rbCustomLocation:
+				library.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM);
+				break;
+		}
+
+		library.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked());
+		library.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked());
+
+		final ArrayList<String> permissionsToRequest = new ArrayList<>(2);
 
 		if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(library))
 			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -98,15 +99,15 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 		}
 
 		saveLibraryAndFinish();
-    };
+	};
 
 	@Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState); 
-        setContentView(R.layout.activity_edit_server_settings);
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_edit_server_settings);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        saveButton.findView().setOnClickListener(connectionButtonListener);
+		saveButton.findView().setOnClickListener(connectionButtonListener);
 	}
 
 	@Override
