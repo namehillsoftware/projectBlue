@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup;
+package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndAnAuthKeyIsProvided;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
@@ -30,7 +30,7 @@ public class WhenScanningForUrls {
 		when(connectionTester.promiseIsConnectionPossible(any()))
 			.thenReturn(new Promise<>(false));
 
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()))))
+		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()) && "myuser:mypass".equals(a.getUrlProvider().getAuthCode()))))
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
@@ -44,7 +44,8 @@ public class WhenScanningForUrls {
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
-				.setAccessCode("gooPc"))).get();
+				.setAccessCode("gooPc")
+				.setAuthKey("myuser:mypass"))).get();
 	}
 
 	@Test

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup;
+package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndTheAuthKeyIsNull;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
@@ -44,7 +44,8 @@ public class WhenScanningForUrls {
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
-				.setAccessCode("gooPc"))).get();
+				.setAccessCode("gooPc")
+				.setAuthKey(null))).get();
 	}
 
 	@Test
