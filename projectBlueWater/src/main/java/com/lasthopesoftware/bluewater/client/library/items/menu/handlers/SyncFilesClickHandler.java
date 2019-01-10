@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 import android.view.View;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.sync.SyncWorker;
+import com.lasthopesoftware.bluewater.client.sync.SyncWorker;
+import com.lasthopesoftware.bluewater.client.sync.library.items.StoredItemAccess;
 
 /**
  * Created by david on 7/18/15.

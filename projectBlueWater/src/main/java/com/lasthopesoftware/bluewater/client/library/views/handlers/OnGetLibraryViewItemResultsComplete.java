@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.client.library.items.list.DemoableItemList
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.sync.library.items.StoredItemAccess;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.util.List;
