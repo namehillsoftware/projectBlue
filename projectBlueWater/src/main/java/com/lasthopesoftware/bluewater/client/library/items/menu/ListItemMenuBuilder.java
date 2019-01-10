@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.Shuffle
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.SyncFilesIsVisibleHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewFilesClickHandler;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.sync.library.items.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 
 public final class ListItemMenuBuilder<T extends IItem> extends AbstractListItemMenuBuilder<T> {

@@ -4,8 +4,8 @@ import android.net.Uri;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.sync.library.items.files.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.sync.library.items.files.uri.StoredFileUriProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
 /**
