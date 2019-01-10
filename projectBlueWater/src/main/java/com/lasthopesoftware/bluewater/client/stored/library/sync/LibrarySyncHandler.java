@@ -28,8 +28,6 @@ public class LibrarySyncHandler {
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
 	private final ProcessStoredFileJobs storedFileJobsProcessor;
-	private final ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider;
-	private final ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider;
 	private final Library library;
 	private final CollectServiceFilesForSync serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
@@ -51,8 +49,6 @@ public class LibrarySyncHandler {
 		this.storedFileAccess = storedFileAccess;
 		this.storedFileUpdater = storedFileUpdater;
 		this.storedFileJobsProcessor = storedFileJobsProcessor;
-		this.libraryStorageReadPermissionsRequirementsProvider = libraryStorageReadPermissionsRequirementsProvider;
-		this.libraryStorageWritePermissionsRequirementsProvider = libraryStorageWritePermissionsRequirementsProvider;
 	}
 
 	public void setOnFileQueued(OneParameterAction<StoredFile> onFileQueued) {
