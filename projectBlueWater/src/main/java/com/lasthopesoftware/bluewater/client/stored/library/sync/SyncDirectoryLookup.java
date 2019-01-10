@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library;
+package com.lasthopesoftware.bluewater.client.stored.library.sync;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;

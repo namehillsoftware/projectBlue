@@ -5,12 +5,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.stored.library.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;

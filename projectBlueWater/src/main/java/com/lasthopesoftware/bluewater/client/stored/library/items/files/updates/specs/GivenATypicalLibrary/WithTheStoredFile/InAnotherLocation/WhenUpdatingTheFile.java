@@ -5,12 +5,12 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeCachedFilesPropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.stored.library.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;

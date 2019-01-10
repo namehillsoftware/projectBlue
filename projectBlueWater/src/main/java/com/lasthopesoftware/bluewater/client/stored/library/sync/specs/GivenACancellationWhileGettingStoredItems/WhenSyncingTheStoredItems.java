@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.specs.GivenACancellationWhileGettingStoredItems;
+package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenACancellationWhileGettingStoredItems;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
@@ -16,7 +15,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.specs.FakeDeferredStoredItemAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.specs.FakeFileConnectionProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;

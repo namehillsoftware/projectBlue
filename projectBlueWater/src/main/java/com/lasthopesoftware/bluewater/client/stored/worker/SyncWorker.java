@@ -17,7 +17,6 @@ import com.annimon.stream.Stream;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
@@ -28,51 +27,35 @@ import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.IScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistItemFinder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestedBroadcast;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.LibraryStorageReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.LibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.LibrarySyncHandler;
-import com.lasthopesoftware.bluewater.client.stored.library.LookupSyncDirectory;
-import com.lasthopesoftware.bluewater.client.stored.library.SyncDirectoryLookup;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemsChecker;
-import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.StoredPlaylistItemsConverter;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.*;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.LibrarySyncHandlerFactory;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
 import com.lasthopesoftware.bluewater.client.stored.worker.constraints.SyncWorkerConstraints;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
+import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
@@ -82,30 +65,26 @@ import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
-import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
-import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
@@ -125,6 +104,7 @@ public class SyncWorker extends ListenableWorker {
 	private final ILibraryProvider libraryProvider;
 	private final LocalBroadcastManager localBroadcastManager;
 	private final BuildUrlProviders urlProviders;
+	private final ProduceLibrarySyncHandlers librarySyncHandlersProduction;
 
 	public static Operation syncImmediately(Context context) {
 		final OneTimeWorkRequest.Builder oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class);
@@ -211,27 +191,9 @@ public class SyncWorker extends ListenableWorker {
 		}
 	};
 
-	private final Map<Integer, IConnectionProvider> libraryConnectionProviders = new ConcurrentHashMap<>();
-
-	private final Lazy<IStoredFileSystemFileProducer> lazyStoredFileSystemFileProducer = new Lazy<>(StoredFileSystemFileProducer::new);
-	private final Lazy<IServiceFileUriQueryParamsProvider> lazyServiceFileUriQueryParamsProvider = new Lazy<>(ServiceFileUriQueryParamsProvider::new);
-	private final Lazy<IFileReadPossibleArbitrator> lazyFileReadPossibleArbitrator = new Lazy<>(FileReadPossibleArbitrator::new);
-	private final Lazy<IFileWritePossibleArbitrator> lazyFileWritePossibleArbitrator = new Lazy<>(FileWritePossibleArbitrator::new);
-	private final Lazy<IFileStreamWriter> lazyFileStreamWriter = new Lazy<>(FileStreamWriter::new);
-	private final Lazy<ILibraryStorageReadPermissionsRequirementsProvider> lazyLibraryStorageReadPermissionsRequirementsProvider = new Lazy<>(LibraryStorageReadPermissionsRequirementsProvider::new);
-	private final Lazy<ILibraryStorageWritePermissionsRequirementsProvider> lazyLibraryStorageWritePermissionsRequirementsProvider = new Lazy<>(LibraryStorageWritePermissionsRequirementsProvider::new);
-
-	private final AtomicInteger librariesProcessing = new AtomicInteger();
-
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
 	private final SettableFuture<Result> settableFuture = SettableFuture.create();
-
-	private final OneParameterAction<LibrarySyncHandler> onLibrarySyncCompleteRunnable = librarySyncHandler -> {
-		librarySyncHandlers.remove(librarySyncHandler);
-
-		if (librariesProcessing.decrementAndGet() == 0) finishSync();
-	};
 
 	private final OneParameterAction<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
 
@@ -314,29 +276,6 @@ public class SyncWorker extends ListenableWorker {
 		}
 	};
 
-	private final CreateAndHold<StoredFilesChecker> lazyStoredFilesChecker = new AbstractSynchronousLazy<StoredFilesChecker>() {
-		@Override
-		protected StoredFilesChecker create() {
-			return new StoredFilesChecker(new StoredFilesCounter(context));
-		}
-	};
-
-	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> lazyOsReadPermissions = new AbstractSynchronousLazy<IStorageReadPermissionArbitratorForOs>() {
-		@Override
-		protected IStorageReadPermissionArbitratorForOs create() {
-			return new ExternalStorageReadPermissionsArbitratorForOs(context);
-		}
-	};
-
-	private final CreateAndHold<LookupSyncDirectory> lazySyncDirectoryLookup = new AbstractSynchronousLazy<LookupSyncDirectory>() {
-		@Override
-		protected LookupSyncDirectory create() {
-			return new SyncDirectoryLookup(
-				new PublicDirectoryLookup(context),
-				new PrivateDirectoryLookup(context));
-		}
-	};
-
 	public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
 		this(
 			context,
@@ -346,7 +285,21 @@ public class SyncWorker extends ListenableWorker {
 			new UrlScanner(
 				new ConnectionTester(),
 				new ServerLookup(new ServerInfoXmlRequest(new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).build())),
-				OkHttpFactory.getInstance()));
+				OkHttpFactory.getInstance()),
+			new LibrarySyncHandlerFactory(
+				new StoredFileAccess(context, new StoredFilesCollection(context)),
+				context,
+				new ExternalStorageReadPermissionsArbitratorForOs(context),
+				new SyncDirectoryLookup(
+					new PublicDirectoryLookup(context),
+					new PrivateDirectoryLookup(context)),
+				new StoredFileSystemFileProducer(),
+				new ServiceFileUriQueryParamsProvider(),
+				new FileReadPossibleArbitrator(),
+				new FileWritePossibleArbitrator(),
+				new FileStreamWriter(),
+				new LibraryStorageWritePermissionsRequirementsProvider(),
+				new LibraryStorageReadPermissionsRequirementsProvider()));
 	}
 
 	public SyncWorker(
@@ -354,12 +307,14 @@ public class SyncWorker extends ListenableWorker {
 		@NonNull WorkerParameters workerParams,
 		ILibraryProvider libraryProvider,
 		LocalBroadcastManager localBroadcastManager,
-		BuildUrlProviders urlProviders) {
+		BuildUrlProviders urlProviders,
+		ProduceLibrarySyncHandlers librarySyncHandlersProduction) {
 		super(context, workerParams);
 		this.context = context;
 		this.libraryProvider = libraryProvider;
 		this.localBroadcastManager = localBroadcastManager;
 		this.urlProviders = urlProviders;
+		this.librarySyncHandlersProduction = librarySyncHandlersProduction;
 	}
 
 	@NonNull
@@ -370,110 +325,35 @@ public class SyncWorker extends ListenableWorker {
 		setSyncNotificationText(null);
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
-		libraryProvider.getAllLibraries().then(new VoidResponse<>(libraries -> {
-			librariesProcessing.set(libraries.size());
-
-			if (librariesProcessing.get() == 0) {
-				finishSync();
-				return;
-			}
-
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-
-			for (final Library library : libraries) {
+		StreamedPromise.stream(libraryProvider.getAllLibraries())
+			.map(library -> {
 				if (library.isSyncLocalConnectionsOnly()) library.setLocalOnly(true);
 
-				final StoredItemAccess storedItemAccess = new StoredItemAccess(context, library);
-				final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, lazyStoredFilesChecker.getObject());
+				return ObservedPromise.observe(urlProviders.promiseBuiltUrlProvider(library)
+					.then(urlProvider -> librarySyncHandlersProduction.getNewSyncHandler(urlProvider, library)));
+			})
+			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync))
+			.subscribe(new Observer<StoredFileJobStatus>() {
+				@Override
+				public void onSubscribe(Disposable d) {
 
-				storedItemsChecker.promiseIsAnyStoredItemsOrFiles(library).eventually(isAny -> {
-					if (!isAny) {
-						if (librariesProcessing.decrementAndGet() == 0) finishSync();
-						return Promise.empty();
-					}
+				}
 
-					final Promise<Void> promiseLibrarySyncStarted =
-						urlProviders.promiseBuiltUrlProvider(library)
-							.then(new VoidResponse<>(urlProvider -> {
-								if (urlProvider == null) {
-									if (librariesProcessing.decrementAndGet() == 0) finishSync();
-									return;
-								}
+				@Override
+				public void onNext(StoredFileJobStatus storedFileJobStatus) {
 
-								final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, OkHttpFactory.getInstance());
-								libraryConnectionProviders.put(library.getId(), connectionProvider);
+				}
 
-								final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance());
-								final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, filePropertiesProvider);
+				@Override
+				public void onError(Throwable e) {
+					settableFuture.setException(e);
+				}
 
-								final StoredFileAccess storedFileAccess = new StoredFileAccess(
-									context,
-									new StoredFilesCollection(context));
-
-								final MediaQueryCursorProvider cursorProvider = new MediaQueryCursorProvider(
-									context,
-									cachedFilePropertiesProvider);
-
-								final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
-									context,
-									new MediaFileUriProvider(
-										context,
-										cursorProvider,
-										lazyOsReadPermissions.getObject(),
-										library,
-										true),
-									new MediaFileIdProvider(
-										cursorProvider,
-										lazyOsReadPermissions.getObject()),
-									new StoredFileQuery(context),
-									cachedFilePropertiesProvider,
-									lazySyncDirectoryLookup.getObject());
-
-								final LibrarySyncHandler librarySyncHandler =
-									new LibrarySyncHandler(
-										library,
-										new StoredItemServiceFileCollector(
-											storedItemAccess,
-											new StoredPlaylistItemsConverter(
-												new PlaylistItemFinder(
-													new LibraryViewsProvider(connectionProvider, new LibraryViewsByConnectionProvider()),
-													new ItemProvider(connectionProvider)),
-												storedItemAccess),
-											new FileProvider(new FileStringListProvider(connectionProvider))),
-										storedFileAccess,
-										storedFileUpdater,
-										new StoredFileJobProcessor(
-											lazyStoredFileSystemFileProducer.getObject(),
-											connectionProvider,
-											storedFileAccess,
-											lazyServiceFileUriQueryParamsProvider.getObject(),
-											lazyFileReadPossibleArbitrator.getObject(),
-											lazyFileWritePossibleArbitrator.getObject(),
-											lazyFileStreamWriter.getObject()
-										),
-										lazyLibraryStorageReadPermissionsRequirementsProvider.getObject(),
-										lazyLibraryStorageWritePermissionsRequirementsProvider.getObject());
-
-								librarySyncHandler.setOnFileQueued(storedFileQueuedAction);
-								librarySyncHandler
-									.observeLibrarySync()
-									.doOnComplete(() -> {
-										if (librariesProcessing.decrementAndGet() == 0) finishSync();
-									});
-							}));
-
-					promiseLibrarySyncStarted
-						.excuse(new VoidResponse<>(e ->
-							logger.error("There was an error getting the URL for library ID " + library.getId(), e)));
-
-					return promiseLibrarySyncStarted;
-				})
-				.excuse(e -> {
-					if (librariesProcessing.decrementAndGet() == 0) finishSync();
-					return null;
-				});
-			}
-		}));
+				@Override
+				public void onComplete() {
+					finishSync();
+				}
+			});
 
 		return settableFuture;
 	}

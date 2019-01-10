@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.stored.library.specs.GivenACustomStoragePreference;
+package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenACustomStoragePreference;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.stored.library.SyncDirectoryLookup;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.storage.directories.specs.FakePrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.specs.FakePublicDirectoryLookup;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.specs.GivenASetOfStoredItems;
+package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenASetOfStoredItems;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
@@ -20,7 +19,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.specs.FakeFileConnectionProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;

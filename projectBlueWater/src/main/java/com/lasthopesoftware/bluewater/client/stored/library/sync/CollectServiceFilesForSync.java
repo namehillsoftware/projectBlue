@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library;
+package com.lasthopesoftware.bluewater.client.stored.library.sync;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.namehillsoftware.handoff.promises.Promise;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.specs.GivenASetOfStoredItems;
+package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenASetOfStoredItems;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.stored.library.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
@@ -15,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.namehillsoftware.handoff.promises.Promise;
 import io.reactivex.Observable;
 import org.junit.BeforeClass;

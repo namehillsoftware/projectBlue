@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
-import com.lasthopesoftware.bluewater.client.stored.library.specs.FakeFileConnectionProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.specs.AndroidContext;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.specs;
+package com.lasthopesoftware.bluewater.client.stored.library.sync.specs;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
