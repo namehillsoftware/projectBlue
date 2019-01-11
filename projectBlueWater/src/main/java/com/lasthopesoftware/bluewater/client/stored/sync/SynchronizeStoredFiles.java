@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.sync;
 
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import io.reactivex.Observable;
+import androidx.work.ListenableWorker;
+import io.reactivex.Single;
 
 public interface SynchronizeStoredFiles {
-	Observable<StoredFileJobStatus> streamFileSynchronization();
+	Single<ListenableWorker.Result> streamFileSynchronization();
 }

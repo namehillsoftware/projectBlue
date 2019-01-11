@@ -15,9 +15,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import androidx.work.*;
 import com.annimon.stream.Stream;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
@@ -27,14 +25,10 @@ import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.IScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestedBroadcast;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
@@ -54,13 +48,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.Library
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
 import com.lasthopesoftware.bluewater.client.stored.worker.constraints.SyncWorkerConstraints;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
-import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
@@ -70,13 +60,11 @@ import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermis
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.Single;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +76,7 @@ import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
-public class SyncWorker extends ListenableWorker {
+public class SyncWorker extends RxWorker {
 	private static final Logger logger = LoggerFactory.getLogger(SyncWorker.class);
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(SyncWorker.class);
@@ -193,8 +181,6 @@ public class SyncWorker extends ListenableWorker {
 
 	private final HashSet<LibrarySyncHandler> librarySyncHandlers = new HashSet<>();
 
-	private final SettableFuture<Result> settableFuture = SettableFuture.create();
-
 	private final OneParameterAction<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
 
 	private final CreateAndHold<String> downloadingStatusLabel = new AbstractSynchronousLazy<String>() {
@@ -204,28 +190,28 @@ public class SyncWorker extends ListenableWorker {
 		}
 	};
 
-	private final CreateAndHold<OneParameterAction<StoredFile>> storedFileDownloadingAction = new AbstractSynchronousLazy<OneParameterAction<StoredFile>>() {
-		@Override
-		protected OneParameterAction<StoredFile> create() {
-			return storedFile -> {
-				sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
-
-				final IConnectionProvider connectionProvider = libraryConnectionProviders.get(storedFile.getLibraryId());
-				if (connectionProvider == null) return;
-
-				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
-					new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
-
-				filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
-					.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), context))
-					.excuse(e -> LoopedInPromise.response(exception -> {
-						setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)));
-						return true;
-					}, context).promiseResponse(e));
-			};
-		}
-	};
+//	private final CreateAndHold<OneParameterAction<StoredFile>> storedFileDownloadingAction = new AbstractSynchronousLazy<OneParameterAction<StoredFile>>() {
+//		@Override
+//		protected OneParameterAction<StoredFile> create() {
+//			return storedFile -> {
+//				sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
+//
+//				final IConnectionProvider connectionProvider = libraryConnectionProviders.get(storedFile.getLibraryId());
+//				if (connectionProvider == null) return;
+//
+//				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+//				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+//					new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
+//
+//				filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
+//					.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), context))
+//					.excuse(e -> LoopedInPromise.response(exception -> {
+//						setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)));
+//						return true;
+//					}, context).promiseResponse(e));
+//			};
+//		}
+//	};
 
 	private final OneParameterAction<StoredFileJobStatus> storedFileDownloadedAction = storedFileJobResult -> {
 		sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobResult.storedFile);
@@ -317,45 +303,9 @@ public class SyncWorker extends ListenableWorker {
 		this.librarySyncHandlersProduction = librarySyncHandlersProduction;
 	}
 
-	@NonNull
 	@Override
-	public ListenableFuture<Result> startWork() {
-		logger.info("Starting sync.");
-
-		setSyncNotificationText(null);
-		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
-
-		StreamedPromise.stream(libraryProvider.getAllLibraries())
-			.map(library -> {
-				if (library.isSyncLocalConnectionsOnly()) library.setLocalOnly(true);
-
-				return ObservedPromise.observe(urlProviders.promiseBuiltUrlProvider(library)
-					.then(urlProvider -> librarySyncHandlersProduction.getNewSyncHandler(urlProvider, library)));
-			})
-			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync))
-			.subscribe(new Observer<StoredFileJobStatus>() {
-				@Override
-				public void onSubscribe(Disposable d) {
-
-				}
-
-				@Override
-				public void onNext(StoredFileJobStatus storedFileJobStatus) {
-
-				}
-
-				@Override
-				public void onError(Throwable e) {
-					settableFuture.setException(e);
-				}
-
-				@Override
-				public void onComplete() {
-					finishSync();
-				}
-			});
-
-		return settableFuture;
+	public Single<Result> createWork() {
+		return null;
 	}
 
 	@Override
@@ -391,11 +341,5 @@ public class SyncWorker extends ListenableWorker {
 
 	private void cancelSync() {
 		Stream.of(librarySyncHandlers).forEach(LibrarySyncHandler::cancel);
-	}
-
-	private void finishSync() {
-		settableFuture.set(Result.success());
-
-		localBroadcastManager.sendBroadcast(new Intent(onSyncStopEvent));
 	}
 }

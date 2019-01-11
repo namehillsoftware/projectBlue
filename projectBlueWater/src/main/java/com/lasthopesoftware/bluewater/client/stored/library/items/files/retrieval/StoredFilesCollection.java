@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.retriev
 
 import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -26,6 +27,6 @@ public class StoredFilesCollection implements GetAllStoredFilesInLibrary {
 					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
 					.fetch(StoredFile.class);
 			}
-		}, RepositoryAccessHelper.databaseExecutor);
+		}, StoredFileAccess.storedFileAccessExecutor);
 	}
 }
