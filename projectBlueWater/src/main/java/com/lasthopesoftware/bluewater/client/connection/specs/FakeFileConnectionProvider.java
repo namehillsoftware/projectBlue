@@ -10,7 +10,7 @@ public class FakeFileConnectionProvider extends FakeConnectionProvider {
 		super();
 
 		mapResponse(
-			(params) -> new ResponseTuple(200, new byte[0]),
+			(params) -> new FakeConnectionResponseTuple(200, new byte[0]),
 			"File/GetFile",
 			"File=.*",
 			"Quality=medium",
@@ -31,7 +31,7 @@ public class FakeFileConnectionProvider extends FakeConnectionProvider {
 
 				returnXml.append("</Item>\n" + "</MPL>\n");
 
-				return new ResponseTuple(200, returnXml.toString().getBytes());
+				return new FakeConnectionResponseTuple(200, returnXml.toString().getBytes());
 			},
 			"File/GetInfo",
 			"File=" + serviceFile.getKey());

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.specs.GivenAConnectionThatReturnsARandomErrorCode;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException;
@@ -26,7 +27,7 @@ public class WhenSendingPlayedToServer {
 		} while (expectedResponseCode < 0 || (expectedResponseCode >= 200 && expectedResponseCode < 300));
 
 		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
-		connectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(expectedResponseCode, new byte[0]), "File/Played", "File=15", "FileType=Key");
+		connectionProvider.mapResponse(p -> new FakeConnectionResponseTuple(expectedResponseCode, new byte[0]), "File/Played", "File=15", "FileType=Key");
 
 		final PlayedFilePlayStatsUpdater updater = new PlayedFilePlayStatsUpdater(connectionProvider);
 

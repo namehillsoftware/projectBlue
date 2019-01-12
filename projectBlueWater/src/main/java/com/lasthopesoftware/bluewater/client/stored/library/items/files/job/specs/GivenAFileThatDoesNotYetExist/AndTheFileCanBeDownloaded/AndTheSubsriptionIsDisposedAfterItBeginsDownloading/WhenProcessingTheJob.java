@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheSubsriptionIsDisposedAfterItBeginsDownloading;
 
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -9,8 +9,14 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.internal.http.RealResponseBody;
+import okio.Buffer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -29,8 +35,23 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() {
-		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
-		fakeConnectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(200, new byte[0]));
+		final Request.Builder builder = new Request.Builder();
+		builder.url("http://test-connection");
+
+		final Buffer buffer = new Buffer();
+
+		final Response.Builder responseBuilder = new Response.Builder();
+		responseBuilder
+			.request(builder.build())
+			.protocol(Protocol.HTTP_1_1)
+			.message("OK")
+			.body(new RealResponseBody(null, 0, buffer))
+			.code(200);
+
+		final DeferredPromise<Response> deferredPromise = new DeferredPromise<>(responseBuilder.build());
+		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
+		when(fakeConnectionProvider.promiseResponse(any()))
+			.thenReturn(deferredPromise);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
@@ -54,6 +75,7 @@ public class WhenProcessingTheJob {
 					public void onNext(StoredFileJobStatus status) {
 						states.add(status.storedFileJobState);
 						disposable.dispose();
+						deferredPromise.resolve();
 					}
 
 					@Override
@@ -69,7 +91,7 @@ public class WhenProcessingTheJob {
 	}
 
 	@Test
-	public void thenTheFileIsMarkedAsDownloaded() {
+	public void thenTheFileIsNotMarkedAsDownloaded() {
 		verify(storedFileAccess, never()).markStoredFileAsDownloaded(storedFile);
 	}
 

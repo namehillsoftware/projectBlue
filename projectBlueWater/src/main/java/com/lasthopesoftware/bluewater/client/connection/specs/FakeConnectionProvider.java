@@ -22,9 +22,9 @@ import java.util.Set;
 
 
 public class FakeConnectionProvider implements IConnectionProvider {
-	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], ResponseTuple>> mappedResponses = new HashMap<>();
+	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], FakeConnectionResponseTuple>> mappedResponses = new HashMap<>();
 
-	public final void mapResponse(CarelessOneParameterFunction<String[], ResponseTuple> response, String... params) {
+	public final void mapResponse(CarelessOneParameterFunction<String[], FakeConnectionResponseTuple> response, String... params) {
 		final HashSet<String> paramsSet = new HashSet<>(Arrays.asList(params));
 		mappedResponses.put(paramsSet, response);
 	}
@@ -54,7 +54,7 @@ public class FakeConnectionProvider implements IConnectionProvider {
 			.body(new RealResponseBody(null, 0, buffer))
 			.code(404);
 
-		CarelessOneParameterFunction<String[], ResponseTuple> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
+		CarelessOneParameterFunction<String[], FakeConnectionResponseTuple> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
 
 		if (mappedResponse == null) {
 			final Optional<Set<String>> optionalResponse = Stream.of(mappedResponses.keySet())
@@ -68,7 +68,7 @@ public class FakeConnectionProvider implements IConnectionProvider {
 		if (mappedResponse == null) return responseBuilder.build();
 
 		try {
-			final ResponseTuple result = mappedResponse.resultFrom(params);
+			final FakeConnectionResponseTuple result = mappedResponse.resultFrom(params);
 			buffer.write(result.response);
 			responseBuilder.code(result.code);
 			responseBuilder.body(new RealResponseBody(null, result.response.length, buffer));
@@ -87,16 +87,6 @@ public class FakeConnectionProvider implements IConnectionProvider {
 			return new MediaServerUrlProvider(null, "test", 80);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	public static class ResponseTuple {
-		final int code;
-		final byte[] response;
-
-		public ResponseTuple(int code, byte[] response) {
-			this.code = code;
-			this.response = response;
 		}
 	}
 }

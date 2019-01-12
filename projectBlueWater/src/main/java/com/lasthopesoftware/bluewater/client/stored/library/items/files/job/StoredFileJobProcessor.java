@@ -84,6 +84,11 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 				return;
 			}
 
+			if (cancellationProxy.isCancelled()) {
+				emitter.onNext(getCancelledStoredFileJobResult(file, storedFile));
+				return;
+			}
+
 			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
 			final ServiceFile serviceFile = job.getServiceFile();

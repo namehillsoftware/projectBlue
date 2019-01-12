@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.servers.version.specs.GivenAStandardConnectionProvider;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
@@ -29,7 +30,7 @@ public class WhenReceivingThePromisedProgramVersion {
 
 		final Random random = new Random();
 		expectedVersion = new SemanticVersion(random.nextInt(), random.nextInt(), random.nextInt());
-		connectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(200,
+		connectionProvider.mapResponse(p -> new FakeConnectionResponseTuple(200,
 				("<Response Status=\"OK\">" +
 					"<Item Name=\"RuntimeGUID\">{7FF5918E-9FDE-4D4D-9AE7-62DFFDD64397}</Item>" +
 					"<Item Name=\"LibraryVersion\">24</Item><Item Name=\"ProgramName\">JRiver Media Center</Item>" +
