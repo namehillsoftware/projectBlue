@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.sync;
 
-import androidx.work.ListenableWorker;
-import io.reactivex.Single;
+import io.reactivex.subjects.CompletableSubject;
 
 public interface SynchronizeStoredFiles {
-	Single<ListenableWorker.Result> streamFileSynchronization();
+	CompletableSubject streamFileSynchronization();
 }

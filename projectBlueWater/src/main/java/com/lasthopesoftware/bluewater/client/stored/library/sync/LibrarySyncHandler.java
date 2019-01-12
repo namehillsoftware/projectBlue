@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
@@ -41,9 +39,7 @@ public class LibrarySyncHandler {
 		CollectServiceFilesForSync serviceFilesToSyncCollector,
 		IStoredFileAccess storedFileAccess,
 		UpdateStoredFiles storedFileUpdater,
-		ProcessStoredFileJobs storedFileJobsProcessor,
-		ILibraryStorageReadPermissionsRequirementsProvider libraryStorageReadPermissionsRequirementsProvider,
-		ILibraryStorageWritePermissionsRequirementsProvider libraryStorageWritePermissionsRequirementsProvider) {
+		ProcessStoredFileJobs storedFileJobsProcessor) {
 		this.library = library;
 		this.serviceFilesToSyncCollector = serviceFilesToSyncCollector;
 		this.storedFileAccess = storedFileAccess;

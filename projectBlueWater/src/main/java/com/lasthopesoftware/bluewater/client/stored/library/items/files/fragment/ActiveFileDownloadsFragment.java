@@ -27,7 +27,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
-import com.lasthopesoftware.bluewater.client.stored.worker.SyncWorker;
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
+import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
@@ -89,7 +90,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 						onFileDownloadedReceiver = new BroadcastReceiver() {
 							@Override
 							public void onReceive(Context context, Intent intent) {
-								final int storedFileId = intent.getIntExtra(SyncWorker.storedFileEventKey, -1);
+								final int storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1);
 
 								final StoredFile storedFile = localStoredFiles.get(storedFileId);
 								if (storedFile == null) return;
@@ -99,7 +100,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							}
 						};
 
-						localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(SyncWorker.onFileDownloadedEvent));
+						localBroadcastManager.registerReceiver(onFileDownloadedReceiver, new IntentFilter(StoredFileSynchronization.onFileDownloadedEvent));
 
 						if (onFileQueuedReceiver != null)
 							localBroadcastManager.unregisterReceiver(onFileQueuedReceiver);
@@ -107,7 +108,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 						onFileQueuedReceiver = new BroadcastReceiver() {
 							@Override
 							public void onReceive(Context context, Intent intent) {
-								final int storedFileId = intent.getIntExtra(SyncWorker.storedFileEventKey, -1);
+								final int storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1);
 								if (storedFileId == -1) return;
 
 								if (localStoredFiles.containsKey(storedFileId)) return;
@@ -124,7 +125,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 							}
 						};
 
-						localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(SyncWorker.onFileQueuedEvent));
+						localBroadcastManager.registerReceiver(onFileQueuedReceiver, new IntentFilter(StoredFileSynchronization.onFileQueuedEvent));
 
 						listView.setAdapter(activeFileDownloadsAdapter);
 
@@ -137,7 +138,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		final CharSequence startSyncLabel = activity.getText(R.string.start_sync_button);
 		final CharSequence stopSyncLabel = activity.getText(R.string.stop_sync_button);
 
-		SyncWorker.promiseIsSyncing()
+		SyncSchedulingWorker.promiseIsSyncing()
 			.eventually(LoopedInPromise.response(
 				new VoidResponse<>(isSyncing -> toggleSyncButton.setText(!isSyncing ? startSyncLabel : stopSyncLabel)), activity));
 
@@ -151,7 +152,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 			}
 		};
 
-		localBroadcastManager.registerReceiver(onSyncStartedReceiver, new IntentFilter(SyncWorker.onSyncStartEvent));
+		localBroadcastManager.registerReceiver(onSyncStartedReceiver, new IntentFilter(StoredFileSynchronization.onSyncStartEvent));
 
 		if (onSyncStoppedReceiver != null)
 			localBroadcastManager.unregisterReceiver(onSyncStoppedReceiver);
@@ -163,12 +164,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 			}
 		};
 
-		localBroadcastManager.registerReceiver(onSyncStoppedReceiver, new IntentFilter(SyncWorker.onSyncStopEvent));
+		localBroadcastManager.registerReceiver(onSyncStoppedReceiver, new IntentFilter(StoredFileSynchronization.onSyncStopEvent));
 
-		toggleSyncButton.setOnClickListener(v -> SyncWorker.promiseIsSyncing()
+		toggleSyncButton.setOnClickListener(v -> SyncSchedulingWorker.promiseIsSyncing()
 			.then(isSyncing -> isSyncing
-				? SyncWorker.cancel()
-				: SyncWorker.syncImmediately(activity)));
+				? SyncSchedulingWorker.cancel()
+				: SyncSchedulingWorker.syncImmediately(activity)));
 
 		toggleSyncButton.setEnabled(true);
 

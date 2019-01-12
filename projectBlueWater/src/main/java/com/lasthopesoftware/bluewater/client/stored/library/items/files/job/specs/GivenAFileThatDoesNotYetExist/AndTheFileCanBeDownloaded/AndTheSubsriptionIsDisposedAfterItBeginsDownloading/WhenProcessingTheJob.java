@@ -75,6 +75,6 @@ public class WhenProcessingTheJob {
 
 	@Test
 	public void thenTheJobStatesProgressCorrectly() {
-		assertThat(states).containsExactly(StoredFileJobState.Downloading, StoredFileJobState.Downloaded);
+		assertThat(states).containsExactly(StoredFileJobState.Downloading);
 	}
 }

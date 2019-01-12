@@ -73,9 +73,8 @@ public class WhenSyncingTheStoredItems {
 				new StoredFileJobStatus(
 					mock(File.class),
 					job.getStoredFile(),
-					StoredFileJobState.Downloaded)),
-			f -> false,
-			f -> false);
+					StoredFileJobState.Downloaded))
+		);
 
 		librarySyncHandler.setOnFileQueued(queuedStoredFiles::add);
 		storedFileJobResults = librarySyncHandler.observeLibrarySync()

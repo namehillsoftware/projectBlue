@@ -4,8 +4,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
@@ -90,9 +88,8 @@ public class WhenSyncingTheStoredItems {
 				new StoredFileJobStatus(
 					mock(File.class),
 					job.getStoredFile(),
-					StoredFileJobState.Downloaded)),
-			mock(ILibraryStorageReadPermissionsRequirementsProvider.class),
-			mock(ILibraryStorageWritePermissionsRequirementsProvider.class));
+					StoredFileJobState.Downloaded))
+		);
 
 		final Single<List<StoredFile>> syncedFiles = librarySyncHandler.observeLibrarySync().map(j -> j.storedFile).toList();
 

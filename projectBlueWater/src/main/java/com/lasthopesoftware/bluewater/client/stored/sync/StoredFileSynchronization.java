@@ -9,7 +9,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import androidx.work.ListenableWorker;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
@@ -24,9 +23,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
-import com.lasthopesoftware.bluewater.client.stored.worker.SyncWorker;
+import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
@@ -41,7 +39,9 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
-import io.reactivex.Single;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.CompletableSubject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ import static android.content.Context.NOTIFICATION_SERVICE;
 
 public class StoredFileSynchronization implements SynchronizeStoredFiles {
 
-	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(SyncWorker.class);
+	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(SyncSchedulingWorker.class);
 
 	public static final String onSyncStartEvent = magicPropertyBuilder.buildProperty("onSyncStartEvent");
 	public static final String onSyncStopEvent = magicPropertyBuilder.buildProperty("onSyncStopEvent");
@@ -198,21 +198,55 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 	}
 
 	@Override
-	public Single<ListenableWorker.Result> streamFileSynchronization() {
+	public CompletableSubject streamFileSynchronization() {
 		logger.info("Starting sync.");
 
 		setSyncNotificationText(null);
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
-		return StreamedPromise.stream(libraryProvider.getAllLibraries())
+		final CompletableSubject completableSubject = CompletableSubject.create();
+
+		StreamedPromise.stream(libraryProvider.getAllLibraries())
 			.map(library -> {
 				if (library.isSyncLocalConnectionsOnly()) library.setLocalOnly(true);
 
 				return ObservedPromise.observe(urlProviders.promiseBuiltUrlProvider(library)
 					.then(urlProvider -> librarySyncHandlersProduction.getNewSyncHandler(urlProvider, library)));
 			})
-			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync))
-			.reduce(ListenableWorker.Result.failure(), (result, storedFileJobStatus) -> result);
+			.flatMap(o -> o.flatMap(librarySyncHandler -> {
+				librarySyncHandler.setOnFileQueued(sf -> sendStoredFileBroadcast(onFileQueuedEvent, sf));
+				return librarySyncHandler.observeLibrarySync();
+			}))
+			.subscribe(new Observer<StoredFileJobStatus>() {
+				@Override
+				public void onSubscribe(Disposable d) {
+
+				}
+
+				@Override
+				public void onNext(StoredFileJobStatus storedFileJobStatus) {
+					switch (storedFileJobStatus.storedFileJobState) {
+						case Downloading:
+							sendStoredFileBroadcast(onFileDownloadingEvent, storedFileJobStatus.storedFile);
+							return;
+						case Downloaded:
+							sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobStatus.storedFile);
+							return;
+					}
+				}
+
+				@Override
+				public void onError(Throwable e) {
+					completableSubject.onError(e);
+				}
+
+				@Override
+				public void onComplete() {
+					completableSubject.onComplete();
+				}
+			});
+
+		return completableSubject;
 	}
 
 	@NonNull

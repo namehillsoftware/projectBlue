@@ -130,8 +130,7 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 				serviceFileUriQueryParamsProvider,
 				fileReadPossibleArbitrator,
 				fileWritePossibleArbitrator,
-				fileStreamWriter),
-			storageReadPermissionsRequirementsProvider,
-			storageWritePermissionsRequirementsProvider);
+				fileStreamWriter)
+		);
 	}
 }

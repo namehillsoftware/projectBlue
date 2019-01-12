@@ -32,7 +32,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class StoredFileJobProcessor implements ProcessStoredFileJobs {
-	private static final Executor storedFileExecutor = Executors.newSingleThreadExecutor();
+	private static final Executor downloadExecutor = Executors.newSingleThreadExecutor();
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJobProcessor.class);
 
@@ -56,25 +56,34 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 	@Override
 	public Observable<StoredFileJobStatus> observeStoredFileDownload(StoredFileJob job) {
-		final StoredFile storedFile = job.getStoredFile();
-		final File file = storedFileFileProvider.getFile(storedFile);
-
-		if (file.exists()) {
-			if (!fileReadPossibleArbitrator.isFileReadPossible(file))
-				return Observable.error(new StoredFileReadException(file, storedFile));
-
-			if (storedFile.isDownloadComplete())
-				return Observable.just(new StoredFileJobStatus(file, storedFile, StoredFileJobState.AlreadyExists));
-		}
-
-		if (!fileWritePossibleArbitrator.isFileWritePossible(file))
-			return Observable.error(new StoredFileWriteException(file, storedFile));
-
-		final File parent = file.getParentFile();
-		if (parent != null && !parent.exists() && !parent.mkdirs())
-			return Observable.error(new StorageCreatePathException(parent));
-
 		return Observable.create(emitter -> {
+			final StoredFile storedFile = job.getStoredFile();
+			final File file = storedFileFileProvider.getFile(storedFile);
+
+			if (file.exists()) {
+				if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
+					emitter.onError(new StoredFileReadException(file, storedFile));
+					return;
+				}
+
+				if (storedFile.isDownloadComplete()) {
+					emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.AlreadyExists));
+					emitter.onComplete();
+					return;
+				}
+			}
+
+			if (!fileWritePossibleArbitrator.isFileWritePossible(file)) {
+				emitter.onError(new StoredFileWriteException(file, storedFile));
+				return;
+			}
+
+			final File parent = file.getParentFile();
+			if (parent != null && !parent.exists() && !parent.mkdirs()) {
+				emitter.onError(new StorageCreatePathException(parent));
+				return;
+			}
+
 			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
 			final CancellationProxy cancellationProxy = new CancellationProxy();
@@ -120,7 +129,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 					} finally {
 						body.close();
 					}
-				}, storedFileExecutor), error -> {
+				}, downloadExecutor), error -> {
 					logger.error("Error getting connection", error);
 					return new Promise<>(new StoredFileJobException(storedFile, error));
 				})
