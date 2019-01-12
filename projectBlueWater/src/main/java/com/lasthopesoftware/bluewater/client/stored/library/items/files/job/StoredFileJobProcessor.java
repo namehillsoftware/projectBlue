@@ -19,7 +19,6 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import io.reactivex.Observable;
-import io.reactivex.disposables.Disposable;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.slf4j.Logger;
@@ -56,7 +55,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 	@Override
 	public Observable<StoredFileJobStatus> observeStoredFileDownload(StoredFileJob job) {
-		return Observable.create(emitter -> {
+		final CancellationProxy cancellationProxy = new CancellationProxy();
+		final Observable<StoredFileJobStatus> streamedFileDownload = Observable.create(emitter -> {
 			final StoredFile storedFile = job.getStoredFile();
 			final File file = storedFileFileProvider.getFile(storedFile);
 
@@ -85,20 +85,6 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 			}
 
 			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
-
-			final CancellationProxy cancellationProxy = new CancellationProxy();
-
-			emitter.setDisposable(new Disposable() {
-				@Override
-				public void dispose() {
-					cancellationProxy.run();
-				}
-
-				@Override
-				public boolean isDisposed() {
-					return cancellationProxy.isCancelled();
-				}
-			});
 
 			final ServiceFile serviceFile = job.getServiceFile();
 			final Promise<Response> promisedResponse = connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
@@ -138,6 +124,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 					new VoidResponse<>(emitter::onError))
 				.then(new VoidResponse<>(v -> emitter.onComplete()));
 		});
+
+		return streamedFileDownload.doOnDispose(() -> cancellationProxy.run());
 	}
 
 	private StoredFileJobStatus getCancelledStoredFileJobResult(File file, StoredFile storedFile) {

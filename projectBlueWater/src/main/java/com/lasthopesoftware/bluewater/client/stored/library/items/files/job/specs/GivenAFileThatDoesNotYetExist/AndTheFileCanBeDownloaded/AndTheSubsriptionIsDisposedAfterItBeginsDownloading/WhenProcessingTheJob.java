@@ -70,7 +70,7 @@ public class WhenProcessingTheJob {
 
 	@Test
 	public void thenTheFileIsMarkedAsDownloaded() {
-		verify(storedFileAccess, times(1)).markStoredFileAsDownloaded(storedFile);
+		verify(storedFileAccess, never()).markStoredFileAsDownloaded(storedFile);
 	}
 
 	@Test
