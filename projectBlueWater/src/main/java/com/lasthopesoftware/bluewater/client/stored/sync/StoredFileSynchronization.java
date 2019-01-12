@@ -220,7 +220,7 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 			.subscribe(new Observer<StoredFileJobStatus>() {
 				@Override
 				public void onSubscribe(Disposable d) {
-
+					completableSubject.doOnDispose(d::dispose);
 				}
 
 				@Override
