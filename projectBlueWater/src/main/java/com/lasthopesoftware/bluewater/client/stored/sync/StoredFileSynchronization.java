@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
@@ -41,9 +42,7 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.subjects.CompletableSubject;
+import io.reactivex.Completable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +58,7 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 	public static final String onFileDownloadingEvent = magicPropertyBuilder.buildProperty("onFileDownloadingEvent");
 	public static final String onFileDownloadedEvent = magicPropertyBuilder.buildProperty("onFileDownloadedEvent");
 	public static final String onFileWriteErrorEvent = magicPropertyBuilder.buildProperty("onFileWriteErrorEvent");
+	public static final String onFileReadErrorEvent = magicPropertyBuilder.buildProperty("onFileReadErrorEvent");
 	public static final String storedFileEventKey = magicPropertyBuilder.buildProperty("storedFileEventKey");
 
 	private static final int notificationId = 23;
@@ -201,15 +201,13 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 	}
 
 	@Override
-	public CompletableSubject streamFileSynchronization() {
+	public Completable streamFileSynchronization() {
 		logger.info("Starting sync.");
 
 		setSyncNotificationText(null);
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
-		final CompletableSubject completableSubject = CompletableSubject.create();
-
-		StreamedPromise.stream(libraryProvider.getAllLibraries())
+		return StreamedPromise.stream(libraryProvider.getAllLibraries())
 			.map(library -> {
 				if (library.isSyncLocalConnectionsOnly()) library.setLocalOnly(true);
 
@@ -217,44 +215,34 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 					.then(urlProvider -> librarySyncHandlersProduction.getNewSyncHandler(urlProvider, library)));
 			})
 			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync, true))
-			.subscribe(new Observer<StoredFileJobStatus>() {
-				@Override
-				public void onSubscribe(Disposable d) {
-					completableSubject.doOnDispose(d::dispose);
+			.flatMapCompletable(storedFileJobStatus -> {
+				switch (storedFileJobStatus.storedFileJobState) {
+					case Queued:
+						sendStoredFileBroadcast(onFileQueuedEvent, storedFileJobStatus.storedFile);
+						return Completable.complete();
+					case Downloading:
+						sendStoredFileBroadcast(onFileDownloadingEvent, storedFileJobStatus.storedFile);
+						return Completable.complete();
+					case Downloaded:
+						sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobStatus.storedFile);
+						return Completable.complete();
 				}
 
-				@Override
-				public void onNext(StoredFileJobStatus storedFileJobStatus) {
-					switch (storedFileJobStatus.storedFileJobState) {
-						case Queued:
-							sendStoredFileBroadcast(onFileQueuedEvent, storedFileJobStatus.storedFile);
-							return;
-						case Downloading:
-							sendStoredFileBroadcast(onFileDownloadingEvent, storedFileJobStatus.storedFile);
-							return;
-						case Downloaded:
-							sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobStatus.storedFile);
-							return;
-					}
+				return Completable.complete();
+			}, true)
+			.onErrorComplete(e -> {
+				if (e instanceof StoredFileWriteException) {
+					sendStoredFileBroadcast(onFileWriteErrorEvent, ((StoredFileWriteException)e).getStoredFile());
+					return true;
 				}
 
-				@Override
-				public void onError(Throwable e) {
-					if (e instanceof StoredFileWriteException) {
-						sendStoredFileBroadcast(onFileWriteErrorEvent, ((StoredFileWriteException)e).getStoredFile());
-						return;
-					}
-
-					completableSubject.onError(e);
+				if (e instanceof StoredFileReadException) {
+					sendStoredFileBroadcast(onFileReadErrorEvent, ((StoredFileReadException)e).getStoredFile());
+					return true;
 				}
 
-				@Override
-				public void onComplete() {
-					completableSubject.onComplete();
-				}
+				return false;
 			});
-
-		return completableSubject;
 	}
 
 	@NonNull

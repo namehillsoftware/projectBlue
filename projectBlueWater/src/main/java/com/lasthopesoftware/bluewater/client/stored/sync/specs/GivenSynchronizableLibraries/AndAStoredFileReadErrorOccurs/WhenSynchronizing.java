@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizableLibraries.AndAStoredFileWriteErrorOccurs;
+package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizableLibraries.AndAStoredFileReadErrorOccurs;
 
 import android.content.Context;
 import android.content.IntentFilter;
@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
@@ -78,7 +78,7 @@ public class WhenSynchronizing extends AndroidContext {
 							Observable.concat(Observable.just(
 								new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
 								new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading)),
-							Observable.error(new StoredFileWriteException(mock(File.class), f))), true)));
+							Observable.error(new StoredFileReadException(mock(File.class), f))), true)));
 
 			return librarySyncHandler;
 		};
@@ -93,7 +93,7 @@ public class WhenSynchronizing extends AndroidContext {
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);
 		intentFilter.addAction(onFileDownloadingEvent);
 		intentFilter.addAction(onFileQueuedEvent);
-		intentFilter.addAction(onFileWriteErrorEvent);
+		intentFilter.addAction(onFileReadErrorEvent);
 
 		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
@@ -121,7 +121,7 @@ public class WhenSynchronizing extends AndroidContext {
 	@Test
 	public void thenTheWriteErrorsIsBroadcast() {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
-			.filter(i -> onFileWriteErrorEvent.equals(i.getAction()))
+			.filter(i -> onFileReadErrorEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
 			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).filter(f -> f.getServiceId() == 7).map(StoredFile::getId).toList());
 	}
