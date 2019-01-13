@@ -76,18 +76,11 @@ public class WhenSyncingTheStoredItems {
 					StoredFileJobState.Downloaded))
 		);
 
-		librarySyncHandler.setOnFileQueued(queuedStoredFiles::add);
 		storedFileJobResults = librarySyncHandler.observeLibrarySync()
 			.filter(j -> j.storedFileJobState == StoredFileJobState.Downloaded)
 			.map(j -> j.storedFile)
 			.toList()
 			.blockingGet();
-	}
-
-	@Test
-	public void thenTheFilesInTheStoredItemsAreQueued() {
-		assertThat(Stream.of(queuedStoredFiles).map(StoredFile::getServiceId).toList())
-			.containsExactly(1, 2, 4, 10);
 	}
 
 	@Test

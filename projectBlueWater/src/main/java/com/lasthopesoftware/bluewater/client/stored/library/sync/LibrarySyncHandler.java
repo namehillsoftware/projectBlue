@@ -6,14 +6,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles;
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import com.vedsoft.futures.runnables.OneParameterAction;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +30,6 @@ public class LibrarySyncHandler {
 	private final UpdateStoredFiles storedFileUpdater;
 
 	private final CancellationProxy cancellationProxy = new CancellationProxy();
-	private OneParameterAction<StoredFile> onFileQueued;
 
 	public LibrarySyncHandler(
 		Library library,
@@ -45,10 +42,6 @@ public class LibrarySyncHandler {
 		this.storedFileAccess = storedFileAccess;
 		this.storedFileUpdater = storedFileUpdater;
 		this.storedFileJobsProcessor = storedFileJobsProcessor;
-	}
-
-	public void setOnFileQueued(OneParameterAction<StoredFile> onFileQueued) {
-		this.onFileQueued = onFileQueued;
 	}
 
 	//	public void setOnFileReadError(OneParameterAction<StoredFile> onFileReadError) {
@@ -90,12 +83,7 @@ public class LibrarySyncHandler {
 						if (storedFile == null || storedFile.isDownloadComplete())
 							return Observable.empty();
 
-						final Observable<StoredFileJobStatus> observeStoredFileDownload = this.storedFileJobsProcessor.observeStoredFileDownload(new StoredFileJob(serviceFile, storedFile));
-
-						if (onFileQueued != null)
-							onFileQueued.runWith(storedFile);
-
-						return observeStoredFileDownload;
+						return this.storedFileJobsProcessor.observeStoredFileDownload(new StoredFileJob(serviceFile, storedFile));
 					});
 
 				promiseDownloadedStoredFile

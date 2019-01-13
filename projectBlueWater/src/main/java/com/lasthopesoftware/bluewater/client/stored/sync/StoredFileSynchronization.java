@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
 import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -213,10 +214,7 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 				return ObservedPromise.observe(urlProviders.promiseBuiltUrlProvider(library)
 					.then(urlProvider -> librarySyncHandlersProduction.getNewSyncHandler(urlProvider, library)));
 			})
-			.flatMap(o -> o.flatMap(librarySyncHandler -> {
-				librarySyncHandler.setOnFileQueued(sf -> sendStoredFileBroadcast(onFileQueuedEvent, sf));
-				return librarySyncHandler.observeLibrarySync();
-			}))
+			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync))
 			.subscribe(new Observer<StoredFileJobStatus>() {
 				@Override
 				public void onSubscribe(Disposable d) {

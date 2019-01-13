@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenACancellationWhileGettingStoredItems;
 
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
@@ -9,17 +8,15 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.specs.FakeDeferredStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
-import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
-import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
 import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -53,27 +50,8 @@ public class WhenSyncingTheStoredItems {
 				new ServiceFile(4),
 				new ServiceFile(10))));
 
-		final FakeFileConnectionProvider fakeConnectionProvider = new FakeFileConnectionProvider();
-
-		final IFileReadPossibleArbitrator readPossibleArbitrator = mock(IFileReadPossibleArbitrator.class);
-		when(readPossibleArbitrator.isFileReadPossible(any())).thenReturn(true);
-
-		final IFileWritePossibleArbitrator writePossibleArbitrator = mock(IFileWritePossibleArbitrator.class);
-		when(writePossibleArbitrator.isFileWritePossible(any())).thenReturn(true);
-
 		storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
-
-		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
-			job -> Observable.just(
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloading),
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloaded)));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
@@ -91,13 +69,31 @@ public class WhenSyncingTheStoredItems {
 					StoredFileJobState.Downloaded))
 		);
 
-		final Single<List<StoredFile>> syncedFiles = librarySyncHandler.observeLibrarySync().map(j -> j.storedFile).toList();
-
-		librarySyncHandler.cancel();
+		final Observable<StoredFile> syncedFiles = librarySyncHandler.observeLibrarySync().map(j -> j.storedFile);
 
 		deferredStoredItemAccess.resolveStoredItems();
 
-		storedFileJobResults = syncedFiles.blockingGet();
+		syncedFiles.blockingSubscribe(new Observer<StoredFile>() {
+			@Override
+			public void onSubscribe(Disposable d) {
+				d.dispose();
+			}
+
+			@Override
+			public void onNext(StoredFile storedFile) {
+				storedFileJobResults.add(storedFile);
+			}
+
+			@Override
+			public void onError(Throwable e) {
+
+			}
+
+			@Override
+			public void onComplete() {
+
+			}
+		});
 	}
 
 	@Test
