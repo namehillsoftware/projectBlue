@@ -60,6 +60,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 			final StoredFile storedFile = job.getStoredFile();
 			final File file = storedFileFileProvider.getFile(storedFile);
 
+			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued));
+
 			if (file.exists()) {
 				if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
 					emitter.onError(new StoredFileReadException(file, storedFile));

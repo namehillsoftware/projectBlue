@@ -8,13 +8,13 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static StoredFileJobStatus storedFileJobStatus;
+	private static List<StoredFileJobState> storedFileJobStatus;
 
 	@BeforeClass
 	public static void before() {
@@ -43,11 +43,13 @@ public class WhenProcessingTheJob {
 			(is, f) -> {});
 
 		storedFileJobStatus = storedFileJobProcessor.observeStoredFileDownload(
-			new StoredFileJob(new ServiceFile(1), storedFile)).blockingFirst();
+			new StoredFileJob(new ServiceFile(1), storedFile))
+			.map(f -> f.storedFileJobState)
+			.toList().blockingGet();
 	}
 
 	@Test
 	public void thenAnAlreadyExistsResultIsReturned() {
-		assertThat(storedFileJobStatus.storedFileJobState).isEqualTo(StoredFileJobState.AlreadyExists);
+		assertThat(storedFileJobStatus).containsExactly(StoredFileJobState.Queued, StoredFileJobState.AlreadyExists);
 	}
 }

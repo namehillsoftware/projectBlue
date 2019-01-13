@@ -54,7 +54,8 @@ public class WhenProcessingTheJob {
 					@Override
 					public void onNext(StoredFileJobStatus status) {
 						states.add(status.storedFileJobState);
-						disposable.dispose();
+						if (status.storedFileJobState == StoredFileJobState.Downloaded)
+							disposable.dispose();
 					}
 
 					@Override
@@ -76,6 +77,9 @@ public class WhenProcessingTheJob {
 
 	@Test
 	public void thenTheJobStatesProgressCorrectly() {
-		assertThat(states).containsExactly(StoredFileJobState.Downloading);
+		assertThat(states).containsExactly(
+			StoredFileJobState.Queued,
+			StoredFileJobState.Downloading,
+			StoredFileJobState.Downloaded);
 	}
 }

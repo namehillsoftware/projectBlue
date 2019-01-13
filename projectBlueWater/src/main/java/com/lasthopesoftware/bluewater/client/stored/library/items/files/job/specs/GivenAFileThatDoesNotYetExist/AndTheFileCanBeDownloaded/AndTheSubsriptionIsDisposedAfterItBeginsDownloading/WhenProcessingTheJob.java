@@ -74,6 +74,9 @@ public class WhenProcessingTheJob {
 					@Override
 					public void onNext(StoredFileJobStatus status) {
 						states.add(status.storedFileJobState);
+
+						if (status.storedFileJobState != StoredFileJobState.Downloading) return;
+
 						disposable.dispose();
 						deferredPromise.resolve();
 					}
@@ -97,6 +100,6 @@ public class WhenProcessingTheJob {
 
 	@Test
 	public void thenTheJobStatesProgressCorrectly() {
-		assertThat(states).containsExactly(StoredFileJobState.Downloading);
+		assertThat(states).containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloading);
 	}
 }
