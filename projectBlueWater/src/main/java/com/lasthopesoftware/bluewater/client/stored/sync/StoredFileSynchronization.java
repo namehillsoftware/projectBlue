@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
@@ -57,6 +58,7 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 	public static final String onFileQueuedEvent = magicPropertyBuilder.buildProperty("onFileQueuedEvent");
 	public static final String onFileDownloadingEvent = magicPropertyBuilder.buildProperty("onFileDownloadingEvent");
 	public static final String onFileDownloadedEvent = magicPropertyBuilder.buildProperty("onFileDownloadedEvent");
+	public static final String onFileWriteErrorEvent = magicPropertyBuilder.buildProperty("onFileWriteErrorEvent");
 	public static final String storedFileEventKey = magicPropertyBuilder.buildProperty("storedFileEventKey");
 
 	private static final int notificationId = 23;
@@ -214,7 +216,7 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 				return ObservedPromise.observe(urlProviders.promiseBuiltUrlProvider(library)
 					.then(urlProvider -> librarySyncHandlersProduction.getNewSyncHandler(urlProvider, library)));
 			})
-			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync))
+			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync, true))
 			.subscribe(new Observer<StoredFileJobStatus>() {
 				@Override
 				public void onSubscribe(Disposable d) {
@@ -238,6 +240,11 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 
 				@Override
 				public void onError(Throwable e) {
+					if (e instanceof StoredFileWriteException) {
+						sendStoredFileBroadcast(onFileWriteErrorEvent, ((StoredFileWriteException)e).getStoredFile());
+						return;
+					}
+
 					completableSubject.onError(e);
 				}
 
