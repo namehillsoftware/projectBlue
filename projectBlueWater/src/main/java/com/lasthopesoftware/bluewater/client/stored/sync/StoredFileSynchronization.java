@@ -37,6 +37,7 @@ import com.lasthopesoftware.resources.notifications.notificationchannel.Notifica
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -251,7 +252,7 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 			return true;
 		}
 
-		return false;
+		return e instanceof StorageCreatePathException;
 	}
 
 	@NonNull
