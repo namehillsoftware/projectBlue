@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServ
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
@@ -78,16 +77,6 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
-
-		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
-			new StoredFileJobProcessor(
-				new StoredFileSystemFileProducer(),
-				fakeConnectionProvider,
-				storedFileAccess,
-				new ServiceFileUriQueryParamsProvider(),
-				readPossibleArbitrator,
-				writePossibleArbitrator,
-				(i, f) -> {}));
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
