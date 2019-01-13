@@ -145,6 +145,9 @@
                 android:enabled="true"
                 android:exported="false">
         </service>
+        <service android:name=".client.stored.service.StoredSyncService"
+                 android:enabled="true"
+                 android:exported="false"/>
     </application>
 
 </manifest>
