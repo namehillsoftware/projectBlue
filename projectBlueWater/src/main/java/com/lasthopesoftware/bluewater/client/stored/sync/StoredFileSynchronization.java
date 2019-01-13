@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
@@ -43,6 +44,7 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import com.vedsoft.futures.runnables.OneParameterAction;
 import com.vedsoft.futures.runnables.TwoParameterAction;
 import io.reactivex.Completable;
+import io.reactivex.exceptions.CompositeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,19 +232,26 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 
 				return Completable.complete();
 			}, true)
-			.onErrorComplete(e -> {
-				if (e instanceof StoredFileWriteException) {
-					sendStoredFileBroadcast(onFileWriteErrorEvent, ((StoredFileWriteException)e).getStoredFile());
-					return true;
-				}
+			.onErrorComplete(this::handleError);
+	}
 
-				if (e instanceof StoredFileReadException) {
-					sendStoredFileBroadcast(onFileReadErrorEvent, ((StoredFileReadException)e).getStoredFile());
-					return true;
-				}
+	private boolean handleError(Throwable e) {
+		if (e instanceof CompositeException) {
+			final CompositeException compositeException = (CompositeException)e;
+			return Stream.of(compositeException.getExceptions()).allMatch(this::handleError);
+		}
 
-				return false;
-			});
+		if (e instanceof StoredFileWriteException) {
+			sendStoredFileBroadcast(onFileWriteErrorEvent, ((StoredFileWriteException)e).getStoredFile());
+			return true;
+		}
+
+		if (e instanceof StoredFileReadException) {
+			sendStoredFileBroadcast(onFileReadErrorEvent, ((StoredFileReadException)e).getStoredFile());
+			return true;
+		}
+
+		return false;
 	}
 
 	@NonNull

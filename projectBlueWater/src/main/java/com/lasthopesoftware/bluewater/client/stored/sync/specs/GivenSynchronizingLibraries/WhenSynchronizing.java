@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizableLibraries.AndAStoredFileReadErrorOccurs;
+package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizingLibraries;
 
 import android.content.Context;
 import android.content.IntentFilter;
@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
@@ -23,8 +22,7 @@ import io.reactivex.Observable;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Random;
 
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.*;
@@ -41,12 +39,15 @@ public class WhenSynchronizing extends AndroidContext {
 		new StoredFile().setId(random.nextInt()).setServiceId(2).setLibraryId(4),
 		new StoredFile().setId(random.nextInt()).setServiceId(4).setLibraryId(4),
 		new StoredFile().setId(random.nextInt()).setServiceId(5).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(7).setLibraryId(4),
 		new StoredFile().setId(random.nextInt()).setServiceId(114).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4)
+		new StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4),
+		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
+		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
+		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
+		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
+		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
+		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
 	};
-
-	private static final List<StoredFile> expectedStoredFileJobs = Stream.of(storedFiles).filter(f -> f.getServiceId() != 7).toList();
 
 	private static final BroadcastRecorder broadcastRecorder = new BroadcastRecorder();
 
@@ -58,27 +59,20 @@ public class WhenSynchronizing extends AndroidContext {
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
 		when(libraryProvider.getAllLibraries())
-			.thenReturn(new Promise<>(Collections.singletonList(new Library().setId(4))));
+			.thenReturn(new Promise<>(Arrays.asList(
+				new Library().setId(4),
+				new Library().setId(10))));
 
 		final ProduceLibrarySyncHandlers syncHandlers = (urlProvider, library) -> {
 			final LibrarySyncHandler librarySyncHandler = mock(LibrarySyncHandler.class);
 			when(librarySyncHandler.observeLibrarySync())
-				.thenReturn(Observable.concat(
-					Observable
-						.fromArray(storedFiles)
-						.filter(f -> f.getServiceId() != 7)
-						.flatMap(f -> Observable.just(
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading),
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloaded))),
-					Observable
-						.fromArray(storedFiles)
-						.filter(f -> f.getServiceId() == 7)
-						.flatMap(f ->
-							Observable.concat(Observable.just(
-								new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
-								new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading)),
-							Observable.error(new StoredFileReadException(mock(File.class), f))), true)));
+				.thenReturn(Observable
+					.fromArray(storedFiles)
+					.filter(f -> f.getLibraryId() == library.getId())
+					.flatMap(f -> Observable.just(
+						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
+						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading),
+						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloaded))));
 
 			return librarySyncHandler;
 		};
@@ -93,7 +87,6 @@ public class WhenSynchronizing extends AndroidContext {
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);
 		intentFilter.addAction(onFileDownloadingEvent);
 		intentFilter.addAction(onFileQueuedEvent);
-		intentFilter.addAction(onFileReadErrorEvent);
 
 		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
@@ -107,7 +100,7 @@ public class WhenSynchronizing extends AndroidContext {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
 			.filter(i -> onFileQueuedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsOnlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
+			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
 	}
 
 	@Test
@@ -115,15 +108,7 @@ public class WhenSynchronizing extends AndroidContext {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
 			.filter(i -> onFileDownloadingEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsOnlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
-	}
-
-	@Test
-	public void thenTheWriteErrorsIsBroadcast() {
-		assertThat(Stream.of(broadcastRecorder.recordedIntents)
-			.filter(i -> onFileReadErrorEvent.equals(i.getAction()))
-			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).filter(f -> f.getServiceId() == 7).map(StoredFile::getId).toList());
+			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
 	}
 
 	@Test
@@ -131,6 +116,6 @@ public class WhenSynchronizing extends AndroidContext {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
 			.filter(i -> onFileDownloadedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsOnlyElementsOf(Stream.of(expectedStoredFileJobs).map(StoredFile::getId).toList());
+			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
 	}
 }
