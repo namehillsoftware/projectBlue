@@ -224,6 +224,9 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 				@Override
 				public void onNext(StoredFileJobStatus storedFileJobStatus) {
 					switch (storedFileJobStatus.storedFileJobState) {
+						case Queued:
+							sendStoredFileBroadcast(onFileQueuedEvent, storedFileJobStatus.storedFile);
+							return;
 						case Downloading:
 							sendStoredFileBroadcast(onFileDownloadingEvent, storedFileJobStatus.storedFile);
 							return;

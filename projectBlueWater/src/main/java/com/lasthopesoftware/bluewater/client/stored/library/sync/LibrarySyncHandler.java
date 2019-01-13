@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
@@ -28,8 +27,6 @@ public class LibrarySyncHandler {
 	private final CollectServiceFilesForSync serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
 	private final UpdateStoredFiles storedFileUpdater;
-
-	private final CancellationProxy cancellationProxy = new CancellationProxy();
 
 	public LibrarySyncHandler(
 		Library library,
@@ -57,12 +54,6 @@ public class LibrarySyncHandler {
 //				onFileWriteError.runWith(library, storedFile);
 //		});
 //	}
-
-	public void cancel() {
-		cancellationProxy.run();
-
-//		storedFileDownloader.cancel();
-	}
 
 	public Observable<StoredFileJobStatus> observeLibrarySync() {
 

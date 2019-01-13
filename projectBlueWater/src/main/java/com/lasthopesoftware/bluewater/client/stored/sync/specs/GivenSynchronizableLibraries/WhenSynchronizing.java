@@ -70,6 +70,7 @@ public class WhenSynchronizing extends AndroidContext {
 					.fromArray(storedFiles)
 					.filter(f -> f.getLibraryId() == library.getId())
 					.flatMap(f -> Observable.just(
+						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
 						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading),
 						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloaded))));
 
