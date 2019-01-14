@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.service;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import androidx.annotation.Nullable;
+import android.support.annotation.Nullable;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 public class StoredFileWritePermissionsReceiver implements ReceiveStoredFileEvent, ImmediateResponse<StoredFile, Void> {
@@ -23,9 +24,11 @@ public class StoredFileWritePermissionsReceiver implements ReceiveStoredFileEven
 	}
 
 	@Override
-	public void receive(int storedFileId) {
+	public Promise<Void> receive(int storedFileId) {
 		if (!writePermissionArbitratorForOs.isWritePermissionGranted())
-			storedFileAccess.getStoredFile(storedFileId).then(this);
+			return storedFileAccess.getStoredFile(storedFileId).then(this);
+
+		return Promise.empty();
 	}
 
 	@Override
