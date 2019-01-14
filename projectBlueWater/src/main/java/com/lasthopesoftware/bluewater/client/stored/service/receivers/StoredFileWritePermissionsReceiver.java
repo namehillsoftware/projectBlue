@@ -24,13 +24,12 @@ public class StoredFileWritePermissionsReceiver implements ReceiveStoredFileEven
 
 	@Override
 	public void receive(int storedFileId) {
-		if (writePermissionArbitratorForOs.isWritePermissionGranted()) return;
-
-		storedFileAccess.getStoredFile(storedFileId).then(this);
+		if (!writePermissionArbitratorForOs.isWritePermissionGranted())
+			storedFileAccess.getStoredFile(storedFileId).then(this);
 	}
 
 	@Override
-	public boolean IsAcceptable(String event) {
+	public boolean isAcceptable(String event) {
 		return StoredFileSynchronization.onFileWriteErrorEvent.equals(event);
 	}
 
