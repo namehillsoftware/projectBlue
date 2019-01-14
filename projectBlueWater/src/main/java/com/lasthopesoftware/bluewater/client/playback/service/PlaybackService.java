@@ -24,12 +24,10 @@ import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
@@ -40,7 +38,6 @@ import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvi
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
@@ -56,7 +53,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.sy
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
@@ -75,11 +71,8 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
 import com.lasthopesoftware.bluewater.client.playback.file.*;
-import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
@@ -869,63 +862,59 @@ implements OnAudioFocusChangeListener
 					new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
 					new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
 
-			return extractorHandler.getObject().eventually(handler -> {
-				if (playlistPlaybackBootstrapper != null)
-					playlistPlaybackBootstrapper.close();
-
 				playlistPlaybackBootstrapper = new ExoPlayerPlaybackBootstrapper(new ExoPlayerCreator(handler, lazyRenderersFactory.getObject()));
 
-					final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
-						this,
-						connectionProvider,
-						library,
-						cache);
+				final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
+					this,
+					connectionProvider,
+					library,
+					cache);
 
-					final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
+				final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
+					handler,
+			null,
+					DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
+					lazyTextOutputLogger.getObject(),
+					lazyMetadataOutputLogger.getObject(),
+					null);
+
+				exoPlayer = ExoPlayerFactory.newInstance(
+					renderers,
+					trackSelector.getObject(),
+					loadControl.getObject());
+
+				final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
+
+				exoPlayer.prepare(mediaSourceQueue);
+				final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
+					new PreparedPlaybackQueueFeederBuilder(
+						new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup()),
 						handler,
-				null,
-						DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
-						lazyTextOutputLogger.getObject(),
-						lazyMetadataOutputLogger.getObject(),
-						null);
-
-					exoPlayer = ExoPlayerFactory.newInstance(
-						renderers,
-						trackSelector.getObject(),
-						loadControl.getObject());
-
-					final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
-
-					exoPlayer.prepare(mediaSourceQueue);
-					final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
-						new PreparedPlaybackQueueFeederBuilder(
-							new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup()),
-							handler,
-							new BestMatchUriProvider(
+						new BestMatchUriProvider(
+							library,
+							new StoredFileUriProvider(
+								lazySelectedLibraryProvider.getObject(),
+								storedFileAccess,
+								arbitratorForOs),
+							new CachedAudioFileUriProvider(
+								remoteFileUriProvider,
+								new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+							new MediaFileUriProvider(
+								this,
+								new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+								arbitratorForOs,
 								library,
-								new StoredFileUriProvider(
-									lazySelectedLibraryProvider.getObject(),
-									storedFileAccess,
-									arbitratorForOs),
-								new CachedAudioFileUriProvider(
-									remoteFileUriProvider,
-									new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
-								new MediaFileUriProvider(
-									this,
-									new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
-									arbitratorForOs,
-									library,
-									false),
-								remoteFileUriProvider),
-							extractorMediaSourceFactoryProvider,
+								false),
+							remoteFileUriProvider),
+						extractorMediaSourceFactoryProvider,
+						exoPlayer,
+						mediaSourceQueue,
+						lazyRenderersFactory.getObject(),
+						new AudioTrackVolumeManager(
 							exoPlayer,
-							mediaSourceQueue,
-							lazyRenderersFactory.getObject(),
-							new AudioTrackVolumeManager(
-								exoPlayer,
-								Stream.of(renderers)
-									.filter(r -> r instanceof MediaCodecAudioRenderer)
-									.toArray(MediaCodecAudioRenderer[]::new)));
+							Stream.of(renderers)
+								.filter(r -> r instanceof MediaCodecAudioRenderer)
+								.toArray(MediaCodecAudioRenderer[]::new)));
 
 				return playbackEngineBuilder.build(library);
 			}).then(preparationSourceProvider -> {
