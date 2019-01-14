@@ -1,17 +1,15 @@
 package com.lasthopesoftware.bluewater.client.servers.version.specs.GivenAStandardConnectionProvider;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -23,37 +21,25 @@ public class WhenReceivingThePromisedProgramVersion {
 	private static SemanticVersion expectedVersion;
 
 	@BeforeClass
-	public static void before() throws IOException, InterruptedException {
+	public static void before() throws InterruptedException, ExecutionException {
 		final IUrlProvider urlProvider = mock(IUrlProvider.class);
 		when(urlProvider.getBaseUrl()).thenReturn("");
 
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-		when(connectionProvider.getUrlProvider()).thenReturn(urlProvider);
-
-		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
 
 		final Random random = new Random();
 		expectedVersion = new SemanticVersion(random.nextInt(), random.nextInt(), random.nextInt());
-		when(urlConnection.getInputStream())
-			.thenReturn(new ByteArrayInputStream(
+		connectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(200,
 				("<Response Status=\"OK\">" +
 					"<Item Name=\"RuntimeGUID\">{7FF5918E-9FDE-4D4D-9AE7-62DFFDD64397}</Item>" +
 					"<Item Name=\"LibraryVersion\">24</Item><Item Name=\"ProgramName\">JRiver Media Center</Item>" +
 					"<Item Name=\"ProgramVersion\">" + expectedVersion + "</Item>" +
 					"<Item Name=\"FriendlyName\">Media-Pc</Item>" +
 					"<Item Name=\"AccessKey\">nIpfQr</Item>" +
-				"</Response>").getBytes()));
-		when(connectionProvider.getConnection("Alive")).thenReturn(urlConnection);
+				"</Response>").getBytes()), "Alive");
 
 		final ProgramVersionProvider programVersionProvider = new ProgramVersionProvider(connectionProvider);
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		programVersionProvider.promiseServerVersion().then(v -> {
-			version = v;
-			countDownLatch.countDown();
-			return null;
-		});
-
-		countDownLatch.await();
+		version = new FuturePromise<>(programVersionProvider.promiseServerVersion()).get();
 	}
 
 	@Test

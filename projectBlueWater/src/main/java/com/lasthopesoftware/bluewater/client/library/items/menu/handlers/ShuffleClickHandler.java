@@ -9,13 +9,17 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
-public final class ShuffleClickHandler extends AbstractMenuClickHandler {
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
-	private final IFileListParameterProvider fileListParameterProvider;
-	private final IItem item;
+public final class ShuffleClickHandler<T extends IItem> extends AbstractMenuClickHandler {
 
-    public ShuffleClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider fileListParameterProvider, IItem item) {
+	private final IFileListParameterProvider<T> fileListParameterProvider;
+	private final T item;
+
+    public ShuffleClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider<T> fileListParameterProvider, T item) {
         super(menuContainer);
 		this.fileListParameterProvider = fileListParameterProvider;
 		this.item = item;
@@ -27,7 +31,9 @@ public final class ShuffleClickHandler extends AbstractMenuClickHandler {
 			.then(FileStringListProvider::new)
 			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.Shuffled, fileListParameterProvider.getFileListParameters(item)))
 			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))
-			.excuse(new OnGetFileStringListForClickErrorListener(v, this));
+			.excuse(new OnGetFileStringListForClickErrorListener(v, this))
+			.excuse(forward())
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(v.getContext()), v.getContext()));
 
         super.onClick(v);
     }

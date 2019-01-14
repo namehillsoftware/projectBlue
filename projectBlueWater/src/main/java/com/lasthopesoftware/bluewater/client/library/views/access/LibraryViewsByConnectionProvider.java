@@ -4,22 +4,16 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemResponse;
-import com.lasthopesoftware.providers.AbstractProvider;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import okhttp3.ResponseBody;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
+import java.util.Collections;
 import java.util.List;
 
 public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsingConnection {
 
-    private static final Logger logger = LoggerFactory.getLogger(LibraryViewsByConnectionProvider.class);
-
-    public final static String browseLibraryParameter = "Browse/Children";
+	public final static String browseLibraryParameter = "Browse/Children";
 
     private static List<Item> cachedFileSystemItems;
     private static Integer revision;
@@ -37,34 +31,24 @@ public class LibraryViewsByConnectionProvider implements ProvideLibraryViewsUsin
 							return new Promise<>(cachedFileSystemItems);
 					}
 
-					return new QueuedPromise<>((cancellationToken) -> {
-						if (cancellationToken.isCancelled()) return null;
+					return connectionProvider.promiseResponse(browseLibraryParameter)
+						.then(response -> {
+							final ResponseBody body = response.body();
+							if (body == null) return Collections.emptyList();
 
-						try {
-							final HttpURLConnection connection = connectionProvider.getConnection(browseLibraryParameter);
-							try {
-								try (final InputStream is = connection.getInputStream()) {
-									final List<Item> items = ItemResponse.GetItems(is);
+							try (final InputStream is = body.byteStream()) {
+								final List<Item> items = ItemResponse.GetItems(is);
 
-									synchronized (browseLibraryParameter) {
-										revision = serverRevision;
-										cachedFileSystemItems = items;
-									}
-
-									return items;
-								} catch (IOException e) {
-									logger.error("There was an error getting the inputstream", e);
-									throw e;
+								synchronized (browseLibraryParameter) {
+									revision = serverRevision;
+									cachedFileSystemItems = items;
 								}
-							} finally {
-								connection.disconnect();
-							}
-						} catch (IOException ioe) {
-							logger.error("There was an error opening the connection", ioe);
-						}
 
-						return null;
-					}, AbstractProvider.providerExecutor);
+								return items;
+							} finally {
+								body.close();
+							}
+						});
 				});
 	}
 }

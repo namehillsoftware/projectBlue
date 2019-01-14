@@ -1,63 +1,41 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.specs.GivenAConnectionThatReturnsARandomErrorCode;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenSendingPlayedToServer {
 
-	private static Object functionEnded;
 	private static HttpResponseException httpResponseException;
 	private static int expectedResponseCode;
 
 	@BeforeClass
-	public static void before() throws InterruptedException, IOException {
+	public static void before() throws InterruptedException {
 		final Random random = new Random();
 		do {
 			expectedResponseCode = random.nextInt();
-		} while (expectedResponseCode >= 200 && expectedResponseCode < 300);
+		} while (expectedResponseCode < 0 || (expectedResponseCode >= 200 && expectedResponseCode < 300));
 
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-
-		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
-		when(urlConnection.getResponseCode()).thenReturn(expectedResponseCode);
-
-		when(connectionProvider.getConnection("File/Played", "File=15", "FileType=Key"))
-			.thenReturn(urlConnection);
+		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
+		connectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(expectedResponseCode, new byte[0]), "File/Played", "File=15", "FileType=Key");
 
 		final PlayedFilePlayStatsUpdater updater = new PlayedFilePlayStatsUpdater(connectionProvider);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		updater
-			.promisePlaystatsUpdate(new ServiceFile(15))
-			.then(v -> {
-				functionEnded = v;
-
-				countDownLatch.countDown();
-				return null;
-			})
-			.excuse(e -> {
-				if (e instanceof HttpResponseException) {
-					httpResponseException = (HttpResponseException)e;
-				}
-
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		try {
+			new FuturePromise<>(updater.promisePlaystatsUpdate(new ServiceFile(15))).get();
+		} catch (ExecutionException e) {
+			if (e.getCause() instanceof HttpResponseException)
+				httpResponseException = (HttpResponseException)e.getCause();
+		}
 	}
 
 	@Test

@@ -1,62 +1,39 @@
 package com.lasthopesoftware.bluewater.client.connection.testing;
 
-import android.os.AsyncTask;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-import org.joda.time.Duration;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 
 public class ConnectionTester implements TestConnections {
-
-	private static final Duration stdTimeoutTime = Duration.millis(30000);
 
 	private static final Logger mLogger = LoggerFactory.getLogger(ConnectionTester.class);
 
 	@Override
 	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
-		return new QueuedPromise<>(() -> doTestSynchronously(connectionProvider, stdTimeoutTime), AsyncTask.THREAD_POOL_EXECUTOR);
+		return connectionProvider.promiseResponse("Alive").then(this::doTestSynchronously, e -> false);
 	}
 
-	private boolean doTestSynchronously(final IConnectionProvider connectionProvider, Duration timeout) {
-		try {
+	private boolean doTestSynchronously(Response response) {
+		final ResponseBody body = response.body();
+		if (body == null) return false;
 
-			final HttpURLConnection conn = connectionProvider.getConnection("Alive");
+		try (final InputStream is = body.byteStream()) {
+			final StandardRequest responseDao = StandardRequest.fromInputStream(is);
 
-			if (conn == null) return Boolean.FALSE;
-
-			try {
-				final int timeoutMillis = (int) timeout.getMillis();
-				conn.setConnectTimeout(timeoutMillis);
-				conn.setReadTimeout(timeoutMillis);
-
-				final InputStream is = conn.getInputStream();
-				try {
-					final StandardRequest responseDao = StandardRequest.fromInputStream(is);
-
-					return responseDao != null && responseDao.isStatus();
-				} finally {
-					try {
-						is.close();
-					} catch (IOException e) {
-						mLogger.error("Error closing connection, device failure?", e);
-					}
-				}
-			} catch (IOException e) {
-				mLogger.info("Unable to get input stream, connection does likely not exist", e);
-			} catch (IllegalArgumentException e) {
-				mLogger.warn("Illegal argument passed in", e);
-			} finally {
-				conn.disconnect();
-			}
+			return responseDao != null && responseDao.isStatus();
 		} catch (IOException e) {
-			mLogger.warn("Error getting a connection", e);
+			mLogger.error("Error closing connection, device failure?", e);
+		} catch (IllegalArgumentException e) {
+			mLogger.warn("Illegal argument passed in", e);
+		} finally {
+			body.close();
 		}
 
 		return false;

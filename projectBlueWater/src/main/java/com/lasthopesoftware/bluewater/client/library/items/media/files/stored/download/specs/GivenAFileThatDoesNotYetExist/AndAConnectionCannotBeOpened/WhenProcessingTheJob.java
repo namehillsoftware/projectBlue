@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.do
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.download.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -27,7 +28,8 @@ public class WhenProcessingTheJob {
 	@BeforeClass
 	public static void before() throws IOException {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-		when(fakeConnectionProvider.getConnection(any())).thenThrow(IOException.class);
+		when(fakeConnectionProvider.promiseResponse(any())).thenReturn(new Promise<>(new IOException()));
+		when(fakeConnectionProvider.getResponse(any())).thenThrow(IOException.class);
 
 		final StoredFileJob storedFileJob = new StoredFileJob(
 			$ -> {

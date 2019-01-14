@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -33,8 +34,9 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class ItemListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<Item>, Void> {
 
@@ -90,7 +92,10 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 						return itemProvider.promiseItems(mItemId);
 					})
 					.eventually(itemProviderComplete)
-					.excuse(new HandleViewIoException(ItemListActivity.this, this));
+					.excuse(new HandleViewIoException(ItemListActivity.this, this))
+					.excuse(forward())
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(ItemListActivity.this), ItemListActivity.this))
+					.then(new VoidResponse<>(v -> finish()));
 			}
 		};
 
@@ -101,7 +106,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 	public Void respond(List<Item> items) {
 		if (items == null) return null;
 
-		ItemListActivity.this.BuildItemListView(items);
+		buildItemListView(items);
 
 		itemListView.findView().setVisibility(View.VISIBLE);
 		pbLoading.findView().setVisibility(View.INVISIBLE);
@@ -109,7 +114,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 		return null;
 	}
 
-	private void BuildItemListView(final List<Item> items) {
+	private void buildItemListView(final List<Item> items) {
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
@@ -124,7 +129,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 				final ListView localItemListView = this.itemListView.findView();
 				localItemListView.setAdapter(itemListAdapter);
-				localItemListView.setOnItemClickListener(new ClickItemListener(this, items instanceof ArrayList ? (ArrayList<Item>) items : new ArrayList<>(items)));
+				localItemListView.setOnItemClickListener(new ClickItemListener(items, pbLoading.findView()));
 				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 			}), this));
     }

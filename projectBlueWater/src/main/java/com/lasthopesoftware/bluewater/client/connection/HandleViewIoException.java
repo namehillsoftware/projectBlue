@@ -4,8 +4,6 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionActivity;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
-import java.io.IOException;
-
 public class HandleViewIoException implements ImmediateResponse<Throwable, Void> {
 	
 	private final Context context;
@@ -17,10 +15,10 @@ public class HandleViewIoException implements ImmediateResponse<Throwable, Void>
 	}
 
 	@Override
-	public Void respond(Throwable e) {
-		if (e instanceof IOException)
+	public Void respond(Throwable e) throws Throwable {
+		if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 			WaitForConnectionActivity.beginWaiting(context, onConnectionRegainedListener);
 
-		return null;
+		throw e;
 	}
 }

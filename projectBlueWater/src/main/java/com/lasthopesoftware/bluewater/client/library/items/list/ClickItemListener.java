@@ -9,23 +9,35 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity;
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class ClickItemListener implements OnItemClickListener {
 
-	private final List<Item> items;
-	private final Context context;
+	private static final Logger logger = LoggerFactory.getLogger(ClickItemListener.class);
 
-	public ClickItemListener(Context context, List<Item> items) {
-		this.context = context;
-        this.items = items;
+	private final List<Item> items;
+	private final View loadingView;
+
+	public ClickItemListener(List<Item> items, View loadingView) {
+		this.items = items;
+		this.loadingView = loadingView;
 	}
 	
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        final Item item = items.get(position);
+		parent.setVisibility(ViewUtils.getVisibility(false));
+		loadingView.setVisibility(ViewUtils.getVisibility(true));
+
+		final Item item = items.get(position);
+
+        final Context context = view.getContext();
 
 		SessionConnection.getInstance(context).promiseSessionConnection()
 			.eventually(c -> ItemProvider.provide(c, item.getKey()))
@@ -41,12 +53,12 @@ public class ClickItemListener implements OnItemClickListener {
 					return;
 				}
 
-				final Intent fileListIntent = new Intent(context, FileListActivity.class);
-				fileListIntent.putExtra(FileListActivity.KEY, item.getKey());
-				fileListIntent.putExtra(FileListActivity.VALUE, item.getValue());
-				fileListIntent.setAction(FileListActivity.VIEW_ITEM_FILES);
-				context.startActivity(fileListIntent);
-			}));
+				FileListActivity.startFileListActivity(context, item);
+			}), new VoidResponse<>(e -> logger.error("An error occurred getting nested items for item " + item.getKey(), e)))
+			.eventually(v -> new LoopedInPromise<>(() -> {
+				parent.setVisibility(ViewUtils.getVisibility(true));
+				loadingView.setVisibility(ViewUtils.getVisibility(false));
+				return null;
+			}, context, Duration.standardSeconds(1)));
 	}
-
 }

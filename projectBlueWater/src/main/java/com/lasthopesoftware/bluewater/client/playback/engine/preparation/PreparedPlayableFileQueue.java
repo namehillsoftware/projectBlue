@@ -18,6 +18,7 @@ import java.io.Closeable;
 import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -44,14 +45,14 @@ implements
 		this.configuration = configuration;
 		this.playbackPreparer = playbackPreparer;
 		this.positionedFileQueue = positionedFileQueue;
-		bufferingMediaPlayerPromises = new LinkedList<>();
+		bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 	}
 
 	public PreparedPlayableFileQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
 		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
-			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new LinkedList<>();
+			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 			PositionedPreparingFile positionedPreparingFile;
 			while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null) {

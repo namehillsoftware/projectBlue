@@ -46,9 +46,11 @@ import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAd
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -59,6 +61,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -279,7 +283,13 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 					.promiseSessionConnection()
 					.eventually(LibraryViewsByConnectionProvider::provide)
 					.eventually(onCompleteAction)
-					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
+					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
+					.excuse(forward())
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this), BrowseLibraryActivity.this))
+					.then(new VoidResponse<>(v -> {
+						ApplicationSettingsActivity.launch(BrowseLibraryActivity.this);
+						finish();
+					}));
 			}
 		};
 

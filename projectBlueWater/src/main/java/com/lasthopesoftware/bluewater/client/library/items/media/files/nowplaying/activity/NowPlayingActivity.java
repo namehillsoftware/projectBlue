@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.annotation.StringRes;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -15,6 +14,7 @@ import android.view.WindowManager;
 import android.widget.*;
 import android.widget.ImageView.ScaleType;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -40,8 +40,10 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -49,8 +51,6 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
@@ -65,8 +65,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 		context.startActivity(viewIntent);
 	}
 
-
-	private static final String fileNotFoundError = "The serviceFile %1s was not found!";
 
 	private static boolean isScreenKeptOn;
 
@@ -160,7 +158,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 						NowPlayingActivity.this,
 						connectionProvider,
 						new AndroidDiskCacheDirectoryProvider(NowPlayingActivity.this),
-						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache)));
+						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+							new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance())));
 				});
 		}
 	};
@@ -409,9 +408,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 					return;
 				}
 
-				disableViewWithMessage(R.string.lbl_loading);
+				disableViewWithMessage();
 
-				final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance());
+				final FilePropertiesProvider filePropertiesProvider =
+					new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance());
 				filePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually(LoopedInPromise.response(fileProperties -> {
@@ -512,21 +512,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 			viewStructure.filePosition = progress;
 	}
 
-	private boolean handleFileNotFoundException(ServiceFile serviceFile, FileNotFoundException fe) {
-		logger.error(String.format(fileNotFoundError, serviceFile), fe);
-		disableViewWithMessage(R.string.file_not_found);
-		return true;
-	}
-	
 	private boolean handleIoException(ServiceFile serviceFile, long position, Throwable exception) {
-		if (exception instanceof FileNotFoundException)
-			return handleFileNotFoundException(serviceFile, (FileNotFoundException)exception);
-
-		if (exception instanceof IOException) {
+		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) {
 			resetViewOnReconnect(serviceFile, position);
 			return true;
 		}
-		
+
+		UnexpectedExceptionToaster.announce(this, exception);
+
 		return false;
 	}
 	
@@ -575,8 +568,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		WaitForConnectionDialog.show(this);
 	}
 
-	private void disableViewWithMessage(@StringRes int messageId) {
-		nowPlayingTitle.findView().setText(messageId);
+	private void disableViewWithMessage() {
+		nowPlayingTitle.findView().setText(R.string.lbl_loading);
 		nowPlayingArtist.findView().setText("");
 		songRating.findView().setRating(0);
 		songRating.findView().setEnabled(false);

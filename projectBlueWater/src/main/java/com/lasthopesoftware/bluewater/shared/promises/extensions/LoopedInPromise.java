@@ -11,6 +11,7 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMess
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellablePreparedMessengerOperator;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import org.joda.time.Duration;
 
 public class LoopedInPromise<Result> extends Promise<Result> {
 
@@ -20,6 +21,14 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 
 	public LoopedInPromise(MessageWriter<Result> task, Handler handler) {
 		super(new Executors.LoopedInResponse<>(new PreparedMessengerOperator<>(task), handler));
+	}
+
+	public LoopedInPromise(MessageWriter<Result> task, Context context, Duration delay) {
+		this(task, new Handler(context.getMainLooper()), delay);
+	}
+
+	public LoopedInPromise(MessageWriter<Result> task, Handler handler, Duration delay) {
+		super(new Executors.DelayedLoopedInPromise<>(new PreparedMessengerOperator<>(task), handler, delay));
 	}
 
 	public LoopedInPromise(CancellableMessageWriter<Result> task, Handler handler) {
@@ -58,6 +67,30 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 					run();
 				else
 					handler.post(this);
+			}
+
+			@Override
+			public void run() {
+				task.send(resultMessenger);
+			}
+		}
+
+		static final class DelayedLoopedInPromise<Result> implements MessengerOperator<Result>, Runnable {
+			private final MessengerOperator<Result> task;
+			private final Handler handler;
+			private final Duration delay;
+			private Messenger<Result> resultMessenger;
+
+			DelayedLoopedInPromise(MessengerOperator<Result> task, Handler handler, Duration delay) {
+				this.task = task;
+				this.handler = handler;
+				this.delay = delay;
+			}
+
+			@Override
+			public void send(Messenger<Result> resultMessenger) {
+				this.resultMessenger = resultMessenger;
+				handler.postDelayed(this, (int)delay.getMillis());
 			}
 
 			@Override

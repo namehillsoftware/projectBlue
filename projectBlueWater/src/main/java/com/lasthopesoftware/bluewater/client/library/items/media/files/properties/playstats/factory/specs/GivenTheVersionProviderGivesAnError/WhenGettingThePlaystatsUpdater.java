@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class WhenGettingThePlaystatsUpdater {
 		final FakeFilePropertiesContainer fakeFilePropertiesContainer = new FakeFilePropertiesContainer();
 		final PlaystatsUpdateSelector playstatsUpdateSelector = new PlaystatsUpdateSelector(
 			fakeConnectionProvider,
-			new FilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer),
+			new FilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer, ParsingScheduler.instance()),
 			new FilePropertiesStorage(fakeConnectionProvider, fakeFilePropertiesContainer),
 			programVersionProvider);
 

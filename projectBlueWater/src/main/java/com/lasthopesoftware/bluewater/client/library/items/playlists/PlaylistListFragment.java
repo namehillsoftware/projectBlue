@@ -20,14 +20,17 @@ import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
-import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewPlaylistResultsComplete;
+import com.lasthopesoftware.bluewater.client.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
+
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class PlaylistListFragment extends Fragment {
 
@@ -55,12 +58,10 @@ public class PlaylistListFragment extends Fragment {
 			.then(new VoidResponse<>(library -> {
 				final PromisedResponse<List<Item>, Void> listResolvedPromise =
 					LoopedInPromise.response(
-						new OnGetLibraryViewPlaylistResultsComplete(
+						new OnGetLibraryViewItemResultsComplete(
 							activity,
-							container,
 							playlistView,
 							loadingView,
-							0,
 							itemListMenuChangeHandler,
 							FileListParameters.getInstance(),
 							new StoredItemAccess(activity, library),
@@ -72,7 +73,9 @@ public class PlaylistListFragment extends Fragment {
 						SessionConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, library.getSelectedView()))
 							.eventually(listResolvedPromise)
-							.excuse(new HandleViewIoException(activity, this));
+							.excuse(new HandleViewIoException(activity, this))
+							.excuse(forward())
+							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
 

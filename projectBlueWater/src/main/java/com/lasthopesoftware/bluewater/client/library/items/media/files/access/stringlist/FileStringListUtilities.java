@@ -2,22 +2,18 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.access.s
 
 import android.support.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class FileStringListUtilities {
 
-	private static final Lazy<ExecutorService> fileParsingExecutor = new Lazy<>(Executors::newCachedThreadPool);
-
 	public static Promise<List<ServiceFile>> promiseParsedFileStringList(@NonNull String fileList) {
-		return new QueuedPromise<>(() -> parseFileStringList(fileList), fileParsingExecutor.getObject());
+		return new QueuedPromise<>(() -> parseFileStringList(fileList), ParsingScheduler.instance().getScheduler());
 	}
 
 	private static List<ServiceFile> parseFileStringList(@NonNull String fileList) {
@@ -38,10 +34,10 @@ public class FileStringListUtilities {
 	}
 
 	public static Promise<String> promiseSerializedFileStringList(List<ServiceFile> serviceFiles) {
-		return new QueuedPromise<>(() -> serializeFileStringList(serviceFiles), fileParsingExecutor.getObject());
+		return new QueuedPromise<>(() -> serializeFileStringList(serviceFiles), ParsingScheduler.instance().getScheduler());
 	}
 
-	public static String serializeFileStringList(List<ServiceFile> serviceFiles) {
+	private static String serializeFileStringList(List<ServiceFile> serviceFiles) {
 		final int fileSize = serviceFiles.size();
 		// Take a guess that most keys will not be greater than 8 characters and add some more
 		// for the first characters

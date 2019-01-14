@@ -18,6 +18,8 @@ public class ServerLookup implements LookupServers {
 	public Promise<ServerInfo> promiseServerInformation(Library library) {
 		return serverInfoXmlRequest.promiseServerInfoXml(library)
 			.then(xml -> {
+				if (xml == null) return null;
+
 				final ServerInfo serverInfo = new ServerInfo();
 
 				final XmlElement remoteIp = xml.getUnique("ip");

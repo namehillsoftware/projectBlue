@@ -5,6 +5,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.specs.SessionConnectionReservation;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
@@ -73,7 +74,8 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 				Promise::new,
 				liveUrlProvider,
-				connectionsTester);
+				connectionsTester,
+				OkHttpFactory.getInstance());
 
 			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
 			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection()).get();

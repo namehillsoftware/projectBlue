@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.settings;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -44,6 +45,11 @@ import tourguide.tourguide.ToolTip;
 import tourguide.tourguide.TourGuide;
 
 public class ApplicationSettingsActivity extends AppCompatActivity {
+
+	public static void launch(Context context) {
+		context.startActivity(new Intent(context, ApplicationSettingsActivity.class));
+	}
+
 	private static final String isTutorialShownPreference = MagicPropertyBuilder.buildMagicPropertyName(ApplicationSettingsActivity.class, "isTutorialShownPreference");
 
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));

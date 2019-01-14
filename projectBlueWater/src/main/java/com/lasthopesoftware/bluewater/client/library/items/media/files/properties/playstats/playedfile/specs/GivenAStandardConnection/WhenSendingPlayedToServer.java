@@ -1,46 +1,29 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.specs.GivenAStandardConnection;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenSendingPlayedToServer {
 
 	private static Object functionEnded;
 
 	@BeforeClass
-	public static void before() throws InterruptedException, IOException {
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-
-		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
-		when(urlConnection.getResponseCode()).thenReturn(200);
-
-		when(connectionProvider.getConnection("File/Played", "File=15", "FileType=Key"))
-			.thenReturn(urlConnection);
+	public static void before() throws InterruptedException, ExecutionException {
+		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
+		connectionProvider.mapResponse(p  -> new FakeConnectionProvider.ResponseTuple(200, new byte[0]), "File/Played", "File=15", "FileType=Key");
 
 		final PlayedFilePlayStatsUpdater updater = new PlayedFilePlayStatsUpdater(connectionProvider);
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		updater
-			.promisePlaystatsUpdate(new ServiceFile(15))
-			.then(v -> {
-				functionEnded = v;
-
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		functionEnded = new FuturePromise<>(updater
+			.promisePlaystatsUpdate(new ServiceFile(15))).get();
 	}
 
 	@Test

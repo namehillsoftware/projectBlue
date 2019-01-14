@@ -31,8 +31,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -42,6 +44,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.Map.Entry;
+
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class FileDetailsActivity extends AppCompatActivity {
 
@@ -132,7 +136,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
 		SessionConnection.getInstance(this).promiseSessionConnection()
-			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance()))
+			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance(), ParsingScheduler.instance()))
 			.eventually(f -> f.promiseFileProperties(new ServiceFile(fileKey)))
 			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
@@ -151,7 +155,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 				pbLoadingFileDetails.findView().setVisibility(View.INVISIBLE);
 				lvFileDetails.findView().setVisibility(View.VISIBLE);
 			}), this))
-			.excuse(new HandleViewIoException(this, () -> setView(fileKey)));
+			.excuse(new HandleViewIoException(this, () -> setView(fileKey)))
+			.excuse(forward())
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
+			.then(new VoidResponse<>(v -> finish()));
 
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 //
@@ -189,7 +196,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 			.eventually(connectionProvider -> {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+						new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
 				return new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider)
 					.promiseFileBitmap(new ServiceFile(fileKey));
