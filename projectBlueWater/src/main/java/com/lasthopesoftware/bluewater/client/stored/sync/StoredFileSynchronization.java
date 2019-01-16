@@ -20,9 +20,6 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
@@ -43,8 +40,6 @@ import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermis
 import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArbitratorForOs;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-import com.vedsoft.futures.runnables.OneParameterAction;
-import com.vedsoft.futures.runnables.TwoParameterAction;
 import io.reactivex.Completable;
 import io.reactivex.exceptions.CompositeException;
 import org.slf4j.Logger;
@@ -102,55 +97,6 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 		protected IScanMediaFileBroadcaster create() {
 			return new ScanMediaFileBroadcaster(context);
 		}
-	};
-
-	private final OneParameterAction<StoredFile> storedFileQueuedAction = storedFile -> sendStoredFileBroadcast(onFileQueuedEvent, storedFile);
-
-	private final CreateAndHold<String> downloadingStatusLabel = new AbstractSynchronousLazy<String>() {
-		@Override
-		protected String create() {
-			return context.getString(R.string.downloading_status_label);
-		}
-	};
-
-//	private final CreateAndHold<OneParameterAction<StoredFile>> storedFileDownloadingAction = new AbstractSynchronousLazy<OneParameterAction<StoredFile>>() {
-//		@Override
-//		protected OneParameterAction<StoredFile> create() {
-//			return storedFile -> {
-//				sendStoredFileBroadcast(onFileDownloadingEvent, storedFile);
-//
-//				final IConnectionProvider connectionProvider = libraryConnectionProviders.get(storedFile.getLibraryId());
-//				if (connectionProvider == null) return;
-//
-//				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-//				final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
-//					new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
-//
-//				filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
-//					.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))), context))
-//					.excuse(e -> LoopedInPromise.response(exception -> {
-//						setSyncNotificationText(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)));
-//						return true;
-//					}, context).promiseResponse(e));
-//			};
-//		}
-//	};
-
-	private final OneParameterAction<StoredFileJobStatus> storedFileDownloadedAction = storedFileJobResult -> {
-		sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobResult.storedFile);
-
-		if (storedFileJobResult.storedFileJobState == StoredFileJobState.Downloaded)
-			scanMediaFileBroadcasterLazy.getObject().sendScanMediaFileBroadcastForFile(storedFileJobResult.downloadedFile);
-	};
-
-	private final TwoParameterAction<Library, StoredFile> storedFileReadErrorAction = (library, storedFile) -> {
-		if (!storageReadPermissionArbitratorForOsLazy.getObject().isReadPermissionGranted())
-			storageReadPermissionsRequestedBroadcast.getObject().sendReadPermissionsRequestedBroadcast(library.getId());
-	};
-
-	private final TwoParameterAction<Library, StoredFile> storedFileWriteErrorAction = (library, storedFile) -> {
-		if (!storageWritePermissionArbitratorForOsLazy.getObject().isWritePermissionGranted())
-			storageWritePermissionsRequestedBroadcast.getObject().sendWritePermissionsNeededBroadcast(library.getId());
 	};
 
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
