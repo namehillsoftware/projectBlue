@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import androidx.work.*;
 import com.annimon.stream.Stream;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
 import com.lasthopesoftware.bluewater.client.stored.worker.constraints.SyncWorkerConstraints;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -24,12 +25,6 @@ public class SyncSchedulingWorker extends Worker {
 
 	private static final String workName = MagicPropertyBuilder.buildMagicPropertyName(SyncSchedulingWorker.class, "");
 
-	public static Operation syncImmediately(Context context) {
-		final OneTimeWorkRequest.Builder oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncSchedulingWorker.class);
-		oneTimeWorkRequest.setConstraints(constraints(context));
-		return WorkManager.getInstance().enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build());
-	}
-
 	public static Operation scheduleSync(Context context) {
 		final PeriodicWorkRequest.Builder periodicWorkRequest = new PeriodicWorkRequest.Builder(SyncSchedulingWorker.class, 3, TimeUnit.HOURS);
 		periodicWorkRequest.setConstraints(constraints(context));
@@ -40,11 +35,6 @@ public class SyncSchedulingWorker extends Worker {
 	private static Constraints constraints(Context context) {
 		final SharedPreferences manager = PreferenceManager.getDefaultSharedPreferences(context);
 		return new SyncWorkerConstraints(manager).getCurrentConstraints();
-	}
-
-	public static Promise<Boolean> promiseIsSyncing() {
-		return promiseWorkInfos()
-			.then(workInfos -> Stream.of(workInfos).anyMatch(wi -> wi.getState() == WorkInfo.State.RUNNING));
 	}
 
 	public static Promise<Boolean> promiseIsScheduled() {
@@ -80,6 +70,7 @@ public class SyncSchedulingWorker extends Worker {
 	@NonNull
 	@Override
 	public Result doWork() {
+		StoredSyncService.doSync(context);
 		return Result.success();
 	}
 

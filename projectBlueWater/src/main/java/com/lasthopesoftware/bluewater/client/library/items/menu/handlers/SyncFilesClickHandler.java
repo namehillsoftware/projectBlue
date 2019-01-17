@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
-import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
+import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
 
 /**
  * Created by david on 7/18/15.
@@ -28,7 +28,7 @@ public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 		mIsSynced = !mIsSynced;
 		mSyncListManager.toggleSync(mItem, mIsSynced);
 
-		SyncSchedulingWorker.syncImmediately(v.getContext());
+		StoredSyncService.doSync(v.getContext());
 
 		super.onClick(v);
 	}

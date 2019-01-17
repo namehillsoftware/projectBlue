@@ -27,8 +27,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
@@ -138,9 +138,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		final CharSequence startSyncLabel = activity.getText(R.string.start_sync_button);
 		final CharSequence stopSyncLabel = activity.getText(R.string.stop_sync_button);
 
-		SyncSchedulingWorker.promiseIsSyncing()
-			.eventually(LoopedInPromise.response(
-				new VoidResponse<>(isSyncing -> toggleSyncButton.setText(!isSyncing ? startSyncLabel : stopSyncLabel)), activity));
+		toggleSyncButton.setText(!StoredSyncService.isSyncRunning() ? startSyncLabel : stopSyncLabel);
 
 		if (onSyncStartedReceiver != null)
 			localBroadcastManager.unregisterReceiver(onSyncStartedReceiver);
@@ -166,10 +164,12 @@ public class ActiveFileDownloadsFragment extends Fragment {
 
 		localBroadcastManager.registerReceiver(onSyncStoppedReceiver, new IntentFilter(StoredFileSynchronization.onSyncStopEvent));
 
-		toggleSyncButton.setOnClickListener(v -> SyncSchedulingWorker.promiseIsSyncing()
-			.then(isSyncing -> isSyncing
-				? SyncSchedulingWorker.cancel()
-				: SyncSchedulingWorker.syncImmediately(activity)));
+		toggleSyncButton.setOnClickListener(v -> {
+			if (StoredSyncService.isSyncRunning())
+				StoredSyncService.cancelSync(v.getContext());
+			else
+				StoredSyncService.doSync(v.getContext());
+		});
 
 		toggleSyncButton.setEnabled(true);
 
