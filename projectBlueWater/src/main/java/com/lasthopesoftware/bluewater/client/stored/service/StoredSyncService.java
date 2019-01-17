@@ -4,12 +4,15 @@ import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
@@ -20,7 +23,10 @@ import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
+import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer;
@@ -28,7 +34,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.LibrarySyncHandlerFactory;
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.StoredFileDownloadingNotifier;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.*;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.bluewater.client.stored.sync.SynchronizeStoredFiles;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -40,14 +46,19 @@ import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
+import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class StoredSyncService extends IntentService implements PostSyncNotification {
@@ -61,10 +72,10 @@ public class StoredSyncService extends IntentService implements PostSyncNotifica
 
 	private static final int buildConnectionTimeoutTime = 10000;
 
-	private static volatile boolean isSyncRunning;
+	private static volatile Disposable syncDisposable;
 
 	public static boolean isSyncRunning() {
-		return isSyncRunning;
+		return syncDisposable != null;
 	}
 
 	public static void doSync(Context context) {
@@ -169,31 +180,94 @@ public class StoredSyncService extends IntentService implements PostSyncNotifica
 		}
 	};
 
-	private final CreateAndHold<StoredFileDownloadingNotifier> lazyDownloadingNotifier = new AbstractSynchronousLazy<StoredFileDownloadingNotifier>() {
+	private final CreateAndHold<ReceiveStoredFileEvent[]> lazyStoredFileEventReceivers = new AbstractSynchronousLazy<ReceiveStoredFileEvent[]>() {
 		@Override
-		protected StoredFileDownloadingNotifier create() {
-			return new StoredFileDownloadingNotifier(
+		protected ReceiveStoredFileEvent[] create() {
+			final StoredSyncService storedSyncService = StoredSyncService.this;
+			final StoredFileDownloadingNotifier storedFileDownloadingNotifier = new StoredFileDownloadingNotifier(
 				lazyStoredFileAccess.getObject(),
+				lazyLibraryRepository.getObject(),
+				lazyUrlScanner.getObject(),
+				storedSyncService,
+				storedSyncService);
 
-			)
+			final StoredFileMediaScannerNotifier storedFileMediaScannerNotifier = new StoredFileMediaScannerNotifier(
+				lazyStoredFileAccess.getObject(),
+				new ScanMediaFileBroadcaster(StoredSyncService.this));
+
+			final StoredFileReadPermissionsReceiver storedFileReadPermissionsReceiver = new StoredFileReadPermissionsReceiver(
+				lazyReadPermissionArbitratorForOs.getObject(),
+				new StorageReadPermissionsRequestedBroadcaster(lazyBroadcastManager.getObject()),
+				lazyStoredFileAccess.getObject());
+
+			final StoredFileWritePermissionsReceiver storedFileWritePermissionsReceiver = new StoredFileWritePermissionsReceiver(
+				new ExternalStorageWritePermissionsArbitratorForOs(StoredSyncService.this),
+				new StorageWritePermissionsRequestedBroadcaster(lazyBroadcastManager.getObject()),
+				lazyStoredFileAccess.getObject());
+
+			return new ReceiveStoredFileEvent[] {
+				storedFileDownloadingNotifier,
+				storedFileMediaScannerNotifier,
+				storedFileReadPermissionsReceiver,
+				storedFileWritePermissionsReceiver
+			};
 		}
-	}
+	};
+
+	private volatile List<BroadcastReceiver> broadcastReceivers = new ArrayList<>();
 
 	public StoredSyncService() {
 		super(StoredSyncService.class.getName());
 	}
 
 	@Override
-	protected void onHandleIntent(@Nullable Intent intent) {
-		lazyStoredFilesSynchronization.getObject()
+	protected synchronized void onHandleIntent(@Nullable Intent intent) {
+		if (intent == null) return;
+
+		final String action = intent.getAction();
+
+		if (cancelSyncAction.equals(action)) {
+			stopSelf();
+			return;
+		}
+
+		if (!doSyncAction.equals(action) || isSyncRunning()) return;
+
+		for (final ReceiveStoredFileEvent receiveStoredFileEvent : lazyStoredFileEventReceivers.getObject()) {
+			final StoredFileBroadcastReceiver broadcastReceiver = new StoredFileBroadcastReceiver(receiveStoredFileEvent);
+			if (!broadcastReceivers.add(broadcastReceiver)) continue;
+
+			lazyBroadcastManager.getObject().registerReceiver(
+				broadcastReceiver,
+				Stream.of(receiveStoredFileEvent.acceptedEvents()).reduce(new IntentFilter(), (i, e) -> {
+					i.addAction(e);
+					return i;
+				}));
+		}
+
+		syncDisposable = lazyStoredFilesSynchronization.getObject()
 			.streamFileSynchronization()
-			.subscribe(() -> stopSelf(), e -> stopSelf());
+			.subscribe(this::stopSelf, e -> stopSelf());
 	}
 
 	@Override
 	public void onDestroy() {
-		super.onDestroy();
+		if (syncDisposable != null) {
+			syncDisposable.dispose();
+			syncDisposable = null;
+		}
 
+		if (!lazyBroadcastManager.isCreated() || broadcastReceivers.isEmpty()) {
+			super.onDestroy();
+			return;
+		}
+
+		while (!broadcastReceivers.isEmpty()) {
+			final BroadcastReceiver receiver = broadcastReceivers.remove(0);
+			lazyBroadcastManager.getObject().unregisterReceiver(receiver);
+		}
+
+		super.onDestroy();
 	}
 
 	@Override
