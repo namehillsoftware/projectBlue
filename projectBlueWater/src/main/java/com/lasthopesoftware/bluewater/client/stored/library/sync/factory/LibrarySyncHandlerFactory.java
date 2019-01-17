@@ -14,8 +14,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistItemFinder;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.read.ILibraryStorageReadPermissionsRequirementsProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.permissions.write.ILibraryStorageWritePermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
@@ -47,8 +45,6 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
 	private final IFileStreamWriter fileStreamWriter;
-	private final ILibraryStorageWritePermissionsRequirementsProvider storageWritePermissionsRequirementsProvider;
-	private final ILibraryStorageReadPermissionsRequirementsProvider storageReadPermissionsRequirementsProvider;
 
 	public LibrarySyncHandlerFactory(
 		IStoredFileAccess storedFileAccess,
@@ -59,9 +55,7 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 		IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider,
 		IFileReadPossibleArbitrator fileReadPossibleArbitrator,
 		IFileWritePossibleArbitrator fileWritePossibleArbitrator,
-		IFileStreamWriter fileStreamWriter,
-		ILibraryStorageWritePermissionsRequirementsProvider storageWritePermissionsRequirementsProvider,
-		ILibraryStorageReadPermissionsRequirementsProvider storageReadPermissionsRequirementsProvider) {
+		IFileStreamWriter fileStreamWriter) {
 		this.storedFileAccess = storedFileAccess;
 		this.context = context;
 		this.storageReadPermissionsPossible = storageReadPermissionsPossible;
@@ -71,8 +65,6 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 		this.fileStreamWriter = fileStreamWriter;
-		this.storageWritePermissionsRequirementsProvider = storageWritePermissionsRequirementsProvider;
-		this.storageReadPermissionsRequirementsProvider = storageReadPermissionsRequirementsProvider;
 	}
 
 	@Override
