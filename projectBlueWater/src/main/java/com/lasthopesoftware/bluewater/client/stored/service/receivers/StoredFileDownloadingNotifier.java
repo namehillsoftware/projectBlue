@@ -21,6 +21,8 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -79,8 +81,8 @@ public class StoredFileDownloadingNotifier implements ReceiveStoredFileEvent {
 	}
 
 	@Override
-	public boolean isAcceptable(String event) {
-		return StoredFileSynchronization.onFileDownloadingEvent.equals(event);
+	public Collection<String> acceptedEvents() {
+		return Collections.singleton(StoredFileSynchronization.onFileDownloadingEvent);
 	}
 
 	private void notifyOfFileDownload(CachedFilePropertiesProvider filePropertiesProvider, StoredFile storedFile) {

@@ -8,6 +8,9 @@ import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArb
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public class StoredFileWritePermissionsReceiver implements ReceiveStoredFileEvent, ImmediateResponse<StoredFile, Void> {
 
 	private final IStorageWritePermissionArbitratorForOs writePermissionArbitratorForOs;
@@ -32,8 +35,8 @@ public class StoredFileWritePermissionsReceiver implements ReceiveStoredFileEven
 	}
 
 	@Override
-	public boolean isAcceptable(String event) {
-		return StoredFileSynchronization.onFileWriteErrorEvent.equals(event);
+	public Collection<String> acceptedEvents() {
+		return Collections.singleton(StoredFileSynchronization.onFileWriteErrorEvent);
 	}
 
 	@Override

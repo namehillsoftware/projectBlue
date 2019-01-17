@@ -8,6 +8,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 
 public class StoredFileMediaScannerNotifier implements ReceiveStoredFileEvent, ImmediateResponse<StoredFile, Void> {
 
@@ -26,8 +28,8 @@ public class StoredFileMediaScannerNotifier implements ReceiveStoredFileEvent, I
 	}
 
 	@Override
-	public boolean isAcceptable(String event) {
-		return StoredFileSynchronization.onFileDownloadingEvent.equals(event);
+	public Collection<String> acceptedEvents() {
+		return Collections.singleton(StoredFileSynchronization.onFileDownloadingEvent);
 	}
 
 	@Override

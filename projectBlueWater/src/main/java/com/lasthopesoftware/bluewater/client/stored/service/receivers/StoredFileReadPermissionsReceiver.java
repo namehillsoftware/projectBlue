@@ -8,6 +8,9 @@ import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbit
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public class StoredFileReadPermissionsReceiver implements ReceiveStoredFileEvent, ImmediateResponse<StoredFile, Void> {
 
 	private final IStorageReadPermissionArbitratorForOs readPermissionArbitratorForOs;
@@ -29,8 +32,8 @@ public class StoredFileReadPermissionsReceiver implements ReceiveStoredFileEvent
 	}
 
 	@Override
-	public boolean isAcceptable(String event) {
-		return StoredFileSynchronization.onFileReadErrorEvent.equals(event);
+	public Collection<String> acceptedEvents() {
+		return Collections.singleton(StoredFileSynchronization.onFileReadErrorEvent);
 	}
 
 	@Override
