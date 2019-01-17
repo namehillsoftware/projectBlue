@@ -85,7 +85,6 @@ public class WhenSynchronizing extends AndroidContext {
 		};
 
 		final StoredFileSynchronization synchronization = new StoredFileSynchronization(
-			context,
 			libraryProvider,
 			localBroadcastManager,
 			library -> new Promise<>(mock(IUrlProvider.class)),

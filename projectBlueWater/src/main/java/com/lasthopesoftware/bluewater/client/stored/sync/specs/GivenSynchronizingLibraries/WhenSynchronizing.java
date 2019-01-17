@@ -79,7 +79,6 @@ public class WhenSynchronizing extends AndroidContext {
 		};
 
 		final StoredFileSynchronization synchronization = new StoredFileSynchronization(
-			context,
 			libraryProvider,
 			localBroadcastManager,
 			library -> new Promise<>(mock(IUrlProvider.class)),
@@ -88,6 +87,8 @@ public class WhenSynchronizing extends AndroidContext {
 
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);
 		intentFilter.addAction(onFileDownloadingEvent);
+		intentFilter.addAction(onSyncStartEvent);
+		intentFilter.addAction(onSyncStopEvent);
 		intentFilter.addAction(onFileQueuedEvent);
 
 		localBroadcastManager.registerReceiver(
@@ -95,6 +96,13 @@ public class WhenSynchronizing extends AndroidContext {
 			intentFilter);
 
 		synchronization.streamFileSynchronization().blockingAwait();
+	}
+
+	@Test
+	public void thenASyncStartedEventOccurs() {
+		assertThat(Stream.of(broadcastRecorder.recordedIntents)
+			.filter(i -> onSyncStartEvent.equals(i.getAction()))
+			.single()).isNotNull();
 	}
 
 	@Test
@@ -119,5 +127,12 @@ public class WhenSynchronizing extends AndroidContext {
 			.filter(i -> onFileDownloadedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
 			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
+	}
+
+	@Test
+	public void thenASyncStoppedEventOccurs() {
+		assertThat(Stream.of(broadcastRecorder.recordedIntents)
+			.filter(i -> onSyncStopEvent.equals(i.getAction()))
+			.single()).isNotNull();
 	}
 }
