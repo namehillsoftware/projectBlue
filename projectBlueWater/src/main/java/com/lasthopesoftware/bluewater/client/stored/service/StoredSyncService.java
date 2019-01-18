@@ -9,7 +9,6 @@ import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
@@ -285,35 +284,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			.subscribe(this::stopSelf, e -> stopSelf());
 
 		return START_NOT_STICKY;
-	}
-
-	protected synchronized void onHandleIntent(@Nullable Intent intent) {
-		if (intent == null) return;
-
-		final String action = intent.getAction();
-
-		if (cancelSyncAction.equals(action)) {
-			stopSelf();
-			return;
-		}
-
-		if (!doSyncAction.equals(action) || isSyncRunning() || !isDeviceStateValidForSync()) return;
-
-		for (final ReceiveStoredFileEvent receiveStoredFileEvent : lazyStoredFileEventReceivers.getObject()) {
-			final StoredFileBroadcastReceiver broadcastReceiver = new StoredFileBroadcastReceiver(receiveStoredFileEvent);
-			if (!broadcastReceivers.add(broadcastReceiver)) continue;
-
-			lazyBroadcastManager.getObject().registerReceiver(
-				broadcastReceiver,
-				Stream.of(receiveStoredFileEvent.acceptedEvents()).reduce(new IntentFilter(), (i, e) -> {
-					i.addAction(e);
-					return i;
-				}));
-		}
-
-		syncDisposable = lazyStoredFilesSynchronization.getObject()
-			.streamFileSynchronization()
-			.subscribe(this::stopSelf, e -> stopSelf());
 	}
 
 	private boolean isDeviceStateValidForSync() {
