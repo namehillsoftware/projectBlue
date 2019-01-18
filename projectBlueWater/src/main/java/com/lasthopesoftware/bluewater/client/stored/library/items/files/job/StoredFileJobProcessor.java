@@ -132,7 +132,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 				.then(new VoidResponse<>(v -> emitter.onComplete()));
 		});
 
-		return streamedFileDownload.doOnDispose(() -> cancellationProxy.run());
+		return streamedFileDownload.doOnDispose(cancellationProxy::run);
 	}
 
 	private StoredFileJobStatus getCancelledStoredFileJobResult(File file, StoredFile storedFile) {

@@ -41,20 +41,6 @@ public class LibrarySyncHandler {
 		this.storedFileJobsProcessor = storedFileJobsProcessor;
 	}
 
-	//	public void setOnFileReadError(OneParameterAction<StoredFile> onFileReadError) {
-//		storedFileDownloader.setOnFileReadError(storedFile -> {
-//			if (libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
-//				onFileReadError.runWith(library, storedFile);
-//		});
-//	}
-
-//	public void setOnFileWriteError(OneParameterAction<StoredFile> onFileWriteError) {
-//		storedFileDownloader.setOnFileWriteError(storedFile -> {
-//			if (libraryStorageWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
-//				onFileWriteError.runWith(library, storedFile);
-//		});
-//	}
-
 	public Observable<StoredFileJobStatus> observeLibrarySync() {
 
 		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
