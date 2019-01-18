@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -17,6 +18,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class OkHttpFactory implements ProvideOkHttpClients {
@@ -31,7 +33,8 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 				})
 				.cache(null)
 				.readTimeout(3, TimeUnit.MINUTES)
-				.connectTimeout(5, TimeUnit.SECONDS);
+				.connectTimeout(5, TimeUnit.SECONDS)
+				.dispatcher(new Dispatcher(Executors.newFixedThreadPool(4)));
 		}
 	};
 
