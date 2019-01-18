@@ -29,7 +29,7 @@ public class StoredFileMediaScannerNotifier implements ReceiveStoredFileEvent, I
 
 	@Override
 	public Collection<String> acceptedEvents() {
-		return Collections.singleton(StoredFileSynchronization.onFileDownloadingEvent);
+		return Collections.singleton(StoredFileSynchronization.onFileDownloadedEvent);
 	}
 
 	@Override
