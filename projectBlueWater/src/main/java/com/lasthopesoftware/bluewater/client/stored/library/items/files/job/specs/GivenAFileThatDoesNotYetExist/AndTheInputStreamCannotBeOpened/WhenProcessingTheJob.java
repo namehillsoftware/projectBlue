@@ -43,6 +43,7 @@ public class WhenProcessingTheJob {
 			},
 			fakeConnectionProvider,
 			mock(IStoredFileAccess.class),
+			f -> new Promise<>(new IOException()),
 			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> false,
 			f -> true,

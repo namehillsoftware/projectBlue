@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
@@ -19,8 +20,6 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import io.reactivex.Observable;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +35,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJobProcessor.class);
 
+	@NonNull
+	private final DownloadStoredFiles storedFiles;
 	@NonNull private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
 	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 	@NonNull private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
@@ -44,7 +45,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 	@NonNull private final IFileStreamWriter fileStreamWriter;
 	@NonNull private final IStoredFileAccess storedFileAccess;
 
-	public StoredFileJobProcessor(@NonNull IStoredFileSystemFileProducer storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
+	public StoredFileJobProcessor(@NonNull IStoredFileSystemFileProducer storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull DownloadStoredFiles storedFiles, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
+		this.storedFiles = storedFiles;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
@@ -96,16 +98,13 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
 			final ServiceFile serviceFile = job.getServiceFile();
-			final Promise<Response> promisedResponse = connectionProvider.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
+			final Promise<InputStream> promisedResponse = storedFiles.promiseDownload(storedFile);
 			cancellationProxy.doCancel(promisedResponse);
 			promisedResponse
-				.eventually(response -> new QueuedPromise<>(() -> {
-					final ResponseBody body = response.body();
-					if (body == null) return null;
-
+				.eventually(inputStream -> new QueuedPromise<>(() -> {
 					if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
-					try (final InputStream is = body.byteStream()) {
+					try (final InputStream is = inputStream) {
 
 						if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
@@ -121,8 +120,6 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 						}
 					} catch (Throwable t) {
 						throw new StoredFileJobException(storedFile, t);
-					} finally {
-						body.close();
 					}
 				}, downloadExecutor), error -> {
 					logger.error("Error getting connection", error);

@@ -9,9 +9,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
+import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Collections;
 
@@ -39,6 +41,7 @@ public class WhenProcessingTheJob {
 			},
 			fakeConnectionProvider,
 			mock(IStoredFileAccess.class),
+			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
 			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> false,
 			f -> true,

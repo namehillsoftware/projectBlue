@@ -12,15 +12,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.http.RealResponseBody;
-import okio.Buffer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,28 +33,14 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() {
-		final Request.Builder builder = new Request.Builder();
-		builder.url("http://test-connection");
-
-		final Buffer buffer = new Buffer();
-
-		final Response.Builder responseBuilder = new Response.Builder();
-		responseBuilder
-			.request(builder.build())
-			.protocol(Protocol.HTTP_1_1)
-			.message("OK")
-			.body(new RealResponseBody(null, 0, buffer))
-			.code(200);
-
-		final DeferredPromise<Response> deferredPromise = new DeferredPromise<>(responseBuilder.build());
+		final DeferredPromise<InputStream> deferredPromise = new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-		when(fakeConnectionProvider.promiseResponse(any()))
-			.thenReturn(deferredPromise);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
 			fakeConnectionProvider,
 			storedFileAccess,
+			f -> deferredPromise,
 			f -> new String[0],
 			f -> false,
 			f -> true,

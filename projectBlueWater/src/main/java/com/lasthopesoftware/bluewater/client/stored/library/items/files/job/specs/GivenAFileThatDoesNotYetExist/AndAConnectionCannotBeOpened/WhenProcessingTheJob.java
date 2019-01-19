@@ -13,6 +13,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -43,6 +44,7 @@ public class WhenProcessingTheJob {
 			},
 			fakeConnectionProvider,
 			mock(IStoredFileAccess.class),
+			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
 			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> false,
 			f -> true,

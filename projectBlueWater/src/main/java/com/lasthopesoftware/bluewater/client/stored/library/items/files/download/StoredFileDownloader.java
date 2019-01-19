@@ -1,32 +1,23 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.download;
 
-import android.support.annotation.NonNull;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.ProcessStoredFileJobs;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import io.reactivex.Observable;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.namehillsoftware.handoff.promises.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Queue;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
-public final class StoredFileDownloader implements IStoredFileDownloader {
+public final class StoredFileDownloader implements DownloadStoredFiles {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileDownloader.class);
-	@NonNull
-	private final ProcessStoredFileJobs storedFileJobs;
 
-	public StoredFileDownloader(@NonNull ProcessStoredFileJobs storedFileJobs) {
-		this.storedFileJobs = storedFileJobs;
+	public StoredFileDownloader() {
+
 	}
 
 	@Override
-	public Observable<StoredFileJobStatus> process(Queue<StoredFileJob> jobsQueue) {
-		return Observable.fromIterable(jobsQueue).flatMap(this::processStoredFileJob);
-	}
-
-	private Observable<StoredFileJobStatus> processStoredFileJob(StoredFileJob storedFileJob) {
-		return storedFileJobs
-			.observeStoredFileDownload(storedFileJob);
+	public Promise<InputStream> promiseDownload(StoredFile storedFile) {
+		return new Promise<>(new ByteArrayInputStream(new byte[0]));
 	}
 }

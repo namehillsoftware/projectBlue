@@ -3,28 +3,30 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.spe
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import io.reactivex.Observable;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
+import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class WhenProcessingTheQueue {
 
-	private static final Queue<StoredFileJob> storedFileJobs = new LinkedList<>(Arrays.asList(
+	private static final Set<StoredFileJob> storedFileJobs = new HashSet<>(Arrays.asList(
 		new StoredFileJob(new ServiceFile(1), new StoredFile().setServiceId(1).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(2), new StoredFile().setServiceId(2).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(4), new StoredFile().setServiceId(4).setLibraryId(1)),
@@ -38,35 +40,36 @@ public class WhenProcessingTheQueue {
 		new StoredFile().setServiceId(2).setLibraryId(1),
 		new StoredFile().setServiceId(4).setLibraryId(1),
 		new StoredFile().setServiceId(5).setLibraryId(1),
-		new StoredFile().setServiceId(114).setLibraryId(1)
 	};
 
-	private static List<StoredFileJobStatus> storedFileStatuses;
+	private static final MarkedFilesStoredFileAccess storedFilesAccess = new MarkedFilesStoredFileAccess();
+
+	private static final List<StoredFileJobStatus> storedFileStatuses = new ArrayList<>();
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
 	public static void before() {
-		final StoredFileDownloader storedFileDownloader = new StoredFileDownloader(
-			job -> {
-				if (Arrays.asList(expectedStoredFiles).contains(job.getStoredFile()))
-					return Observable.just(
-						new StoredFileJobStatus(
-							mock(File.class),
-							job.getStoredFile(),
-							StoredFileJobState.Downloading),
-						new StoredFileJobStatus(
-							mock(File.class),
-							job.getStoredFile(),
-							StoredFileJobState.Downloaded));
+		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
+		fakeConnectionProvider.mapResponse(p -> new FakeConnectionResponseTuple(200, new byte[0]));
 
-				return Observable.just(
-					new StoredFileJobStatus(
-						mock(File.class),
-						job.getStoredFile(),
-						StoredFileJobState.Downloading));
-			});
+		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
+			$ -> mock(File.class),
+			fakeConnectionProvider,
+			storedFilesAccess,
+			f -> {
+				if (Arrays.asList(expectedStoredFiles).contains(f))
+					return new Promise<>(new ByteArrayInputStream(new byte[0]));
 
-		storedFileStatuses = storedFileDownloader.process(storedFileJobs).toList().blockingGet();
+				return new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
+			},
+			f -> new String[0],
+			f -> false,
+			f -> true,
+			(is, f) -> {});
+
+		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(status -> {
+
+		});
 	}
 
 	@Test
