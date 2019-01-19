@@ -54,7 +54,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 	}
 
 	@Override
-	public Promise<StoredFileJobStatus> observeStoredFileDownload(StoredFileJob job) {
+	public Observable<StoredFileJobStatus> observeStoredFileDownload(StoredFileJob job) {
 		final CancellationProxy cancellationProxy = new CancellationProxy();
 		final Observable<StoredFileJobStatus> streamedFileDownload = Observable.create(emitter -> {
 			final StoredFile storedFile = job.getStoredFile();

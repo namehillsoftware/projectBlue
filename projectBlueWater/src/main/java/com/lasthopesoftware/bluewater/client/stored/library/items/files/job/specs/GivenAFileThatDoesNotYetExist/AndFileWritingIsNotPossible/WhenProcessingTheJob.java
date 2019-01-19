@@ -9,13 +9,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -25,7 +23,7 @@ public class WhenProcessingTheJob {
 	private static StoredFileWriteException storedFileWriteException;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() {
 		final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 		storedFile.setIsDownloadComplete(true);
 
@@ -39,9 +37,9 @@ public class WhenProcessingTheJob {
 			(is, f) -> {});
 
 		try {
-			new FuturePromise<>(storedFileJobProcessor.observeStoredFileDownload(
-				new StoredFileJob(new ServiceFile(1), storedFile))).get();
-		} catch (ExecutionException e) {
+			storedFileJobProcessor.observeStoredFileDownload(
+				new StoredFileJob(new ServiceFile(1), storedFile)).blockingSubscribe();
+		} catch (Throwable e) {
 			if (e.getCause() instanceof StoredFileWriteException)
 				storedFileWriteException = (StoredFileWriteException)e.getCause();
 		}

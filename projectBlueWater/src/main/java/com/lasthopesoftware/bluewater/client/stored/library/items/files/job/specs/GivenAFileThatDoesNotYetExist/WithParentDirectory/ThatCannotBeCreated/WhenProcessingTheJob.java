@@ -8,13 +8,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -26,7 +24,7 @@ public class WhenProcessingTheJob {
 	private static StorageCreatePathException storageCreatePathException;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
@@ -46,9 +44,9 @@ public class WhenProcessingTheJob {
 			(is, f) -> {});
 
 		try {
-			new FuturePromise<>(storedFileJobProcessor.observeStoredFileDownload(
-				new StoredFileJob(new ServiceFile(1), storedFile))).get();
-		} catch (ExecutionException e) {
+			storedFileJobProcessor.observeStoredFileDownload(
+				new StoredFileJob(new ServiceFile(1), storedFile)).blockingSubscribe();
+		} catch (Throwable e) {
 			if (e.getCause() instanceof StorageCreatePathException)
 				storageCreatePathException = (StorageCreatePathException)e.getCause();
 		}

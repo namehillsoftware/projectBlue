@@ -9,14 +9,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,7 +27,7 @@ public class WhenProcessingTheJob {
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 		when(fakeConnectionProvider.promiseResponse(any())).thenReturn(new Promise<>(new IOException()));
 
@@ -50,9 +48,9 @@ public class WhenProcessingTheJob {
 			(is, f) -> {});
 
 		try {
-			new FuturePromise<>(storedFileJobProcessor.observeStoredFileDownload(
-				new StoredFileJob(new ServiceFile(1), storedFile))).get();
-		} catch (ExecutionException e) {
+			storedFileJobProcessor.observeStoredFileDownload(
+				new StoredFileJob(new ServiceFile(1), storedFile)).blockingSubscribe();
+		} catch (Throwable e) {
 			if (e.getCause() instanceof StoredFileJobException)
 				storedFileJobException = (StoredFileJobException)e.getCause();
 		}
