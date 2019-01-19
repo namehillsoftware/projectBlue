@@ -8,13 +8,15 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -22,10 +24,10 @@ import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static List<StoredFileJobState> storedFileJobStatus;
+	private static StoredFileJobStatus storedFileJobStatus;
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws ExecutionException, InterruptedException {
 		final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 		storedFile.setIsDownloadComplete(true);
 
@@ -42,14 +44,12 @@ public class WhenProcessingTheJob {
 			mock(IFileWritePossibleArbitrator.class),
 			(is, f) -> {});
 
-		storedFileJobStatus = storedFileJobProcessor.observeStoredFileDownload(
-			new StoredFileJob(new ServiceFile(1), storedFile))
-			.map(f -> f.storedFileJobState)
-			.toList().blockingGet();
+		storedFileJobStatus = new FuturePromise<>(storedFileJobProcessor.observeStoredFileDownload(
+			new StoredFileJob(new ServiceFile(1), storedFile))).get();
 	}
 
 	@Test
 	public void thenAnAlreadyExistsResultIsReturned() {
-		assertThat(storedFileJobStatus).containsExactly(StoredFileJobState.Queued, StoredFileJobState.AlreadyExists);
+		assertThat(storedFileJobStatus).isEqualTo(StoredFileJobState.AlreadyExists);
 	}
 }
