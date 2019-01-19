@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -41,9 +42,10 @@ public class WhenProcessingTheJob {
 
 		try {
 			storedFileJobProcessor.observeStoredFileDownload(
-				new StoredFileJob(
+				Collections.singleton(new StoredFileJob(
 					new ServiceFile(1),
-					new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true))).blockingSubscribe();
+					new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true))))
+				.blockingSubscribe();
 		} catch (Throwable e) {
 			if (e.getCause() instanceof StoredFileReadException)
 				storedFileReadException = (StoredFileReadException)e.getCause();

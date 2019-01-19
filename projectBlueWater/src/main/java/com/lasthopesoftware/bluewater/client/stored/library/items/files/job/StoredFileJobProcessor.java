@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -54,8 +55,9 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 	}
 
 	@Override
-	public Observable<StoredFileJobStatus> observeStoredFileDownload(StoredFileJob job) {
+	public Observable<StoredFileJobStatus> observeStoredFileDownload(Set<StoredFileJob> jobs) {
 		final CancellationProxy cancellationProxy = new CancellationProxy();
+		final StoredFileJob job = jobs.iterator().next();
 		final Observable<StoredFileJobStatus> streamedFileDownload = Observable.create(emitter -> {
 			final StoredFile storedFile = job.getStoredFile();
 			final File file = storedFileFileProvider.getFile(storedFile);

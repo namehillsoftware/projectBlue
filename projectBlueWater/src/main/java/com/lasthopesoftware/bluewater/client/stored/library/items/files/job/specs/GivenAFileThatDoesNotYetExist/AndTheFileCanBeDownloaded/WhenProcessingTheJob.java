@@ -8,14 +8,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import io.reactivex.subjects.BehaviorSubject;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +23,7 @@ public class WhenProcessingTheJob {
 
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 	private static final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
-	private static List<StoredFileJobState> states = new ArrayList<>();
+	private static List<StoredFileJobState> states;
 
 	@BeforeClass
 	public static void before() {
@@ -41,11 +39,10 @@ public class WhenProcessingTheJob {
 			f -> true,
 			(is, f) -> {});
 
-		final BehaviorSubject<StoredFileJobStatus> subject = BehaviorSubject.create();
-		for (final StoredFileJobStatus status : storedFileJobProcessor.observeStoredFileDownload(
-			new StoredFileJob(new ServiceFile(1), storedFile)).blockingIterable()) {
-			states.add(status.storedFileJobState);
-		}
+		states = storedFileJobProcessor.observeStoredFileDownload(
+			Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
+			.map(f -> f.storedFileJobState)
+			.toList().blockingGet();
 	}
 
 	@Test

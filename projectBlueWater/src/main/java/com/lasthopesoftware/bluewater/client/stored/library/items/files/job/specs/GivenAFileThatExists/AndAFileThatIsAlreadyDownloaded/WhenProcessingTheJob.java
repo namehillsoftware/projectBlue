@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +44,7 @@ public class WhenProcessingTheJob {
 			(is, f) -> {});
 
 		storedFileJobStatus = storedFileJobProcessor.observeStoredFileDownload(
-			new StoredFileJob(new ServiceFile(1), storedFile))
+			Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
 			.map(f -> f.storedFileJobState)
 			.toList().blockingGet();
 	}

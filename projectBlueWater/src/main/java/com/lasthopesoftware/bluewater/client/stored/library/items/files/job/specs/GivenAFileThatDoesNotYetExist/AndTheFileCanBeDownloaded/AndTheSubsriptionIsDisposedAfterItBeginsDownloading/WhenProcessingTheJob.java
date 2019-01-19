@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,7 +63,7 @@ public class WhenProcessingTheJob {
 			f -> true,
 			(is, f) -> {});
 
-		storedFileJobProcessor.observeStoredFileDownload(new StoredFileJob(new ServiceFile(1), storedFile))
+		storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
 			.blockingSubscribe(new Observer<StoredFileJobStatus>() {
 				private Disposable disposable;
 

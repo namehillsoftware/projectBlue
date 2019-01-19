@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import org.junit.BeforeClass;
@@ -18,7 +17,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +28,7 @@ public class WhenProcessingTheJob {
 
 	private static StoredFileJobException storedFileJobException;
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
-	private static final List<StoredFileJobState> states = new ArrayList<>();
+	private static List<StoredFileJobState> states;
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
@@ -54,10 +53,10 @@ public class WhenProcessingTheJob {
 			(is, f) -> { throw new IOException(); });
 
 		try {
-			for (StoredFileJobStatus status : storedFileJobProcessor.observeStoredFileDownload(
-					new StoredFileJob(new ServiceFile(1), storedFile)).blockingIterable()) {
-				states.add(status.storedFileJobState);
-			}
+			states = storedFileJobProcessor.observeStoredFileDownload(
+				Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
+				.map(f -> f.storedFileJobState)
+				.toList().blockingGet();
 		} catch (Throwable e) {
 			if (e.getCause() instanceof StoredFileJobException)
 				storedFileJobException = (StoredFileJobException)e.getCause();
