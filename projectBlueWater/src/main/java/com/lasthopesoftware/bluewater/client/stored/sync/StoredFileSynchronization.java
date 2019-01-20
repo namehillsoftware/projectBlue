@@ -87,7 +87,8 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 				return Completable.complete();
 			}, true)
 			.onErrorComplete(this::handleError)
-			.doOnComplete(() -> localBroadcastManager.sendBroadcast(new Intent(onSyncStopEvent)));
+			.doOnComplete(this::sendStoppedSync)
+			.doOnDispose(this::sendStoppedSync);
 	}
 
 	private boolean handleError(Throwable e) {
@@ -107,6 +108,10 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 		}
 
 		return e instanceof StorageCreatePathException || e instanceof StoredFileJobException;
+	}
+
+	private void sendStoppedSync() {
+		localBroadcastManager.sendBroadcast(new Intent(onSyncStopEvent));
 	}
 
 	private void sendStoredFileBroadcast(@NonNull String action, @NonNull StoredFile storedFile) {
