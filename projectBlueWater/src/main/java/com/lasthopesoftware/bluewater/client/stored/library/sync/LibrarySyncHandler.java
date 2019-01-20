@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 
 public class LibrarySyncHandler {
@@ -54,14 +53,14 @@ public class LibrarySyncHandler {
 
 				return pruneFilesTask.then(voids -> serviceFilesSet);
 			}))
-			.flatMap(serviceFile -> {
-				final Promise<Observable<StoredFileJobStatus>> promiseDownloadedStoredFile = storedFileUpdater
+			.map(serviceFile -> {
+				final Promise<StoredFileJob> promiseDownloadedStoredFile = storedFileUpdater
 					.promiseStoredFileUpdate(library, serviceFile)
 					.then(storedFile -> {
 						if (storedFile == null || storedFile.isDownloadComplete())
-							return Observable.empty();
+							return null;
 
-						return this.storedFileJobsProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(serviceFile, storedFile)));
+						return new StoredFileJob(serviceFile, storedFile);
 					});
 
 				promiseDownloadedStoredFile
@@ -70,8 +69,15 @@ public class LibrarySyncHandler {
 						return null;
 					});
 
-				return ObservedPromise.observe(promiseDownloadedStoredFile);
+				return promiseDownloadedStoredFile;
 			})
-			.flatMap(o -> o, true);
+			.toList()
+			.toObservable()
+			.flatMap(promises -> {
+				final Promise<Observable<StoredFileJobStatus>> observablePromise = Promise.whenAll(promises)
+					.then(storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(new HashSet<>(storedFileJobs)));
+
+				return ObservedPromise.observe(observablePromise).flatMap(o -> o);
+			});
 	}
 }
