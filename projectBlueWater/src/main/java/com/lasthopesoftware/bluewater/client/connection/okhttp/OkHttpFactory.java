@@ -34,7 +34,7 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 				.cache(null)
 				.readTimeout(3, TimeUnit.MINUTES)
 				.connectTimeout(5, TimeUnit.SECONDS)
-				.dispatcher(new Dispatcher(Executors.newFixedThreadPool(4)));
+				.dispatcher(new Dispatcher(Executors.newFixedThreadPool(6)));
 		}
 	};
 
