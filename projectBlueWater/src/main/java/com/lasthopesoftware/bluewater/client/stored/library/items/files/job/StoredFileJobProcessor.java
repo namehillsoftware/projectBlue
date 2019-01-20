@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -51,72 +51,82 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 	@Override
 	public Observable<StoredFileJobStatus> observeStoredFileDownload(Set<StoredFileJob> jobs) {
+		final Queue<StoredFileJob> queuedJobs = new ArrayDeque<>(jobs);
 		final CancellationProxy cancellationProxy = new CancellationProxy();
-		final StoredFileJob job = jobs.iterator().next();
 		final Observable<StoredFileJobStatus> streamedFileDownload = Observable.create(emitter -> {
-			final StoredFile storedFile = job.getStoredFile();
-			final File file = storedFileFileProvider.getFile(storedFile);
+			StoredFileJob job;
+			Promise<InputStream> promisedStreamQueue = Promise.empty();
+			Collection<Promise<Void>> promisedEmits = new ArrayList<>(jobs.size());
+			while ((job = queuedJobs.poll()) != null) {
+				final StoredFile storedFile = job.getStoredFile();
+				final File file = storedFileFileProvider.getFile(storedFile);
 
-			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued));
+				emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued));
 
-			if (file.exists()) {
-				if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
-					emitter.onError(new StoredFileReadException(file, storedFile));
-					return;
-				}
-
-				if (storedFile.isDownloadComplete()) {
-					emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.AlreadyExists));
-					emitter.onComplete();
-					return;
-				}
-			}
-
-			if (!fileWritePossibleArbitrator.isFileWritePossible(file)) {
-				emitter.onError(new StoredFileWriteException(file, storedFile));
-				return;
-			}
-
-			final File parent = file.getParentFile();
-			if (parent != null && !parent.exists() && !parent.mkdirs()) {
-				emitter.onError(new StorageCreatePathException(parent));
-				return;
-			}
-
-			if (cancellationProxy.isCancelled()) {
-				emitter.onNext(getCancelledStoredFileJobResult(file, storedFile));
-				return;
-			}
-
-			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
-
-			final Promise<InputStream> promisedResponse = storedFiles.promiseDownload(storedFile);
-			cancellationProxy.doCancel(promisedResponse);
-			promisedResponse
-				.eventually(inputStream -> new QueuedPromise<>(() -> {
-					if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
-
-					try (final InputStream is = inputStream) {
-
-						this.fileStreamWriter.writeStreamToFile(is, file);
-
-						storedFileAccess.markStoredFileAsDownloaded(storedFile);
-
-						return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
-					} catch (IOException ioe) {
-						logger.error("Error writing file!", ioe);
-						throw new StoredFileWriteException(file, storedFile, ioe);
-					} catch (Throwable t) {
-						throw new StoredFileJobException(storedFile, t);
+				if (file.exists()) {
+					if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
+						emitter.onError(new StoredFileReadException(file, storedFile));
+						return;
 					}
-				}, downloadExecutor), error -> {
-					logger.error("Error getting connection", error);
-					return new Promise<>(new StoredFileJobException(storedFile, error));
-				})
-				.then(
-					new VoidResponse<>(emitter::onNext),
-					new VoidResponse<>(emitter::onError))
-				.then(new VoidResponse<>(v -> emitter.onComplete()));
+
+					if (storedFile.isDownloadComplete()) {
+						emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.AlreadyExists));
+						emitter.onComplete();
+						return;
+					}
+				}
+
+				if (!fileWritePossibleArbitrator.isFileWritePossible(file)) {
+					emitter.onError(new StoredFileWriteException(file, storedFile));
+					return;
+				}
+
+				final File parent = file.getParentFile();
+				if (parent != null && !parent.exists() && !parent.mkdirs()) {
+					emitter.onError(new StorageCreatePathException(parent));
+					return;
+				}
+
+				if (cancellationProxy.isCancelled()) {
+					emitter.onNext(getCancelledStoredFileJobResult(file, storedFile));
+					return;
+				}
+
+				promisedStreamQueue = promisedStreamQueue.eventually(q -> {
+					emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
+
+					final Promise<InputStream> promisedDownload = storedFiles.promiseDownload(storedFile);
+					cancellationProxy.doCancel(promisedDownload);
+					return promisedDownload;
+				});
+
+				promisedEmits.add(promisedStreamQueue
+					.eventually(inputStream -> new QueuedPromise<>(() -> {
+						if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
+
+						try (final InputStream is = inputStream) {
+
+							this.fileStreamWriter.writeStreamToFile(is, file);
+
+							storedFileAccess.markStoredFileAsDownloaded(storedFile);
+
+							return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
+						} catch (IOException ioe) {
+							logger.error("Error writing file!", ioe);
+							throw new StoredFileWriteException(file, storedFile, ioe);
+						} catch (Throwable t) {
+							throw new StoredFileJobException(storedFile, t);
+						}
+					}, downloadExecutor), error -> {
+						logger.error("Error getting connection", error);
+						return new Promise<>(new StoredFileJobException(storedFile, error));
+					})
+					.then(
+						new VoidResponse<>(emitter::onNext),
+						new VoidResponse<>(emitter::onError)));
+			}
+
+			Promise.whenAll(promisedEmits).then(new VoidResponse<>(v -> emitter.onComplete()));
 		});
 
 		return streamedFileDownload.doOnDispose(cancellationProxy::run);

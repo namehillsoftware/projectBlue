@@ -35,7 +35,15 @@ public class WhenProcessingTheQueue {
 		new StoredFileJob(new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1))));
 
-	private static final StoredFile[] expectedStoredFiles = new StoredFile[] {
+	private static final StoredFile[] expectedDownloadingStoredFiles = new StoredFile[] {
+		new StoredFile().setServiceId(1).setLibraryId(1),
+		new StoredFile().setServiceId(2).setLibraryId(1),
+		new StoredFile().setServiceId(4).setLibraryId(1),
+		new StoredFile().setServiceId(5).setLibraryId(1),
+		new StoredFile().setServiceId(7).setLibraryId(1),
+	};
+
+	private static final StoredFile[] expectedDownloadedStoredFiles = new StoredFile[] {
 		new StoredFile().setServiceId(1).setLibraryId(1),
 		new StoredFile().setServiceId(2).setLibraryId(1),
 		new StoredFile().setServiceId(4).setLibraryId(1),
@@ -56,7 +64,7 @@ public class WhenProcessingTheQueue {
 			$ -> mock(File.class),
 			storedFilesAccess,
 			f -> {
-				if (Arrays.asList(expectedStoredFiles).contains(f))
+				if (Arrays.asList(expectedDownloadedStoredFiles).contains(f))
 					return new Promise<>(new ByteArrayInputStream(new byte[0]));
 
 				return new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
@@ -65,20 +73,24 @@ public class WhenProcessingTheQueue {
 			f -> true,
 			(is, f) -> {});
 
-		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(status -> {
-
-		});
+		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(storedFileStatuses::add);
 	}
 
 	@Test
-	public void thenTheFilesAreBroadcastAsDownloading() {
-		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloading)
+	public void thenTheFilesAreBroadcastAsQueued() {
+		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Queued)
 			.map(r -> r.storedFile).toList()).containsOnlyElementsOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
 	}
 
 	@Test
-	public void thenAllTheFilesAreBroadcastAsDownloaded() {
+	public void thenTheCorrectFilesAreBroadcastAsDownloading() {
+		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloading)
+			.map(r -> r.storedFile).toList()).containsOnly(expectedDownloadingStoredFiles);
+	}
+
+	@Test
+	public void thenTheCorrectFilesAreBroadcastAsDownloaded() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloaded)
-			.map(r -> r.storedFile).toList()).containsOnly(expectedStoredFiles);
+			.map(r -> r.storedFile).toList()).containsOnly(expectedDownloadedStoredFiles);
 	}
 }

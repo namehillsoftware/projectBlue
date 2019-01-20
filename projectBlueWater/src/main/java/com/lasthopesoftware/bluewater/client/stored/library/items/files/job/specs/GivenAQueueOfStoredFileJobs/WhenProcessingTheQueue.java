@@ -3,8 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.spe
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
@@ -53,9 +51,6 @@ public class WhenProcessingTheQueue {
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
 	public static void before() {
-		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
-		fakeConnectionProvider.mapResponse(p -> new FakeConnectionResponseTuple(200, new byte[0]));
-
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
 			storedFilesAccess,
