@@ -6,7 +6,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
+import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 import okhttp3.Response;
 
 import java.io.ByteArrayInputStream;
@@ -26,19 +28,21 @@ public final class StoredFileDownloader implements DownloadStoredFiles {
 	@Override
 	public Promise<InputStream> promiseDownload(StoredFile storedFile) {
 		return new Promise<>(m -> {
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			m.cancellationRequested(cancellationProxy);
 
 			final Promise<Response> promisedResponse = connectionProvider
 				.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(new ServiceFile(storedFile.getServiceId())));
 
-			m.cancellationRequested(promisedResponse::cancel);
+			cancellationProxy.doCancel(promisedResponse);
 
 			promisedResponse
 				.then(r -> r.body() == null || r.code() == 404
 					? new ByteArrayInputStream(new byte[0])
 					: r.body().byteStream())
 				.then(
-					new VoidResponse<>(m::sendResolution),
-					new VoidResponse<>(m::sendRejection));
+					new ResolutionProxy<>(m),
+					new RejectionProxy(m));
 		});
 	}
 }
