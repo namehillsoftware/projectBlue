@@ -71,8 +71,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 					if (storedFile.isDownloadComplete()) {
 						emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.AlreadyExists));
-						emitter.onComplete();
-						return;
+						continue;
 					}
 				}
 
