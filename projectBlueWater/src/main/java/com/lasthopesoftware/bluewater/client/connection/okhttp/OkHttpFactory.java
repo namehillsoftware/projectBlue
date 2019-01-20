@@ -19,10 +19,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class OkHttpFactory implements ProvideOkHttpClients {
 
@@ -35,7 +32,10 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 				null, true);
 		}
 
-		return Executors.newFixedThreadPool(maxDownloadThreadPoolSize);
+		return new ThreadPoolExecutor(
+			0, 6,
+			1, TimeUnit.MINUTES,
+			new LinkedBlockingQueue<>());
 	});
 
 	private static final CreateAndHold<OkHttpClient.Builder> lazyCommonBuilder = new AbstractSynchronousLazy<OkHttpClient.Builder>() {
