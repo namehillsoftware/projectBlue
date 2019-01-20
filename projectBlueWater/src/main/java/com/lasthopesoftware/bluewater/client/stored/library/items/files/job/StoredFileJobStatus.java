@@ -33,8 +33,4 @@ public class StoredFileJobStatus {
 		result = 31 * result + storedFileJobState.hashCode();
 		return result;
 	}
-
-	public static StoredFileJobStatus empty() {
-		return new StoredFileJobStatus(null, null, StoredFileJobState.None);
-	}
 }
