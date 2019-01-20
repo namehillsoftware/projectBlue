@@ -267,16 +267,18 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 		if (isSyncRunning() || !isDeviceStateValidForSync()) return START_NOT_STICKY;
 
-		for (final ReceiveStoredFileEvent receiveStoredFileEvent : lazyStoredFileEventReceivers.getObject()) {
-			final StoredFileBroadcastReceiver broadcastReceiver = new StoredFileBroadcastReceiver(receiveStoredFileEvent);
-			if (!broadcastReceivers.add(broadcastReceiver)) continue;
+		if (!lazyStoredFileEventReceivers.isCreated()) {
+			for (final ReceiveStoredFileEvent receiveStoredFileEvent : lazyStoredFileEventReceivers.getObject()) {
+				final StoredFileBroadcastReceiver broadcastReceiver = new StoredFileBroadcastReceiver(receiveStoredFileEvent);
+				if (!broadcastReceivers.add(broadcastReceiver)) continue;
 
-			lazyBroadcastManager.getObject().registerReceiver(
-				broadcastReceiver,
-				Stream.of(receiveStoredFileEvent.acceptedEvents()).reduce(new IntentFilter(), (i, e) -> {
-					i.addAction(e);
-					return i;
-				}));
+				lazyBroadcastManager.getObject().registerReceiver(
+					broadcastReceiver,
+					Stream.of(receiveStoredFileEvent.acceptedEvents()).reduce(new IntentFilter(), (i, e) -> {
+						i.addAction(e);
+						return i;
+					}));
+			}
 		}
 
 		syncDisposable = lazyStoredFilesSynchronization.getObject()
