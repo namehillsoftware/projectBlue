@@ -14,12 +14,14 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.spec
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.namehillsoftware.handoff.promises.Promise;
+import io.reactivex.Observer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -52,7 +54,7 @@ public class WhenProcessingTheQueue {
 
 	private static final MarkedFilesStoredFileAccess storedFilesAccess = new MarkedFilesStoredFileAccess();
 
-	private static final List<StoredFileJobStatus> storedFileStatuses = new ArrayList<>();
+	private static List<StoredFileJobStatus> storedFileStatuses = new ArrayList<>();
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
@@ -73,10 +75,10 @@ public class WhenProcessingTheQueue {
 			f -> true,
 			(is, f) -> {});
 
-
-		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(storedFileJobStatus -> {
-
-		});
+		storedFileStatuses = storedFileJobProcessor
+			.observeStoredFileDownload(storedFileJobs)
+			.timeout(1, TimeUnit.SECONDS, Observer::onComplete)
+			.toList().blockingGet();
 	}
 
 	@Test
