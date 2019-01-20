@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -75,9 +77,11 @@ public class LibrarySyncHandler {
 			.toObservable()
 			.flatMap(promises -> {
 				final Promise<Observable<StoredFileJobStatus>> observablePromise = Promise.whenAll(promises)
-					.then(storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(new HashSet<>(storedFileJobs)));
+					.then(storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(
+						Stream.of(storedFileJobs).filter(j -> j != null).collect(Collectors.toSet())));
 
-				return ObservedPromise.observe(observablePromise).flatMap(o -> o);
-			});
+				return ObservedPromise.observe(observablePromise);
+			})
+			.flatMap(o -> o);
 	}
 }
