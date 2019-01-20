@@ -73,7 +73,10 @@ public class WhenProcessingTheQueue {
 			f -> true,
 			(is, f) -> {});
 
-		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(storedFileStatuses::add);
+
+		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(storedFileJobStatus -> {
+
+		});
 	}
 
 	@Test

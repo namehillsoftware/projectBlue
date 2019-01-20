@@ -14,7 +14,6 @@ import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
@@ -23,7 +22,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -55,8 +56,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 		final CancellationProxy cancellationProxy = new CancellationProxy();
 		final Observable<StoredFileJobStatus> streamedFileDownload = Observable.create(emitter -> {
 			StoredFileJob job;
-			Promise<InputStream> promisedStreamQueue = Promise.empty();
-			Collection<Promise<Void>> promisedEmits = new ArrayList<>(jobs.size());
+			Promise<Void> promisedStreamQueue = Promise.empty();
 			while ((job = queuedJobs.poll()) != null) {
 				final StoredFile storedFile = job.getStoredFile();
 				final File file = storedFileFileProvider.getFile(storedFile);
@@ -93,40 +93,41 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 				}
 
 				promisedStreamQueue = promisedStreamQueue.eventually(q -> {
+					if (cancellationProxy.isCancelled()) return Promise.empty();
+
 					emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
 					final Promise<InputStream> promisedDownload = storedFiles.promiseDownload(storedFile);
 					cancellationProxy.doCancel(promisedDownload);
 					return promisedDownload;
-				});
+				}).then(inputStream -> {
+					if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
-				promisedEmits.add(promisedStreamQueue
-					.eventually(inputStream -> new QueuedPromise<>(() -> {
-						if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
+					try (final InputStream is = inputStream) {
 
-						try (final InputStream is = inputStream) {
+						this.fileStreamWriter.writeStreamToFile(is, file);
 
-							this.fileStreamWriter.writeStreamToFile(is, file);
+						storedFileAccess.markStoredFileAsDownloaded(storedFile);
 
-							storedFileAccess.markStoredFileAsDownloaded(storedFile);
-
-							return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
-						} catch (IOException ioe) {
-							logger.error("Error writing file!", ioe);
-							throw new StoredFileWriteException(file, storedFile, ioe);
-						} catch (Throwable t) {
-							throw new StoredFileJobException(storedFile, t);
-						}
-					}, downloadExecutor), error -> {
-						logger.error("Error getting connection", error);
-						return new Promise<>(new StoredFileJobException(storedFile, error));
-					})
-					.then(
-						new VoidResponse<>(emitter::onNext),
-						new VoidResponse<>(emitter::onError)));
+						return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
+					} catch (IOException ioe) {
+						logger.error("Error writing file!", ioe);
+						throw new StoredFileWriteException(file, storedFile, ioe);
+					} catch (Throwable t) {
+						throw new StoredFileJobException(storedFile, t);
+					}
+				}, error -> {
+					logger.error("Error getting connection", error);
+					throw new StoredFileJobException(storedFile, error);
+				})
+				.then(
+					new VoidResponse<>(emitter::onNext),
+					new VoidResponse<>(emitter::onError));
 			}
 
-			Promise.whenAll(promisedEmits).then(new VoidResponse<>(v -> emitter.onComplete()));
+			promisedStreamQueue.then(
+				new VoidResponse<>(v -> emitter.onComplete()),
+				new VoidResponse<>(emitter::onError));
 		});
 
 		return streamedFileDownload.doOnDispose(cancellationProxy::run);
