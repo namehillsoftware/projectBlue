@@ -49,6 +49,6 @@ public class WhenProcessingTheJob {
 
 	@Test
 	public void thenAnAlreadyExistsResultIsReturned() {
-		assertThat(storedFileJobStatus).containsExactly(StoredFileJobState.Queued, StoredFileJobState.AlreadyExists);
+		assertThat(storedFileJobStatus).containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloaded);
 	}
 }

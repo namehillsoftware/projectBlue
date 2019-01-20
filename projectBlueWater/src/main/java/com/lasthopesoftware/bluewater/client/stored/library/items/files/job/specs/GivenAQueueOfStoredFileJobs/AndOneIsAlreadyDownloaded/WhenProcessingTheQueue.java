@@ -83,6 +83,7 @@ public class WhenProcessingTheQueue {
 	@Test
 	public void thenAllTheFilesAreBroadcastAsDownloaded() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloaded)
-			.map(r -> r.storedFile).toList()).containsOnly(expectedStoredFiles);
+			.map(r -> r.storedFile).toList()).containsOnlyElementsOf(
+				Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
 	}
 }
