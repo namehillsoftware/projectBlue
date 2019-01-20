@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServ
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.StoredPlaylistItemsConverter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
@@ -119,6 +120,7 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 				storedFileSystemFileProducer,
 				connectionProvider,
 				storedFileAccess,
+				new StoredFileDownloader(serviceFileUriQueryParamsProvider, connectionProvider),
 				serviceFileUriQueryParamsProvider,
 				fileReadPossibleArbitrator,
 				fileWritePossibleArbitrator,

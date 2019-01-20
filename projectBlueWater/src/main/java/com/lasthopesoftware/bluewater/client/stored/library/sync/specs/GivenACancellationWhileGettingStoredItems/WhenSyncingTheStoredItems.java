@@ -61,11 +61,11 @@ public class WhenSyncingTheStoredItems {
 			job -> Observable.just(
 				new StoredFileJobStatus(
 					mock(File.class),
-					job.getStoredFile(),
+					job.iterator().next().getStoredFile(),
 					StoredFileJobState.Downloading),
 				new StoredFileJobStatus(
 					mock(File.class),
-					job.getStoredFile(),
+					job.iterator().next().getStoredFile(),
 					StoredFileJobState.Downloaded))
 		);
 

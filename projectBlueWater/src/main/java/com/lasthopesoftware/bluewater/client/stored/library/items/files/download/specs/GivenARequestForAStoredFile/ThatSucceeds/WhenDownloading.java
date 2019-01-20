@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.downloa
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -33,7 +34,7 @@ public class WhenDownloading {
 		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
 		fakeConnectionProvider.mapResponse(p -> new FakeConnectionResponseTuple(200, responseBytes));
 
-		final StoredFileDownloader downloader = new StoredFileDownloader();
+		final StoredFileDownloader downloader = new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), fakeConnectionProvider);
 		inputStream = new FuturePromise<>(downloader.promiseDownload(new StoredFile().setServiceId(4))).get();
 	}
 

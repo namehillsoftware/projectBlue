@@ -10,11 +10,13 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.namehillsoftware.handoff.promises.Promise;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +40,7 @@ public class WhenProcessingTheJob {
 			$ -> mock(File.class),
 			fakeConnectionProvider,
 			storedFileAccess,
+			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
 			f -> new String[0],
 			f -> false,
 			f -> true,

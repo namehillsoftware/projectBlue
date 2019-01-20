@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 public class LibrarySyncHandler {
@@ -60,7 +61,7 @@ public class LibrarySyncHandler {
 						if (storedFile == null || storedFile.isDownloadComplete())
 							return Observable.empty();
 
-						return this.storedFileJobsProcessor.observeStoredFileDownload(new StoredFileJob(serviceFile, storedFile));
+						return this.storedFileJobsProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(serviceFile, storedFile)));
 					});
 
 				promiseDownloadedStoredFile

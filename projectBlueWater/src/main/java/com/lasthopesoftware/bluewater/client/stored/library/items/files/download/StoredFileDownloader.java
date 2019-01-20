@@ -1,23 +1,32 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.download;
 
+import android.support.annotation.NonNull;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public final class StoredFileDownloader implements DownloadStoredFiles {
 
-	private static final Logger logger = LoggerFactory.getLogger(StoredFileDownloader.class);
+	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 
-	public StoredFileDownloader() {
+	@NonNull private final IConnectionProvider connectionProvider;
 
+	public StoredFileDownloader(@NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IConnectionProvider connectionProvider) {
+		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
+		this.connectionProvider = connectionProvider;
 	}
 
 	@Override
 	public Promise<InputStream> promiseDownload(StoredFile storedFile) {
-		return new Promise<>(new ByteArrayInputStream(new byte[0]));
+		return connectionProvider
+			.promiseResponse(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(new ServiceFile(storedFile.getServiceId())))
+			.then(r -> r.body() == null || r.code() == 404
+				? new ByteArrayInputStream(new byte[0])
+				: r.body().byteStream());
 	}
 }

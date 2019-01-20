@@ -87,6 +87,7 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				new StoredFileSystemFileProducer(),
 				fakeConnectionProvider,
 				storedFileAccess,
+				f -> new Promise<>(new IOException()),
 				new ServiceFileUriQueryParamsProvider(),
 				readPossibleArbitrator,
 				writePossibleArbitrator,

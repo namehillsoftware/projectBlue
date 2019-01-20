@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job;
 import android.support.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
@@ -97,7 +96,6 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
-			final ServiceFile serviceFile = job.getServiceFile();
 			final Promise<InputStream> promisedResponse = storedFiles.promiseDownload(storedFile);
 			cancellationProxy.doCancel(promisedResponse);
 			promisedResponse
@@ -106,18 +104,14 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 					try (final InputStream is = inputStream) {
 
-						if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
+						this.fileStreamWriter.writeStreamToFile(is, file);
 
-						try {
-							this.fileStreamWriter.writeStreamToFile(is, file);
+						storedFileAccess.markStoredFileAsDownloaded(storedFile);
 
-							storedFileAccess.markStoredFileAsDownloaded(storedFile);
-
-							return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
-						} catch (IOException ioe) {
-							logger.error("Error writing file!", ioe);
-							throw new StoredFileWriteException(file, storedFile, ioe);
-						}
+						return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
+					} catch (IOException ioe) {
+						logger.error("Error writing file!", ioe);
+						throw new StoredFileWriteException(file, storedFile, ioe);
 					} catch (Throwable t) {
 						throw new StoredFileJobException(storedFile, t);
 					}
