@@ -34,10 +34,8 @@ public class WhenProcessingTheJob {
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
-			fakeConnectionProvider,
 			storedFileAccess,
 			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
-			f -> new String[0],
 			f -> false,
 			f -> true,
 			(is, f) -> {});

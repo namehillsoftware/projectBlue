@@ -118,10 +118,8 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 			storedFileUpdater,
 			new StoredFileJobProcessor(
 				storedFileSystemFileProducer,
-				connectionProvider,
 				storedFileAccess,
 				new StoredFileDownloader(serviceFileUriQueryParamsProvider, connectionProvider),
-				serviceFileUriQueryParamsProvider,
 				fileReadPossibleArbitrator,
 				fileWritePossibleArbitrator,
 				fileStreamWriter)

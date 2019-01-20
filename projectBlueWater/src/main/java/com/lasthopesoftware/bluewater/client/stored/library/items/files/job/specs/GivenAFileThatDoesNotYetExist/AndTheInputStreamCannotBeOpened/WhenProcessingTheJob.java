@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.AndTheInputStreamCannotBeOpened;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -18,7 +16,6 @@ import java.io.IOException;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -29,9 +26,6 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() {
-		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-		when(fakeConnectionProvider.promiseResponse(any())).thenReturn(new Promise<>(new IOException()));
-
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> {
 				final File file = mock(File.class);
@@ -41,10 +35,8 @@ public class WhenProcessingTheJob {
 
 				return file;
 			},
-			fakeConnectionProvider,
 			mock(IStoredFileAccess.class),
 			f -> new Promise<>(new IOException()),
-			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> false,
 			f -> true,
 			(is, f) -> {});

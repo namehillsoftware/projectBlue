@@ -54,7 +54,6 @@ public class WhenProcessingTheQueue {
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
-			fakeConnectionProvider,
 			storedFilesAccess,
 			f -> {
 				if (Arrays.asList(expectedStoredFiles).contains(f))
@@ -62,7 +61,6 @@ public class WhenProcessingTheQueue {
 
 				return new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
 			},
-			f -> new String[0],
 			f -> false,
 			f -> true,
 			(is, f) -> {});

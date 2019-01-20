@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatExists.AndAFileThatIsAlreadyDownloaded;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -37,10 +35,8 @@ public class WhenProcessingTheJob {
 				when(mockFile.exists()).thenReturn(true);
 				return mockFile;
 			},
-			mock(IConnectionProvider.class),
 			mock(IStoredFileAccess.class),
 			f -> Promise.empty(),
-			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> true,
 			mock(IFileWritePossibleArbitrator.class),
 			(is, f) -> {});

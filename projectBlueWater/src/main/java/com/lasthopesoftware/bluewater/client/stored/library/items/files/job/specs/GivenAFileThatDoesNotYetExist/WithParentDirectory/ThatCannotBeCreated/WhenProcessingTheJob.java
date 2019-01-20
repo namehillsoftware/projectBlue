@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.WithParentDirectory.ThatCannotBeCreated;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -28,8 +26,6 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() {
-		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
-
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> {
 				final File file = mock(File.class);
@@ -39,10 +35,8 @@ public class WhenProcessingTheJob {
 
 				return file;
 			},
-			fakeConnectionProvider,
 			mock(IStoredFileAccess.class),
 			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
-			mock(IServiceFileUriQueryParamsProvider.class),
 			f -> false,
 			f -> true,
 			(is, f) -> {});

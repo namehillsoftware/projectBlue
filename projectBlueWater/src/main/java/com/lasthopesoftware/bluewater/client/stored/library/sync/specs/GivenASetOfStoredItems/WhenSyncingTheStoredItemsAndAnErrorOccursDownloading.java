@@ -4,7 +4,6 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -85,10 +84,8 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
 			new StoredFileJobProcessor(
 				new StoredFileSystemFileProducer(),
-				fakeConnectionProvider,
 				storedFileAccess,
 				f -> new Promise<>(new IOException()),
-				new ServiceFileUriQueryParamsProvider(),
 				readPossibleArbitrator,
 				writePossibleArbitrator,
 				(i, f) -> {})

@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job;
 
 import android.support.annotation.NonNull;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
@@ -37,20 +35,16 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 	@NonNull
 	private final DownloadStoredFiles storedFiles;
 	@NonNull private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
-	@NonNull private final IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider;
 	@NonNull private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	@NonNull private final IStoredFileSystemFileProducer storedFileFileProvider;
-	@NonNull private final IConnectionProvider connectionProvider;
 	@NonNull private final IFileStreamWriter fileStreamWriter;
 	@NonNull private final IStoredFileAccess storedFileAccess;
 
-	public StoredFileJobProcessor(@NonNull IStoredFileSystemFileProducer storedFileFileProvider, @NonNull IConnectionProvider connectionProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull DownloadStoredFiles storedFiles, @NonNull IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
+	public StoredFileJobProcessor(@NonNull IStoredFileSystemFileProducer storedFileFileProvider, @NonNull IStoredFileAccess storedFileAccess, @NonNull DownloadStoredFiles storedFiles, @NonNull IFileReadPossibleArbitrator fileReadPossibleArbitrator, @NonNull IFileWritePossibleArbitrator fileWritePossibleArbitrator, @NonNull IFileStreamWriter fileStreamWriter) {
 		this.storedFiles = storedFiles;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
-		this.serviceFileUriQueryParamsProvider = serviceFileUriQueryParamsProvider;
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.storedFileFileProvider = storedFileFileProvider;
-		this.connectionProvider = connectionProvider;
 		this.fileStreamWriter = fileStreamWriter;
 		this.storedFileAccess = storedFileAccess;
 	}

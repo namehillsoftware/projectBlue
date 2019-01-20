@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.AndFileWritingIsNotPossible;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -14,7 +12,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Collections;
 
@@ -32,10 +29,8 @@ public class WhenProcessingTheJob {
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
-			mock(IConnectionProvider.class),
 			mock(IStoredFileAccess.class),
-			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
-			mock(IServiceFileUriQueryParamsProvider.class),
+			f -> Promise.empty(),
 			f -> false,
 			mock(IFileWritePossibleArbitrator.class),
 			(is, f) -> {});
