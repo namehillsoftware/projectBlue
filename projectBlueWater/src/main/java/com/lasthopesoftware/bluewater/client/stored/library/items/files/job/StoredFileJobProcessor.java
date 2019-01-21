@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
@@ -65,8 +64,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 				if (file.exists()) {
 					if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
-						emitter.onError(new StoredFileReadException(file, storedFile));
-						return;
+						emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Unreadable));
+						continue;
 					}
 
 					if (storedFile.isDownloadComplete()) {

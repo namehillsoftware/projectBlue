@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.AndOneIsAlreadyDownloaded.AndThereIsNotPermissionToDownload;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.AndSomeAreAlreadyDownloaded.AndOneCannotBeRead;
 
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -30,14 +30,17 @@ public class WhenProcessingTheQueue {
 		new StoredFileJob(new ServiceFile(2), new StoredFile().setServiceId(2).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(4), new StoredFile().setServiceId(4).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(5), new StoredFile().setServiceId(5).setLibraryId(1).setIsDownloadComplete(true)),
-		new StoredFileJob(new ServiceFile(7), new StoredFile().setServiceId(7).setLibraryId(1).setIsDownloadComplete(true)),
-		new StoredFileJob(new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1))));
+		new StoredFileJob(new ServiceFile(7), new StoredFile().setServiceId(7).setLibraryId(1)),
+		new StoredFileJob(new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1).setIsDownloadComplete(true)),
+		new StoredFileJob(new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1).setIsDownloadComplete(true))));
 
 	private static final StoredFile[] expectedStoredFiles = new StoredFile[] {
 		new StoredFile().setServiceId(1).setLibraryId(1),
 		new StoredFile().setServiceId(2).setLibraryId(1),
 		new StoredFile().setServiceId(4).setLibraryId(1),
+		new StoredFile().setServiceId(5).setLibraryId(1),
+		new StoredFile().setServiceId(7).setLibraryId(1),
+		new StoredFile().setServiceId(92).setLibraryId(1),
 	};
 
 	private static final MarkedFilesStoredFileAccess storedFilesAccess = new MarkedFilesStoredFileAccess();
@@ -54,11 +57,14 @@ public class WhenProcessingTheQueue {
 
 				when(file.exists()).thenReturn(storedFile.isDownloadComplete());
 
+				if (storedFile.getServiceId() == 114)
+					when(file.getPath()).thenReturn("unreadable");
+
 				return file;
 			},
 			storedFilesAccess,
 			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
-			f -> false,
+			f -> !"unreadable".equals(f.getPath()),
 			f -> true,
 			(is, f) -> {});
 
@@ -73,8 +79,13 @@ public class WhenProcessingTheQueue {
 	}
 
 	@Test
-	public void thenAnErrorOccurs() {
-		assertThat(exception).isNotNull();
+	public void thenNoErrorOccurs() {
+		assertThat(exception).isNull();
+	}
+
+	@Test
+	public void thenTheCorrectFilesAreMarkedUnreadable() {
+		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Unreadable).single().storedFile.getServiceId()).isEqualTo(114);
 	}
 
 	@Test
