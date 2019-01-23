@@ -110,7 +110,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 						return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded);
 					} catch (IOException ioe) {
 						logger.error("Error writing file!", ioe);
-						return null;
+						return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued);
 					} catch (Throwable t) {
 						throw new StoredFileJobException(storedFile, t);
 					}

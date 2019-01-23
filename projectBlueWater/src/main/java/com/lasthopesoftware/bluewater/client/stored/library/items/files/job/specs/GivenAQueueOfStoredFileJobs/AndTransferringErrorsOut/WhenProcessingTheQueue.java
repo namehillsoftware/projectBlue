@@ -59,20 +59,30 @@ public class WhenProcessingTheQueue {
 
 				when(file.exists()).thenReturn(storedFile.isDownloadComplete());
 
+				if (storedFile.getServiceId() == 2)
+					when(file.getPath()).thenReturn("write-failure");
+
 				return file;
 			},
 			storedFilesAccess,
 			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
 			f -> true,
 			f -> true,
-			(is, f) -> { throw new IOException(); });
+			(is, f) -> {
+				if ("write-failure".equals(f.getPath()))
+					throw new IOException();
+			});
 
 		storedFileStatuses = storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).toList().blockingGet();
 	}
 
-	@Test public void thenTheErrorFileIsMarkedAsQueued() {
+	@Test
+	public void thenTheErrorFileIsMarkedAsQueued() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFile.getServiceId() == 2)
-			.map(r -> r.).single().getServiceId()).isEqualTo(2);
+			.map(r -> r.storedFileJobState).toList()).containsExactly(
+				StoredFileJobState.Queued,
+				StoredFileJobState.Downloading,
+				StoredFileJobState.Queued);
 	}
 
 	@Test
@@ -83,7 +93,8 @@ public class WhenProcessingTheQueue {
 	@Test
 	public void thenTheFilesAreBroadcastAsDownloading() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloading)
-			.map(r -> r.storedFile).toList()).containsExactly(expectedStoredFiles);
+			.map(r -> r.storedFile).toList())
+			.containsExactlyElementsOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
 	}
 
 	@Test
