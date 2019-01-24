@@ -10,8 +10,10 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
 import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 public final class StoredFileDownloader implements DownloadStoredFiles {
@@ -39,10 +41,32 @@ public final class StoredFileDownloader implements DownloadStoredFiles {
 			promisedResponse
 				.then(r -> r.body() == null || r.code() == 404
 					? new ByteArrayInputStream(new byte[0])
-					: r.body().byteStream())
+					: new StreamedResponse(r.body()))
 				.then(
 					new ResolutionProxy<>(m),
 					new RejectionProxy(m));
 		});
+	}
+
+	private static final class StreamedResponse extends InputStream {
+
+		private final ResponseBody responseBody;
+		private final InputStream byteStream;
+
+		StreamedResponse(ResponseBody responseBody) {
+			this.responseBody = responseBody;
+			byteStream = this.responseBody.byteStream();
+		}
+
+		@Override
+		public int read() throws IOException {
+			return byteStream.read();
+		}
+
+		@Override
+		public void close() throws IOException {
+			byteStream.close();
+			responseBody.close();
+		}
 	}
 }
