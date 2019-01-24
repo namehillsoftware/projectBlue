@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -21,8 +22,8 @@ import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static StoredFileJobException storedFileJobException;
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+	private static List<StoredFileJobState> jobStates;
 
 	@BeforeClass
 	public static void before() {
@@ -41,27 +42,15 @@ public class WhenProcessingTheJob {
 			f -> true,
 			(is, f) -> {});
 
-		try {
-			storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(
-				new StoredFileJob(new ServiceFile(1), storedFile))).blockingSubscribe();
-		} catch (Throwable e) {
-			if (e.getCause() instanceof StoredFileJobException)
-				storedFileJobException = (StoredFileJobException)e.getCause();
-		}
+		jobStates = storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(
+			new StoredFileJob(new ServiceFile(1), storedFile))).map(j -> j.storedFileJobState).toList().blockingGet();
 	}
 
 	@Test
-	public void thenAStoredFileJobExceptionIsThrown() {
-		assertThat(storedFileJobException).isNotNull();
-	}
-
-	@Test
-	public void thenTheInnerExceptionIsAnIoException() {
-		assertThat(storedFileJobException.getCause()).isInstanceOf(IOException.class);
-	}
-
-	@Test
-	public void thenTheStoredFileIsAssociatedWithTheException() {
-		assertThat(storedFileJobException.getStoredFile()).isEqualTo(storedFile);
+	public void thenTheStoredFileJobIsInQueuedState() {
+		assertThat(jobStates).containsExactly(
+			StoredFileJobState.Queued,
+			StoredFileJobState.Downloading,
+			StoredFileJobState.Queued);
 	}
 }
