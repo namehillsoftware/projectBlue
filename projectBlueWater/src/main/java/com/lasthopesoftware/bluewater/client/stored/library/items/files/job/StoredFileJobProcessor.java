@@ -120,6 +120,9 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 					if (error instanceof IOException)
 						return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued);
 
+					if (error instanceof StoredFileJobException)
+						throw error;
+
 					throw new StoredFileJobException(storedFile, error);
 				})
 				.then(new VoidResponse<>(emitter::onNext));

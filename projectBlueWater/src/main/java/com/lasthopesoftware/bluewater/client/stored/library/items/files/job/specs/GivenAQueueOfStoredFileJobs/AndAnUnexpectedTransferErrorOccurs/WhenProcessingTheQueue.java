@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.AndSomeAreAlreadyDownloaded.AndOneCannotBeRead;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.AndAnUnexpectedTransferErrorOccurs;
 
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -8,9 +8,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.storage.read.exceptions.StorageReadFileException;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -29,22 +29,21 @@ public class WhenProcessingTheQueue {
 		new StoredFileJob(new ServiceFile(1), new StoredFile().setServiceId(1).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(2), new StoredFile().setServiceId(2).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(4), new StoredFile().setServiceId(4).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(5), new StoredFile().setServiceId(5).setLibraryId(1).setIsDownloadComplete(true)),
+		new StoredFileJob(new ServiceFile(5), new StoredFile().setServiceId(5).setLibraryId(1)),
 		new StoredFileJob(new ServiceFile(7), new StoredFile().setServiceId(7).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1).setIsDownloadComplete(true)),
-		new StoredFileJob(new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1).setIsDownloadComplete(true))));
+		new StoredFileJob(new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1)),
+		new StoredFileJob(new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1))));
 
 	private static final StoredFile[] expectedStoredFiles = new StoredFile[] {
 		new StoredFile().setServiceId(1).setLibraryId(1),
 		new StoredFile().setServiceId(2).setLibraryId(1),
 		new StoredFile().setServiceId(4).setLibraryId(1),
-		new StoredFile().setServiceId(7).setLibraryId(1),
 	};
 
 	private static final MarkedFilesStoredFileAccess storedFilesAccess = new MarkedFilesStoredFileAccess();
 
 	private static final List<StoredFileJobStatus> storedFileStatuses = new ArrayList<>();
-	private static StorageReadFileException exception;
+	private static StoredFileJobException exception;
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
 	@BeforeClass
@@ -55,55 +54,55 @@ public class WhenProcessingTheQueue {
 
 				when(file.exists()).thenReturn(storedFile.isDownloadComplete());
 
-				if (storedFile.getServiceId() == 114)
-					when(file.getPath()).thenReturn("unreadable");
+				if (storedFile.getServiceId() == 5)
+					when(file.getPath()).thenReturn("write-failure");
 
 				return file;
 			},
 			storedFilesAccess,
 			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
-			f -> !"unreadable".equals(f.getPath()),
 			f -> true,
-			(is, f) -> {});
+			f -> true,
+			(is, f) -> {
+				if ("write-failure".equals(f.getPath()))
+					throw new UnexpectedException();
+			});
 
-		storedFileJobProcessor
-			.observeStoredFileDownload(storedFileJobs)
-			.blockingSubscribe(
+			storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(
 				storedFileStatuses::add,
-				error -> {
-					if (error instanceof StorageReadFileException)
-						exception = (StorageReadFileException)error;
+				e -> {
+					if (e instanceof StoredFileJobException)
+						exception = (StoredFileJobException)e;
 				});
+		}
+
+	@Test
+	public void thenTheErrorFileIsCorrect() {
+		assertThat(exception.getStoredFile().getServiceId()).isEqualTo(5);
 	}
 
 	@Test
-	public void thenNoErrorOccurs() {
-		assertThat(exception).isNull();
+	public void thenTheUnexpectedEsceptionIsCorrect() {
+		assertThat(exception.getCause()).isInstanceOf(UnexpectedException.class);
 	}
 
 	@Test
-	public void thenTheCorrectFilesAreMarkedUnreadable() {
-		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Unreadable).single().storedFile.getServiceId()).isEqualTo(114);
-	}
-
-	@Test
-	public void thenTheCorrectFilesAreMarkedAsDownloaded() {
+	public void thenTheFilesAreMarkedAsDownloaded() {
 		assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded).containsExactly(expectedStoredFiles);
 	}
 
 	@Test
 	public void thenTheFilesAreBroadcastAsDownloading() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloading)
-			.map(r -> r.storedFile).toList()).containsExactly(expectedStoredFiles);
+			.map(r -> r.storedFile.getServiceId()).toList())
+			.containsExactly(1, 2, 4, 5);
 	}
 
 	@Test
-	public void thenTheCorrectFilesAreBroadcastAsDownloaded() {
+	public void thenAllTheFilesAreBroadcastAsDownloaded() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloaded)
-			.map(r -> r.storedFile).toList()).containsOnlyElementsOf(
-				Stream.of(storedFileJobs)
-					.map(StoredFileJob::getStoredFile)
-					.filter(f -> f.getServiceId() != 114)
-					.toList());
+			.map(r -> r.storedFile).toList()).containsExactly(expectedStoredFiles);
 	}
+
+	private static class UnexpectedException extends RuntimeException {}
 }
