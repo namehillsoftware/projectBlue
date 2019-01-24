@@ -4,4 +4,5 @@
 - Do not have permissions to write - return error for that library, stop downloading for that library, because it is likely other files in that library cannot be written
 - Do not have permissions to make directory - return error, end immediately
 - IO Exception occurs during download - log error, return status of 'queued', continue processing, because it was likely just a network issue
+- IO Exception occurs during connection - log error, return status of 'queued', continue processing, because it was likely just a network issue
 - Generic exception occurs during download - return error, end immediately

@@ -116,11 +116,13 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 					}
 				}, error -> {
 					logger.error("Error getting connection", error);
+
+					if (error instanceof IOException)
+						return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued);
+
 					throw new StoredFileJobException(storedFile, error);
 				})
-				.then(
-					new VoidResponse<>(emitter::onNext),
-					new VoidResponse<>(emitter::onError));
+				.then(new VoidResponse<>(emitter::onNext));
 			}
 
 			promisedStreamQueue.then(
