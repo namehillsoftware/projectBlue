@@ -64,9 +64,24 @@ public final class StoredFileDownloader implements DownloadStoredFiles {
 		}
 
 		@Override
+		public int read(byte[] b, int off, int len) throws IOException {
+			return byteStream.read(b, off, len);
+		}
+
+		@Override
+		public int available() throws IOException {
+			return byteStream.available();
+		}
+
+		@Override
 		public void close() throws IOException {
 			byteStream.close();
 			responseBody.close();
+		}
+
+		@Override
+		public String toString() {
+			return byteStream.toString();
 		}
 	}
 }
