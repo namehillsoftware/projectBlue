@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.stored.service.receivers.specs.GivenADownloadedFile;
+package com.lasthopesoftware.bluewater.client.stored.service.receivers.file.specs.GivenADownloadedFile;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.StoredFileMediaScannerNotifier;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileMediaScannerNotifier;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.service.receivers;
+package com.lasthopesoftware.bluewater.client.stored.service.receivers.file;
 
 import com.namehillsoftware.handoff.promises.Promise;
 

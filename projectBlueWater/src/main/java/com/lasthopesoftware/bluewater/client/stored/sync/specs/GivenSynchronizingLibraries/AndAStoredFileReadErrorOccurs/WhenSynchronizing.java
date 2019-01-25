@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
-import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -88,8 +87,7 @@ public class WhenSynchronizing extends AndroidContext {
 			libraryProvider,
 			localBroadcastManager,
 			library -> new Promise<>(mock(IUrlProvider.class)),
-			syncHandlers,
-			mock(PostSyncNotification.class));
+			syncHandlers);
 
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);
 		intentFilter.addAction(onFileDownloadingEvent);

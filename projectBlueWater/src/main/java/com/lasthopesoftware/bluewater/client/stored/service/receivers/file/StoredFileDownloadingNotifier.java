@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.service.receivers;
+package com.lasthopesoftware.bluewater.client.stored.service.receivers.file;
 
 import android.content.Context;
 import com.lasthopesoftware.bluewater.R;

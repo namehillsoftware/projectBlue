@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
-import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
 import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
@@ -41,26 +40,22 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 	private final LocalBroadcastManager localBroadcastManager;
 	private final BuildUrlProviders urlProviders;
 	private final ProduceLibrarySyncHandlers librarySyncHandlersProduction;
-	private final PostSyncNotification syncNotifications;
 
 	public StoredFileSynchronization(
 		ILibraryProvider libraryProvider,
 		LocalBroadcastManager localBroadcastManager,
 		BuildUrlProviders urlProviders,
-		ProduceLibrarySyncHandlers librarySyncHandlersProduction,
-		PostSyncNotification syncNotifications) {
+		ProduceLibrarySyncHandlers librarySyncHandlersProduction) {
 		this.libraryProvider = libraryProvider;
 		this.localBroadcastManager = localBroadcastManager;
 		this.urlProviders = urlProviders;
 		this.librarySyncHandlersProduction = librarySyncHandlersProduction;
-		this.syncNotifications = syncNotifications;
 	}
 
 	@Override
 	public Completable streamFileSynchronization() {
 		logger.info("Starting sync.");
 
-		syncNotifications.notify(null);
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
 		return StreamedPromise.stream(libraryProvider.getAllLibraries())

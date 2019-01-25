@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.service.receivers;
+package com.lasthopesoftware.bluewater.client.stored.service.receivers.file;
 
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;

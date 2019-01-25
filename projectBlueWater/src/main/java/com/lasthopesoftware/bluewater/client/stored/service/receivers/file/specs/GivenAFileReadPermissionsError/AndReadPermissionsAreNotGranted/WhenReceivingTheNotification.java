@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.stored.service.receivers.specs.GivenAFileReadPermissionsError.AndReadPermissionsAreNotGranted;
+package com.lasthopesoftware.bluewater.client.stored.service.receivers.file.specs.GivenAFileReadPermissionsError.AndReadPermissionsAreNotGranted;
 
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.StoredFileReadPermissionsReceiver;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileReadPermissionsReceiver;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
