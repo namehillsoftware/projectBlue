@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
@@ -27,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static StoredFileWriteException storedFileWriteException;
+	private static Throwable storedFileWriteException;
 	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
 	private static List<StoredFileJobState> states = new ArrayList<>();
 
@@ -54,29 +53,16 @@ public class WhenProcessingTheJob {
 			.map(f -> f.storedFileJobState)
 			.blockingSubscribe(
 				storedFileJobState -> states.add(storedFileJobState),
-				e -> {
-					if (e instanceof StoredFileWriteException)
-						storedFileWriteException = (StoredFileWriteException)e;
-				});
+				e -> storedFileWriteException = e);
 	}
 
 	@Test
-	public void thenTheStoredFileIsDownloading() {
-		assertThat(states).containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloading);
+	public void thenTheStoredFileIsPutBackIntoQueuedState() {
+		assertThat(states).containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloading, StoredFileJobState.Queued);
 	}
 
 	@Test
-	public void thenAStoredFileJobExceptionIsThrown() {
-		assertThat(storedFileWriteException).isNotNull();
-	}
-
-	@Test
-	public void thenTheInnerExceptionIsAnIoException() {
-		assertThat(storedFileWriteException.getCause()).isInstanceOf(IOException.class);
-	}
-
-	@Test
-	public void thenTheStoredFileIsAssociatedWithTheException() {
-		assertThat(storedFileWriteException.getStoredFile()).isEqualTo(storedFile);
+	public void thenNoExceptionIsThrown() {
+		assertThat(storedFileWriteException).isNull();
 	}
 }

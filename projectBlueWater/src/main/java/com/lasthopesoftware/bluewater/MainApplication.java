@@ -54,6 +54,8 @@ import java.util.Collection;
 
 public class MainApplication extends Application {
 
+	private final Lazy<Logger> lazyLogger = new Lazy<>(() -> LoggerFactory.getLogger(MainApplication.class));
+
 	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
 	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
@@ -74,10 +76,8 @@ public class MainApplication extends Application {
 			isWorkManagerInitialized = true;
 		}
 
-		SyncSchedulingWorker.promiseIsScheduled()
-			.then(isScheduled -> !isScheduled
-				? SyncSchedulingWorker.scheduleSync(this)
-				: null);
+		lazyLogger.getObject().info("Checking if work needs to be scheduled");
+		SyncSchedulingWorker.scheduleSync(this);
 	}
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {

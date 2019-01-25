@@ -21,14 +21,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayDeque;
-import java.util.Queue;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class StoredFileJobProcessor implements ProcessStoredFileJobs {
-	private static final Executor downloadExecutor = Executors.newSingleThreadExecutor();
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileJobProcessor.class);
 
@@ -50,13 +46,14 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 	}
 
 	@Override
-	public Observable<StoredFileJobStatus> observeStoredFileDownload(Set<StoredFileJob> jobs) {
-		final Queue<StoredFileJob> queuedJobs = new ArrayDeque<>(jobs);
+	public Observable<StoredFileJobStatus> observeStoredFileDownload(Iterable<StoredFileJob> jobs) {
 		final CancellationProxy cancellationProxy = new CancellationProxy();
 		final Observable<StoredFileJobStatus> streamedFileDownload = Observable.create(emitter -> {
-			StoredFileJob job;
+			final Set<StoredFileJob> queuedStoredFileJobs = new HashSet<>();
 			Promise<Void> promisedStreamQueue = Promise.empty();
-			while ((job = queuedJobs.poll()) != null) {
+			for (final StoredFileJob job : jobs) {
+				if (!queuedStoredFileJobs.add(job)) continue;
+
 				final StoredFile storedFile = job.getStoredFile();
 				final File file = storedFileFileProvider.getFile(storedFile);
 
