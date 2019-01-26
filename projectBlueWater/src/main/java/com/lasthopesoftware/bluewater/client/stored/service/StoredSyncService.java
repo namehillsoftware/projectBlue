@@ -88,6 +88,12 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		}
 	}
 
+	public static boolean isSyncRunning() {
+		synchronized (adapterSyncObject) {
+			return syncAdapter != null && syncAdapter.isSyncRunning();
+		}
+	}
+
 	private synchronized SyncAdapter getSyncAdapter() {
 		synchronized (adapterSyncObject) {
 			if (syncAdapter == null)

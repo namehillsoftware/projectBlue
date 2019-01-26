@@ -92,18 +92,22 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		}
 	};
 
+	private boolean isSyncRunning;
+
 	public SyncAdapter(Context context, boolean autoInitialize) {
 		super(context, autoInitialize);
 	}
 
-	public SyncAdapter(Context context, boolean autoInitialize, boolean allowParallelSyncs) {
-		super(context, autoInitialize, allowParallelSyncs);
-	}
-
 	@Override
 	public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-		if (isDeviceStateValidForSync())
-			lazyStoredFilesSynchronization.getObject().streamFileSynchronization().blockingAwait();
+		if (!isDeviceStateValidForSync()) return;
+
+		lazyStoredFilesSynchronization.getObject().streamFileSynchronization().blockingAwait();
+		isSyncRunning = true;
+	}
+
+	public boolean isSyncRunning() {
+		return isSyncRunning;
 	}
 
 	private boolean isDeviceStateValidForSync() {
