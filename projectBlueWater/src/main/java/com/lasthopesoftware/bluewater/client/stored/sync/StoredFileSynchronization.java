@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
-import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
@@ -24,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 public class StoredFileSynchronization implements SynchronizeStoredFiles {
 
-	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(SyncSchedulingWorker.class);
+	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(StoredFileSynchronization.class);
 
 	public static final String onSyncStartEvent = magicPropertyBuilder.buildProperty("onSyncStartEvent");
 	public static final String onSyncStopEvent = magicPropertyBuilder.buildProperty("onSyncStopEvent");
