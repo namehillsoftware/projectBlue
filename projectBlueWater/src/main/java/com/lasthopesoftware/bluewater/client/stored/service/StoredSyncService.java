@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.service;
 import android.app.*;
 import android.content.*;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -69,6 +70,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static final String doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "doSyncAction");
 	private static final String cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "cancelSyncAction");
+	private static final String lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "lastSyncTime");
 
 	private static final int notificationId = 23;
 
@@ -93,14 +95,19 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	public static void schedule(Context context) {
+		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		final long lastSync = preferences.getLong(lastSyncTime, 0);
+
+		final DateTime lastSyncDateTime = new DateTime(lastSync);
+		final DateTime nextSync = lastSyncDateTime.plus(syncInterval);
+
 		final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
-		final DateTime initialRunTime = DateTime.now().plus(syncInterval);
-		alarmManager.setInexactRepeating(
-			AlarmManager.RTC_WAKEUP,
-			initialRunTime.getMillis(),
-			syncInterval.getMillis(),
-			pendingIntent);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
+		} else {
+			alarmManager.set(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
+		}
 	}
 
 	public static boolean isSyncRunning() {
@@ -273,14 +280,14 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		final String action = intent.getAction();
 
 		if (cancelSyncAction.equals(action)) {
-			finish();
+			finishAndSchedule();
 			return START_NOT_STICKY;
 		}
 
 		if (!doSyncAction.equals(action)) return START_NOT_STICKY;
 
 		if (isSyncRunning() || !isDeviceStateValidForSync()) {
-			finish();
+			finishAndSchedule();
 			return START_NOT_STICKY;
 		}
 
@@ -307,7 +314,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 		synchronizationDisposable = lazyStoredFilesSynchronization.getObject()
 			.streamFileSynchronization()
-			.subscribe(this::finish, this::finish);
+			.subscribe(this::finishAndSchedule, this::finishAndSchedule);
 
 		return START_NOT_STICKY;
 	}
@@ -332,12 +339,19 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		return true;
 	}
 
-	private void finish(Throwable error) {
+	private void finishAndSchedule(Throwable error) {
 		logger.error("An error occurred while synchronizing stored files", error);
-		finish();
+		finishAndSchedule();
 	}
 
-	private void finish() {
+	private void finishAndSchedule() {
+		PreferenceManager.getDefaultSharedPreferences(this)
+			.edit()
+			.putLong(lastSyncTime, DateTime.now().getMillis())
+			.apply();
+
+		schedule(this);
+
 		stopSelf();
 	}
 
