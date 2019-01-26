@@ -53,7 +53,6 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
-import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +67,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static final String doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "doSyncAction");
 	private static final String cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "cancelSyncAction");
-	private static final String lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "lastSyncTime");
 
 	private static final int notificationId = 23;
 
@@ -92,16 +90,14 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		safelyStartService(context, intent);
 	}
 
-	public static void scheduleNextSync(Context context) {
-		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-		final long lastSync = preferences.getLong(lastSyncTime, 0);
-
-		final DateTime lastSyncDateTime = new DateTime(lastSync);
-		final DateTime nextSync = lastSyncDateTime.plus(syncInterval);
-
+	public static void schedule(Context context) {
 		final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
-		alarmManager.set(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
+		alarmManager.setInexactRepeating(
+			AlarmManager.ELAPSED_REALTIME_WAKEUP,
+			syncInterval.getMillis(),
+			syncInterval.getMillis(),
+			pendingIntent);
 	}
 
 	public static boolean isSyncRunning() {
@@ -274,14 +270,14 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		final String action = intent.getAction();
 
 		if (cancelSyncAction.equals(action)) {
-			finishAndScheduleNext();
+			finish();
 			return START_NOT_STICKY;
 		}
 
 		if (!doSyncAction.equals(action)) return START_NOT_STICKY;
 
 		if (isSyncRunning() || !isDeviceStateValidForSync()) {
-			finishAndScheduleNext();
+			finish();
 			return START_NOT_STICKY;
 		}
 
@@ -308,7 +304,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 		synchronizationDisposable = lazyStoredFilesSynchronization.getObject()
 			.streamFileSynchronization()
-			.subscribe(this::finishAndScheduleNext, this::finishAndScheduleNext);
+			.subscribe(this::finish, this::finish);
 
 		return START_NOT_STICKY;
 	}
@@ -333,19 +329,12 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		return true;
 	}
 
-	private void finishAndScheduleNext(Throwable error) {
+	private void finish(Throwable error) {
 		logger.error("An error occurred while synchronizing stored files", error);
-		finishAndScheduleNext();
+		finish();
 	}
 
-	private void finishAndScheduleNext() {
-		PreferenceManager.getDefaultSharedPreferences(this)
-			.edit()
-			.putLong(lastSyncTime, DateTime.now().getMillis())
-			.apply();
-
-		scheduleNextSync(this);
-
+	private void finish() {
 		stopSelf();
 	}
 

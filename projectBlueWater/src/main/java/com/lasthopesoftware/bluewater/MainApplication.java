@@ -70,7 +70,7 @@ public class MainApplication extends Application {
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
 		lazyLogger.getObject().info("Checking if work needs to be scheduled");
-		StoredSyncService.scheduleNextSync(this);
+		StoredSyncService.schedule(this);
 	}
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {
