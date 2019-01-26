@@ -294,6 +294,13 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 						return i;
 					}));
 			}
+
+			lazyBroadcastManager.getObject().registerReceiver(
+				lazySyncStartedReceiver.getObject(),
+				Stream.of(lazySyncStartedReceiver.getObject().acceptedEvents()).reduce(new IntentFilter(), (i, e) -> {
+					i.addAction(e);
+					return i;
+				}));
 		}
 
 		synchronizationDisposable = lazyStoredFilesSynchronization.getObject()
