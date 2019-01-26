@@ -340,6 +340,8 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 				.edit()
 				.putLong(lastSyncTime, DateTime.now().getMillis())
 				.apply();
+
+			scheduleNextSync(this);
 		}
 
 		if (lazyBroadcastManager.isCreated()) {
