@@ -10,8 +10,6 @@ import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
-import androidx.work.Configuration;
-import androidx.work.WorkManager;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -40,7 +38,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.stored.worker.SyncSchedulingWorker;
+import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -71,13 +69,8 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
-		if (!isWorkManagerInitialized) {
-			WorkManager.initialize(this, new Configuration.Builder().build());
-			isWorkManagerInitialized = true;
-		}
-
 		lazyLogger.getObject().info("Checking if work needs to be scheduled");
-		SyncSchedulingWorker.scheduleSync(this);
+		StoredSyncService.scheduleNextSync(this);
 	}
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {
