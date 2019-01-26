@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
+import com.lasthopesoftware.bluewater.client.stored.service.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -58,8 +59,6 @@ public class MainApplication extends Application {
 	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
 	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
 
-	private static boolean isWorkManagerInitialized;
-	
 	@SuppressLint("DefaultLocale")
 	@Override
 	public void onCreate() {
@@ -70,6 +69,8 @@ public class MainApplication extends Application {
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
 		lazyLogger.getObject().info("Checking if work needs to be scheduled");
+
+		registerReceiver(new SyncAlarmBroadcastReceiver(), new IntentFilter(SyncAlarmBroadcastReceiver.scheduledSyncIntent));
 		StoredSyncService.schedule(this);
 	}
 
