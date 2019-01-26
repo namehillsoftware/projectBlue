@@ -21,23 +21,34 @@ import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
-import com.lasthopesoftware.bluewater.client.stored.service.adapter.SyncAdapter;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.LibrarySyncHandlerFactory;
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*;
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
+import com.lasthopesoftware.bluewater.client.stored.sync.SynchronizeStoredFiles;
+import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
+import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
+import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs;
+import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -60,10 +71,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static final int buildConnectionTimeoutTime = 10000;
 
-	private static final Object adapterSyncObject = new Object();
-
-	private static SyncAdapter syncAdapter;
-
 	public static void doSync(Context context) {
 		final Intent intent = new Intent(context, StoredSyncService.class);
 		intent.setAction(doSyncAction);
@@ -85,21 +92,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			logger.warn("An illegal state exception occurred while trying to start the service", e);
 		} catch (SecurityException e) {
 			logger.warn("A security exception occurred while trying to start the service", e);
-		}
-	}
-
-	public static boolean isSyncRunning() {
-		synchronized (adapterSyncObject) {
-			return syncAdapter != null && syncAdapter.isSyncRunning();
-		}
-	}
-
-	private synchronized SyncAdapter getSyncAdapter() {
-		synchronized (adapterSyncObject) {
-			if (syncAdapter == null)
-				syncAdapter = new SyncAdapter(getApplicationContext(), true);
-
-			return syncAdapter;
 		}
 	}
 
@@ -157,6 +149,29 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private final CreateAndHold<IStorageReadPermissionArbitratorForOs> lazyReadPermissionArbitratorForOs = new Lazy<>(() -> new ExternalStorageReadPermissionsArbitratorForOs(this));
 
 	private final CreateAndHold<ILibraryProvider> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
+
+	private final CreateAndHold<SynchronizeStoredFiles> lazyStoredFilesSynchronization = new AbstractSynchronousLazy<SynchronizeStoredFiles>() {
+		@Override
+		protected SynchronizeStoredFiles create() {
+			final StoredSyncService storedSyncService = StoredSyncService.this;
+
+			return new StoredFileSynchronization(
+				lazyLibraryRepository.getObject(),
+				lazyBroadcastManager.getObject(),
+				lazyUrlScanner.getObject(),
+				new LibrarySyncHandlerFactory(
+					lazyStoredFileAccess.getObject(),
+					storedSyncService,
+					lazyReadPermissionArbitratorForOs.getObject(),
+					new SyncDirectoryLookup(new PublicDirectoryLookup(storedSyncService), new PrivateDirectoryLookup(storedSyncService)),
+					new StoredFileSystemFileProducer(),
+					new ServiceFileUriQueryParamsProvider(),
+					new FileReadPossibleArbitrator(),
+					new FileWritePossibleArbitrator(),
+					new FileStreamWriter())
+			);
+		}
+	};
 
 	private final CreateAndHold<ReceiveStoredFileEvent[]> lazyStoredFileEventReceivers = new AbstractSynchronousLazy<ReceiveStoredFileEvent[]>() {
 		@Override
@@ -238,8 +253,10 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		return getSyncAdapter().getSyncAdapterBinder();
+		return lazyBinder.getObject();
 	}
+
+	private final Lazy<IBinder> lazyBinder = new Lazy<>(() -> new GenericBinder<>(this));
 
 	@Override
 	public void notify(String notificationText) {

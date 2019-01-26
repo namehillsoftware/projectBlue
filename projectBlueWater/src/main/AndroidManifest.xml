@@ -9,9 +9,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
 
     <application
             android:name=".MainApplication"
@@ -151,20 +148,6 @@
         <service android:name=".client.stored.service.StoredSyncService"
                  android:enabled="true"
                  android:exported="false"/>
-        <service android:name=".client.stored.service.adapter.AuthenticatorBindingService">
-            <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator"/>
-            </intent-filter>
-            <meta-data
-                    android:name="android.accounts.AccountAuthenticator"
-                    android:resource="@xml/authenticator" />
-        </service>
-
-        <provider
-                android:name="com.lasthopesoftware.bluewater.client.stored.service.adapter.EmptyContentProvider"
-                android:authorities="com.lasthopesoftware.bluewater.provider"
-                android:exported="false"
-                android:syncable="true"/>
     </application>
 
 </manifest>

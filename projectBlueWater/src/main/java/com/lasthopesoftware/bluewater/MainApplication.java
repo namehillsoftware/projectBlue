@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.app.NotificationManager;
-import android.content.*;
-import android.os.Bundle;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
@@ -45,7 +45,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionH
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.Lazy;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,12 +61,6 @@ public class MainApplication extends Application {
 	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
 
 	private static boolean isWorkManagerInitialized;
-
-	private static final String dummyAuthority = "com.lasthopesoftware.bluewater.provider";
-	private static final String dummyAccountType = "namehillsoftware.com";
-	private static final String dummyAccount = "dummyaccount";
-
-	private Account account;
 	
 	@SuppressLint("DefaultLocale")
 	@Override
@@ -85,42 +78,7 @@ public class MainApplication extends Application {
 
 		lazyLogger.getObject().info("Checking if work needs to be scheduled");
 		SyncSchedulingWorker.scheduleSync(this);
-
-		account = CreateSyncAccount();
-
-		ContentResolver.addPeriodicSync(
-			account,
-			dummyAuthority,
-			Bundle.EMPTY,
-			Duration.standardHours(3).toStandardSeconds().getValue(0));
 	}
-
-	public Account CreateSyncAccount() {
-		// Create the account type and default account
-		Account newAccount = new Account(dummyAccount, dummyAccountType);
-		// Get an instance of the Android account manager
-		AccountManager accountManager = (AccountManager) getSystemService(ACCOUNT_SERVICE);
-		/*
-		 * Add the account and account type, no password or user data
-		 * If successful, return the Account object, otherwise report an error.
-		 */
-		if (accountManager.addAccountExplicitly(newAccount, null, null)) {
-			/*
-			 * If you don't set android:syncable="true" in
-			 * in your <provider> element in the manifest,
-			 * then call context.setIsSyncable(account, AUTHORITY, 1)
-			 * here.
-			 */
-		} else {
-			/*
-			 * The account exists or some other error occurred. Log this, report it,
-			 * or handle it internally.
-			 */
-		}
-
-		return account;
-	}
-
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {
 
