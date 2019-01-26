@@ -274,13 +274,16 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		final String action = intent.getAction();
 
 		if (cancelSyncAction.equals(action)) {
-			stopSelf();
+			finishAndScheduleNext();
 			return START_NOT_STICKY;
 		}
 
-		if (!doSyncAction.equals(action)) return START_REDELIVER_INTENT;
+		if (!doSyncAction.equals(action)) return START_NOT_STICKY;
 
-		if (isSyncRunning() || !isDeviceStateValidForSync()) return START_NOT_STICKY;
+		if (isSyncRunning() || !isDeviceStateValidForSync()) {
+			finishAndScheduleNext();
+			return START_NOT_STICKY;
+		}
 
 		if (!lazyStoredFileEventReceivers.isCreated()) {
 			for (final ReceiveStoredFileEvent receiveStoredFileEvent : lazyStoredFileEventReceivers.getObject()) {
@@ -305,7 +308,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 		synchronizationDisposable = lazyStoredFilesSynchronization.getObject()
 			.streamFileSynchronization()
-			.subscribe(this::stopSelf, e -> stopSelf());
+			.subscribe(this::finishAndScheduleNext, this::finishAndScheduleNext);
 
 		return START_NOT_STICKY;
 	}
@@ -330,18 +333,27 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		return true;
 	}
 
+	private void finishAndScheduleNext(Throwable error) {
+		logger.error("An error occurred while synchronizing stored files", error);
+		finishAndScheduleNext();
+	}
+
+	private void finishAndScheduleNext() {
+		PreferenceManager.getDefaultSharedPreferences(this)
+			.edit()
+			.putLong(lastSyncTime, DateTime.now().getMillis())
+			.apply();
+
+		scheduleNextSync(this);
+
+		stopSelf();
+	}
+
 	@Override
 	public void onDestroy() {
 		if (synchronizationDisposable != null) {
 			synchronizationDisposable.dispose();
 			synchronizationDisposable = null;
-
-			PreferenceManager.getDefaultSharedPreferences(this)
-				.edit()
-				.putLong(lastSyncTime, DateTime.now().getMillis())
-				.apply();
-
-			scheduleNextSync(this);
 		}
 
 		if (lazyBroadcastManager.isCreated()) {
