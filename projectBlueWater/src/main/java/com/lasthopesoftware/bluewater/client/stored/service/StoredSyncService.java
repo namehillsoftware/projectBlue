@@ -101,7 +101,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 		final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
-		alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, nextSync.getMillis(), pendingIntent);
+		alarmManager.set(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
 	}
 
 	public static boolean isSyncRunning() {
