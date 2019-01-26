@@ -53,6 +53,7 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
+import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,9 +94,10 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	public static void schedule(Context context) {
 		final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, new Intent(SyncAlarmBroadcastReceiver.scheduledSyncIntent), PendingIntent.FLAG_UPDATE_CURRENT);
+		final DateTime initialRunTime = DateTime.now().plus(syncInterval);
 		alarmManager.setInexactRepeating(
-			AlarmManager.ELAPSED_REALTIME_WAKEUP,
-			syncInterval.getMillis(),
+			AlarmManager.RTC_WAKEUP,
+			initialRunTime.getMillis(),
 			syncInterval.getMillis(),
 			pendingIntent);
 	}

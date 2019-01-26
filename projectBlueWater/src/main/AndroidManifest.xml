@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
           package="com.lasthopesoftware.bluewater">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -19,12 +18,6 @@
             android:logo="@drawable/clearstream_logo_dark"
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
-        <provider
-                android:name="androidx.work.impl.WorkManagerInitializer"
-                android:authorities="com.lasthopesoftware.bluewater"
-                android:enabled="false"
-                android:exported="false"
-                tools:replace="android:authorities" />
         <meta-data
                 android:name="android.app.default_searchable"
                 android:value=".client.library.items.media.files.list.SearchFilesActivity"/>
@@ -141,6 +134,8 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"></action>
             </intent-filter>
         </receiver>
+        <receiver android:name=".client.stored.service.SyncAlarmBroadcastReceiver"
+                  android:enabled="true" />
 
         <service
                 android:name=".client.playback.service.PlaybackService"
