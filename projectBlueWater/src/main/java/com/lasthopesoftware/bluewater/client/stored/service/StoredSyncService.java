@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
@@ -108,7 +109,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static void safelyStartService(Context context, Intent intent) {
 		try {
-			context.startService(intent);
+			ContextCompat.startForegroundService(context, intent);
 		} catch (IllegalStateException e) {
 			logger.warn("An illegal state exception occurred while trying to start the service", e);
 		} catch (SecurityException e) {
