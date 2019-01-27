@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.access.specs;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 
 
 public class FakeRevisionConnectionProvider extends FakeConnectionProvider {
@@ -10,7 +11,7 @@ public class FakeRevisionConnectionProvider extends FakeConnectionProvider {
 	public FakeRevisionConnectionProvider() {
 		mapResponse(
 			(params) ->
-				new ResponseTuple(
+				new FakeConnectionResponseTuple(
 					200,
 					("<Response Status=\"OK\">" +
 						"<Item Name=\"Master\">1192</Item>" +

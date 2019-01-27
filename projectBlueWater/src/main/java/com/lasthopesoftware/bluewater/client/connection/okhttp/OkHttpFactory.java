@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection.okhttp;
 
+import android.os.Build;
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -17,9 +19,24 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class OkHttpFactory implements ProvideOkHttpClients {
+
+	private static final CreateAndHold<ExecutorService> executor = new Lazy<>(() -> {
+		final int maxDownloadThreadPoolSize = 6;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			return new ForkJoinPool(
+				maxDownloadThreadPoolSize,
+				ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+				null, true);
+		}
+
+		return new ThreadPoolExecutor(
+			0, 6,
+			1, TimeUnit.MINUTES,
+			new LinkedBlockingQueue<>());
+	});
 
 	private static final CreateAndHold<OkHttpClient.Builder> lazyCommonBuilder = new AbstractSynchronousLazy<OkHttpClient.Builder>() {
 		@Override
@@ -31,7 +48,8 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 				})
 				.cache(null)
 				.readTimeout(3, TimeUnit.MINUTES)
-				.connectTimeout(5, TimeUnit.SECONDS);
+				.connectTimeout(5, TimeUnit.SECONDS)
+				.dispatcher(new Dispatcher(executor.getObject()));
 		}
 	};
 

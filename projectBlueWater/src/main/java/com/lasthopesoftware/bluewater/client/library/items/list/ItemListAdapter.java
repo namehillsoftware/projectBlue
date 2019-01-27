@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.ha
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.ListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 
 import java.util.List;
 

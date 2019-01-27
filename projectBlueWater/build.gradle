@@ -13,7 +13,6 @@ android {
         targetSdkVersion 28
         versionCode getGeneratedVersionCode()
         versionName project.version
-        multiDexEnabled true
     }
 
     compileOptions {

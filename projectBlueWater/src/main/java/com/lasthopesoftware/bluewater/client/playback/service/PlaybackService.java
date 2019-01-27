@@ -44,12 +44,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -85,6 +79,12 @@ import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySel
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;

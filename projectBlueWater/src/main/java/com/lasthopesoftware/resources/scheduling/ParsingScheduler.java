@@ -4,21 +4,23 @@ import android.os.Build;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
 
 public class ParsingScheduler implements ScheduleParsingWork {
 
 	private static final CreateAndHold<Executor> executor = new Lazy<>(() -> {
+		final int maxThreadPoolSize = Runtime.getRuntime().availableProcessors();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			return new ForkJoinPool
-				(Runtime.getRuntime().availableProcessors(),
+				(maxThreadPoolSize,
 					ForkJoinPool.defaultForkJoinWorkerThreadFactory,
 					null, true);
 		}
 
-		return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		return new ThreadPoolExecutor(
+			0, maxThreadPoolSize,
+			1, TimeUnit.MINUTES,
+			new LinkedBlockingQueue<>());
 	});
 
 	private static final CreateAndHold<ParsingScheduler> scheduler = new Lazy<>(ParsingScheduler::new);

@@ -17,10 +17,10 @@ public class ConnectionTester implements TestConnections {
 
 	@Override
 	public Promise<Boolean> promiseIsConnectionPossible(IConnectionProvider connectionProvider) {
-		return connectionProvider.promiseResponse("Alive").then(this::doTestSynchronously, e -> false);
+		return connectionProvider.promiseResponse("Alive").then(this::testResponse, e -> false);
 	}
 
-	private boolean doTestSynchronously(Response response) {
+	private boolean testResponse(Response response) {
 		final ResponseBody body = response.body();
 		if (body == null) return false;
 

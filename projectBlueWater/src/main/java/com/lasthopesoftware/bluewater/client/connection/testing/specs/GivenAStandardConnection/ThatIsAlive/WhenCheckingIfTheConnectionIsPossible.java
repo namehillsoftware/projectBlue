@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.testing.specs.GivenAStandardConnection.ThatIsAlive;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import org.junit.BeforeClass;
@@ -18,7 +19,7 @@ public class WhenCheckingIfTheConnectionIsPossible {
 	public static void before() throws ExecutionException, InterruptedException {
 		final ConnectionTester connectionTester = new ConnectionTester();
 		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
-		connectionProvider.mapResponse(p -> new FakeConnectionProvider.ResponseTuple(200,
+		connectionProvider.mapResponse(p -> new FakeConnectionResponseTuple(200,
 			("<Response Status=\"OK\">" +
 				"<Item Name=\"Master\">1192</Item>" +
 				"<Item Name=\"Sync\">1192</Item>" +

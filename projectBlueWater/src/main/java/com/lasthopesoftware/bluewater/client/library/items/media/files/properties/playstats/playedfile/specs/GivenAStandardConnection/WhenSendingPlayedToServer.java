@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.specs.GivenAStandardConnection;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -18,7 +19,7 @@ public class WhenSendingPlayedToServer {
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException {
 		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
-		connectionProvider.mapResponse(p  -> new FakeConnectionProvider.ResponseTuple(200, new byte[0]), "File/Played", "File=15", "FileType=Key");
+		connectionProvider.mapResponse(p  -> new FakeConnectionResponseTuple(200, new byte[0]), "File/Played", "File=15", "FileType=Key");
 
 		final PlayedFilePlayStatsUpdater updater = new PlayedFilePlayStatsUpdater(connectionProvider);
 

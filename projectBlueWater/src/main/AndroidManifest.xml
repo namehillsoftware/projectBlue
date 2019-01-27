@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.lasthopesoftware.bluewater">
+          xmlns:tools="http://schemas.android.com/tools" package="com.lasthopesoftware.bluewater">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
             android:name=".MainApplication"
@@ -16,7 +17,9 @@
             android:label="@string/app_name"
             android:logo="@drawable/clearstream_logo_dark"
             android:theme="@style/AppTheme"
-            android:usesCleartextTraffic="true">
+            android:usesCleartextTraffic="true"
+            tools:ignore="GoogleAppIndexingWarning"
+            tools:targetApi="m">
         <meta-data
                 android:name="android.app.default_searchable"
                 android:value=".client.library.items.media.files.list.SearchFilesActivity"/>
@@ -127,19 +130,17 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".sync.receivers.SyncAlarmBroadcastReceiver">
+        <receiver android:name=".client.stored.service.DeviceBootSyncScheduler"
+                  android:enabled="true">
             <intent-filter>
-                <action android:name="com.lasthopesoftware.bluewater.servers.library.items.media.files.local.sync.doScheduledSync"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
-
+        <receiver android:name=".client.stored.service.SyncAlarmBroadcastReceiver"
+                  android:enabled="true"
+                  android:exported="false" />
         <service
                 android:name=".client.playback.service.PlaybackService"
-                android:enabled="true"
-                android:exported="false">
-        </service>
-        <service
-                android:name=".sync.service.SyncService"
                 android:enabled="true"
                 android:exported="false">
         </service>
@@ -148,6 +149,9 @@
                 android:enabled="true"
                 android:exported="false">
         </service>
+        <service android:name=".client.stored.service.StoredSyncService"
+                 android:enabled="true"
+                 android:exported="false"/>
     </application>
 
 </manifest>

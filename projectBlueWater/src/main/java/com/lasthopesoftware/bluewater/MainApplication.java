@@ -26,9 +26,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
@@ -38,8 +35,11 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
-import com.lasthopesoftware.bluewater.sync.service.SyncService;
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.Lazy;
@@ -51,11 +51,13 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class MainApplication extends Application {
-	
+
+	private final Lazy<Logger> lazyLogger = new Lazy<>(() -> LoggerFactory.getLogger(MainApplication.class));
+
 	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
 	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
-	
+
 	@SuppressLint("DefaultLocale")
 	@Override
 	public void onCreate() {
@@ -65,8 +67,7 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
-		// Kick off a serviceFile sync if one isn't scheduled on start-up
-		if (!SyncService.isSyncScheduled(this)) SyncService.doSync(this);
+		StoredSyncService.schedule(this);
 	}
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {
@@ -77,20 +78,20 @@ public class MainApplication extends Application {
 				final int libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
 				if (libraryId < 0) return;
 
+				final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
+				if (fileKey == -1) return;
+
+				final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
+				if (mediaFileId == -1) return;
+
+				final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
+				if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
+
 				new LibraryRepository(context)
 					.getLibrary(libraryId)
 					.eventually(library ->
 						AccessConfigurationBuilder.buildConfiguration(context, library).then(new VoidResponse<>(urlProvider -> {
 							if (urlProvider == null) return;
-
-							final int fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1);
-							if (fileKey == -1) return;
-
-							final int mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1);
-							if (mediaFileId == -1) return;
-
-							final String mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath);
-							if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
 							final StoredFileAccess storedFileAccess = new StoredFileAccess(
 								context,
