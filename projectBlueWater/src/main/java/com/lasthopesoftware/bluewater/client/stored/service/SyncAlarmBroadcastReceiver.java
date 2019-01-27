@@ -6,12 +6,8 @@ import android.content.Intent;
 import org.slf4j.LoggerFactory;
 
 public class SyncAlarmBroadcastReceiver extends BroadcastReceiver {
-	public static final String scheduledSyncIntent = "com.lasthopesoftware.bluewater.client.stored.service.SyncAlarmBroadcastReceiver.doScheduledSync";
-
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (intent == null || !scheduledSyncIntent.equals(intent.getAction())) return;
-
 		LoggerFactory.getLogger(getClass()).info("Received alarm to begin sync.");
 		StoredSyncService.doSync(context);
 	}
