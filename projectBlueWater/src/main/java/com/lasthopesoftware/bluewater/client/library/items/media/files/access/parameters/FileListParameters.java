@@ -20,12 +20,16 @@ public class FileListParameters implements IFileListParameterProvider {
 
 	@Override
 	public String[] getFileListParameters(Item item) {
-		return new String[] {"Browse/Files", "ID=" + String.valueOf(item.getKey()), "Version=2"};
+		return new String[] {
+			"Browse/Files",
+			"ID=" + String.valueOf(item.getKey()),
+			"Version=2"
+		};
 	}
 
 	@Override
 	public String[] getFileListParameters(Playlist playlist) {
-		return new String[0];
+		return new String[] { "Playlist/Files", "ID=" + String.valueOf(playlist.getKey()) };
 	}
 
 	public enum Options {
