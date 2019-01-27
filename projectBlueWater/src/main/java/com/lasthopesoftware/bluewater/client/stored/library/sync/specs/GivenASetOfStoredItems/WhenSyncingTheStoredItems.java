@@ -62,7 +62,11 @@ public class WhenSyncingTheStoredItems {
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
-			new StoredItemServiceFileCollector(storedItemAccessMock, storedPlaylistsConverter, mockFileProvider),
+			new StoredItemServiceFileCollector(
+				storedItemAccessMock,
+				storedPlaylistsConverter,
+				mockFileProvider,
+				fileListParameters),
 			storedFileAccess,
 			(l, sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
 			job -> Observable.just(

@@ -79,7 +79,11 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
-			new StoredItemServiceFileCollector(storedItemAccessMock, mock(ConvertStoredPlaylistsToStoredItems.class), mockFileProvider),
+			new StoredItemServiceFileCollector(
+				storedItemAccessMock,
+				mock(ConvertStoredPlaylistsToStoredItems.class),
+				mockFileProvider,
+				fileListParameters),
 			storedFileAccess,
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
 			new StoredFileJobProcessor(
