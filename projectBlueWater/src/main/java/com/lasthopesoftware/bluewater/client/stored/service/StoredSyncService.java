@@ -78,7 +78,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private static final Duration syncInterval = Duration.standardHours(3);
 
 	private static Disposable synchronizationDisposable;
-	private PowerManager.WakeLock wakeLock;
 
 	public static void doSync(Context context) {
 		final Intent intent = new Intent(context, StoredSyncService.class);
@@ -263,15 +262,22 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private final CreateAndHold<SyncStartedReceiver> lazySyncStartedReceiver = new Lazy<>(() -> new SyncStartedReceiver(this));
 
+	private final CreateAndHold<PowerManager.WakeLock> lazyWakeLock = new AbstractSynchronousLazy<PowerManager.WakeLock>() {
+		@Override
+		protected PowerManager.WakeLock create() {
+			final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
+			return powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "wakeLock"));
+		}
+	};
+
 	private List<BroadcastReceiver> broadcastReceivers = new ArrayList<>();
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 
-		final PowerManager powerManager = (PowerManager)getSystemService(POWER_SERVICE);
-		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "wakeLock"));
-		wakeLock.acquire();
+
+		lazyWakeLock.getObject().acquire();
 	}
 
 	@Override
@@ -376,7 +382,8 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		if (onPowerDisconnectedReceiver.isCreated())
 			unregisterReceiver(onPowerDisconnectedReceiver.getObject());
 
-		wakeLock.release();
+		if (lazyWakeLock.isCreated())
+			lazyWakeLock.getObject().release();
 
 		stopForeground(true);
 
