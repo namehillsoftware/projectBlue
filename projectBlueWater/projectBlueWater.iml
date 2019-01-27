@@ -263,5 +263,7 @@
     <orderEntry type="module" module-name="futures" />
     <orderEntry type="module" module-name="pagerslidingtabstrip" />
     <orderEntry type="module" module-name="futures" />
+    <orderEntry type="module" module-name="pagerslidingtabstrip" />
+    <orderEntry type="module" module-name="futures" />
   </component>
 </module>

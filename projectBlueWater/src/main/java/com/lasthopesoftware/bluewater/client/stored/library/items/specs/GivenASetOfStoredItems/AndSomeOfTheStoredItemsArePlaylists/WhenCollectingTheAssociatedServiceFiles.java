@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
@@ -53,7 +54,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			.thenReturn(new Promise<>(secondItemExpectedFiles));
 		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
 			.thenReturn(new Promise<>(thirdItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(12))))
+		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(5))))
 			.thenReturn(new Promise<>(fourthItemExpectedFiles));
 
 		final ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems = mock(ConvertStoredPlaylistsToStoredItems.class);
@@ -62,7 +63,6 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
-			storedPlaylistsToStoredItems,
 			fileProvider,
 			fileListParameters);
 

@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
@@ -81,7 +80,6 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			new Library(),
 			new StoredItemServiceFileCollector(
 				storedItemAccessMock,
-				mock(ConvertStoredPlaylistsToStoredItems.class),
 				mockFileProvider,
 				fileListParameters),
 			storedFileAccess,

@@ -64,7 +64,6 @@ public class WhenSyncingTheStoredItems {
 			new Library(),
 			new StoredItemServiceFileCollector(
 				storedItemAccessMock,
-				storedPlaylistsConverter,
 				mockFileProvider,
 				fileListParameters),
 			storedFileAccess,

@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
@@ -57,7 +56,6 @@ public class WhenSyncingTheStoredItems {
 			new Library(),
 			new StoredItemServiceFileCollector(
 				deferredStoredItemAccess,
-				mock(ConvertStoredPlaylistsToStoredItems.class),
 				mockFileProvider,
 				FileListParameters.getInstance()),
 			storedFileAccess,

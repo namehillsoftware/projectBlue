@@ -4,7 +4,6 @@ import android.content.Context;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
@@ -13,13 +12,9 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileS
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistItemFinder;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.StoredPlaylistItemsConverter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
@@ -109,11 +104,6 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 			library,
 			new StoredItemServiceFileCollector(
 				storedItemAccess,
-				new StoredPlaylistItemsConverter(
-					new PlaylistItemFinder(
-						new LibraryViewsProvider(connectionProvider, new LibraryViewsByConnectionProvider()),
-						new ItemProvider(connectionProvider)),
-					storedItemAccess),
 				new FileProvider(new FileStringListProvider(connectionProvider)),
 				FileListParameters.getInstance()),
 			storedFileAccess,

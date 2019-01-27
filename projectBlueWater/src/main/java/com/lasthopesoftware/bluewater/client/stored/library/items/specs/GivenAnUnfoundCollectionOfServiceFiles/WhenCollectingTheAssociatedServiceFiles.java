@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.assertj.core.api.Condition;
@@ -70,7 +69,6 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
-			mock(ConvertStoredPlaylistsToStoredItems.class),
 			fileProvider,
 			fileListParameters);
 

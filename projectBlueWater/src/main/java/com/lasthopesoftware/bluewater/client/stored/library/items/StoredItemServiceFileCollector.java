@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
@@ -28,17 +27,14 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	private static final Logger logger = LoggerFactory.getLogger(StoredItemServiceFileCollector.class);
 
 	private final IStoredItemAccess storedItemAccess;
-	private final ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems;
 	private final IFileProvider fileProvider;
 	private final IFileListParameterProvider fileListParameters;
 
 	public StoredItemServiceFileCollector(
 		IStoredItemAccess storedItemAccess,
-		ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems,
 		IFileProvider fileProvider,
 		IFileListParameterProvider fileListParameters) {
 		this.storedItemAccess = storedItemAccess;
-		this.storedPlaylistsToStoredItems = storedPlaylistsToStoredItems;
 		this.fileProvider = fileProvider;
 		this.fileListParameters = fileListParameters;
 	}
