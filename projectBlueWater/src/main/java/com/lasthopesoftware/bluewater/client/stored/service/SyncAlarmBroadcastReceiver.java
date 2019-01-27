@@ -10,6 +10,8 @@ public class SyncAlarmBroadcastReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
+		if (intent == null || !scheduledSyncIntent.equals(intent.getAction())) return;
+
 		LoggerFactory.getLogger(getClass()).info("Received alarm to begin sync.");
 		StoredSyncService.doSync(context);
 	}
