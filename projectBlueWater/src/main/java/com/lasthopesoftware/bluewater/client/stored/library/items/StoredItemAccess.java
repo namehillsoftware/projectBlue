@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.stored.library.items;
 
 import android.content.Context;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
@@ -48,17 +50,19 @@ public final class StoredItemAccess implements IStoredItemAccess {
 
 	@Override
 	public void toggleSync(IItem item, boolean enable) {
+		final IItem inferredItemType = inferItemType(item);
 		if (enable)
-			enableItemSync(item, StoredItemHelpers.getListType(item));
+			enableItemSync(inferredItemType, StoredItemHelpers.getListType(inferredItemType));
 		else
-			disableItemSync(item, StoredItemHelpers.getListType(item));
+			disableItemSync(inferredItemType, StoredItemHelpers.getListType(inferredItemType));
 	}
 
 	@Override
 	public Promise<Boolean> isItemMarkedForSync(final IItem item) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				return isItemMarkedForSync(repositoryAccessHelper, library, item, StoredItemHelpers.getListType(item));
+				final IItem inferredItemType = inferItemType(item);
+				return isItemMarkedForSync(repositoryAccessHelper, library, inferredItemType, StoredItemHelpers.getListType(inferredItemType));
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
@@ -115,5 +119,15 @@ public final class StoredItemAccess implements IStoredItemAccess {
 						.fetch(StoredItem.class);
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
+	}
+
+	private IItem inferItemType(IItem item) {
+		if (item instanceof Item) {
+			final Item castItem = (Item)item;
+			final Playlist playlist = castItem.getPlaylist();
+			if (playlist != null) return playlist;
+		}
+
+		return item;
 	}
 }

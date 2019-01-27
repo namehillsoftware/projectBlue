@@ -39,7 +39,7 @@ public class Item extends AbstractIntKeyStringValue implements IItem {
         return getKey();
     }
 
-    @Nullable public Playlist toPlaylist() {
+    @Nullable public Playlist getPlaylist() {
 		return playlistId != null
 			? new Playlist(playlistId)
 			: null;
