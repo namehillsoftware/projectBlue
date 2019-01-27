@@ -102,9 +102,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-runtime-classes" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-verifier" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-apk" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-resources" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant_app_manifest" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant_run_app_info_output_file" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant_run_main_apk_resources" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant_run_merged_manifests" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant_run_split_apk_resources" />
@@ -255,6 +253,8 @@
     <orderEntry type="library" name="Gradle: com.android.support:support-media-compat:28.0.0@aar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:shadowapi:4.1@jar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.robolectric:sandbox:4.1@jar" level="project" />
+    <orderEntry type="module" module-name="pagerslidingtabstrip" />
+    <orderEntry type="module" module-name="futures" />
     <orderEntry type="module" module-name="pagerslidingtabstrip" />
     <orderEntry type="module" module-name="futures" />
     <orderEntry type="module" module-name="pagerslidingtabstrip" />

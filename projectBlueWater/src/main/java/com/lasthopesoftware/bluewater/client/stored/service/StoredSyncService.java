@@ -274,7 +274,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
+	public synchronized int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent == null) return START_NOT_STICKY;
 
 		final String action = intent.getAction();
@@ -284,9 +284,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			return START_NOT_STICKY;
 		}
 
-		if (!doSyncAction.equals(action)) return START_NOT_STICKY;
+		if (!doSyncAction.equals(action) || isSyncRunning()) return START_NOT_STICKY;
 
-		if (isSyncRunning() || !isDeviceStateValidForSync()) {
+		if (!isDeviceStateValidForSync()) {
 			finishAndSchedule();
 			return START_NOT_STICKY;
 		}
