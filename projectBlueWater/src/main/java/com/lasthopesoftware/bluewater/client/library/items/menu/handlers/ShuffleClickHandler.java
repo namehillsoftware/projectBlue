@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.view.View;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
-import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
@@ -14,12 +14,12 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
-public final class ShuffleClickHandler<T extends IItem> extends AbstractMenuClickHandler {
+public final class ShuffleClickHandler extends AbstractMenuClickHandler {
 
-	private final IFileListParameterProvider<T> fileListParameterProvider;
-	private final T item;
+	private final IFileListParameterProvider fileListParameterProvider;
+	private final Item item;
 
-    public ShuffleClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider<T> fileListParameterProvider, T item) {
+    public ShuffleClickHandler(NotifyOnFlipViewAnimator menuContainer, IFileListParameterProvider fileListParameterProvider, Item item) {
         super(menuContainer);
 		this.fileListParameterProvider = fileListParameterProvider;
 		this.item = item;

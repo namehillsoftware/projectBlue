@@ -6,6 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -28,11 +30,17 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	private final IStoredItemAccess storedItemAccess;
 	private final ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems;
 	private final IFileProvider fileProvider;
+	private final IFileListParameterProvider fileListParameters;
 
-	public StoredItemServiceFileCollector(IStoredItemAccess storedItemAccess, ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems, IFileProvider fileProvider) {
+	public StoredItemServiceFileCollector(
+		IStoredItemAccess storedItemAccess,
+		ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems,
+		IFileProvider fileProvider,
+		IFileListParameterProvider fileListParameters) {
 		this.storedItemAccess = storedItemAccess;
 		this.storedPlaylistsToStoredItems = storedPlaylistsToStoredItems;
 		this.fileProvider = fileProvider;
+		this.fileListParameters = fileListParameters;
 	}
 
 	@Override
@@ -65,12 +73,20 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	}
 
 	private Promise<List<ServiceFile>> promiseServiceFiles(StoredItem storedItem, CancellationProxy cancellationProxy) {
-		final int serviceId = storedItem.getServiceId();
-		final Item item = new Item(serviceId);
-		final String[] parameters = FileListParameters.getInstance().getFileListParameters(item);
+		switch (storedItem.getItemType()) {
+			case ITEM:
+				return promiseServiceFiles(new Item(storedItem.getServiceId()), cancellationProxy);
+			case PLAYLIST:
+				return promiseServiceFiles(new Playlist(storedItem.getServiceId()), cancellationProxy);
+			default:
+				return new Promise<>(Collections.emptyList());
+		}
+	}
 
-		final Promise<List<ServiceFile>> serviceFilesPromise =
-			fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+	private Promise<List<ServiceFile>> promiseServiceFiles(Item item, CancellationProxy cancellationProxy) {
+		final String[] parameters = fileListParameters.getFileListParameters(item);
+
+		final Promise<List<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 
 		cancellationProxy.doCancel(serviceFilesPromise);
 
@@ -79,6 +95,25 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 				if (e instanceof FileNotFoundException) {
 					logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
 					storedItemAccess.toggleSync(item, false);
+					return Collections.emptyList();
+				}
+
+				throw e;
+			});
+	}
+
+	private Promise<List<ServiceFile>> promiseServiceFiles(Playlist playlist, CancellationProxy cancellationProxy) {
+		final String[] parameters = fileListParameters.getFileListParameters(playlist);
+
+		final Promise<List<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+
+		cancellationProxy.doCancel(serviceFilesPromise);
+
+		return serviceFilesPromise
+			.then(f -> f, e -> {
+				if (e instanceof FileNotFoundException) {
+					logger.warn("The item " + playlist.getKey() + " was not found, disabling sync for item");
+					storedItemAccess.toggleSync(playlist, false);
 					return Collections.emptyList();
 				}
 

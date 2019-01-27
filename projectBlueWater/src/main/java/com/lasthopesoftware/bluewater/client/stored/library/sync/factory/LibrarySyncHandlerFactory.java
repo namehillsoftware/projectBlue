@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
@@ -113,7 +114,8 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 						new LibraryViewsProvider(connectionProvider, new LibraryViewsByConnectionProvider()),
 						new ItemProvider(connectionProvider)),
 					storedItemAccess),
-				new FileProvider(new FileStringListProvider(connectionProvider))),
+				new FileProvider(new FileStringListProvider(connectionProvider)),
+				FileListParameters.getInstance()),
 			storedFileAccess,
 			storedFileUpdater,
 			new StoredFileJobProcessor(

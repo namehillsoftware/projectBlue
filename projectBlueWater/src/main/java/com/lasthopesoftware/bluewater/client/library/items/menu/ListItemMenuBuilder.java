@@ -9,7 +9,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.PlayClickHandler;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ShuffleClickHandler;
@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 
-public final class ListItemMenuBuilder<T extends IItem> extends AbstractListItemMenuBuilder<T> {
+public final class ListItemMenuBuilder extends AbstractListItemMenuBuilder<Item> {
 
 	private static class ViewHolder {
 		private final LazyViewFinder<TextView> textViewFinder;
@@ -66,16 +66,16 @@ public final class ListItemMenuBuilder<T extends IItem> extends AbstractListItem
 
 	private final StoredItemAccess storedItemAccess;
 	private final Library library;
-	private final IFileListParameterProvider<T> fileListParameterProvider;
+	private final IFileListParameterProvider fileListParameterProvider;
 
-	public ListItemMenuBuilder(StoredItemAccess storedItemAccess, Library library, IFileListParameterProvider<T> fileListParameterProvider) {
+	public ListItemMenuBuilder(StoredItemAccess storedItemAccess, Library library, IFileListParameterProvider fileListParameterProvider) {
 		this.storedItemAccess = storedItemAccess;
 		this.library = library;
 		this.fileListParameterProvider = fileListParameterProvider;
 	}
 
 	@Override
-	public View getView(int position, T item, View convertView, ViewGroup parent) {
+	public View getView(int position, Item item, View convertView, ViewGroup parent) {
 		NotifyOnFlipViewAnimator parentView = (NotifyOnFlipViewAnimator)convertView;
 		if (parentView == null) {
 		
@@ -108,8 +108,8 @@ public final class ListItemMenuBuilder<T extends IItem> extends AbstractListItem
 		
 		final ViewHolder viewHolder = (ViewHolder) parentView.getTag();
 		viewHolder.getTextView().setText(item.getValue());
-		viewHolder.getShuffleButton().setOnClickListener(new ShuffleClickHandler<>(parentView, fileListParameterProvider, item));
-		viewHolder.getPlayButton().setOnClickListener(new PlayClickHandler<>(parentView, fileListParameterProvider, item));
+		viewHolder.getShuffleButton().setOnClickListener(new ShuffleClickHandler(parentView, fileListParameterProvider, item));
+		viewHolder.getPlayButton().setOnClickListener(new PlayClickHandler(parentView, fileListParameterProvider, item));
 		viewHolder.getViewButton().setOnClickListener(new ViewFilesClickHandler(parentView, item));
 
 		viewHolder.getSyncButton().setEnabled(false);

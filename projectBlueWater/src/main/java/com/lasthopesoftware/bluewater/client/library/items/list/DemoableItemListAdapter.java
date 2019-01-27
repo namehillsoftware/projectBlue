@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -20,16 +21,16 @@ import tourguide.tourguide.TourGuide;
 
 import java.util.List;
 
-public class DemoableItemListAdapter<T extends IItem> extends ItemListAdapter<T> {
+public class DemoableItemListAdapter<T extends IItem> extends ItemListAdapter {
 
 	private static final String PREFS_KEY = MagicPropertyBuilder.buildMagicPropertyName(DemoableItemListAdapter.class, "TUTORIAL_SHOWN");
 	private static final boolean DEBUGGING_TUTORIAL = false;
 	private final Activity activity;
-	private final List<T> items;
+	private final List<Item> items;
 
 	private boolean wasTutorialShown;
 
-	public DemoableItemListAdapter(Activity activity, int resource, List<T> items, IFileListParameterProvider<T> fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
+	public DemoableItemListAdapter(Activity activity, int resource, List<Item> items, IFileListParameterProvider fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
 		super(activity, resource, items, fileListParameterProvider, itemListMenuEvents, storedItemAccess, library);
 
 		this.activity = activity;
