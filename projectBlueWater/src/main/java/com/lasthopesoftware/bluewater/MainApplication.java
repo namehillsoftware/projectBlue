@@ -38,7 +38,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
 import com.lasthopesoftware.bluewater.client.stored.service.SyncAlarmBroadcastReceiver;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.compilation.DebugFlag;
@@ -71,7 +70,6 @@ public class MainApplication extends Application {
 		lazyLogger.getObject().info("Checking if work needs to be scheduled");
 
 		registerReceiver(new SyncAlarmBroadcastReceiver(), new IntentFilter(SyncAlarmBroadcastReceiver.scheduledSyncIntent));
-		StoredSyncService.schedule(this);
 	}
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {

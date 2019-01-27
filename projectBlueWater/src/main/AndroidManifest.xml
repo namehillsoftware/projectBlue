@@ -134,6 +134,12 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"></action>
             </intent-filter>
         </receiver>
+        <receiver android:name=".client.stored.service.SyncAlarmBroadcastReceiver"
+                  android:enabled="true">
+            <intent-filter>
+                <action android:name="com.lasthopesoftware.bluewater.client.stored.service.SyncAlarmBroadcastReceiver.doScheduledSync"></action>
+            </intent-filter>
+        </receiver>
 
         <service
                 android:name=".client.playback.service.PlaybackService"
