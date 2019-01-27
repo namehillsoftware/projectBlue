@@ -63,7 +63,8 @@ public class WhenCollectingTheAssociatedServiceFiles {
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
 			storedPlaylistsToStoredItems,
-			fileProvider);
+			fileProvider,
+			fileListParameters);
 
 		collectedFiles =
 			new FuturePromise<>(serviceFileCollector

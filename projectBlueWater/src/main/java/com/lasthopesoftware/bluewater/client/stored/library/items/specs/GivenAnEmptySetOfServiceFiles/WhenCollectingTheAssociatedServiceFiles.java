@@ -68,7 +68,8 @@ public class WhenCollectingTheAssociatedServiceFiles {
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
 			mock(ConvertStoredPlaylistsToStoredItems.class),
-			fileProvider);
+			fileProvider,
+			fileListParameters);
 
 		collectedFiles = new FuturePromise<>(serviceFileCollector
 			.promiseServiceFilesToSync()).get(1000, TimeUnit.SECONDS);
