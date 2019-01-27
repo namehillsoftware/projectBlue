@@ -50,15 +50,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 						return new Promise<>(new CancellationException());
 
 					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
-						.map(storedItem -> {
-							if (storedItem.getItemType() == StoredItem.ItemType.PLAYLIST) {
-								return storedPlaylistsToStoredItems
-									.promiseConvertedStoredItem(storedItem)
-									.eventually(i -> promiseServiceFiles(i, cancellationProxy));
-							}
-
-							return promiseServiceFiles(storedItem, cancellationProxy);
-						});
+						.map(storedItem -> promiseServiceFiles(storedItem, cancellationProxy));
 
 					return Promise.whenAll(mappedFileDataPromises.toList());
 				});

@@ -36,7 +36,7 @@ public class PlaylistItemFinder implements FindPlaylistItem {
 				if (items.isEmpty()) return Promise.empty();
 
 				final Optional<Item> possiblePlaylistItem = Stream.of(items)
-					.filter(i -> i.getPlaylistId() == playlist.getKey())
+					.filter(i -> i.getPlaylistId() != null && i.getPlaylistId() == playlist.getKey())
 					.findFirst();
 
 				if (possiblePlaylistItem.isPresent())
