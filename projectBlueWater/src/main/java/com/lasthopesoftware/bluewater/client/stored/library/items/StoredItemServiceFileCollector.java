@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
@@ -13,6 +14,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
 import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class StoredItemServiceFileCollector implements CollectServiceFilesForSync {
 
@@ -87,15 +91,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		cancellationProxy.doCancel(serviceFilesPromise);
 
 		return serviceFilesPromise
-			.then(f -> f, e -> {
-				if (e instanceof FileNotFoundException) {
-					logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
-					storedItemAccess.toggleSync(item, false);
-					return Collections.emptyList();
-				}
-
-				throw e;
-			});
+			.then(forward(), new ExceptionHandler(item, storedItemAccess));
 	}
 
 	private Promise<List<ServiceFile>> promiseServiceFiles(Playlist playlist, CancellationProxy cancellationProxy) {
@@ -106,14 +102,27 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		cancellationProxy.doCancel(serviceFilesPromise);
 
 		return serviceFilesPromise
-			.then(f -> f, e -> {
-				if (e instanceof FileNotFoundException) {
-					logger.warn("The item " + playlist.getKey() + " was not found, disabling sync for item");
-					storedItemAccess.toggleSync(playlist, false);
-					return Collections.emptyList();
-				}
+			.then(forward(), new ExceptionHandler(playlist, storedItemAccess));
+	}
 
-				throw e;
-			});
+	private static class ExceptionHandler implements ImmediateResponse<Throwable, List<ServiceFile>> {
+		private final IItem item;
+		private final IStoredItemAccess storedItemAccess;
+
+		ExceptionHandler(IItem item, IStoredItemAccess storedItemAccess) {
+			this.item = item;
+			this.storedItemAccess = storedItemAccess;
+		}
+
+		@Override
+		public List<ServiceFile> respond(Throwable e) throws Throwable {
+			if (e instanceof FileNotFoundException) {
+				logger.warn("The item " + item.getKey() + " was not found, disabling sync for item");
+				storedItemAccess.toggleSync(item, false);
+				return Collections.emptyList();
+			}
+
+			throw e;
+		}
 	}
 }
