@@ -11,7 +11,7 @@ public class WhenGettingFileListParameters {
 
 	private static final String[] expectedFileListParameters = {
 		"Playlist/Files",
-		"ID=57",
+		"Playlist=57",
 	};
 
 	private static String[] returnedFileListParameters;

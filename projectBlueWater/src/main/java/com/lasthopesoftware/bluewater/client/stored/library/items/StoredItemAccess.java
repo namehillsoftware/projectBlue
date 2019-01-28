@@ -50,7 +50,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 
 	@Override
 	public void toggleSync(IItem item, boolean enable) {
-		item = inferCorrectItem(item);
+		item = inferItem(item);
 		if (enable)
 			enableItemSync(item, StoredItemHelpers.getListType(item));
 		else
@@ -61,7 +61,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 	public Promise<Boolean> isItemMarkedForSync(final IItem item) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				final IItem inferredItem = inferCorrectItem(item);
+				final IItem inferredItem = inferItem(item);
 				return isItemMarkedForSync(repositoryAccessHelper, library, inferredItem, StoredItemHelpers.getListType(inferredItem));
 			}
 		}, RepositoryAccessHelper.databaseExecutor);
@@ -121,7 +121,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 		}, RepositoryAccessHelper.databaseExecutor);
 	}
 
-	private static IItem inferCorrectItem(IItem item) {
+	private static IItem inferItem(IItem item) {
 		if (item instanceof Item) {
 			final Playlist playlist = ((Item)item).getPlaylist();
 			if (playlist != null) return playlist;

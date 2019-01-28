@@ -29,7 +29,7 @@ public class FileListParameters implements IFileListParameterProvider {
 
 	@Override
 	public String[] getFileListParameters(Playlist playlist) {
-		return new String[] { "Playlist/Files", "ID=" + String.valueOf(playlist.getKey()) };
+		return new String[] { "Playlist/Files", "Playlist=" + String.valueOf(playlist.getKey()) };
 	}
 
 	public enum Options {
