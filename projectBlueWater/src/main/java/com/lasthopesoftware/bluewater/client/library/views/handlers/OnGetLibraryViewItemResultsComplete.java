@@ -25,11 +25,11 @@ public class OnGetLibraryViewItemResultsComplete implements ImmediateResponse<Li
 	private final ListView listView;
 	private final View loadingView;
 	private final IItemListMenuChangeHandler itemListMenuChangeHandler;
-	private final IFileListParameterProvider<Item> fileListParameterProvider;
+	private final IFileListParameterProvider fileListParameterProvider;
 	private final StoredItemAccess storedItemAccess;
 	private final Library library;
 
-    public OnGetLibraryViewItemResultsComplete(Activity activity, ListView listView, View loadingView, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider<Item> fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
+    public OnGetLibraryViewItemResultsComplete(Activity activity, ListView listView, View loadingView, IItemListMenuChangeHandler itemListMenuChangeHandler, IFileListParameterProvider fileListParameterProvider, StoredItemAccess storedItemAccess, Library library) {
 		this.activity = activity;
 		this.listView = listView;
         this.loadingView = loadingView;

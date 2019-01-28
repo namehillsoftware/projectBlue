@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
@@ -43,7 +42,8 @@ public class WhenSyncingTheStoredItems {
 		};
 
 		final IFileProvider mockFileProvider = mock(IFileProvider.class);
-		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
+		when(mockFileProvider.promiseFiles(
+			FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
 				new ServiceFile(2),
@@ -55,23 +55,23 @@ public class WhenSyncingTheStoredItems {
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
 			new Library(),
-			new StoredItemServiceFileCollector(deferredStoredItemAccess, mock(ConvertStoredPlaylistsToStoredItems.class), mockFileProvider),
+			new StoredItemServiceFileCollector(
+				deferredStoredItemAccess,
+				mockFileProvider,
+				FileListParameters.getInstance()),
 			storedFileAccess,
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
-			job -> Observable.just(
+			jobs -> Observable.fromIterable(jobs).flatMap(job -> Observable.just(
 				new StoredFileJobStatus(
 					mock(File.class),
-					job.iterator().next().getStoredFile(),
+					job.getStoredFile(),
 					StoredFileJobState.Downloading),
 				new StoredFileJobStatus(
 					mock(File.class),
-					job.iterator().next().getStoredFile(),
-					StoredFileJobState.Downloaded))
-		);
+					job.getStoredFile(),
+					StoredFileJobState.Downloaded))));
 
 		final Observable<StoredFile> syncedFiles = librarySyncHandler.observeLibrarySync().map(j -> j.storedFile);
-
-		deferredStoredItemAccess.resolveStoredItems();
 
 		syncedFiles.blockingSubscribe(new Observer<StoredFile>() {
 			@Override
@@ -94,6 +94,8 @@ public class WhenSyncingTheStoredItems {
 
 			}
 		});
+
+		deferredStoredItemAccess.resolveStoredItems();
 	}
 
 	@Test

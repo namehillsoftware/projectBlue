@@ -1,12 +1,14 @@
 package com.lasthopesoftware.bluewater.client.library.items;
 
+import android.support.annotation.Nullable;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 
 
 
 public class Item extends AbstractIntKeyStringValue implements IItem {
 
-	private int playlistId;
+	private Integer playlistId;
 
 	public Item(int key, String value) {
 		super(key, value);
@@ -23,11 +25,11 @@ public class Item extends AbstractIntKeyStringValue implements IItem {
 		super();
 	}
 
-	public int getPlaylistId() {
+	@Nullable public Integer getPlaylistId() {
 		return playlistId;
 	}
 
-	public Item setPlaylistId(int playlistId) {
+	public Item setPlaylistId(@Nullable Integer playlistId) {
 		this.playlistId = playlistId;
 		return this;
 	}
@@ -36,4 +38,10 @@ public class Item extends AbstractIntKeyStringValue implements IItem {
     public int hashCode() {
         return getKey();
     }
+
+    @Nullable public Playlist getPlaylist() {
+		return playlistId != null
+			? new Playlist(playlistId)
+			: null;
+	}
 }

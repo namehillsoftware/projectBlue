@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.service;
 import android.app.*;
 import android.content.*;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -103,11 +102,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
 		final Intent intent = new Intent(context, SyncAlarmBroadcastReceiver.class);
 		final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
-		} else {
-			alarmManager.set(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
-		}
+		alarmManager.set(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
 	}
 
 	public static boolean isSyncRunning() {

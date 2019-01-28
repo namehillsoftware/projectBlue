@@ -118,7 +118,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 		lazySpecificLibraryProvider.getObject().getBrowserLibrary()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				final StoredItemAccess storedItemAccess = new StoredItemAccess(this, library);
-				final ItemListAdapter<Item> itemListAdapter = new ItemListAdapter<>(
+				final ItemListAdapter itemListAdapter = new ItemListAdapter(
 					this,
 					R.id.tvStandard,
 					items,

@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters;
 
-import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
+import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 
 /**
  * Created by david on 11/26/15.
  */
-public interface IFileListParameterProvider<TItem extends IItem> {
-	String[] getFileListParameters(TItem item);
+public interface IFileListParameterProvider {
+	String[] getFileListParameters(Item item);
+
+	String[] getFileListParameters(Playlist playlist);
 }
