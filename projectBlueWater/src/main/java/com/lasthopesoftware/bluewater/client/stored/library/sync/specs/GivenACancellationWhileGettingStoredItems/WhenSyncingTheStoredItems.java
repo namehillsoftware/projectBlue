@@ -42,7 +42,8 @@ public class WhenSyncingTheStoredItems {
 		};
 
 		final IFileProvider mockFileProvider = mock(IFileProvider.class);
-		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
+		when(mockFileProvider.promiseFiles(
+			FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
 				new ServiceFile(2),
@@ -60,20 +61,17 @@ public class WhenSyncingTheStoredItems {
 				FileListParameters.getInstance()),
 			storedFileAccess,
 			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
-			job -> Observable.just(
+			jobs -> Observable.fromIterable(jobs).flatMap(job -> Observable.just(
 				new StoredFileJobStatus(
 					mock(File.class),
-					job.iterator().next().getStoredFile(),
+					job.getStoredFile(),
 					StoredFileJobState.Downloading),
 				new StoredFileJobStatus(
 					mock(File.class),
-					job.iterator().next().getStoredFile(),
-					StoredFileJobState.Downloaded))
-		);
+					job.getStoredFile(),
+					StoredFileJobState.Downloaded))));
 
 		final Observable<StoredFile> syncedFiles = librarySyncHandler.observeLibrarySync().map(j -> j.storedFile);
-
-		deferredStoredItemAccess.resolveStoredItems();
 
 		syncedFiles.blockingSubscribe(new Observer<StoredFile>() {
 			@Override
@@ -96,6 +94,8 @@ public class WhenSyncingTheStoredItems {
 
 			}
 		});
+
+		deferredStoredItemAccess.resolveStoredItems();
 	}
 
 	@Test

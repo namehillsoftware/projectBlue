@@ -24,7 +24,7 @@ public final class FileProvider implements IFileProvider, PromisedResponse<Strin
 	}
 
 	@Override
-	public Promise<List<ServiceFile>> promiseResponse(String stringList) throws Throwable {
+	public Promise<List<ServiceFile>> promiseResponse(String stringList) {
 		return FileStringListUtilities.promiseParsedFileStringList(stringList);
 	}
 }

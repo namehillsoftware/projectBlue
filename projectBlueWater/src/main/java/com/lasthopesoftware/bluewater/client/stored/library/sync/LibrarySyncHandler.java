@@ -11,6 +11,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
+import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
@@ -46,13 +49,20 @@ public class LibrarySyncHandler {
 
 		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
 
-		return StreamedPromise.stream(promisedServiceFilesToSync
-			.eventually(allServiceFilesToSync -> {
-				final HashSet<ServiceFile> serviceFilesSet = allServiceFilesToSync instanceof HashSet ? (HashSet<ServiceFile>)allServiceFilesToSync : new HashSet<>(allServiceFilesToSync);
-				final Promise<Void> pruneFilesTask = storedFileAccess.pruneStoredFiles(library, serviceFilesSet);
-				pruneFilesTask.excuse(new VoidResponse<>(e -> logger.warn("There was an error pruning the files", e)));
+		return StreamedPromise.stream(new Promise<HashSet<ServiceFile>>(messenger -> {
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			messenger.cancellationRequested(cancellationProxy);
+			cancellationProxy.doCancel(promisedServiceFilesToSync);
+			promisedServiceFilesToSync
+				.eventually(allServiceFilesToSync -> {
+					final HashSet<ServiceFile> serviceFilesSet = allServiceFilesToSync instanceof HashSet ? (HashSet<ServiceFile>)allServiceFilesToSync : new HashSet<>(allServiceFilesToSync);
+					final Promise<Void> pruneFilesTask = storedFileAccess.pruneStoredFiles(library, serviceFilesSet);
+					cancellationProxy.doCancel(pruneFilesTask);
+					pruneFilesTask.excuse(new VoidResponse<>(e -> logger.warn("There was an error pruning the files", e)));
 
-				return pruneFilesTask.then(voids -> serviceFilesSet);
+					return pruneFilesTask.then(voids -> serviceFilesSet);
+				})
+				.then(new ResolutionProxy<>(messenger), new RejectionProxy(messenger));
 			}))
 			.map(serviceFile -> {
 				final Promise<StoredFileJob> promiseDownloadedStoredFile = storedFileUpdater
