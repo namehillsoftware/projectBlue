@@ -5,7 +5,10 @@ import android.support.annotation.Keep;
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Keep
 public class Library implements IEntityCreator, IEntityUpdater {
@@ -32,6 +35,8 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	private String libraryName;
 	private String accessCode;
 	private String authKey;
+	private String userName;
+	private String password;
 	private boolean isLocalOnly = false;
 	private boolean isRepeating = false;
 	private int nowPlayingId = -1;
@@ -218,32 +223,33 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return this;
 	}
 
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Library library = (Library) o;
-		return id == library.id &&
-			isLocalOnly == library.isLocalOnly &&
-			isRepeating == library.isRepeating &&
-			nowPlayingId == library.nowPlayingId &&
-			nowPlayingProgress == library.nowPlayingProgress &&
-			selectedView == library.selectedView &&
-			isUsingExistingFiles == library.isUsingExistingFiles &&
-			isSyncLocalConnectionsOnly == library.isSyncLocalConnectionsOnly &&
-			Objects.equals(libraryName, library.libraryName) &&
-			Objects.equals(accessCode, library.accessCode) &&
-			Objects.equals(authKey, library.authKey) &&
-			selectedViewType == library.selectedViewType &&
-			Objects.equals(savedTracksString, library.savedTracksString) &&
-			Objects.equals(customSyncedFilesPath, library.customSyncedFilesPath) &&
-			syncedFileLocation == library.syncedFileLocation;
+		return id == library.id;
 	}
 
 	@Override
 	public int hashCode() {
-
-		return Objects.hash(id, libraryName, accessCode, authKey, isLocalOnly, isRepeating, nowPlayingId, nowPlayingProgress, selectedViewType, selectedView, savedTracksString, customSyncedFilesPath, syncedFileLocation, isUsingExistingFiles, isSyncLocalConnectionsOnly);
+		return id;
 	}
 
 	@Override
@@ -253,13 +259,19 @@ public class Library implements IEntityCreator, IEntityUpdater {
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion >= 5) return;
+		if (oldVersion < 5) {
 
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
+		}
+
+		if (oldVersion < 7) {
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `userName` VARCHAR;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `password` VARCHAR;");
+		}
 	}
 
 	public enum SyncedFileLocation {
