@@ -45,7 +45,8 @@ public class WhenScanningForUrls {
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
 				.setAccessCode("gooPc")
-				.setAuthKey(null))).get();
+				.setUserName(null)
+				.setPassword(null))).get();
 	}
 
 	@Test

@@ -18,7 +18,6 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	public static final String tableName = "LIBRARIES";
 	public static final String libraryNameColumn = "libraryName";
 	public static final String accessCodeColumn = "accessCode";
-	public static final String authKeyColumn = "authKey";
 	public static final String isLocalOnlyColumn = "isLocalOnly";
 	public static final String isRepeatingColumn = "isRepeating";
 	public static final String nowPlayingIdColumn = "nowPlayingId";
@@ -216,16 +215,18 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return userName;
 	}
 
-	public void setUserName(String userName) {
+	public Library setUserName(String userName) {
 		this.userName = userName;
+		return this;
 	}
 
 	public String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public Library setPassword(String password) {
 		this.password = password;
+		return this;
 	}
 
 	@Override

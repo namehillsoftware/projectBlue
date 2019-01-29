@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.builder;
 
+import android.util.Base64;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
@@ -34,7 +35,10 @@ public class UrlScanner implements BuildUrlProviders {
 		if (library.getAccessCode() == null)
 			return new Promise<>(new IllegalArgumentException("The access code cannot be null"));
 
-		final String authKey = library.getAuthKey();
+		final String authKey = library.getUserName() != null
+			? Base64.encodeToString((library.getUserName() + ":" + library.getPassword()).getBytes(), Base64.DEFAULT)
+			: null;
+
 		final MediaServerUrlProvider mediaServerUrlProvider;
 		try {
 			mediaServerUrlProvider = new MediaServerUrlProvider(
