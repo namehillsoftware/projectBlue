@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.library.repository;
 
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.Keep;
+import android.util.Base64;
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
@@ -28,13 +30,14 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	public static final String syncedFileLocationColumn = "syncedFileLocation";
 	public static final String isUsingExistingFilesColumn = "isUsingExistingFiles";
 	public static final String isSyncLocalConnectionsOnlyColumn = "isSyncLocalConnectionsOnly";
+	public static final String userNameColumn = "userName";
+	public static final String passwordColumn = "password";
 
 	private int id = -1;
 	
 	// Remote connection fields
 	private String libraryName;
 	private String accessCode;
-	private String authKey;
 	private String userName;
 	private String password;
 	private boolean isLocalOnly = false;
@@ -87,20 +90,6 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	 */
 	public Library setAccessCode(String accessCode) {
 		this.accessCode = accessCode;
-		return this;
-	}
-
-	/**
-	 * @return the authKey
-	 */
-	public String getAuthKey() {
-		return authKey;
-	}
-	/**
-	 * @param authKey the authKey to set
-	 */
-	public Library setAuthKey(String authKey) {
-		this.authKey = authKey;
 		return this;
 	}
 
@@ -254,13 +243,12 @@ public class Library implements IEntityCreator, IEntityUpdater {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `authKey` VARCHAR(100) , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");
+		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `userName` VARCHAR , `password` VARCHAR , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");
 	}
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
 		if (oldVersion < 5) {
-
 			db.execSQL("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
 			db.execSQL("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
 			db.execSQL("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
@@ -271,6 +259,40 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		if (oldVersion < 7) {
 			db.execSQL("ALTER TABLE `LIBRARIES` add column `userName` VARCHAR;");
 			db.execSQL("ALTER TABLE `LIBRARIES` add column `password` VARCHAR;");
+			try (final Cursor cursor = db.rawQuery("SELECT ID, authKey FROM `LIBRARIES` WHERE `authKey` IS NOT NULL AND `authKey` <> ''", new String[0])) {
+				if (cursor.moveToFirst() && cursor.getCount() > 0) {
+					do {
+						final int libraryId = cursor.getInt(0);
+						final String authKey = cursor.getString(1);
+						final String decodedAuthKey = new String(Base64.decode(authKey, Base64.DEFAULT));
+						final String[] userCredentials = decodedAuthKey.split(":");
+
+						switch (userCredentials.length) {
+							case 2:
+								db.execSQL(
+									"UPDATE `" + Library.tableName + "` " +
+									" SET `" + userNameColumn + "` = ?, " +
+									" `" + passwordColumn + "` = ? " +
+									" WHERE `id` = ?",
+									new Object[] {
+										userCredentials[0],
+										userCredentials[1],
+										libraryId
+									});
+								break;
+							case 1:
+								db.execSQL(
+								"UPDATE `" + Library.tableName + "` " +
+									" SET `" + userNameColumn + "` = ? " +
+									" WHERE `id` = ?",
+									new Object[] {
+										userCredentials[0],
+										libraryId
+									});
+						}
+					} while (cursor.moveToNext());
+				}
+			}
 		}
 	}
 
