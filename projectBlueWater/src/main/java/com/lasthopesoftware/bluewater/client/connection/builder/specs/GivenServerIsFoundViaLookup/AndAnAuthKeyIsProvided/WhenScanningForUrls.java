@@ -30,7 +30,7 @@ public class WhenScanningForUrls extends AndroidContext {
 		when(connectionTester.promiseIsConnectionPossible(any()))
 			.thenReturn(new Promise<>(false));
 
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()) && Base64.encodeToString("myuser:mypass".getBytes(), Base64.DEFAULT).equals(a.getUrlProvider().getAuthCode()))))
+		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()) && Base64.encodeToString("myuser:myPass".getBytes(), Base64.DEFAULT).equals(a.getUrlProvider().getAuthCode()))))
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
