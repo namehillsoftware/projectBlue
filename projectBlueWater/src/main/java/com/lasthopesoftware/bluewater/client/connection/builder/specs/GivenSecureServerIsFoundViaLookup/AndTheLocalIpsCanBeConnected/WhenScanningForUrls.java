@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,6 +48,7 @@ public class WhenScanningForUrls {
 					.setCertificateFingerprint("2386166660562C5AAA1253B2BED7C2483F9C2D45")));
 
 		final UrlScanner urlScanner = new UrlScanner(
+			mock(EncodeToBase64.class),
 			connectionTester,
 			serverLookup,
 			OkHttpFactory.getInstance());

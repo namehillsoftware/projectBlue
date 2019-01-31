@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
+import com.lasthopesoftware.resources.strings.Base64Encoder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -54,7 +55,7 @@ public class SessionConnection {
 			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(client));
 			final ConnectionTester connectionTester = new ConnectionTester();
 
-			return new UrlScanner(connectionTester, serverLookup, OkHttpFactory.getInstance());
+			return new UrlScanner(new Base64Encoder(), connectionTester, serverLookup, OkHttpFactory.getInstance());
 		}
 	};
 
