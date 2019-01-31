@@ -37,7 +37,7 @@ public class UrlScanner implements BuildUrlProviders {
 		if (library.getAccessCode() == null)
 			return new Promise<>(new IllegalArgumentException("The access code cannot be null"));
 
-		final String authKey = library.getUserName() != null
+		final String authKey = library.getUserName() != null && library.getPassword() != null
 			? base64.encodeString(library.getUserName() + ":" + library.getPassword())
 			: null;
 

@@ -268,28 +268,30 @@ public class Library implements IEntityCreator, IEntityUpdater {
 						final String decodedAuthKey = new String(Base64.decode(authKey, Base64.DEFAULT));
 						final String[] userCredentials = decodedAuthKey.split(":");
 
-						switch (userCredentials.length) {
-							case 2:
-								db.execSQL(
-									"UPDATE `" + Library.tableName + "` " +
+						if (userCredentials.length > 1) {
+							db.execSQL(
+								"UPDATE `" + Library.tableName + "` " +
 									" SET `" + userNameColumn + "` = ?, " +
 									" `" + passwordColumn + "` = ? " +
 									" WHERE `id` = ?",
-									new Object[] {
-										userCredentials[0],
-										userCredentials[1],
-										libraryId
-									});
-								break;
-							case 1:
-								db.execSQL(
+								new Object[] {
+									userCredentials[0],
+									userCredentials[1],
+									libraryId
+								});
+
+							continue;
+						}
+
+						if (userCredentials.length > 0) {
+							db.execSQL(
 								"UPDATE `" + Library.tableName + "` " +
 									" SET `" + userNameColumn + "` = ? " +
 									" WHERE `id` = ?",
-									new Object[] {
-										userCredentials[0],
-										libraryId
-									});
+								new Object[] {
+									userCredentials[0],
+									libraryId
+								});
 						}
 					} while (cursor.moveToNext());
 				}
