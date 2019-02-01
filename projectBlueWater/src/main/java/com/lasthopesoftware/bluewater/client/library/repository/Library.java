@@ -268,7 +268,7 @@ public class Library implements IEntityCreator, IEntityUpdater {
 						if (authKey == null || authKey.isEmpty()) continue;
 
 						final String decodedAuthKey = new String(Base64.decode(authKey, Base64.DEFAULT));
-						final String[] userCredentials = decodedAuthKey.split(":");
+						final String[] userCredentials = decodedAuthKey.split(":", 2);
 
 						if (userCredentials.length > 1) {
 							db.execSQL(

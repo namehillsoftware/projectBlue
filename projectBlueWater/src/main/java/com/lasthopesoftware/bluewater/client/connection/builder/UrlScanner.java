@@ -37,7 +37,7 @@ public class UrlScanner implements BuildUrlProviders {
 		if (library.getAccessCode() == null)
 			return new Promise<>(new IllegalArgumentException("The access code cannot be null"));
 
-		final String authKey = library.getUserName() != null && library.getPassword() != null
+		final String authKey = isUserCredentialsValid(library)
 			? base64.encodeString(library.getUserName() + ":" + library.getPassword())
 			: null;
 
@@ -88,6 +88,13 @@ public class UrlScanner implements BuildUrlProviders {
 
 					return testUrls(mediaServerUrlProvidersQueue);
 				}));
+	}
+
+	private static boolean isUserCredentialsValid(Library library) {
+		return library.getUserName() != null
+			&& !library.getUserName().isEmpty()
+			&& library.getPassword() != null
+			&& !library.getPassword().isEmpty();
 	}
 
 	private Promise<IUrlProvider> testUrls(Queue<IUrlProvider> urls) {

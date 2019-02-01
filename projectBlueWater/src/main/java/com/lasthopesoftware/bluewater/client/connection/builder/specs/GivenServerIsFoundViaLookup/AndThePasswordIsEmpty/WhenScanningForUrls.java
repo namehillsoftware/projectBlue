@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndAnAuthKeyIsProvided;
+package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndThePasswordIsEmpty;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
@@ -30,7 +30,7 @@ public class WhenScanningForUrls {
 		when(connectionTester.promiseIsConnectionPossible(any()))
 			.thenReturn(new Promise<>(false));
 
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()) && "gooey".equals(a.getUrlProvider().getAuthCode()))))
+		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()) && a.getUrlProvider().getAuthCode() == null)))
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
@@ -38,7 +38,7 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(new ServerInfo().setRemoteIp("1.2.3.4").setHttpPort(143)));
 
 		final UrlScanner urlScanner = new UrlScanner(
-			decodedString -> "gooey",
+			decodedString -> decodedString,
 			connectionTester,
 			serverLookup,
 			OkHttpFactory.getInstance());
@@ -46,8 +46,8 @@ public class WhenScanningForUrls {
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
 				.setAccessCode("gooPc")
-				.setUserName("myuser")
-				.setPassword("myPass"))).get();
+				.setUserName("user")
+				.setPassword(""))).get();
 	}
 
 	@Test

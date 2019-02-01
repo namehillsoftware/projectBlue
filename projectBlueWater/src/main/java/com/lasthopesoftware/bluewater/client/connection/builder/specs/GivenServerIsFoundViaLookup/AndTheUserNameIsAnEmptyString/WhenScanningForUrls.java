@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndTheAuthKeyIsAnEmptyString;
+package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndTheUserNameIsAnEmptyString;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,7 +30,9 @@ public class WhenScanningForUrls {
 		when(connectionTester.promiseIsConnectionPossible(any()))
 			.thenReturn(new Promise<>(false));
 
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()))))
+		when(connectionTester.promiseIsConnectionPossible(
+			argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl())
+				&& a.getUrlProvider().getAuthCode() == null)))
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
@@ -39,7 +40,7 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(new ServerInfo().setRemoteIp("1.2.3.4").setHttpPort(143)));
 
 		final UrlScanner urlScanner = new UrlScanner(
-			mock(EncodeToBase64.class),
+			decodedString -> decodedString,
 			connectionTester,
 			serverLookup,
 			OkHttpFactory.getInstance());
