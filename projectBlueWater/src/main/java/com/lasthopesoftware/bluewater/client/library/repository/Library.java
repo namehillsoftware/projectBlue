@@ -1,11 +1,16 @@
 package com.lasthopesoftware.bluewater.client.library.repository;
 
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.Keep;
+import android.util.Base64;
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Keep
 public class Library implements IEntityCreator, IEntityUpdater {
@@ -13,7 +18,6 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	public static final String tableName = "LIBRARIES";
 	public static final String libraryNameColumn = "libraryName";
 	public static final String accessCodeColumn = "accessCode";
-	public static final String authKeyColumn = "authKey";
 	public static final String isLocalOnlyColumn = "isLocalOnly";
 	public static final String isRepeatingColumn = "isRepeating";
 	public static final String nowPlayingIdColumn = "nowPlayingId";
@@ -25,13 +29,16 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	public static final String syncedFileLocationColumn = "syncedFileLocation";
 	public static final String isUsingExistingFilesColumn = "isUsingExistingFiles";
 	public static final String isSyncLocalConnectionsOnlyColumn = "isSyncLocalConnectionsOnly";
+	public static final String userNameColumn = "userName";
+	public static final String passwordColumn = "password";
 
 	private int id = -1;
 	
 	// Remote connection fields
 	private String libraryName;
 	private String accessCode;
-	private String authKey;
+	private String userName;
+	private String password;
 	private boolean isLocalOnly = false;
 	private boolean isRepeating = false;
 	private int nowPlayingId = -1;
@@ -82,20 +89,6 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	 */
 	public Library setAccessCode(String accessCode) {
 		this.accessCode = accessCode;
-		return this;
-	}
-
-	/**
-	 * @return the authKey
-	 */
-	public String getAuthKey() {
-		return authKey;
-	}
-	/**
-	 * @param authKey the authKey to set
-	 */
-	public Library setAuthKey(String authKey) {
-		this.authKey = authKey;
 		return this;
 	}
 
@@ -218,48 +211,94 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return this;
 	}
 
+	public String getUserName() {
+		return userName;
+	}
+
+	public Library setUserName(String userName) {
+		this.userName = userName;
+		return this;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public Library setPassword(String password) {
+		this.password = password;
+		return this;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Library library = (Library) o;
-		return id == library.id &&
-			isLocalOnly == library.isLocalOnly &&
-			isRepeating == library.isRepeating &&
-			nowPlayingId == library.nowPlayingId &&
-			nowPlayingProgress == library.nowPlayingProgress &&
-			selectedView == library.selectedView &&
-			isUsingExistingFiles == library.isUsingExistingFiles &&
-			isSyncLocalConnectionsOnly == library.isSyncLocalConnectionsOnly &&
-			Objects.equals(libraryName, library.libraryName) &&
-			Objects.equals(accessCode, library.accessCode) &&
-			Objects.equals(authKey, library.authKey) &&
-			selectedViewType == library.selectedViewType &&
-			Objects.equals(savedTracksString, library.savedTracksString) &&
-			Objects.equals(customSyncedFilesPath, library.customSyncedFilesPath) &&
-			syncedFileLocation == library.syncedFileLocation;
+		return id == library.id;
 	}
 
 	@Override
 	public int hashCode() {
-
-		return Objects.hash(id, libraryName, accessCode, authKey, isLocalOnly, isRepeating, nowPlayingId, nowPlayingProgress, selectedViewType, selectedView, savedTracksString, customSyncedFilesPath, syncedFileLocation, isUsingExistingFiles, isSyncLocalConnectionsOnly);
+		return id;
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `authKey` VARCHAR(100) , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");
+		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `userName` VARCHAR , `password` VARCHAR , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");
 	}
 
 	@Override
 	public void onUpdate(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion >= 5) return;
+		if (oldVersion < 5) {
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
+		}
 
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `customSyncedFilesPath` VARCHAR;");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `syncedFileLocation` VARCHAR DEFAULT 'INTERNAL';");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `isUsingExistingFiles` BOOLEAN DEFAULT 0;");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `isSyncLocalConnectionsOnly` BOOLEAN DEFAULT 0;");
-		db.execSQL("ALTER TABLE `LIBRARIES` add column `selectedViewType` VARCHAR;");
+		if (oldVersion < 7) {
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `userName` VARCHAR;");
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `password` VARCHAR;");
+			try (final Cursor cursor = db.rawQuery("SELECT ID, authKey FROM `LIBRARIES` WHERE `authKey` IS NOT NULL AND `authKey` <> ''", new String[0])) {
+				if (cursor.moveToFirst() && cursor.getCount() > 0) {
+					do {
+						final int libraryId = cursor.getInt(0);
+						final String authKey = cursor.getString(1);
+						if (authKey == null || authKey.isEmpty()) continue;
+
+						final String decodedAuthKey = new String(Base64.decode(authKey, Base64.DEFAULT));
+						final String[] userCredentials = decodedAuthKey.split(":", 2);
+
+						if (userCredentials.length > 1) {
+							db.execSQL(
+								"UPDATE `" + Library.tableName + "` " +
+									" SET `" + userNameColumn + "` = ?, " +
+									" `" + passwordColumn + "` = ? " +
+									" WHERE `id` = ?",
+								new Object[] {
+									userCredentials[0],
+									userCredentials[1],
+									libraryId
+								});
+
+							continue;
+						}
+
+						if (userCredentials.length > 0) {
+							db.execSQL(
+								"UPDATE `" + Library.tableName + "` " +
+									" SET `" + userNameColumn + "` = ? " +
+									" WHERE `id` = ?",
+								new Object[] {
+									userCredentials[0],
+									libraryId
+								});
+						}
+					} while (cursor.moveToNext());
+				}
+			}
+		}
 	}
 
 	public enum SyncedFileLocation {

@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.resources.strings.Base64Encoder;
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
@@ -186,6 +187,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 				.build();
 
 			return new UrlScanner(
+				new Base64Encoder(),
 				new ConnectionTester(),
 				new ServerLookup(new ServerInfoXmlRequest(client)),
 				OkHttpFactory.getInstance());

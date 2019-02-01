@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import java.net.MalformedURLException;
@@ -16,11 +17,13 @@ import java.util.Queue;
 
 public class UrlScanner implements BuildUrlProviders {
 
+	private final EncodeToBase64 base64;
 	private final TestConnections connectionTester;
 	private final LookupServers serverLookup;
 	private final ProvideOkHttpClients okHttpClients;
 
-	public UrlScanner(TestConnections connectionTester, LookupServers serverLookup, ProvideOkHttpClients okHttpClients) {
+	public UrlScanner(EncodeToBase64 base64, TestConnections connectionTester, LookupServers serverLookup, ProvideOkHttpClients okHttpClients) {
+		this.base64 = base64;
 		this.connectionTester = connectionTester;
 		this.serverLookup = serverLookup;
 		this.okHttpClients = okHttpClients;
@@ -34,7 +37,10 @@ public class UrlScanner implements BuildUrlProviders {
 		if (library.getAccessCode() == null)
 			return new Promise<>(new IllegalArgumentException("The access code cannot be null"));
 
-		final String authKey = library.getAuthKey();
+		final String authKey = isUserCredentialsValid(library)
+			? base64.encodeString(library.getUserName() + ":" + library.getPassword())
+			: null;
+
 		final MediaServerUrlProvider mediaServerUrlProvider;
 		try {
 			mediaServerUrlProvider = new MediaServerUrlProvider(
@@ -82,6 +88,13 @@ public class UrlScanner implements BuildUrlProviders {
 
 					return testUrls(mediaServerUrlProvidersQueue);
 				}));
+	}
+
+	private static boolean isUserCredentialsValid(Library library) {
+		return library.getUserName() != null
+			&& !library.getUserName().isEmpty()
+			&& library.getPassword() != null
+			&& !library.getPassword().isEmpty();
 	}
 
 	private Promise<IUrlProvider> testUrls(Queue<IUrlProvider> urls) {

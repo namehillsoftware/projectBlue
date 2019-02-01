@@ -91,7 +91,8 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 				InsertBuilder
 					.fromTable(Library.tableName)
 					.addColumn(Library.accessCodeColumn)
-					.addColumn(Library.authKeyColumn)
+					.addColumn(Library.userNameColumn)
+					.addColumn(Library.passwordColumn)
 					.addColumn(Library.isLocalOnlyColumn)
 					.addColumn(Library.libraryNameColumn)
 					.addColumn(Library.isRepeatingColumn)
@@ -111,7 +112,8 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 				UpdateBuilder
 					.fromTable(Library.tableName)
 					.addSetter(Library.accessCodeColumn)
-					.addSetter(Library.authKeyColumn)
+					.addSetter(Library.userNameColumn)
+					.addSetter(Library.passwordColumn)
 					.addSetter(Library.isLocalOnlyColumn)
 					.addSetter(Library.libraryNameColumn)
 					.addSetter(Library.isRepeatingColumn)
@@ -146,7 +148,8 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 						repositoryAccessHelper
 							.mapSql(isLibraryExists ? libraryUpdateSql.getObject() : libraryInsertSql.getObject())
 							.addParameter(Library.accessCodeColumn, library.getAccessCode())
-							.addParameter(Library.authKeyColumn, library.getAuthKey())
+							.addParameter(Library.userNameColumn, library.getUserName())
+							.addParameter(Library.passwordColumn, library.getPassword())
 							.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly())
 							.addParameter(Library.libraryNameColumn, library.getLibraryName())
 							.addParameter(Library.isRepeatingColumn, library.isRepeating())

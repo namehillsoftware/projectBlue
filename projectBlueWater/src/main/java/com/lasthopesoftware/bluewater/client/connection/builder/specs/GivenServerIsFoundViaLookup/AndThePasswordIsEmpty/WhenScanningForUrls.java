@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenSecureServerIsFoundViaLookup.AndTheFingerprintIsNull;
+package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndThePasswordIsEmpty;
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,26 +30,24 @@ public class WhenScanningForUrls {
 		when(connectionTester.promiseIsConnectionPossible(any()))
 			.thenReturn(new Promise<>(false));
 
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "https://1.2.3.4:452/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()))))
+		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "http://1.2.3.4:143/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()) && a.getUrlProvider().getAuthCode() == null)))
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
 		when(serverLookup.promiseServerInformation(argThat(a -> "gooPc".equals(a.getAccessCode()))))
-			.thenReturn(new Promise<>(new ServerInfo()
-				.setRemoteIp("1.2.3.4")
-				.setHttpPort(143)
-				.setHttpsPort(452)
-				.setCertificateFingerprint(null)));
+			.thenReturn(new Promise<>(new ServerInfo().setRemoteIp("1.2.3.4").setHttpPort(143)));
 
 		final UrlScanner urlScanner = new UrlScanner(
-			mock(EncodeToBase64.class),
+			decodedString -> decodedString,
 			connectionTester,
 			serverLookup,
 			OkHttpFactory.getInstance());
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
-				.setAccessCode("gooPc"))).get();
+				.setAccessCode("gooPc")
+				.setUserName("user")
+				.setPassword(""))).get();
 	}
 
 	@Test
@@ -60,11 +57,6 @@ public class WhenScanningForUrls {
 
 	@Test
 	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("https://1.2.3.4:452/MCWS/v1/");
-	}
-
-	@Test
-	public void thenTheCertificateFingerprintIsEmpty() {
-		assertThat(urlProvider.getCertificateFingerprint()).isEmpty();
+		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://1.2.3.4:143/MCWS/v1/");
 	}
 }

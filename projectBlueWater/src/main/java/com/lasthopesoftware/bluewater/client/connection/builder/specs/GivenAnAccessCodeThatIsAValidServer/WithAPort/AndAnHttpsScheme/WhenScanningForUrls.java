@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,7 +32,11 @@ public class WhenScanningForUrls {
 		when(connectionTester.promiseIsConnectionPossible(argThat(a -> a.getUrlProvider().getBaseUrl().equals("https://gooPc:3504/MCWS/v1/"))))
 			.thenReturn(new Promise<>(true));
 
-		final UrlScanner urlScanner = new UrlScanner(connectionTester, mock(LookupServers.class), OkHttpFactory.getInstance());
+		final UrlScanner urlScanner = new UrlScanner(
+			mock(EncodeToBase64.class),
+			connectionTester,
+			mock(LookupServers.class),
+			OkHttpFactory.getInstance());
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()

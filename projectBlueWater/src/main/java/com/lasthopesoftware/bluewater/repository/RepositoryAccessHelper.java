@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 public class RepositoryAccessHelper extends SQLiteOpenHelper implements Closeable {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-	private static final int DATABASE_VERSION = 6;
+	private static final int DATABASE_VERSION = 7;
 	private static final String DATABASE_NAME = "sessions_db";
 
 	private final static Lazy<IEntityCreator[]> entityCreators = new Lazy<>(() -> new IEntityCreator[]{new Library(), new StoredFileEntityCreator(), new StoredItem(), new CachedFile()});

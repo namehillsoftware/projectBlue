@@ -8,7 +8,6 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View.OnClickListener;
@@ -59,12 +58,8 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 
 		library.setAccessCode(txtAccessCode.findView().getText().toString());
 
-		final String userName = txtUserName.findView().getText().toString();
-		final String password = txtPassword.findView().getText().toString();
-		final String authKey = !userName.isEmpty() && !password.isEmpty()
-			? Base64.encodeToString((userName + ":" + password).getBytes(), Base64.DEFAULT).trim()
-			: "";
-		library.setAuthKey(authKey);
+		library.setUserName(txtUserName.findView().getText().toString());
+		library.setPassword(txtPassword.findView().getText().toString());
 
 		library.setLocalOnly(chkLocalOnly.findView().isChecked());
 		library.setCustomSyncedFilesPath(txtSyncPath.findView().getText().toString());
@@ -92,7 +87,7 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
 		if (permissionsToRequest.size() > 0) {
-			final String[] permissionsToRequestArray = permissionsToRequest.toArray(new String[permissionsToRequest.size()]);
+			final String[] permissionsToRequestArray = permissionsToRequest.toArray(new String[0]);
 			ActivityCompat.requestPermissions(EditClientSettingsActivity.this, permissionsToRequestArray, permissionsRequestInteger);
 
 			return;
@@ -187,14 +182,9 @@ public class EditClientSettingsActivity extends AppCompatActivity {
 				}
 
 				txtAccessCode.findView().setText(library.getAccessCode());
-				if (library.getAuthKey() == null) return;
 
-				final String decryptedUserAuth = new String(Base64.decode(library.getAuthKey(), Base64.DEFAULT));
-				if (decryptedUserAuth.isEmpty()) return;
-
-				final String[] userDetails = decryptedUserAuth.split(":", 2);
-				txtUserName.findView().setText(userDetails[0]);
-				txtPassword.findView().setText(userDetails[1] != null ? userDetails[1] : "");
+				txtUserName.findView().setText(library.getUserName());
+				txtPassword.findView().setText(library.getPassword());
 			}), this));
 	}
 

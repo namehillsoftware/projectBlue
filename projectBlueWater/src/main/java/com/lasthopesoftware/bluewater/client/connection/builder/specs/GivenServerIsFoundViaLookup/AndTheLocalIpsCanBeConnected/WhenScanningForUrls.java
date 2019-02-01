@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,6 +46,7 @@ public class WhenScanningForUrls {
 						"192.168.1.56"))));
 
 		final UrlScanner urlScanner = new UrlScanner(
+			mock(EncodeToBase64.class),
 			connectionTester,
 			serverLookup,
 			OkHttpFactory.getInstance());
