@@ -60,7 +60,7 @@ public class WhenParsingTheServerInfo {
 	}
 
 	@Test
-	public void thenTheCertificateFingerprintIsCorrect() {
-		assertThat(serverInfo.getCertificateFingerprint()).isEqualToIgnoringCase("746E06046B44CED35658F300DB2D08A799DEBC7E");
+	public void thenTheCertificateFingerprintIsCorrectIsNull() {
+		assertThat(serverInfo.getCertificateFingerprint()).isNull();
 	}
 }

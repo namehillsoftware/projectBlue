@@ -8,6 +8,12 @@ import java.util.Arrays;
 
 public class ServerLookup implements LookupServers {
 
+	private static final String ipKey = "ip";
+	private static final String localIpListKey = "localiplist";
+	private static final String portKey = "port";
+	private static final String httpsPortKey = "https_port";
+	private static final String certificateFingerprintKey = "certificate_fingerprint";
+
 	private final RequestServerInfoXml serverInfoXmlRequest;
 
 	public ServerLookup(RequestServerInfoXml serverInfoXmlRequest) {
@@ -22,20 +28,20 @@ public class ServerLookup implements LookupServers {
 
 				final ServerInfo serverInfo = new ServerInfo();
 
-				final XmlElement remoteIp = xml.getUnique("ip");
-				if (remoteIp != null) serverInfo.setRemoteIp(remoteIp.getValue());
+				final XmlElement remoteIp = xml.getUnique(ipKey);
+				serverInfo.setRemoteIp(remoteIp.getValue());
 
-				final XmlElement localIps = xml.getUnique("localiplist");
-				if (localIps != null) serverInfo.setLocalIps(Arrays.asList(localIps.getValue().split(",")));
+				final XmlElement localIps = xml.getUnique(localIpListKey);
+				serverInfo.setLocalIps(Arrays.asList(localIps.getValue().split(",")));
 
-				final XmlElement portXml = xml.getUnique("port");
-				if (portXml != null) serverInfo.setHttpPort(Integer.parseInt(portXml.getValue()));
+				final XmlElement portXml = xml.getUnique(portKey);
+				serverInfo.setHttpPort(Integer.parseInt(portXml.getValue()));
 
-				final XmlElement securePortXml = xml.getUnique("https_port");
-				if (securePortXml != null) serverInfo.setHttpsPort(Integer.parseInt(securePortXml.getValue()));
+				if (xml.contains(httpsPortKey))
+					serverInfo.setHttpsPort(Integer.parseInt(xml.getUnique(httpsPortKey).getValue()));
 
-				final XmlElement certificateFingerprintXml = xml.getUnique("certificate_fingerprint");
-				if (certificateFingerprintXml != null) serverInfo.setCertificateFingerprint(certificateFingerprintXml.getValue());
+				if (xml.contains(certificateFingerprintKey))
+					serverInfo.setCertificateFingerprint(xml.getUnique(certificateFingerprintKey).getValue());
 
 				return serverInfo;
 			});
