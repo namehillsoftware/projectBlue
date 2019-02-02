@@ -8,11 +8,14 @@ import java.util.Arrays;
 
 public class ServerLookup implements LookupServers {
 
-	private static final String ipKey = "ip";
-	private static final String localIpListKey = "localiplist";
-	private static final String portKey = "port";
-	private static final String httpsPortKey = "https_port";
-	private static final String certificateFingerprintKey = "certificate_fingerprint";
+	private static final String ipElement = "ip";
+	private static final String localIpListElement = "localiplist";
+	private static final String portElement = "port";
+	private static final String httpsPortElement = "https_port";
+	private static final String certificateFingerprintElement = "certificate_fingerprint";
+	private static final String statusAttribute = "Status";
+	private static final String errorStatusValue = "Error";
+	private static final String msgElement = "msg";
 
 	private final RequestServerInfoXml serverInfoXmlRequest;
 
@@ -26,22 +29,28 @@ public class ServerLookup implements LookupServers {
 			.then(xml -> {
 				if (xml == null) return null;
 
+				if (xml.containsAttribute(statusAttribute) && errorStatusValue.equals(xml.getAttribute(statusAttribute))) {
+					if (xml.contains(msgElement))
+						throw new ServerDiscoveryException(library, xml.getUnique(msgElement).getValue());
+					throw new ServerDiscoveryException(library);
+				}
+
 				final ServerInfo serverInfo = new ServerInfo();
 
-				final XmlElement remoteIp = xml.getUnique(ipKey);
+				final XmlElement remoteIp = xml.getUnique(ipElement);
 				serverInfo.setRemoteIp(remoteIp.getValue());
 
-				final XmlElement localIps = xml.getUnique(localIpListKey);
+				final XmlElement localIps = xml.getUnique(localIpListElement);
 				serverInfo.setLocalIps(Arrays.asList(localIps.getValue().split(",")));
 
-				final XmlElement portXml = xml.getUnique(portKey);
+				final XmlElement portXml = xml.getUnique(portElement);
 				serverInfo.setHttpPort(Integer.parseInt(portXml.getValue()));
 
-				if (xml.contains(httpsPortKey))
-					serverInfo.setHttpsPort(Integer.parseInt(xml.getUnique(httpsPortKey).getValue()));
+				if (xml.contains(httpsPortElement))
+					serverInfo.setHttpsPort(Integer.parseInt(xml.getUnique(httpsPortElement).getValue()));
 
-				if (xml.contains(certificateFingerprintKey))
-					serverInfo.setCertificateFingerprint(xml.getUnique(certificateFingerprintKey).getValue());
+				if (xml.contains(certificateFingerprintElement))
+					serverInfo.setCertificateFingerprint(xml.getUnique(certificateFingerprintElement).getValue());
 
 				return serverInfo;
 			});
