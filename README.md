@@ -1,5 +1,7 @@
 # Handoff, an A+ like Promise Implementation for Java
 
+[![Download](https://api.bintray.com/packages/dvedvick/maven/handoff/images/download.svg)](https://bintray.com/dvedvick/maven/handoff/_latestVersion)
+
 Handoff is a simple, A+ like Promises implementation for Java. It allows easy control flow to be written for asynchronous processes in Java:
 
 ```java
@@ -46,11 +48,11 @@ playlist.promiseFirstFile()
 
 ## Installation
 
-Handoff is currently available via [Jitpack](https://jitpack.io/#namehillsoftware/handoff). For example, in order to include it in your Gradle project, use the following in your dependencies section:
+Handoff can be installed via Gradle:
 
 ```gradle
 dependencies {
-    implementation 'com.github.namehillsoftware:handoff:0.7.0'
+    implementation 'com.namehillsoftware:handoff:0.12.0'
 }
 ```
 
