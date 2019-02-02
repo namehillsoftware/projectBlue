@@ -60,7 +60,7 @@ dependencies {
 
 ### Promise Creation
 
-Handoff makes it easy to make any asynchronous process a promise. Take for example an asynchronous OKHTTP3 call. The `Promise` class can be extended to wrap the callback OKHTTP3 returns:
+Handoff makes it easy to make any asynchronous process a promise. Take for example an asynchronous OKHTTP3 call. The `Promise` class can be extended to wrap the OKHTTP3 callback interface:
 
 ```java
 class PromisedResponse extends Promise<String> implements Callback {
