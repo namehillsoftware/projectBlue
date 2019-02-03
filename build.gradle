@@ -9,6 +9,8 @@ buildscript {
 
 plugins {
     id "com.jfrog.bintray" version "1.8.1"
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.8.2'
 }
 
 allprojects {
@@ -33,6 +35,13 @@ ext.snapshotSuffix = "SNAPSHOT+<sha>"
 group = "com.namehillsoftware"
 archivesBaseName = "handoff"
 
+jacocoTestReport {
+    reports {
+        xml.enabled = true // coveralls plugin depends on xml format report
+        html.enabled = true
+    }
+}
+
 sourceSets {
     main {
         java {
@@ -43,15 +52,6 @@ sourceSets {
 
     test {
         java {
-            srcDir 'src/specs/java'
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
-        }
-    }
-
-    specs {
-        java {
-            srcDir 'src/specs/java'
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
         }
@@ -63,9 +63,6 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.+'
     testImplementation 'junit:junit:4.+'
     testImplementation 'org.assertj:assertj-core:2.+'
-    specsImplementation 'junit:junit:4.+'
-    specsImplementation 'org.assertj:assertj-core:2.+'
-    specsImplementation 'org.mockito:mockito-core:2.+'
 }
 
 task sourcesJar(type: Jar) {
