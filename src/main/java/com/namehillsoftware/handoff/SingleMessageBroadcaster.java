@@ -1,9 +1,20 @@
 package com.namehillsoftware.handoff;
 
+import com.namehillsoftware.handoff.errors.ReceiveUnhandledRejections;
+
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation {
+
+	private static final Object uncaughtHandlerSynchronization = new Object();
+	private static volatile ReceiveUnhandledRejections unhandledRejections;
+
+	public static void setUnhandledRejectionsReceiver(ReceiveUnhandledRejections unhandledRejections) {
+		synchronized (uncaughtHandlerSynchronization) {
+			SingleMessageBroadcaster.unhandledRejections = unhandledRejections;
+		}
+	}
 
 	private final Object resolveSync = new Object();
 	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
