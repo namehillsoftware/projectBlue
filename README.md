@@ -1,6 +1,6 @@
 # Handoff, an A+ like Promise Implementation for Java
 
-[![Download](https://api.bintray.com/packages/dvedvick/maven/handoff/images/download.svg)](https://bintray.com/dvedvick/maven/handoff/_latestVersion)
+[![Build Status](https://travis-ci.com/namehillsoftware/handoff.svg?branch=master)](https://travis-ci.com/namehillsoftware/handoff) [![Download](https://api.bintray.com/packages/dvedvick/maven/handoff/images/download.svg)](https://bintray.com/dvedvick/maven/handoff/_latestVersion)
 
 Handoff is a simple, A+ like Promises implementation for Java. It allows easy control flow to be written for asynchronous processes in Java:
 
