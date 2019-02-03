@@ -15,6 +15,7 @@ public class WhenChainingResolutionTwice {
 	private static ImmediateResponse<String, ?> firstResultHandler;
 	private static ImmediateResponse<String, ?> secondResultHandler;
 
+	@SuppressWarnings("unchecked")
 	@BeforeClass
 	public static void before() throws InterruptedException {
 		final CountDownLatch latch = new CountDownLatch(1);

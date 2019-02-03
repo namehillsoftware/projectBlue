@@ -43,15 +43,6 @@ sourceSets {
 
     test {
         java {
-            srcDir 'src/specs/java'
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
-        }
-    }
-
-    specs {
-        java {
-            srcDir 'src/specs/java'
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
         }
@@ -63,9 +54,6 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.+'
     testImplementation 'junit:junit:4.+'
     testImplementation 'org.assertj:assertj-core:2.+'
-    specsImplementation 'junit:junit:4.+'
-    specsImplementation 'org.assertj:assertj-core:2.+'
-    specsImplementation 'org.mockito:mockito-core:2.+'
 }
 
 task sourcesJar(type: Jar) {

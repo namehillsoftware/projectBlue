@@ -36,7 +36,7 @@ public class WhenTheCancellationIsCalled {
 
 		private Messenger<TResult> resolve;
 
-		public void resolve(TResult resolution) {
+		void resolve(TResult resolution) {
 			if (resolve != null)
 				resolve.sendResolution(resolution);
 		}
