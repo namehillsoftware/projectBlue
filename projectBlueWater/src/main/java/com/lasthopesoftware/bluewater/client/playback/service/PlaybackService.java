@@ -527,7 +527,6 @@ implements OnAudioFocusChangeListener
         wifiLock.acquire();
 
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
-		wakeLock.setReferenceCounted(false);
 		wakeLock.acquire();
 
 		registerRemoteClientControl();
