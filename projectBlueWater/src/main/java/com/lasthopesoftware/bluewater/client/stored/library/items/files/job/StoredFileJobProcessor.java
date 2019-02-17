@@ -96,9 +96,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 					cancellationProxy.doCancel(promisedDownload);
 					return promisedDownload;
 				}).then(inputStream -> {
-					if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
-
 					try (final InputStream is = inputStream) {
+						if (cancellationProxy.isCancelled()) return getCancelledStoredFileJobResult(file, storedFile);
 
 						this.fileStreamWriter.writeStreamToFile(is, file);
 
