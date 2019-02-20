@@ -13,9 +13,11 @@ import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import io.reactivex.Emitter;
 import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Set;
 
 public class StoredFileJobProcessor implements ProcessStoredFileJobs {
@@ -50,9 +51,27 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 	@Override
 	public Observable<StoredFileJobStatus> observeStoredFileDownload(Iterable<StoredFileJob> jobs) {
-		final CancellationProxy cancellationProxy = new CancellationProxy();
-		final Observable<StoredFileJobStatus> streamedFileDownload = Observable.create(emitter -> {
-			final LinkedList<StoredFileJob> jobsQueue = new LinkedList<>();
+		return new RecursiveQueueProcessor(jobs);
+	}
+
+	private static StoredFileJobStatus getCancelledStoredFileJobResult(File file, StoredFile storedFile) {
+		return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Cancelled);
+	}
+
+	private class RecursiveQueueProcessor extends Observable<StoredFileJobStatus> implements PromisedResponse<StoredFileJobStatus, Void>, Disposable {
+		private Iterable<StoredFileJob> jobs;
+		private final CancellationProxy cancellationProxy = new CancellationProxy();
+		private final LinkedList<StoredFileJob> jobsQueue = new LinkedList<>();
+		private Observer<? super StoredFileJobStatus> observer;
+
+		RecursiveQueueProcessor(Iterable<StoredFileJob> jobs) {
+			this.jobs = jobs;
+		}
+
+		@Override
+		protected synchronized void subscribeActual(Observer<? super StoredFileJobStatus> observer) {
+			observer.onSubscribe(this);
+
 			final Set<StoredFileJob> queuedJobs = new HashSet<>();
 			for (final StoredFileJob job : jobs) {
 				if (!queuedJobs.add(job)) continue;
@@ -60,39 +79,19 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 				final StoredFile storedFile = job.getStoredFile();
 				final File file = storedFileFileProvider.getFile(storedFile);
 
-				emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued));
+				observer.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued));
 				jobsQueue.offer(job);
 			}
 
-			final RecursiveQueueProcessor queueProcessor = new RecursiveQueueProcessor(
-				jobsQueue,
-				emitter,
-				cancellationProxy);
+//			jobs = null;
 
-			queueProcessor.processQueue().then(
-				new VoidResponse<>(v -> emitter.onComplete()),
-				new VoidResponse<>(emitter::onError));
-		});
-
-		return streamedFileDownload.doOnDispose(cancellationProxy::run);
-	}
-
-	private StoredFileJobStatus getCancelledStoredFileJobResult(File file, StoredFile storedFile) {
-		return new StoredFileJobStatus(file, storedFile, StoredFileJobState.Cancelled);
-	}
-
-	private class RecursiveQueueProcessor {
-		private final Queue<StoredFileJob> jobsQueue;
-		private final Emitter<StoredFileJobStatus> emitter;
-		private final CancellationProxy cancellationProxy;
-
-		RecursiveQueueProcessor(Queue<StoredFileJob> jobsQueue, Emitter<StoredFileJobStatus> jobStatusEmitter, CancellationProxy cancellationProxy) {
-			this.jobsQueue = jobsQueue;
-			this.emitter = jobStatusEmitter;
-			this.cancellationProxy = cancellationProxy;
+			this.observer = observer;
+			processQueue().then(
+				new VoidResponse<>(v -> observer.onComplete()),
+				new VoidResponse<>(observer::onError));
 		}
 
-		Promise<Void> processQueue() {
+		private Promise<Void> processQueue() {
 			final StoredFileJob job = jobsQueue.poll();
 			if (job == null) return Promise.empty();
 
@@ -101,33 +100,33 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 			if (file.exists()) {
 				if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
-					emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Unreadable));
+					observer.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Unreadable));
 					return processQueue();
 				}
 
 				if (storedFile.isDownloadComplete()) {
-					emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded));
+					observer.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded));
 					return processQueue();
 				}
 			}
 
 			if (!fileWritePossibleArbitrator.isFileWritePossible(file)) {
-				emitter.onError(new StoredFileWriteException(file, storedFile));
+				observer.onError(new StoredFileWriteException(file, storedFile));
 				return processQueue();
 			}
 
 			final File parent = file.getParentFile();
 			if (parent != null && !parent.exists() && !parent.mkdirs()) {
-				emitter.onError(new StorageCreatePathException(parent));
+				observer.onError(new StorageCreatePathException(parent));
 				return processQueue();
 			}
 
 			if (cancellationProxy.isCancelled()) {
-				emitter.onNext(getCancelledStoredFileJobResult(file, storedFile));
+				observer.onNext(getCancelledStoredFileJobResult(file, storedFile));
 				return Promise.empty();
 			}
 
-			emitter.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
+			observer.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
 			final Promise<InputStream> promisedDownload = storedFiles.promiseDownload(storedFile);
 			cancellationProxy.doCancel(promisedDownload);
@@ -156,8 +155,25 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 				throw new StoredFileJobException(storedFile, error);
 			})
-			.then(new VoidResponse<>(emitter::onNext))
-			.eventually(v -> processQueue());
+			.eventually(this);
+		}
+
+		@Override
+		public Promise<Void> promiseResponse(StoredFileJobStatus status) {
+			if (cancellationProxy.isCancelled()) return Promise.empty();
+
+			observer.onNext(status);
+			return processQueue();
+		}
+
+		@Override
+		public void dispose() {
+			cancellationProxy.run();
+		}
+
+		@Override
+		public boolean isDisposed() {
+			return cancellationProxy.isCancelled();
 		}
 	}
 }
