@@ -97,6 +97,8 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 		}
 
 		private Promise<Void> processQueue() {
+			if (cancellationProxy.isCancelled()) return Promise.empty();
+
 			final StoredFileJob job = jobsQueue.poll();
 			if (job == null) return Promise.empty();
 
@@ -117,13 +119,13 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 			if (!fileWritePossibleArbitrator.isFileWritePossible(file)) {
 				observer.onError(new StoredFileWriteException(file, storedFile));
-				return processQueue();
+				return Promise.empty();
 			}
 
 			final File parent = file.getParentFile();
 			if (parent != null && !parent.exists() && !parent.mkdirs()) {
 				observer.onError(new StorageCreatePathException(parent));
-				return processQueue();
+				return Promise.empty();
 			}
 
 			if (cancellationProxy.isCancelled()) {
@@ -165,8 +167,6 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 		@Override
 		public Promise<Void> promiseResponse(StoredFileJobStatus status) {
-			if (cancellationProxy.isCancelled()) return Promise.empty();
-
 			observer.onNext(status);
 			return processQueue();
 		}
