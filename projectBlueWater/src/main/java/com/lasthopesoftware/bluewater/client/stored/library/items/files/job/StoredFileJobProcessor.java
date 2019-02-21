@@ -70,6 +70,11 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 		@Override
 		protected synchronized void subscribeActual(Observer<? super StoredFileJobStatus> observer) {
+			if (jobs == null) {
+				observer.onComplete();
+				return;
+			}
+
 			observer.onSubscribe(this);
 
 			final Set<StoredFileJob> queuedJobs = new HashSet<>();
@@ -83,7 +88,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 				jobsQueue.offer(job);
 			}
 
-//			jobs = null;
+			jobs = null;
 
 			this.observer = observer;
 			processQueue().then(
