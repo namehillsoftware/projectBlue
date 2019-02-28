@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
@@ -55,8 +56,9 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
 
 		playbackEngine = new PlaybackEngine(
-			fakePlaybackPreparerProvider,
-			() -> 1,
+			new PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider,
+				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
