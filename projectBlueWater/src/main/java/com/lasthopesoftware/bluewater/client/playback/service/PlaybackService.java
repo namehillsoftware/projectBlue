@@ -28,7 +28,6 @@ import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvicto
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
@@ -39,7 +38,6 @@ import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvi
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.AudioCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.items.media.audio.uri.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
@@ -49,7 +47,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
@@ -71,6 +68,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.*;
+import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
@@ -896,7 +896,21 @@ implements OnAudioFocusChangeListener
 
 				final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
 					connectionProvider,
-					new ServiceFileUriQueryParamsProvider());
+					library,
+					cache);
+
+				final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
+					handler,
+			null,
+					DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
+					lazyTextOutputLogger.getObject(),
+					lazyMetadataOutputLogger.getObject(),
+					null);
+
+				exoPlayer = ExoPlayerFactory.newInstance(
+					renderers,
+					trackSelector.getObject(),
+					loadControl.getObject());
 
 				final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
 
