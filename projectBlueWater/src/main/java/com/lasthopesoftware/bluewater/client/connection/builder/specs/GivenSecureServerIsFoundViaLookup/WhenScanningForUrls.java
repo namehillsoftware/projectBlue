@@ -3,12 +3,13 @@ package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenSecu
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.BeforeClass;
@@ -46,8 +47,10 @@ public class WhenScanningForUrls {
 				.setCertificateFingerprint("2386166660562C5AAA1253B2BED7C2483F9C2D45")));
 
 		final UrlScanner urlScanner = new UrlScanner(
+			mock(EncodeToBase64.class),
 			connectionTester,
-			serverLookup);
+			serverLookup,
+			OkHttpFactory.getInstance());
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()

@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -3,18 +3,15 @@ package com.lasthopesoftware.bluewater.client.servers.version;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
+import okhttp3.ResponseBody;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgramVersionProvider implements IProgramVersionProvider {
 
-	private final Object syncObject = new Object();
 	private final IConnectionProvider connectionProvider;
 
-	private final AtomicInteger serverVersionThreads = new AtomicInteger();
+	private SemanticVersion serverVersion;
 
 	public ProgramVersionProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
@@ -22,59 +19,42 @@ public class ProgramVersionProvider implements IProgramVersionProvider {
 
 	@Override
 	public Promise<SemanticVersion> promiseServerVersion() {
-		return new Promise<>((messenger) ->
-			new Thread("server-version-thread-" + serverVersionThreads.getAndIncrement()) {
-				@Override
-				public void run() {
-					try {
-						synchronized (syncObject) {
-							final HttpURLConnection connection;
-							try {
-								connection = connectionProvider.getConnection("Alive");
-							} catch (IOException e) {
-								messenger.sendRejection(e);
-								return;
-							}
+		if (serverVersion != null) return new Promise<>(serverVersion);
 
-							try {
-								try (final InputStream is = connection.getInputStream()) {
-									final StandardRequest standardRequest = StandardRequest.fromInputStream(is);
-									if (standardRequest == null) {
-										messenger.sendResolution(null);
-										return;
-									}
+		return connectionProvider.promiseResponse("Alive").then(response -> {
+			final ResponseBody body = response.body();
+			if (body == null) return null;
 
-									final String semVerString = standardRequest.items.get("ProgramVersion");
-									if (semVerString == null) {
-										messenger.sendResolution(null);
-										return;
-									}
+			final StandardRequest standardRequest;
+			try (final InputStream is = body.byteStream()) {
+				standardRequest = StandardRequest.fromInputStream(is);
+			} finally {
+				body.close();
+			}
 
-									final String[] semVerParts = semVerString.split("\\.");
+			if (standardRequest == null) {
+				return null;
+			}
 
-									int major = 0, minor = 0, patch = 0;
+			final String semVerString = standardRequest.items.get("ProgramVersion");
+			if (semVerString == null) {
+				return null;
+			}
 
-									if (semVerParts.length > 0)
-										major = Integer.parseInt(semVerParts[0]);
+			final String[] semVerParts = semVerString.split("\\.");
 
-									if (semVerParts.length > 1)
-										minor = Integer.parseInt(semVerParts[1]);
+			int major = 0, minor = 0, patch = 0;
 
-									if (semVerParts.length > 2)
-										patch = Integer.parseInt(semVerParts[2]);
+			if (semVerParts.length > 0)
+				major = Integer.parseInt(semVerParts[0]);
 
-									messenger.sendResolution(new SemanticVersion(major, minor, patch));
-								} catch (IOException e) {
-									messenger.sendRejection(e);
-								}
-							} finally {
-								connection.disconnect();
-							}
-						}
-					} finally {
-						serverVersionThreads.decrementAndGet();
-					}
-				}
-		}.start());
+			if (semVerParts.length > 1)
+				minor = Integer.parseInt(semVerParts[1]);
+
+			if (semVerParts.length > 2)
+				patch = Integer.parseInt(semVerParts[2]);
+
+			return serverVersion = new SemanticVersion(major, minor, patch);
+		});
 	}
 }

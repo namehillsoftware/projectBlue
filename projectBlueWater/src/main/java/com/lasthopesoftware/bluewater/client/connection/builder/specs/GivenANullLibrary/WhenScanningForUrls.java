@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenANul
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -20,8 +21,10 @@ public class WhenScanningForUrls {
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException {
 		final UrlScanner urlScanner = new UrlScanner(
+			mock(EncodeToBase64.class),
 			mock(TestConnections.class),
-			mock(LookupServers.class));
+			mock(LookupServers.class),
+			mock(ProvideOkHttpClients.class));
 
 		try {
 			new FuturePromise<>(urlScanner.promiseBuiltUrlProvider(null)).get();

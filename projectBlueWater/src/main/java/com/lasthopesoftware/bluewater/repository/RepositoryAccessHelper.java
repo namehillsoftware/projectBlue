@@ -3,12 +3,11 @@ package com.lasthopesoftware.bluewater.repository;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityCreator;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.repository.StoredFileEntityUpdater;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItem;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityCreator;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityUpdater;
 import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.lazyj.Lazy;
 
@@ -19,7 +18,7 @@ import java.util.concurrent.Executors;
 public class RepositoryAccessHelper extends SQLiteOpenHelper implements Closeable {
 	public static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
-	private static final int DATABASE_VERSION = 6;
+	private static final int DATABASE_VERSION = 7;
 	private static final String DATABASE_NAME = "sessions_db";
 
 	private final static Lazy<IEntityCreator[]> entityCreators = new Lazy<>(() -> new IEntityCreator[]{new Library(), new StoredFileEntityCreator(), new StoredItem(), new CachedFile()});

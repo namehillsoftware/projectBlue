@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
+import com.lasthopesoftware.resources.scheduling.ScheduleParsingWork;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormatter;
@@ -13,13 +13,8 @@ import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<>(() -> new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter());
@@ -70,8 +65,8 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 								DATE_TAGGED,
 								DATE_FIRST_RATED))));
 	
-	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
-		super(connectionProvider, filePropertiesContainerProvider);
+	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
+		super(connectionProvider, filePropertiesContainerProvider, parsingScheduler);
 	}
 
 	@Override

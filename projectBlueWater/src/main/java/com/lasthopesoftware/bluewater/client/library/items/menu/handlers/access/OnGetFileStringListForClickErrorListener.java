@@ -1,14 +1,12 @@
 package com.lasthopesoftware.bluewater.client.library.items.menu.handlers.access;
 
 import android.view.View;
-
-import com.lasthopesoftware.bluewater.client.connection.WaitForConnectionDialog;
-import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
+import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 
-import java.io.IOException;
-
-public final class OnGetFileStringListForClickErrorListener implements ImmediateResponse<Throwable, Boolean> {
+public final class OnGetFileStringListForClickErrorListener implements ImmediateResponse<Throwable, Void> {
     private final View mView;
     private final View.OnClickListener mOnClickListener;
 
@@ -18,14 +16,18 @@ public final class OnGetFileStringListForClickErrorListener implements Immediate
     }
 
     @Override
-    public Boolean respond(Throwable innerException) {
-        if (innerException instanceof IOException) {
-            PollConnection.Instance.get(mView.getContext()).addOnConnectionRegainedListener(() -> mOnClickListener.onClick(mView));
-
-            WaitForConnectionDialog.show(mView.getContext());
-            return true;
+    public Void respond(Throwable innerException) throws Throwable {
+        if (ConnectionLostExceptionFilter.isConnectionLostException(innerException)) {
+			WaitForConnectionDialog.show(mView.getContext());
+            PollConnectionService.pollSessionConnection(mView.getContext())
+                .then(c -> {
+                    mOnClickListener.onClick(mView);
+                    return null;
+                });
+            return null;
         }
-        return false;
+
+        throw innerException;
     }
 
 }

@@ -1,26 +1,22 @@
 package com.lasthopesoftware.bluewater.client.library.items.access;
 
 import android.util.LruCache;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
-import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.providers.AbstractProvider;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class ItemProvider {
+public class ItemProvider implements ProvideItems {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
 
@@ -37,23 +33,21 @@ public class ItemProvider {
     private static final int maxSize = 50;
     private static final LruCache<UrlKeyHolder<Integer>, ItemHolder> itemsCache = new LruCache<>(maxSize);
 
-    private final int itemKey;
-
 	private final IConnectionProvider connectionProvider;
 
 	public static Promise<List<Item>> provide(IConnectionProvider connectionProvider, int itemKey) {
-		return new ItemProvider(connectionProvider, itemKey).promiseItems();
+		return new ItemProvider(connectionProvider).promiseItems(itemKey);
 	}
 	
-	public ItemProvider(IConnectionProvider connectionProvider, int itemKey) {
+	public ItemProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
-        this.itemKey = itemKey;
 	}
 
-    public Promise<List<Item>> promiseItems() {
+	@Override
+    public Promise<List<Item>> promiseItems(int itemKey) {
 		return
 			RevisionChecker.promiseRevision(connectionProvider)
-				.eventually(serverRevision -> new QueuedPromise<>((cancellationToken) -> {
+				.eventually(serverRevision -> {
 					final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
 
 					final ItemHolder itemHolder;
@@ -62,35 +56,33 @@ public class ItemProvider {
 					}
 
 					if (itemHolder != null && itemHolder.revision.equals(serverRevision)) {
-						return itemHolder.items;
+						return new Promise<>(itemHolder.items);
 					}
 
-					if (cancellationToken.isCancelled()) {
-						return new ArrayList<>();
-					}
+					return connectionProvider.promiseResponse(
+						LibraryViewsByConnectionProvider.browseLibraryParameter,
+						"ID=" + String.valueOf(itemKey),
+						"Version=2").then(response -> {
+							final ResponseBody body = response.body();
+							if (body == null) return Collections.emptyList();
 
-					final HttpURLConnection connection;
-					connection = connectionProvider.getConnection(LibraryViewsProvider.browseLibraryParameter, "ID=" + String.valueOf(itemKey), "Version=2");
+							try (final InputStream is = body.byteStream()) {
+								final List<Item> items = ItemResponse.GetItems(is);
 
-					try {
-						try (InputStream is = connection.getInputStream()) {
-							final List<Item> items = ItemResponse.GetItems(is);
+								final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
 
-							final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
+								synchronized (itemsCache) {
+									itemsCache.put(boxedItemKey, newItemHolder);
+								}
 
-							synchronized (itemsCache) {
-								itemsCache.put(boxedItemKey, newItemHolder);
+								return items;
+							} catch (IOException e) {
+								logger.error("There was an error getting the inputstream", e);
+								throw e;
+							} finally {
+								body.close();
 							}
-
-							return items;
-						}
-					} catch (IOException e) {
-						logger.error("There was an error getting the inputstream", e);
-						throw e;
-					} finally {
-						if (connection != null)
-							connection.disconnect();
-					}
-				}, AbstractProvider.providerExecutor));
+					});
+				});
 	}
 }

@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.events;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

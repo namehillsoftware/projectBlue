@@ -6,38 +6,35 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.resources.scheduling.ScheduleParsingWork;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-
-import org.apache.commons.io.IOUtils;
+import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 import xmlwise.Xmlwise;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 	private final IConnectionProvider connectionProvider;
 	private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
+	private final ScheduleParsingWork parsingScheduler;
 
-	private static final ExecutorService filePropertiesExecutor = Executors.newSingleThreadExecutor();
-
-
-	public FilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
+	public FilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
 		this.connectionProvider = connectionProvider;
 		this.filePropertiesContainerProvider = filePropertiesContainerProvider;
+		this.parsingScheduler = parsingScheduler;
 	}
 
 	@Override
@@ -49,18 +46,41 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 				return new Promise<>(new HashMap<>(filePropertiesContainer.getProperties()));
 			}
 
-			return new QueuedPromise<>(new FilePropertiesWriter(connectionProvider, filePropertiesContainerProvider, serviceFile, revision), filePropertiesExecutor);
+			return new FilePropertiesPromise(parsingScheduler, connectionProvider, filePropertiesContainerProvider, serviceFile, revision);
 		});
 	}
 
-	private static final class FilePropertiesWriter implements CancellableMessageWriter<Map<String, String>> {
+	private static final class FilePropertiesPromise extends Promise<Map<String, String>> {
 
+		private FilePropertiesPromise(ScheduleParsingWork parsingScheduler, IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ServiceFile serviceFile, Integer serverRevision) {
+
+			final CancellationProxy cancellationProxy = new CancellationProxy();
+			respondToCancellation(cancellationProxy);
+
+			final Promise<Response> filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.getKey());
+			cancellationProxy.doCancel(filePropertiesResponse);
+
+			Promise<Map<String, String>> promisedProperties = filePropertiesResponse
+				.eventually(new FilePropertiesWriter(parsingScheduler, connectionProvider, filePropertiesContainerProvider, serviceFile, serverRevision));
+
+			cancellationProxy.doCancel(promisedProperties);
+
+			promisedProperties.then(new VoidResponse<>(this::resolve), new VoidResponse<>(this::reject));
+		}
+	}
+
+	private static final class FilePropertiesWriter implements PromisedResponse<Response, Map<String, String>>, CancellableMessageWriter<Map<String, String>> {
+
+		private final ScheduleParsingWork parsingScheduler;
 		private final IConnectionProvider connectionProvider;
 		private final ServiceFile serviceFile;
 		private final Integer serverRevision;
 		private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 
-		private FilePropertiesWriter(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ServiceFile serviceFile, Integer serverRevision) {
+		private Response response;
+
+		private FilePropertiesWriter(ScheduleParsingWork parsingScheduler, IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ServiceFile serviceFile, Integer serverRevision) {
+			this.parsingScheduler = parsingScheduler;
 			this.connectionProvider = connectionProvider;
 			this.serviceFile = serviceFile;
 			this.serverRevision = serverRevision;
@@ -69,42 +89,35 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 
 		@Override
 		public Map<String, String> prepareMessage(CancellationToken cancellationToken) throws Throwable {
-			if (cancellationToken.isCancelled())
-				throw new CancellationException();
+			if (cancellationToken.isCancelled()) return new HashMap<>();
+
+			final ResponseBody body = response.body();
+			if (body == null) return new HashMap<>();
 
 			try {
-				if (cancellationToken.isCancelled())
-					throw new CancellationException();
+				final XmlElement xml = Xmlwise.createXml(body.string());
+				final XmlElement parent = xml.get(0);
 
-				final HttpURLConnection conn = connectionProvider.getConnection("File/GetInfo", "File=" + serviceFile.getKey());
-				conn.setReadTimeout(45000);
-				try {
-					if (cancellationToken.isCancelled())
-						throw new CancellationException();
+				final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
+				for (XmlElement el : parent)
+					returnProperties.put(el.getAttribute("Name"), el.getValue());
 
-					try (InputStream is = conn.getInputStream()) {
-						if (cancellationToken.isCancelled())
-							throw new CancellationException();
+				final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
+				filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
 
-						final XmlElement xml = Xmlwise.createXml(IOUtils.toString(is));
-						final XmlElement parent = xml.get(0);
-
-						final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
-						for (XmlElement el : parent)
-							returnProperties.put(el.getAttribute("Name"), el.getValue());
-
-						final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
-						filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
-
-						return returnProperties;
-					}
-				} finally {
-					conn.disconnect();
-				}
+				return returnProperties;
 			} catch (IOException | XmlParseException e) {
 				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
 				throw e;
+			} finally {
+				body.close();
 			}
+		}
+
+		@Override
+		public Promise<Map<String, String>> promiseResponse(Response response) {
+			this.response = response;
+			return new QueuedPromise<>(this, parsingScheduler.getScheduler());
 		}
 	}
 

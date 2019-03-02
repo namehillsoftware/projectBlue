@@ -2,12 +2,13 @@ package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenAnAc
 
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,7 +32,11 @@ public class WhenScanningForUrls {
 		when(connectionTester.promiseIsConnectionPossible(argThat(a -> a.getUrlProvider().getBaseUrl().equals("http://gooPc:3504/MCWS/v1/"))))
 			.thenReturn(new Promise<>(true));
 
-		final UrlScanner urlScanner = new UrlScanner(connectionTester, mock(LookupServers.class));
+		final UrlScanner urlScanner = new UrlScanner(
+			mock(EncodeToBase64.class),
+			connectionTester,
+			mock(LookupServers.class),
+			mock(ProvideOkHttpClients.class));
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.os.BatteryManager;
-
 import com.lasthopesoftware.bluewater.client.connection.ConnectionInfo;
 
 /**

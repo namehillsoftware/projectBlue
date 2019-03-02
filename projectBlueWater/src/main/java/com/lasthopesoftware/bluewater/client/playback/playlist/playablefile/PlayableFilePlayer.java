@@ -10,18 +10,15 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-
+import io.reactivex.ObservableEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-
-import io.reactivex.ObservableEmitter;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public final class PlayableFilePlayer implements IPlaylistPlayer, Closeable {
 
@@ -99,6 +96,7 @@ public final class PlayableFilePlayer implements IPlaylistPlayer, Closeable {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void pause() {
 		synchronized (stateChangeSync) {
 			lastStateChangePromise = lastStateChangePromise
@@ -108,6 +106,7 @@ public final class PlayableFilePlayer implements IPlaylistPlayer, Closeable {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void resume() {
 		synchronized (stateChangeSync) {
@@ -148,7 +147,7 @@ public final class PlayableFilePlayer implements IPlaylistPlayer, Closeable {
 
 		preparingPlaybackFile
 			.eventually(this::startFilePlayback)
-			.excuse(perform(this::handlePlaybackException));
+			.excuse(new VoidResponse<>(this::handlePlaybackException));
 	}
 
 	private Promise<PlayingFile> startFilePlayback(PositionedPlayableFile positionedPlayableFile) {

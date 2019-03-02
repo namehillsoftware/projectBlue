@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistStateManager;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -20,18 +18,16 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fak
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,33 +41,23 @@ public class WhenChangingTracks {
 	private static Library library;
 
 	@BeforeClass
-	public static void before() throws IOException, InterruptedException {
+	public static void before() throws InterruptedException, ExecutionException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		library = new Library();
 		library.setId(1);
-		library.setSavedTracksString(FileStringListUtilities.serializeFileStringList(Arrays.asList(
+		library.setSavedTracksString(new FuturePromise<>(FileStringListUtilities.promiseSerializedFileStringList(Arrays.asList(
 			new ServiceFile(1),
 			new ServiceFile(2),
 			new ServiceFile(3),
 			new ServiceFile(4),
-			new ServiceFile(5))));
+			new ServiceFile(5)))).get());
 
 		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
 		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));
 
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).then(Promise::new);
-
-		final IUrlProvider urlProvider = mock(IUrlProvider.class);
-		when(urlProvider.getBaseUrl()).thenReturn("");
-
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-		when(connectionProvider.getUrlProvider()).thenReturn(urlProvider);
-
-		final HttpURLConnection urlConnection = mock(HttpURLConnection.class);
-		when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
-		when(connectionProvider.getConnection(any())).thenReturn(urlConnection);
 
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
 		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(4))))

@@ -5,22 +5,21 @@ import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-
-import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.ListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
-import com.lasthopesoftware.bluewater.client.library.items.stored.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 
 import java.util.List;
 
-public class ItemListAdapter<T extends IItem & IFileListParameterProvider> extends ArrayAdapter<T> {
+public class ItemListAdapter extends ArrayAdapter<Item> {
 
-	private final ListItemMenuBuilder<T> listItemMenuBuilder;
+	private final ListItemMenuBuilder listItemMenuBuilder;
 
-	public ItemListAdapter(Activity activity, int resource, List<T> items, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
+	ItemListAdapter(Activity activity, int resource, List<Item> items, IFileListParameterProvider fileListParameterProvider, IItemListMenuChangeHandler itemListMenuEvents, StoredItemAccess storedItemAccess, Library library) {
 		super(activity, resource, items);
 
 		final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
@@ -28,7 +27,7 @@ public class ItemListAdapter<T extends IItem & IFileListParameterProvider> exten
 		viewChangedHandler.setOnAnyMenuShown(itemListMenuEvents);
 		viewChangedHandler.setOnViewChangedListener(itemListMenuEvents);
 
-		listItemMenuBuilder = new ListItemMenuBuilder<>(storedItemAccess, library);
+		listItemMenuBuilder = new ListItemMenuBuilder(storedItemAccess, library, fileListParameterProvider);
 		listItemMenuBuilder.setOnViewChangedListener(viewChangedHandler);
 	}
 

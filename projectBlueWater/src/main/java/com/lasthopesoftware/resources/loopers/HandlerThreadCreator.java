@@ -1,7 +1,6 @@
 package com.lasthopesoftware.resources.loopers;
 
 import android.os.HandlerThread;
-
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class HandlerThreadCreator {

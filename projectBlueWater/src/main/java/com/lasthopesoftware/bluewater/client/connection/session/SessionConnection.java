@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.session;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
@@ -12,39 +11,35 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProv
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
-import com.lasthopesoftware.bluewater.client.library.access.views.ProvideLibraryViews;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViewsUsingConnection;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
+import com.lasthopesoftware.resources.strings.Base64Encoder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
-
-import org.joda.time.Duration;
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class SessionConnection {
 
 	public static final String buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcast");
 	public static final String buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcastStatus");
-	public static final String refreshSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "refreshSessionBroadcast");
-	public static final String isRefreshSuccessfulStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "isRefreshSuccessfulStatus");
 
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
 	private static final Object buildingConnectionPromiseSync = new Object();
@@ -54,10 +49,13 @@ public class SessionConnection {
 	private static final CreateAndHold<BuildUrlProviders> lazyUrlScanner = new AbstractSynchronousLazy<BuildUrlProviders>() {
 		@Override
 		protected BuildUrlProviders create() {
-			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(Duration.millis(buildConnectionTimeoutTime)));
-			final ConnectionTester connectionTester = new ConnectionTester(Duration.millis(buildConnectionTimeoutTime));
+			final OkHttpClient client = new OkHttpClient.Builder()
+				.connectTimeout(buildConnectionTimeoutTime, TimeUnit.MILLISECONDS)
+				.build();
+			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(client));
+			final ConnectionTester connectionTester = new ConnectionTester();
 
-			return new UrlScanner(connectionTester, serverLookup);
+			return new UrlScanner(new Base64Encoder(), connectionTester, serverLookup, OkHttpFactory.getInstance());
 		}
 	};
 
@@ -69,10 +67,11 @@ public class SessionConnection {
 	private final LocalBroadcastManager localBroadcastManager;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
-	private final ProvideLibraryViews libraryViewsProvider;
+	private final ProvideLibraryViewsUsingConnection libraryViewsProvider;
 	private final ILibraryStorage libraryStorage;
 	private final ProvideLiveUrl liveUrlProvider;
 	private final TestConnections connectionTester;
+	private final OkHttpFactory okHttpFactory;
 
 	public static synchronized SessionConnection getInstance(Context context) {
 		if (sessionConnectionInstance != null) return sessionConnectionInstance;
@@ -83,22 +82,24 @@ public class SessionConnection {
 			LocalBroadcastManager.getInstance(applicationContext),
 			new SelectedBrowserLibraryIdentifierProvider(applicationContext),
 			new LibraryRepository(applicationContext),
-			new LibraryViewsProvider(),
+			new LibraryViewsByConnectionProvider(),
 			new LibraryRepository(applicationContext),
 			new LiveUrlProvider(
 				new ActiveNetworkFinder(applicationContext),
 				lazyUrlScanner.getObject()),
-			new ConnectionTester(Duration.standardSeconds(30)));
+			new ConnectionTester(),
+			OkHttpFactory.getInstance());
 	}
 
 	public SessionConnection(
 		LocalBroadcastManager localBroadcastManager,
 		ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider,
 		ILibraryProvider libraryProvider,
-		ProvideLibraryViews libraryViewsProvider,
+		ProvideLibraryViewsUsingConnection libraryViewsProvider,
 		ILibraryStorage libraryStorage,
 		ProvideLiveUrl liveUrlProvider,
-		TestConnections connectionTester) {
+		TestConnections connectionTester,
+		OkHttpFactory okHttpFactory) {
 		this.localBroadcastManager = localBroadcastManager;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
@@ -106,6 +107,7 @@ public class SessionConnection {
 		this.libraryStorage = libraryStorage;
 		this.liveUrlProvider = liveUrlProvider;
 		this.connectionTester = connectionTester;
+		this.okHttpFactory = okHttpFactory;
 	}
 
 	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
@@ -146,13 +148,13 @@ public class SessionConnection {
 
 			final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
 
-			final Promise<IConnectionProvider> subsequentlyPromisedConnectionProvider = cachedPromisedProvider.eventually(
+			final Promise<IConnectionProvider> nextPromisedConnectionProvider = cachedPromisedProvider.eventually(
 				c -> c != null ? new Promise<>(c) : promiseUpdatedCachedConnection(newSelectedLibraryId),
 				e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
 
-			promisedConnectionProvidersCache.put(newSelectedLibraryId, subsequentlyPromisedConnectionProvider);
+			promisedConnectionProvidersCache.put(newSelectedLibraryId, nextPromisedConnectionProvider);
 
-			return subsequentlyPromisedConnectionProvider;
+			return nextPromisedConnectionProvider;
 		}
 	}
 
@@ -185,7 +187,7 @@ public class SessionConnection {
 							return Promise.empty();
 						}
 
-						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider);
+						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider, okHttpFactory);
 
 						if (library.getSelectedView() >= 0) {
 							doStateChange(BuildingSessionConnectionStatus.BuildingSessionComplete);
@@ -243,24 +245,5 @@ public class SessionConnection {
 		public static final int GettingView = 5;
 		public static final int GettingViewFailed = 6;
 		public static final int BuildingSessionComplete = 7;
-
-		private static final CreateAndHold<Set<Integer>> runningConditionsLazy =
-				new AbstractSynchronousLazy<Set<Integer>>() {
-					@Override
-					protected Set<Integer> create() {
-						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibrary, BuildingSessionConnectionStatus.BuildingConnection, BuildingSessionConnectionStatus.GettingView)));
-					}
-				};
-
-		private static final CreateAndHold<Set<Integer>> completeConditionsLazy =
-				new AbstractSynchronousLazy<Set<Integer>>() {
-					@Override
-					protected Set<Integer> create() {
-						return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BuildingSessionConnectionStatus.GettingLibraryFailed, BuildingSessionConnectionStatus.BuildingConnectionFailed, BuildingSessionConnectionStatus.GettingViewFailed, BuildingSessionConnectionStatus.BuildingSessionComplete)));
-					}
-				};
-
-		static final Set<Integer> runningConditions = runningConditionsLazy.getObject();
-		public static final Set<Integer> completeConditions = completeConditionsLazy.getObject();
 	}
 }

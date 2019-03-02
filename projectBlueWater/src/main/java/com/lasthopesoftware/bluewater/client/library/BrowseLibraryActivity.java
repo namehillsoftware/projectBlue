@@ -22,7 +22,6 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -30,38 +29,40 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.views.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.fragment.ActiveFileDownloadsFragment;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistListFragment;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.access.PlaylistsProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
+import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment;
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
 
@@ -184,7 +185,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		super.onStart();
 
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-			.eventually(LoopedInPromise.response(perform(restore -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(restore -> {
 				if (!restore) startLibrary();
 			}), this));
 	}
@@ -210,7 +211,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.eventually(LoopedInPromise.response(perform(library -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				// No library, must bail out
 				if (library == null) {
 					finish();
@@ -236,7 +237,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
 
 		PromisedResponse<List<Item>, Void> onCompleteAction =
-			LoopedInPromise.response(perform(items -> {
+			LoopedInPromise.response(new VoidResponse<>(items -> {
 				if (isStopped || items == null) return;
 
 				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
@@ -280,9 +281,15 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			public void run() {
 				SessionConnection.getInstance(BrowseLibraryActivity.this)
 					.promiseSessionConnection()
-					.eventually(LibraryViewsProvider::provide)
+					.eventually(LibraryViewsByConnectionProvider::provide)
 					.eventually(onCompleteAction)
-					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this));
+					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
+					.excuse(forward())
+					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this), BrowseLibraryActivity.this))
+					.then(new VoidResponse<>(v -> {
+						ApplicationSettingsActivity.launch(BrowseLibraryActivity.this);
+						finish();
+					}));
 			}
 		};
 
@@ -292,7 +299,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
 		return (parent, view, position, id) -> {
 			final Item selectedItem = items.get(position);
-			updateSelectedView(PlaylistsProvider.PlaylistsItemKey.equals(selectedItem.getValue()) ? Library.ViewType.PlaylistView : Library.ViewType.StandardServerView, selectedItem.getKey());
+			updateSelectedView(KnownViews.Playlists.equals(selectedItem.getValue())
+				? Library.ViewType.PlaylistView
+				: Library.ViewType.StandardServerView, selectedItem.getKey());
 		};
 	}
 
@@ -302,7 +311,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.eventually(LoopedInPromise.response(perform(library -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);

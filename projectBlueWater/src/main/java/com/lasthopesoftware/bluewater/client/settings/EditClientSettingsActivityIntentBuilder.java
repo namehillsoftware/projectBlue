@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.settings;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
-
 import com.lasthopesoftware.resources.intents.IIntentFactory;
 import com.lasthopesoftware.resources.intents.IntentFactory;
 

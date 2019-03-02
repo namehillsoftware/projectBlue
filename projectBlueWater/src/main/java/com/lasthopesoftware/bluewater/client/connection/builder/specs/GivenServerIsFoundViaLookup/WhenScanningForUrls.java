@@ -3,12 +3,13 @@ package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServ
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -38,8 +39,10 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(new ServerInfo().setRemoteIp("1.2.3.4").setHttpPort(143)));
 
 		final UrlScanner urlScanner = new UrlScanner(
+			mock(EncodeToBase64.class),
 			connectionTester,
-			serverLookup);
+			serverLookup,
+			OkHttpFactory.getInstance());
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()

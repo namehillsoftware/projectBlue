@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.spec
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

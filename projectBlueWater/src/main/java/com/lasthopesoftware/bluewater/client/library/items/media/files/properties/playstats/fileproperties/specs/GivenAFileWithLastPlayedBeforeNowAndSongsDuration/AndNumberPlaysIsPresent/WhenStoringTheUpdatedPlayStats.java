@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.specs.GivenAFileWithLastPlayedBeforeNowAndSongsDuration.AndNumberPlaysIsPresent;
 
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeRevisionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
-
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -32,7 +33,7 @@ public class WhenStoringTheUpdatedPlayStats {
 		originalLastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).getMillis()).getStandardSeconds();
 
 		connectionProvider.mapResponse((params) ->
-			("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
+			new FakeConnectionResponseTuple(200, ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
 			"<MPL Version=\"2.0\" Title=\"MCWS - Files - 10936\" PathSeparator=\"\\\">\n" +
 				"<Item>\n" +
 					"<Field Name=\"Key\">23</Field>\n" +
@@ -43,11 +44,11 @@ public class WhenStoringTheUpdatedPlayStats {
 					"<Field Name=\"" + FilePropertiesProvider.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
 					"<Field Name=\"" + FilePropertiesProvider.NUMBER_PLAYS + "\">52</Field>\n" +
 				"</Item>\n" +
-			"</MPL>\n").getBytes(),
+			"</MPL>\n").getBytes()),
 			"File/GetInfo", "File=23");
 
 		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertiesContainer);
+		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertiesContainer, ParsingScheduler.instance());
 
 		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(filePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
 

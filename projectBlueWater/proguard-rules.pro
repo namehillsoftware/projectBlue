@@ -23,6 +23,7 @@
 -dontwarn ch.qos.logback**
 
 -keep class android.support.v7.widget.SearchView { *; }
+-keep class android.arch.lifecycle.** {*;}
 
 # okhttp rules
 -dontwarn okhttp3.**

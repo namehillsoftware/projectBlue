@@ -1,22 +1,22 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.audio;
 
 import android.net.Uri;
-
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.TransferListener;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CacheOutputStream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
 import com.lasthopesoftware.resources.uri.PathAndQuery;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import okio.Buffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
-import okio.Buffer;
+import java.util.List;
+import java.util.Map;
 
 
 public class DiskFileCacheDataSource implements DataSource {
@@ -32,6 +32,11 @@ public class DiskFileCacheDataSource implements DataSource {
 	public DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ICacheStreamSupplier cacheStreamSupplier) {
 		this.defaultHttpDataSource = defaultHttpDataSource;
 		this.cacheStreamSupplier = cacheStreamSupplier;
+	}
+
+	@Override
+	public void addTransferListener(TransferListener transferListener) {
+
 	}
 
 	@Override
@@ -126,6 +131,11 @@ public class DiskFileCacheDataSource implements DataSource {
 	@Override
 	public Uri getUri() {
 		return defaultHttpDataSource.getUri();
+	}
+
+	@Override
+	public Map<String, List<String>> getResponseHeaders() {
+		return null;
 	}
 
 	@Override

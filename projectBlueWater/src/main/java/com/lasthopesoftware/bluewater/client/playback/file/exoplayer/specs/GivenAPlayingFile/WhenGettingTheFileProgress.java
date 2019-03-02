@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;

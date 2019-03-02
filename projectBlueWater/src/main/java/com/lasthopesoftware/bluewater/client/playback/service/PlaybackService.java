@@ -9,7 +9,6 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
-import android.media.session.MediaSession;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.*;
@@ -29,7 +28,9 @@ import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.helpers.PollConnection;
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
@@ -48,12 +49,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.GetAllStoredFilesInLibrary;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.retrieval.StoredFilesCollection;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.MediaQueryCursorProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.stored.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -74,8 +69,11 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
 import com.lasthopesoftware.bluewater.client.playback.file.*;
+import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
@@ -98,6 +96,12 @@ import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySel
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
@@ -110,9 +114,11 @@ import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -130,10 +136,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackService
 extends Service
@@ -155,7 +161,7 @@ implements OnAudioFocusChangeListener
 		final Intent svcIntent = getNewSelfIntent(context, Action.launchMusicService);
 		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
 		svcIntent.putExtra(Action.Bag.filePlaylist, serializedFileList);
-		context.startService(svcIntent);
+		safelyStartService(context, svcIntent);
 	}
 
 	public static void seekTo(final Context context, int filePos) {
@@ -166,11 +172,11 @@ implements OnAudioFocusChangeListener
 		final Intent svcIntent = getNewSelfIntent(context, Action.seekTo);
 		svcIntent.putExtra(Action.Bag.playlistPosition, filePos);
 		svcIntent.putExtra(Action.Bag.startPos, fileProgress);
-		context.startService(svcIntent);
+		safelyStartService(context, svcIntent);
 	}
 
 	public static void play(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.play));
+		safelyStartService(context, getNewSelfIntent(context, Action.play));
 	}
 
 	public static PendingIntent pendingPlayingIntent(final Context context) {
@@ -184,7 +190,7 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void pause(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.pause));
+		safelyStartService(context, getNewSelfIntent(context, Action.pause));
 	}
 
 	public static PendingIntent pendingPauseIntent(final Context context) {
@@ -198,11 +204,11 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void togglePlayPause(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.togglePlayPause));
+		safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause));
 	}
 
 	public static void next(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.next));
+		safelyStartService(context, getNewSelfIntent(context, Action.next));
 	}
 
 	public static PendingIntent pendingNextIntent(final Context context) {
@@ -216,7 +222,7 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void previous(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.previous));
+		safelyStartService(context, getNewSelfIntent(context, Action.previous));
 	}
 
 	public static PendingIntent pendingPreviousIntent(final Context context) {
@@ -230,27 +236,27 @@ implements OnAudioFocusChangeListener
 	}
 
 	public static void setRepeating(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.repeating));
+		safelyStartService(context, getNewSelfIntent(context, Action.repeating));
 	}
 
 	public static void setCompleting(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.completing));
+		safelyStartService(context, getNewSelfIntent(context, Action.completing));
 	}
 
 	public static void addFileToPlaylist(final Context context, int fileKey) {
 		final Intent intent = getNewSelfIntent(context, Action.addFileToPlaylist);
 		intent.putExtra(Action.Bag.playlistPosition, fileKey);
-		context.startService(intent);
+		safelyStartService(context, intent);
 	}
 
 	public static void removeFileAtPositionFromPlaylist(final Context context, int filePosition) {
 		final Intent intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist);
 		intent.putExtra(Action.Bag.filePosition, filePosition);
-		context.startService(intent);
+		safelyStartService(context, intent);
 	}
 
 	public static void killService(final Context context) {
-		context.startService(getNewSelfIntent(context, Action.killMusicService));
+		safelyStartService(context, getNewSelfIntent(context, Action.killMusicService));
 	}
 
 	public static PendingIntent pendingKillService(final Context context) {
@@ -261,6 +267,16 @@ implements OnAudioFocusChangeListener
 				context,
 				Action.killMusicService),
 			PendingIntent.FLAG_UPDATE_CURRENT);
+	}
+
+	private static void safelyStartService(Context context, Intent intent) {
+		try {
+			context.startService(intent);
+		} catch (IllegalStateException e) {
+			logger.warn("An illegal state exception occurred while trying to start the service", e);
+		} catch (SecurityException e) {
+			logger.warn("A security exception occurred while trying to start the service", e);
+		}
 	}
 
 	/* End streamer intent helpers */
@@ -330,8 +346,8 @@ implements OnAudioFocusChangeListener
 					mediaSessionTag);
 
 				newMediaSession.setFlags(
-					MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
-					MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+					MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+					MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
 				newMediaSession.setCallback(new MediaSessionCallbackReceiver(PlaybackService.this));
 
@@ -435,27 +451,31 @@ implements OnAudioFocusChangeListener
 	private PowerManager.WakeLock wakeLock = null;
 	private SimpleCache cache;
 
-	private final CreateAndHold<Runnable> connectionRegainedListener = new AbstractSynchronousLazy<Runnable>() {
+	private Promise<IConnectionProvider> pollingSessionConnection;
+
+	private final CreateAndHold<ImmediateResponse<IConnectionProvider, Void>> connectionRegainedListener = new AbstractSynchronousLazy<ImmediateResponse<IConnectionProvider, Void>>() {
 		@Override
-		protected final Runnable create() {
-			return () -> {
+		protected final ImmediateResponse<IConnectionProvider, Void> create() {
+			return new VoidResponse<>((c) -> {
 				if (playbackEngine == null) {
 					stopSelf(startId);
 					return;
 				}
 
 				playbackEngine.resume();
-			};
+			});
 		}
 	};
 
-	private final CreateAndHold<Runnable> onPollingCancelledListener = new AbstractSynchronousLazy<Runnable>() {
+	private final CreateAndHold<ImmediateResponse<Throwable, Void>> onPollingCancelledListener = new AbstractSynchronousLazy<ImmediateResponse<Throwable, Void>>() {
 		@Override
-		protected final Runnable create() {
-			return () -> {
-				unregisterListeners();
-				stopSelf(startId);
-			};
+		protected final ImmediateResponse<Throwable, Void> create() {
+			return new VoidResponse<>((e) -> {
+				if (e instanceof CancellationException) {
+					unregisterListeners();
+					stopSelf(startId);
+				}
+			});
 		}
 	};
 
@@ -538,7 +558,7 @@ implements OnAudioFocusChangeListener
 	private void notifyStartingService() {
 		lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
-			.then(perform(this::notifyForeground));
+			.then(new VoidResponse<>(this::notifyForeground));
 	}
 	
 	private void registerListeners() {
@@ -548,7 +568,6 @@ implements OnAudioFocusChangeListener
         wifiLock.acquire();
 
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
-		wakeLock.setReferenceCounted(false);
 		wakeLock.acquire();
 
 		registerRemoteClientControl();
@@ -584,12 +603,6 @@ implements OnAudioFocusChangeListener
 			wakeLock = null;
 		}
 
-		final PollConnection pollConnection = PollConnection.Instance.get(this);
-		if (connectionRegainedListener.isCreated())
-			pollConnection.removeOnConnectionRegainedListener(connectionRegainedListener.getObject());
-		if (onPollingCancelledListener.isCreated())
-			pollConnection.removeOnPollingCancelledListener(onPollingCancelledListener.getObject());
-
 		if (lazyAudioBecomingNoisyReceiver.isCreated())
 			unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject());
 		
@@ -611,11 +624,6 @@ implements OnAudioFocusChangeListener
 			.registerReceiver(
 				onLibraryChanged,
 				new IntentFilter(BrowserLibrarySelection.libraryChosenEvent));
-
-		localBroadcastManagerLazy.getObject()
-			.registerReceiver(
-				buildSessionReceiver,
-				new IntentFilter(SessionConnection.buildSessionBroadcast));
 	}
 
 	@Override
@@ -638,232 +646,18 @@ implements OnAudioFocusChangeListener
 		lazySelectedLibraryProvider.getObject()
 			.getBrowserLibrary()
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-			.then(perform(m -> actOnIntent(intent)))
+			.then(new VoidResponse<>(m -> actOnIntent(intent)))
 			.excuse(UnhandledRejectionHandler);
 
 		return START_NOT_STICKY;
 	}
-	
-	private void handleBuildConnectionStatusChange(final int status) {
-		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
-		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
-		switch (status) {
-			case BuildingSessionConnectionStatus.GettingLibrary:
-				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
-				break;
-			case BuildingSessionConnectionStatus.GettingLibraryFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
-				return;
-			case BuildingSessionConnectionStatus.BuildingConnection:
-				notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
-				break;
-			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
-				return;
-			case BuildingSessionConnectionStatus.GettingView:
-				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
-				break;
-			case BuildingSessionConnectionStatus.GettingViewFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
-				return;
-		}
-		notifyNotificationManager(notifyBuilder);
-	}
 
-	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) {
-		return playbackEnginePromise =
-			playbackEnginePromise != null
-				? playbackEnginePromise.eventually(e -> initializePlaybackPlaylistStateManager(library))
-				: initializePlaybackPlaylistStateManager(library);
-	}
-
-	private Promise<PlaybackEngine> initializePlaybackPlaylistStateManager(Library library) {
-		if (playbackEngine != null)
-			playbackEngine.close();
-
-		final SpecificLibraryProvider libraryProvider =
-			new SpecificLibraryProvider(
-				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
-				lazyLibraryRepository.getObject());
-
-		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
-			cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
-				connectionProvider,
-				FilePropertyCache.getInstance(),
-				new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
-			if (remoteControlProxy != null)
-				localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
-
-			final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
-			remoteControlProxy =
-				new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
-					new MediaSessionBroadcaster(
-						this,
-						cachedFilePropertiesProvider,
-						imageProvider,
-						lazyMediaSession.getObject()) :
-					new RemoteControlClientBroadcaster(
-						this,
-						cachedFilePropertiesProvider,
-						imageProvider,
-						remoteControlClient.getObject()));
-
-			localBroadcastManagerLazy
-				.getObject()
-				.registerReceiver(
-					remoteControlProxy,
-					Stream.of(remoteControlProxy.registerForIntents())
-						.reduce(new IntentFilter(), (intentFilter, action) -> {
-							intentFilter.addAction(action);
-							return intentFilter;
-						}));
-
-			if (playbackNotificationRouter != null)
-				localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
-
-			if (nowPlayingNotificationBuilder != null)
-				nowPlayingNotificationBuilder.close();
-
-			playbackNotificationRouter =
-				new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
-					this,
-					notificationManagerLazy.getObject(),
-					lazyPlaybackNotificationsConfiguration.getObject(),
-					nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
-						this,
-						lazyMediaStyleNotificationSetup.getObject(),
-						connectionProvider,
-						cachedFilePropertiesProvider,
-						imageProvider)));
-
-			localBroadcastManagerLazy
-				.getObject()
-				.registerReceiver(
-					playbackNotificationRouter,
-					Stream.of(playbackNotificationRouter.registerForIntents())
-						.reduce(new IntentFilter(), (intentFilter, action) -> {
-							intentFilter.addAction(action);
-							return intentFilter;
-						}));
-
-			if (playlistPlaybackBootstrapper != null)
-				playlistPlaybackBootstrapper.close();
-
-			playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
-				lazyPlaylistVolumeManager.getObject(),
-				new PlaybackHandlerVolumeControllerFactory(
-					new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
-
-			final StoredFileAccess storedFileAccess = new StoredFileAccess(
-				this,
-				lazyAllStoredFilesInLibrary.getObject());
-
-			final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
-				new ExternalStorageReadPermissionsArbitratorForOs(this);
-
-			final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
-				connectionProvider,
-				new ServiceFileUriQueryParamsProvider());
-
-			final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
-			if (cache != null)
-				cache.release();
-			cache = new SimpleCache(
-				new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
-				new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
-
-			return extractorHandler.getObject().eventually(handler -> {
-				if (playlistPlaybackBootstrapper != null)
-					playlistPlaybackBootstrapper.close();
-
-				playlistPlaybackBootstrapper = new ExoPlayerPlaybackBootstrapper(new ExoPlayerCreator(handler, lazyRenderersFactory.getObject()));
-
-					final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
-						this,
-						connectionProvider,
-						library,
-						cache);
-
-					final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
-						handler,
-				null,
-						DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
-						lazyTextOutputLogger.getObject(),
-						lazyMetadataOutputLogger.getObject(),
-						null);
-
-					exoPlayer = ExoPlayerFactory.newInstance(
-						renderers,
-						trackSelector.getObject(),
-						loadControl.getObject());
-
-					final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
-
-					exoPlayer.prepare(mediaSourceQueue);
-					final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
-						new PreparedPlaybackQueueFeederBuilder(
-							new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup()),
-							handler,
-							new BestMatchUriProvider(
-								library,
-								new StoredFileUriProvider(
-									lazySelectedLibraryProvider.getObject(),
-									storedFileAccess,
-									arbitratorForOs),
-								new CachedAudioFileUriProvider(
-									remoteFileUriProvider,
-									new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
-								new MediaFileUriProvider(
-									this,
-									new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
-									arbitratorForOs,
-									library,
-									false),
-								remoteFileUriProvider),
-							extractorMediaSourceFactoryProvider,
-							exoPlayer,
-							mediaSourceQueue,
-							lazyRenderersFactory.getObject(),
-							new AudioTrackVolumeManager(
-								exoPlayer,
-								Stream.of(renderers)
-									.filter(r -> r instanceof MediaCodecAudioRenderer)
-									.toArray(MediaCodecAudioRenderer[]::new)));
-
-				return playbackEngineBuilder.build(library);
-			}).then(preparationSourceProvider -> {
-				if (preparedPlaybackQueueResourceManagement != null)
-					preparedPlaybackQueueResourceManagement.close();
-
-				preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(
-					preparationSourceProvider,
-					preparationSourceProvider);
-
-				playbackEngine =
-					new PlaybackEngine(
-						preparedPlaybackQueueResourceManagement,
-						QueueProviders.providers(),
-						new NowPlayingRepository(libraryProvider, lazyLibraryRepository.getObject()),
-						playlistPlaybackBootstrapper);
-
-				playbackEngine
-					.setOnPlaybackStarted(this::handlePlaybackStarted)
-					.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
-					.setOnPlaylistError(this::uncaughtExceptionHandler)
-					.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
-					.setOnPlaylistReset(this::broadcastResetPlaylist);
-
-				return playbackEngine;
-			});
-		});
-	}
-	
 	private void actOnIntent(final Intent intent) {
 		if (intent == null) {
 			pausePlayback(true);
 			return;
 		}
-		
+
 		String action = intent.getAction();
 		if (action == null) return;
 
@@ -881,17 +675,17 @@ implements OnAudioFocusChangeListener
 				});
 
 			return;
-        }
+		}
 
 		if (action.equals(Action.togglePlayPause))
 			action = isPlaying ? Action.pause : Action.play;
 
 		if (action.equals(Action.play)) {
 			isPlaying = true;
-        	playbackEngine.resume();
+			playbackEngine.resume();
 
-        	return;
-        }
+			return;
+		}
 
 		if (action.equals(Action.pause)) {
 			pausePlayback(true);
@@ -942,8 +736,8 @@ implements OnAudioFocusChangeListener
 			return;
 		}
 
-		if (action.equals(Action.stopWaitingForConnection)) {
-        	PollConnection.Instance.get(this).stopPolling();
+		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
+			pollingSessionConnection.cancel();
 			return;
 		}
 
@@ -970,6 +764,229 @@ implements OnAudioFocusChangeListener
 		}
 	}
 
+	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) {
+		return playbackEnginePromise =
+			playbackEnginePromise != null
+				? playbackEnginePromise.eventually(
+					e -> initializePlaybackPlaylistStateManager(library),
+					e -> initializePlaybackPlaylistStateManager(library))
+				: initializePlaybackPlaylistStateManager(library);
+	}
+
+	private Promise<PlaybackEngine> initializePlaybackPlaylistStateManager(Library library) {
+		if (playbackEngine != null)
+			playbackEngine.close();
+
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(
+				buildSessionReceiver,
+				new IntentFilter(SessionConnection.buildSessionBroadcast));
+
+		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
+			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+
+			if (connectionProvider == null)
+				throw new PlaybackEngineInitializationException("connectionProvider was null!");
+
+			return extractorHandler.getObject().then(handler -> {cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
+				connectionProvider,
+				FilePropertyCache.getInstance(),
+				new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
+				if (remoteControlProxy != null)
+					localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
+
+				final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
+				remoteControlProxy =
+					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+						? new MediaSessionBroadcaster(
+							this,
+							cachedFilePropertiesProvider,
+							imageProvider,
+							lazyMediaSession.getObject())
+						: new RemoteControlClientBroadcaster(
+							this,
+							cachedFilePropertiesProvider,
+							imageProvider,
+							remoteControlClient.getObject()));
+
+				localBroadcastManagerLazy
+					.getObject()
+					.registerReceiver(
+						remoteControlProxy,
+						Stream.of(remoteControlProxy.registerForIntents())
+							.reduce(new IntentFilter(), (intentFilter, action) -> {
+								intentFilter.addAction(action);
+								return intentFilter;
+							}));
+
+				if (playbackNotificationRouter != null)
+					localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
+
+				if (nowPlayingNotificationBuilder != null)
+					nowPlayingNotificationBuilder.close();
+
+				playbackNotificationRouter =
+					new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
+						this,
+						notificationManagerLazy.getObject(),
+						lazyPlaybackNotificationsConfiguration.getObject(),
+						nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
+							this,
+							lazyMediaStyleNotificationSetup.getObject(),
+							connectionProvider,
+							cachedFilePropertiesProvider,
+							imageProvider)));
+
+				localBroadcastManagerLazy
+					.getObject()
+					.registerReceiver(
+						playbackNotificationRouter,
+						Stream.of(playbackNotificationRouter.registerForIntents())
+							.reduce(new IntentFilter(), (intentFilter, action) -> {
+								intentFilter.addAction(action);
+								return intentFilter;
+							}));
+
+				if (playlistPlaybackBootstrapper != null)
+					playlistPlaybackBootstrapper.close();
+
+				playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
+					lazyPlaylistVolumeManager.getObject(),
+					new PlaybackHandlerVolumeControllerFactory(
+						new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
+
+				final StoredFileAccess storedFileAccess = new StoredFileAccess(
+					this,
+					lazyAllStoredFilesInLibrary.getObject());
+
+				final ExternalStorageReadPermissionsArbitratorForOs arbitratorForOs =
+					new ExternalStorageReadPermissionsArbitratorForOs(this);
+
+				final AudioCacheConfiguration cacheConfiguration = new AudioCacheConfiguration(library);
+				if (cache != null)
+					cache.release();
+				cache = new SimpleCache(
+					new AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
+					new LeastRecentlyUsedCacheEvictor(cacheConfiguration.getMaxSize()));
+
+				if (playlistPlaybackBootstrapper != null)
+					playlistPlaybackBootstrapper.close();
+
+				playlistPlaybackBootstrapper = new ExoPlayerPlaybackBootstrapper(new ExoPlayerCreator(handler, lazyRenderersFactory.getObject()));
+
+				final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
+					this,
+					connectionProvider,
+					library,
+					cache);
+
+				final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
+					handler,
+					null,
+					DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
+					lazyTextOutputLogger.getObject(),
+					lazyMetadataOutputLogger.getObject(),
+					null);
+
+				exoPlayer = ExoPlayerFactory.newInstance(
+					renderers,
+					trackSelector.getObject(),
+					loadControl.getObject());
+
+				final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
+
+				exoPlayer.prepare(mediaSourceQueue);
+				final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
+					new PreparedPlaybackQueueFeederBuilder(
+						new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup()),
+						handler,
+						new BestMatchUriProvider(
+							library,
+							new StoredFileUriProvider(
+								lazySelectedLibraryProvider.getObject(),
+								storedFileAccess,
+								arbitratorForOs),
+							new CachedAudioFileUriProvider(
+								remoteFileUriProvider,
+								new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+							new MediaFileUriProvider(
+								this,
+								new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+								arbitratorForOs,
+								library,
+								false),
+							remoteFileUriProvider),
+						extractorMediaSourceFactoryProvider,
+						exoPlayer,
+						mediaSourceQueue,
+						lazyRenderersFactory.getObject(),
+						new AudioTrackVolumeManager(
+							exoPlayer,
+							Stream.of(renderers)
+								.filter(r -> r instanceof MediaCodecAudioRenderer)
+								.toArray(MediaCodecAudioRenderer[]::new)));
+
+				return playbackEngineBuilder.build(library);
+			}).then(preparationSourceProvider -> {
+				if (preparedPlaybackQueueResourceManagement != null)
+					preparedPlaybackQueueResourceManagement.close();
+
+				preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(
+					preparationSourceProvider,
+					preparationSourceProvider);
+
+				playbackEngine =
+					new PlaybackEngine(
+						preparedPlaybackQueueResourceManagement,
+						QueueProviders.providers(),
+						new NowPlayingRepository(
+							new SpecificLibraryProvider(
+								lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
+								lazyLibraryRepository.getObject()),
+							lazyLibraryRepository.getObject()),
+						playlistPlaybackBootstrapper);
+
+				playbackEngine
+					.setOnPlaybackStarted(this::handlePlaybackStarted)
+					.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
+					.setOnPlaylistError(this::uncaughtExceptionHandler)
+					.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
+					.setOnPlaylistReset(this::broadcastResetPlaylist);
+
+				return playbackEngine;
+			});
+		}, e -> {
+			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+			throw e;
+		});
+	}
+
+	private void handleBuildConnectionStatusChange(final int status) {
+		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
+		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
+		switch (status) {
+			case BuildingSessionConnectionStatus.GettingLibrary:
+				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
+				break;
+			case BuildingSessionConnectionStatus.GettingLibraryFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
+				return;
+			case BuildingSessionConnectionStatus.BuildingConnection:
+				notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
+				break;
+			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
+				return;
+			case BuildingSessionConnectionStatus.GettingView:
+				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
+				break;
+			case BuildingSessionConnectionStatus.GettingViewFailed:
+				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
+				return;
+		}
+		notifyNotificationManager(notifyBuilder);
+	}
+
 	private void handlePlaybackStarted(PositionedPlayingFile positionedPlayableFile) {
 		isPlaying = true;
 		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted(positionedPlayableFile.asPositionedFile());
@@ -992,6 +1009,11 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {
+		if (exception instanceof PlaybackEngineInitializationException) {
+			handlePlaybackEngineInitializationException((PlaybackEngineInitializationException)exception);
+			return;
+		}
+
 		if (exception instanceof PreparationException) {
 			handlePreparationException((PreparationException)exception);
 			return;
@@ -1008,6 +1030,12 @@ implements OnAudioFocusChangeListener
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
+		stopNotification();
+	}
+
+	private void handlePlaybackEngineInitializationException(PlaybackEngineInitializationException exception) {
+		logger.error("There was an error initializing the playback engine", exception);
+		stopNotification();
 	}
 
 	private void handlePreparationException(PreparationException preparationException) {
@@ -1066,12 +1094,9 @@ implements OnAudioFocusChangeListener
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
 		notifyBackground(builder);
 
-		final PollConnection checkConnection = PollConnection.Instance.get(this);
-
-		checkConnection.addOnConnectionRegainedListener(connectionRegainedListener.getObject());
-		checkConnection.addOnPollingCancelledListener(onPollingCancelledListener.getObject());
-		
-		checkConnection.startPolling();
+		pollingSessionConnection = PollConnectionService.pollSessionConnection(this);
+		pollingSessionConnection
+			.then(connectionRegainedListener.getObject(), onPollingCancelledListener.getObject());
 	}
 
 	private void closeAndRestartPlaylistManager() {
@@ -1085,12 +1110,10 @@ implements OnAudioFocusChangeListener
 		lazyLibraryRepository.getObject()
 			.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId())
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-			.then(v -> {
+			.then(new VoidResponse<>(v -> {
 				if (isPlaying)
 					playbackEngine.resume();
-
-				return null;
-			})
+			}))
 			.excuse(UnhandledRejectionHandler);
 	}
 
@@ -1229,11 +1252,7 @@ implements OnAudioFocusChangeListener
 			filePositionSubscription.dispose();
 
 		if (cache != null) {
-			try {
-				cache.release();
-			} catch (Cache.CacheException e) {
-				logger.warn("There was an error releasing the cache", e);
-			}
+			cache.release();
 		}
 
 		if (nowPlayingNotificationBuilder != null)

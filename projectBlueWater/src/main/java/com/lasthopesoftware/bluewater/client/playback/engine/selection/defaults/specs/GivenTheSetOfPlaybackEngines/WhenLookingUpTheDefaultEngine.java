@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.menu;
 
 import android.os.Handler;
 import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -10,11 +9,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +74,9 @@ public class FileNameTextViewSetter {
 					}
 
 					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-					final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+					final CachedFilePropertiesProvider cachedFilePropertiesProvider =
+						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+							new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
 					final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
 

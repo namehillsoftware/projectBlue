@@ -2,12 +2,13 @@ package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASel
 
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
-
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.specs.SessionConnectionReservation;
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
@@ -18,7 +19,6 @@ import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
@@ -27,13 +27,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnection;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnectionFailed;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingView;
+import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.*;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +62,10 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 			broadcastRecorder,
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
 
+		final TestConnections testConnections = mock(TestConnections.class);
+		when(testConnections.promiseIsConnectionPossible(any()))
+				.thenReturn(new Promise<>(false));
+
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
 				localBroadcastManager,
@@ -73,7 +74,8 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 				Promise::new,
 				liveUrlProvider,
-				c -> new Promise<>(false));
+				testConnections,
+				OkHttpFactory.getInstance());
 
 			connectionProvider = new FuturePromise<>(
 				sessionConnection.promiseSessionConnection()

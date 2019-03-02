@@ -17,14 +17,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fak
 import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,7 +39,7 @@ public class WhenPlaybackCompletes {
 	private static PositionedFile resetPositionedFile;
 
 	@BeforeClass
-	public static void before() throws InterruptedException {
+	public static void before() throws InterruptedException, ExecutionException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		final Library library = new Library();
@@ -80,16 +80,7 @@ public class WhenPlaybackCompletes {
 		}
 		playingPlaybackHandler.resolve();
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		nowPlayingRepository
-			.getNowPlaying()
-			.then(np -> {
-				nowPlaying = np;
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		nowPlaying = new FuturePromise<>(nowPlayingRepository.getNowPlaying()).get();
 	}
 
 	@Test

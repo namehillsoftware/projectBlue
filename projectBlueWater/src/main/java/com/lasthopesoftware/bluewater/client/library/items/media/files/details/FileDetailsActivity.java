@@ -15,7 +15,6 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
@@ -32,24 +31,21 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
 public class FileDetailsActivity extends AppCompatActivity {
 
@@ -140,9 +136,9 @@ public class FileDetailsActivity extends AppCompatActivity {
 		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
 		SessionConnection.getInstance(this).promiseSessionConnection()
-			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance()))
+			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance(), ParsingScheduler.instance()))
 			.eventually(f -> f.promiseFileProperties(new ServiceFile(fileKey)))
-			.eventually(LoopedInPromise.response(perform(fileProperties -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
@@ -159,7 +155,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 				pbLoadingFileDetails.findView().setVisibility(View.INVISIBLE);
 				lvFileDetails.findView().setVisibility(View.VISIBLE);
 			}), this))
-			.excuse(new HandleViewIoException(this, () -> setView(fileKey)));
+			.excuse(new HandleViewIoException(this, () -> setView(fileKey)))
+			.excuse(forward())
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
+			.then(new VoidResponse<>(v -> finish()));
 
 //        final SimpleTask<Void, Void, Float> getRatingsTask = new SimpleTask<Void, Void, Float>(new OnExecuteListener<Void, Void, Float>() {
 //
@@ -197,7 +196,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 			.eventually(connectionProvider -> {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache, new FilePropertiesProvider(connectionProvider, filePropertyCache));
+					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+						new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
 				return new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider)
 					.promiseFileBitmap(new ServiceFile(fileKey));
@@ -206,7 +206,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				bitmap != null
 					? new Promise<>(bitmap)
 					: defaultImageProvider.getObject().promiseFileBitmap())
-			.eventually(LoopedInPromise.response(perform(result -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(result -> {
 				if (mFileImage != null) mFileImage.recycle();
 
 				if (isDestroyed) {

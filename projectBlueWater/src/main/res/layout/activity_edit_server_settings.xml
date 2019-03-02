@@ -1,166 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/rlConfigureLibrary"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="23dp"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:weightSum="1.0"
-        android:id="@+id/llAccessCode" >
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+	<RelativeLayout
+		android:id="@+id/rlConfigureLibrary"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
 
-	    <EditText
-	        android:id="@+id/txtAccessCode"
-	        android:layout_width="0dp"
-	        android:layout_height="wrap_content"
-	        android:layout_weight=".75"
-	        android:ems="10"
-	        android:hint="@string/lbl_access_code"
-	        android:inputType="textVisiblePassword" >
-	
-	        <requestFocus />
-	    </EditText>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:weightSum="1.0"
-        android:id="@+id/llUserName"
-        android:layout_below="@id/llAccessCode" >
-	    <EditText
-	        android:id="@+id/txtUserName"
-	        android:layout_width="0dp"
-	        android:layout_height="wrap_content"
-	        android:layout_weight=".75"
-	        android:ems="10"
-	        android:hint="@string/lbl_user_name"
-	        android:inputType="textVisiblePassword" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:weightSum="1.0"
-        android:id="@+id/llPassword"
-        android:layout_below="@id/llUserName" >
-	    <EditText
-	        android:id="@+id/txtPassword"
-	        android:layout_width="0dp"
-	        android:layout_height="wrap_content"
-	        android:layout_weight=".75"
-	        android:ems="10"
-	        android:hint="@string/lbl_password"
-	        android:inputType="textPassword" />
-    </LinearLayout>
-
-   <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:weightSum="1.0" 
-        android:id="@+id/llLocalOnly"
-        android:layout_below="@id/llPassword">
-	    <CheckBox
-	       android:id="@+id/chkLocalOnly"
-	       android:layout_width="0dp"
-	       android:layout_height="wrap_content"
-	       android:layout_weight=".75"
-	       android:text="@string/lbl_local_only" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:weightSum="1.0"
-        android:id="@+id/llSyncFileOptions"
-        android:layout_below="@id/llLocalOnly"
-        android:layout_marginTop="20dp"
-        android:baselineAligned="false">
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:weightSum="1.0"
-            android:layout_weight=".75"
-            android:id="@+id/llSyncPath">
-            <TextView
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/lblSyncMusicLocation"
-                android:layout_marginBottom="10dp"/>
-            <RadioGroup
-                android:id="@+id/rgSyncFileOptions"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-                <RadioButton
-                    android:id="@+id/rbPrivateToApp"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/rbPrivateToApp"/>
-                <RadioButton
-                    android:id="@+id/rbPublicLocation"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/rbPublicLocation"/>
-                <RadioButton
-                    android:id="@+id/rbCustomLocation"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/rbCustomLocation"/>
-            </RadioGroup>
-			<EditText
-				android:id="@+id/txtSyncPath"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:ems="10"
-				android:enabled="false"
-				android:inputType="textUri"
-				android:hint="@string/lbl_sync_path"/>
-            <CheckBox
-                android:id="@+id/chkIsUsingLocalConnectionForSync"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/lbl_sync_local_connection"/>
-        </LinearLayout>
-    </LinearLayout>
-
-	<LinearLayout
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:orientation="horizontal"
-		android:gravity="center_horizontal"
-		android:weightSum="1.0"
-		android:id="@+id/useExistingFilesLinearLayout"
-		android:layout_below="@id/llSyncFileOptions">
-		<CheckBox
-			android:id="@+id/chkIsUsingExistingFiles"
-			android:layout_width="0dp"
+		<LinearLayout
+			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
-			android:layout_weight=".75"
-			android:text="@string/lbl_use_existing_music"/>
-	</LinearLayout>
+			android:layout_marginTop="23dp"
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:weightSum="1.0"
+			android:id="@+id/llAccessCode" >
 
-    <Button
-        android:id="@+id/btnConnect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/useExistingFilesLinearLayout"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:text="@string/btn_save" />
-    
-</RelativeLayout>
+			<EditText
+				android:id="@+id/txtAccessCode"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight=".75"
+				android:ems="10"
+				android:hint="@string/lbl_access_code"
+				android:inputType="textVisiblePassword" >
+
+				<requestFocus />
+			</EditText>
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:weightSum="1.0"
+			android:id="@+id/llUserName"
+			android:layout_below="@id/llAccessCode" >
+			<EditText
+				android:id="@+id/txtUserName"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight=".75"
+				android:ems="10"
+				android:hint="@string/lbl_user_name"
+				android:inputType="textVisiblePassword" />
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:weightSum="1.0"
+			android:id="@+id/llPassword"
+			android:layout_below="@id/llUserName" >
+			<EditText
+				android:id="@+id/txtPassword"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight=".75"
+				android:ems="10"
+				android:hint="@string/lbl_password"
+				android:inputType="textPassword" />
+		</LinearLayout>
+
+	   <LinearLayout
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:weightSum="1.0"
+			android:id="@+id/llLocalOnly"
+			android:layout_below="@id/llPassword">
+			<CheckBox
+			   android:id="@+id/chkLocalOnly"
+			   android:layout_width="0dp"
+			   android:layout_height="wrap_content"
+			   android:layout_weight=".75"
+			   android:text="@string/lbl_local_only" />
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:weightSum="1.0"
+			android:id="@+id/llSyncFileOptions"
+			android:layout_below="@id/llLocalOnly"
+			android:layout_marginTop="20dp"
+			android:baselineAligned="false">
+			<LinearLayout
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:gravity="center_horizontal"
+				android:weightSum="1.0"
+				android:layout_weight=".75"
+				android:id="@+id/llSyncPath">
+				<TextView
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceMedium"
+					android:text="@string/lblSyncMusicLocation"
+					android:layout_marginBottom="10dp"/>
+				<RadioGroup
+					android:id="@+id/rgSyncFileOptions"
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content">
+					<RadioButton
+						android:id="@+id/rbPrivateToApp"
+						android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:text="@string/rbPrivateToApp"/>
+					<RadioButton
+						android:id="@+id/rbPublicLocation"
+						android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:text="@string/rbPublicLocation"/>
+					<RadioButton
+						android:id="@+id/rbCustomLocation"
+						android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:text="@string/rbCustomLocation"/>
+				</RadioGroup>
+				<EditText
+					android:id="@+id/txtSyncPath"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:ems="10"
+					android:enabled="false"
+					android:inputType="textUri"
+					android:hint="@string/lbl_sync_path"/>
+				<CheckBox
+					android:id="@+id/chkIsUsingLocalConnectionForSync"
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:text="@string/lbl_sync_local_connection"/>
+			</LinearLayout>
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center_horizontal"
+			android:weightSum="1.0"
+			android:id="@+id/useExistingFilesLinearLayout"
+			android:layout_below="@id/llSyncFileOptions">
+			<CheckBox
+				android:id="@+id/chkIsUsingExistingFiles"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight=".75"
+				android:text="@string/lbl_use_existing_music"/>
+		</LinearLayout>
+
+		<Button
+			android:id="@+id/btnConnect"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/useExistingFilesLinearLayout"
+			android:layout_centerHorizontal="true"
+			android:layout_marginTop="20dp"
+			android:text="@string/btn_save" />
+
+	</RelativeLayout>
+</ScrollView>

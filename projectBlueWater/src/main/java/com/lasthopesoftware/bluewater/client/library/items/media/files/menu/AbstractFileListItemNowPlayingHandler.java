@@ -5,7 +5,6 @@ import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.RelativeLayout;
-
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 
 /**

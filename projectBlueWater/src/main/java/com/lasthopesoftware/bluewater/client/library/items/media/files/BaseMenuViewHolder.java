@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
 import android.widget.ImageButton;
-
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 
 public class BaseMenuViewHolder {

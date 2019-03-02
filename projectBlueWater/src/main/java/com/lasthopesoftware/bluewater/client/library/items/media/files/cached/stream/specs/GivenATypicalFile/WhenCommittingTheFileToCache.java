@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.s
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.CachedFileOutputStream;
 import com.namehillsoftware.handoff.promises.Promise;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 

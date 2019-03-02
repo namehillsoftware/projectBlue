@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
 public final class PositionedFile implements Comparable<PositionedFile> {

@@ -1,11 +1,9 @@
 package com.lasthopesoftware.bluewater.settings.hidden.specs.GivenATypicalIntentBuilder;
 
 import android.content.Intent;
-
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivity;
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder;
 import com.lasthopesoftware.resources.intents.IntentFactory;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

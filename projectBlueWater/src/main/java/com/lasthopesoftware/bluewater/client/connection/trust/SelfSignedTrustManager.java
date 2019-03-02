@@ -16,14 +16,13 @@
  */
 package com.lasthopesoftware.bluewater.client.connection.trust;
 
+import javax.net.ssl.X509TrustManager;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-
-import javax.net.ssl.X509TrustManager;
 
 public class SelfSignedTrustManager implements X509TrustManager {
 

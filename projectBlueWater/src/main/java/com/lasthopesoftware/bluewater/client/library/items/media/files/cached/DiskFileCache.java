@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached;
 
 import android.content.Context;
 import android.database.SQLException;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.ICachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
@@ -13,15 +12,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.st
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.handoff.promises.Promise;
-
+import okio.Buffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLDataException;
-
-import okio.Buffer;
 
 public class DiskFileCache implements ICache {
 

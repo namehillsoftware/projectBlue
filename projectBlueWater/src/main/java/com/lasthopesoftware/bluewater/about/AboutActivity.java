@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.lasthopesoftware.bluewater.BuildConfig;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder;
@@ -22,14 +21,14 @@ public class AboutActivity extends AppCompatActivity implements View.OnLongClick
 
 	private final CreateAndHold<Bitmap> lazyLogoBitmap = new AbstractSynchronousLazy<Bitmap>() {
 		@Override
-		protected Bitmap create() throws Exception {
+		protected Bitmap create() {
 			return BitmapFactory.decodeResource(getResources(), R.drawable.music_canoe_hi_res_logo);
 		}
 	};
 
 	private final CreateAndHold<HiddenSettingsActivityIntentBuilder> lazyHiddenSettingsActivityIntentBuilder = new AbstractSynchronousLazy<HiddenSettingsActivityIntentBuilder>() {
 		@Override
-		protected HiddenSettingsActivityIntentBuilder create() throws Throwable {
+		protected HiddenSettingsActivityIntentBuilder create() {
 			return new HiddenSettingsActivityIntentBuilder(new IntentFactory(AboutActivity.this));
 		}
 	};

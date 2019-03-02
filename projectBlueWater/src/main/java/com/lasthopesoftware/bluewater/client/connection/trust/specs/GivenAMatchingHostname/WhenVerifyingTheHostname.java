@@ -1,16 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection.trust.specs.GivenAMatchingHostname;
 
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.net.ssl.HostnameVerifier;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class WhenVerifyingTheHostname {
 
