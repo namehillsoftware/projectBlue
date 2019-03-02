@@ -10,7 +10,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCo
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.*;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
@@ -29,8 +31,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static com.namehillsoftware.handoff.promises.response.ImmediateAction.perform;
 
 public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineBroadcaster, AutoCloseable {
 

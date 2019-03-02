@@ -1,13 +1,14 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued;
 
 import android.os.Handler;
-
+import android.support.annotation.Nullable;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.google.android.exoplayer2.upstream.Allocator;
+import com.google.android.exoplayer2.upstream.TransferListener;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.callables.Function;
 
@@ -64,9 +65,20 @@ public class MediaSourceQueue implements MediaSource, QueueMediaSources {
 		concatenatingMediaSource.removeEventListener(eventListener);
 	}
 
+	@Nullable
+	@Override
+	public Object getTag() {
+		return concatenatingMediaSource.getTag();
+	}
+
 	@Override
 	public void prepareSource(ExoPlayer player, boolean isTopLevelSource, SourceInfoRefreshListener listener) {
 		concatenatingMediaSource.prepareSource(player, isTopLevelSource, listener);
+	}
+
+	@Override
+	public void prepareSource(ExoPlayer player, boolean isTopLevelSource, SourceInfoRefreshListener listener, @Nullable TransferListener mediaTransferListener) {
+		concatenatingMediaSource.prepareSource(player, isTopLevelSource, listener, mediaTransferListener);
 	}
 
 	@Override
@@ -107,9 +119,20 @@ public class MediaSourceQueue implements MediaSource, QueueMediaSources {
 			this.mediaSource.removeEventListener(eventListener);
 		}
 
+		@Nullable
+		@Override
+		public Object getTag() {
+			return mediaSource.getTag();
+		}
+
 		@Override
 		public void prepareSource(ExoPlayer player, boolean isTopLevelSource, SourceInfoRefreshListener listener) {
 			this.mediaSource.prepareSource(player, isTopLevelSource, listener);
+		}
+
+		@Override
+		public void prepareSource(ExoPlayer player, boolean isTopLevelSource, SourceInfoRefreshListener listener, @Nullable TransferListener mediaTransferListener) {
+			mediaSource.prepareSource(player, isTopLevelSource, listener, mediaTransferListener);
 		}
 
 		@Override

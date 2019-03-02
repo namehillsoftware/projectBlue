@@ -24,7 +24,6 @@ import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
@@ -69,9 +68,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
 import com.lasthopesoftware.bluewater.client.playback.file.*;
-import com.lasthopesoftware.bluewater.client.playback.file.*;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
@@ -788,10 +785,12 @@ implements OnAudioFocusChangeListener
 			if (connectionProvider == null)
 				throw new PlaybackEngineInitializationException("connectionProvider was null!");
 
-			return extractorHandler.getObject().then(handler -> {cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
-				connectionProvider,
-				FilePropertyCache.getInstance(),
-				new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
+			return extractorHandler.getObject().eventually(handler -> {
+				cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
+					connectionProvider,
+					FilePropertyCache.getInstance(),
+					new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
+
 				if (remoteControlProxy != null)
 					localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
@@ -875,9 +874,11 @@ implements OnAudioFocusChangeListener
 				playlistPlaybackBootstrapper = new ExoPlayerPlaybackBootstrapper(new ExoPlayerCreator(handler, lazyRenderersFactory.getObject()));
 
 				final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
-					this,
-					connectionProvider,
 					library,
+					new HttpDataSourceFactoryProvider(
+						this,
+						connectionProvider,
+						OkHttpFactory.getInstance()),
 					cache);
 
 				final Renderer[] renderers = lazyRenderersFactory.getObject().createRenderers(
@@ -892,6 +893,10 @@ implements OnAudioFocusChangeListener
 					renderers,
 					trackSelector.getObject(),
 					loadControl.getObject());
+
+				final RemoteFileUriProvider remoteFileUriProvider = new RemoteFileUriProvider(
+					connectionProvider,
+					new ServiceFileUriQueryParamsProvider());
 
 				final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
 
