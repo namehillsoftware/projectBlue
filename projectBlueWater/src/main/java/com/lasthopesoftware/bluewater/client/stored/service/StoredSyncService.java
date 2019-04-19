@@ -7,7 +7,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
@@ -112,13 +111,15 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static void safelyStartService(Context context, Intent intent) {
 		try {
-			ContextCompat.startForegroundService(context, intent);
+			context.startService(intent);
 		} catch (IllegalStateException e) {
 			logger.warn("An illegal state exception occurred while trying to start the service", e);
 		} catch (SecurityException e) {
 			logger.warn("A security exception occurred while trying to start the service", e);
 		}
 	}
+
+	private final AbstractSynchronousLazy<SharedPreferences> lazySharedPreferences = new Lazy<>(() -> PreferenceManager.getDefaultSharedPreferences(this));
 
 	private final AbstractSynchronousLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
 		@Override
@@ -273,7 +274,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	public void onCreate() {
 		super.onCreate();
 
-
 		lazyWakeLock.getObject().acquire();
 	}
 
@@ -324,7 +324,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	private boolean isDeviceStateValidForSync() {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		final SharedPreferences sharedPreferences = lazySharedPreferences.getObject();
 
 		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
 		if (isSyncOnWifiOnly) {
@@ -349,7 +349,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	private void finishAndSchedule() {
-		PreferenceManager.getDefaultSharedPreferences(this)
+		lazySharedPreferences.getObject()
 			.edit()
 			.putLong(lastSyncTime, DateTime.now().getMillis())
 			.apply();

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenAStandardQueue.AndASecondFileThatFailsToPrepareInTime;
 
-import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
@@ -32,7 +31,7 @@ public class WhenTheQueueIsStarted {
 			Stream
 				.range(0, 2)
 				.map(ServiceFile::new)
-				.collect(Collectors.toList());
+				.toList();
 
 		final PlayableFilePreparationSource playbackPreparer = mock(PlayableFilePreparationSource.class);
 		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(0), 0))

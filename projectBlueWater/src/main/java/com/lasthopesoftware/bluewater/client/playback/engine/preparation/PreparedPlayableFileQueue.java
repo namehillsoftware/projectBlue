@@ -34,7 +34,7 @@ implements
 
 	private final IPreparedPlaybackQueueConfiguration configuration;
 	private final PlayableFilePreparationSource playbackPreparer;
-	private final Queue<PositionedPreparingFile> bufferingMediaPlayerPromises;
+	private final ConcurrentLinkedQueue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 	private IPositionedFileQueue positionedFileQueue;
 
@@ -44,7 +44,6 @@ implements
 		this.configuration = configuration;
 		this.playbackPreparer = playbackPreparer;
 		this.positionedFileQueue = positionedFileQueue;
-		bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 	}
 
 	public PreparedPlayableFileQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
