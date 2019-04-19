@@ -119,6 +119,8 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		}
 	}
 
+	private final AbstractSynchronousLazy<SharedPreferences> lazySharedPreferences = new Lazy<>(() -> PreferenceManager.getDefaultSharedPreferences(this));
+
 	private final AbstractSynchronousLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
 		@Override
 		protected final BroadcastReceiver create() {
@@ -272,7 +274,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	public void onCreate() {
 		super.onCreate();
 
-
 		lazyWakeLock.getObject().acquire();
 	}
 
@@ -323,7 +324,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	private boolean isDeviceStateValidForSync() {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		final SharedPreferences sharedPreferences = lazySharedPreferences.getObject();
 
 		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
 		if (isSyncOnWifiOnly) {
@@ -348,7 +349,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	private void finishAndSchedule() {
-		PreferenceManager.getDefaultSharedPreferences(this)
+		lazySharedPreferences.getObject()
 			.edit()
 			.putLong(lastSyncTime, DateTime.now().getMillis())
 			.apply();
