@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
@@ -33,7 +34,7 @@ implements
 
 	private final IPreparedPlaybackQueueConfiguration configuration;
 	private final PlayableFilePreparationSource playbackPreparer;
-	private final Queue<PositionedPreparingFile> bufferingMediaPlayerPromises;
+	private final ConcurrentLinkedQueue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 	private IPositionedFileQueue positionedFileQueue;
 
@@ -43,14 +44,13 @@ implements
 		this.configuration = configuration;
 		this.playbackPreparer = playbackPreparer;
 		this.positionedFileQueue = positionedFileQueue;
-		bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 	}
 
 	public PreparedPlayableFileQueue updateQueue(IPositionedFileQueue newPositionedFileQueue) {
 		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 		try {
-			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
+			final Queue<PositionedPreparingFile> newPositionedPreparingMediaPlayerPromises = new LinkedList<>();
 
 			PositionedPreparingFile positionedPreparingFile;
 			while ((positionedPreparingFile = bufferingMediaPlayerPromises.poll()) != null) {
