@@ -20,26 +20,20 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
-
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.Timeline.Period;
-import com.google.android.exoplayer2.source.BaseMediaSource;
-import com.google.android.exoplayer2.source.MediaPeriod;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.MediaSourceEventListener;
+import com.google.android.exoplayer2.source.*;
 import com.google.android.exoplayer2.source.MediaSourceEventListener.EventDispatcher;
 import com.google.android.exoplayer2.source.MediaSourceEventListener.MediaLoadData;
-import com.google.android.exoplayer2.source.TrackGroup;
-import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.upstream.Allocator;
 import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.upstream.TransferListener;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class FakeMediaSource extends BaseMediaSource {
 	private static final DataSpec FAKE_DATA_SPEC = new DataSpec(Uri.parse("http://manifest.uri"));
@@ -79,22 +73,19 @@ public class FakeMediaSource extends BaseMediaSource {
 		this.trackGroupArray = trackGroupArray;
 	}
 
+	@Nullable
 	@Override
-	public synchronized void prepareSourceInternal(ExoPlayer player, boolean isTopLevelSource) {
-		sourceInfoRefreshHandler = new Handler();
-		if (timeline != null) {
-			finishSourcePreparation();
-		}
+	public Object getTag() {
+		return null;
 	}
 
 	@Override
-	public void maybeThrowSourceInfoRefreshError() throws IOException {
+	public void maybeThrowSourceInfoRefreshError() {
 	}
 
 	@Override
 	public MediaPeriod createPeriod(MediaSource.MediaPeriodId id, Allocator allocator) {
-		Assertions.checkIndex(id.periodIndex, 0, timeline.getPeriodCount());
-		Period period = timeline.getPeriod(id.periodIndex, new Period());
+		Period period = timeline.getPeriodByUid(id.periodUid, new Period());
 		EventDispatcher eventDispatcher =
 			createEventDispatcher(period.windowIndex, id, period.getPositionInWindowMs());
 		FakeMediaPeriod mediaPeriod =
@@ -108,6 +99,10 @@ public class FakeMediaSource extends BaseMediaSource {
 	public void releasePeriod(MediaPeriod mediaPeriod) {
 		FakeMediaPeriod fakeMediaPeriod = (FakeMediaPeriod) mediaPeriod;
 		fakeMediaPeriod.release();
+	}
+
+	@Override
+	protected void prepareSourceInternal(ExoPlayer player, boolean isTopLevelSource, @Nullable TransferListener mediaTransferListener) {
 	}
 
 	@Override
@@ -162,11 +157,13 @@ public class FakeMediaSource extends BaseMediaSource {
 			EventDispatcher eventDispatcher = createEventDispatcher(/* mediaPeriodId= */ null);
 			eventDispatcher.loadStarted(
 				new MediaSourceEventListener.LoadEventInfo(
-					FAKE_DATA_SPEC, elapsedRealTimeMs, /* loadDurationMs= */ 0, /* bytesLoaded= */ 0),
+					FAKE_DATA_SPEC, Uri.EMPTY, new HashMap<>(), elapsedRealTimeMs, /* loadDurationMs= */ 0, /* bytesLoaded= */ 0),
 				mediaLoadData);
 			eventDispatcher.loadCompleted(
 				new MediaSourceEventListener.LoadEventInfo(
 					FAKE_DATA_SPEC,
+					Uri.EMPTY,
+					new HashMap<>(),
 					elapsedRealTimeMs,
 					/* loadDurationMs= */ 0,
 					/* bytesLoaded= */ MANIFEST_LOAD_BYTES),

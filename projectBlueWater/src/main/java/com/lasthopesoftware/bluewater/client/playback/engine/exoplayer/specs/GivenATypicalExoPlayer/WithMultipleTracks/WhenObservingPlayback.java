@@ -2,21 +2,13 @@ package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.specs.Gi
 
 import android.os.Looper;
 import android.support.annotation.Nullable;
-
 import com.annimon.stream.Stream;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.PlayerMessage;
-import com.google.android.exoplayer2.SeekParameters;
-import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.ActiveExoPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -66,7 +58,7 @@ public class WhenObservingPlayback {
 
 		@Override
 		public int getRepeatMode() {
-			return 0;
+			return Player.REPEAT_MODE_OFF;
 		}
 
 		@Override
@@ -101,6 +93,26 @@ public class WhenObservingPlayback {
 
 		@Override
 		public void seekTo(int windowIndex, long positionMs) {
+
+		}
+
+		@Override
+		public boolean hasPrevious() {
+			return false;
+		}
+
+		@Override
+		public void previous() {
+
+		}
+
+		@Override
+		public boolean hasNext() {
+			return false;
+		}
+
+		@Override
+		public void next() {
 
 		}
 
@@ -208,6 +220,11 @@ public class WhenObservingPlayback {
 		}
 
 		@Override
+		public long getTotalBufferedDuration() {
+			return 0;
+		}
+
+		@Override
 		public boolean isCurrentWindowDynamic() {
 			return false;
 		}
@@ -233,8 +250,24 @@ public class WhenObservingPlayback {
 		}
 
 		@Override
+		public long getContentDuration() {
+			return 0;
+		}
+
+		@Override
 		public long getContentPosition() {
 			return 0;
+		}
+
+		@Override
+		public long getContentBufferedPosition() {
+			return 0;
+		}
+
+		@Nullable
+		@Override
+		public AudioComponent getAudioComponent() {
+			return null;
 		}
 
 		@Nullable
@@ -246,6 +279,17 @@ public class WhenObservingPlayback {
 		@Nullable
 		@Override
 		public TextComponent getTextComponent() {
+			return null;
+		}
+
+		@Nullable
+		@Override
+		public MetadataComponent getMetadataComponent() {
+			return null;
+		}
+
+		@Override
+		public Looper getApplicationLooper() {
 			return null;
 		}
 
@@ -281,6 +325,11 @@ public class WhenObservingPlayback {
 		}
 
 		@Override
+		public void retry() {
+
+		}
+
+		@Override
 		public void prepare(MediaSource mediaSource) {
 
 		}
@@ -308,6 +357,11 @@ public class WhenObservingPlayback {
 		@Override
 		public void setSeekParameters(@Nullable SeekParameters seekParameters) {
 
+		}
+
+		@Override
+		public SeekParameters getSeekParameters() {
+			return null;
 		}
 	}
 }

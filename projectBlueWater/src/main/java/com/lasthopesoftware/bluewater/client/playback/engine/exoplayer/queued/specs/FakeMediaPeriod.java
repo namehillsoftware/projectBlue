@@ -28,7 +28,9 @@ import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.DataSpec;
+
 import java.io.IOException;
+import java.util.HashMap;
 
 public class FakeMediaPeriod implements MediaPeriod {
 
@@ -194,15 +196,11 @@ public class FakeMediaPeriod implements MediaPeriod {
 		prepareCallback.onPrepared(this);
 		eventDispatcher.loadCompleted(
 			FAKE_DATA_SPEC,
+			Uri.EMPTY,
+			new HashMap<>(),
 			C.DATA_TYPE_MEDIA,
-			C.TRACK_TYPE_UNKNOWN,
-			/* trackFormat= */ null,
-			C.SELECTION_REASON_UNKNOWN,
-			/* trackSelectionData= */ null,
-			/* mediaStartTimeUs= */ 0,
-			/* mediaEndTimeUs = */ C.TIME_UNSET,
 			SystemClock.elapsedRealtime(),
-			/* loadDurationMs= */ 0,
-			/* bytesLoaded= */ 100);
+			0,
+			100);
 	}
 }

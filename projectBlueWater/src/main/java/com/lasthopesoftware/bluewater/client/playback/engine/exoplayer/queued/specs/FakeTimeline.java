@@ -16,7 +16,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.specs;
 
 import android.util.Pair;
-
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.ads.AdPlaybackState;
@@ -212,6 +211,11 @@ public final class FakeTimeline extends Timeline {
 			}
 		}
 		return C.INDEX_UNSET;
+	}
+
+	@Override
+	public Object getUidOfPeriod(int periodIndex) {
+		return null;
 	}
 
 	private static TimelineWindowDefinition[] createDefaultWindowDefinitions(int windowCount) {

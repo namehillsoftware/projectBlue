@@ -3,23 +3,21 @@ package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.s
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-
+import android.support.annotation.Nullable;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlayerMessage;
+import com.google.android.exoplayer2.SeekParameters;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.MediaSourceQueue;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.specs.FakeExoPlayer;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
-
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
 import static junit.framework.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.booleanThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -52,9 +50,19 @@ public class WhenEnqueued extends AndroidContext {
 		}
 
 		@Override
+		public void retry() {
+
+		}
+
+		@Override
 		public PlayerMessage createMessage(PlayerMessage.Target target) {
 			return new PlayerMessage(
 				/* sender= */ this, target, Timeline.EMPTY, /* defaultWindowIndex= */ 0, handler);
+		}
+
+		@Override
+		public SeekParameters getSeekParameters() {
+			return null;
 		}
 
 		@Override
@@ -73,6 +81,58 @@ public class WhenEnqueued extends AndroidContext {
 				fail("Unexpected ExoPlaybackException.");
 			}
 			return true;
+		}
+
+		@Nullable
+		@Override
+		public AudioComponent getAudioComponent() {
+			return null;
+		}
+
+		@Nullable
+		@Override
+		public MetadataComponent getMetadataComponent() {
+			return null;
+		}
+
+		@Override
+		public Looper getApplicationLooper() {
+			return null;
+		}
+
+		@Override
+		public boolean hasPrevious() {
+			return false;
+		}
+
+		@Override
+		public void previous() {
+
+		}
+
+		@Override
+		public boolean hasNext() {
+			return false;
+		}
+
+		@Override
+		public void next() {
+
+		}
+
+		@Override
+		public long getTotalBufferedDuration() {
+			return 0;
+		}
+
+		@Override
+		public long getContentDuration() {
+			return 0;
+		}
+
+		@Override
+		public long getContentBufferedPosition() {
+			return 0;
 		}
 	}
 }
