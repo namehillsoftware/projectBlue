@@ -25,7 +25,7 @@ public class FileNameTextViewSetter {
 	private final TextView textView;
 	private final Handler handler;
 
-	private Promise<Void> currentlyPromisedTextViewUpdate;
+	private volatile Promise<Void> currentlyPromisedTextViewUpdate;
 
 	public FileNameTextViewSetter(TextView textView) {
 		this.textView = textView;
@@ -36,17 +36,17 @@ public class FileNameTextViewSetter {
 		if (currentlyPromisedTextViewUpdate != null)
 			currentlyPromisedTextViewUpdate.cancel();
 
-		return currentlyPromisedTextViewUpdate = new LockedTextViewOperator(textView, handler, serviceFile);
+		return currentlyPromisedTextViewUpdate = new PromisedTextViewUpdate(textView, handler, serviceFile);
 	}
 
-	private class LockedTextViewOperator extends Promise<Void> implements Runnable {
+	private class PromisedTextViewUpdate extends Promise<Void> implements Runnable {
 
 		private final CancellationProxy cancellationProxy = new CancellationProxy();
 		private final TextView textView;
 		private final Handler handler;
 		private final ServiceFile serviceFile;
 
-		LockedTextViewOperator(TextView textView, Handler handler, ServiceFile serviceFile) {
+		PromisedTextViewUpdate(TextView textView, Handler handler, ServiceFile serviceFile) {
 			this.textView = textView;
 			this.handler = handler;
 			this.serviceFile = serviceFile;
