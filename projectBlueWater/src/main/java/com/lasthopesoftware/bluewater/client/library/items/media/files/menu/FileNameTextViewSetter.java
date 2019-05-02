@@ -10,8 +10,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
-import com.namehillsoftware.handoff.Messenger;
-import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import org.slf4j.Logger;
@@ -34,22 +32,16 @@ public class FileNameTextViewSetter {
 		this.handler = new Handler(textView.getContext().getMainLooper());
 	}
 
-	public Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
-		if (currentlyPromisedTextViewUpdate == null) {
-			currentlyPromisedTextViewUpdate = new LoopedInPromise<>(new LockedTextViewOperator(textView, handler, serviceFile), handler);
-			return currentlyPromisedTextViewUpdate;
-		}
+	public synchronized Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
+		if (currentlyPromisedTextViewUpdate != null)
+			currentlyPromisedTextViewUpdate.cancel();
 
-		currentlyPromisedTextViewUpdate.cancel();
-
-		currentlyPromisedTextViewUpdate =
-			currentlyPromisedTextViewUpdate.eventually(o -> new LoopedInPromise<>(new LockedTextViewOperator(textView, handler, serviceFile), handler));
-
-		return currentlyPromisedTextViewUpdate;
+		return currentlyPromisedTextViewUpdate = new LockedTextViewOperator(textView, handler, serviceFile);
 	}
 
-	private static class LockedTextViewOperator implements MessengerOperator<Void> {
+	private class LockedTextViewOperator extends Promise<Void> implements Runnable {
 
+		private final CancellationProxy cancellationProxy = new CancellationProxy();
 		private final TextView textView;
 		private final Handler handler;
 		private final ServiceFile serviceFile;
@@ -58,19 +50,21 @@ public class FileNameTextViewSetter {
 			this.textView = textView;
 			this.handler = handler;
 			this.serviceFile = serviceFile;
+
+			respondToCancellation(cancellationProxy);
+
+			this.handler.post(this);
 		}
 
 		@Override
-		public void send(Messenger<Void> messenger) {
-			final CancellationProxy cancellationProxy = new CancellationProxy();
-			messenger.cancellationRequested(cancellationProxy);
-
+		public void run() {
 			textView.setText(R.string.lbl_loading);
 
 			SessionConnection.getInstance(textView.getContext()).promiseSessionConnection()
 				.eventually(connectionProvider -> {
-					if (cancellationProxy.isCancelled()) {
-						messenger.sendResolution(null);
+					if (isUpdateCancelled()) {
+						resolve(null);
+						return Promise.empty();
 					}
 
 					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
@@ -85,22 +79,32 @@ public class FileNameTextViewSetter {
 					return filePropertiesPromise;
 				})
 				.eventually(LoopedInPromise.response(properties -> {
+					if (isUpdateCancelled()) {
+						resolve(null);
+						return null;
+					}
+
 					final String fileName = properties.get(FilePropertiesProvider.NAME);
 
 					if (fileName != null)
 						textView.setText(fileName);
 
-					messenger.sendResolution(null);
+					resolve(null);
 					return null;
 				}, handler))
 				.excuse(e -> {
 					if (!(e instanceof CancellationException))
 						logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
 
-					messenger.sendResolution(null);
+					resolve(null);
 
 					return null;
 				});
+		}
+
+		private boolean isUpdateCancelled() {
+			return currentlyPromisedTextViewUpdate != this
+				|| cancellationProxy.isCancelled();
 		}
 	}
 }
