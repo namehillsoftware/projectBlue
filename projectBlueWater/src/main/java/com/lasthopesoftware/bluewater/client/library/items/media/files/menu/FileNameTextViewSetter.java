@@ -15,6 +15,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -25,35 +26,38 @@ public class FileNameTextViewSetter {
 	private final TextView textView;
 	private final Handler handler;
 
-	private volatile Promise<Void> currentlyPromisedTextViewUpdate;
+	private volatile PromisedTextViewUpdate currentlyPromisedTextViewUpdate;
 
 	public FileNameTextViewSetter(TextView textView) {
 		this.textView = textView;
 		this.handler = new Handler(textView.getContext().getMainLooper());
 	}
 
-	public synchronized Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
+	public Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
 		if (currentlyPromisedTextViewUpdate != null)
 			currentlyPromisedTextViewUpdate.cancel();
 
-		return currentlyPromisedTextViewUpdate = new PromisedTextViewUpdate(textView, handler, serviceFile);
+		currentlyPromisedTextViewUpdate = new PromisedTextViewUpdate(serviceFile);
+		currentlyPromisedTextViewUpdate.beginUpdate();
+		return currentlyPromisedTextViewUpdate;
 	}
 
 	private class PromisedTextViewUpdate extends Promise<Void> implements Runnable {
 
 		private final CancellationProxy cancellationProxy = new CancellationProxy();
-		private final TextView textView;
-		private final Handler handler;
 		private final ServiceFile serviceFile;
 
-		PromisedTextViewUpdate(TextView textView, Handler handler, ServiceFile serviceFile) {
-			this.textView = textView;
-			this.handler = handler;
+		PromisedTextViewUpdate(ServiceFile serviceFile) {
 			this.serviceFile = serviceFile;
 
 			respondToCancellation(cancellationProxy);
+		}
 
-			this.handler.post(this);
+		void beginUpdate() {
+			if (handler.getLooper().getThread() == Thread.currentThread())
+				run();
+			else
+				handler.post(this);
 		}
 
 		@Override
@@ -64,7 +68,7 @@ public class FileNameTextViewSetter {
 				.eventually(connectionProvider -> {
 					if (isUpdateCancelled()) {
 						resolve(null);
-						return Promise.empty();
+						return new Promise<>(new HashMap<>());
 					}
 
 					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
