@@ -15,7 +15,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -68,7 +68,7 @@ public class FileNameTextViewSetter {
 				.eventually(connectionProvider -> {
 					if (isUpdateCancelled()) {
 						resolve(null);
-						return new Promise<>(new HashMap<>());
+						return new Promise<>(Collections.emptyMap());
 					}
 
 					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
