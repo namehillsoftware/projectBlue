@@ -11,8 +11,8 @@ import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
-import android.os.*;
 import android.os.Process;
+import android.os.*;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -20,6 +20,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
 import com.annimon.stream.Stream;
+import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
@@ -956,6 +957,10 @@ implements OnAudioFocusChangeListener
 			return;
 		}
 
+		if (exception instanceof ExoPlaybackException) {
+			handleExoPlaybackException((ExoPlaybackException)exception);
+		}
+
 		if (exception instanceof PlaybackException) {
 			handlePlaybackException((PlaybackException)exception);
 			return;
@@ -976,19 +981,32 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void handlePlaybackException(PlaybackException exception) {
-		if (exception.getCause() instanceof IllegalStateException) {
+		final Throwable cause = exception.getCause();
+
+		if (cause instanceof ExoPlaybackException) {
+			handleExoPlaybackException((ExoPlaybackException)cause);
+		}
+
+		if (cause instanceof IllegalStateException) {
 			logger.error("The player ended up in an illegal state - closing and restarting the player", exception);
 			closeAndRestartPlaylistManager();
 
 			return;
 		}
 
-		if (exception.getCause() instanceof IOException) {
+		if (cause instanceof IOException) {
 			handleIoException((IOException)exception.getCause());
 			return;
 		}
 
 		logger.error("An unexpected playback exception occurred", exception);
+	}
+
+	private void handleExoPlaybackException(ExoPlaybackException exception) {
+		logger.error("An ExoPlaybackException occurred");
+
+		if (exception.getCause() != null)
+			uncaughtExceptionHandler(exception.getCause());
 	}
 
 	private void handleIoException(IOException exception) {
