@@ -15,6 +15,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.SocketException;
 import java.util.Collections;
 import java.util.Map;
@@ -94,14 +95,20 @@ public class FileNameTextViewSetter {
 					return resolve();
 				}, handler))
 				.excuse(e -> {
+					if (isUpdateCancelled()) return resolve();
+
 					if (e instanceof CancellationException)	return resolve();
 
 					if (e instanceof SocketException) {
-						final SocketException se = (SocketException)e;
-						final String message = se.getMessage();
-						if (message != null && message.toLowerCase().contains("socket closed")) {
+						final String message = e.getMessage();
+						if (message != null && message.toLowerCase().contains("socket closed"))
 							return resolve();
-						}
+					}
+
+					if (e instanceof IOException) {
+						final String message = e.getMessage();
+						if (message != null && message.toLowerCase().contains("canceled"))
+							return resolve();
 					}
 
 					logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
