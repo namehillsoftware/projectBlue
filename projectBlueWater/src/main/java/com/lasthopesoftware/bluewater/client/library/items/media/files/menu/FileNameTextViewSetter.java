@@ -15,6 +15,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -83,27 +84,35 @@ public class FileNameTextViewSetter {
 					return filePropertiesPromise;
 				})
 				.eventually(LoopedInPromise.response(properties -> {
-					if (isUpdateCancelled()) {
-						resolve(null);
-						return null;
-					}
+					if (isUpdateCancelled()) return resolve();
 
 					final String fileName = properties.get(FilePropertiesProvider.NAME);
 
 					if (fileName != null)
 						textView.setText(fileName);
 
-					resolve(null);
-					return null;
+					return resolve();
 				}, handler))
 				.excuse(e -> {
-					if (!(e instanceof CancellationException))
-						logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
+					if (e instanceof CancellationException)	return resolve();
 
-					resolve(null);
+					if (e instanceof SocketException) {
+						final SocketException se = (SocketException)e;
+						final String message = se.getMessage();
+						if (message != null && message.toLowerCase().contains("socket closed")) {
+							return resolve();
+						}
+					}
 
-					return null;
+					logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
+
+					return resolve();
 				});
+		}
+
+		private Void resolve() {
+			resolve(null);
+			return null;
 		}
 
 		private boolean isUpdateCancelled() {
