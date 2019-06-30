@@ -16,12 +16,13 @@ public class WhenChangingTheMaxVolume {
 		volumeManager = new EmptyFileVolumeManager();
 
 		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager);
+		maxFileVolumeManager.setVolume(.58f);
 		maxFileVolumeManager.setMaxFileVolume(.8f);
 		maxFileVolumeManager.setMaxFileVolume(.47f);
 	}
 
 	@Test
 	public void thenThePlaybackHandlerVolumeIsCorrectlySet() {
-		assertThat(volumeManager.getVolume()).isEqualTo(.47f);
+		assertThat(volumeManager.getVolume()).isEqualTo(.2726f);
 	}
 }
