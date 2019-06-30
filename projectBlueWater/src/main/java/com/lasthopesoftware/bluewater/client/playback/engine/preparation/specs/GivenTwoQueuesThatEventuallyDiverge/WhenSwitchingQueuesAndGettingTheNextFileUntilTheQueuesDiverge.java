@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
@@ -27,7 +27,7 @@ public class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 		expectedPositionedPlayableFile = new PositionedPlayableFile(
 			6,
 			mock(PlayableFile.class),
-			new EmptyFileVolumeManager(),
+			new NoTransformVolumeManager(),
 			new ServiceFile(6));
 
 		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);

@@ -3,18 +3,16 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.s
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.specs.FakeFilePreparer;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class WhenItIsPrepared {
 
@@ -24,7 +22,7 @@ public class WhenItIsPrepared {
 	@BeforeClass
 	public static void establish() throws ExecutionException, InterruptedException {
 		final FakeFilePreparer fakeFilePreparer = new FakeFilePreparer(emptyPlaybackHandler, emptyPlaybackHandler);
-		final MaxFileVolumePreparer maxFileVolumePreparer = new MaxFileVolumePreparer(fakeFilePreparer, mock(ProvideMaxFileVolume.class));
+		final MaxFileVolumePreparer maxFileVolumePreparer = new MaxFileVolumePreparer(fakeFilePreparer, (sf) -> new Promise<>(.89f));
 		returnedFile = new FuturePromise<>(maxFileVolumePreparer.promisePreparedPlaybackFile(
 			new ServiceFile(5),
 			0)).get();
@@ -36,7 +34,7 @@ public class WhenItIsPrepared {
 	}
 
 	@Test
-	public void thenTheVolumeManagerIsAMaxFileVolumeManager() {
-		assertThat(returnedFile.getPlayableFileVolumeManager()).isInstanceOf(MaxFileVolumeManager.class);
+	public void thenTheVolumeIsManagedByTheMaxFileVolumeManager() {
+		assertThat(returnedFile.getPlayableFileVolumeManager().getVolume()).isEqualTo(.89f);
 	}
 }

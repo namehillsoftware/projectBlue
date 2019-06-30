@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStan
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.specs.fakes.FakeVolumeControllerFactory;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenChangingTheVolume {
 
-	private static final EmptyFileVolumeManager volumeManager = new EmptyFileVolumeManager();
+	private static final NoTransformVolumeManager volumeManager = new NoTransformVolumeManager();
 
 	@BeforeClass
 	public static void before() {

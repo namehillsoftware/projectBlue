@@ -41,7 +41,7 @@ public class WhenStartingPlayback {
 			new Promise<>(new PositionedPlayableFile(
 				0,
 				playbackHandler,
-				new EmptyFileVolumeManager(),
+				new NoTransformVolumeManager(),
 				new ServiceFile(1)));
 
 		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
