@@ -4,14 +4,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayable
 
 public class MaxFileVolumeManager implements ManagePlayableFileVolume {
 	private final ManagePlayableFileVolume playableFileVolume;
-	private float unadjustedVolume;
+	private float unadjustedVolume = 1;
 	private float maxFileVolume = 1;
 
-	public MaxFileVolumeManager(ManagePlayableFileVolume playableFileVolume, float initialHandlerVolume) {
+	public MaxFileVolumeManager(ManagePlayableFileVolume playableFileVolume) {
 		this.playableFileVolume = playableFileVolume;
-		this.unadjustedVolume = initialHandlerVolume;
-
-		playableFileVolume.setVolume(initialHandlerVolume);
 	}
 
 	@Override

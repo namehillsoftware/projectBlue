@@ -14,7 +14,7 @@ public class WhenChangingTheMaxVolume {
 
 	@BeforeClass
 	public static void before() {
-		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(playbackHandler, .58f);
+		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(playbackHandler);
 		maxFileVolumeManager.setMaxFileVolume(.8f);
 		maxFileVolumeManager.setVolume(.23f);
 		maxFileVolumeManager.setMaxFileVolume(.47f);

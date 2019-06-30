@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingP
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparer;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -39,7 +40,7 @@ public class WhenGettingAPreparationSource {
 			public int getMaxQueueSize() {
 				return 13;
 			}
-		});
+		}, mock(ProvideMaxFileVolume.class));
 
 		playableFileSource = maxFileVolumePreparationProvider.providePlayableFilePreparationSource();
 	}

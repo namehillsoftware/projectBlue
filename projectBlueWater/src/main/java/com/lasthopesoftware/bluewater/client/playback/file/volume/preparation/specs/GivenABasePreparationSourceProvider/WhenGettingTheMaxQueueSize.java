@@ -2,11 +2,13 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.s
 
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class WhenGettingTheMaxQueueSize {
 
@@ -24,7 +26,7 @@ public class WhenGettingTheMaxQueueSize {
 			public int getMaxQueueSize() {
 				return 13;
 			}
-		});
+		}, mock(ProvideMaxFileVolume.class));
 
 		maxQueueSize = maxFileVolumePreparationProvider.getMaxQueueSize();
 	}

@@ -16,7 +16,7 @@ public class WhenSettingTheVolumeToSixtyFourPercent {
 
 	@BeforeClass
 	public static void before() {
-		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager, 1);
+		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager);
 		returnedVolume = maxFileVolumeManager.setVolume(.64f);
 	}
 

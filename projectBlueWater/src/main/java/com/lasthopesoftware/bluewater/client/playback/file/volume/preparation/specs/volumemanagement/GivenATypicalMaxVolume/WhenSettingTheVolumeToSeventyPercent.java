@@ -18,7 +18,7 @@ public class WhenSettingTheVolumeToSeventyPercent {
 	public static void before() {
 		volumeManager = new EmptyFileVolumeManager();
 
-		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager, 1);
+		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager);
 		maxFileVolumeManager.setMaxFileVolume(.9f);
 		returnedVolume = maxFileVolumeManager.setVolume(.7f);
 	}

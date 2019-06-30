@@ -151,9 +151,9 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	private Promise<PlayingFile> startFilePlayback(PositionedPlayableFile positionedPlayableFile) {
 		volumeManager = volumeControllerFactory.manageVolume(positionedPlayableFile, volume);
+		positionedPlayableFile.getPlayableFileVolumeManager().setVolume(volume);
 
 		final PlayableFile playbackHandler = positionedPlayableFile.getPlayableFile();
-
 		synchronized (stateChangeSync) {
 			final Promise<PlayingFile> promisedPlayback = lastStateChangePromise.eventually(
 				v -> playbackHandler.promisePlayback(),
