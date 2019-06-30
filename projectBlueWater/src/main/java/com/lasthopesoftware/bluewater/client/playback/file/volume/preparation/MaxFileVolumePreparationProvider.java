@@ -13,7 +13,7 @@ public class MaxFileVolumePreparationProvider implements IPlayableFilePreparatio
 
 	@Override
 	public PlayableFilePreparationSource providePlayableFilePreparationSource() {
-		return new MaxFileVolumePreparer();
+		return new MaxFileVolumePreparer(preparationSourceProvider.providePlayableFilePreparationSource());
 	}
 
 	@Override

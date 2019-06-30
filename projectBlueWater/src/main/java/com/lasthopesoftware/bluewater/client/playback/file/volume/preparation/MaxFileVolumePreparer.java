@@ -6,8 +6,22 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class MaxFileVolumePreparer implements PlayableFilePreparationSource {
+
+	private final PlayableFilePreparationSource playableFilePreparationSource;
+
+	public MaxFileVolumePreparer(PlayableFilePreparationSource playableFilePreparationSource) {
+		this.playableFilePreparationSource = playableFilePreparationSource;
+	}
+
 	@Override
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
-		return null;
+		return playableFilePreparationSource
+			.promisePreparedPlaybackFile(serviceFile, preparedAt)
+			.then(ppf -> new PreparedPlayableFile(
+				ppf.getPlaybackHandler(),
+				new MaxFileVolumeManager(
+					ppf.getPlayableFileVolumeManager(),
+					1),
+				ppf.getBufferingPlaybackFile()));
 	}
 }

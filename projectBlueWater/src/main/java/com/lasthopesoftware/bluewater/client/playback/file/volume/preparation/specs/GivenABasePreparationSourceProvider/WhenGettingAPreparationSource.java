@@ -49,18 +49,4 @@ public class WhenGettingAPreparationSource {
 		assertThat(playableFileSource).isInstanceOf(MaxFileVolumePreparer.class);
 	}
 
-	private static class ReportingPlayableFileVolumeManager implements ManagePlayableFileVolume {
-
-		public float volume;
-
-		@Override
-		public float setVolume(float volume) {
-			return this.volume = volume;
-		}
-
-		@Override
-		public float getVolume() {
-			return volume;
-		}
-	}
 }
