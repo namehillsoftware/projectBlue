@@ -6,8 +6,12 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MaxFileVolumePreparer implements PlayableFilePreparationSource {
+
+	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumePreparer.class);
 
 	private final PlayableFilePreparationSource playableFilePreparationSource;
 	private final ProvideMaxFileVolume provideMaxFileVolume;
@@ -27,7 +31,8 @@ public class MaxFileVolumePreparer implements PlayableFilePreparationSource {
 				final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(ppf.getPlayableFileVolumeManager());
 
 				promisedMaxFileVolume
-					.then(new VoidResponse<>(maxFileVolumeManager::setMaxFileVolume));
+					.then(new VoidResponse<>(maxFileVolumeManager::setMaxFileVolume))
+					.excuse(new VoidResponse<>(err ->logger.warn("There was an error getting the max file volume for file " + serviceFile, err)));
 
 				return new PreparedPlayableFile(
 					ppf.getPlaybackHandler(),
