@@ -1,8 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation;
 
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MaxFileVolumeManager implements ManagePlayableFileVolume {
+	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumeManager.class);
+
 	private final ManagePlayableFileVolume playableFileVolume;
 	private float unadjustedVolume = 1;
 	private float maxFileVolume = 1;
@@ -15,6 +19,7 @@ public class MaxFileVolumeManager implements ManagePlayableFileVolume {
 	public float setVolume(float volume) {
 		unadjustedVolume = volume;
 		final float adjustedVolume = maxFileVolume * volume;
+		logger.debug("Volume set to " + volume + ", adjusted volume set to " + adjustedVolume);
 		playableFileVolume.setVolume(adjustedVolume);
 		return adjustedVolume;
 	}
@@ -25,6 +30,7 @@ public class MaxFileVolumeManager implements ManagePlayableFileVolume {
 	}
 
 	public void setMaxFileVolume(float maxFileVolume) {
+		logger.debug("Max file volume set to " + maxFileVolume);
 		this.maxFileVolume = maxFileVolume;
 		setVolume(unadjustedVolume);
 	}
