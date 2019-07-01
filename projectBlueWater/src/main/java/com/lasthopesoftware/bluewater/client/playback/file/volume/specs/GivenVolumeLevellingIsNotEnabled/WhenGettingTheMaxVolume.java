@@ -35,7 +35,7 @@ public class WhenGettingTheMaxVolume {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		maxFileVolumeProvider
-			.getMaxFileVolume(new ServiceFile(1))
+			.promiseMaxFileVolume(new ServiceFile(1))
 			.then(volume -> {
 				returnedVolume = volume;
 				countDownLatch.countDown();

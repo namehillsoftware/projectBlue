@@ -32,7 +32,7 @@ public class DiskFileAccessTimeUpdater implements IDiskFileAccessTimeUpdater {
 	private void doFileAccessedUpdate(final long cachedFileId) {
 		final long updateTime = System.currentTimeMillis();
 
-		logger.info("Updating accessed time on cached serviceFile with ID " + cachedFileId + " to " + new Date(updateTime));
+		logger.info("Updating accessed time on cached file with ID " + cachedFileId + " to " + new Date(updateTime));
 
 		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
@@ -44,7 +44,7 @@ public class DiskFileAccessTimeUpdater implements IDiskFileAccessTimeUpdater {
 
 				closeableTransaction.setTransactionSuccessful();
 			} catch (SQLException sqlException) {
-				logger.error("There was an error trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
+				logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
 				throw sqlException;
 			}
 		}

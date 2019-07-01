@@ -8,7 +8,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MaxFileVolumeProvider {
+public class MaxFileVolumeProvider implements ProvideMaxFileVolume {
 
 	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumeProvider.class);
 
@@ -30,7 +30,8 @@ public class MaxFileVolumeProvider {
 		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
 	}
 
-	public Promise<Float> getMaxFileVolume(ServiceFile serviceFile) {
+	@Override
+	public Promise<Float> promiseMaxFileVolume(ServiceFile serviceFile) {
 		if (!volumeLevelSettings.isVolumeLevellingEnabled())
 			return promisedUnityVolume;
 

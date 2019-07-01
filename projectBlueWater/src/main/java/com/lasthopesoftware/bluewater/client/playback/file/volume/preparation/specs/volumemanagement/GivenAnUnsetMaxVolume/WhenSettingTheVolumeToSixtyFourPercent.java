@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenAnUnsetMaxVolume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.specs.volumemanagement.GivenAnUnsetMaxVolume;
 
 
-import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerMaxVolumeModifier;
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -11,13 +11,13 @@ import static org.assertj.core.api.Assertions.offset;
 
 public class WhenSettingTheVolumeToSixtyFourPercent {
 
-	private static final EmptyFileVolumeManager volumeManager = new EmptyFileVolumeManager();
+	private static final NoTransformVolumeManager volumeManager = new NoTransformVolumeManager();
 	private static float returnedVolume;
 
 	@BeforeClass
 	public static void before() {
-		final PlaybackHandlerMaxVolumeModifier playbackHandlerMaxVolumeModifier = new PlaybackHandlerMaxVolumeModifier(volumeManager, 1);
-		returnedVolume = playbackHandlerMaxVolumeModifier.setVolume(.64f);
+		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager);
+		returnedVolume = maxFileVolumeManager.setVolume(.64f);
 	}
 
 	@Test
