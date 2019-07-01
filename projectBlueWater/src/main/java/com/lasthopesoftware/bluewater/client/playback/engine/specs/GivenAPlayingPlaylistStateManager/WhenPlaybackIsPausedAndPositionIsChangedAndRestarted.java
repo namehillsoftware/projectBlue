@@ -15,11 +15,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -61,7 +61,7 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f), mock(IPlaybackHandlerVolumeControllerFactory.class)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
 
 		playbackEngine
 			.setOnPlayingFileChanged(f -> positionedFiles.add(f))

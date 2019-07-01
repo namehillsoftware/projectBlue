@@ -13,3 +13,4 @@ charset = utf-8
 [*.{java,kt,gradle}]
 indent_style = tab
 trim_trailing_whitespace = true
+indent_size = tab
