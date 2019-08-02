@@ -91,7 +91,10 @@ implements
 
 		exoPlayer.addListener(this);
 
-		if (cancellationToken.isCancelled()) return;
+		if (cancellationToken.isCancelled()) {
+			bufferingExoPlayer = null;
+			return;
+		}
 
 		final MediaSource mediaSource =
 			mediaSourceProvider.getNewMediaSource(uri);
