@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class WhenBuildingTheEngine {
 			new PreparedPlaybackQueueFeederBuilder(
 				mock(Context.class),
 				mock(Handler.class),
-				mock(ExtractorMediaSourceFactoryProvider.class),
+				mock(MediaSourceProvider.class),
 				mock(BestMatchUriProvider.class));
 
 		engine = playbackEngineBuilder.build(new Library());

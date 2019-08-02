@@ -1,46 +1,109 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
+import android.net.Uri;
+import android.os.Handler;
 import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderingEventListener;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.MetadataOutputLogger;
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.TextOutputLogger;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager;
-import com.namehillsoftware.handoff.Messenger;
+import com.lasthopesoftware.compilation.DebugFlag;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CancellationException;
 
-final class ExoPlayerPreparationHandler
+final class PromisePreparedExoPlayer
+extends
+	Promise<PreparedPlayableFile>
 implements
 	Player.EventListener,
 	Runnable {
 
+	private static final CreateAndHold<TextOutputLogger> lazyTextOutputLogger = new Lazy<>(TextOutputLogger::new);
+	private static final CreateAndHold<MetadataOutputLogger> lazyMetadataOutputLogger = new Lazy<>(MetadataOutputLogger::new);
+
 	private static final Logger logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler.class);
 
 	private final ExoPlayer exoPlayer;
-	private final Messenger<PreparedPlayableFile> messenger;
 	private final MediaCodecAudioRenderer[] audioRenderers;
 	private final BufferingExoPlayer bufferingExoPlayer;
 	private final long prepareAt;
-	private final CancellationToken cancellationToken;
+	private final CancellationToken cancellationToken = new CancellationToken();
 
 	private boolean isResolved;
 
-	ExoPlayerPreparationHandler(ExoPlayer exoPlayer, MediaCodecAudioRenderer[] audioRenderers, BufferingExoPlayer bufferingExoPlayer, long prepareAt, Messenger<PreparedPlayableFile> messenger, CancellationToken cancellationToken) {
-		this.exoPlayer = exoPlayer;
-		this.audioRenderers = audioRenderers;
-		this.bufferingExoPlayer = bufferingExoPlayer;
+	PromisePreparedExoPlayer(MediaSourceProvider mediaSourceProvider,
+							 TrackSelector trackSelector,
+							 LoadControl loadControl,
+							 RenderersFactory renderersFactory,
+							 Handler handler,
+							 Uri uri,
+							 long prepareAt) {
+
+		respondToCancellation(this);
+
 		this.prepareAt = prepareAt;
-		this.messenger = messenger;
-		this.cancellationToken = cancellationToken;
-		messenger.cancellationRequested(this);
+
+		if (cancellationToken.isCancelled()) {
+			reject(new CancellationException());
+			exoPlayer = null;
+			audioRenderers = null;
+			bufferingExoPlayer = null;
+			return;
+		}
+
+		audioRenderers =
+			(MediaCodecAudioRenderer[]) renderersFactory.createRenderers(
+				handler,
+				null,
+				DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
+				lazyTextOutputLogger.getObject(),
+				lazyMetadataOutputLogger.getObject(),
+				null);
+
+		exoPlayer = ExoPlayerFactory.newInstance(
+			audioRenderers,
+			trackSelector,
+			loadControl);
+
+		if (cancellationToken.isCancelled()) {
+			reject(new CancellationException());
+			bufferingExoPlayer = null;
+			return;
+		}
+
+
+		exoPlayer.addListener(this);
+
+		if (cancellationToken.isCancelled()) return;
+
+		final MediaSource mediaSource =
+			mediaSourceProvider.getNewMediaSource(uri);
+
+		bufferingExoPlayer = new BufferingExoPlayer();
+		mediaSource.addEventListener(handler, bufferingExoPlayer);
+
+		try {
+			exoPlayer.prepare(mediaSource);
+		} catch (IllegalStateException e) {
+			reject(e);
+		}
 
 		bufferingExoPlayer.promiseBufferedPlaybackFile()
 			.excuse(e -> {
@@ -53,9 +116,9 @@ implements
 	public void run() {
 		cancellationToken.run();
 
-		exoPlayer.release();
+		if (exoPlayer != null) exoPlayer.release();
 
-		messenger.sendRejection(new CancellationException());
+		reject(new CancellationException());
 	}
 
 	@Override
@@ -81,7 +144,7 @@ implements
 		isResolved = true;
 
 		exoPlayer.removeListener(this);
-		messenger.sendResolution(
+		resolve(
 			new PreparedPlayableFile(
 				new ExoPlayerPlaybackHandler(exoPlayer),
 				new AudioTrackVolumeManager(exoPlayer, audioRenderers),
@@ -116,6 +179,6 @@ implements
 
 		exoPlayer.stop();
 		exoPlayer.release();
-		messenger.sendRejection(new PlaybackException(new EmptyPlaybackHandler(0), error));
+		reject(new PlaybackException(new EmptyPlaybackHandler(0), error));
 	}
 }

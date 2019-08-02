@@ -10,7 +10,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderersFactory;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -25,14 +25,14 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 
 	private final Handler handler;
 	private final BestMatchUriProvider bestMatchUriProvider;
-	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
+	private final MediaSourceProvider mediaSourceProvider;
 	private final RenderersFactory renderersFactory;
 
-	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider, BestMatchUriProvider bestMatchUriProvider) {
+	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, MediaSourceProvider mediaSourceProvider, BestMatchUriProvider bestMatchUriProvider) {
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
-		this.extractorMediaSourceFactoryProvider = extractorMediaSourceFactoryProvider;
+		this.mediaSourceProvider = mediaSourceProvider;
 
 		renderersFactory = new AudioRenderersFactory(context);
 	}
@@ -45,7 +45,7 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	@Override
 	public PlayableFilePreparationSource providePlayableFilePreparationSource() {
 		return new ExoPlayerPlaybackPreparer(
-			extractorMediaSourceFactoryProvider,
+			mediaSourceProvider,
 			trackSelector.getObject(),
 			loadControl.getObject(),
 			renderersFactory,
