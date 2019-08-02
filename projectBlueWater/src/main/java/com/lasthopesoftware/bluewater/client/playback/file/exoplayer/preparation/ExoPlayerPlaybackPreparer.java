@@ -106,6 +106,8 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 							.getFactory(uri)
 							.createMediaSource(uri);
 
+					mediaSource.addEventListener(handler, bufferingExoPlayer);
+
 					try {
 						exoPlayer.prepare(mediaSource);
 					} catch (IllegalStateException e) {
