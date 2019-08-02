@@ -107,6 +107,7 @@ final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 							.createMediaSource(uri);
 
 					try {
+						mediaSource.addEventListener(handler, bufferingExoPlayer);
 						exoPlayer.prepare(mediaSource);
 					} catch (IllegalStateException e) {
 						messenger.sendRejection(e);
