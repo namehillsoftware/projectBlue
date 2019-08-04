@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.net.Uri;
 import android.os.Handler;
+import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -15,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager;
 import com.lasthopesoftware.compilation.DebugFlag;
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CancellationException;
 
-final class PromisePreparedExoPlayer
+final class PreparedExoPlayerPromise
 extends
 	Promise<PreparedPlayableFile>
 implements
@@ -48,7 +49,7 @@ implements
 
 	private boolean isResolved;
 
-	PromisePreparedExoPlayer(MediaSourceProvider mediaSourceProvider,
+	PreparedExoPlayerPromise(SpawnMediaSources mediaSourceProvider,
 							 TrackSelector trackSelector,
 							 LoadControl loadControl,
 							 RenderersFactory renderersFactory,
@@ -69,18 +70,22 @@ implements
 		}
 
 		audioRenderers =
-			(MediaCodecAudioRenderer[]) renderersFactory.createRenderers(
+			Stream.of(renderersFactory.createRenderers(
 				handler,
 				null,
 				DebugFlag.getInstance().isDebugCompilation() ? new AudioRenderingEventListener() : null,
 				lazyTextOutputLogger.getObject(),
 				lazyMetadataOutputLogger.getObject(),
-				null);
+				null))
+				.filter(r -> r instanceof MediaCodecAudioRenderer)
+				.map(r -> (MediaCodecAudioRenderer)r)
+				.toArray(MediaCodecAudioRenderer[]::new);
 
 		exoPlayer = ExoPlayerFactory.newInstance(
 			audioRenderers,
 			trackSelector,
-			loadControl);
+			loadControl,
+			handler.getLooper());
 
 		if (cancellationToken.isCancelled()) {
 			reject(new CancellationException());

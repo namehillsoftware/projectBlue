@@ -3,6 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 import android.net.Uri;
 import com.google.android.exoplayer2.source.MediaSource;
 
-interface SpawnMediaSources {
+public interface SpawnMediaSources {
 	MediaSource getNewMediaSource(Uri uri);
 }
