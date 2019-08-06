@@ -152,9 +152,6 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap);
 		mediaSession.setMetadata(mediaMetadata = metadataBuilder.build());
 
-		// Track the remote client bitmap and recycle it in case the remote control client
-		// does not properly recycle the bitmap
-		if (remoteClientBitmap != null) remoteClientBitmap.recycle();
 		remoteClientBitmap = bitmap;
 
 		return null;

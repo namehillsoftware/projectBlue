@@ -610,17 +610,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 
 		void release() {
-			if (promisedNowPlayingImage == null) return;
-
-			promisedNowPlayingImage
-				.then(bitmap -> {
-					if (bitmap != null)
-						bitmap.recycle();
-
-					return null;
-				});
-
-			promisedNowPlayingImage.cancel();
+			if (promisedNowPlayingImage != null)
+				promisedNowPlayingImage.cancel();
 		}
 	}
 }
