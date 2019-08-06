@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeMan
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 import org.slf4j.Logger;
@@ -34,7 +35,8 @@ extends
 	Promise<PreparedPlayableFile>
 implements
 	Player.EventListener,
-	Runnable {
+	Runnable,
+	ImmediateResponse<Throwable, Void> {
 
 	private static final CreateAndHold<TextOutputLogger> lazyTextOutputLogger = new Lazy<>(TextOutputLogger::new);
 	private static final CreateAndHold<MetadataOutputLogger> lazyMetadataOutputLogger = new Lazy<>(MetadataOutputLogger::new);
@@ -113,11 +115,7 @@ implements
 			reject(e);
 		}
 
-		bufferingExoPlayer.promiseBufferedPlaybackFile()
-			.excuse(e -> {
-				handleError(e);
-				return null;
-			});
+		bufferingExoPlayer.promiseBufferedPlaybackFile().excuse(this);
 	}
 
 	@Override
@@ -188,5 +186,11 @@ implements
 		exoPlayer.stop();
 		exoPlayer.release();
 		reject(new PlaybackException(new EmptyPlaybackHandler(0), error));
+	}
+
+	@Override
+	public Void respond(Throwable throwable) {
+		handleError(throwable);
+		return null;
 	}
 }
