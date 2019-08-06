@@ -64,12 +64,4 @@ public class AboutActivity extends AppCompatActivity implements View.OnLongClick
 		startActivity(lazyHiddenSettingsActivityIntentBuilder.getObject().buildHiddenSettingsIntent());
 		return true;
 	}
-
-	@Override
-	protected void onDestroy() {
-		if (lazyLogoBitmap.isCreated())
-			lazyLogoBitmap.getObject().recycle();
-
-		super.onDestroy();
-	}
 }

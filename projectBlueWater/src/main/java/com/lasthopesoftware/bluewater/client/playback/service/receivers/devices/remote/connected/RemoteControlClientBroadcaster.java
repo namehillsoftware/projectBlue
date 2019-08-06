@@ -116,9 +116,6 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 		final RemoteControlClient.MetadataEditor metaData = remoteControlClient.editMetadata(false);
 		metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
 
-		// Track the remote client bitmap and recycle it in case the remote control client
-		// does not properly recycle the bitmap
-		if (remoteClientBitmap != null) remoteClientBitmap.recycle();
 		remoteClientBitmap = bitmap;
 
 		return null;

@@ -102,8 +102,6 @@ public class FileDetailsActivity extends AppCompatActivity {
     private LazyViewFinder<TextView> artistTextViewFinder = new LazyViewFinder<>(this, R.id.tvArtist);
 	private final Lazy<DefaultImageProvider> defaultImageProvider = new Lazy<>(() -> new DefaultImageProvider(this));
 
-	private boolean isDestroyed;
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -207,13 +205,6 @@ public class FileDetailsActivity extends AppCompatActivity {
 					? new Promise<>(bitmap)
 					: defaultImageProvider.getObject().promiseFileBitmap())
 			.eventually(LoopedInPromise.response(new VoidResponse<>(result -> {
-				if (mFileImage != null) mFileImage.recycle();
-
-				if (isDestroyed) {
-					if (result != null) result.recycle();
-					return;
-				}
-
 				mFileImage = result;
 
 				imgFileThumbnailBuilder.getObject().setImageBitmap(result);
@@ -257,19 +248,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    switch (item.getItemId()) {
-	    case android.R.id.home:
-	        this.finish();
-	        return true;
-	    }
+		if (item.getItemId() == android.R.id.home) {
+			this.finish();
+			return true;
+		}
 	    return super.onOptionsItemSelected(item);
-	}
-
-	@Override
-	public void onDestroy() {
-		isDestroyed = true;
-		if (mFileImage != null) mFileImage.recycle();
-
-		super.onDestroy();
 	}
 }
