@@ -95,7 +95,6 @@ implements
 			return;
 		}
 
-
 		exoPlayer.addListener(this);
 
 		if (cancellationToken.isCancelled()) {
