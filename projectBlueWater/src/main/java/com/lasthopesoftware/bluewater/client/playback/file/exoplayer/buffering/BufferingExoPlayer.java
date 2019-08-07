@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering;
 
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MediaSourceEventListener;
@@ -17,20 +18,16 @@ implements
 	MediaSourceEventListener
 {
 	private static final Logger logger = LoggerFactory.getLogger(BufferingExoPlayer.class);
-
-	private boolean isTransferComplete;
-	private Exception loadError;
+	private final MediaSource mediaSource;
 
 	@Override
 	public Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile() {
 		return this;
 	}
 
-	public BufferingExoPlayer() {
-		if (isTransferComplete)
-			resolve(this);
-		if (loadError != null)
-			reject(loadError);
+	public BufferingExoPlayer(Handler handler, MediaSource mediaSource) {
+		this.mediaSource = mediaSource;
+		mediaSource.addEventListener(handler, this);
 	}
 
 	@Override
@@ -50,8 +47,8 @@ implements
 
 	@Override
 	public void onLoadCompleted(int windowIndex, @Nullable MediaSource.MediaPeriodId mediaPeriodId, LoadEventInfo loadEventInfo, MediaLoadData mediaLoadData) {
-		isTransferComplete = true;
 		resolve(this);
+		mediaSource.removeEventListener(this);
 	}
 
 	@Override
@@ -62,8 +59,8 @@ implements
 	@Override
 	public void onLoadError(int windowIndex, @Nullable MediaSource.MediaPeriodId mediaPeriodId, LoadEventInfo loadEventInfo, MediaLoadData mediaLoadData, IOException error, boolean wasCanceled) {
 		logger.error("An error occurred during playback buffering", error);
-		loadError = error;
 		reject(error);
+		mediaSource.removeEventListener(this);
 	}
 
 	@Override
