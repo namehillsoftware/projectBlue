@@ -90,7 +90,6 @@ implements
 			handler.getLooper());
 
 		if (cancellationToken.isCancelled()) {
-			reject(new CancellationException());
 			bufferingExoPlayer = null;
 			return;
 		}
@@ -102,11 +101,9 @@ implements
 			return;
 		}
 
-		final MediaSource mediaSource =
-			mediaSourceProvider.getNewMediaSource(uri);
+		final MediaSource mediaSource = mediaSourceProvider.getNewMediaSource(uri);
 
-		bufferingExoPlayer = new BufferingExoPlayer();
-		mediaSource.addEventListener(handler, bufferingExoPlayer);
+		bufferingExoPlayer = new BufferingExoPlayer(handler, mediaSource);
 
 		try {
 			exoPlayer.prepare(mediaSource);
