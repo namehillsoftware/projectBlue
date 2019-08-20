@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -136,17 +137,8 @@ implements
 		}
 
 		void release() {
-			if (promisedNowPlayingImage == null) return;
-
-			promisedNowPlayingImage
-				.then(bitmap -> {
-					if (bitmap != null)
-						bitmap.recycle();
-
-					return null;
-				});
-
-			promisedNowPlayingImage.cancel();
+			if (promisedNowPlayingImage != null)
+				promisedNowPlayingImage.cancel();
 		}
 	}
 }

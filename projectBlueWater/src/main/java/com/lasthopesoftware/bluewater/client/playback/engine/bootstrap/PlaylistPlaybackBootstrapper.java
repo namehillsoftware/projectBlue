@@ -3,28 +3,25 @@ package com.lasthopesoftware.bluewater.client.playback.engine.bootstrap;
 import com.lasthopesoftware.bluewater.client.playback.engine.ActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.IActivePlayer;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
 import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.PlayableFilePlayer;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 
 public final class PlaylistPlaybackBootstrapper implements StartAndClosePlayback {
 
 	private final PlaylistVolumeManager volumeManagement;
-	private final IPlaybackHandlerVolumeControllerFactory volumeControllerFactory;
 
 	private PlayableFilePlayer playlistPlayer;
 	private ActivePlayer activePlayer;
 
-	public PlaylistPlaybackBootstrapper(PlaylistVolumeManager volumeManagement, IPlaybackHandlerVolumeControllerFactory volumeControllerFactory) {
+	public PlaylistPlaybackBootstrapper(PlaylistVolumeManager volumeManagement) {
 		this.volumeManagement = volumeManagement;
-		this.volumeControllerFactory = volumeControllerFactory;
 	}
 
 	@Override
 	public IActivePlayer startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) {
 		close();
 
-		playlistPlayer = new PlayableFilePlayer(preparedPlaybackQueue, volumeControllerFactory, filePosition);
+		playlistPlayer = new PlayableFilePlayer(preparedPlaybackQueue, filePosition);
 		activePlayer = new ActivePlayer(playlistPlayer, volumeManagement);
 
 		return activePlayer;

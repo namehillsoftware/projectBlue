@@ -1,9 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource;
 
 import android.net.Uri;
+
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.extractor.mp3.Mp3Extractor;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
 import com.google.android.exoplayer2.upstream.FileDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
@@ -15,7 +17,7 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-public class ExtractorMediaSourceFactoryProvider implements ProvideMediaSourceFactories {
+public class MediaSourceProvider implements SpawnMediaSources {
 
 	private static final CreateAndHold<ExtractorsFactory> extractorsFactory = new Lazy<>(() -> Mp3Extractor.FACTORY);
 
@@ -30,7 +32,7 @@ public class ExtractorMediaSourceFactoryProvider implements ProvideMediaSourceFa
 
 	private final CreateAndHold<ExtractorMediaSource.Factory> lazyRemoteExtractorFactory;
 
-	public ExtractorMediaSourceFactoryProvider(Library library, ProvideHttpDataSourceFactory dataSourceFactoryProvider, Cache cache) {
+	public MediaSourceProvider(Library library, ProvideHttpDataSourceFactory dataSourceFactoryProvider, Cache cache) {
 
 		lazyRemoteExtractorFactory = new AbstractSynchronousLazy<ExtractorMediaSource.Factory>() {
 			@Override
@@ -50,7 +52,11 @@ public class ExtractorMediaSourceFactoryProvider implements ProvideMediaSourceFa
 	}
 
 	@Override
-	public ExtractorMediaSource.Factory getFactory(Uri uri) {
+	public MediaSource getNewMediaSource(Uri uri) {
+		return getFactory(uri).createMediaSource(uri);
+	}
+
+	private ExtractorMediaSource.Factory getFactory(Uri uri) {
 		return IoCommon.FileUriScheme.equalsIgnoreCase(uri.getScheme())
 			? lazyFileExtractorFactory.getObject()
 			: lazyRemoteExtractorFactory.getObject();

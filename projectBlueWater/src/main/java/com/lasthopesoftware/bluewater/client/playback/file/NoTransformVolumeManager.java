@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 
 
-public class EmptyFileVolumeManager implements ManagePlayableFileVolume {
+public class NoTransformVolumeManager implements ManagePlayableFileVolume {
 	private float volume;
 
 	@Override

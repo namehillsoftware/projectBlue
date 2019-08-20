@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.media.MediaMetadataEditor;
 import android.media.MediaMetadataRetriever;
 import android.media.RemoteControlClient;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -12,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,9 +118,6 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 		final RemoteControlClient.MetadataEditor metaData = remoteControlClient.editMetadata(false);
 		metaData.putBitmap(MediaMetadataEditor.BITMAP_KEY_ARTWORK, bitmap).apply();
 
-		// Track the remote client bitmap and recycle it in case the remote control client
-		// does not properly recycle the bitmap
-		if (remoteClientBitmap != null) remoteClientBitmap.recycle();
 		remoteClientBitmap = bitmap;
 
 		return null;

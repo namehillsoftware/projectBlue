@@ -6,7 +6,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.QueueMediaSources;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 
@@ -15,7 +15,7 @@ public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayable
 
 	private final Handler handler;
 	private final BestMatchUriProvider bestMatchUriProvider;
-	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
+	private final SpawnMediaSources extractorMediaSourceFactoryProvider;
 	private final ManagePlayableFileVolume playableFileVolumeManager;
 	private final ExoPlayer exoPlayer;
 	private final QueueMediaSources mediaSourcesQueue;
@@ -23,7 +23,7 @@ public class SingleExoPlayerSourcePreparationSourceProvider implements IPlayable
 	public SingleExoPlayerSourcePreparationSourceProvider(
 		Handler handler,
 		BestMatchUriProvider bestMatchUriProvider,
-		ExtractorMediaSourceFactoryProvider mediaSourceFactoryProvider,
+		SpawnMediaSources mediaSourceFactoryProvider,
 		ExoPlayer exoPlayer,
 		QueueMediaSources mediaSourcesQueue,
 		ManagePlayableFileVolume playableFileVolumeManager) {

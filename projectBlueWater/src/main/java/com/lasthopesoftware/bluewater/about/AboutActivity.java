@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.lasthopesoftware.bluewater.BuildConfig;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder;
@@ -63,13 +64,5 @@ public class AboutActivity extends AppCompatActivity implements View.OnLongClick
 	public boolean onLongClick(View v) {
 		startActivity(lazyHiddenSettingsActivityIntentBuilder.getObject().buildHiddenSettingsIntent());
 		return true;
-	}
-
-	@Override
-	protected void onDestroy() {
-		if (lazyLogoBitmap.isCreated())
-			lazyLogoBitmap.getObject().recycle();
-
-		super.onDestroy();
 	}
 }

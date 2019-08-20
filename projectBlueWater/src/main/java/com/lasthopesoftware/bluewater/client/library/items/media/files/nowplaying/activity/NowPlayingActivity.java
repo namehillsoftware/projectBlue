@@ -1,6 +1,11 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity;
 
-import android.content.*;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.os.Build;
@@ -11,8 +16,14 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.*;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
@@ -49,6 +60,7 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
@@ -610,17 +622,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 
 		void release() {
-			if (promisedNowPlayingImage == null) return;
-
-			promisedNowPlayingImage
-				.then(bitmap -> {
-					if (bitmap != null)
-						bitmap.recycle();
-
-					return null;
-				});
-
-			promisedNowPlayingImage.cancel();
+			if (promisedNowPlayingImage != null)
+				promisedNowPlayingImage.cancel();
 		}
 	}
 }

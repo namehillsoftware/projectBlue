@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeP
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -57,7 +58,7 @@ public class WhenGettingTheMaxVolume {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		maxFileVolumeProvider
-			.getMaxFileVolume(new ServiceFile(1))
+			.promiseMaxFileVolume(new ServiceFile(1))
 			.then(volume -> {
 				returnedVolume = volume;
 				countDownLatch.countDown();

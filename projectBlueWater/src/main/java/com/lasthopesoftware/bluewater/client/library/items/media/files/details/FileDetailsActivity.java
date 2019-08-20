@@ -15,6 +15,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
@@ -39,11 +40,17 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
@@ -101,8 +108,6 @@ public class FileDetailsActivity extends AppCompatActivity {
     private LazyViewFinder<TextView> fileNameTextViewFinder = new LazyViewFinder<>(this, R.id.tvFileName);
     private LazyViewFinder<TextView> artistTextViewFinder = new LazyViewFinder<>(this, R.id.tvArtist);
 	private final Lazy<DefaultImageProvider> defaultImageProvider = new Lazy<>(() -> new DefaultImageProvider(this));
-
-	private boolean isDestroyed;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -207,13 +212,6 @@ public class FileDetailsActivity extends AppCompatActivity {
 					? new Promise<>(bitmap)
 					: defaultImageProvider.getObject().promiseFileBitmap())
 			.eventually(LoopedInPromise.response(new VoidResponse<>(result -> {
-				if (mFileImage != null) mFileImage.recycle();
-
-				if (isDestroyed) {
-					if (result != null) result.recycle();
-					return;
-				}
-
 				mFileImage = result;
 
 				imgFileThumbnailBuilder.getObject().setImageBitmap(result);
@@ -257,19 +255,10 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    switch (item.getItemId()) {
-	    case android.R.id.home:
-	        this.finish();
-	        return true;
-	    }
+		if (item.getItemId() == android.R.id.home) {
+			this.finish();
+			return true;
+		}
 	    return super.onOptionsItemSelected(item);
-	}
-
-	@Override
-	public void onDestroy() {
-		isDestroyed = true;
-		if (mFileImage != null) mFileImage.recycle();
-
-		super.onDestroy();
 	}
 }

@@ -13,8 +13,8 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistRe
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ManagePlaybackQueues;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.EmptyFileVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
@@ -22,8 +22,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.observables.ConnectableObservable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +30,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observables.ConnectableObservable;
 
 public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineBroadcaster, AutoCloseable {
 
@@ -231,7 +233,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 					saveStateToLibrary(
 						new PositionedPlayingFile(
 							new EmptyPlaybackHandler(0),
-							new EmptyFileVolumeManager(),
+							new NoTransformVolumeManager(),
 							preparationException.getPositionedFile()));
 				}
 

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.cached.p
 
 import android.content.Context;
 import android.database.SQLException;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.CacheFlusherTask;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.ICachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
@@ -14,6 +15,7 @@ import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +91,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 
 							closeableTransaction.setTransactionSuccessful();
 						} catch (SQLException sqlException) {
-							logger.warn("There was an error inserting the cached serviceFile with the unique key " + uniqueKey, sqlException);
+							logger.warn("There was an error inserting the cached file with the unique key " + uniqueKey, sqlException);
 							throw sqlException;
 						}
 					} finally {
@@ -109,7 +111,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-					logger.info("Updating serviceFile name of cached serviceFile with ID " + cachedFileId + " to " + cachedFilePath);
+					logger.info("Updating file name of cached file with ID " + cachedFileId + " to " + cachedFilePath);
 
 					repositoryAccessHelper
 						.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME + " WHERE id = @id")
@@ -119,7 +121,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 
 					closeableTransaction.setTransactionSuccessful();
 				} catch (SQLException sqlException) {
-					logger.error("There was an error trying to update the cached serviceFile with ID " + cachedFileId, sqlException);
+					logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
 					throw sqlException;
 				}
 			}

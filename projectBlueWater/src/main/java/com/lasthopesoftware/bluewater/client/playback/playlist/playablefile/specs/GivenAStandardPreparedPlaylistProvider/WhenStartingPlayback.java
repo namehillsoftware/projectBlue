@@ -2,17 +2,23 @@ package com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.spe
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.*;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.IPlaybackHandlerVolumeControllerFactory;
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.playablefile.PlayableFilePlayer;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
-import io.reactivex.Observable;
+
 import org.joda.time.Duration;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+
+import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -41,7 +47,7 @@ public class WhenStartingPlayback {
 			new Promise<>(new PositionedPlayableFile(
 				0,
 				playbackHandler,
-				new EmptyFileVolumeManager(),
+				new NoTransformVolumeManager(),
 				new ServiceFile(1)));
 
 		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
@@ -54,7 +60,7 @@ public class WhenStartingPlayback {
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null);
 
-		Observable.create(new PlayableFilePlayer(preparedPlaybackFileQueue, mock(IPlaybackHandlerVolumeControllerFactory.class), 0))
+		Observable.create(new PlayableFilePlayer(preparedPlaybackFileQueue, 0))
 			.toList().subscribe(positionedPlayingFiles -> this.positionedPlayingFiles = positionedPlayingFiles);
 	}
 

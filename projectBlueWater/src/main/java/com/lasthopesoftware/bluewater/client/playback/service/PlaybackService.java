@@ -4,23 +4,39 @@ package com.lasthopesoftware.bluewater.client.playback.service;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.*;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.Process;
-import android.os.*;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.widget.Toast;
+
 import com.annimon.stream.Stream;
-import com.google.android.exoplayer2.*;
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.Renderer;
+import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
@@ -67,14 +83,20 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
-import com.lasthopesoftware.bluewater.client.playback.file.*;
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.PlaybackHandlerVolumeControllerFactory;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.*;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup;
@@ -119,11 +141,7 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-import io.reactivex.Observable;
-import io.reactivex.Scheduler;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.schedulers.RxThreadFactory;
-import io.reactivex.internal.schedulers.SingleScheduler;
+
 import org.joda.time.Duration;
 import org.joda.time.Minutes;
 import org.slf4j.Logger;
@@ -135,6 +153,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.schedulers.RxThreadFactory;
+import io.reactivex.internal.schedulers.SingleScheduler;
 
 import static android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY;
 
@@ -851,9 +875,7 @@ implements OnAudioFocusChangeListener
 					playlistPlaybackBootstrapper.close();
 
 				playlistPlaybackBootstrapper = new PlaylistPlaybackBootstrapper(
-					lazyPlaylistVolumeManager.getObject(),
-					new PlaybackHandlerVolumeControllerFactory(
-						new MaxFileVolumeProvider(lazyVolumeLevelSettings.getObject(), cachedFilePropertiesProvider)));
+					lazyPlaylistVolumeManager.getObject());
 
 				final StoredFileAccess storedFileAccess = new StoredFileAccess(
 					this,
@@ -874,7 +896,7 @@ implements OnAudioFocusChangeListener
 
 				playlistPlaybackBootstrapper = new ExoPlayerPlaybackBootstrapper(new ExoPlayerCreator(handler, lazyRenderersFactory.getObject()));
 
-				final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider = new ExtractorMediaSourceFactoryProvider(
+				final MediaSourceProvider extractorMediaSourceFactoryProvider = new MediaSourceProvider(
 					library,
 					new HttpDataSourceFactoryProvider(
 						this,
@@ -906,28 +928,33 @@ implements OnAudioFocusChangeListener
 
 				final MediaSourceQueue mediaSourceQueue = new MediaSourceQueue();
 
+				final BestMatchUriProvider bestMatchUriProvider = new BestMatchUriProvider(
+					library,
+					new StoredFileUriProvider(
+						lazySelectedLibraryProvider.getObject(),
+						storedFileAccess,
+						arbitratorForOs),
+					new CachedAudioFileUriProvider(
+						remoteFileUriProvider,
+						new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
+					new MediaFileUriProvider(
+						this,
+						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+						arbitratorForOs,
+						library,
+						false),
+					remoteFileUriProvider);
+
 				exoPlayer.prepare(mediaSourceQueue);
 				final PreparedPlaybackQueueFeederBuilder playbackEngineBuilder =
 					new PreparedPlaybackQueueFeederBuilder(
 						new SelectedPlaybackEngineTypeAccess(this, new DefaultPlaybackEngineLookup()),
 						handler,
-						new BestMatchUriProvider(
-							library,
-							new StoredFileUriProvider(
-								lazySelectedLibraryProvider.getObject(),
-								storedFileAccess,
-								arbitratorForOs),
-							new CachedAudioFileUriProvider(
-								remoteFileUriProvider,
-								new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
-							new MediaFileUriProvider(
-								this,
-								new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
-								arbitratorForOs,
+						new MediaSourceProvider(
 								library,
-								false),
-							remoteFileUriProvider),
-						extractorMediaSourceFactoryProvider,
+								new HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
+								cache),
+						bestMatchUriProvider,
 						exoPlayer,
 						mediaSourceQueue,
 						lazyRenderersFactory.getObject(),
@@ -941,6 +968,13 @@ implements OnAudioFocusChangeListener
 			}).then(preparationSourceProvider -> {
 				if (preparedPlaybackQueueResourceManagement != null)
 					preparedPlaybackQueueResourceManagement.close();
+//
+//				final IPlayableFilePreparationSourceProvider preparationSourceProvider =
+//					new MaxFileVolumePreparationProvider(
+//						playbackEngineBuilder.build(library),
+//						new MaxFileVolumeProvider(
+//							lazyVolumeLevelSettings.getObject(),
+//							cachedFilePropertiesProvider));
 
 				preparedPlaybackQueueResourceManagement = new PreparedPlaybackQueueResourceManagement(
 					preparationSourceProvider,
@@ -1040,6 +1074,10 @@ implements OnAudioFocusChangeListener
 			return;
 		}
 
+		if (exception instanceof ExoPlaybackException) {
+			handleExoPlaybackException((ExoPlaybackException)exception);
+		}
+
 		if (exception instanceof PlaybackException) {
 			handlePlaybackException((PlaybackException)exception);
 			return;
@@ -1060,19 +1098,32 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void handlePlaybackException(PlaybackException exception) {
-		if (exception.getCause() instanceof IllegalStateException) {
+		final Throwable cause = exception.getCause();
+
+		if (cause instanceof ExoPlaybackException) {
+			handleExoPlaybackException((ExoPlaybackException)cause);
+		}
+
+		if (cause instanceof IllegalStateException) {
 			logger.error("The player ended up in an illegal state - closing and restarting the player", exception);
 			closeAndRestartPlaylistManager();
 
 			return;
 		}
 
-		if (exception.getCause() instanceof IOException) {
+		if (cause instanceof IOException) {
 			handleIoException((IOException)exception.getCause());
 			return;
 		}
 
 		logger.error("An unexpected playback exception occurred", exception);
+	}
+
+	private void handleExoPlaybackException(ExoPlaybackException exception) {
+		logger.error("An ExoPlaybackException occurred");
+
+		if (exception.getCause() != null)
+			uncaughtExceptionHandler(exception.getCause());
 	}
 
 	private void handleIoException(IOException exception) {

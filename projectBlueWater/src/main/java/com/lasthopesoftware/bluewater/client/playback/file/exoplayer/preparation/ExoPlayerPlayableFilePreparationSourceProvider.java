@@ -1,19 +1,19 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
 import android.os.Handler;
+
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderersFactory;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ExtractorMediaSourceFactoryProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.joda.time.Minutes;
 
 
@@ -25,14 +25,14 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 
 	private final Handler handler;
 	private final BestMatchUriProvider bestMatchUriProvider;
-	private final ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider;
+	private final SpawnMediaSources mediaSourceProvider;
 	private final RenderersFactory renderersFactory;
 
-	public ExoPlayerPlayableFilePreparationSourceProvider(Handler handler, BestMatchUriProvider bestMatchUriProvider, ExtractorMediaSourceFactoryProvider extractorMediaSourceFactoryProvider, RenderersFactory renderersFactory) {
+	public ExoPlayerPlayableFilePreparationSourceProvider(Handler handler, SpawnMediaSources mediaSourceProvider, BestMatchUriProvider bestMatchUriProvider, RenderersFactory renderersFactory) {
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
-		this.extractorMediaSourceFactoryProvider = extractorMediaSourceFactoryProvider;
+		this.mediaSourceProvider = mediaSourceProvider;
 
 		this.renderersFactory = renderersFactory;
 	}
@@ -45,7 +45,7 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	@Override
 	public PlayableFilePreparationSource providePlayableFilePreparationSource() {
 		return new ExoPlayerPlaybackPreparer(
-			extractorMediaSourceFactoryProvider,
+			mediaSourceProvider,
 			trackSelector.getObject(),
 			loadControl.getObject(),
 			renderersFactory,
