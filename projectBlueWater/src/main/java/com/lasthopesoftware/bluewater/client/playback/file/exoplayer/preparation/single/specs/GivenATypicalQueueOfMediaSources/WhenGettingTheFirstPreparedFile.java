@@ -6,8 +6,7 @@ import android.os.Handler;
 import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.queued.MediaSourceQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.single.SingleExoPlayerPlaybackPreparer;
@@ -44,7 +43,7 @@ public class WhenGettingTheFirstPreparedFile extends AndroidContext {
 		final SingleExoPlayerPlaybackPreparer exoPlayerPlaybackPreparer =
 			new SingleExoPlayerPlaybackPreparer(
 				exoPlayer,
-				uri -> new ExtractorMediaSource.Factory(mock(DataSource.Factory.class)),
+				uri -> mock(MediaSource.class),
 				new MediaSourceQueue(),
 				mock(ManagePlayableFileVolume.class),
 				new Handler(),
