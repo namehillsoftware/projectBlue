@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions.specs;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 

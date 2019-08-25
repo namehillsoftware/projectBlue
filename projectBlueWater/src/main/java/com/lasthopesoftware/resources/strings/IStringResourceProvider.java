@@ -1,6 +1,6 @@
 package com.lasthopesoftware.resources.strings;
 
-import android.support.annotation.StringRes;
+import androidx.annotation.StringRes;
 
 /**
  * Created by david on 7/3/16.

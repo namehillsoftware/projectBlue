@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
 import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import io.reactivex.functions.Consumer;

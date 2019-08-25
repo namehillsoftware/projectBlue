@@ -4,8 +4,8 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.IntentFilter;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
@@ -27,10 +27,7 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.InvocationTargetException;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class WhenTheFileChanges extends AndroidContext {

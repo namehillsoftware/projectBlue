@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.sync;
 
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;

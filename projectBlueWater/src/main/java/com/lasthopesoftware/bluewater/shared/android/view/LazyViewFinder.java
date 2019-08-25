@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.shared.android.view;
 
 import android.app.Activity;
-import android.support.annotation.IdRes;
 import android.view.View;
+import androidx.annotation.IdRes;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 

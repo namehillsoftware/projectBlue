@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.shared.android.view;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
+import androidx.appcompat.widget.AppCompatImageView;
 
 public class ScaledWrapImageView extends AppCompatImageView {
 

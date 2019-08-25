@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 
 import java.io.File;

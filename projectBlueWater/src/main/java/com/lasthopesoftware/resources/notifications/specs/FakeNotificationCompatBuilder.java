@@ -1,7 +1,7 @@
 package com.lasthopesoftware.resources.notifications.specs;
 
 import android.app.Notification;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 
 public class FakeNotificationCompatBuilder extends NotificationCompat.Builder {
 	private final Notification returnNotification;

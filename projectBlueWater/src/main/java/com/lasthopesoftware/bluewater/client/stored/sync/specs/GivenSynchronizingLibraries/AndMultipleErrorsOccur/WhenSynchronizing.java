@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizi
 
 import android.content.Context;
 import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.test.core.app.ApplicationProvider;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;

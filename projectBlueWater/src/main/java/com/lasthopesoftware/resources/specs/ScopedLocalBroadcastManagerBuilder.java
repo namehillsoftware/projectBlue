@@ -1,7 +1,7 @@
 package com.lasthopesoftware.resources.specs;
 
 import android.content.Context;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.lang.reflect.Constructor;

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering;
 
 import android.os.Handler;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MediaSourceEventListener;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;

@@ -2,13 +2,14 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ViewAnimator;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
@@ -70,7 +71,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
             actionBar.setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_view_items);

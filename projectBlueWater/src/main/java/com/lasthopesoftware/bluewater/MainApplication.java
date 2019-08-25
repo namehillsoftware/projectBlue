@@ -9,7 +9,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Configuration;
+import androidx.work.WorkManager;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -58,6 +60,8 @@ public class MainApplication extends Application {
 	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
 	private final Lazy<IStorageWritePermissionsRequestNotificationBuilder> storageWritePermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageWritePermissionsRequestNotificationBuilder(this));
 
+	private static boolean isWorkManagerInitialized;
+
 	@SuppressLint("DefaultLocale")
 	@Override
 	public void onCreate() {
@@ -66,6 +70,11 @@ public class MainApplication extends Application {
 		initializeLogging();
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
+
+		if (!isWorkManagerInitialized) {
+			WorkManager.initialize(this, new Configuration.Builder().build());
+			isWorkManagerInitialized = true;
+		}
 
 		SyncSchedulingWorker.promiseIsScheduled(this)
 			.then(isScheduled -> {

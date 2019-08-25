@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v4.util.LruCache;
+import androidx.collection.LruCache;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;

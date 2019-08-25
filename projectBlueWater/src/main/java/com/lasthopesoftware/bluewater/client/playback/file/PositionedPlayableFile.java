@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 

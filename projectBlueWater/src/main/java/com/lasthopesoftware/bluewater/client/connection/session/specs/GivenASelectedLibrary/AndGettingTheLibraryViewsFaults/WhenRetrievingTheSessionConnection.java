@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary.AndGettingTheLibraryViewsFaults;
 
 import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;

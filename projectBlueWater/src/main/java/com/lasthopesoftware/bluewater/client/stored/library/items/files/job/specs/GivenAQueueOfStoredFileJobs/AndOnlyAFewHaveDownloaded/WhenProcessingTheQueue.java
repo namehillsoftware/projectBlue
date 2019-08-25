@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.AndOnlyAFewHaveDownloaded;
 
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
