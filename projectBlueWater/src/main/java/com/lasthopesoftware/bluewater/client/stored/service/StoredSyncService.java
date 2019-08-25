@@ -1,12 +1,16 @@
 package com.lasthopesoftware.bluewater.client.stored.service;
 
-import android.app.*;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.*;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
@@ -55,7 +59,6 @@ import com.namehillsoftware.lazyj.Lazy;
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
 import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +77,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private static final int notificationId = 23;
 
 	private static final int buildConnectionTimeoutTime = 10000;
-	private static final Duration syncInterval = Duration.standardHours(3);
 
 	private static Disposable synchronizationDisposable;
 
@@ -89,20 +91,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		final Intent intent = new Intent(context, StoredSyncService.class);
 		intent.setAction(cancelSyncAction);
 
-		safelyStartService(context, intent);
-	}
-
-	public static void schedule(Context context) {
-		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-		final long lastSync = preferences.getLong(lastSyncTime, 0);
-
-		final DateTime lastSyncDateTime = new DateTime(lastSync);
-		final DateTime nextSync = lastSyncDateTime.plus(syncInterval);
-
-		final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-		final Intent intent = new Intent(context, SyncAlarmBroadcastReceiver.class);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarmManager.set(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
+		context.startService(intent);
 	}
 
 	public static boolean isSyncRunning() {
@@ -111,7 +100,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static void safelyStartService(Context context, Intent intent) {
 		try {
-			context.startService(intent);
+			ContextCompat.startForegroundService(context, intent);
 		} catch (IllegalStateException e) {
 			logger.warn("An illegal state exception occurred while trying to start the service", e);
 		} catch (SecurityException e) {
@@ -353,8 +342,6 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			.edit()
 			.putLong(lastSyncTime, DateTime.now().getMillis())
 			.apply();
-
-		schedule(this);
 
 		stopSelf();
 	}

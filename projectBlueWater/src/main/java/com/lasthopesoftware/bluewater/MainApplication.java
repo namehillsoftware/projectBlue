@@ -38,7 +38,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
+import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -67,7 +67,13 @@ public class MainApplication extends Application {
 		Thread.setDefaultUncaughtExceptionHandler(new LoggerUncaughtExceptionHandler());
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
-		StoredSyncService.schedule(this);
+		SyncSchedulingWorker.promiseIsScheduled(this)
+			.then(isScheduled -> {
+				if (!isScheduled)
+					SyncSchedulingWorker.scheduleSync(this);
+
+				return null;
+			});
 	}
 
 	private void registerAppBroadcastReceivers(LocalBroadcastManager localBroadcastManager) {
