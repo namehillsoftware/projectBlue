@@ -152,6 +152,12 @@
         <service android:name=".client.stored.service.StoredSyncService"
                  android:enabled="true"
                  android:exported="false"/>
+
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="com.lasthopesoftware.bluewater.workmanager-init"
+            android:exported="false"
+            android:enabled="false"/>
     </application>
 
 </manifest>

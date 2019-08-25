@@ -10,11 +10,12 @@ import android.os.Build;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
 import androidx.annotation.IntDef;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.app.NavUtils;
 import androidx.core.app.TaskStackBuilder;
-import androidx.core.view.MenuItemCompat;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 
@@ -27,7 +28,7 @@ public class ViewUtils {
 		activity.getMenuInflater().inflate(R.menu.menu_blue_water, menu);
 		
 		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
-	    final SearchView searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.search));
+	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
 	    searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
 
 		return true;

@@ -65,7 +65,7 @@
 				android:layout_height="wrap_content"
 				android:ellipsize="marquee"
 				android:marqueeRepeatLimit="1"
-				android:maxLines="1"
+				android:singleLine="true"
 				android:text="@string/lbl_song_title"
 				android:textAppearance="?android:attr/textAppearanceLarge"
 				android:textColor="@color/white" />
@@ -76,7 +76,7 @@
 				android:layout_height="wrap_content"
 				android:ellipsize="marquee"
 				android:marqueeRepeatLimit="marquee_forever"
-				android:maxLines="1"
+				android:singleLine="true"
 				android:text="@string/lbl_song_artist"
 				android:textAppearance="?android:attr/textAppearanceSmall"
 				android:textColor="@color/white" />
