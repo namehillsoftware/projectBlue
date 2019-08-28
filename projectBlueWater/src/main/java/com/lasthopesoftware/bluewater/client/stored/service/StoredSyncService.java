@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -18,6 +19,7 @@ import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
@@ -49,6 +51,7 @@ import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.Store
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.bluewater.client.stored.sync.SynchronizeStoredFiles;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
+import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
@@ -119,6 +122,34 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	private final AbstractSynchronousLazy<SharedPreferences> lazySharedPreferences = new Lazy<>(() -> PreferenceManager.getDefaultSharedPreferences(this));
+
+	private final AbstractSynchronousLazy<BroadcastReceiver> onWifiStateChangedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
+		@Override
+		protected final BroadcastReceiver create() {
+			return new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					final boolean isSyncOnWifiOnly = lazySharedPreferences.getObject().getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
+					if (isSyncOnWifiOnly && !IoCommon.isWifiConnected(context))
+						cancelSync(StoredSyncService.this);
+				}
+			};
+		}
+	};
+
+	private final AbstractSynchronousLazy<BroadcastReceiver> onPowerDisconnectedReceiver = new AbstractSynchronousLazy<BroadcastReceiver>() {
+		@Override
+		public final BroadcastReceiver create() {
+			return new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					final boolean isSyncOnPowerOnly = lazySharedPreferences.getObject().getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false);
+					if (isSyncOnPowerOnly)
+						cancelSync(StoredSyncService.this);
+				}
+			};
+		}
+	};
 
 	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
@@ -286,6 +317,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 				}));
 		}
 
+		registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+		registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+
 		synchronizationDisposable = lazyStoredFilesSynchronization.getObject()
 			.streamFileSynchronization()
 			.subscribe(this::finish, this::finish);
@@ -320,6 +354,12 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 				lazyBroadcastManager.getObject().unregisterReceiver(receiver);
 			}
 		}
+
+		if (onWifiStateChangedReceiver.isCreated())
+			unregisterReceiver(onWifiStateChangedReceiver.getObject());
+
+		if (onPowerDisconnectedReceiver.isCreated())
+			unregisterReceiver(onPowerDisconnectedReceiver.getObject());
 
 		if (lazyWakeLock.isCreated())
 			lazyWakeLock.getObject().release();
