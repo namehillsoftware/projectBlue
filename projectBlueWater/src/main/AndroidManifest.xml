@@ -136,9 +136,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".client.stored.service.SyncAlarmBroadcastReceiver"
-                  android:enabled="true"
-                  android:exported="false" />
+
         <service
                 android:name=".client.playback.service.PlaybackService"
                 android:enabled="true"
