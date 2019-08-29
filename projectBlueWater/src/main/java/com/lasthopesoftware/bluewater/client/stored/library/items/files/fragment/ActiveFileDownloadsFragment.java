@@ -12,10 +12,12 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
@@ -168,7 +170,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 			if (StoredSyncService.isSyncRunning())
 				StoredSyncService.cancelSync(v.getContext());
 			else
-				StoredSyncService.doSync(v.getContext());
+				StoredSyncService.doSyncUninterrupted(v.getContext());
 		});
 
 		toggleSyncButton.setEnabled(true);
