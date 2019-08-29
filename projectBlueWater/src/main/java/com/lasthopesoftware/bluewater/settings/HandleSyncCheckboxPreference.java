@@ -6,21 +6,23 @@ import android.preference.PreferenceManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
-class HandleCheckboxPreference implements CompoundButton.OnCheckedChangeListener {
+import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker;
+
+class HandleSyncCheckboxPreference implements CompoundButton.OnCheckedChangeListener {
 	static void handle(Context context, String settingKey, CheckBox settingCheckbox) {
 		settingCheckbox.setEnabled(false);
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 		final boolean preference = sharedPreferences.getBoolean(settingKey, false);
 		settingCheckbox.setChecked(preference);
 		settingCheckbox.setOnCheckedChangeListener(
-			new HandleCheckboxPreference(sharedPreferences, settingKey));
+			new HandleSyncCheckboxPreference(sharedPreferences, settingKey));
 		settingCheckbox.setEnabled(true);
 	}
 
 	private final SharedPreferences sharedPreferences;
 	private final String settingKey;
 
-	private HandleCheckboxPreference(SharedPreferences sharedPreferences, String settingKey) {
+	private HandleSyncCheckboxPreference(SharedPreferences sharedPreferences, String settingKey) {
 		this.settingKey = settingKey;
 		this.sharedPreferences = sharedPreferences;
 	}
@@ -31,5 +33,7 @@ class HandleCheckboxPreference implements CompoundButton.OnCheckedChangeListener
 			.edit()
 			.putBoolean(settingKey, isChecked)
 			.apply();
+
+		SyncSchedulingWorker.scheduleSync(buttonView.getContext());
 	}
 }
