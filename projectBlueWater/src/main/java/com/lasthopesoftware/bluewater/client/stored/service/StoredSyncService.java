@@ -84,6 +84,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private static final Logger logger = LoggerFactory.getLogger(StoredSyncService.class);
 
 	private static final String doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "doSyncAction");
+	private static final String isUninterruptedSyncSetting = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "isUninterruptedSyncSetting");
 	private static final String cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "cancelSyncAction");
 	private static final String lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "lastSyncTime");
 
@@ -96,6 +97,14 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	public static void doSync(Context context) {
 		final Intent intent = new Intent(context, StoredSyncService.class);
 		intent.setAction(doSyncAction);
+
+		safelyStartService(context, intent);
+	}
+
+	public static void doSyncUninterrupted(Context context) {
+		final Intent intent = new Intent(context, StoredSyncService.class);
+		intent.setAction(doSyncAction);
+		intent.putExtra(isUninterruptedSyncSetting, true);
 
 		safelyStartService(context, intent);
 	}
@@ -294,7 +303,19 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			return START_NOT_STICKY;
 		}
 
-		if (!doSyncAction.equals(action) || isSyncRunning()) return START_NOT_STICKY;
+		if (!doSyncAction.equals(action)) return START_NOT_STICKY;
+
+		final boolean isUninterruptedSync = intent.getBooleanExtra(isUninterruptedSyncSetting, false);
+		if (isSyncRunning()) {
+			if (isUninterruptedSync) {
+				if (onWifiStateChangedReceiver.isCreated())
+					unregisterReceiver(onWifiStateChangedReceiver.getObject());
+				if (onPowerDisconnectedReceiver.isCreated())
+					unregisterReceiver(onPowerDisconnectedReceiver.getObject());
+			}
+
+			return START_NOT_STICKY;
+		}
 
 		if (!lazyStoredFileEventReceivers.isCreated()) {
 			for (final ReceiveStoredFileEvent receiveStoredFileEvent : lazyStoredFileEventReceivers.getObject()) {
@@ -317,8 +338,10 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 				}));
 		}
 
-		registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
-		registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+		if (!isUninterruptedSync) {
+			registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+			registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+		}
 
 		synchronizationDisposable = lazyStoredFilesSynchronization.getObject()
 			.streamFileSynchronization()
