@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
 

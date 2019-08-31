@@ -3,7 +3,7 @@ package com.lasthopesoftware.storage.read.permissions;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 
 public class ExternalStorageReadPermissionsArbitratorForOs implements IStorageReadPermissionArbitratorForOs {
 	private final Context context;

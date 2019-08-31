@@ -1,6 +1,6 @@
 package com.lasthopesoftware.storage.directories.specs;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.io.File;
 

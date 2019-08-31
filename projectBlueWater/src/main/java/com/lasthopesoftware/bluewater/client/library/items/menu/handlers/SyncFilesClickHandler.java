@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.view.View;
+
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -28,7 +29,7 @@ public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 		mIsSynced = !mIsSynced;
 		mSyncListManager.toggleSync(mItem, mIsSynced);
 
-		StoredSyncService.doSync(v.getContext());
+		StoredSyncService.doSyncUninterrupted(v.getContext());
 
 		super.onClick(v);
 	}

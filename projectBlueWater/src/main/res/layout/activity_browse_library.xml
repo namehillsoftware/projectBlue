@@ -4,7 +4,7 @@
 	android:layout_height="match_parent"
 	android:id="@+id/browseLibraryRelativeLayout">
 
-	<android.support.v4.widget.DrawerLayout
+	<androidx.drawerlayout.widget.DrawerLayout
 			android:id="@+id/drawer_layout"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent">
@@ -33,7 +33,7 @@
 					android:id="@+id/tabsLibraryViews"
 					android:layout_width="match_parent"
 					android:layout_height="48dip" />
-				<android.support.v4.view.ViewPager
+				<androidx.viewpager.widget.ViewPager
 					android:id="@+id/libraryViewPager"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
@@ -64,5 +64,5 @@
 			</ListView>
 		</RelativeLayout>
 
-	</android.support.v4.widget.DrawerLayout>
+	</androidx.drawerlayout.widget.DrawerLayout>
 </RelativeLayout>

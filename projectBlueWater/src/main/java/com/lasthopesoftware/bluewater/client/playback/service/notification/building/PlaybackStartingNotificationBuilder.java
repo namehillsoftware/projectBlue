@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.buil
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -29,7 +29,7 @@ public class PlaybackStartingNotificationBuilder {
 
 	public Promise<NotificationCompat.Builder> promisePreparedPlaybackStartingNotification() {
 		return new Promise<>(produceNotificationBuilders.getNotificationBuilder(configuration.getNotificationChannel())
-			.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+			.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
 				.setCancelButtonIntent(PlaybackService.pendingKillService(context))
 				.setMediaSession(mediaSessionCompat.getSessionToken())
 				.setShowCancelButton(true))

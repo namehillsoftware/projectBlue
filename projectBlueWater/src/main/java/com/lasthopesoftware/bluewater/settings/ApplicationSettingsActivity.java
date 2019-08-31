@@ -7,13 +7,20 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.RequiresApi;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
@@ -39,6 +46,7 @@ import com.lasthopesoftware.resources.notifications.notificationchannel.SharedCh
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import tourguide.tourguide.Overlay;
 import tourguide.tourguide.Pointer;
 import tourguide.tourguide.ToolTip;
@@ -67,9 +75,18 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		final RelativeLayout editAppSettingsView = (RelativeLayout) getLayoutInflater().inflate(R.layout.layout_edit_app_settings, serverListView.findView(), false);
 		serverListView.findView().addHeaderView(editAppSettingsView);
 
-		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, findViewById(R.id.syncOnPowerCheckbox));
-		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, findViewById(R.id.syncOnWifiCheckbox));
-		HandleCheckboxPreference.handle(this, ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled, findViewById(R.id.isVolumeLevelingEnabled));
+		HandleSyncCheckboxPreference.handle(
+			this,
+			ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey,
+			findViewById(R.id.syncOnPowerCheckbox));
+		HandleSyncCheckboxPreference.handle(
+			this,
+			ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey,
+			findViewById(R.id.syncOnWifiCheckbox));
+		HandleCheckboxPreference.handle(
+			this,
+			ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled,
+			findViewById(R.id.isVolumeLevelingEnabled));
 
 		final PlaybackEngineTypeSelectionPersistence selection = new PlaybackEngineTypeSelectionPersistence(
 			this,

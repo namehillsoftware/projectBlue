@@ -1,7 +1,7 @@
 package com.lasthopesoftware.resources.notifications;
 
 import android.content.Context;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 
 public class NotificationBuilderProducer implements ProduceNotificationBuilders {
 

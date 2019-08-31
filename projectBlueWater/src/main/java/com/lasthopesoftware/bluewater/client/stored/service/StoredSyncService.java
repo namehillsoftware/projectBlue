@@ -1,13 +1,23 @@
 package com.lasthopesoftware.bluewater.client.stored.service;
 
-import android.app.*;
-import android.content.*;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
@@ -32,7 +42,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLo
 import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.LibrarySyncHandlerFactory;
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver;
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.ReceiveStoredFileEvent;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileBroadcastReceiver;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileDownloadingNotifier;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileMediaScannerNotifier;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileReadPermissionsReceiver;
+import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileWritePermissionsReceiver;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.bluewater.client.stored.sync.SynchronizeStoredFiles;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
@@ -52,10 +67,8 @@ import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrato
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-import io.reactivex.disposables.Disposable;
-import okhttp3.OkHttpClient;
+
 import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,18 +76,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.disposables.Disposable;
+import okhttp3.OkHttpClient;
+
 public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredSyncService.class);
 
 	private static final String doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "doSyncAction");
+	private static final String isUninterruptedSyncSetting = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "isUninterruptedSyncSetting");
 	private static final String cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "cancelSyncAction");
 	private static final String lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService.class, "lastSyncTime");
 
 	private static final int notificationId = 23;
 
 	private static final int buildConnectionTimeoutTime = 10000;
-	private static final Duration syncInterval = Duration.standardHours(3);
 
 	private static Disposable synchronizationDisposable;
 
@@ -85,24 +101,19 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		safelyStartService(context, intent);
 	}
 
-	public static void cancelSync(Context context) {
+	public static void doSyncUninterrupted(Context context) {
 		final Intent intent = new Intent(context, StoredSyncService.class);
-		intent.setAction(cancelSyncAction);
+		intent.setAction(doSyncAction);
+		intent.putExtra(isUninterruptedSyncSetting, true);
 
 		safelyStartService(context, intent);
 	}
 
-	public static void schedule(Context context) {
-		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-		final long lastSync = preferences.getLong(lastSyncTime, 0);
+	public static void cancelSync(Context context) {
+		final Intent intent = new Intent(context, StoredSyncService.class);
+		intent.setAction(cancelSyncAction);
 
-		final DateTime lastSyncDateTime = new DateTime(lastSync);
-		final DateTime nextSync = lastSyncDateTime.plus(syncInterval);
-
-		final AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-		final Intent intent = new Intent(context, SyncAlarmBroadcastReceiver.class);
-		final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarmManager.set(AlarmManager.RTC_WAKEUP, nextSync.getMillis(), pendingIntent);
+		context.startService(intent);
 	}
 
 	public static boolean isSyncRunning() {
@@ -111,7 +122,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private static void safelyStartService(Context context, Intent intent) {
 		try {
-			context.startService(intent);
+			ContextCompat.startForegroundService(context, intent);
 		} catch (IllegalStateException e) {
 			logger.warn("An illegal state exception occurred while trying to start the service", e);
 		} catch (SecurityException e) {
@@ -127,7 +138,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
-					if (!IoCommon.isWifiConnected(context)) cancelSync(StoredSyncService.this);
+					final boolean isSyncOnWifiOnly = lazySharedPreferences.getObject().getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
+					if (isSyncOnWifiOnly && !IoCommon.isWifiConnected(context))
+						cancelSync(StoredSyncService.this);
 				}
 			};
 		}
@@ -139,7 +152,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			return new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
-					cancelSync(StoredSyncService.this);
+					final boolean isSyncOnPowerOnly = lazySharedPreferences.getObject().getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false);
+					if (isSyncOnPowerOnly)
+						cancelSync(StoredSyncService.this);
 				}
 			};
 		}
@@ -284,14 +299,21 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		final String action = intent.getAction();
 
 		if (cancelSyncAction.equals(action)) {
-			finishAndSchedule();
+			finish();
 			return START_NOT_STICKY;
 		}
 
-		if (!doSyncAction.equals(action) || isSyncRunning()) return START_NOT_STICKY;
+		if (!doSyncAction.equals(action)) return START_NOT_STICKY;
 
-		if (!isDeviceStateValidForSync()) {
-			finishAndSchedule();
+		final boolean isUninterruptedSync = intent.getBooleanExtra(isUninterruptedSyncSetting, false);
+		if (isSyncRunning()) {
+			if (isUninterruptedSync) {
+				if (onWifiStateChangedReceiver.isCreated())
+					unregisterReceiver(onWifiStateChangedReceiver.getObject());
+				if (onPowerDisconnectedReceiver.isCreated())
+					unregisterReceiver(onPowerDisconnectedReceiver.getObject());
+			}
+
 			return START_NOT_STICKY;
 		}
 
@@ -316,45 +338,28 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 				}));
 		}
 
+		if (!isUninterruptedSync) {
+			registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+			registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+		}
+
 		synchronizationDisposable = lazyStoredFilesSynchronization.getObject()
 			.streamFileSynchronization()
-			.subscribe(this::finishAndSchedule, this::finishAndSchedule);
+			.subscribe(this::finish, this::finish);
 
 		return START_NOT_STICKY;
 	}
 
-	private boolean isDeviceStateValidForSync() {
-		final SharedPreferences sharedPreferences = lazySharedPreferences.getObject();
-
-		final boolean isSyncOnWifiOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false);
-		if (isSyncOnWifiOnly) {
-			if (!IoCommon.isWifiConnected(this)) return false;
-
-			registerReceiver(onWifiStateChangedReceiver.getObject(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
-		}
-
-		final boolean isSyncOnPowerOnly = sharedPreferences.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false);
-		if (isSyncOnPowerOnly) {
-			if (!IoCommon.isPowerConnected(this)) return false;
-
-			registerReceiver(onPowerDisconnectedReceiver.getObject(), new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
-		}
-
-		return true;
-	}
-
-	private void finishAndSchedule(Throwable error) {
+	private void finish(Throwable error) {
 		logger.error("An error occurred while synchronizing stored files", error);
-		finishAndSchedule();
+		finish();
 	}
 
-	private void finishAndSchedule() {
+	private void finish() {
 		lazySharedPreferences.getObject()
 			.edit()
 			.putLong(lastSyncTime, DateTime.now().getMillis())
 			.apply();
-
-		schedule(this);
 
 		stopSelf();
 	}

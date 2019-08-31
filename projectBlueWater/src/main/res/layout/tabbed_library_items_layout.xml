@@ -22,7 +22,7 @@
             android:id="@+id/tabsLibraryViews"
             android:layout_width="match_parent"
             android:layout_height="48dip" />
-        <android.support.v4.view.ViewPager
+        <androidx.viewpager.widget.ViewPager
             android:id="@+id/libraryViewPager"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
