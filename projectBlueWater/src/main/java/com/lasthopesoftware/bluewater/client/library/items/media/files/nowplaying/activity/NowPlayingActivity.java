@@ -1,6 +1,11 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity;
 
-import android.content.*;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.os.Build;
@@ -9,10 +14,17 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.*;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
@@ -25,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -49,6 +62,7 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
@@ -164,6 +178,13 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 	};
 
+	private final CreateAndHold<Promise<Bitmap>> lazyDefaultImage = new AbstractSynchronousLazy<Promise<Bitmap>>() {
+		@Override
+		protected Promise<Bitmap> create() throws Throwable {
+			return new DefaultImageProvider(NowPlayingActivity.this).promiseFileBitmap();
+		}
+	};
+
 	private TimerTask timerTask;
 
 	private LocalBroadcastManager localBroadcastManager;
@@ -229,7 +250,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			shuffleButton.setOnClickListener(v ->
 				lazyNowPlayingRepository.getObject()
 					.getNowPlaying()
-					.eventually(LoopedInPromise.response(result -> {
+					.eventually(LoopedInPromise.<NowPlaying, NowPlaying>response(result -> {
 						final boolean isRepeating = !result.isRepeating;
 						if (isRepeating)
 							PlaybackService.setRepeating(v.getContext());
@@ -282,7 +303,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 			return;
 		}
 
-		new DefaultImageProvider(this).promiseFileBitmap()
+		lazyDefaultImage.getObject()
 			.eventually(bitmap -> new LoopedInPromise<>(() -> {
 				nowPlayingBackgroundBitmap = bitmap;
 
@@ -396,11 +417,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 				final ViewStructure localViewStructure = viewStructure;
 
-				final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
-
-				loadingProgressBar.findView().setVisibility(View.VISIBLE);
-				nowPlayingImage.setVisibility(View.INVISIBLE);
-
 				setNowPlayingImage(localViewStructure, serviceFile);
 
 				if (localViewStructure.fileProperties != null) {
@@ -414,11 +430,14 @@ public class NowPlayingActivity extends AppCompatActivity {
 					new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance());
 				filePropertiesProvider
 					.promiseFileProperties(serviceFile)
-					.eventually(LoopedInPromise.response(fileProperties -> {
-						localViewStructure.fileProperties = fileProperties;
-						setFileProperties(serviceFile, initialFilePosition, fileProperties);
-						return null;
-					}, messageHandler.getObject()))
+					.eventually(fileProperties -> {
+						if (localViewStructure != viewStructure) return Promise.empty();
+
+						return new LoopedInPromise<>(() -> {
+							localViewStructure.fileProperties = fileProperties;
+							return setFileProperties(serviceFile, initialFilePosition, fileProperties);
+						}, messageHandler.getObject());
+					})
 					.excuse(e -> LoopedInPromise.<Throwable, Boolean>response(exception -> handleIoException(serviceFile, initialFilePosition, exception), messageHandler.getObject()).promiseResponse(e));
 			}), messageHandler.getObject()));
 	}
@@ -435,7 +454,11 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 
 		viewStructure.promisedNowPlayingImage
-			.eventually(bitmap -> new LoopedInPromise<>(() -> setNowPlayingImage(bitmap), messageHandler.getObject()))
+			.eventually(bitmap -> {
+				if (viewStructure != NowPlayingActivity.viewStructure) return Promise.empty();
+
+				return new LoopedInPromise<>(() -> setNowPlayingImage(bitmap), messageHandler.getObject());
+			})
 			.excuse(new VoidResponse<>(e -> {
 				if (e instanceof CancellationException) {
 					logger.info("Bitmap retrieval cancelled", e);
@@ -456,7 +479,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 		return null;
 	}
 
-	private void setFileProperties(final ServiceFile serviceFile, final long initialFilePosition, Map<String, String> fileProperties) {
+	private Void setFileProperties(final ServiceFile serviceFile, final long initialFilePosition, Map<String, String> fileProperties) {
 		final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 		nowPlayingArtist.findView().setText(artist);
 
@@ -479,6 +502,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		setTrackDuration(duration > 0 ? duration : 100);
 		setTrackProgress(initialFilePosition);
+
+		return null;
 	}
 
 	private void setFileRating(ServiceFile serviceFile, Float rating) {
