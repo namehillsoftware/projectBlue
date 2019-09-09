@@ -17,12 +17,17 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.ViewAnimator;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.R;
@@ -33,8 +38,10 @@ import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessi
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFileListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
@@ -69,7 +76,11 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
 
-public class NowPlayingActivity extends AppCompatActivity {
+public class NowPlayingActivity
+extends
+	AppCompatActivity
+implements
+	IItemListMenuChangeHandler {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
 
@@ -185,6 +196,36 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 	};
 
+	private final LazyViewFinder<ListView> nowPlayingDrawerListView = new LazyViewFinder<ListView>(this, R.id.nowPlayingDrawerListView);
+
+	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.nowPlayingDrawer);
+
+	private final CreateAndHold<ActionBarDrawerToggle> drawerToggle = new AbstractSynchronousLazy<ActionBarDrawerToggle>() {
+		@Override
+		protected ActionBarDrawerToggle create() {
+			return new ActionBarDrawerToggle(
+				NowPlayingActivity.this,                  /* host Activity */
+				drawerLayout.findView(),         /* DrawerLayout object */
+				R.string.drawer_open,  /* "open drawer" description */
+				R.string.drawer_close  /* "close drawer" description */
+			) {
+				/** Called when a drawer has settled in a completely closed state. */
+				@Override
+				public void onDrawerClosed(View view) {
+					super.onDrawerClosed(view);
+					invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
+				}
+
+				/** Called when a drawer has settled in a completely open state. */
+				@Override
+				public void onDrawerOpened(View drawerView) {
+					super.onDrawerOpened(drawerView);
+					invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
+				}
+			};
+		}
+	};
+
 	private TimerTask timerTask;
 
 	private LocalBroadcastManager localBroadcastManager;
@@ -274,6 +315,20 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
 			songProgressBar.findView().getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
+
+		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.END);
+		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
+		lazyNowPlayingRepository.getObject().getNowPlaying()
+			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
+				nowPlayingDrawerListView.findView().setAdapter(
+					new NowPlayingFileListAdapter(
+						this,
+						R.id.tvStandard,
+						NowPlayingActivity.this,
+						nowPlaying.playlist,
+						lazyNowPlayingRepository.getObject()));
+				return null;
+			}, messageHandler.getObject()));
 	}
 	
 	@Override
@@ -620,6 +675,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		PollConnectionService.removeOnConnectionLostListener(onConnectionLostListener);
 	}
+
+	@Override
+	public void onAllMenusHidden() {}
+
+	@Override
+	public void onAnyMenuShown() {}
+
+	@Override
+	public void onViewChanged(ViewAnimator viewAnimator) {}
 
 	private static class ViewStructure {
 		final UrlKeyHolder<Integer> urlKeyHolder;

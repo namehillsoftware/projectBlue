@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
+
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.list.AbstractFileListAdapter;
@@ -14,11 +16,11 @@ import com.vedsoft.futures.runnables.OneParameterAction;
 
 import java.util.List;
 
-class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterAction<Integer> {
+public class NowPlayingFileListAdapter extends AbstractFileListAdapter implements OneParameterAction<Integer> {
 
     private final NowPlayingFileListItemMenuBuilder nowPlayingFileListItemMenuBuilder;
 
-	NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<ServiceFile> serviceFiles, INowPlayingRepository nowPlayingRepository) {
+	public NowPlayingFileListAdapter(Context context, int resource, IItemListMenuChangeHandler itemListMenuChangeHandler, List<ServiceFile> serviceFiles, INowPlayingRepository nowPlayingRepository) {
 		super(context, resource, serviceFiles);
 
         final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();

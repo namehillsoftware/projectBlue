@@ -8,8 +8,10 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ViewAnimator;
+
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
@@ -105,10 +107,13 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode != InstantiateSessionConnectionActivity.ACTIVITY_ID) return;
+		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) {
+			lazyNowPlayingRepository.getObject()
+				.getNowPlaying()
+				.eventually(lazyDispatchedLibraryCompleteResolution.getObject());
+		}
 
-		lazyNowPlayingRepository.getObject().getNowPlaying()
-			.eventually(lazyDispatchedLibraryCompleteResolution.getObject());
+		super.onActivityResult(requestCode, resultCode, data);
 	}
 	
 	@Override
