@@ -42,7 +42,6 @@ import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.ha
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFileListAdapter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -102,7 +101,7 @@ implements
 	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
 	private final LazyViewFinder<ImageButton> pauseButton = new LazyViewFinder<>(this, R.id.btnPause);
 	private final LazyViewFinder<RatingBar> songRating = new LazyViewFinder<>(this, R.id.rbSongRating);
-	private final LazyViewFinder<RelativeLayout> contentView = new LazyViewFinder<>(this, R.id.viewNowPlayingRelativeLayout);
+	private final LazyViewFinder<RelativeLayout> contentView = new LazyViewFinder<>(this, R.id.rlCtlNowPlaying);
 	private final LazyViewFinder<ProgressBar> songProgressBar = new LazyViewFinder<>(this, R.id.pbNowPlaying);
 	private final LazyViewFinder<ImageView> nowPlayingImageViewFinder = new LazyViewFinder<>(this, R.id.imgNowPlaying);
 	private final LazyViewFinder<TextView> nowPlayingArtist = new LazyViewFinder<>(this, R.id.tvSongArtist);
@@ -213,14 +212,14 @@ implements
 				@Override
 				public void onDrawerClosed(View view) {
 					super.onDrawerClosed(view);
-					invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
 				}
 
 				/** Called when a drawer has settled in a completely open state. */
 				@Override
 				public void onDrawerOpened(View drawerView) {
 					super.onDrawerOpened(drawerView);
-					invalidateOptionsMenu(); // creates resultFrom to onPrepareOptionsMenu()
+					nowPlayingDrawerListView.findView().bringToFront();
+					drawerLayout.findView().requestLayout();
 				}
 			};
 		}
@@ -306,7 +305,7 @@ implements
 
 		final ImageButton viewNowPlayingListButton = findViewById(R.id.viewNowPlayingListButton);
 		if (viewNowPlayingListButton != null)
-			viewNowPlayingListButton.setOnClickListener(v -> startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class)));
+			viewNowPlayingListButton.setOnClickListener(v -> drawerLayout.findView().openDrawer(GravityCompat.END));
 
 		isScreenKeptOnButton.findView().setOnClickListener(v -> {
 			isScreenKeptOn = !isScreenKeptOn;
