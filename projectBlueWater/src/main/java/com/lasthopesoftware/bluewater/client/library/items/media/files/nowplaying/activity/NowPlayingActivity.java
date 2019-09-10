@@ -51,6 +51,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
@@ -131,12 +132,15 @@ implements
 	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(this);
 
 	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
+		private final ListView drawerListView = nowPlayingDrawerListView.findView();
+
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
-			NowPlayingActivity.this.playlistPosition = playlistPosition;
+			if (!isDrawerOpened && playlistPosition < drawerListView.getCount())
+				drawerListView.setSelection(playlistPosition);
 
 			showNowPlayingControls();
 			updateKeepScreenOnStatus();
@@ -210,12 +214,12 @@ implements
 				R.string.drawer_open,  /* "open drawer" description */
 				R.string.drawer_close  /* "close drawer" description */
 			) {
-				private final ListView drawerListView = nowPlayingDrawerListView.findView();
-
 				/** Called when a drawer has settled in a completely closed state. */
 				@Override
 				public void onDrawerClosed(View view) {
 					super.onDrawerClosed(view);
+
+					isDrawerOpened = false;
 				}
 
 				/** Called when a drawer has settled in a completely open state. */
@@ -223,10 +227,9 @@ implements
 				public void onDrawerOpened(View drawerView) {
 					super.onDrawerOpened(drawerView);
 
-					if (playlistPosition > -1 && playlistPosition < drawerListView.getCount())
-						drawerListView.setSelection(playlistPosition);
+					isDrawerOpened = true;
 
-					drawerListView.bringToFront();
+					nowPlayingDrawerListView.findView().bringToFront();
 					drawerLayout.findView().requestLayout();
 				}
 			};
@@ -237,7 +240,7 @@ implements
 
 	private LocalBroadcastManager localBroadcastManager;
 
-	private int playlistPosition;
+	private boolean isDrawerOpened;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -329,7 +332,8 @@ implements
 		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
 		lazyNowPlayingRepository.getObject().getNowPlaying()
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
-				playlistPosition = nowPlaying.playlistPosition;
+				nowPlayingDrawerListView
+					.findView().setOnItemLongClickListener(new LongClickViewAnimatorListener());
 				nowPlayingDrawerListView.findView().setAdapter(
 					new NowPlayingFileListAdapter(
 						this,
