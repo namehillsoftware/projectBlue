@@ -136,6 +136,8 @@ implements
 			final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
+			NowPlayingActivity.this.playlistPosition = playlistPosition;
+
 			showNowPlayingControls();
 			updateKeepScreenOnStatus();
 
@@ -208,6 +210,8 @@ implements
 				R.string.drawer_open,  /* "open drawer" description */
 				R.string.drawer_close  /* "close drawer" description */
 			) {
+				private final ListView drawerListView = nowPlayingDrawerListView.findView();
+
 				/** Called when a drawer has settled in a completely closed state. */
 				@Override
 				public void onDrawerClosed(View view) {
@@ -218,7 +222,11 @@ implements
 				@Override
 				public void onDrawerOpened(View drawerView) {
 					super.onDrawerOpened(drawerView);
-					nowPlayingDrawerListView.findView().bringToFront();
+
+					if (playlistPosition > -1 && playlistPosition < drawerListView.getCount())
+						drawerListView.setSelection(playlistPosition);
+
+					drawerListView.bringToFront();
 					drawerLayout.findView().requestLayout();
 				}
 			};
@@ -228,6 +236,8 @@ implements
 	private TimerTask timerTask;
 
 	private LocalBroadcastManager localBroadcastManager;
+
+	private int playlistPosition;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -319,6 +329,7 @@ implements
 		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
 		lazyNowPlayingRepository.getObject().getNowPlaying()
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
+				playlistPosition = nowPlaying.playlistPosition;
 				nowPlayingDrawerListView.findView().setAdapter(
 					new NowPlayingFileListAdapter(
 						this,
