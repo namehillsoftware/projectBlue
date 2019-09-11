@@ -132,15 +132,13 @@ implements
 	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(this);
 
 	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
-		private final ListView drawerListView = nowPlayingDrawerListView.findView();
-
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
-			if (!isDrawerOpened && playlistPosition < drawerListView.getCount())
-				drawerListView.setSelection(playlistPosition);
+			if (!isDrawerOpened)
+				updateNowPlayingListViewPosition(playlistPosition);
 
 			showNowPlayingControls();
 			updateKeepScreenOnStatus();
@@ -332,15 +330,16 @@ implements
 		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
 		lazyNowPlayingRepository.getObject().getNowPlaying()
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
-				nowPlayingDrawerListView
-					.findView().setOnItemLongClickListener(new LongClickViewAnimatorListener());
-				nowPlayingDrawerListView.findView().setAdapter(
+				final ListView listView = nowPlayingDrawerListView.findView();
+				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+				listView.setAdapter(
 					new NowPlayingFileListAdapter(
 						this,
 						R.id.tvStandard,
 						NowPlayingActivity.this,
 						nowPlaying.playlist,
 						lazyNowPlayingRepository.getObject()));
+				updateNowPlayingListViewPosition(nowPlaying.playlistPosition);
 				return null;
 			}, messageHandler.getObject()));
 	}
@@ -362,6 +361,12 @@ implements
 		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) initializeView();
 
 		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	private void updateNowPlayingListViewPosition(int newPosition) {
+		final ListView listView = nowPlayingDrawerListView.findView();
+		if (newPosition > -1 && newPosition < listView.getCount())
+			listView.setSelection(newPosition);
 	}
 
 	private void setNowPlayingBackgroundBitmap() {
