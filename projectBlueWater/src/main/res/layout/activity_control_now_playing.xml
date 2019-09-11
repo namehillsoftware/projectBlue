@@ -2,7 +2,8 @@
     android:id="@+id/rlCtlNowPlaying"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/overlay_dark">
+    android:background="@color/overlay_dark"
+    android:fitsSystemWindows="true">
 
     <RelativeLayout
         android:layout_width="match_parent"
