@@ -27,10 +27,11 @@
                 android:layout_gravity="center_horizontal"/>
         </RelativeLayout>
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="240dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
+            android:id="@+id/nowPlayingDrawerContainer"
             android:background="@color/now_playing_list_color">
 
             <ListView
@@ -39,7 +40,7 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:fitsSystemWindows="true"/>
-        </RelativeLayout>
+        </LinearLayout>
     </androidx.drawerlayout.widget.DrawerLayout>
 
 

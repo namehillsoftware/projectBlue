@@ -14,12 +14,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
@@ -317,10 +319,6 @@ implements
 					}, messageHandler.getObject())));
 		}
 
-		final ImageButton viewNowPlayingListButton = findViewById(R.id.viewNowPlayingListButton);
-		if (viewNowPlayingListButton != null)
-			viewNowPlayingListButton.setOnClickListener(v -> drawerLayout.findView().openDrawer(GravityCompat.END));
-
 		isScreenKeptOnButton.findView().setOnClickListener(v -> {
 			isScreenKeptOn = !isScreenKeptOn;
 			updateKeepScreenOnStatus();
@@ -329,7 +327,22 @@ implements
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
 			songProgressBar.findView().getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
 
-		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.END);
+		final ImageButton viewNowPlayingListButton = findViewById(R.id.viewNowPlayingListButton);
+		if (viewNowPlayingListButton != null)
+			viewNowPlayingListButton.setOnClickListener(v -> drawerLayout.findView().openDrawer(GravityCompat.END));
+
+		final int rotation =  getWindowManager().getDefaultDisplay().getRotation();
+		if (rotation == Surface.ROTATION_90) {
+			final LinearLayout nowPlayingDrawerContainer = findViewById(R.id.nowPlayingDrawerContainer);
+			final DrawerLayout.LayoutParams newLayoutParams = new DrawerLayout.LayoutParams(nowPlayingDrawerContainer.getLayoutParams());
+			newLayoutParams.gravity = GravityCompat.START;
+			nowPlayingDrawerContainer.setLayoutParams(newLayoutParams);
+
+			if (viewNowPlayingListButton != null)
+				viewNowPlayingListButton.setOnClickListener(v -> drawerLayout.findView().openDrawer(GravityCompat.START));
+		}
+
+		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
@@ -341,10 +354,10 @@ implements
 				int newHeight = outPoint.y;
 				final Rect rect = new Rect();
 				getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
-				final int statusBarHeight = rect.top;
+				final int statusBarHeight = (int)(rect.top * 1.1);
 				newHeight -= statusBarHeight;
 				final ViewGroup.LayoutParams layoutParams = listView.getLayoutParams();
-				final RelativeLayout.LayoutParams newLayoutParams = new RelativeLayout.LayoutParams(layoutParams.width, newHeight);
+				final LinearLayout.LayoutParams newLayoutParams = new LinearLayout.LayoutParams(layoutParams.width, newHeight);
 				newLayoutParams.setMargins(0, statusBarHeight, 0, 0);
 				listView.setLayoutParams(newLayoutParams);
 				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
