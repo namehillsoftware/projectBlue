@@ -115,53 +115,51 @@ public class SessionConnection {
 	}
 
 	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
-		return selectedLibraryIdentifierProvider.getSelectedLibraryId()
-			.eventually(newSelectedLibraryId -> {
-				synchronized (buildingConnectionPromiseSync) {
-					if (!promisedConnectionProvidersCache.containsKey(newSelectedLibraryId))
-						promisedConnectionProvidersCache.put(newSelectedLibraryId, Promise.empty());
+		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
-					final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
+		synchronized (buildingConnectionPromiseSync) {
+			if (!promisedConnectionProvidersCache.containsKey(newSelectedLibraryId))
+				promisedConnectionProvidersCache.put(newSelectedLibraryId, Promise.empty());
 
-					final Promise<IConnectionProvider> promisedTestConnectionProvider = cachedPromisedProvider
-						.eventually(c -> c != null
-								? connectionTester.promiseIsConnectionPossible(c)
-								.eventually(result -> result
-									? new Promise<>(c)
-									: promiseUpdatedCachedConnection(newSelectedLibraryId))
-								: promiseUpdatedCachedConnection(newSelectedLibraryId),
-							e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
+			final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
 
-					promisedConnectionProvidersCache.put(newSelectedLibraryId, promisedTestConnectionProvider);
-					return promisedTestConnectionProvider;
-				}
-			});
+			final Promise<IConnectionProvider> promisedTestConnectionProvider = cachedPromisedProvider
+				.eventually(c -> c != null
+					? connectionTester.promiseIsConnectionPossible(c)
+						.eventually(result -> result
+							? new Promise<>(c)
+							: promiseUpdatedCachedConnection(newSelectedLibraryId))
+					: promiseUpdatedCachedConnection(newSelectedLibraryId),
+				e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
+
+			promisedConnectionProvidersCache.put(newSelectedLibraryId, promisedTestConnectionProvider);
+			return promisedTestConnectionProvider;
+		}
 	}
 
 	public Promise<IConnectionProvider> promiseSessionConnection() {
-		return selectedLibraryIdentifierProvider.getSelectedLibraryId()
-			.eventually(newSelectedLibraryId -> {
-				IConnectionProvider cachedConnectionProvider = cachedConnectionProviders.get(newSelectedLibraryId);
-				if (cachedConnectionProvider != null) return new Promise<>(cachedConnectionProvider);
+		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
-				synchronized (buildingConnectionPromiseSync) {
-					cachedConnectionProvider = cachedConnectionProviders.get(newSelectedLibraryId);
-					if (cachedConnectionProvider != null) return new Promise<>(cachedConnectionProvider);
+		IConnectionProvider cachedConnectionProvider = cachedConnectionProviders.get(newSelectedLibraryId);
+		if (cachedConnectionProvider != null) return new Promise<>(cachedConnectionProvider);
 
-					if (!promisedConnectionProvidersCache.containsKey(newSelectedLibraryId))
-						promisedConnectionProvidersCache.put(newSelectedLibraryId, Promise.empty());
+		synchronized (buildingConnectionPromiseSync) {
+			cachedConnectionProvider = cachedConnectionProviders.get(newSelectedLibraryId);
+			if (cachedConnectionProvider != null) return new Promise<>(cachedConnectionProvider);
 
-					final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
+			if (!promisedConnectionProvidersCache.containsKey(newSelectedLibraryId))
+				promisedConnectionProvidersCache.put(newSelectedLibraryId, Promise.empty());
 
-					final Promise<IConnectionProvider> nextPromisedConnectionProvider = cachedPromisedProvider.eventually(
-						c -> c != null ? new Promise<>(c) : promiseUpdatedCachedConnection(newSelectedLibraryId),
-						e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
+			final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
 
-					promisedConnectionProvidersCache.put(newSelectedLibraryId, nextPromisedConnectionProvider);
+			final Promise<IConnectionProvider> nextPromisedConnectionProvider = cachedPromisedProvider.eventually(
+				c -> c != null ? new Promise<>(c) : promiseUpdatedCachedConnection(newSelectedLibraryId),
+				e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
 
-					return nextPromisedConnectionProvider;
-				}
-			});
+			promisedConnectionProvidersCache.put(newSelectedLibraryId, nextPromisedConnectionProvider);
+
+			return nextPromisedConnectionProvider;
+		}
 	}
 
 	private Promise<IConnectionProvider> promiseUpdatedCachedConnection(int libraryId) {
