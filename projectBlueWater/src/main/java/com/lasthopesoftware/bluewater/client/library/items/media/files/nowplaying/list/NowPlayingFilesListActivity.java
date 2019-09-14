@@ -14,9 +14,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.IItemListViewContainer;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLi
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -39,14 +40,16 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
 	private final LazyViewFinder<ProgressBar> mLoadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 
-	private final CreateAndHold<INowPlayingRepository> lazyNowPlayingRepository =
-		new AbstractSynchronousLazy<INowPlayingRepository>() {
+	private final CreateAndHold<Promise<INowPlayingRepository>> lazyNowPlayingRepository =
+		new AbstractSynchronousLazy<Promise<INowPlayingRepository>>() {
 			@Override
-			protected INowPlayingRepository create() {
+			protected Promise<INowPlayingRepository> create() {
 				final LibraryRepository libraryRepository = new LibraryRepository(NowPlayingFilesListActivity.this);
 				final SelectedBrowserLibraryIdentifierProvider selectedBrowserLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingFilesListActivity.this);
-				final ISpecificLibraryProvider specificLibraryProvider = new ChosenLibraryProvider(selectedBrowserLibraryIdentifierProvider, libraryRepository);
-				return new NowPlayingRepository(specificLibraryProvider, libraryRepository);
+				return selectedBrowserLibraryIdentifierProvider.getSelectedLibraryId().then(id -> {
+					final ISpecificLibraryProvider specificLibraryProvider = new SpecificLibraryProvider(id, libraryRepository);
+					return new NowPlayingRepository(specificLibraryProvider, libraryRepository);
+				});
 			}
 		};
 
@@ -61,7 +64,7 @@ public class NowPlayingFilesListActivity extends AppCompatActivity implements II
 								NowPlayingFilesListActivity.this,
 								fileListView.findView(),
 								mLoadingProgressBar.findView(),
-								lazyNowPlayingRepository.getObject())),
+								)),
 						NowPlayingFilesListActivity.this);
 			}
 		};

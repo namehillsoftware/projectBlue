@@ -20,6 +20,6 @@ public class SelectedBrowserLibraryIdentifierProvider implements ISelectedLibrar
 
 	@Override
 	public Promise<Integer> getSelectedLibraryId() {
-		return new QueuedPromise<>(() -> PreferenceManager.getDefaultSharedPreferences(context).getInt(LibrarySelectionKey.chosenLibraryKey, -1), AsyncTask.THREAD_POOL_EXECUTOR);
+		return new QueuedPromise<Integer>(() -> PreferenceManager.getDefaultSharedPreferences(context).getInt(LibrarySelectionKey.chosenLibraryKey, -1), AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 }

@@ -3,13 +3,12 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
 /**
  * Created by david on 2/12/17.
  */
 
-public class SelectedBrowserLibraryProvider implements ISelectedBrowserLibraryProvider, PromisedResponse<Integer, Library> {
+public class SelectedBrowserLibraryProvider implements ISelectedBrowserLibraryProvider {
 
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
@@ -21,11 +20,6 @@ public class SelectedBrowserLibraryProvider implements ISelectedBrowserLibraryPr
 
 	@Override
 	public Promise<Library> getBrowserLibrary() {
-		return selectedLibraryIdentifierProvider.getSelectedLibraryId().eventually(this);
-	}
-
-	@Override
-	public Promise<Library> promiseResponse(Integer libraryId) {
-		return libraryProvider.getLibrary(libraryId);
+		return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId());
 	}
 }

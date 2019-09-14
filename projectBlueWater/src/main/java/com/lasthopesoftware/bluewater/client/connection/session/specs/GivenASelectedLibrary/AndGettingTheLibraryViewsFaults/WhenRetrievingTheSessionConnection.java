@@ -65,7 +65,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
 				localBroadcastManager,
-				() -> new Promise<>(2),
+				() -> 2,
 				libraryProvider,
 				(provider) -> new Promise<>(new IOException("An error! :O")),
 				Promise::new,

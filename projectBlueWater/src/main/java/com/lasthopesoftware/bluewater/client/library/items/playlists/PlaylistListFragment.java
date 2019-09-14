@@ -16,9 +16,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
@@ -50,16 +48,15 @@ public class PlaylistListFragment extends Fragment {
 
 		playlistView.setVisibility(View.INVISIBLE);
 
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
+		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
+
 		final FragmentActivity activity = getActivity();
 
 		if (activity == null) return itemListLayout;
 
-		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
-		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
-		final ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider = new SelectedBrowserLibraryProvider(selectedLibraryIdentifierProvider, libraryProvider);
-
-		selectedBrowserLibraryProvider
-			.getBrowserLibrary()
+		libraryProvider
+			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.then(new VoidResponse<>(library -> {
 				final PromisedResponse<List<Item>, Void> listResolvedPromise =
 					LoopedInPromise.response(

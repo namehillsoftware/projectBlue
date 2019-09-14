@@ -111,8 +111,8 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		final int selectedLibraryId = 2;
 
 		@Override
-		public Promise<Integer> getSelectedLibraryId() {
-			return new Promise<>(selectedLibraryId);
+		public int getSelectedLibraryId() {
+			return selectedLibraryId;
 		}
 	}
 }

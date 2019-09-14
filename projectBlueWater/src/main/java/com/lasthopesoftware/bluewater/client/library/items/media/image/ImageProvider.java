@@ -7,9 +7,7 @@ import android.graphics.BitmapFactory;
 import androidx.collection.LruCache;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.DiskFileCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.access.CachedFilesProvider;
@@ -123,38 +121,38 @@ public class ImageProvider {
 
 							final LibraryRepository libraryProvider = new LibraryRepository(context);
 							final SelectedBrowserLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
-							final ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider = new SelectedBrowserLibraryProvider(selectedLibraryIdentifierProvider, libraryProvider);
 
-							return selectedBrowserLibraryProvider
-								.getBrowserLibrary()
-								.eventually(library -> {
-									final ImageCacheConfiguration imageCacheConfiguration = new ImageCacheConfiguration(library);
-									final CachedFilesProvider cachedFilesProvider = new CachedFilesProvider(context, imageCacheConfiguration);
-									final DiskFileAccessTimeUpdater diskFileAccessTimeUpdater = new DiskFileAccessTimeUpdater(context);
-									final DiskFileCache imageDiskCache =
-										new DiskFileCache(
-											context,
-											diskCacheDirectoryProvider,
-											imageCacheConfiguration,
-											new DiskFileCacheStreamSupplier(
+							return
+								libraryProvider
+									.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+									.eventually(library -> {
+										final ImageCacheConfiguration imageCacheConfiguration = new ImageCacheConfiguration(library);
+										final CachedFilesProvider cachedFilesProvider = new CachedFilesProvider(context, imageCacheConfiguration);
+										final DiskFileAccessTimeUpdater diskFileAccessTimeUpdater = new DiskFileAccessTimeUpdater(context);
+										final DiskFileCache imageDiskCache =
+											new DiskFileCache(
+												context,
 												diskCacheDirectoryProvider,
 												imageCacheConfiguration,
-												new DiskFileCachePersistence(
-													context,
+												new DiskFileCacheStreamSupplier(
 													diskCacheDirectoryProvider,
 													imageCacheConfiguration,
-													cachedFilesProvider,
-													diskFileAccessTimeUpdater),
-												cachedFilesProvider
-											),
-											cachedFilesProvider,
-											diskFileAccessTimeUpdater);
+													new DiskFileCachePersistence(
+														context,
+														diskCacheDirectoryProvider,
+														imageCacheConfiguration,
+														cachedFilesProvider,
+														diskFileAccessTimeUpdater),
+													cachedFilesProvider
+												),
+												cachedFilesProvider,
+												diskFileAccessTimeUpdater);
 
-									return imageDiskCache.promiseCachedFile(uniqueKey)
-										.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor))
-										.eventually(imageBitmap -> imageBitmap != null
-												? new Promise<>(imageBitmap)
-												: promiseImage(connectionProvider, uniqueKey, imageDiskCache, serviceFile.getKey()),
+										return imageDiskCache.promiseCachedFile(uniqueKey)
+											.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor))
+											.eventually(imageBitmap -> imageBitmap != null
+													? new Promise<>(imageBitmap)
+													: promiseImage(connectionProvider, uniqueKey, imageDiskCache, serviceFile.getKey()),
 												error -> {
 													logger.warn("There was an error getting the file from the cache!", error);
 													return promiseImage(connectionProvider, uniqueKey, imageDiskCache, serviceFile.getKey());

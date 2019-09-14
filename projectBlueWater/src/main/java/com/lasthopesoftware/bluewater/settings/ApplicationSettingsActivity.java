@@ -191,20 +191,20 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 		libraryProvider
 			.getAllLibraries()
-			.eventually(libraries -> new SelectedBrowserLibraryIdentifierProvider(this)
-				.getSelectedLibraryId()
-				.eventually(LoopedInPromise.response(new VoidResponse<>(chosenLibraryId -> {
-					final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
+			.eventually(LoopedInPromise.response(new VoidResponse<>(libraries -> {
+				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
 
-					serverListView.findView().setAdapter(
-						new ServerListAdapter(
-							this,
-							Stream.of(libraries).sortBy(Library::getId).toList(),
-							selectedBrowserLibrary.isPresent() ? selectedBrowserLibrary.get() : null,
-							new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
+				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
 
-					progressBar.findView().setVisibility(View.INVISIBLE);
-					serverListView.findView().setVisibility(View.VISIBLE);
-				}), this)));
+				serverListView.findView().setAdapter(
+					new ServerListAdapter(
+						this,
+						Stream.of(libraries).sortBy(Library::getId).toList(),
+						selectedBrowserLibrary.isPresent() ? selectedBrowserLibrary.get() : null,
+						new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
+
+				progressBar.findView().setVisibility(View.INVISIBLE);
+				serverListView.findView().setVisibility(View.VISIBLE);
+			}), this));
 	}
 }
