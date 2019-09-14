@@ -9,11 +9,15 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+
 import androidx.fragment.app.Fragment;
+
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ItemProvider;
@@ -61,9 +65,10 @@ public class ItemListFragment extends Fragment {
 
 		final ILibraryProvider libraryProvider = new LibraryRepository(activity);
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(activity);
+		final ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider = new SelectedBrowserLibraryProvider(selectedLibraryIdentifierProvider, libraryProvider);
 
-		libraryProvider
-			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+		selectedBrowserLibraryProvider
+			.getBrowserLibrary()
 			.then(new VoidResponse<>(activeLibrary -> {
 				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(result -> {
 					if (result == null || result.size() == 0) return null;
@@ -101,9 +106,10 @@ public class ItemListFragment extends Fragment {
 
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
 		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
+		final ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider = new SelectedBrowserLibraryProvider(selectedLibraryIdentifierProvider, libraryProvider);
 
-		libraryProvider
-			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
+		selectedBrowserLibraryProvider
+			.getBrowserLibrary()
 			.then(new VoidResponse<>(library -> {
 				PromisedResponse<List<Item>, Void> onGetLibraryViewItemResultsComplete = LoopedInPromise.response(new OnGetLibraryViewItemResultsComplete(
 					activity,

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 public class PlaybackStartedBroadcaster {
 
@@ -14,6 +15,7 @@ public class PlaybackStartedBroadcaster {
 	}
 
 	public void broadcastPlaybackStarted(PositionedFile positionedFile) {
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getSelectedLibraryId(), positionedFile);
+		libraryIdentifierProvider.getSelectedLibraryId()
+			.then(new VoidResponse<>(id -> playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, id, positionedFile)));
 	}
 }

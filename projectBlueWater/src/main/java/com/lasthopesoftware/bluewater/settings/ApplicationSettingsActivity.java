@@ -191,20 +191,20 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 
 		libraryProvider
 			.getAllLibraries()
-			.eventually(LoopedInPromise.response(new VoidResponse<>(libraries -> {
-				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
+			.eventually(libraries -> new SelectedBrowserLibraryIdentifierProvider(this)
+				.getSelectedLibraryId()
+				.eventually(LoopedInPromise.response(new VoidResponse<>(chosenLibraryId -> {
+					final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
 
-				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
+					serverListView.findView().setAdapter(
+						new ServerListAdapter(
+							this,
+							Stream.of(libraries).sortBy(Library::getId).toList(),
+							selectedBrowserLibrary.isPresent() ? selectedBrowserLibrary.get() : null,
+							new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
 
-				serverListView.findView().setAdapter(
-					new ServerListAdapter(
-						this,
-						Stream.of(libraries).sortBy(Library::getId).toList(),
-						selectedBrowserLibrary.isPresent() ? selectedBrowserLibrary.get() : null,
-						new BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider)));
-
-				progressBar.findView().setVisibility(View.INVISIBLE);
-				serverListView.findView().setVisibility(View.VISIBLE);
-			}), this));
+					progressBar.findView().setVisibility(View.INVISIBLE);
+					serverListView.findView().setVisibility(View.VISIBLE);
+				}), this)));
 	}
 }

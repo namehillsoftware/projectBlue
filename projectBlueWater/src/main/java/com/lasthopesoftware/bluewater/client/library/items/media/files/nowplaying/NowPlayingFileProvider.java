@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying;
 
 import android.content.Context;
+
+import com.lasthopesoftware.bluewater.client.library.access.ChosenLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -19,8 +20,8 @@ public class NowPlayingFileProvider implements INowPlayingFileProvider {
 		return
 			new NowPlayingFileProvider(
 				new NowPlayingRepository(
-					new SpecificLibraryProvider(
-						new SelectedBrowserLibraryIdentifierProvider(context).getSelectedLibraryId(),
+					new ChosenLibraryProvider(
+						new SelectedBrowserLibraryIdentifierProvider(context),
 						libraryRepository),
 					libraryRepository));
 	}

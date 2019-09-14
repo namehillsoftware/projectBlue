@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary;
 
 import android.content.IntentFilter;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
@@ -18,6 +20,7 @@ import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
@@ -26,7 +29,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.*;
+import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnection;
+import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
+import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
+import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingView;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -59,7 +65,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
 				localBroadcastManager,
-				() -> 2,
+				() -> new Promise<>(2),
 				libraryProvider,
 				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 				Promise::new,

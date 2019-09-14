@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePro
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -78,8 +79,8 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		int selectedLibraryId;
 
 		@Override
-		public int getSelectedLibraryId() {
-			return selectedLibraryId;
+		public Promise<Integer> getSelectedLibraryId() {
+			return new Promise<>(selectedLibraryId);
 		}
 	}
 }

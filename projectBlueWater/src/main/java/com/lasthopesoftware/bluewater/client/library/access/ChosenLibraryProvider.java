@@ -5,22 +5,18 @@ import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryI
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
-/**
- * Created by david on 2/12/17.
- */
-
-public class SelectedBrowserLibraryProvider implements ISelectedBrowserLibraryProvider, PromisedResponse<Integer, Library> {
+public class ChosenLibraryProvider implements ISpecificLibraryProvider, PromisedResponse<Integer, Library> {
 
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
 	private final ILibraryProvider libraryProvider;
 
-	public SelectedBrowserLibraryProvider(ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider) {
+	public ChosenLibraryProvider(ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider, ILibraryProvider libraryProvider) {
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
 		this.libraryProvider = libraryProvider;
 	}
 
 	@Override
-	public Promise<Library> getBrowserLibrary() {
+	public Promise<Library> getLibrary() {
 		return selectedLibraryIdentifierProvider.getSelectedLibraryId().eventually(this);
 	}
 

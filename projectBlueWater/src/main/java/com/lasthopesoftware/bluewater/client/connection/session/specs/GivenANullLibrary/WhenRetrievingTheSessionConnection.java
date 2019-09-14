@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenANullLibrary;
 
 import android.content.IntentFilter;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
@@ -18,6 +20,7 @@ import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -55,7 +58,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
 				localBroadcastManager,
-				() -> 2,
+				() -> new Promise<>(2),
 				libraryProvider,
 				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 				Promise::new,
