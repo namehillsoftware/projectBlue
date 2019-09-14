@@ -14,12 +14,11 @@
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/nowPlayingDrawer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
 
         <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:orientation="vertical">
            <include
                 layout="@layout/activity_control_now_playing"
@@ -32,13 +31,12 @@
             android:layout_width="240dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
-            android:background="@color/now_playing_list_color" >
+            android:background="@color/now_playing_list_color">
 
             <ListView
                 android:id="@+id/nowPlayingDrawerListView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_alignParentTop="true"
                 android:orientation="vertical"
                 android:fitsSystemWindows="true"/>
         </RelativeLayout>

@@ -7,12 +7,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -328,10 +331,24 @@ implements
 
 		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.END);
 		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
+
 		lazyNowPlayingRepository.getObject().getNowPlaying()
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
 				final ListView listView = nowPlayingDrawerListView.findView();
+
+				final Point outPoint = new Point();
+				((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(outPoint);
+				int newHeight = outPoint.y;
+				final Rect rect = new Rect();
+				getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
+				final int statusBarHeight = rect.top;
+				newHeight -= statusBarHeight;
+				final ViewGroup.LayoutParams layoutParams = listView.getLayoutParams();
+				final RelativeLayout.LayoutParams newLayoutParams = new RelativeLayout.LayoutParams(layoutParams.width, newHeight);
+				newLayoutParams.setMargins(0, statusBarHeight, 0, 0);
+				listView.setLayoutParams(newLayoutParams);
 				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+
 				listView.setAdapter(
 					new NowPlayingFileListAdapter(
 						this,
