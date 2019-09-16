@@ -4,13 +4,13 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.cinnober.gradle.semver-git'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     buildToolsVersion '28.0.3'
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode getGeneratedVersionCode()
         versionName project.version
     }
@@ -23,7 +23,7 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
-        }
+		}
         release {
             minifyEnabled true
             shrinkResources true
@@ -89,10 +89,11 @@ def getGeneratedVersionCode() {
 dependencies {
     implementation project(':pagerslidingtabstrip')
     implementation project(':futures')
-    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.annotation:annotation:1.1.0'
 	implementation 'androidx.multidex:multidex:2.0.1'
 	implementation "androidx.work:work-runtime:2.2.0"
-	implementation "androidx.media:media:1.0.1"
+	implementation "androidx.media:media:1.1.0"
 	implementation "androidx.drawerlayout:drawerlayout:1.0.0"
 	implementation 'com.google.android.material:material:1.0.0'
 	implementation 'androidx.legacy:legacy-support-v4:1.0.0'

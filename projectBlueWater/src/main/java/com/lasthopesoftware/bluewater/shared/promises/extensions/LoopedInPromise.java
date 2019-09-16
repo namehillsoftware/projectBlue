@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions;
 
 import android.content.Context;
 import android.os.Handler;
+
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -11,6 +12,7 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMess
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellablePreparedMessengerOperator;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+
 import org.joda.time.Duration;
 
 public class LoopedInPromise<Result> extends Promise<Result> {

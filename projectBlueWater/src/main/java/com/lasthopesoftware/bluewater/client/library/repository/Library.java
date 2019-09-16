@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.repository;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Base64;
+
 import androidx.annotation.Keep;
+
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
@@ -301,6 +303,7 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		}
 	}
 
+	@Keep
 	public enum SyncedFileLocation {
 		EXTERNAL,
 		INTERNAL,
@@ -312,6 +315,7 @@ public class Library implements IEntityCreator, IEntityUpdater {
 							SyncedFileLocation.CUSTOM)));
 	}
 
+	@Keep
 	public enum ViewType {
 		StandardServerView,
 		PlaylistView,
