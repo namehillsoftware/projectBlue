@@ -23,7 +23,6 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
-            useProguard false
         }
         release {
             minifyEnabled true

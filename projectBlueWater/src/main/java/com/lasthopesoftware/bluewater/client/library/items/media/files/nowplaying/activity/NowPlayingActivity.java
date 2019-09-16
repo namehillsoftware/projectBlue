@@ -7,16 +7,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
-import android.graphics.Point;
 import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.view.Surface;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -31,6 +28,7 @@ import android.widget.ViewAnimator;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -335,7 +333,6 @@ implements
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
 				final ListView listView = nowPlayingDrawerListView.findView();
 				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
-				updateNowPlayingListViewHeight();
 
 				listView.setAdapter(
 					new NowPlayingFileListAdapter(
@@ -352,6 +349,7 @@ implements
 	private void setupNowPlayingListDrawer() {
 		viewNowPlayingListButton.findView()
 			.setOnClickListener(v -> drawerLayout.findView().openDrawer(GravityCompat.END));
+		drawerLayout.findView().setScrimColor(ContextCompat.getColor(this, android.R.color.transparent));
 		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
 
@@ -368,22 +366,6 @@ implements
 		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.END);
 	}
 
-	private void updateNowPlayingListViewHeight() {
-		final Point outPoint = new Point();
-		((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(outPoint);
-		int newHeight = outPoint.y;
-		final Rect rect = new Rect();
-		getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
-		final int statusBarHeight = (int)(rect.top * 1.1);
-		newHeight -= statusBarHeight;
-
-		final ListView listView = nowPlayingDrawerListView.findView();
-		final ViewGroup.LayoutParams layoutParams = listView.getLayoutParams();
-		final LinearLayout.LayoutParams newLayoutParams = new LinearLayout.LayoutParams(layoutParams.width, newHeight);
-		newLayoutParams.setMargins(0, statusBarHeight, 0, 0);
-		listView.setLayoutParams(newLayoutParams);
-	}
-	
 	@Override
 	public void onStart() {
 		super.onStart();
