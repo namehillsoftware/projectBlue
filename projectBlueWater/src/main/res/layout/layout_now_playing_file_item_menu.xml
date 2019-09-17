@@ -18,7 +18,7 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:contentDescription="@string/btn_remove_file"
-        android:src="@drawable/content_discard" />
+        android:src="@drawable/ic_clear_white_32dp" />
     
 	<ImageButton
 	    android:id="@+id/btnViewFileDetails"
@@ -27,7 +27,7 @@
 	    android:layout_height="match_parent"
 	    android:layout_weight="1"
 	    android:contentDescription="@string/btn_view_song_details"
-	    android:src="@drawable/ic_list" />
+	    android:src="@drawable/ic_menu_white_32dp" />
 
 	
 	<ImageButton
@@ -37,6 +37,6 @@
 	    android:layout_height="match_parent"
 	    android:layout_weight="1"
 	    android:contentDescription="@string/btn_play_files"
-	    android:src="@drawable/av_play" />
+	    android:src="@drawable/av_play_dark" />
 	
 </LinearLayout>
