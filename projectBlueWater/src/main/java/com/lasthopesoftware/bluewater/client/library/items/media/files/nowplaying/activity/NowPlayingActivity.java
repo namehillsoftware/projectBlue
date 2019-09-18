@@ -86,6 +86,7 @@ implements
 	IItemListMenuChangeHandler {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
+	private ViewAnimator viewAnimator;
 
 	public static void startNowPlayingActivity(final Context context) {
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
@@ -724,7 +725,21 @@ implements
 	public void onAnyMenuShown() {}
 
 	@Override
-	public void onViewChanged(ViewAnimator viewAnimator) {}
+	public void onViewChanged(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public void onBackPressed() {
+		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
+
+		if (isDrawerOpened) {
+			drawerLayout.findView().closeDrawers();
+			return;
+		}
+
+		super.onBackPressed();
+	}
 
 	private static class ViewStructure {
 		final UrlKeyHolder<Integer> urlKeyHolder;
