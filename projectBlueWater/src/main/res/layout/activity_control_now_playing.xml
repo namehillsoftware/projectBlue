@@ -40,7 +40,8 @@
                 android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/screen_is_off"
                 android:paddingBottom="@dimen/now_playing_menu_padding"
-                android:src="@drawable/screen_off" />
+                android:src="@drawable/ic_screen_off_white_32dp"
+                android:alpha=".80"/>
 
             <ImageButton
                 android:id="@+id/viewNowPlayingListButton"
@@ -51,7 +52,8 @@
                 android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/btn_view_files"
                 android:paddingTop="@dimen/now_playing_menu_padding"
-                android:src="@drawable/ic_list_dark" />
+                android:src="@drawable/ic_menu_white_32dp"
+                android:alpha=".80"/>
         </LinearLayout>
 
         <LinearLayout

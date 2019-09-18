@@ -460,7 +460,7 @@ implements
 	}
 
 	private void updateKeepScreenOnStatus() {
-		isScreenKeptOnButton.findView().setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.screen_on : R.drawable.screen_off));
+		isScreenKeptOnButton.findView().setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.ic_screen_on_white_32dp : R.drawable.ic_screen_off_white_32dp));
 
 		if (isScreenKeptOn)
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
