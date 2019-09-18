@@ -18,7 +18,7 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:contentDescription="@string/btn_remove_file"
-        android:src="@drawable/ic_clear_white_32dp" />
+        android:src="@drawable/ic_remove_item_white_32dp" />
     
 	<ImageButton
 	    android:id="@+id/btnViewFileDetails"
