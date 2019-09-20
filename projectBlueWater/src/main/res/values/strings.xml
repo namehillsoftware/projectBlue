@@ -34,10 +34,8 @@
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
     <string name="action_settings">Settings</string>
-    <string name="title_view_now_playing_files">Now Playing Files</string>
     <string name="lbl_waiting_for_connection">Waiting for Connection</string>
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
-    <string name="title_svc_now_playing">%1$s Now Playing</string>
     <string name="lbl_something_went_wrong">Something went wrong! Attempting to reconnect.</string>
     <string name="lbl_starting_playback">Starting Playback</string>
     <string name="title_activity_wait_for_connection">Waiting For Connection</string>
@@ -56,8 +54,6 @@
     <string name="lbl_search_hint">Search for files</string>
     <string name="title_activity_search_results">Search Results for &quot;%1$s&quot;</string>
     <string name="btn_remove_file">Remove file from playlist</string>
-    <string name="file_not_found">File not found</string>
-    <string name="lbl_error_getting_file_properties">Error getting file properties.</string>
     <string name="title_svc_connecting_to_server">Connecting to server</string>
     <string name="title_long_click_menu">Long Click</string>
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>

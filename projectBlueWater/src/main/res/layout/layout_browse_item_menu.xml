@@ -27,7 +27,7 @@
 	    android:layout_height="match_parent"
 	    android:layout_weight="1"
 	    android:contentDescription="@string/btn_view_files"
-	    android:src="@drawable/ic_list" />
+	    android:src="@drawable/ic_menu_gray_36dp" />
 
     <ImageButton
         android:id="@+id/btnSyncItem"

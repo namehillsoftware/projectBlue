@@ -1,22 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/viewNowPlayingRelativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/viewNowPlayingRelativeLayout">
+    android:orientation="vertical">
 
     <include
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         layout="@layout/activity_view_cover_art"
-        android:layout_gravity="center_horizontal"/>
-
-    <include
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        layout="@layout/activity_control_now_playing"
-        android:layout_gravity="center_horizontal"/>
+        android:layout_gravity="center_horizontal" />
 
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/overlay_dark"
+            android:fitsSystemWindows="true">
+        <androidx.drawerlayout.widget.DrawerLayout
+            android:id="@+id/nowPlayingDrawer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+               <include
+                    layout="@layout/activity_control_now_playing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"/>
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="300dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="end"
+                android:id="@+id/nowPlayingDrawerContainer"
+                android:background="@color/now_playing_list_color">
+
+                <ListView
+                    android:id="@+id/nowPlayingDrawerListView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:fitsSystemWindows="true"/>
+            </LinearLayout>
+        </androidx.drawerlayout.widget.DrawerLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

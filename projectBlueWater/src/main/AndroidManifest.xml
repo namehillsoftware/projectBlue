@@ -111,14 +111,6 @@
                 android:launchMode="singleTask"
                 android:theme="@style/NowPlayingTheme">
         </activity>
-        <activity
-                android:name=".client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity"
-                android:label="@string/title_activity_view_now_playing"
-                android:launchMode="singleTask">
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity"/>
-        </activity>
 
         <receiver android:name=".client.playback.service.receivers.AudioBecomingNoisyReceiver">
             <intent-filter android:priority="1000">

@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
 import androidx.collection.LruCache;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -25,15 +27,21 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
-import okhttp3.ResponseBody;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import okhttp3.ResponseBody;
 
 public class ImageProvider {
 	

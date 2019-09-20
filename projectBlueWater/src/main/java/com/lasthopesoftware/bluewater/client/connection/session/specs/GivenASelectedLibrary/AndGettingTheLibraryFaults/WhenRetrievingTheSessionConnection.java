@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary.AndGettingTheLibraryFaults;
 
 import android.content.IntentFilter;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
@@ -18,6 +20,7 @@ import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;

@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items;
 
 import android.database.sqlite.SQLiteDatabase;
+
 import androidx.annotation.Keep;
+
 import com.lasthopesoftware.bluewater.repository.IEntityCreator;
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater;
 
@@ -75,5 +77,6 @@ public class StoredItem implements IEntityCreator, IEntityUpdater {
 		db.execSQL(createTableSql);
 	}
 
+	@Keep
 	public enum ItemType { FILE, PLAYLIST, ITEM }
 }

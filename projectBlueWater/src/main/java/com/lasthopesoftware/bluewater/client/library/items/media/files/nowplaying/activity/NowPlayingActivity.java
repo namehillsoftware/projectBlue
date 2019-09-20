@@ -12,17 +12,25 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.ViewAnimator;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.R;
@@ -33,9 +41,10 @@ import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessi
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFilesListActivity;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.list.NowPlayingFileListAdapter;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -45,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
@@ -69,9 +79,14 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
 
-public class NowPlayingActivity extends AppCompatActivity {
+public class NowPlayingActivity
+extends
+	AppCompatActivity
+implements
+	IItemListMenuChangeHandler {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NowPlayingActivity.class);
+	private ViewAnimator viewAnimator;
 
 	public static void startNowPlayingActivity(final Context context) {
 		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
@@ -91,7 +106,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<ImageButton> playButton = new LazyViewFinder<>(this, R.id.btnPlay);
 	private final LazyViewFinder<ImageButton> pauseButton = new LazyViewFinder<>(this, R.id.btnPause);
 	private final LazyViewFinder<RatingBar> songRating = new LazyViewFinder<>(this, R.id.rbSongRating);
-	private final LazyViewFinder<RelativeLayout> contentView = new LazyViewFinder<>(this, R.id.viewNowPlayingRelativeLayout);
+	private final LazyViewFinder<RelativeLayout> contentView = new LazyViewFinder<>(this, R.id.rlCtlNowPlaying);
 	private final LazyViewFinder<ProgressBar> songProgressBar = new LazyViewFinder<>(this, R.id.pbNowPlaying);
 	private final LazyViewFinder<ImageView> nowPlayingImageViewFinder = new LazyViewFinder<>(this, R.id.imgNowPlaying);
 	private final LazyViewFinder<TextView> nowPlayingArtist = new LazyViewFinder<>(this, R.id.tvSongArtist);
@@ -99,6 +114,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private final LazyViewFinder<TextView> nowPlayingTitle = new LazyViewFinder<>(this, R.id.tvSongTitle);
 	private final LazyViewFinder<ImageView> nowPlayingImageLoading = new LazyViewFinder<>(this, R.id.imgNowPlayingLoading);
 	private final LazyViewFinder<ProgressBar> loadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingImg);
+	private final LazyViewFinder<ImageButton> viewNowPlayingListButton = new LazyViewFinder<>(this, R.id.viewNowPlayingListButton);
+
 	private final CreateAndHold<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
 		protected NowPlayingToggledVisibilityControls create() {
@@ -125,6 +142,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 		public void onReceive(Context context, Intent intent) {
 			final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
 			if (playlistPosition < 0) return;
+
+			if (!isDrawerOpened)
+				updateNowPlayingListViewPosition(playlistPosition);
 
 			showNowPlayingControls();
 			updateKeepScreenOnStatus();
@@ -185,9 +205,46 @@ public class NowPlayingActivity extends AppCompatActivity {
 		}
 	};
 
+	private final LazyViewFinder<ListView> nowPlayingDrawerListView = new LazyViewFinder<ListView>(this, R.id.nowPlayingDrawerListView);
+
+	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.nowPlayingDrawer);
+
+	private final CreateAndHold<ActionBarDrawerToggle> drawerToggle = new AbstractSynchronousLazy<ActionBarDrawerToggle>() {
+		@Override
+		protected ActionBarDrawerToggle create() {
+			return new ActionBarDrawerToggle(
+				NowPlayingActivity.this,                  /* host Activity */
+				drawerLayout.findView(),         /* DrawerLayout object */
+				R.string.drawer_open,  /* "open drawer" description */
+				R.string.drawer_close  /* "close drawer" description */
+			) {
+				/** Called when a drawer has settled in a completely closed state. */
+				@Override
+				public void onDrawerClosed(View view) {
+					super.onDrawerClosed(view);
+
+					isDrawerOpened = false;
+				}
+
+				/** Called when a drawer has settled in a completely open state. */
+				@Override
+				public void onDrawerOpened(View drawerView) {
+					super.onDrawerOpened(drawerView);
+
+					isDrawerOpened = true;
+
+					nowPlayingDrawerListView.findView().bringToFront();
+					drawerLayout.findView().requestLayout();
+				}
+			};
+		}
+	};
+
 	private TimerTask timerTask;
 
 	private LocalBroadcastManager localBroadcastManager;
+
+	private boolean isDrawerOpened;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -263,10 +320,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 					}, messageHandler.getObject())));
 		}
 
-		final ImageButton viewNowPlayingListButton = findViewById(R.id.viewNowPlayingListButton);
-		if (viewNowPlayingListButton != null)
-			viewNowPlayingListButton.setOnClickListener(v -> startActivity(new Intent(v.getContext(), NowPlayingFilesListActivity.class)));
-
 		isScreenKeptOnButton.findView().setOnClickListener(v -> {
 			isScreenKeptOn = !isScreenKeptOn;
 			updateKeepScreenOnStatus();
@@ -274,8 +327,46 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
 			songProgressBar.findView().getProgressDrawable().setColorFilter(getResources().getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN);
+
+		setupNowPlayingListDrawer();
+
+		lazyNowPlayingRepository.getObject().getNowPlaying()
+			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
+				final ListView listView = nowPlayingDrawerListView.findView();
+				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+
+				listView.setAdapter(
+					new NowPlayingFileListAdapter(
+						this,
+						R.id.tvStandard,
+						NowPlayingActivity.this,
+						nowPlaying.playlist,
+						lazyNowPlayingRepository.getObject()));
+				updateNowPlayingListViewPosition(nowPlaying.playlistPosition);
+				return null;
+			}, messageHandler.getObject()));
 	}
-	
+
+	private void setupNowPlayingListDrawer() {
+		viewNowPlayingListButton.findView()
+			.setOnClickListener(v -> drawerLayout.findView().openDrawer(GravityCompat.END));
+		drawerLayout.findView().setScrimColor(ContextCompat.getColor(this, android.R.color.transparent));
+		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+		drawerLayout.findView().addDrawerListener(drawerToggle.getObject());
+
+		final int rotation =  getWindowManager().getDefaultDisplay().getRotation();
+		if (rotation != Surface.ROTATION_90) return;
+
+		final LinearLayout nowPlayingDrawerContainer = findViewById(R.id.nowPlayingDrawerContainer);
+		final DrawerLayout.LayoutParams newLayoutParams = new DrawerLayout.LayoutParams(nowPlayingDrawerContainer.getLayoutParams());
+		newLayoutParams.gravity = GravityCompat.START;
+		nowPlayingDrawerContainer.setLayoutParams(newLayoutParams);
+
+		viewNowPlayingListButton.findView()
+			.setOnClickListener(v -> drawerLayout.findView().openDrawer(GravityCompat.START));
+		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.END);
+	}
+
 	@Override
 	public void onStart() {
 		super.onStart();
@@ -293,6 +384,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) initializeView();
 
 		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	private void updateNowPlayingListViewPosition(int newPosition) {
+		final ListView listView = nowPlayingDrawerListView.findView();
+		if (newPosition > -1 && newPosition < listView.getCount())
+			listView.setSelection(newPosition);
 	}
 
 	private void setNowPlayingBackgroundBitmap() {
@@ -363,7 +460,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 
 	private void updateKeepScreenOnStatus() {
-		isScreenKeptOnButton.findView().setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.screen_on : R.drawable.screen_off));
+		isScreenKeptOnButton.findView().setImageDrawable(ViewUtils.getDrawable(this, isScreenKeptOn ? R.drawable.ic_screen_on_white_36dp : R.drawable.ic_screen_off_white_36dp));
 
 		if (isScreenKeptOn)
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -619,6 +716,29 @@ public class NowPlayingActivity extends AppCompatActivity {
 		localBroadcastManager.unregisterReceiver(onTrackPositionChanged);
 
 		PollConnectionService.removeOnConnectionLostListener(onConnectionLostListener);
+	}
+
+	@Override
+	public void onAllMenusHidden() {}
+
+	@Override
+	public void onAnyMenuShown() {}
+
+	@Override
+	public void onViewChanged(ViewAnimator viewAnimator) {
+		this.viewAnimator = viewAnimator;
+	}
+
+	@Override
+	public void onBackPressed() {
+		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
+
+		if (isDrawerOpened) {
+			drawerLayout.findView().closeDrawers();
+			return;
+		}
+
+		super.onBackPressed();
 	}
 
 	private static class ViewStructure {

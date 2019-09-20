@@ -4,12 +4,12 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="overlay_dark">#66000000</color>
-    <color name="overlay_light">#DDDDDD</color>
     <color name="ics_gray">#858585</color>
     <!--<color name="clearstream_blue">#97acec</color>-->
     <color name="clearstream_blue">#8c9eff</color>
     <color name="clearstream_dark">#303f9f</color>
     <color name="custom_transparent_white">#CCFFFFFF</color>
+    <color name="now_playing_list_color">#4F000000</color>
     <color name="selection_background_color_light">#FEBB20</color>
 
 </resources>
