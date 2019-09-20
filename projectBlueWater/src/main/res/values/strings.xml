@@ -34,7 +34,6 @@
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
     <string name="action_settings">Settings</string>
-    <string name="title_view_now_playing_files">Now Playing Files</string>
     <string name="lbl_waiting_for_connection">Waiting for Connection</string>
     <string name="lbl_click_to_cancel">Click here to cancel.</string>
     <string name="lbl_something_went_wrong">Something went wrong! Attempting to reconnect.</string>
