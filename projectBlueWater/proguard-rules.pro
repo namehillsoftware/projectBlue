@@ -22,7 +22,6 @@
 -dontwarn org.joda.time**
 -dontwarn ch.qos.logback**
 
--keep class android.support.v7.widget.SearchView { *; }
 -keep class android.arch.lifecycle.** {*;}
 
 # okhttp rules
@@ -36,7 +35,7 @@
     public static final ** CREATOR;
 }
 
--keepnames class * extends androidx.customview.view {
+-keepnames class * extends androidx.customview.view.AbsSavedState {
     public static final ** CREATOR;
 }
 
