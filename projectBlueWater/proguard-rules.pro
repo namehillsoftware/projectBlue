@@ -22,7 +22,6 @@
 -dontwarn org.joda.time**
 -dontwarn ch.qos.logback**
 
--keep class android.support.v7.widget.SearchView { *; }
 -keep class android.arch.lifecycle.** {*;}
 
 # okhttp rules
@@ -31,6 +30,14 @@
 -dontwarn javax.annotation.**
 # A resource is loaded with a relative path so the package of this class must be preserved.
 -keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+
+-keepnames class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
+
+-keepnames class * extends androidx.customview.view.AbsSavedState {
+    public static final ** CREATOR;
+}
 
 # -printseeds /home/david/sandbox/projectBlue/projectBlueWater/release/seeds.txt # print out classes that are kept
 # -printusage /home/david/sandbox/projectBlue/projectBlueWater/release/usage.txt # print out classes that are obfuscated

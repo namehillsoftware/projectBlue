@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater;
 
 import android.annotation.SuppressLint;
-import android.app.Application;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,18 +8,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.multidex.MultiDexApplication;
 import androidx.work.Configuration;
 import androidx.work.WorkManager;
-import ch.qos.logback.classic.AsyncAppender;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.android.LogcatAppender;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.rolling.RollingFileAppender;
-import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
-import ch.qos.logback.core.util.StatusPrinter;
+
 import com.lasthopesoftware.bluewater.client.connection.AccessConfigurationBuilder;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer;
@@ -45,6 +38,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionH
 import com.lasthopesoftware.compilation.DebugFlag;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,9 +46,17 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class MainApplication extends Application {
+import ch.qos.logback.classic.AsyncAppender;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.android.LogcatAppender;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
+import ch.qos.logback.core.util.StatusPrinter;
 
-	private final Lazy<Logger> lazyLogger = new Lazy<>(() -> LoggerFactory.getLogger(MainApplication.class));
+public class MainApplication extends MultiDexApplication {
 
 	private final Lazy<NotificationManager> notificationManagerLazy = new Lazy<>(() -> (NotificationManager) getSystemService(NOTIFICATION_SERVICE));
 	private final Lazy<IStorageReadPermissionsRequestNotificationBuilder> storageReadPermissionsRequestNotificationBuilderLazy = new Lazy<>(() -> new StorageReadPermissionsRequestNotificationBuilder(this));
