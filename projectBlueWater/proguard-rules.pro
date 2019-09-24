@@ -31,15 +31,9 @@
 # A resource is loaded with a relative path so the package of this class must be preserved.
 -keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
--keepnames class * implements android.os.Parcelable {
+-keep class androidx.drawerlayout.widget.DrawerLayout$SavedState {
     public static final ** CREATOR;
 }
-
--keepnames class * extends androidx.customview.view.AbsSavedState {
-    public static final ** CREATOR;
-}
-
--keepnames class androidx.drawerlayout.widget.DrawerLayout$SavedState { *; }
 
 # -printseeds /home/david/sandbox/projectBlue/projectBlueWater/release/seeds.txt # print out classes that are kept
 # -printusage /home/david/sandbox/projectBlue/projectBlueWater/release/usage.txt # print out classes that are obfuscated

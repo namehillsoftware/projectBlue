@@ -95,7 +95,6 @@ dependencies {
 	implementation 'androidx.multidex:multidex:2.0.1'
 	implementation "androidx.work:work-runtime:2.2.0"
 	implementation "androidx.media:media:1.1.0"
-	implementation "androidx.drawerlayout:drawerlayout:1.0.0"
 	implementation 'com.google.android.material:material:1.0.0'
 	implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 	implementation 'joda-time:joda-time:2.10.3'
