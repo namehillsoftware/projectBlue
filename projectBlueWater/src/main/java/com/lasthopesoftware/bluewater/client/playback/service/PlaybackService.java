@@ -22,7 +22,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.Process;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.util.SparseBooleanArray;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -288,8 +287,7 @@ implements OnAudioFocusChangeListener
 	private static final String wifiLockSvcName =  MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "wifiLockSvcName");
 	private static final String mediaSessionTag = MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "mediaSessionTag");
 
-	private static final int playingNotificationId = 42;
-	private static final int startingNotificationId = 53;
+	private static final int notificationId = 42;
 	private static int startId;
 
 	private static final int maxErrors = 3;
@@ -332,6 +330,10 @@ implements OnAudioFocusChangeListener
 					PlaybackService.this,
 					mediaSessionTag);
 
+				newMediaSession.setFlags(
+					MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+					MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
 				newMediaSession.setCallback(new MediaSessionCallbackReceiver(PlaybackService.this));
 
 				final Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
@@ -356,7 +358,7 @@ implements OnAudioFocusChangeListener
 
 			final String channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 			
-			return new PlaybackNotificationsConfiguration(channelName, playingNotificationId);
+			return new PlaybackNotificationsConfiguration(channelName, notificationId);
 		}
 	};
 	private final CreateAndHold<MediaStyleNotificationSetup> lazyMediaStyleNotificationSetup = new AbstractSynchronousLazy<MediaStyleNotificationSetup>() {
@@ -409,12 +411,11 @@ implements OnAudioFocusChangeListener
 
 	private final CreateAndHold<AudioBecomingNoisyReceiver> lazyAudioBecomingNoisyReceiver = new Lazy<>(AudioBecomingNoisyReceiver::new);
 
-	private final SparseBooleanArray notificationForegroundStatuses = new SparseBooleanArray();
-
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
 
 	private boolean areListenersRegistered = false;
+	private boolean isNotificationForeground = false;
 
 	private Promise<PlaybackEngine> playbackEnginePromise;
 	private PlaybackEngine playbackEngine;
@@ -496,50 +497,26 @@ implements OnAudioFocusChangeListener
 		return isPlaying;
 	}
 
-	private boolean isAnyNotificationForeground() {
-		for (int i = 0; i < notificationForegroundStatuses.size(); i++) {
-			if (notificationForegroundStatuses.valueAt(i)) return true;
-		}
-
-		return false;
-	}
-
-	private boolean isOnlyNotificationForeground(int notificationId) {
-		return isNotificationForeground(notificationId)	&& !isAnyNotificationForeground();
-	}
-
-	private boolean isNotificationForeground(int notificationId) {
-		return notificationForegroundStatuses.get(notificationId, false);
-	}
-
-	private void markNotificationBackground(int notificationId) {
-		notificationForegroundStatuses.put(notificationId, false);
-	}
-
-	private void markNotificationForeground(int notificationId) {
-		notificationForegroundStatuses.put(notificationId, false);
-	}
-
-	private void notifyBackground(Builder notificationBuilder, int notificationId) {
-		if (isOnlyNotificationForeground(notificationId))
+	private void notifyBackground(Builder notificationBuilder) {
+		if (isNotificationForeground)
 			stopForeground(false);
 
-		markNotificationBackground(notificationId);
+		isNotificationForeground = false;
 
-		notifyNotificationManager(notificationBuilder, notificationId);
+		notifyNotificationManager(notificationBuilder);
 	}
 
-	private void notifyForeground(Builder notificationBuilder, int notificationId) {
-		if (isNotificationForeground(notificationId)) {
-			notifyNotificationManager(notificationBuilder, notificationId);
+	private void notifyForeground(Builder notificationBuilder) {
+		if (isNotificationForeground) {
+			notifyNotificationManager(notificationBuilder);
 			return;
 		}
 
 		startForeground(notificationId, addNotificationAccoutrements(notificationBuilder).build());
-		markNotificationForeground(notificationId);
+		isNotificationForeground = true;
 	}
 
-	private void notifyNotificationManager(Builder notificationBuilder, int notificationId) {
+	private void notifyNotificationManager(Builder notificationBuilder) {
 		notificationManagerLazy.getObject().notify(notificationId, addNotificationAccoutrements(notificationBuilder).build());
 	}
 
@@ -551,24 +528,19 @@ implements OnAudioFocusChangeListener
 
 	private void stopNotificationIfNotPlaying() {
 		if (!isPlaying)
-			stopNotification(playingNotificationId);
+			stopNotification();
 	}
 
-	private void stopAllNotifications() {
-		for (int i = 0; i < notificationForegroundStatuses.size(); i++)
-			stopNotification(notificationForegroundStatuses.keyAt(i));
-	}
-
-	private void stopNotification(int notificationId) {
-		markNotificationBackground(notificationId);
-		if (!isAnyNotificationForeground()) stopForeground(true);
+	private void stopNotification() {
+		stopForeground(true);
+		isNotificationForeground = false;
 		notificationManagerLazy.getObject().cancel(notificationId);
 	}
 
 	private void notifyStartingService() {
 		lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
-			.then(new VoidResponse<>(b -> notifyForeground(b, startingNotificationId)));
+			.then(new VoidResponse<>(this::notifyForeground));
 	}
 	
 	private void registerListeners() {
@@ -657,15 +629,16 @@ implements OnAudioFocusChangeListener
 			.getBrowserLibrary()
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 			.then(new VoidResponse<>(m -> actOnIntent(intent)))
-			.then(
-				new VoidResponse<>(v -> stopNotification(startingNotificationId)),
-				UnhandledRejectionHandler);
+			.excuse(UnhandledRejectionHandler);
 
 		return START_NOT_STICKY;
 	}
 
 	private void actOnIntent(final Intent intent) {
-		if (intent == null) return;
+		if (intent == null) {
+			pausePlayback(true);
+			return;
+		}
 
 		String action = intent.getAction();
 		if (action == null) return;
@@ -674,11 +647,8 @@ implements OnAudioFocusChangeListener
 			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (playlistPosition < 0) return;
 
-			final String playlistString = intent.getStringExtra(Action.Bag.filePlaylist);
-			if (playlistString == null) return;
-
 			FileStringListUtilities
-				.promiseParsedFileStringList(playlistString)
+				.promiseParsedFileStringList(intent.getStringExtra(Action.Bag.filePlaylist))
 				.then(playlist -> {
 					playbackEngine.startPlaylist(playlist, playlistPosition, 0);
 					NowPlayingActivity.startNowPlayingActivity(this);
@@ -693,7 +663,6 @@ implements OnAudioFocusChangeListener
 			action = isPlaying ? Action.pause : Action.play;
 
 		if (action.equals(Action.play)) {
-
 			isPlaying = true;
 			playbackEngine.resume();
 
@@ -756,10 +725,7 @@ implements OnAudioFocusChangeListener
 
 		if (action.equals(Action.addFileToPlaylist)) {
 			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (fileKey < 0) {
-				stopNotificationIfNotPlaying();
-				return;
-			}
+			if (fileKey < 0) return;
 
 			playbackEngine
 				.addFile(new ServiceFile(fileKey))
@@ -780,7 +746,7 @@ implements OnAudioFocusChangeListener
 		}
 	}
 	
-	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) {
+	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) throws Exception {
 		return playbackEnginePromise =
 			playbackEnginePromise != null
 				? playbackEnginePromise.eventually(
@@ -974,7 +940,7 @@ implements OnAudioFocusChangeListener
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
 				return;
 		}
-		notifyForeground(notifyBuilder, playingNotificationId);
+		notifyNotificationManager(notifyBuilder);
 	}
 	
 	private void handlePlaybackStarted(PositionedPlayingFile positionedPlayableFile) {
@@ -1024,12 +990,12 @@ implements OnAudioFocusChangeListener
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
-		stopAllNotifications();
+		stopNotification();
 	}
 
 	private void handlePlaybackEngineInitializationException(PlaybackEngineInitializationException exception) {
 		logger.error("There was an error initializing the playback engine", exception);
-		stopAllNotifications();
+		stopNotification();
 	}
 
 	private void handlePreparationException(PreparationException preparationException) {
@@ -1099,7 +1065,7 @@ implements OnAudioFocusChangeListener
 
 		builder.setContentTitle(getText(R.string.lbl_waiting_for_connection));
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
-		notifyBackground(builder, playingNotificationId);
+		notifyBackground(builder);
 
 		pollingSessionConnection = PollConnectionService.pollSessionConnection(this);
 		pollingSessionConnection
@@ -1208,7 +1174,7 @@ implements OnAudioFocusChangeListener
 		
 	@Override
 	public void onDestroy() {
-		stopAllNotifications();
+		stopNotification();
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
