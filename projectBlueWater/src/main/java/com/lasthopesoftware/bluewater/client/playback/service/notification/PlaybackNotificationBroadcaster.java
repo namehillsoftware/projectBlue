@@ -12,7 +12,9 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	private final PlaybackNotificationsConfiguration playbackNotificationsConfiguration;
 	private final BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder;
 
+	private final Object notificationSync = new Object();
 	private boolean isPlaying;
+	private boolean isNotificationStarted;
 	private ServiceFile serviceFile;
 
 	public PlaybackNotificationBroadcaster(ControlNotifications notificationsController, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
@@ -45,8 +47,11 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 	@Override
 	public void notifyStopped() {
-		isPlaying = false;
-		notificationsController.removeForegroundNotification(playbackNotificationsConfiguration.getNotificationId());
+		synchronized (notificationSync) {
+			isPlaying = false;
+			isNotificationStarted = false;
+			notificationsController.removeForegroundNotification(playbackNotificationsConfiguration.getNotificationId());
+		}
 	}
 
 	@Override
@@ -55,14 +60,24 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	}
 
 	private void updateNowPlaying(ServiceFile serviceFile) {
-		this.serviceFile = serviceFile;
+		synchronized (notificationSync) {
+			this.serviceFile = serviceFile;
 
-		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
-			.then(new VoidResponse<>(builder -> {
-					if (!isPlaying)
-						notificationsController.notifyBackground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
-					else
+			if (!isNotificationStarted && !isPlaying) return;
+
+			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
+				.then(new VoidResponse<>(builder -> {
+					synchronized (notificationSync) {
+						if (!isPlaying) {
+							if (!isNotificationStarted) return;
+
+							notificationsController.notifyBackground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
+						}
+
+						isNotificationStarted = true;
 						notificationsController.notifyForeground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
-			}));
+					}
+				}));
+		}
 	}
 }
