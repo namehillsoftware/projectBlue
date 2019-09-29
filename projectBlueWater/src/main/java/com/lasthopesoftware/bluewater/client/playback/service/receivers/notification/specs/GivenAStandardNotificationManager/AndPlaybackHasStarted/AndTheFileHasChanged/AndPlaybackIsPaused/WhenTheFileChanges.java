@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -78,7 +79,7 @@ public class WhenTheFileChanges extends AndroidContext {
 					}));
 
 		playbackNotificationRouter.onReceive(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			new Intent(PlaylistEvents.onPlaylistStart));
 
 		{
@@ -86,12 +87,12 @@ public class WhenTheFileChanges extends AndroidContext {
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
 
 			playbackNotificationRouter.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				playlistChangeIntent);
 		}
 
 		playbackNotificationRouter.onReceive(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			new Intent(PlaylistEvents.onPlaylistPause));
 
 		{
@@ -99,7 +100,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2);
 
 			playbackNotificationRouter.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				playlistChangeIntent);
 		}
 	}

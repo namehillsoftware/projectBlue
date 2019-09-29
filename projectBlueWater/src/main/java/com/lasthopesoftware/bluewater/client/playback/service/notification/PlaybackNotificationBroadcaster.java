@@ -72,6 +72,7 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 							if (!isNotificationStarted) return;
 
 							notificationsController.notifyBackground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
+							return;
 						}
 
 						isNotificationStarted = true;
