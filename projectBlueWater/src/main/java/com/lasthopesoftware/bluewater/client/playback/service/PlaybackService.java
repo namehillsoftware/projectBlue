@@ -507,7 +507,7 @@ implements OnAudioFocusChangeListener
 
 	private void stopNotificationIfNotPlaying() {
 		if (!isPlaying)
-			lazyNotificationController.getObject().stopForegroundNotification(playingNotificationId);
+			lazyNotificationController.getObject().removeForegroundNotification(playingNotificationId);
 	}
 
 	private void notifyStartingService() {
@@ -604,7 +604,7 @@ implements OnAudioFocusChangeListener
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 			.then(new VoidResponse<>(m -> actOnIntent(intent)))
 			.then(
-				new VoidResponse<>(v -> lazyNotificationController.getObject().stopForegroundNotification(startingNotificationId)),
+				new VoidResponse<>(v -> lazyNotificationController.getObject().removeForegroundNotification(startingNotificationId)),
 				UnhandledRejectionHandler);
 
 		return START_NOT_STICKY;
@@ -971,12 +971,12 @@ implements OnAudioFocusChangeListener
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
-		lazyNotificationController.getObject().stopAllForegroundNotifications();
+		lazyNotificationController.getObject().removeAllForegroundNotifications();
 	}
 
 	private void handlePlaybackEngineInitializationException(PlaybackEngineInitializationException exception) {
 		logger.error("There was an error initializing the playback engine", exception);
-		lazyNotificationController.getObject().stopAllForegroundNotifications();
+		lazyNotificationController.getObject().removeAllForegroundNotifications();
 	}
 
 	private void handlePreparationException(PreparationException preparationException) {
@@ -1155,7 +1155,7 @@ implements OnAudioFocusChangeListener
 		
 	@Override
 	public void onDestroy() {
-		lazyNotificationController.getObject().stopAllForegroundNotifications();
+		lazyNotificationController.getObject().removeAllForegroundNotifications();
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);

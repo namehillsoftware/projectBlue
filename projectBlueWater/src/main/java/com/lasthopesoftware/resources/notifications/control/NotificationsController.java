@@ -7,6 +7,7 @@ import android.util.SparseBooleanArray;
 
 public class NotificationsController implements ControlNotifications {
 
+	private final Object syncObject = new Object();
 	private final SparseBooleanArray notificationForegroundStatuses = new SparseBooleanArray();
 	private final Service service;
 	private final NotificationManager notificationManager;
@@ -17,60 +18,91 @@ public class NotificationsController implements ControlNotifications {
 	}
 
 	private boolean isOnlyNotificationForeground(int notificationId) {
-		return isNotificationForeground(notificationId)	&& !isAnyNotificationForeground();
+		synchronized (syncObject) {
+			return isNotificationForeground(notificationId) && !isAnyNotificationForegroundExcept(notificationId);
+		}
 	}
 
 	private boolean isNotificationForeground(int notificationId) {
-		return notificationForegroundStatuses.get(notificationId, false);
+		synchronized (syncObject) {
+			return notificationForegroundStatuses.get(notificationId, false);
+		}
 	}
 
 	@Override
 	public void notifyBackground(Notification notification, int notificationId) {
-		if (isOnlyNotificationForeground(notificationId))
-			service.stopForeground(false);
+		synchronized (syncObject) {
+			if (isOnlyNotificationForeground(notificationId))
+				service.stopForeground(false);
 
-		markNotificationBackground(notificationId);
+			markNotificationBackground(notificationId);
 
-		notificationManager.notify(notificationId, notification);
+			notificationManager.notify(notificationId, notification);
+		}
 	}
 
 	@Override
 	public void notifyForeground(Notification notification, int notificationId) {
-		if (isNotificationForeground(notificationId)) {
-			notificationManager.notify(notificationId, notification);
-			return;
-		}
+		synchronized (syncObject) {
+			if (isNotificationForeground(notificationId)) {
+				notificationManager.notify(notificationId, notification);
+				return;
+			}
 
-		service.startForeground(notificationId, notification);
-		markNotificationForeground(notificationId);
+			service.startForeground(notificationId, notification);
+			markNotificationForeground(notificationId);
+		}
 	}
 
 	@Override
-	public void stopAllForegroundNotifications() {
-		for (int i = 0; i < notificationForegroundStatuses.size(); i++)
-			stopForegroundNotification(notificationForegroundStatuses.keyAt(i));
+	public void removeAllForegroundNotifications() {
+		synchronized (syncObject) {
+			for (int i = 0; i < notificationForegroundStatuses.size(); i++)
+				removeForegroundNotification(notificationForegroundStatuses.keyAt(i));
+		}
+	}
+
+	@Override
+	public void removeForegroundNotification(int notificationId) {
+		synchronized (syncObject) {
+			markNotificationBackground(notificationId);
+			if (!isAnyNotificationForeground()) service.stopForeground(true);
+			notificationManager.cancel(notificationId);
+		}
 	}
 
 	@Override
 	public void stopForegroundNotification(int notificationId) {
-		markNotificationBackground(notificationId);
-		if (!isAnyNotificationForeground()) service.stopForeground(true);
-		notificationManager.cancel(notificationId);
+		synchronized (syncObject) {
+			markNotificationBackground(notificationId);
+			if (!isAnyNotificationForeground()) service.stopForeground(false);
+		}
 	}
 
 	private boolean isAnyNotificationForeground() {
-		for (int i = 0; i < notificationForegroundStatuses.size(); i++) {
-			if (notificationForegroundStatuses.valueAt(i)) return true;
+		return isAnyNotificationForegroundExcept(-1);
+	}
+
+	private boolean isAnyNotificationForegroundExcept(int except) {
+		synchronized (syncObject) {
+			for (int i = 0; i < notificationForegroundStatuses.size(); i++) {
+				if (notificationForegroundStatuses.keyAt(i) == except) continue;
+				if (notificationForegroundStatuses.valueAt(i)) return true;
+			}
 		}
 
 		return false;
 	}
 
 	private void markNotificationBackground(int notificationId) {
-		notificationForegroundStatuses.put(notificationId, false);
+		synchronized (syncObject) {
+			notificationForegroundStatuses.put(notificationId, false);
+		}
 	}
 
 	private void markNotificationForeground(int notificationId) {
-		notificationForegroundStatuses.put(notificationId, false);
+		synchronized (syncObject) {
+			notificationForegroundStatuses.put(notificationId, true);
+		}
 	}
 }

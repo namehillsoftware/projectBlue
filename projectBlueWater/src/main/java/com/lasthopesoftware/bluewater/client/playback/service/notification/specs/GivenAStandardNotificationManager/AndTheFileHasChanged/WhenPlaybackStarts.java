@@ -3,20 +3,26 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.spec
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
+import com.lasthopesoftware.resources.notifications.control.NotificationsController;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.junit.Test;
 import org.robolectric.Robolectric;
 
 import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class WhenPlaybackStarts extends AndroidContext {
 
@@ -32,8 +38,9 @@ public class WhenPlaybackStarts extends AndroidContext {
 
 		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
 			new PlaybackNotificationBroadcaster(
-				service.getObject(),
-				notificationManager,
+				new NotificationsController(
+					service.getObject(),
+					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
 				notificationContentBuilder);
 

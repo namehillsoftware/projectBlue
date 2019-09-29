@@ -38,7 +38,7 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying = false)
 			.then(builder -> {
-				notificationsController.notifyBackground(builder, playbackNotificationsConfiguration.getNotificationId());
+				notificationsController.notifyBackground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
 				return null;
 			});
 	}
@@ -46,7 +46,7 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	@Override
 	public void notifyStopped() {
 		isPlaying = false;
-		notificationsController.stopForegroundNotification(playbackNotificationsConfiguration.getNotificationId());
+		notificationsController.removeForegroundNotification(playbackNotificationsConfiguration.getNotificationId());
 	}
 
 	@Override
@@ -60,9 +60,9 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 			.then(new VoidResponse<>(builder -> {
 					if (!isPlaying)
-						notificationsController.notifyBackground(builder, playbackNotificationsConfiguration.getNotificationId());
+						notificationsController.notifyBackground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
 					else
-						notificationsController.notifyForeground(builder, playbackNotificationsConfiguration.getNotificationId());
+						notificationsController.notifyForeground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
 			}));
 	}
 }
