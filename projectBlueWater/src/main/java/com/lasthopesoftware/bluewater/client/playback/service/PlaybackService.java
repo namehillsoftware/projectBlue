@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service;
 
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -22,7 +23,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.Process;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.util.SparseBooleanArray;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -114,6 +114,8 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer;
+import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
+import com.lasthopesoftware.resources.notifications.control.NotificationsController;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
@@ -409,7 +411,7 @@ implements OnAudioFocusChangeListener
 
 	private final CreateAndHold<AudioBecomingNoisyReceiver> lazyAudioBecomingNoisyReceiver = new Lazy<>(AudioBecomingNoisyReceiver::new);
 
-	private final SparseBooleanArray notificationForegroundStatuses = new SparseBooleanArray();
+	private final CreateAndHold<ControlNotifications> lazyNotificationController = new Lazy<>(() -> new NotificationsController(this, notificationManagerLazy.getObject()));
 
 	private int numberOfErrors = 0;
 	private long lastErrorTime = 0;
@@ -496,79 +498,23 @@ implements OnAudioFocusChangeListener
 		return isPlaying;
 	}
 
-	private boolean isAnyNotificationForeground() {
-		for (int i = 0; i < notificationForegroundStatuses.size(); i++) {
-			if (notificationForegroundStatuses.valueAt(i)) return true;
-		}
-
-		return false;
-	}
-
-	private boolean isOnlyNotificationForeground(int notificationId) {
-		return isNotificationForeground(notificationId)	&& !isAnyNotificationForeground();
-	}
-
-	private boolean isNotificationForeground(int notificationId) {
-		return notificationForegroundStatuses.get(notificationId, false);
-	}
-
-	private void markNotificationBackground(int notificationId) {
-		notificationForegroundStatuses.put(notificationId, false);
-	}
-
-	private void markNotificationForeground(int notificationId) {
-		notificationForegroundStatuses.put(notificationId, false);
-	}
-
-	private void notifyBackground(Builder notificationBuilder, int notificationId) {
-		if (isOnlyNotificationForeground(notificationId))
-			stopForeground(false);
-
-		markNotificationBackground(notificationId);
-
-		notifyNotificationManager(notificationBuilder, notificationId);
-	}
-
-	private void notifyForeground(Builder notificationBuilder, int notificationId) {
-		if (isNotificationForeground(notificationId)) {
-			notifyNotificationManager(notificationBuilder, notificationId);
-			return;
-		}
-
-		startForeground(notificationId, addNotificationAccoutrements(notificationBuilder).build());
-		markNotificationForeground(notificationId);
-	}
-
-	private void notifyNotificationManager(Builder notificationBuilder, int notificationId) {
-		notificationManagerLazy.getObject().notify(notificationId, addNotificationAccoutrements(notificationBuilder).build());
-	}
-
-	private static Builder addNotificationAccoutrements(Builder notificationBuilder) {
+	private static Notification buildFullNotification(Builder notificationBuilder) {
 		return notificationBuilder
 			.setSmallIcon(R.drawable.clearstream_logo_dark)
-			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+			.build();
 	}
 
 	private void stopNotificationIfNotPlaying() {
 		if (!isPlaying)
-			stopNotification(playingNotificationId);
-	}
-
-	private void stopAllNotifications() {
-		for (int i = 0; i < notificationForegroundStatuses.size(); i++)
-			stopNotification(notificationForegroundStatuses.keyAt(i));
-	}
-
-	private void stopNotification(int notificationId) {
-		markNotificationBackground(notificationId);
-		if (!isAnyNotificationForeground()) stopForeground(true);
-		notificationManagerLazy.getObject().cancel(notificationId);
+			lazyNotificationController.getObject().stopForegroundNotification(playingNotificationId);
 	}
 
 	private void notifyStartingService() {
 		lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
-			.then(new VoidResponse<>(b -> notifyForeground(b, startingNotificationId)));
+			.then(new VoidResponse<>(b -> lazyNotificationController.getObject().notifyForeground(
+				buildFullNotification(b), startingNotificationId)));
 	}
 	
 	private void registerListeners() {
@@ -658,7 +604,7 @@ implements OnAudioFocusChangeListener
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 			.then(new VoidResponse<>(m -> actOnIntent(intent)))
 			.then(
-				new VoidResponse<>(v -> stopNotification(startingNotificationId)),
+				new VoidResponse<>(v -> lazyNotificationController.getObject().stopForegroundNotification(startingNotificationId)),
 				UnhandledRejectionHandler);
 
 		return START_NOT_STICKY;
@@ -842,8 +788,7 @@ implements OnAudioFocusChangeListener
 
 				playbackNotificationRouter =
 					new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
-						this,
-						notificationManagerLazy.getObject(),
+						lazyNotificationController.getObject(),
 						lazyPlaybackNotificationsConfiguration.getObject(),
 						nowPlayingNotificationBuilder = new NowPlayingNotificationBuilder(
 							this,
@@ -974,7 +919,9 @@ implements OnAudioFocusChangeListener
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
 				return;
 		}
-		notifyForeground(notifyBuilder, playingNotificationId);
+		lazyNotificationController.getObject().notifyForeground(
+			buildFullNotification(notifyBuilder),
+			playingNotificationId);
 	}
 	
 	private void handlePlaybackStarted(PositionedPlayingFile positionedPlayableFile) {
@@ -1024,12 +971,12 @@ implements OnAudioFocusChangeListener
 		}
 
 		logger.error("An unexpected error has occurred!", exception);
-		stopAllNotifications();
+		lazyNotificationController.getObject().stopAllForegroundNotifications();
 	}
 
 	private void handlePlaybackEngineInitializationException(PlaybackEngineInitializationException exception) {
 		logger.error("There was an error initializing the playback engine", exception);
-		stopAllNotifications();
+		lazyNotificationController.getObject().stopAllForegroundNotifications();
 	}
 
 	private void handlePreparationException(PreparationException preparationException) {
@@ -1099,7 +1046,7 @@ implements OnAudioFocusChangeListener
 
 		builder.setContentTitle(getText(R.string.lbl_waiting_for_connection));
 		builder.setContentText(getText(R.string.lbl_click_to_cancel));
-		notifyBackground(builder, playingNotificationId);
+		lazyNotificationController.getObject().notifyBackground(buildFullNotification(builder), playingNotificationId);
 
 		pollingSessionConnection = PollConnectionService.pollSessionConnection(this);
 		pollingSessionConnection
@@ -1208,7 +1155,7 @@ implements OnAudioFocusChangeListener
 		
 	@Override
 	public void onDestroy() {
-		stopAllNotifications();
+		lazyNotificationController.getObject().stopAllForegroundNotifications();
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
