@@ -80,13 +80,13 @@ public class NotificationsController implements ControlNotifications {
 	}
 
 	private boolean isAnyNotificationForeground() {
-		return isAnyNotificationForegroundExcept(-1);
+		return isAnyNotificationForegroundExcept(null);
 	}
 
-	private boolean isAnyNotificationForegroundExcept(int except) {
+	private boolean isAnyNotificationForegroundExcept(Integer except) {
 		synchronized (syncObject) {
 			for (int i = 0; i < notificationForegroundStatuses.size(); i++) {
-				if (notificationForegroundStatuses.keyAt(i) == except) continue;
+				if (except != null && notificationForegroundStatuses.keyAt(i) == except) continue;
 				if (notificationForegroundStatuses.valueAt(i)) return true;
 			}
 		}
