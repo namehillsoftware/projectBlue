@@ -19,7 +19,7 @@ public class NotificationsController implements ControlNotifications {
 
 	private boolean isOnlyNotificationForeground(int notificationId) {
 		synchronized (syncObject) {
-			return isNotificationForeground(notificationId) && !isAnyNotificationForegroundExcept(notificationId);
+			return isNotificationForeground(notificationId) && isAllNotificationsBackgroundExcept(notificationId);
 		}
 	}
 
@@ -44,12 +44,9 @@ public class NotificationsController implements ControlNotifications {
 	@Override
 	public void notifyForeground(Notification notification, int notificationId) {
 		synchronized (syncObject) {
-			if (isNotificationForeground(notificationId)) {
-				notificationManager.notify(notificationId, notification);
-				return;
-			}
+			if (isAnyNotificationForeground()) notificationManager.notify(notificationId, notification);
+			else service.startForeground(notificationId, notification);
 
-			service.startForeground(notificationId, notification);
 			markNotificationForeground(notificationId);
 		}
 	}
@@ -66,7 +63,7 @@ public class NotificationsController implements ControlNotifications {
 	public void removeForegroundNotification(int notificationId) {
 		synchronized (syncObject) {
 			markNotificationBackground(notificationId);
-			if (!isAnyNotificationForeground()) service.stopForeground(true);
+			if (isAllNotificationsBackground()) service.stopForeground(true);
 			notificationManager.cancel(notificationId);
 		}
 	}
@@ -75,23 +72,27 @@ public class NotificationsController implements ControlNotifications {
 	public void stopForegroundNotification(int notificationId) {
 		synchronized (syncObject) {
 			markNotificationBackground(notificationId);
-			if (!isAnyNotificationForeground()) service.stopForeground(false);
+			if (isAllNotificationsBackground()) service.stopForeground(false);
 		}
 	}
 
 	private boolean isAnyNotificationForeground() {
-		return isAnyNotificationForegroundExcept(null);
+		return !isAllNotificationsBackground();
 	}
 
-	private boolean isAnyNotificationForegroundExcept(Integer except) {
+	private boolean isAllNotificationsBackground() {
+		return isAllNotificationsBackgroundExcept(null);
+	}
+
+	private boolean isAllNotificationsBackgroundExcept(Integer except) {
 		synchronized (syncObject) {
 			for (int i = 0; i < notificationForegroundStatuses.size(); i++) {
 				if (except != null && notificationForegroundStatuses.keyAt(i) == except) continue;
-				if (notificationForegroundStatuses.valueAt(i)) return true;
+				if (notificationForegroundStatuses.valueAt(i)) return false;
 			}
 		}
 
-		return false;
+		return true;
 	}
 
 	private void markNotificationBackground(int notificationId) {
