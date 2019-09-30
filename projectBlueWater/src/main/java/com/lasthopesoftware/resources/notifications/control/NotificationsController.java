@@ -55,17 +55,17 @@ public class NotificationsController implements ControlNotifications {
 	}
 
 	@Override
-	public void removeAllForegroundNotifications() {
+	public void removeAllNotifications() {
 		synchronized (syncObject) {
 			for (int i = 0; i < notificationForegroundStatuses.size(); i++)
-				removeForegroundNotification(notificationForegroundStatuses.keyAt(i));
+				removeNotification(notificationForegroundStatuses.keyAt(i));
 		}
 	}
 
 	@Override
-	public void removeForegroundNotification(int notificationId) {
+	public void removeNotification(int notificationId) {
 		synchronized (syncObject) {
-			markNotificationBackground(notificationId);
+			notificationForegroundStatuses.delete(notificationId);
 			if (!isAnyNotificationForeground()) service.stopForeground(true);
 			notificationManager.cancel(notificationId);
 		}

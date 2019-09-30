@@ -50,7 +50,7 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 		synchronized (notificationSync) {
 			isPlaying = false;
 			isNotificationStarted = false;
-			notificationsController.removeForegroundNotification(playbackNotificationsConfiguration.getNotificationId());
+			notificationsController.removeNotification(playbackNotificationsConfiguration.getNotificationId());
 		}
 	}
 
