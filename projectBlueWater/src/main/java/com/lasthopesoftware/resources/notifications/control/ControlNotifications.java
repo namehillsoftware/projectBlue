@@ -7,9 +7,9 @@ public interface ControlNotifications {
 
 	void notifyForeground(Notification notification, int notificationId);
 
-	void removeAllForegroundNotifications();
+	void removeAllNotifications();
 
-	void removeForegroundNotification(int notificationId);
+	void removeNotification(int notificationId);
 
 	void stopForegroundNotification(int notificationId);
 }
