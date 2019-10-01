@@ -1151,7 +1151,8 @@ implements OnAudioFocusChangeListener
 		
 	@Override
 	public void onDestroy() {
-		lazyNotificationController.getObject().removeAllNotifications();
+		if (lazyNotificationController.isCreated())
+			lazyNotificationController.getObject().removeAllNotifications();
 
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
 		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);

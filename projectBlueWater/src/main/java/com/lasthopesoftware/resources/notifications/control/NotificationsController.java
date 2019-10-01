@@ -54,8 +54,8 @@ public class NotificationsController implements ControlNotifications {
 	@Override
 	public void removeAllNotifications() {
 		synchronized (syncObject) {
-			for (int i = 0; i < notificationForegroundStatuses.size(); i++)
-				removeNotification(notificationForegroundStatuses.keyAt(i));
+			while (notificationForegroundStatuses.size() > 0)
+				removeNotification(notificationForegroundStatuses.keyAt(0));
 		}
 	}
 

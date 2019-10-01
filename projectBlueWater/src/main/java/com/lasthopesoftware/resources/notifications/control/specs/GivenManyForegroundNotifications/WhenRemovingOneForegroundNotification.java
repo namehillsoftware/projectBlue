@@ -14,13 +14,15 @@ import org.junit.Test;
 import org.robolectric.Robolectric;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class WhenStoppingAllForegroundNotifications extends AndroidContext {
+public class WhenRemovingOneForegroundNotification extends AndroidContext {
 
 	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
 	private static final NotificationManager notificationManager = mock(NotificationManager.class);
@@ -32,11 +34,8 @@ public class WhenStoppingAllForegroundNotifications extends AndroidContext {
 		notificationsController.notifyForeground(mock(Notification.class), 13);
 		notificationsController.notifyForeground(mock(Notification.class), 33);
 		notificationsController.notifyForeground(mock(Notification.class), 77);
-		notificationsController.notifyBackground(mock(Notification.class), 88);
 
-		notificationsController.stopForegroundNotification(13);
-		notificationsController.stopForegroundNotification(33);
-		notificationsController.stopForegroundNotification(77);
+		notificationsController.removeNotification(13);
 	}
 
 	@Test
@@ -45,7 +44,7 @@ public class WhenStoppingAllForegroundNotifications extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheServiceIsNotInTheForegroundAndTheNotificationIsNotRemoved() {
-		verify(service.getObject(), times(1)).stopForeground(false);
+	public void thenTheServiceIsStillInTheForeground() {
+		verify(service.getObject(), never()).stopForeground(anyBoolean());
 	}
 }
