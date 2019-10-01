@@ -639,7 +639,6 @@ implements OnAudioFocusChangeListener
 			action = isPlaying ? Action.pause : Action.play;
 
 		if (action.equals(Action.play)) {
-
 			isPlaying = true;
 			playbackEngine.resume();
 
@@ -702,10 +701,7 @@ implements OnAudioFocusChangeListener
 
 		if (action.equals(Action.addFileToPlaylist)) {
 			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (fileKey < 0) {
-				stopNotificationIfNotPlaying();
-				return;
-			}
+			if (fileKey < 0) return;
 
 			playbackEngine
 				.addFile(new ServiceFile(fileKey))
