@@ -5,8 +5,11 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
+
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.test.core.app.ApplicationProvider;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -15,19 +18,27 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
+import com.lasthopesoftware.resources.notifications.control.NotificationsController;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.junit.Test;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.InvocationTargetException;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class WhenTheFileChanges extends AndroidContext {
 
@@ -50,8 +61,9 @@ public class WhenTheFileChanges extends AndroidContext {
 
 		final PlaybackNotificationRouter playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
-				service.getObject(),
-				notificationManager,
+				new NotificationsController(
+					service.getObject(),
+					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
 				notificationContentBuilder));
 
@@ -67,7 +79,7 @@ public class WhenTheFileChanges extends AndroidContext {
 					}));
 
 		playbackNotificationRouter.onReceive(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			new Intent(PlaylistEvents.onPlaylistStart));
 
 		{
@@ -75,12 +87,12 @@ public class WhenTheFileChanges extends AndroidContext {
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
 
 			playbackNotificationRouter.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				playlistChangeIntent);
 		}
 
 		playbackNotificationRouter.onReceive(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			new Intent(PlaylistEvents.onPlaylistPause));
 
 		{
@@ -88,7 +100,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2);
 
 			playbackNotificationRouter.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				playlistChangeIntent);
 		}
 	}
