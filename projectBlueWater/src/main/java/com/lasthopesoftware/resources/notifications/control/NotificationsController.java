@@ -17,18 +17,6 @@ public class NotificationsController implements ControlNotifications {
 		this.notificationManager = notificationManager;
 	}
 
-	private boolean isOnlyNotificationForeground(int notificationId) {
-		synchronized (syncObject) {
-			return isNotificationForeground(notificationId) && isAllNotificationsBackgroundExcept(notificationId);
-		}
-	}
-
-	private boolean isNotificationForeground(int notificationId) {
-		synchronized (syncObject) {
-			return notificationForegroundStatuses.get(notificationId, false);
-		}
-	}
-
 	@Override
 	public void notifyBackground(Notification notification, int notificationId) {
 		synchronized (syncObject) {
@@ -73,6 +61,18 @@ public class NotificationsController implements ControlNotifications {
 		synchronized (syncObject) {
 			markNotificationBackground(notificationId);
 			if (isAllNotificationsBackground()) service.stopForeground(false);
+		}
+	}
+
+	private boolean isOnlyNotificationForeground(int notificationId) {
+		synchronized (syncObject) {
+			return isNotificationForeground(notificationId) && isAllNotificationsBackgroundExcept(notificationId);
+		}
+	}
+
+	private boolean isNotificationForeground(int notificationId) {
+		synchronized (syncObject) {
+			return notificationForegroundStatuses.get(notificationId, false);
 		}
 	}
 
