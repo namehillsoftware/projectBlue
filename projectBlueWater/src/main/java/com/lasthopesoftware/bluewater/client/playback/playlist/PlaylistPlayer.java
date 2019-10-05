@@ -93,23 +93,27 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void pause() {
+	public Promise<Void> pause() {
 		synchronized (stateChangeSync) {
 			lastStateChangePromise = lastStateChangePromise
 				.eventually(
 					lazyPausedPromise.getObject(),
 					lazyPausedPromise.getObject());
+
+			return lastStateChangePromise.then($ -> null);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void resume() {
+	public Promise<Void> resume() {
 		synchronized (stateChangeSync) {
 			lastStateChangePromise = lastStateChangePromise
 				.eventually(
 					lazyResumePromise.getObject(),
 					lazyResumePromise.getObject());
+
+			return lastStateChangePromise.then($ -> null);
 		}
 	}
 

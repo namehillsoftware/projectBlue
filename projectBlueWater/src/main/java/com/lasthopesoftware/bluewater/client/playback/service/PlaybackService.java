@@ -505,13 +505,8 @@ implements OnAudioFocusChangeListener
 			.build();
 	}
 
-	private void stopNotificationIfNotPlaying() {
-		if (!isPlaying)
-			lazyNotificationController.getObject().removeNotification(playingNotificationId);
-	}
-
-	private void notifyStartingService() {
-		lazyPlaybackStartingNotificationBuilder.getObject()
+	private Promise<Void> notifyStartingService() {
+		return lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
 			.then(new VoidResponse<>(b -> lazyNotificationController.getObject().notifyForeground(
 				buildFullNotification(b), startingNotificationId)));
@@ -594,13 +589,12 @@ implements OnAudioFocusChangeListener
 		}
 
 		if (playbackEngine != null) {
-			actOnIntent(intent);
+			actOnIntent(intent).excuse(UnhandledRejectionHandler);
 			return START_NOT_STICKY;
 		}
 
-		notifyStartingService();
-		lazySelectedLibraryProvider.getObject()
-			.getBrowserLibrary()
+		notifyStartingService()
+			.eventually(v -> lazySelectedLibraryProvider.getObject().getBrowserLibrary())
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 			.eventually(m -> actOnIntent(intent))
 			.then(
@@ -625,11 +619,11 @@ implements OnAudioFocusChangeListener
 
 			return FileStringListUtilities
 				.promiseParsedFileStringList(playlistString)
-				.then(playlist -> {
-					playbackEngine.startPlaylist(playlist, playlistPosition, 0);
+				.eventually(playlist -> {
+					final Promise<Void> promiseStartedPlaylist = playbackEngine.startPlaylist(playlist, playlistPosition, 0);
 					NowPlayingActivity.startNowPlayingActivity(this);
 
-					return null;
+					return promiseStartedPlaylist;
 				});
 		}
 

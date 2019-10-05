@@ -63,12 +63,12 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		this.playbackBootstrapper = playbackBootstrapper;
 	}
 
-	public void startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
+	public Promise<Void> startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
 		logger.info("Starting playback");
 
 		this.playlist = playlist;
 
-		updateLibraryPlaylistPositions(playlistPosition, filePosition).then(new VoidResponse<>(this::resumePlaybackFromNowPlaying));
+		return updateLibraryPlaylistPositions(playlistPosition, filePosition).then(new VoidResponse<>(this::resumePlaybackFromNowPlaying));
 	}
 
 	public Promise<PositionedFile> skipToNext() {
@@ -143,9 +143,11 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 	public Promise<Void> resume() {
 		if (activePlayer != null) {
-			activePlayer.resume();
+			final Promise<Void> promisedResumption = activePlayer.resume();
 
 			isPlaying = true;
+
+			return promisedResumption;
 		}
 
 		return restorePlaylistFromStorage().then(np -> {
@@ -155,15 +157,17 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	}
 
 	public Promise<Void> pause() {
+		Promise<Void> promisedPause = Promise.empty();
+
 		if (activePlayer != null)
-			activePlayer.pause();
+			promisedPause = activePlayer.pause();
 
 		isPlaying = false;
 
 		if (positionedPlayingFile != null)
-			return saveStateToLibrary(positionedPlayingFile);
+			return promisedPause.eventually(p -> saveStateToLibrary(positionedPlayingFile));
 
-		return Promise.empty();
+		return promisedPause;
 	}
 
 	public boolean isPlaying() {
