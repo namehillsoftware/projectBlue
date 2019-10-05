@@ -602,7 +602,7 @@ implements OnAudioFocusChangeListener
 		lazySelectedLibraryProvider.getObject()
 			.getBrowserLibrary()
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-			.then(new VoidResponse<>(m -> actOnIntent(intent)))
+			.eventually(m -> actOnIntent(intent))
 			.then(
 				new VoidResponse<>(v -> lazyNotificationController.getObject().removeNotification(startingNotificationId)),
 				UnhandledRejectionHandler);
@@ -610,20 +610,20 @@ implements OnAudioFocusChangeListener
 		return START_NOT_STICKY;
 	}
 
-	private void actOnIntent(final Intent intent) {
-		if (intent == null) return;
+	private Promise<Void> actOnIntent(final Intent intent) {
+		if (intent == null) return Promise.empty();
 
 		String action = intent.getAction();
-		if (action == null) return;
+		if (action == null) return Promise.empty();
 
 		if (action.equals(Action.launchMusicService)) {
 			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (playlistPosition < 0) return;
+			if (playlistPosition < 0) return Promise.empty();
 
 			final String playlistString = intent.getStringExtra(Action.Bag.filePlaylist);
-			if (playlistString == null) return;
+			if (playlistString == null) return Promise.empty();
 
-			FileStringListUtilities
+			return FileStringListUtilities
 				.promiseParsedFileStringList(playlistString)
 				.then(playlist -> {
 					playbackEngine.startPlaylist(playlist, playlistPosition, 0);
@@ -631,8 +631,6 @@ implements OnAudioFocusChangeListener
 
 					return null;
 				});
-
-			return;
 		}
 
 		if (action.equals(Action.togglePlayPause))
@@ -640,86 +638,72 @@ implements OnAudioFocusChangeListener
 
 		if (action.equals(Action.play)) {
 			isPlaying = true;
-			playbackEngine.resume();
-
-			return;
+			return playbackEngine.resume();
 		}
 
-		if (action.equals(Action.pause)) {
-			pausePlayback(true);
-			return;
-		}
+		if (action.equals(Action.pause)) return pausePlayback(true);
 
-		if (!Action.playbackStartingActions.contains(action))
-			stopNotificationIfNotPlaying();
+		if (!Action.playbackStartingActions.contains(action)) return Promise.empty();
 
 		if (action.equals(Action.repeating)) {
 			playbackEngine.playRepeatedly();
-			return;
+			return Promise.empty();
 		}
 
 		if (action.equals(Action.completing)) {
 			playbackEngine.playToCompletion();
-			return;
+			return Promise.empty();
 		}
 
 		if (action.equals(Action.seekTo)) {
 			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (playlistPosition < 0) return;
+			if (playlistPosition < 0) return Promise.empty();
 
 			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
-			if (filePosition < 0) return;
+			if (filePosition < 0) return Promise.empty();
 
-			playbackEngine
+			return playbackEngine
 				.changePosition(playlistPosition, filePosition)
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-
-			return;
+				.then(this::broadcastChangedFile);
 		}
 
 		if (action.equals(Action.previous)) {
-			playbackEngine
+			return playbackEngine
 				.skipToPrevious()
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-			return;
+				.then(this::broadcastChangedFile);
 		}
 
 		if (action.equals(Action.next)) {
-			playbackEngine
+			return playbackEngine
 				.skipToNext()
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-			return;
+				.then(this::broadcastChangedFile);
 		}
 
 		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
 			pollingSessionConnection.cancel();
-			return;
+			return Promise.empty();
 		}
 
 		if (action.equals(Action.addFileToPlaylist)) {
 			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (fileKey < 0) return;
+			if (fileKey < 0) return Promise.empty();
 
-			playbackEngine
+			return playbackEngine
 				.addFile(new ServiceFile(fileKey))
 				.eventually(LoopedInPromise.response(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
-					return library;
-				}, this))
-				.excuse(UnhandledRejectionHandler);
-
-			return;
+					return null;
+				}, this));
 		}
 
 		if (action.equals(Action.removeFileAtPositionFromPlaylist)) {
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
-			if (filePosition < -1) return;
+			if (filePosition < -1) return Promise.empty();
 
-			playbackEngine.removeFileAtPosition(filePosition).excuse(UnhandledRejectionHandler);
+			return playbackEngine.removeFileAtPosition(filePosition).then(r -> null);
 		}
+
+		return Promise.empty();
 	}
 	
 	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) {
@@ -925,20 +909,21 @@ implements OnAudioFocusChangeListener
 		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted(positionedPlayableFile.asPositionedFile());
 	}
 
-	private void pausePlayback(boolean isUserInterrupted) {
+	private Promise<Void> pausePlayback(boolean isUserInterrupted) {
 		isPlaying = false;
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
-		if (playbackEngine == null) return;
+		if (playbackEngine == null) return Promise.empty();
 
-		playbackEngine.pause();
+		return playbackEngine.pause()
+			.then(new VoidResponse<>(v -> {
+				if (positionedPlayingFile != null)
+					lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
-		if (positionedPlayingFile != null)
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
-
-		if (filePositionSubscription != null)
-			filePositionSubscription.dispose();
+				if (filePositionSubscription != null)
+					filePositionSubscription.dispose();
+			}));
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {

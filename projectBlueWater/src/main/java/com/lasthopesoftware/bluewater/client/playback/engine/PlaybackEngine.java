@@ -22,8 +22,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.observables.ConnectableObservable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +30,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observables.ConnectableObservable;
 
 public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineBroadcaster, AutoCloseable {
 
@@ -139,27 +141,29 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		updatePreparedFileQueueUsingState(positionedFileQueueProviders.get(false));
 	}
 
-	public void resume() {
+	public Promise<Void> resume() {
 		if (activePlayer != null) {
 			activePlayer.resume();
 
 			isPlaying = true;
 		}
 
-		restorePlaylistFromStorage().then(np -> {
+		return restorePlaylistFromStorage().then(np -> {
 			resumePlaybackFromNowPlaying(np);
 			return null;
 		});
 	}
 
-	public void pause() {
+	public Promise<Void> pause() {
 		if (activePlayer != null)
 			activePlayer.pause();
 
 		isPlaying = false;
 
 		if (positionedPlayingFile != null)
-			saveStateToLibrary(positionedPlayingFile);
+			return saveStateToLibrary(positionedPlayingFile);
+
+		return Promise.empty();
 	}
 
 	public boolean isPlaying() {
@@ -348,10 +352,10 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 				});
 	}
 
-	private void saveStateToLibrary(PositionedPlayingFile positionedPlayingFile) {
-		if (playlist == null) return;
+	private Promise<Void> saveStateToLibrary(PositionedPlayingFile positionedPlayingFile) {
+		if (playlist == null) return Promise.empty();
 
-		nowPlayingRepository
+		return nowPlayingRepository
 			.getNowPlaying()
 			.then(np -> {
 				np.playlist = playlist;
@@ -368,7 +372,8 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 				return np;
 			})
-			.eventually(nowPlayingRepository::updateNowPlaying);
+			.eventually(nowPlayingRepository::updateNowPlaying)
+			.then(np -> null);
 	}
 
 	@Override
