@@ -39,6 +39,9 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Override
 	public void before() {
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(new Notification()));
+
 		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
 			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
 

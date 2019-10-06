@@ -19,6 +19,8 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.junit.Test;
 import org.robolectric.Robolectric;
 
+import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -32,6 +34,9 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 
 	@Override
 	public void before() {
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(new Notification()));
+
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), true))
 			.thenReturn(new Promise<>(new FakeNotificationCompatBuilder(new Notification())));
 

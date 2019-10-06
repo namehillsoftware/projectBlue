@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification;
 
+import android.app.Notification;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
@@ -9,8 +11,8 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 	private final ControlNotifications notificationsController;
-	private final PlaybackNotificationsConfiguration playbackNotificationsConfiguration;
 	private final BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder;
+	private final int notificationId;
 
 	private final Object notificationSync = new Object();
 	private boolean isPlaying;
@@ -19,7 +21,7 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 	public PlaybackNotificationBroadcaster(ControlNotifications notificationsController, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
 		this.notificationsController = notificationsController;
-		this.playbackNotificationsConfiguration = playbackNotificationsConfiguration;
+		this.notificationId = playbackNotificationsConfiguration.getNotificationId();
 		this.nowPlayingNotificationContentBuilder = nowPlayingNotificationContentBuilder;
 	}
 
@@ -34,13 +36,13 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	@Override
 	public void notifyPaused() {
 		if (serviceFile == null) {
-			notificationsController.stopForegroundNotification(playbackNotificationsConfiguration.getNotificationId());
+			notificationsController.stopForegroundNotification(notificationId);
 			return;
 		}
 
 		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying = false)
 			.then(builder -> {
-				notificationsController.notifyBackground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
+				notificationsController.notifyBackground(builder.build(), notificationId);
 				return null;
 			});
 	}
@@ -50,7 +52,7 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 		synchronized (notificationSync) {
 			isPlaying = false;
 			isNotificationStarted = false;
-			notificationsController.removeNotification(playbackNotificationsConfiguration.getNotificationId());
+			notificationsController.removeNotification(notificationId);
 		}
 	}
 
@@ -65,18 +67,28 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 
 			if (!isNotificationStarted && !isPlaying) return;
 
+			final Notification loadingBuilderNotification = nowPlayingNotificationContentBuilder.getLoadingNotification(isPlaying).build();
+			if (isPlaying) {
+				notificationsController.notifyForeground(loadingBuilderNotification, notificationId);
+				isNotificationStarted = true;
+			}
+
+			if (!isPlaying && isNotificationStarted) {
+				notificationsController.notifyBackground(loadingBuilderNotification, notificationId);
+			}
+
 			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 				.then(new VoidResponse<>(builder -> {
 					synchronized (notificationSync) {
 						if (!isPlaying) {
 							if (!isNotificationStarted) return;
 
-							notificationsController.notifyBackground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
+							notificationsController.notifyBackground(builder.build(), notificationId);
 							return;
 						}
 
 						isNotificationStarted = true;
-						notificationsController.notifyForeground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
+						notificationsController.notifyForeground(builder.build(), notificationId);
 					}
 				}));
 		}
