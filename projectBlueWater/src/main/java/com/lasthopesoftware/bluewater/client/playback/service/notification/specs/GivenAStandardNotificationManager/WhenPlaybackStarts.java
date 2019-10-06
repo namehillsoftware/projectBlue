@@ -9,9 +9,9 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildPlaybackStartingNotification;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
+import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
@@ -20,25 +20,21 @@ import static com.lasthopesoftware.resources.notifications.specs.FakeNotificatio
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-public class WhenPlaybackStarts {
+public class WhenPlaybackStarts extends AndroidContext {
 	private static final Notification startedNotification = new Notification();
 	private static final ControlNotifications notificationController = mock(ControlNotifications.class);
 
+	@Override
 	public void before() {
 		final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
-
-		final BuildPlaybackStartingNotification startingNotification = mock(BuildPlaybackStartingNotification.class);
-		when(startingNotification.promisePreparedPlaybackStartingNotification())
-			.thenReturn(new Promise<>(newFakeBuilder(startedNotification)));
 
 		final PlaybackNotificationRouter playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				notificationController,
 				new PlaybackNotificationsConfiguration("",43),
 				notificationContentBuilder,
-				startingNotification));
+				() -> new Promise<>(newFakeBuilder(startedNotification))));
 
 		playbackNotificationRouter
 			.onReceive(

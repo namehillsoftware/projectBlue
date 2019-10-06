@@ -45,7 +45,7 @@ public class WhenTheFileChanges extends AndroidContext {
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(1).equals(arg)),
 			anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(firstNotification)));
+			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
 
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(2).equals(arg)),
@@ -59,7 +59,7 @@ public class WhenTheFileChanges extends AndroidContext {
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
 				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification()))));
+				() -> new Promise<>(newFakeBuilder(firstNotification))));
 
 		playbackNotificationRouter
 			.onReceive(
@@ -96,7 +96,7 @@ public class WhenTheFileChanges extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheServiceIsStartedOnTheFirstServiceItem() {
+	public void thenTheServiceIsStartedWhenPlaybackStarts() {
 		verify(service.getObject(), times(1))
 			.startForeground(43, firstNotification);
 	}

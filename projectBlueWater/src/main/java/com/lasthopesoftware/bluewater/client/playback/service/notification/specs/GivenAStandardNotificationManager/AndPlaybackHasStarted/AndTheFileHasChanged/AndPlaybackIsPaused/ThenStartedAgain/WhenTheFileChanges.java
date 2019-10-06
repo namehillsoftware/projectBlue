@@ -4,8 +4,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 
-import androidx.core.app.NotificationCompat;
-
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
@@ -39,19 +37,15 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Override
 	public void before() {
-		final NotificationCompat.Builder firstBuilder = mock(NotificationCompat.Builder.class);
-		when(firstBuilder.build()).thenReturn(firstNotification);
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(1).equals(arg)),
 			anyBoolean()))
-			.thenReturn(new Promise<>(firstBuilder));
+			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
 
-		final NotificationCompat.Builder secondBuilder = mock(NotificationCompat.Builder.class);
-		when(secondBuilder.build()).thenReturn(secondNotification);
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(2).equals(arg)),
 			anyBoolean()))
-			.thenReturn(new Promise<>(secondBuilder));
+			.thenReturn(new Promise<>(newFakeBuilder(secondNotification)));
 
 		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
 			new PlaybackNotificationBroadcaster(
@@ -60,7 +54,7 @@ public class WhenTheFileChanges extends AndroidContext {
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
 				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification())));
+				() -> new Promise<>(newFakeBuilder(firstNotification)));
 
 		playbackNotificationBroadcaster.notifyPlaying();
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
@@ -70,7 +64,7 @@ public class WhenTheFileChanges extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheServiceIsStartedOnTheFirstServiceItem() {
+	public void thenTheServiceIsStartedWhenPlaybackStarts() {
 		verify(service.getObject(), times(1))
 			.startForeground(43, firstNotification);
 	}
