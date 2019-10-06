@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 
+import androidx.core.app.NotificationCompat;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
@@ -36,15 +38,19 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Override
 	public void before() {
+		final NotificationCompat.Builder firstBuilder = mock(NotificationCompat.Builder.class);
+		when(firstBuilder.build()).thenReturn(firstNotification);
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(1).equals(arg)),
 			anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
+			.thenReturn(new Promise<>(firstBuilder));
 
+		final NotificationCompat.Builder secondBuilder = mock(NotificationCompat.Builder.class);
+		when(secondBuilder.build()).thenReturn(secondNotification);
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(2).equals(arg)),
 			anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(secondNotification)));
+			.thenReturn(new Promise<>(secondBuilder));
 
 		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
 			new PlaybackNotificationBroadcaster(
@@ -62,7 +68,7 @@ public class WhenTheFileChanges extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheServiceIsStartedWhenPlaybackStarts() {
+	public void thenTheServiceIsStartedOnTheFirstServiceItem() {
 		verify(service.getObject(), times(1))
 			.startForeground(43, firstNotification);
 	}
