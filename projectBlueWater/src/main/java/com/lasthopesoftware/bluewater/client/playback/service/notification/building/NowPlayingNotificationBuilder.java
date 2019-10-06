@@ -62,10 +62,10 @@ implements
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
 				final NotificationCompat.Builder builder =
-					addButtons(mediaStyleNotificationSetup.getMediaStyleNotification()
+					addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), isPlaying)
 						.setOngoing(isPlaying)
 						.setContentTitle(name)
-						.setContentText(artist), isPlaying);
+						.setContentText(artist);
 
 				if (!viewStructure.urlKeyHolder.equals(urlKeyHolder))
 					return new Promise<>(builder);
@@ -81,6 +81,13 @@ implements
 						},
 						e -> builder);
 			});
+	}
+
+	@Override
+	public NotificationCompat.Builder getLoadingNotification(boolean isPlaying) {
+		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), isPlaying)
+			.setOngoing(isPlaying)
+			.setContentTitle(context.getString(R.string.lbl_loading));
 	}
 
 	@Override

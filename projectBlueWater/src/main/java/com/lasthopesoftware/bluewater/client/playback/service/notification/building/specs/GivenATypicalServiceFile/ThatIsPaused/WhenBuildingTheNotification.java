@@ -1,7 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPaused;
 
 import android.graphics.Bitmap;
+
 import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeFileConnectionProvider;
@@ -17,15 +20,18 @@ import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class WhenBuildingTheNotification extends AndroidContext {
 
@@ -34,7 +40,7 @@ public class WhenBuildingTheNotification extends AndroidContext {
 		return Bitmap.createBitmap(1, 1, conf);
 	});
 
-	private static final NotificationCompat.Builder spiedBuilder = spy(new NotificationCompat.Builder(RuntimeEnvironment.application, "test"));
+	private static final NotificationCompat.Builder spiedBuilder = spy(new NotificationCompat.Builder(ApplicationProvider.getApplicationContext(), "test"));
 
 	private static NotificationCompat.Builder builder;
 
@@ -56,7 +62,7 @@ public class WhenBuildingTheNotification extends AndroidContext {
 			.thenReturn(new Promise<>(expectedBitmap.getObject()));
 
 		final NowPlayingNotificationBuilder npBuilder = new NowPlayingNotificationBuilder(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			() -> spiedBuilder,
 			connectionProvider,
 			new CachedFilePropertiesProvider(
@@ -74,19 +80,19 @@ public class WhenBuildingTheNotification extends AndroidContext {
 	@Test
 	public void thenTheNotificationHasAPlayButton() {
 		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
-			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_play));
+			.containsOnlyOnce(ApplicationProvider.getApplicationContext().getString(R.string.btn_play));
 	}
 
 	@Test
 	public void thenTheNotificationHasAPreviousButton() {
 		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
-			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_previous));
+			.containsOnlyOnce(ApplicationProvider.getApplicationContext().getString(R.string.btn_previous));
 	}
 
 	@Test
 	public void thenTheNotificationHasANextButton() {
 		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
-			.containsOnlyOnce(RuntimeEnvironment.application.getString(R.string.btn_next));
+			.containsOnlyOnce(ApplicationProvider.getApplicationContext().getString(R.string.btn_next));
 	}
 
 	@Test
