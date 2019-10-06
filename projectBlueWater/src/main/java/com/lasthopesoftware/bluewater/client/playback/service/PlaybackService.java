@@ -505,6 +505,11 @@ implements OnAudioFocusChangeListener
 			.build();
 	}
 
+	private void stopNotificationIfNotPlaying() {
+		if (!isPlaying)
+			lazyNotificationController.getObject().removeNotification(playingNotificationId);
+	}
+
 	private Promise<Void> notifyStartingService() {
 		return lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
@@ -637,7 +642,8 @@ implements OnAudioFocusChangeListener
 
 		if (action.equals(Action.pause)) return pausePlayback(true);
 
-		if (!Action.playbackStartingActions.contains(action)) return Promise.empty();
+		if (!Action.playbackStartingActions.contains(action))
+			stopNotificationIfNotPlaying();
 
 		if (action.equals(Action.repeating)) {
 			playbackEngine.playRepeatedly();
