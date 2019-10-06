@@ -32,8 +32,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			new PlaybackNotificationBroadcaster(
 				notificationController,
 				new PlaybackNotificationsConfiguration("", 43),
-				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification())));
+				notificationContentBuilder);
 
 		playbackNotificationBroadcaster.notifyPlaying();
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));

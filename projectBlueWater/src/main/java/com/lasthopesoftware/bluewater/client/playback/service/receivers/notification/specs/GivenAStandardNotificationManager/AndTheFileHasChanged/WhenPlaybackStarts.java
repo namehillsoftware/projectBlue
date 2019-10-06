@@ -47,8 +47,7 @@ public class WhenPlaybackStarts extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification()))));
+				notificationContentBuilder));
 
 		final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
 		playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);

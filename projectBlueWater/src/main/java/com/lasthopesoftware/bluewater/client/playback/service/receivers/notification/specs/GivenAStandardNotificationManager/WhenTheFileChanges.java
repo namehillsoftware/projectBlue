@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationManager;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
@@ -23,7 +22,6 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.junit.Test;
 import org.robolectric.Robolectric;
 
-import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -50,8 +48,7 @@ public class WhenTheFileChanges extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification()))));
+				notificationContentBuilder));
 
 		{
 			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);

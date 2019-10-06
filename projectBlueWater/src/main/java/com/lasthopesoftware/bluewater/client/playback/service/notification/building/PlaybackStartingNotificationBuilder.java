@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.resources.notifications.ProduceNotificationBuilders;
 import com.namehillsoftware.handoff.promises.Promise;
 
-public class PlaybackStartingNotificationBuilder implements BuildPlaybackStartingNotification {
+public class PlaybackStartingNotificationBuilder {
 
 	private final Context context;
 	private final ProduceNotificationBuilders produceNotificationBuilders;
@@ -29,7 +29,6 @@ public class PlaybackStartingNotificationBuilder implements BuildPlaybackStartin
 		this.mediaSessionCompat = mediaSessionCompat;
 	}
 
-	@Override
 	public Promise<NotificationCompat.Builder> promisePreparedPlaybackStartingNotification() {
 		return new Promise<>(produceNotificationBuilders.getNotificationBuilder(configuration.getNotificationChannel())
 			.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()

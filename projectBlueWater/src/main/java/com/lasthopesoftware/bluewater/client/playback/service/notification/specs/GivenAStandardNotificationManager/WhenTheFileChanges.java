@@ -46,8 +46,7 @@ public class WhenTheFileChanges {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification())));
+				notificationContentBuilder);
 
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
 	}
