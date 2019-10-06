@@ -6,7 +6,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.test.core.app.ApplicationProvider;
 
@@ -31,6 +30,7 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.InvocationTargetException;
 
+import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -49,15 +49,14 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Override
 	public void before() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-		final NotificationCompat.Builder firstBuilder = mock(NotificationCompat.Builder.class);
-		when(firstBuilder.build()).thenReturn(new Notification());
-		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
-			.thenReturn(new Promise<>(firstBuilder));
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(new Notification()));
 
-		final NotificationCompat.Builder secondBuilder = mock(NotificationCompat.Builder.class);
-		when(secondBuilder.build()).thenReturn(secondNotification);
+		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
+			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
+
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(2), false))
-			.thenReturn(new Promise<>(secondBuilder));
+			.thenReturn(new Promise<>(newFakeBuilder(secondNotification)));
 
 		final PlaybackNotificationRouter playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(

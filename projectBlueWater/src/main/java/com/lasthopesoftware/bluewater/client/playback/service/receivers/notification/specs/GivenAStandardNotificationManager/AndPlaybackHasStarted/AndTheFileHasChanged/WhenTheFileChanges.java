@@ -6,6 +6,7 @@ import android.app.Service;
 import android.content.Intent;
 
 import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -22,8 +23,8 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import org.junit.Test;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 
+import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -51,6 +52,9 @@ public class WhenTheFileChanges extends AndroidContext {
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(2), true))
 			.thenReturn(new Promise<>(nextBuilder));
 
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(new Notification()));
+
 		final PlaybackNotificationRouter playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				new NotificationsController(
@@ -61,7 +65,7 @@ public class WhenTheFileChanges extends AndroidContext {
 
 		playbackNotificationRouter
 			.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				new Intent(PlaylistEvents.onPlaylistStart));
 
 		{
@@ -69,7 +73,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
 			playbackNotificationRouter
 				.onReceive(
-					RuntimeEnvironment.application,
+					ApplicationProvider.getApplicationContext(),
 					playlistChangeIntent);
 		}
 	}

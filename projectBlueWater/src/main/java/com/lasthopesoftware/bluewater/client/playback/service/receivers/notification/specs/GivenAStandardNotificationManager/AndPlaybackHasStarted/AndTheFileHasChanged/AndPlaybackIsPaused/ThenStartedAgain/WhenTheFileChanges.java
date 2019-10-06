@@ -42,6 +42,9 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Override
 	public void before() {
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(new Notification()));
+
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(1).equals(arg)),
 			anyBoolean()))
