@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildPlaybackStartingNotification;
 import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
@@ -11,24 +12,38 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	private final ControlNotifications notificationsController;
 	private final PlaybackNotificationsConfiguration playbackNotificationsConfiguration;
 	private final BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder;
+	private BuildPlaybackStartingNotification playbackStartingNotification;
 
 	private final Object notificationSync = new Object();
 	private boolean isPlaying;
 	private boolean isNotificationStarted;
 	private ServiceFile serviceFile;
 
-	public PlaybackNotificationBroadcaster(ControlNotifications notificationsController, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder) {
+	public PlaybackNotificationBroadcaster(ControlNotifications notificationsController, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder, BuildPlaybackStartingNotification playbackStartingNotification) {
 		this.notificationsController = notificationsController;
 		this.playbackNotificationsConfiguration = playbackNotificationsConfiguration;
 		this.nowPlayingNotificationContentBuilder = nowPlayingNotificationContentBuilder;
+		this.playbackStartingNotification = playbackStartingNotification;
 	}
 
 	@Override
 	public void notifyPlaying() {
 		isPlaying = true;
 
-		if (serviceFile != null)
+		if (serviceFile != null) {
 			updateNowPlaying(serviceFile);
+			return;
+		}
+
+		playbackStartingNotification.promisePreparedPlaybackStartingNotification()
+			.then(new VoidResponse<>(builder -> {
+				synchronized (notificationSync) {
+					if (isNotificationStarted) return;
+
+					isNotificationStarted = true;
+					notificationsController.notifyForeground(builder.build(), playbackNotificationsConfiguration.getNotificationId());
+				}
+			}));
 	}
 
 	@Override

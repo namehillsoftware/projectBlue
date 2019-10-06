@@ -42,7 +42,8 @@ public class WhenPlaybackStarts extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder);
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(new Notification())));
 
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
 		playbackNotificationBroadcaster.notifyPlaying();

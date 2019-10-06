@@ -292,7 +292,6 @@ implements OnAudioFocusChangeListener
 
 	private static final int playingNotificationId = 42;
 	private static final int startingNotificationId = 53;
-	private static int startId;
 
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
@@ -433,6 +432,7 @@ implements OnAudioFocusChangeListener
 	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
 	private SimpleCache cache;
+	private int startId;
 
 	private Promise<IConnectionProvider> pollingSessionConnection;
 
@@ -580,7 +580,7 @@ implements OnAudioFocusChangeListener
 	@Override
 	public final int onStartCommand(final Intent intent, int flags, int startId) {
 		// Should be modified to save its state locally in the future.
-		PlaybackService.startId = startId;
+		this.startId = startId;
 
 		final String action = intent.getAction();
 		if (Action.killMusicService.equals(action) || !Action.validActions.contains(action)) {
@@ -769,7 +769,8 @@ implements OnAudioFocusChangeListener
 							lazyMediaStyleNotificationSetup.getObject(),
 							connectionProvider,
 							cachedFilePropertiesProvider,
-							imageProvider)));
+							imageProvider),
+						lazyPlaybackStartingNotificationBuilder.getObject()));
 
 				localBroadcastManagerLazy
 					.getObject()
