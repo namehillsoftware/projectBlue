@@ -142,15 +142,15 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 	}
 
 	public Promise<Void> resume() {
+		Promise<Void> resumePromise = Promise.empty();
+
 		if (activePlayer != null) {
-			final Promise<Void> promisedResumption = activePlayer.resume();
+			resumePromise = activePlayer.resume();
 
 			isPlaying = true;
-
-			return promisedResumption;
 		}
 
-		return restorePlaylistFromStorage().then(np -> {
+		return resumePromise.eventually($ -> restorePlaylistFromStorage()).then(np -> {
 			resumePlaybackFromNowPlaying(np);
 			return null;
 		});
