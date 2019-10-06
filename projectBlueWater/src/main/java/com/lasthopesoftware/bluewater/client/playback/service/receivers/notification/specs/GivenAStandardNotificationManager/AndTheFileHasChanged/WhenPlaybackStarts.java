@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenPlaybackStarts extends AndroidContext {
 
+	private static final Notification loadingNotification = new Notification();
 	private static final Notification startedNotification = new Notification();
 	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
 	private static final NotificationManager notificationManager = mock(NotificationManager.class);
@@ -43,7 +44,7 @@ public class WhenPlaybackStarts extends AndroidContext {
 			.thenReturn(new Promise<>(newFakeBuilder(startedNotification)));
 
 		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
-			.thenReturn(newFakeBuilder(new Notification()));
+			.thenReturn(newFakeBuilder(loadingNotification));
 
 		final PlaybackNotificationRouter playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
@@ -68,6 +69,7 @@ public class WhenPlaybackStarts extends AndroidContext {
 
 	@Test
 	public void thenTheServiceIsStartedInTheForeground() {
-		verify(service.getObject()).startForeground(43, startedNotification);
+		verify(service.getObject()).startForeground(43, loadingNotification);
+		verify(notificationManager).notify(43, startedNotification);
 	}
 }
