@@ -7,7 +7,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import io.reactivex.observables.ConnectableObservable;
 
 public interface IActivePlayer {
-	Promise<Void> pause();
-	Promise<Void> resume();
+	Promise<?> pause();
+	Promise<?> resume();
 	ConnectableObservable<PositionedPlayingFile> observe();
 }

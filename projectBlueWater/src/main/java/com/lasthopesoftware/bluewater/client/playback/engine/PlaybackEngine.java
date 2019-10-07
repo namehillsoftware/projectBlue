@@ -141,8 +141,8 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		updatePreparedFileQueueUsingState(positionedFileQueueProviders.get(false));
 	}
 
-	public Promise<Void> resume() {
-		Promise<Void> resumePromise = Promise.empty();
+	public Promise<?> resume() {
+		Promise<?> resumePromise = Promise.empty();
 
 		if (activePlayer != null) {
 			resumePromise = activePlayer.resume();
@@ -156,8 +156,8 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		});
 	}
 
-	public Promise<Void> pause() {
-		Promise<Void> promisedPause = Promise.empty();
+	public Promise<?> pause() {
+		Promise<?> promisedPause = Promise.empty();
 
 		if (activePlayer != null)
 			promisedPause = activePlayer.pause();
@@ -356,7 +356,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 				});
 	}
 
-	private Promise<Void> saveStateToLibrary(PositionedPlayingFile positionedPlayingFile) {
+	private Promise<NowPlaying> saveStateToLibrary(PositionedPlayingFile positionedPlayingFile) {
 		if (playlist == null) return Promise.empty();
 
 		return nowPlayingRepository
@@ -376,8 +376,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 
 				return np;
 			})
-			.eventually(nowPlayingRepository::updateNowPlaying)
-			.then(np -> null);
+			.eventually(nowPlayingRepository::updateNowPlaying);
 	}
 
 	@Override

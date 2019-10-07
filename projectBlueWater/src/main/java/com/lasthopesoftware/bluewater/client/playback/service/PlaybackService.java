@@ -609,7 +609,7 @@ implements OnAudioFocusChangeListener
 		return START_NOT_STICKY;
 	}
 
-	private Promise<Void> actOnIntent(final Intent intent) {
+	private Promise<?> actOnIntent(final Intent intent) {
 		if (intent == null) return Promise.empty();
 
 		String action = intent.getAction();
@@ -700,7 +700,7 @@ implements OnAudioFocusChangeListener
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return Promise.empty();
 
-			return playbackEngine.removeFileAtPosition(filePosition).then(r -> null);
+			return playbackEngine.removeFileAtPosition(filePosition);
 		}
 
 		return Promise.empty();

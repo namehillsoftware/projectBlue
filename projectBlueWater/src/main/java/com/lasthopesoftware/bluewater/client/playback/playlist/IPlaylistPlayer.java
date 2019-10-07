@@ -10,8 +10,8 @@ import io.reactivex.ObservableOnSubscribe;
  */
 
 public interface IPlaylistPlayer extends ObservableOnSubscribe<PositionedPlayingFile> {
-	Promise<Void> pause();
-	Promise<Void> resume();
+	Promise<?> pause();
+	Promise<?> resume();
 
 	void setVolume(float volume);
 

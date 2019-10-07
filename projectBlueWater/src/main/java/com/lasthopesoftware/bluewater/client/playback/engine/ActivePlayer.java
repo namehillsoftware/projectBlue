@@ -27,12 +27,12 @@ public class ActivePlayer implements IActivePlayer, AutoCloseable {
 	}
 
 	@Override
-	public Promise<Void> pause() {
+	public Promise<?> pause() {
 		return playlistPlayer.pause();
 	}
 
 	@Override
-	public Promise<Void> resume() {
+	public Promise<?> resume() {
 		return playlistPlayer.resume();
 	}
 
