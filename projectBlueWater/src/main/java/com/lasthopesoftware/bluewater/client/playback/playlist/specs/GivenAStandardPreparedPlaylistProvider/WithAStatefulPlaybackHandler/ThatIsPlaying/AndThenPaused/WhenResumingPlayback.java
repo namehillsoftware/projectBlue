@@ -7,10 +7,13 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.ExecutionException;
 
 import io.reactivex.Observable;
 
@@ -23,7 +26,7 @@ public class WhenResumingPlayback {
 	private FakeBufferingPlaybackHandler playbackHandler;
 
 	@Before
-	public void before() {
+	public void before() throws ExecutionException, InterruptedException {
 		playbackHandler = new FakeBufferingPlaybackHandler();
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
@@ -41,9 +44,9 @@ public class WhenResumingPlayback {
 
 		Observable.create(playlistPlayback).subscribe();
 
-		playlistPlayback.pause();
+		new FuturePromise<>(playlistPlayback.pause()).get();
 
-		playlistPlayback.resume();
+		new FuturePromise<>(playlistPlayback.resume()).get();
 	}
 
 	@Test
