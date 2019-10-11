@@ -23,6 +23,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +80,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 				.eventually(np -> changePosition(getNextPosition(np.playlistPosition, np.playlist), 0));
 	}
 
-	private static int getNextPosition(int startingPosition, Collection<ServiceFile> playlist) {
+	private static int getNextPosition(int startingPosition, @NotNull Collection<ServiceFile> playlist) {
 		return startingPosition < playlist.size() - 1 ? startingPosition + 1 : 0;
 	}
 
@@ -89,6 +91,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 				.eventually(np -> changePosition(getPreviousPosition(np.playlistPosition), 0));
 	}
 
+	@Contract(pure = true)
 	private static int getPreviousPosition(int startingPosition) {
 		return startingPosition > 0 ? startingPosition - 1 : 0;
 	}
@@ -204,7 +207,7 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		return this;
 	}
 
-	private void resumePlaybackFromNowPlaying(NowPlaying nowPlaying) throws IOException {
+	private void resumePlaybackFromNowPlaying(@NotNull NowPlaying nowPlaying) throws IOException {
 		final IPositionedFileQueueProvider positionedFileQueueProvider = positionedFileQueueProviders.get(nowPlaying.isRepeating);
 
 		final IPositionedFileQueue fileQueue = positionedFileQueueProvider.provideQueue(nowPlaying.playlist, nowPlaying.playlistPosition);

@@ -39,7 +39,8 @@ public class WhenTheFileChanges {
 			new PlaybackNotificationBroadcaster(
 				notificationController,
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder);
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(new Notification())));
 
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
 	}

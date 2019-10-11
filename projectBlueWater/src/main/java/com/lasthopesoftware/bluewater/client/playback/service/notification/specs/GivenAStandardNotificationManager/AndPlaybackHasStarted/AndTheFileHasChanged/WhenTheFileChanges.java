@@ -33,7 +33,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			.thenReturn(newFakeBuilder(loadingNotification));
 
 		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(startedNotification)));
+			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
 
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(2), true))
 			.thenReturn(new Promise<>(newFakeBuilder(nextNotification)));
@@ -42,7 +42,8 @@ public class WhenTheFileChanges extends AndroidContext {
 			new PlaybackNotificationBroadcaster(
 				notificationController,
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder);
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(startedNotification)));
 
 		playbackNotificationBroadcaster.notifyPlaying();
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));

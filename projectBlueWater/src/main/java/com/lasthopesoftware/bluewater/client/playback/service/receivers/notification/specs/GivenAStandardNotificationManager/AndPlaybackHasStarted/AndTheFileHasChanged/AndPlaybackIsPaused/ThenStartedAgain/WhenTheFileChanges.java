@@ -31,17 +31,17 @@ public class WhenTheFileChanges extends AndroidContext {
 	private static final Notification firstNotification = new Notification();
 	private static final Notification secondNotification = new Notification();
 	private static final ControlNotifications notificationsController = mock(ControlNotifications.class);
-	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
 
 	@Override
 	public void before() {
+		final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
 		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
 			.thenReturn(newFakeBuilder(loadingNotification));
 
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(1).equals(arg)),
 			anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(firstNotification)));
+			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
 
 		when(notificationContentBuilder.promiseNowPlayingNotification(
 			argThat(arg -> new ServiceFile(2).equals(arg)),
@@ -52,7 +52,8 @@ public class WhenTheFileChanges extends AndroidContext {
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				notificationsController,
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(firstNotification))));
 
 		playbackNotificationRouter
 			.onReceive(

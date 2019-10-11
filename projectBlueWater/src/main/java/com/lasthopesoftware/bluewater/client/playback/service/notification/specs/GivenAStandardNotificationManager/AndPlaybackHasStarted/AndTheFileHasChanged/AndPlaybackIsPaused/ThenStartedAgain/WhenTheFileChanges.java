@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 public class WhenTheFileChanges extends AndroidContext {
 
 	private static final Notification loadingNotification = new Notification();
+	private static final Notification startingNotification = new Notification();
 	private static final Notification firstNotification = new Notification();
 	private static final Notification secondNotification = new Notification();
 	private static final ControlNotifications notificationController = mock(ControlNotifications.class);
@@ -47,7 +48,8 @@ public class WhenTheFileChanges extends AndroidContext {
 			new PlaybackNotificationBroadcaster(
 				notificationController,
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder);
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(startingNotification)));
 
 		playbackNotificationBroadcaster.notifyPlaying();
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
@@ -65,7 +67,7 @@ public class WhenTheFileChanges extends AndroidContext {
 	@Test
 	public void thenTheServiceIsStartedOnTheFirstServiceItem() {
 		verify(notificationController, times(1))
-			.notifyForeground(firstNotification, 43);
+			.notifyForeground(startingNotification, 43);
 	}
 
 	@Test

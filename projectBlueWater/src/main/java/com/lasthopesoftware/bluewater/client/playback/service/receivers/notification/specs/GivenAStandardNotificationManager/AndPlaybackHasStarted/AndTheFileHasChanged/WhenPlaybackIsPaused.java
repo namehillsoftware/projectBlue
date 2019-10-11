@@ -60,7 +60,8 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
 		playbackNotificationRouter
 			.onReceive(

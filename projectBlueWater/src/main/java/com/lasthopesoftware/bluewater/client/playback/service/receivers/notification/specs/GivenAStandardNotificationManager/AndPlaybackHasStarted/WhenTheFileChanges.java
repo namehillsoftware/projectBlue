@@ -5,7 +5,6 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 
-import androidx.core.app.NotificationCompat;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -41,10 +40,8 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Override
 	public void before() {
-		final NotificationCompat.Builder startedBuilder = mock(NotificationCompat.Builder.class);
-		when(startedBuilder.build()).thenReturn(startedNotification);
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), true))
-			.thenReturn(new Promise<>(startedBuilder));
+			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
 
 		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
 			.thenReturn(newFakeBuilder(loadingNotification));
@@ -55,7 +52,8 @@ public class WhenTheFileChanges extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(startedNotification))));
 
 		playbackNotificationRouter
 			.onReceive(
@@ -74,7 +72,6 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Test
 	public void thenTheServiceIsStartedInTheForeground() {
-		verify(service.getObject()).startForeground(43, loadingNotification);
-		verify (notificationManager).notify(43, startedNotification);
+		verify(service.getObject()).startForeground(43, startedNotification);
 	}
 }
