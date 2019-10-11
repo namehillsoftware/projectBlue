@@ -219,6 +219,9 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		if (playbackSubscription != null)
 			playbackSubscription.dispose();
 
+		if (onPlaybackStarted != null)
+			onPlaybackStarted.onPlaybackStarted();
+
 		activePlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition);
 		isPlaying = true;
 
@@ -265,14 +268,6 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 						return null;
 					});
 			});
-
-		observable.firstElement()
-			.subscribe(
-				p -> {
-					if (onPlaybackStarted != null)
-						onPlaybackStarted.onPlaybackStarted(p);
-				},
-				e -> {});
 
 		return observable;
 	}

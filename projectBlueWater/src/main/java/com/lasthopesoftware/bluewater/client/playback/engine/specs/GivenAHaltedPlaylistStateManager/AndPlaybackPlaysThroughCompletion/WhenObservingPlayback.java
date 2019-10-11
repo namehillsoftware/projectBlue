@@ -33,6 +33,7 @@ public class WhenObservingPlayback {
 	private static boolean isPlaying;
 	private static PositionedPlayingFile firstPlayingFile;
 	private static boolean isCompleted;
+	private static boolean playbackStarted;
 
 	@BeforeClass
 	public static void context() throws InterruptedException {
@@ -58,8 +59,12 @@ public class WhenObservingPlayback {
 		final CountDownLatch countDownLatch = new CountDownLatch(6);
 
 		playbackEngine
-			.setOnPlaybackStarted(p -> firstPlayingFile = p)
-			.setOnPlayingFileChanged(p -> countDownLatch.countDown())
+			.setOnPlaybackStarted(() -> playbackStarted = true)
+			.setOnPlayingFileChanged(p -> {
+				if (firstPlayingFile == null)
+					firstPlayingFile = p;
+				countDownLatch.countDown();
+			})
 			.setOnPlaybackCompleted(() -> {
 				isCompleted = true;
 				countDownLatch.countDown();
@@ -83,6 +88,11 @@ public class WhenObservingPlayback {
 		countDownLatch.await(1, TimeUnit.SECONDS);
 
 		isPlaying = playbackEngine.isPlaying();
+	}
+
+	@Test
+	public void thenPlaybackIsStarted() {
+		assertThat(playbackStarted).isTrue();
 	}
 
 	@Test

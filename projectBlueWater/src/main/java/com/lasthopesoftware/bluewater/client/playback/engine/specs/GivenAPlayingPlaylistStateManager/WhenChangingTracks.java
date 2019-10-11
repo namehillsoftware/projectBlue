@@ -61,8 +61,8 @@ public class WhenChangingTracks {
 		final CountDownLatch countDownLatch = new CountDownLatch(2);
 
 		playbackEngine
-			.setOnPlaybackStarted(p -> startedFiles.add(p))
 			.setOnPlayingFileChanged(p -> {
+				startedFiles.add(p);
 				latestFile = p;
 				countDownLatch.countDown();
 			})
