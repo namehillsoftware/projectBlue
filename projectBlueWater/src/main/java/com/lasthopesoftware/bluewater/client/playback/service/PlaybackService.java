@@ -14,8 +14,6 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
-import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -429,7 +427,6 @@ implements OnAudioFocusChangeListener
 	private PlaybackNotificationRouter playbackNotificationRouter;
 	private NowPlayingNotificationBuilder nowPlayingNotificationBuilder;
 
-	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
 	private SimpleCache cache;
 	private int startId;
@@ -514,15 +511,12 @@ implements OnAudioFocusChangeListener
 		return lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
 			.then(new VoidResponse<>(b -> lazyNotificationController.getObject().notifyForeground(
-				buildFullNotification(b), startingNotificationId)));
+				b.build(), startingNotificationId)));
 	}
 	
 	private void registerListeners() {
 		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 				
-		wifiLock = ((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, wifiLockSvcName);
-        wifiLock.acquire();
-
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
 		wakeLock.acquire();
 
@@ -548,12 +542,6 @@ implements OnAudioFocusChangeListener
 	private void unregisterListeners() {
 		audioManagerLazy.getObject().abandonAudioFocus(this);
 		
-		// release the wifilock if we still have it
-		if (wifiLock != null) {
-			if (wifiLock.isHeld()) wifiLock.release();
-			wifiLock = null;
-		}
-
 		if (wakeLock != null) {
 			if (wakeLock.isHeld()) wakeLock.release();
 			wakeLock = null;
