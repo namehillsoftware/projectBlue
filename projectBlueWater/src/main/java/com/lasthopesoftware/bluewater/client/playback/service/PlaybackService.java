@@ -14,8 +14,6 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
-import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -292,7 +290,6 @@ implements OnAudioFocusChangeListener
 
 	private static final int playingNotificationId = 42;
 	private static final int startingNotificationId = 53;
-	private static int startId;
 
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
@@ -346,7 +343,7 @@ implements OnAudioFocusChangeListener
 		};
 	private final CreateAndHold<IPlaybackBroadcaster> lazyPlaybackBroadcaster = new Lazy<>(() -> new LocalPlaybackBroadcaster(localBroadcastManagerLazy.getObject()));
 	private final CreateAndHold<ISelectedLibraryIdentifierProvider> lazyChosenLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
-	private final CreateAndHold<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(lazyChosenLibraryIdentifierProvider.getObject(), lazyPlaybackBroadcaster.getObject()));
+	private final CreateAndHold<PlaybackStartedBroadcaster> lazyPlaybackStartedBroadcaster = new Lazy<>(() -> new PlaybackStartedBroadcaster(localBroadcastManagerLazy.getObject()));
 	private final CreateAndHold<LibraryRepository> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
@@ -430,9 +427,9 @@ implements OnAudioFocusChangeListener
 	private PlaybackNotificationRouter playbackNotificationRouter;
 	private NowPlayingNotificationBuilder nowPlayingNotificationBuilder;
 
-	private WifiLock wifiLock = null;
 	private PowerManager.WakeLock wakeLock = null;
 	private SimpleCache cache;
+	private int startId;
 
 	private Promise<IConnectionProvider> pollingSessionConnection;
 
@@ -510,19 +507,16 @@ implements OnAudioFocusChangeListener
 			lazyNotificationController.getObject().removeNotification(playingNotificationId);
 	}
 
-	private void notifyStartingService() {
-		lazyPlaybackStartingNotificationBuilder.getObject()
+	private Promise<Void> notifyStartingService() {
+		return lazyPlaybackStartingNotificationBuilder.getObject()
 			.promisePreparedPlaybackStartingNotification()
 			.then(new VoidResponse<>(b -> lazyNotificationController.getObject().notifyForeground(
-				buildFullNotification(b), startingNotificationId)));
+				b.build(), startingNotificationId)));
 	}
 	
 	private void registerListeners() {
 		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 				
-		wifiLock = ((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, wifiLockSvcName);
-        wifiLock.acquire();
-
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
 		wakeLock.acquire();
 
@@ -548,12 +542,6 @@ implements OnAudioFocusChangeListener
 	private void unregisterListeners() {
 		audioManagerLazy.getObject().abandonAudioFocus(this);
 		
-		// release the wifilock if we still have it
-		if (wifiLock != null) {
-			if (wifiLock.isHeld()) wifiLock.release();
-			wifiLock = null;
-		}
-
 		if (wakeLock != null) {
 			if (wakeLock.isHeld()) wakeLock.release();
 			wakeLock = null;
@@ -585,7 +573,7 @@ implements OnAudioFocusChangeListener
 	@Override
 	public final int onStartCommand(final Intent intent, int flags, int startId) {
 		// Should be modified to save its state locally in the future.
-		PlaybackService.startId = startId;
+		this.startId = startId;
 
 		final String action = intent.getAction();
 		if (Action.killMusicService.equals(action) || !Action.validActions.contains(action)) {
@@ -594,15 +582,14 @@ implements OnAudioFocusChangeListener
 		}
 
 		if (playbackEngine != null) {
-			actOnIntent(intent);
+			actOnIntent(intent).excuse(UnhandledRejectionHandler);
 			return START_NOT_STICKY;
 		}
 
-		notifyStartingService();
-		lazySelectedLibraryProvider.getObject()
-			.getBrowserLibrary()
+		notifyStartingService()
+			.eventually(v -> lazySelectedLibraryProvider.getObject().getBrowserLibrary())
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
-			.then(new VoidResponse<>(m -> actOnIntent(intent)))
+			.eventually(m -> actOnIntent(intent))
 			.then(
 				new VoidResponse<>(v -> lazyNotificationController.getObject().removeNotification(startingNotificationId)),
 				UnhandledRejectionHandler);
@@ -610,29 +597,27 @@ implements OnAudioFocusChangeListener
 		return START_NOT_STICKY;
 	}
 
-	private void actOnIntent(final Intent intent) {
-		if (intent == null) return;
+	private Promise<?> actOnIntent(final Intent intent) {
+		if (intent == null) return Promise.empty();
 
 		String action = intent.getAction();
-		if (action == null) return;
+		if (action == null) return Promise.empty();
 
 		if (action.equals(Action.launchMusicService)) {
 			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (playlistPosition < 0) return;
+			if (playlistPosition < 0) return Promise.empty();
 
 			final String playlistString = intent.getStringExtra(Action.Bag.filePlaylist);
-			if (playlistString == null) return;
+			if (playlistString == null) return Promise.empty();
 
-			FileStringListUtilities
+			return FileStringListUtilities
 				.promiseParsedFileStringList(playlistString)
-				.then(playlist -> {
-					playbackEngine.startPlaylist(playlist, playlistPosition, 0);
+				.eventually(playlist -> {
+					final Promise<Void> promiseStartedPlaylist = playbackEngine.startPlaylist(playlist, playlistPosition, 0);
 					NowPlayingActivity.startNowPlayingActivity(this);
 
-					return null;
+					return promiseStartedPlaylist;
 				});
-
-			return;
 		}
 
 		if (action.equals(Action.togglePlayPause))
@@ -640,86 +625,73 @@ implements OnAudioFocusChangeListener
 
 		if (action.equals(Action.play)) {
 			isPlaying = true;
-			playbackEngine.resume();
-
-			return;
+			return playbackEngine.resume();
 		}
 
-		if (action.equals(Action.pause)) {
-			pausePlayback(true);
-			return;
-		}
+		if (action.equals(Action.pause)) return pausePlayback(true);
 
 		if (!Action.playbackStartingActions.contains(action))
 			stopNotificationIfNotPlaying();
 
 		if (action.equals(Action.repeating)) {
 			playbackEngine.playRepeatedly();
-			return;
+			return Promise.empty();
 		}
 
 		if (action.equals(Action.completing)) {
 			playbackEngine.playToCompletion();
-			return;
+			return Promise.empty();
 		}
 
 		if (action.equals(Action.seekTo)) {
 			final int playlistPosition = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (playlistPosition < 0) return;
+			if (playlistPosition < 0) return Promise.empty();
 
 			final int filePosition = intent.getIntExtra(Action.Bag.startPos, -1);
-			if (filePosition < 0) return;
+			if (filePosition < 0) return Promise.empty();
 
-			playbackEngine
+			return playbackEngine
 				.changePosition(playlistPosition, filePosition)
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-
-			return;
+				.then(this::broadcastChangedFile);
 		}
 
 		if (action.equals(Action.previous)) {
-			playbackEngine
+			return playbackEngine
 				.skipToPrevious()
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-			return;
+				.then(this::broadcastChangedFile);
 		}
 
 		if (action.equals(Action.next)) {
-			playbackEngine
+			return playbackEngine
 				.skipToNext()
-				.then(this::broadcastChangedFile)
-				.excuse(UnhandledRejectionHandler);
-			return;
+				.then(this::broadcastChangedFile);
 		}
 
 		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
 			pollingSessionConnection.cancel();
-			return;
+			return Promise.empty();
 		}
 
 		if (action.equals(Action.addFileToPlaylist)) {
 			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
-			if (fileKey < 0) return;
+			if (fileKey < 0) return Promise.empty();
 
-			playbackEngine
+			return playbackEngine
 				.addFile(new ServiceFile(fileKey))
 				.eventually(LoopedInPromise.response(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
-					return library;
-				}, this))
-				.excuse(UnhandledRejectionHandler);
-
-			return;
+					return null;
+				}, this));
 		}
 
 		if (action.equals(Action.removeFileAtPositionFromPlaylist)) {
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
-			if (filePosition < -1) return;
+			if (filePosition < -1) return Promise.empty();
 
-			playbackEngine.removeFileAtPosition(filePosition).excuse(UnhandledRejectionHandler);
+			return playbackEngine.removeFileAtPosition(filePosition);
 		}
+
+		return Promise.empty();
 	}
 	
 	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) {
@@ -791,7 +763,8 @@ implements OnAudioFocusChangeListener
 							lazyMediaStyleNotificationSetup.getObject(),
 							connectionProvider,
 							cachedFilePropertiesProvider,
-							imageProvider)));
+							imageProvider),
+						lazyPlaybackStartingNotificationBuilder.getObject()));
 
 				localBroadcastManagerLazy
 					.getObject()
@@ -920,25 +893,26 @@ implements OnAudioFocusChangeListener
 			playingNotificationId);
 	}
 	
-	private void handlePlaybackStarted(PositionedPlayingFile positionedPlayableFile) {
+	private void handlePlaybackStarted() {
 		isPlaying = true;
-		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted(positionedPlayableFile.asPositionedFile());
+		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted();
 	}
 
-	private void pausePlayback(boolean isUserInterrupted) {
+	private Promise<Void> pausePlayback(boolean isUserInterrupted) {
 		isPlaying = false;
 
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners();
 
-		if (playbackEngine == null) return;
+		if (playbackEngine == null) return Promise.empty();
 
-		playbackEngine.pause();
+		return playbackEngine.pause()
+			.then(new VoidResponse<>(v -> {
+				if (positionedPlayingFile != null)
+					lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
-		if (positionedPlayingFile != null)
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
-
-		if (filePositionSubscription != null)
-			filePositionSubscription.dispose();
+				if (filePositionSubscription != null)
+					filePositionSubscription.dispose();
+			}));
 	}
 
 	private void uncaughtExceptionHandler(Throwable exception) {

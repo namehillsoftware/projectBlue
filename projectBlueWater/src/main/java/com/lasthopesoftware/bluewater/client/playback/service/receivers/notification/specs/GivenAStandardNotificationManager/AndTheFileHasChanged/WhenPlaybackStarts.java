@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.robolectric.Robolectric;
 
 import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenPlaybackStarts extends AndroidContext {
 
+	private static final Notification loadingNotification = new Notification();
 	private static final Notification startedNotification = new Notification();
 	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
 	private static final NotificationManager notificationManager = mock(NotificationManager.class);
@@ -41,13 +43,17 @@ public class WhenPlaybackStarts extends AndroidContext {
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), true))
 			.thenReturn(new Promise<>(newFakeBuilder(startedNotification)));
 
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(loadingNotification));
+
 		final PlaybackNotificationRouter playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
 				new NotificationsController(
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
 		final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
 		playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
@@ -64,6 +70,7 @@ public class WhenPlaybackStarts extends AndroidContext {
 
 	@Test
 	public void thenTheServiceIsStartedInTheForeground() {
-		verify(service.getObject()).startForeground(43, startedNotification);
+		verify(service.getObject()).startForeground(43, loadingNotification);
+		verify(notificationManager).notify(43, startedNotification);
 	}
 }

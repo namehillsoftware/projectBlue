@@ -5,7 +5,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 
-import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -22,8 +22,8 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import org.junit.Test;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 
+import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenTheFileChanges extends AndroidContext {
 
+	private static final Notification loadingNotification = new Notification();
 	private static final Notification startedNotification = new Notification();
 	private static final Notification nextNotification = new Notification();
 	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
@@ -41,15 +42,14 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Override
 	public void before() {
-		final NotificationCompat.Builder startedBuilder = mock(NotificationCompat.Builder.class);
-		when(startedBuilder.build()).thenReturn(startedNotification);
 		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
-			.thenReturn(new Promise<>(startedBuilder));
+			.thenReturn(new Promise<>(newFakeBuilder(startedNotification)));
 
-		final NotificationCompat.Builder nextBuilder = mock(NotificationCompat.Builder.class);
-		when(nextBuilder.build()).thenReturn(nextNotification);
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(2), true))
-			.thenReturn(new Promise<>(nextBuilder));
+			.thenReturn(new Promise<>(newFakeBuilder(nextNotification)));
+
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(loadingNotification));
 
 		final PlaybackNotificationRouter playbackNotificationRouter =
 			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
@@ -57,11 +57,12 @@ public class WhenTheFileChanges extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(startedNotification))));
 
 		playbackNotificationRouter
 			.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				new Intent(PlaylistEvents.onPlaylistStart));
 
 		{
@@ -69,7 +70,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
 			playbackNotificationRouter
 				.onReceive(
-					RuntimeEnvironment.application,
+					ApplicationProvider.getApplicationContext(),
 					playlistChangeIntent);
 		}
 	}

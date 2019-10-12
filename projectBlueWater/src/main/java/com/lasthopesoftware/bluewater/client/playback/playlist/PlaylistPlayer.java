@@ -66,8 +66,8 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 				.then(p -> {
 					positionedPlayingFile = new PositionedPlayingFile(
 						p,
-						positionedPlayingFile.getPlayableFileVolumeManager(),
-						positionedPlayingFile.asPositionedFile());
+						positionedPlayableFile.getPlayableFileVolumeManager(),
+						positionedPlayableFile.asPositionedFile());
 
 					positionedPlayableFile = null;
 
@@ -93,9 +93,9 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void pause() {
+	public Promise<?> pause() {
 		synchronized (stateChangeSync) {
-			lastStateChangePromise = lastStateChangePromise
+			return lastStateChangePromise = lastStateChangePromise
 				.eventually(
 					lazyPausedPromise.getObject(),
 					lazyPausedPromise.getObject());
@@ -104,9 +104,9 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void resume() {
+	public Promise<?> resume() {
 		synchronized (stateChangeSync) {
-			lastStateChangePromise = lastStateChangePromise
+			return lastStateChangePromise = lastStateChangePromise
 				.eventually(
 					lazyResumePromise.getObject(),
 					lazyResumePromise.getObject());

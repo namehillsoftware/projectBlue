@@ -4,8 +4,10 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.media.session.MediaSessionCompat;
+
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -13,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.resources.notifications.ProduceNotificationBuilders;
 import com.namehillsoftware.handoff.promises.Promise;
 
-public class PlaybackStartingNotificationBuilder {
+public class PlaybackStartingNotificationBuilder implements BuildPlaybackStartingNotification {
 
 	private final Context context;
 	private final ProduceNotificationBuilders produceNotificationBuilders;
@@ -27,18 +29,19 @@ public class PlaybackStartingNotificationBuilder {
 		this.mediaSessionCompat = mediaSessionCompat;
 	}
 
+	@Override
 	public Promise<NotificationCompat.Builder> promisePreparedPlaybackStartingNotification() {
 		return new Promise<>(produceNotificationBuilders.getNotificationBuilder(configuration.getNotificationChannel())
 			.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
 				.setCancelButtonIntent(PlaybackService.pendingKillService(context))
 				.setMediaSession(mediaSessionCompat.getSessionToken())
 				.setShowCancelButton(true))
-			.setOngoing(true)
+			.setOngoing(false)
 			.setSound(null)
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
 			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 			.setContentIntent(buildNowPlayingActivityIntent())
-			.setShowWhen(false)
+			.setShowWhen(true)
 			.setSmallIcon(R.drawable.clearstream_logo_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.setContentTitle(context.getString(R.string.app_name))

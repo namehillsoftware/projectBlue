@@ -1,19 +1,19 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import android.content.Intent;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class PlaybackStartedBroadcaster {
 
-	private final ISelectedLibraryIdentifierProvider libraryIdentifierProvider;
-	private final IPlaybackBroadcaster playbackBroadcaster;
+	private final LocalBroadcastManager localBroadcastManager;
 
-	public PlaybackStartedBroadcaster(ISelectedLibraryIdentifierProvider libraryIdentifierProvider, IPlaybackBroadcaster playbackBroadcaster) {
-		this.libraryIdentifierProvider = libraryIdentifierProvider;
-		this.playbackBroadcaster = playbackBroadcaster;
+	public PlaybackStartedBroadcaster(LocalBroadcastManager localBroadcastManager) {
+		this.localBroadcastManager = localBroadcastManager;
 	}
 
-	public void broadcastPlaybackStarted(PositionedFile positionedFile) {
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStart, libraryIdentifierProvider.getSelectedLibraryId(), positionedFile);
+	public void broadcastPlaybackStarted() {
+		final Intent playbackBroadcastIntent = new Intent(PlaylistEvents.onPlaylistStart);
+		localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
 	}
 }

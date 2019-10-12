@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPlaying;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.building.specs.GivenATypicalServiceFile.ThatIsPaused;
 
 import android.graphics.Bitmap;
 
@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -33,7 +32,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class WhenBuildingTheNotification extends AndroidContext {
+public class WhenBuildingTheLoadingNotification extends AndroidContext {
 
 	private static final Lazy<Bitmap> expectedBitmap = new Lazy<>(() -> {
 		final Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
@@ -74,13 +73,13 @@ public class WhenBuildingTheNotification extends AndroidContext {
 					ParsingScheduler.instance())),
 			imageProvider);
 
-		builder = new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
+		builder = npBuilder.getLoadingNotification(false);
 	}
 
 	@Test
-	public void thenTheNotificationHasAPauseButton() {
+	public void thenTheNotificationHasAPlayButton() {
 		assertThat(Stream.of(builder.mActions).map(a -> a.title).toList())
-			.containsOnlyOnce(ApplicationProvider.getApplicationContext().getString(R.string.btn_pause));
+			.containsOnlyOnce(ApplicationProvider.getApplicationContext().getString(R.string.btn_play));
 	}
 
 	@Test
@@ -97,6 +96,7 @@ public class WhenBuildingTheNotification extends AndroidContext {
 
 	@Test
 	public void thenTheNotificationBitmapIsCorrect() {
-		verify(spiedBuilder).setLargeIcon(expectedBitmap.getObject());
+		verify(spiedBuilder).setContentTitle(
+			ApplicationProvider.getApplicationContext().getString(R.string.lbl_loading));
 	}
 }

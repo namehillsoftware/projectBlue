@@ -39,8 +39,8 @@ public class WhenRemovingAllNotifications extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheServiceStartsForegroundOnce() {
-		verify(service.getObject(), times(1)).startForeground(anyInt(), any());
+	public void thenTheServiceStartsForegroundForEachForegroundNotification() {
+		verify(service.getObject(), times(3)).startForeground(anyInt(), any());
 	}
 
 	@Test

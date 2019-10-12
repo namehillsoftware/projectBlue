@@ -31,6 +31,7 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.InvocationTargetException;
 
+import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -56,6 +57,9 @@ public class WhenTheFileChanges extends AndroidContext {
 			.thenReturn(new Notification())
 			.thenReturn(secondNotification);
 
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(new Notification()));
+
 		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
 			.thenReturn(new Promise<>(builder));
 
@@ -68,7 +72,8 @@ public class WhenTheFileChanges extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
 		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
 

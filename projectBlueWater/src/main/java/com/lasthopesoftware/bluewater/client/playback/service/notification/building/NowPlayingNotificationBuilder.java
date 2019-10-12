@@ -1,21 +1,21 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building;
 
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
+
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.Map;
 
@@ -29,6 +29,24 @@ implements
 	private final ImageProvider imageProvider;
 	private final Context context;
 	private final SetupMediaStyleNotifications mediaStyleNotificationSetup;
+
+	private final CreateAndHold<NotificationCompat.Builder> lazyPlayingLoadingNotification = new AbstractSynchronousLazy<NotificationCompat.Builder>() {
+		@Override
+		protected NotificationCompat.Builder create() {
+			return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), true)
+				.setOngoing(true)
+				.setContentTitle(context.getString(R.string.lbl_loading));
+		}
+	};
+
+	private final CreateAndHold<NotificationCompat.Builder> lazyNotPlayingLoadingNotification = new AbstractSynchronousLazy<NotificationCompat.Builder>() {
+		@Override
+		protected NotificationCompat.Builder create() {
+			return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), false)
+				.setOngoing(false)
+				.setContentTitle(context.getString(R.string.lbl_loading));
+		}
+	};
 
 	private ViewStructure viewStructure;
 
@@ -63,37 +81,11 @@ implements
 				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
 				final String name = fileProperties.get(FilePropertiesProvider.NAME);
 
-				final NotificationCompat.Builder builder = mediaStyleNotificationSetup.getMediaStyleNotification();
-				builder
-					.setSound(null)
-					.setPriority(NotificationCompat.PRIORITY_DEFAULT)
-					.setOngoing(isPlaying)
-					.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
-					.setContentIntent(buildNowPlayingActivityIntent())
-					.setDeleteIntent(PlaybackService.pendingKillService(context))
-					.setShowWhen(false)
-					.setSmallIcon(R.drawable.clearstream_logo_dark)
-					.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-					.setContentTitle(name)
-					.setContentText(artist)
-					.addAction(new NotificationCompat.Action(
-						R.drawable.av_rewind,
-						context.getString(R.string.btn_previous),
-						PlaybackService.pendingPreviousIntent(context)))
-					.addAction(
-						isPlaying
-							? new NotificationCompat.Action(
-								R.drawable.av_pause,
-								context.getString(R.string.btn_pause),
-								PlaybackService.pendingPauseIntent(context))
-							: new NotificationCompat.Action(
-								R.drawable.av_play,
-								context.getString(R.string.btn_play),
-								PlaybackService.pendingPlayingIntent(context)))
-					.addAction(new NotificationCompat.Action(
-						R.drawable.av_fast_forward,
-						context.getString(R.string.btn_next),
-						PlaybackService.pendingNextIntent(context)));
+				final NotificationCompat.Builder builder =
+					addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), isPlaying)
+						.setOngoing(isPlaying)
+						.setContentTitle(name)
+						.setContentText(artist);
 
 				if (!viewStructure.urlKeyHolder.equals(urlKeyHolder))
 					return new Promise<>(builder);
@@ -111,17 +103,39 @@ implements
 			});
 	}
 
-	private PendingIntent buildNowPlayingActivityIntent() {
-		// Set the notification area
-		final Intent viewIntent = new Intent(context, NowPlayingActivity.class);
-		viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		return PendingIntent.getActivity(context, 0, viewIntent, 0);
+	@Override
+	public NotificationCompat.Builder getLoadingNotification(boolean isPlaying) {
+		return isPlaying
+			? lazyPlayingLoadingNotification.getObject()
+			: lazyNotPlayingLoadingNotification.getObject();
 	}
 
 	@Override
 	public void close() {
 		if (viewStructure != null)
 			viewStructure.release();
+	}
+
+	private NotificationCompat.Builder addButtons(NotificationCompat.Builder builder, boolean isPlaying) {
+		return builder
+			.addAction(new NotificationCompat.Action(
+				R.drawable.av_rewind,
+				context.getString(R.string.btn_previous),
+				PlaybackService.pendingPreviousIntent(context)))
+			.addAction(
+				isPlaying
+					? new NotificationCompat.Action(
+					R.drawable.av_pause,
+					context.getString(R.string.btn_pause),
+					PlaybackService.pendingPauseIntent(context))
+					: new NotificationCompat.Action(
+					R.drawable.av_play,
+					context.getString(R.string.btn_play),
+					PlaybackService.pendingPlayingIntent(context)))
+			.addAction(new NotificationCompat.Action(
+				R.drawable.av_fast_forward,
+				context.getString(R.string.btn_next),
+				PlaybackService.pendingNextIntent(context)));
 	}
 
 	private static class ViewStructure {

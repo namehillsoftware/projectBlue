@@ -32,8 +32,10 @@ public class NotificationsController implements ControlNotifications {
 	@Override
 	public void notifyForeground(Notification notification, int notificationId) {
 		synchronized (syncObject) {
-			if (isAnyNotificationForeground()) notificationManager.notify(notificationId, notification);
-			else service.startForeground(notificationId, notification);
+			if (notificationForegroundStatuses.get(notificationId, false))
+				notificationManager.notify(notificationId, notification);
+			else
+				service.startForeground(notificationId, notification);
 
 			markNotificationForeground(notificationId);
 		}
@@ -51,8 +53,8 @@ public class NotificationsController implements ControlNotifications {
 	public void removeNotification(int notificationId) {
 		synchronized (syncObject) {
 			notificationForegroundStatuses.delete(notificationId);
-			if (isAllNotificationsBackground()) service.stopForeground(true);
 			notificationManager.cancel(notificationId);
+			if (isAllNotificationsBackground()) service.stopForeground(true);
 		}
 	}
 

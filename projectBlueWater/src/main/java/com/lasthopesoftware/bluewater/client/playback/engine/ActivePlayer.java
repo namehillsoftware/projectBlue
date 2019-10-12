@@ -4,6 +4,8 @@ package com.lasthopesoftware.bluewater.client.playback.engine;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
+import com.namehillsoftware.handoff.promises.Promise;
+
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observables.ConnectableObservable;
@@ -25,13 +27,13 @@ public class ActivePlayer implements IActivePlayer, AutoCloseable {
 	}
 
 	@Override
-	public void pause() {
-		playlistPlayer.pause();
+	public Promise<?> pause() {
+		return playlistPlayer.pause();
 	}
 
 	@Override
-	public void resume() {
-		playlistPlayer.resume();
+	public Promise<?> resume() {
+		return playlistPlayer.resume();
 	}
 
 	@Override

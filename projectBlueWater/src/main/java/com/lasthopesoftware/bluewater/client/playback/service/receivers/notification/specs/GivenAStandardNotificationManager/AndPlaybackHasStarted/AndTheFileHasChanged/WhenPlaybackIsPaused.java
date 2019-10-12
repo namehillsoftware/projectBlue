@@ -6,6 +6,7 @@ import android.app.Service;
 import android.content.Intent;
 
 import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -22,8 +23,9 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import org.junit.Test;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 
+import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -43,6 +45,9 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 			.thenReturn(new Notification())
 			.thenReturn(pausedNotification);
 
+		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(newFakeBuilder(new Notification()));
+
 		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(1), true))
 			.thenReturn(new Promise<>(builder));
 
@@ -55,11 +60,12 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
 		playbackNotificationRouter
 			.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				new Intent(PlaylistEvents.onPlaylistStart));
 
 		{
@@ -67,13 +73,13 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
 			playbackNotificationRouter
 				.onReceive(
-					RuntimeEnvironment.application,
+					ApplicationProvider.getApplicationContext(),
 					playlistChangeIntent);
 		}
 
 		playbackNotificationRouter
 			.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				new Intent(PlaylistEvents.onPlaylistPause));
 	}
 

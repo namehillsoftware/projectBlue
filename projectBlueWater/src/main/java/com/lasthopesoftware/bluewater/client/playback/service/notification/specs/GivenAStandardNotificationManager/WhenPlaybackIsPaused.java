@@ -50,7 +50,8 @@ public class WhenPlaybackIsPaused {
 					service.getObject(),
 					notificationManager),
 				new PlaybackNotificationsConfiguration("",43),
-				notificationContentBuilder));
+				notificationContentBuilder,
+				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
 		playbackNotificationRouter
 			.onReceive(
