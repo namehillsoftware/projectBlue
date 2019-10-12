@@ -14,6 +14,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProv
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.Map;
 
@@ -27,6 +29,24 @@ implements
 	private final ImageProvider imageProvider;
 	private final Context context;
 	private final SetupMediaStyleNotifications mediaStyleNotificationSetup;
+
+	private final CreateAndHold<NotificationCompat.Builder> lazyPlayingLoadingNotification = new AbstractSynchronousLazy<NotificationCompat.Builder>() {
+		@Override
+		protected NotificationCompat.Builder create() {
+			return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), true)
+				.setOngoing(true)
+				.setContentTitle(context.getString(R.string.lbl_loading));
+		}
+	};
+
+	private final CreateAndHold<NotificationCompat.Builder> lazyNotPlayingLoadingNotification = new AbstractSynchronousLazy<NotificationCompat.Builder>() {
+		@Override
+		protected NotificationCompat.Builder create() {
+			return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), false)
+				.setOngoing(false)
+				.setContentTitle(context.getString(R.string.lbl_loading));
+		}
+	};
 
 	private ViewStructure viewStructure;
 
@@ -85,9 +105,9 @@ implements
 
 	@Override
 	public NotificationCompat.Builder getLoadingNotification(boolean isPlaying) {
-		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), isPlaying)
-			.setOngoing(isPlaying)
-			.setContentTitle(context.getString(R.string.lbl_loading));
+		return isPlaying
+			? lazyPlayingLoadingNotification.getObject()
+			: lazyNotPlayingLoadingNotification.getObject();
 	}
 
 	@Override
