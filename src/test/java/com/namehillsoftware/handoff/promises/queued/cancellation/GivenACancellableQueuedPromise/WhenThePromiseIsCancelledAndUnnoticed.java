@@ -1,6 +1,7 @@
 package com.namehillsoftware.handoff.promises.queued.cancellation.GivenACancellableQueuedPromise;
 
 
+import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,7 +11,7 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenThePromiseIsCancelledAndUnnoticed {
+public class WhenThePromiseIsCancelledAndUnnoticed extends PromiseTestBase {
 
 	private static Throwable caughtException;
 	private static String result;

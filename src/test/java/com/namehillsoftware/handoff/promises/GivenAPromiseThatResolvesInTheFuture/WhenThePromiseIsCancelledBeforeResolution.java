@@ -1,6 +1,7 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +15,7 @@ import static org.mockito.Mockito.*;
  * Created by david on 10/30/16.
  */
 
-public class WhenThePromiseIsCancelledBeforeResolution {
+public class WhenThePromiseIsCancelledBeforeResolution extends PromiseTestBase {
 	private static Object result;
 	private static Object expectedResult;
 	private static Runnable cancellationRunnable;

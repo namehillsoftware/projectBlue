@@ -1,13 +1,14 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolves;
 
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.mockito.Mockito.*;
 
-public class WhenChainingResolutionTwice {
+public class WhenChainingResolutionTwice extends PromiseTestBase {
 
 	private static ImmediateResponse<String, ?> firstResultHandler;
 	private static ImmediateResponse<String, ?> secondResultHandler;

@@ -3,12 +3,13 @@ package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsCancelled.Befor
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenTheCancellationIsCalled {
+public class WhenTheCancellationIsCalled extends PromiseTestBase {
 
 	private static final Throwable thrownException = new Exception();
 	private static Throwable caughtException;

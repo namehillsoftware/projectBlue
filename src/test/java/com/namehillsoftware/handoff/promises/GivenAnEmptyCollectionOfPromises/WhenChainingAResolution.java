@@ -1,6 +1,7 @@
 package com.namehillsoftware.handoff.promises.GivenAnEmptyCollectionOfPromises;
 
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenChainingAResolution {
+public class WhenChainingAResolution extends PromiseTestBase {
 	private static ArrayList<String> result;
 
 	@BeforeClass

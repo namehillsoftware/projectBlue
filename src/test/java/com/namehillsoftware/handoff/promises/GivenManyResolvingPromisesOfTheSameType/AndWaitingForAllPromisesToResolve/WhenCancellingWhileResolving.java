@@ -3,6 +3,7 @@ package com.namehillsoftware.handoff.promises.GivenManyResolvingPromisesOfTheSam
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.errors.AggregateCancellationException;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenCancellingWhileResolving {
+public class WhenCancellingWhileResolving extends PromiseTestBase {
 	private static AggregateCancellationException aggregateCancellationException;
 
 	@BeforeClass

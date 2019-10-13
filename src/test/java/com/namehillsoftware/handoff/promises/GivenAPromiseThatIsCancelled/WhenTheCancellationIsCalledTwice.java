@@ -1,12 +1,13 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsCancelled;
 
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.mockito.Mockito.*;
 
-public class WhenTheCancellationIsCalledTwice {
+public class WhenTheCancellationIsCalledTwice extends PromiseTestBase {
 
 	private static final Runnable mockCancel = mock(Runnable.class);
 
