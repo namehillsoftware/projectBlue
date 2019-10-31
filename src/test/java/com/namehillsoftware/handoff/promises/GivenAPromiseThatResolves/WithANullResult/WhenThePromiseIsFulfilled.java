@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolves.WithANullResult;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,7 +9,7 @@ import org.junit.Test;
  * Created by david on 10/20/16.
  */
 
-public class WhenThePromiseIsFulfilled extends PromiseTestBase {
+public class WhenThePromiseIsFulfilled {
 
 	private Object result;
 

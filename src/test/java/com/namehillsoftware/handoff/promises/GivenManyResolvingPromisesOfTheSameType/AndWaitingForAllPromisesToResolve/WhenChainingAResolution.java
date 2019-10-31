@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenManyResolvingPromisesOfTheSameType.AndWaitingForAllPromisesToResolve;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -13,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by david on 3/18/17.
  */
 
-public class WhenChainingAResolution extends PromiseTestBase {
+public class WhenChainingAResolution {
 	private static ArrayList<String> result;
 
 	@BeforeClass

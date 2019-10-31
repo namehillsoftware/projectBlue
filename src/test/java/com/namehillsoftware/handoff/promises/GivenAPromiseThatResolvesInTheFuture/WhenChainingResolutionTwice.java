@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -11,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
-public class WhenChainingResolutionTwice extends PromiseTestBase {
+public class WhenChainingResolutionTwice {
 
 	private static ImmediateResponse<String, ?> firstResultHandler;
 	private static ImmediateResponse<String, ?> secondResultHandler;

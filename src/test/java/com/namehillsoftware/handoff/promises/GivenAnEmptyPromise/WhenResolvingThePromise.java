@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAnEmptyPromise;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -9,7 +8,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenResolvingThePromise extends PromiseTestBase {
+public class WhenResolvingThePromise {
 
 	private static Object result;
 

@@ -2,7 +2,6 @@ package com.namehillsoftware.handoff.promises.GivenManyResolvingPromisesOfTheSam
 
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -13,7 +12,7 @@ import java.util.concurrent.CancellationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenCancellingBeforeResolving extends PromiseTestBase {
+public class WhenCancellingBeforeResolving {
 	private static CancellationException cancellationException;
 	private static String result;
 	private static Collection<Throwable> promiseRejections = new ArrayList<>();

@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolves.AndEventuallyContinuingWithResponseAndRejection.AndTheRejectionThrowsAnError;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by david on 10/17/16.
  */
-public class WhenAnotherReturningPromiseIsExpected extends PromiseTestBase {
+public class WhenAnotherReturningPromiseIsExpected {
 
 	private Integer nextReturningPromiseResult;
 	private boolean isCalled;

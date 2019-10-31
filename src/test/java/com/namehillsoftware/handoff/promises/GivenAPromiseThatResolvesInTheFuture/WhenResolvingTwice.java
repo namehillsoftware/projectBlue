@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * Created by david on 2/20/17.
  */
 
-public class WhenResolvingTwice extends PromiseTestBase {
+public class WhenResolvingTwice {
 
 	private static Object expectedResult = new Object();
 	private static Object unexpectedResult = new Object();

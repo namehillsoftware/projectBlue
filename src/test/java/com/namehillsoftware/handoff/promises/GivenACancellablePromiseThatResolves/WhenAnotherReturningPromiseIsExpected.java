@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenACancellablePromiseThatResolves;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -9,7 +8,7 @@ import org.junit.Test;
 /**
  * Created by david on 10/17/16.
  */
-public class WhenAnotherReturningPromiseIsExpected extends PromiseTestBase {
+public class WhenAnotherReturningPromiseIsExpected {
 
 	private static Integer nextReturningPromiseResult;
 	private static boolean isCalled;

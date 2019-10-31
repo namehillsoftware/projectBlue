@@ -56,7 +56,10 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 			return;
 		}
 
-		if (message.rejection != null)
-			Rejections.getUnhandledRejectionsHandler().newUnhandledRejection(message.rejection);
+		if (message.rejection == null) return;
+
+		final Rejections.ReceiveUnhandledRejections unhandledRejections = Rejections.getUnhandledRejectionsHandler();
+		if (unhandledRejections != null)
+			unhandledRejections.newUnhandledRejection(message.rejection);
 	}
 }

@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsCancelled.AfterThePromiseIsResolved;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +13,7 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
  * Created by david on 10/17/16.
  */
 
-public class WhenTheCancellationIsCalled extends PromiseTestBase {
+public class WhenTheCancellationIsCalled {
 
 	private static final Runnable mockCancel = mock(Runnable.class);
 	private static final Object expectedResult = new Object();

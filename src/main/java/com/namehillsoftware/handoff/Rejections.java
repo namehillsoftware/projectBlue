@@ -1,27 +1,20 @@
 package com.namehillsoftware.handoff;
 
-import java.util.Objects;
-
 public class Rejections {
 
     public interface ReceiveUnhandledRejections {
         void newUnhandledRejection(Throwable rejection);
     }
 
-    private static final ReceiveUnhandledRejections defaultReject = rejection -> {};
+    private static final ReceiveUnhandledRejections defaultReceiver = rejection -> {};
 
-    private static volatile ReceiveUnhandledRejections unhandledRejections = defaultReject;
+    private static volatile ReceiveUnhandledRejections receiver = defaultReceiver;
 
-    public static void setUnhandledRejectionsReceiver(ReceiveUnhandledRejections unhandledRejections) {
-        Objects.requireNonNull(unhandledRejections);
-        Rejections.unhandledRejections = unhandledRejections;
-    }
-
-    public static void useDefaultUnhandledRejectionsReceiver() {
-        setUnhandledRejectionsReceiver(defaultReject);
+    public static void setUnhandledRejectionsReceiver(ReceiveUnhandledRejections receiver) {
+        Rejections.receiver = receiver;
     }
 
     static ReceiveUnhandledRejections getUnhandledRejectionsHandler() {
-        return unhandledRejections;
+        return receiver;
     }
 }

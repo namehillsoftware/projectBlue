@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolvesInTheFuture;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * Created by david on 10/20/16.
  */
 
-public class WhenThePromiseIsFulfilled extends PromiseTestBase {
+public class WhenThePromiseIsFulfilled {
 
 	private static Object result;
 	private static Object expectedResult;

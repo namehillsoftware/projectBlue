@@ -1,7 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenManyResolvingPromisesOfTheSameType.AndWaitingForAllPromisesToResolve.WithOneRejection;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -13,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by david on 3/18/17.
  */
 
-public class WhenChainingAResolutionAndError extends PromiseTestBase {
+public class WhenChainingAResolutionAndError {
 
 	private static final Exception expectedException = new Exception();
 	private static Throwable caughtException;

@@ -1,13 +1,12 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndTheRejectionIsNeverHandled.AndTheUnhandledRejectionIsNull;
 
 import com.namehillsoftware.handoff.Rejections;
-import com.namehillsoftware.handoff.promises.PromiseTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenTheRejectionIsCalled extends PromiseTestBase {
+public class WhenTheRejectionIsCalled {
 
 	private static Throwable caughtException;
 
@@ -21,7 +20,7 @@ public class WhenTheRejectionIsCalled extends PromiseTestBase {
 	}
 
 	@Test
-	public void thenTheRejectionIsCorrect() {
-		assertThat(caughtException).isInstanceOf(NullPointerException.class);
+	public void thenNoExceptionIsThrown() {
+		assertThat(caughtException).isNull();
 	}
 }
