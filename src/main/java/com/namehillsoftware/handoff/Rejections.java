@@ -6,9 +6,7 @@ public class Rejections {
         void newUnhandledRejection(Throwable rejection);
     }
 
-    private static final ReceiveUnhandledRejections defaultReceiver = rejection -> {};
-
-    private static volatile ReceiveUnhandledRejections receiver = defaultReceiver;
+    private static volatile ReceiveUnhandledRejections receiver;
 
     public static void setUnhandledRejectionsReceiver(ReceiveUnhandledRejections receiver) {
         Rejections.receiver = receiver;
