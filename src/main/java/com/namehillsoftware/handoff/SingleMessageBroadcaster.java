@@ -23,7 +23,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 			super.cancel();
 	}
 
-	public final void awaitResolution(RespondingMessenger<Resolution> recipient) {
+	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
 		recipients.offer(recipient);
 
 		if (isResolvedSynchronously())
@@ -46,9 +46,20 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 		dispatchMessage(message);
 	}
 
-	private void dispatchMessage(Message<Resolution> message) {
-		RespondingMessenger<Resolution> r;
-		while ((r = recipients.poll()) != null)
-			r.respond(message);
+	private synchronized void dispatchMessage(Message<Resolution> message) {
+		RespondingMessenger<Resolution> r = recipients.poll();
+		if (r != null) {
+			do {
+				r.respond(message);
+			} while ((r = recipients.poll()) != null);
+
+			return;
+		}
+
+		if (message.rejection == null) return;
+
+		final Rejections.ReceiveUnhandledRejections unhandledRejections = Rejections.getUnhandledRejectionsHandler();
+		if (unhandledRejections != null)
+			unhandledRejections.newUnhandledRejection(message.rejection);
 	}
 }
