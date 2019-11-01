@@ -14,16 +14,18 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMess
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+
 import org.slf4j.LoggerFactory;
-import xmlwise.XmlElement;
-import xmlwise.XmlParseException;
-import xmlwise.Xmlwise;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import xmlwise.XmlElement;
+import xmlwise.XmlParseException;
+import xmlwise.Xmlwise;
 
 public class FilePropertiesProvider implements IFilePropertiesProvider {
 
@@ -137,6 +139,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 	static final String DATE_MODIFIED = "Date Modified";
 	static final String DATE_TAGGED = "Date Tagged";
 	static final String DATE_FIRST_RATED = "Date First Rated";
+	static final String DATE_LAST_OPENED = "Date Last Opened";
 	static final String FILE_SIZE = "File Size";
 	public static final String AUDIO_ANALYSIS_INFO = "Audio Analysis Info";
 	public static final String GET_COVER_ART_INFO = "Get Cover Art Info";
