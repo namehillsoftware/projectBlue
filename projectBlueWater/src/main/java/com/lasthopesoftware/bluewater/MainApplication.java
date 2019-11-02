@@ -36,7 +36,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.u
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.compilation.DebugFlag;
-import com.namehillsoftware.handoff.Rejections;
+import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.Lazy;
 
@@ -74,7 +74,7 @@ public class MainApplication extends MultiDexApplication {
 
 		final LoggerUncaughtExceptionHandler loggerUncaughtExceptionHandler = new LoggerUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler(loggerUncaughtExceptionHandler);
-		Rejections.setUnhandledRejectionsReceiver(loggerUncaughtExceptionHandler);
+		Promise.Rejections.setUnhandledRejectionsReceiver(loggerUncaughtExceptionHandler);
 		registerAppBroadcastReceivers(LocalBroadcastManager.getInstance(this));
 
 		if (!isWorkManagerInitialized) {

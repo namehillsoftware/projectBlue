@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.shared.exceptions;
 
-import com.namehillsoftware.handoff.Rejections;
+import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
-public class LoggerUncaughtExceptionHandler implements UncaughtExceptionHandler, Rejections.ReceiveUnhandledRejections {
+public class LoggerUncaughtExceptionHandler implements UncaughtExceptionHandler, UnhandledRejectionsReceiver {
 
 	private static final Logger logger = LoggerFactory.getLogger(LoggerUncaughtExceptionHandler.class);
 
@@ -17,7 +17,7 @@ public class LoggerUncaughtExceptionHandler implements UncaughtExceptionHandler,
 	}
 
 	@Override
-	public void newUnhandledRejection(Throwable rejection) {
+	public void setUnhandledRejectionReceiver(Throwable rejection) {
 		logger.warn("An asynchronous exception has not yet been handled", rejection);
 	}
 }
