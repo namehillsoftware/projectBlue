@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.resources.scheduling.ScheduleParsingWork;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormatter;
@@ -13,8 +14,13 @@ import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<>(() -> new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter());
@@ -63,7 +69,8 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 								DATE_IMPORTED,
 								DATE_MODIFIED,
 								DATE_TAGGED,
-								DATE_FIRST_RATED))));
+								DATE_FIRST_RATED,
+								DATE_LAST_OPENED))));
 	
 	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
 		super(connectionProvider, filePropertiesContainerProvider, parsingScheduler);
@@ -109,7 +116,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		
 		if (FILE_SIZE.equals(name)) {
 			final double fileSizeBytes = Math.ceil(Long.valueOf(value).doubleValue() / 1024 / 1024 * 100) / 100;
-			return String.valueOf(fileSizeBytes) + " MB";
+			return fileSizeBytes + " MB";
 		}
 		
 		if (DURATION.equals(name)) {
