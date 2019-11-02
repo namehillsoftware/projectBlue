@@ -1,6 +1,6 @@
 package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndTheRejectionIsNeverHandled.AndTheUnhandledRejectionIsNull;
 
-import com.namehillsoftware.handoff.Rejections;
+import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ public class WhenTheRejectionIsCalled {
 	@BeforeClass
 	public static void before() {
 		try {
-			Rejections.setUnhandledRejectionsReceiver(null);
+			Promise.Rejections.setUnhandledRejectionsReceiver(null);
 		} catch (NullPointerException e) {
 			caughtException = e;
 		}

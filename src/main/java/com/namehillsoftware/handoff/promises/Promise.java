@@ -4,6 +4,7 @@ import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.SingleMessageBroadcaster;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,6 +72,12 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 	public static <Resolution> Promise<Resolution> whenAny(Collection<Promise<Resolution>> promises) {
 		return new Resolutions.HonorFirstPromise<>(promises);
+	}
+
+	public static class Rejections {
+		public static void setUnhandledRejectionsReceiver(UnhandledRejectionsReceiver receiver) {
+			SingleMessageBroadcaster.setUnhandledRejectionsReceiver(receiver);
+		}
 	}
 
 	private static class LazyEmptyPromiseHolder {
