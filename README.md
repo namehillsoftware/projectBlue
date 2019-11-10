@@ -46,13 +46,6 @@ playlist.promiseFirstFile()
     });
 ```
 
-Handoff contains equivalents to Java's `catch` and `finally` control flow statements:
-
-| Java      | Immediate Response         | Eventual Response                                            |
-|-----------|----------------------------|--------------------------------------------------------------|
-| `catch`   | `.excuse(exception -> {})` | `.excuse(e -> e).eventually(e -> { // return promise... });` |
-| `finally` | `.always(() -> {})`        | `.inevitably(() -> { // return promise... })`                |
-
 ## Installation
 
 Handoff can be installed via Gradle:
@@ -184,3 +177,28 @@ playlist.promiseFirstFile()
 ```
 
 Once trapped in a method chain, that error will go away within that method chain.
+
+### Guaranteed Execution
+
+Like the finally block, Handoff has control blocks which always guarantee execution:
+
+```java
+final InputStream is = body.byteStream(); 
+playlist.promiseFirstFile()
+    .then(f -> { // Perform another action immediately with the result - this continues on the same thread the result was returned on
+        // perform action
+        throw new IOException("Uh oh!"); // return null to represent Void
+    })
+    .then(o -> {
+        // Code here won't be executed
+    })
+    .always(() -> is.close()) // In spite of the error, this control block will execute
+    .excuse(error -> {
+        Logger.error("An error occured!", error); // Log some error, continue on as normal
+
+        if (error instanceof IOException)
+        Logger.error("It was an IO Error too!");
+
+        return null;
+    });
+```
