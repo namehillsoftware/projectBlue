@@ -46,6 +46,13 @@ playlist.promiseFirstFile()
     });
 ```
 
+Handoff contains equivalents to Java's `catch` and `finally` control flow statements:
+
+| Java      | Immediate Response         | Eventual Response                                            |
+|-----------|----------------------------|--------------------------------------------------------------|
+| `catch`   | `.excuse(exception -> {})` | `.excuse(e -> e).eventually(e -> { // return promise... });` |
+| `finally` | `.always(() -> {})`        | `.inevitably(() -> { // return promise... })`                |
+
 ## Installation
 
 Handoff can be installed via Gradle:
