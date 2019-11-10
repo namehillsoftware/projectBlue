@@ -2,6 +2,7 @@ package com.namehillsoftware.handoff.promises;
 
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.SingleMessageBroadcaster;
+import com.namehillsoftware.handoff.promises.response.AlwaysResponse;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver;
@@ -49,6 +50,15 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 
 	public final <NewRejection> Promise<NewRejection> excuse(ImmediateResponse<Throwable, NewRejection> onRejected) {
 		return then(new RejectedResponsePromise<>(onRejected));
+	}
+
+	public final Promise<Resolution> always(AlwaysResponse onFinally) {
+		return then(r -> {
+			onFinally.respond();
+			return r;
+		}, e -> {
+			throw e;
+		});
 	}
 
 	@SuppressWarnings("unchecked")
