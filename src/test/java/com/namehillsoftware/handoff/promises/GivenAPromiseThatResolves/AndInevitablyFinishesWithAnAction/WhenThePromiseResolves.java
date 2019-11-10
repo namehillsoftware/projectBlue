@@ -1,4 +1,4 @@
-package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolves.AndAlwaysFinishesWithAnAction;
+package com.namehillsoftware.handoff.promises.GivenAPromiseThatResolves.AndInevitablyFinishesWithAnAction;
 
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Assert;
@@ -16,7 +16,7 @@ public class WhenThePromiseResolves {
 	@Before
 	public void before() {
 		new Promise<>("test")
-				.must(() ->  isCalled = true)
+				.inevitably(() -> new Promise<>(isCalled = true))
 				.then(r -> nextReturningPromiseResult = r);
 	}
 

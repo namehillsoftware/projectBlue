@@ -1,4 +1,4 @@
-package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndAlwaysFinishesWithAnAction;
+package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndInevitablyFinishesWithAnAction;
 
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Assert;
@@ -16,7 +16,7 @@ public class WhenTheRejectionIsCalled {
 	@BeforeClass
 	public static void before() {
 		new Promise<String>(thrownException)
-				.must(() -> isCalled = true)
+				.inevitably(() -> new Promise<>(isCalled = true))
 				.excuse(exception -> caughtException = exception);
 	}
 
