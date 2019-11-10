@@ -58,9 +58,9 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 	}
 
 	public final Promise<Resolution> inevitably(EventualAction onAny) {
-	    return eventually(r -> onAny.promiseAction().then(v -> r), e -> onAny.promiseAction().then(v -> {
-	        throw e;
-        }));
+		final PromisedEventualAction<Resolution> promisedEventualAction = new PromisedEventualAction<>(onAny);
+		awaitResolution(promisedEventualAction);
+		return promisedEventualAction;
     }
 
 	@SuppressWarnings("unchecked")
