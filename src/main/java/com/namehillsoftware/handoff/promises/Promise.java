@@ -53,13 +53,7 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 	}
 
 	public final Promise<Resolution> always(AlwaysResponse onFinally) {
-		return then(r -> {
-			onFinally.respond();
-			return r;
-		}, e -> {
-			onFinally.respond();
-			throw e;
-		});
+		return then(new AlwaysImmediateResponse<>(onFinally));
 	}
 
 	@SuppressWarnings("unchecked")
