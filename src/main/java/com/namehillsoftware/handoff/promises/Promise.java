@@ -57,6 +57,7 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 			onFinally.respond();
 			return r;
 		}, e -> {
+			onFinally.respond();
 			throw e;
 		});
 	}

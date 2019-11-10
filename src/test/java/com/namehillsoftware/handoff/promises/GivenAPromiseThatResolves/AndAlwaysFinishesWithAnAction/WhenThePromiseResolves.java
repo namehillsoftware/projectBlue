@@ -26,7 +26,7 @@ public class WhenThePromiseResolves {
 	}
 
 	@Test
-	public void thenTheFinalConditionIsCalled() {
+	public void thenTheAlwaysConditionIsCalled() {
 		Assert.assertTrue(isCalled);
 	}
 }
