@@ -2,11 +2,11 @@ package com.namehillsoftware.handoff.promises;
 
 import com.namehillsoftware.handoff.promises.response.ImmediateAction;
 
-final class AlwaysImmediateResponse<Resolution> extends PromiseResponse<Resolution, Resolution> {
+final class ImmediateActionResponse<Resolution> extends PromiseResponse<Resolution, Resolution> {
 
     private ImmediateAction response;
 
-    AlwaysImmediateResponse(ImmediateAction response) {
+    ImmediateActionResponse(ImmediateAction response) {
         this.response = response;
     }
 

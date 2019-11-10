@@ -54,11 +54,11 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 	}
 
 	public final Promise<Resolution> must(ImmediateAction onAny) {
-		return then(new AlwaysImmediateResponse<>(onAny));
+		return then(new ImmediateActionResponse<>(onAny));
 	}
 
 	public final Promise<Resolution> inevitably(EventualAction onAny) {
-	    return eventually(r -> onAny.respond().then(v -> r), e -> onAny.respond().then(v -> {
+	    return eventually(r -> onAny.promiseAction().then(v -> r), e -> onAny.promiseAction().then(v -> {
 	        throw e;
         }));
     }
