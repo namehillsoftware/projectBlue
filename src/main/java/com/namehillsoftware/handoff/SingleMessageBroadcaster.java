@@ -2,19 +2,25 @@ package com.namehillsoftware.handoff;
 
 import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver;
 
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation {
 
+	private static final UnhandledRejectionDispatcher unhandledRejectionDispatcher = new UnhandledRejectionDispatcher();
+
 	private final Object resolveSync = new Object();
-	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
+	@SuppressWarnings("unchecked")
+	private final AtomicReference<Queue<RespondingMessenger<Resolution>>> recipients = new AtomicReference<>(
+			new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)unhandledRejectionDispatcher)));
 
 	private Message<Resolution> message;
 
 	private static volatile UnhandledRejectionsReceiver unhandledRejectionsReceiver;
 
-	protected static void setUnhandledRejectionsReceiver(UnhandledRejectionsReceiver receiver) {
+	protected static synchronized void setUnhandledRejectionsReceiver(UnhandledRejectionsReceiver receiver) {
 		SingleMessageBroadcaster.unhandledRejectionsReceiver = receiver;
 	}
 
@@ -31,8 +37,14 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 			super.cancel();
 	}
 
-	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
-		recipients.offer(recipient);
+	protected synchronized final void awaitResolution(RespondingMessenger<Resolution> recipient) {
+		final Queue<RespondingMessenger<Resolution>> messengers = recipients
+				.updateAndGet(respondingMessengers ->
+					respondingMessengers.peek() == unhandledRejectionDispatcher
+						? new ConcurrentLinkedQueue<>()
+						: respondingMessengers);
+
+		messengers.offer(recipient);
 
 		if (isResolvedSynchronously())
 			dispatchMessage(message);
@@ -54,19 +66,19 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 		dispatchMessage(message);
 	}
 
-	private synchronized void dispatchMessage(Message<Resolution> message) {
-		RespondingMessenger<Resolution> r = recipients.poll();
-		if (r != null) {
-			do {
-				r.respond(message);
-			} while ((r = recipients.poll()) != null);
+	private void dispatchMessage(Message<Resolution> message) {
+		final Queue<RespondingMessenger<Resolution>> respondingMessengers = recipients.get();
+		RespondingMessenger<Resolution> r;
+		while ((r = respondingMessengers.poll()) != null)
+			r.respond(message);
+	}
 
-			return;
+	private static class UnhandledRejectionDispatcher implements RespondingMessenger {
+
+		@Override
+		public void respond(Message message) {
+			if (unhandledRejectionsReceiver != null)
+				unhandledRejectionsReceiver.newUnhandledRejection(message.rejection);
 		}
-
-		if (message.rejection == null) return;
-
-		if (unhandledRejectionsReceiver != null)
-			unhandledRejectionsReceiver.setUnhandledRejectionReceiver(message.rejection);
 	}
 }
