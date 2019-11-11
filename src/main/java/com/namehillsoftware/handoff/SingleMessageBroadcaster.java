@@ -33,7 +33,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 	}
 
 	public final void cancel() {
-		if (!isResolvedSynchronously())
+		if (!isResolved())
 			super.cancel();
 	}
 
@@ -44,11 +44,11 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 
 		recipients.get().offer(recipient);
 
-		if (isResolvedSynchronously())
+		if (isResolved())
 			dispatchMessage(atomicMessage.get());
 	}
 
-	private boolean isResolvedSynchronously() {
+	private boolean isResolved() {
 		return atomicMessage.get() != null;
 	}
 
