@@ -178,6 +178,20 @@ playlist.promiseFirstFile()
 
 Once trapped in a method chain, that error will go away within that method chain.
 
+#### Unhandled rejections
+
+Unhandled rejections can sometimes be useful to know about. These can occur in situations like this:
+
+```java
+playlist.promiseFirstFile()
+    .then(f -> { // Perform another action immediately with the result - this continues on the same thread the result was returned on
+        // perform action
+        throw new IOException("Uh oh!"); // return null to represent Void
+    }); // Nothing is done with the exception
+```
+
+To handle unhandled rejections, set a listener on `Promise.Rejections.setUnhandledRejectionsReceiver(...)`.
+
 ### Guaranteed Execution
 
 Like the finally block, Handoff has control blocks which always guarantee execution. For a continuation that `must` happen immediately, continue using `must`:
