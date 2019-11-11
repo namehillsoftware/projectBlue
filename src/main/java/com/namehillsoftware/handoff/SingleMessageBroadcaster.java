@@ -15,14 +15,14 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 		SingleMessageBroadcaster.unhandledRejectionsReceiver = receiver;
 	}
 
-	@SuppressWarnings("unchecked")
-	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)UnhandledRejectionDispatcher.instance));
-
-	private Queue<RespondingMessenger<Resolution>> recipients = unhandledErrorQueue;
-
 	private final Queue<RespondingMessenger<Resolution>> actualQueue = new ConcurrentLinkedQueue<>();
 
 	private final AtomicReference<Message<Resolution>> atomicMessage = new AtomicReference<>();
+
+	@SuppressWarnings("unchecked")
+	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)UnhandledRejectionDispatcher.instance));
+
+	private final AtomicReference<Queue<RespondingMessenger<Resolution>>> recipients = new AtomicReference<>(unhandledErrorQueue);
 
 	protected final void reject(Throwable error) {
 		resolve(null, error);
@@ -38,12 +38,11 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 	}
 
 	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
-		if (recipients == unhandledErrorQueue)
-			recipients = actualQueue;
+		recipients.compareAndSet(unhandledErrorQueue, actualQueue);
 
 		unhandledErrorQueue = null;
 
-		recipients.offer(recipient);
+		recipients.get().offer(recipient);
 
 		if (isResolvedSynchronously())
 			dispatchMessage(atomicMessage.get());
@@ -54,14 +53,14 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 	}
 
 	private void resolve(Resolution resolution, Throwable rejection) {
-		while (atomicMessage.get() == null && !atomicMessage.compareAndSet(null, new Message<>(resolution, rejection)));
+		atomicMessage.compareAndSet(null, new Message<>(resolution, rejection));
 
 		dispatchMessage(atomicMessage.get());
 	}
 
 	private void dispatchMessage(Message<Resolution> message) {
 		RespondingMessenger<Resolution> r;
-		while ((r = recipients.poll()) != null)
+		while ((r = recipients.get().poll()) != null)
 			r.respond(message);
 	}
 
