@@ -9,7 +9,7 @@ extends
 implements
 	RespondingMessenger<Resolution> {
 
-		@Override
+	@Override
 	public final void respond(Message<Resolution> message) {
 		try {
 			if (message.rejection == null)

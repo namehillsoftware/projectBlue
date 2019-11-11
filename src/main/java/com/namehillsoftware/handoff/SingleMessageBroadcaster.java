@@ -2,21 +2,27 @@ package com.namehillsoftware.handoff;
 
 import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver;
 
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation {
 
-	private final Object resolveSync = new Object();
-	private final Queue<RespondingMessenger<Resolution>> recipients = new ConcurrentLinkedQueue<>();
-
-	private Message<Resolution> message;
-
 	private static volatile UnhandledRejectionsReceiver unhandledRejectionsReceiver;
 
-	protected static void setUnhandledRejectionsReceiver(UnhandledRejectionsReceiver receiver) {
+	protected static synchronized void setUnhandledRejectionsReceiver(UnhandledRejectionsReceiver receiver) {
 		SingleMessageBroadcaster.unhandledRejectionsReceiver = receiver;
 	}
+
+	private final Queue<RespondingMessenger<Resolution>> actualQueue = new ConcurrentLinkedQueue<>();
+
+	private final AtomicReference<Message<Resolution>> atomicMessage = new AtomicReference<>();
+
+	@SuppressWarnings("unchecked")
+	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)UnhandledRejectionDispatcher.instance));
+
+	private final AtomicReference<Queue<RespondingMessenger<Resolution>>> recipients = new AtomicReference<>(unhandledErrorQueue);
 
 	protected final void reject(Throwable error) {
 		resolve(null, error);
@@ -32,41 +38,40 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 	}
 
 	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
-		recipients.offer(recipient);
+		recipients.compareAndSet(unhandledErrorQueue, actualQueue);
+
+		unhandledErrorQueue = null;
+
+		recipients.get().offer(recipient);
 
 		if (isResolvedSynchronously())
-			dispatchMessage(message);
+			dispatchMessage(atomicMessage.get());
 	}
 
 	private boolean isResolvedSynchronously() {
-		synchronized (resolveSync) {
-			return message != null;
-		}
+		return atomicMessage.get() != null;
 	}
 
 	private void resolve(Resolution resolution, Throwable rejection) {
-		synchronized (resolveSync) {
-			if (message != null) return;
+		atomicMessage.compareAndSet(null, new Message<>(resolution, rejection));
 
-			message = new Message<>(resolution, rejection);
-		}
-
-		dispatchMessage(message);
+		dispatchMessage(atomicMessage.get());
 	}
 
-	private synchronized void dispatchMessage(Message<Resolution> message) {
-		RespondingMessenger<Resolution> r = recipients.poll();
-		if (r != null) {
-			do {
-				r.respond(message);
-			} while ((r = recipients.poll()) != null);
+	private void dispatchMessage(Message<Resolution> message) {
+		RespondingMessenger<Resolution> r;
+		while ((r = recipients.get().poll()) != null)
+			r.respond(message);
+	}
 
-			return;
+	private static final class UnhandledRejectionDispatcher implements RespondingMessenger {
+
+		private static final UnhandledRejectionDispatcher instance = new UnhandledRejectionDispatcher();
+
+		@Override
+		public void respond(Message message) {
+			if (unhandledRejectionsReceiver != null)
+				unhandledRejectionsReceiver.newUnhandledRejection(message.rejection);
 		}
-
-		if (message.rejection == null) return;
-
-		if (unhandledRejectionsReceiver != null)
-			unhandledRejectionsReceiver.setUnhandledRejectionReceiver(message.rejection);
 	}
 }
