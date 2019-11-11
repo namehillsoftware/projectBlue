@@ -15,16 +15,14 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 		SingleMessageBroadcaster.unhandledRejectionsReceiver = receiver;
 	}
 
-	private final Object resolveSync = new Object();
-
 	@SuppressWarnings("unchecked")
-	private final Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)UnhandledRejectionDispatcher.instance));
+	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)UnhandledRejectionDispatcher.instance));
+
+	private Queue<RespondingMessenger<Resolution>> recipients = unhandledErrorQueue;
 
 	private final Queue<RespondingMessenger<Resolution>> actualQueue = new ConcurrentLinkedQueue<>();
 
-	private final AtomicReference<Queue<RespondingMessenger<Resolution>>> recipients = new AtomicReference<>(unhandledErrorQueue);
-
-	private Message<Resolution> message;
+	private final AtomicReference<Message<Resolution>> atomicMessage = new AtomicReference<>();
 
 	protected final void reject(Throwable error) {
 		resolve(null, error);
@@ -40,35 +38,32 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 	}
 
 	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
-		recipients.updateAndGet(respondingMessengers ->
-			respondingMessengers == unhandledErrorQueue
-				? actualQueue
-				: respondingMessengers)
-			.offer(recipient);
+		if (recipients == unhandledErrorQueue)
+			recipients = actualQueue;
+
+		unhandledErrorQueue = null;
+
+		recipients.offer(recipient);
 
 		if (isResolvedSynchronously())
-			dispatchMessage(message);
+			dispatchMessage(atomicMessage.get());
 	}
 
 	private boolean isResolvedSynchronously() {
-		synchronized (resolveSync) {
-			return message != null;
-		}
+		return atomicMessage.get() != null;
 	}
 
 	private void resolve(Resolution resolution, Throwable rejection) {
-		synchronized (resolveSync) {
-			if (message != null) return;
-
-			message = new Message<>(resolution, rejection);
+		if (atomicMessage.get() == null) {
+			while (!atomicMessage.compareAndSet(null, new Message<>(resolution, rejection)));
 		}
 
-		dispatchMessage(message);
+		dispatchMessage(atomicMessage.get());
 	}
 
 	private void dispatchMessage(Message<Resolution> message) {
 		RespondingMessenger<Resolution> r;
-		while ((r = recipients.get().poll()) != null)
+		while ((r = recipients.poll()) != null)
 			r.respond(message);
 	}
 
