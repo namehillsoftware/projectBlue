@@ -54,9 +54,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 	}
 
 	private void resolve(Resolution resolution, Throwable rejection) {
-		if (atomicMessage.get() == null) {
-			while (!atomicMessage.compareAndSet(null, new Message<>(resolution, rejection)));
-		}
+		while (atomicMessage.get() == null && !atomicMessage.compareAndSet(null, new Message<>(resolution, rejection)));
 
 		dispatchMessage(atomicMessage.get());
 	}
