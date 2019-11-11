@@ -17,7 +17,7 @@ public class LoggerUncaughtExceptionHandler implements UncaughtExceptionHandler,
 	}
 
 	@Override
-	public void setUnhandledRejectionReceiver(Throwable rejection) {
+	public void newUnhandledRejection(Throwable rejection) {
 		logger.warn("An asynchronous exception has not yet been handled", rejection);
 	}
 }

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
@@ -40,12 +41,8 @@ public class PollConnectionService extends Service {
 			}, BIND_AUTO_CREATE));
 
 		return promiseConnectedService.eventually(s -> s.pollConnectionService.lazyConnectionPoller.getObject()
-			.then(c -> {
+			.must(() -> {
 				context.unbindService(s.serviceConnection);
-				return c;
-			}, e -> {
-				context.unbindService(s.serviceConnection);
-				throw e;
 			}));
 	}
 
