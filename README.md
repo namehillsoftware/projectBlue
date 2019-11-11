@@ -180,7 +180,7 @@ Once trapped in a method chain, that error will go away within that method chain
 
 ### Guaranteed Execution
 
-Like the finally block, Handoff has control blocks which always guarantee execution:
+Like the finally block, Handoff has control blocks which always guarantee execution. For a continuation that `must` happen immediately, continue using `must`:
 
 ```java
 final InputStream is = body.byteStream(); 
@@ -192,7 +192,30 @@ playlist.promiseFirstFile()
     .then(o -> {
         // Code here won't be executed
     })
-    .always(() -> is.close()) // In spite of the error, this control block will execute
+    .must(() -> is.close()) // In spite of the error, this control block will execute
+    .excuse(error -> {
+        Logger.error("An error occured!", error); // Log some error, continue on as normal
+
+        if (error instanceof IOException)
+        Logger.error("It was an IO Error too!");
+
+        return null;
+    });
+```
+
+For a continuation that must happen eventually, use `inevitably`:
+
+```java
+final PromisedStream is = new PromisedStream<>(body.byteStream()); // theoretical "Promised stream" which closes asynchronously
+playlist.promiseFirstFile()
+    .then(f -> { // Perform another action immediately with the result - this continues on the same thread the result was returned on
+        // perform action
+        throw new IOException("Uh oh!"); // return null to represent Void
+    })
+    .then(o -> {
+        // Code here won't be executed
+    })
+    .inevitably(() -> is.promiseClose())) // In spite of the error, this control block will execute
     .excuse(error -> {
         Logger.error("An error occured!", error); // Log some error, continue on as normal
 
