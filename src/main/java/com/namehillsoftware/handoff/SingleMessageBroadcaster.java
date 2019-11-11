@@ -70,7 +70,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 
 		@Override
 		public void respond(Message message) {
-			if (unhandledRejectionsReceiver != null)
+			if (message.rejection != null && unhandledRejectionsReceiver != null)
 				unhandledRejectionsReceiver.newUnhandledRejection(message.rejection);
 		}
 	}
