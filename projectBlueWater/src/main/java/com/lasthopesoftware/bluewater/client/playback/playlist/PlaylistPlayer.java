@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.EventualAction;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -35,10 +36,10 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	private volatile boolean isStarted;
 	private ObservableEmitter<PositionedPlayingFile> emitter;
 
-	private final CreateAndHold<PromisedResponse> lazyPausedPromise = new AbstractSynchronousLazy<PromisedResponse>() {
+	private final CreateAndHold<EventualAction> lazyPausedPromise = new AbstractSynchronousLazy<EventualAction>() {
 		@Override
-		protected PromisedResponse create() {
-			return o -> positionedPlayingFile != null
+		protected EventualAction create() {
+			return () -> positionedPlayingFile != null
 				? positionedPlayingFile
 				.getPlayingFile()
 				.promisePause()
@@ -56,10 +57,10 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 		}
 	};
 
-	private final CreateAndHold<PromisedResponse> lazyResumePromise = new AbstractSynchronousLazy<PromisedResponse>() {
+	private final CreateAndHold<EventualAction> lazyResumePromise = new AbstractSynchronousLazy<EventualAction>() {
 		@Override
-		protected PromisedResponse create() {
-			return o -> positionedPlayableFile != null
+		protected EventualAction create() {
+			return () -> positionedPlayableFile != null
 				? positionedPlayableFile
 				.getPlayableFile()
 				.promisePlayback()
@@ -96,9 +97,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	public Promise<?> pause() {
 		synchronized (stateChangeSync) {
 			return lastStateChangePromise = lastStateChangePromise
-				.eventually(
-					lazyPausedPromise.getObject(),
-					lazyPausedPromise.getObject());
+				.inevitably(lazyPausedPromise.getObject());
 		}
 	}
 
@@ -107,9 +106,7 @@ public final class PlaylistPlayer implements IPlaylistPlayer, Closeable {
 	public Promise<?> resume() {
 		synchronized (stateChangeSync) {
 			return lastStateChangePromise = lastStateChangePromise
-				.eventually(
-					lazyResumePromise.getObject(),
-					lazyResumePromise.getObject());
+				.inevitably(lazyResumePromise.getObject());
 		}
 	}
 

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.polling;
 
 import android.app.AlertDialog;
 import android.content.Context;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -41,13 +42,8 @@ public class WaitForConnectionDialog {
 			alertDialog.setInverseBackgroundForced(true);
 
 			alertDialog.setOnShowListener(dialog -> pollingSessionConnection
-				.eventually(LoopedInPromise.response(connectionProvider -> {
+				.inevitably(() -> new LoopedInPromise<Void>(() -> {
 					if (!isDismissed && alertDialog.isShowing()) alertDialog.dismiss();
-
-					return null;
-				}, context), LoopedInPromise.response(e -> {
-					if (!isDismissed && alertDialog.isShowing()) alertDialog.dismiss();
-
 					return null;
 				}, context)));
 
