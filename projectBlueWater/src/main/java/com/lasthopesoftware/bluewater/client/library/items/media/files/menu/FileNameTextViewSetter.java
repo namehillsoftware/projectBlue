@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.menu;
 
 import android.os.Handler;
 import android.widget.TextView;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
@@ -12,6 +13,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +22,8 @@ import java.net.SocketException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+
+import javax.net.ssl.SSLHandshakeException;
 
 public class FileNameTextViewSetter {
 
@@ -109,6 +113,10 @@ public class FileNameTextViewSetter {
 						final String message = e.getMessage();
 						if (message != null && message.toLowerCase().contains("canceled"))
 							return resolve();
+					}
+
+					if (!logger.isDebugEnabled() && e instanceof SSLHandshakeException) {
+						return resolve();
 					}
 
 					logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
