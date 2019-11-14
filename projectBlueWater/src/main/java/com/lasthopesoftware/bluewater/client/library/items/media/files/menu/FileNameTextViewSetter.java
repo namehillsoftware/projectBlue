@@ -116,6 +116,7 @@ public class FileNameTextViewSetter {
 					}
 
 					if (!logger.isDebugEnabled() && e instanceof SSLHandshakeException) {
+						logger.warn("An error occurred getting the file properties for the file with ID " + serviceFile.getKey() + ": " + e.getMessage());
 						return resolve();
 					}
 
