@@ -13,6 +13,9 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +25,15 @@ import java.net.SocketException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
-import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 
 public class FileNameTextViewSetter {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileNameTextViewSetter.class);
+	private static final CreateAndHold<Executor> errorExecutor = new Lazy<>(Executors::newSingleThreadExecutor);
 
 	private final TextView textView;
 	private final Handler handler;
@@ -98,10 +104,11 @@ public class FileNameTextViewSetter {
 
 					return resolve();
 				}, handler))
-				.excuse(e -> {
+				.excuse(e -> e)
+				.eventually(e -> new QueuedPromise<>(() -> {
 					if (isUpdateCancelled()) return resolve();
 
-					if (e instanceof CancellationException)	return resolve();
+					if (e instanceof CancellationException) return resolve();
 
 					if (e instanceof SocketException) {
 						final String message = e.getMessage();
@@ -115,15 +122,16 @@ public class FileNameTextViewSetter {
 							return resolve();
 					}
 
-					if (!logger.isDebugEnabled() && e instanceof SSLHandshakeException) {
-						logger.warn("An error occurred getting the file properties for the file with ID " + serviceFile.getKey() + ": " + e.getMessage());
-						return resolve();
+					if (e instanceof SSLProtocolException) {
+						final String message = e.getMessage();
+						if (message != null && message.toLowerCase().contains("ssl handshake aborted"))
+							return resolve();
 					}
 
 					logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
 
 					return resolve();
-				});
+				}, errorExecutor.getObject()));
 		}
 
 		private Void resolve() {
