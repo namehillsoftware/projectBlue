@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.shared;
 
+import java.util.Objects;
+
 /**
  * Created by david on 1/17/16.
  */
@@ -20,7 +22,7 @@ public class UrlKeyHolder<T> {
 		if (o == null || getClass() != o.getClass()) return false;
 
 		final UrlKeyHolder<?> that = (UrlKeyHolder<?>) o;
-		return !(url != null ? !url.equals(that.url) : that.url != null) && !(key != null ? !key.equals(that.key) : that.key != null);
+		return Objects.equals(url, that.url) && Objects.equals(key, that.key);
 	}
 
 	@Override

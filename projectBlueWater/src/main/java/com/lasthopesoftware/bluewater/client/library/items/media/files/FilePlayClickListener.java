@@ -2,19 +2,20 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files;
 
 import android.content.Context;
 import android.view.View;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
-import java.util.List;
+import java.util.Collection;
 
 public class FilePlayClickListener extends AbstractMenuClickHandler {
-	private final List<ServiceFile> serviceFiles;
+	private final Collection<ServiceFile> serviceFiles;
 	private final int position;
 	
-	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, List<ServiceFile> serviceFiles) {
+	public FilePlayClickListener(NotifyOnFlipViewAnimator parent, int position, Collection<ServiceFile> serviceFiles) {
         super(parent);
 
 		this.position = position;

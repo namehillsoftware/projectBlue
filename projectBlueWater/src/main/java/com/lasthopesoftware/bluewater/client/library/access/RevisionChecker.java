@@ -3,16 +3,19 @@ package com.lasthopesoftware.bluewater.client.library.access;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.StandardRequest;
 import com.namehillsoftware.handoff.promises.Promise;
-import okhttp3.ResponseBody;
+
+import org.joda.time.Duration;
 
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import okhttp3.ResponseBody;
+
 public class RevisionChecker {
 	
 	private static final Integer badRevision = -1;
-    private static final long checkedExpirationTime = 30000;
+    private static final long checkedExpirationTime = Duration.standardSeconds(30).getMillis();
 
 	private static final Map<String, Integer> cachedRevisions = new HashMap<>();
 	private static final Map<String, Long> lastRevisions = new HashMap<>();

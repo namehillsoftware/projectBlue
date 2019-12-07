@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.BaseMenuViewHolder;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.FilePlayClickListener;
@@ -26,11 +27,11 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.util.List;
+import java.util.Collection;
 
 public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<ServiceFile> {
 
-    private final List<ServiceFile> serviceFiles;
+    private final Collection<ServiceFile> serviceFiles;
     private final INowPlayingFileProvider nowPlayingFileProvider;
 
     private static final class ViewHolder extends BaseMenuViewHolder {
@@ -53,7 +54,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
         }
     }
 
-    public FileListItemMenuBuilder(final List<ServiceFile> serviceFiles, INowPlayingFileProvider nowPlayingFileProvider) {
+    public FileListItemMenuBuilder(final Collection<ServiceFile> serviceFiles, INowPlayingFileProvider nowPlayingFileProvider) {
         this.serviceFiles = serviceFiles;
         this.nowPlayingFileProvider = nowPlayingFileProvider;
     }

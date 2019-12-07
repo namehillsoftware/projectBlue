@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
+import android.content.Context;
 import android.os.Handler;
+
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
@@ -14,6 +16,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 public final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
 
 	private final SpawnMediaSources mediaSourceProvider;
+	private final Context context;
 	private final TrackSelector trackSelector;
 	private final LoadControl loadControl;
 	private final RenderersFactory renderersFactory;
@@ -21,13 +24,14 @@ public final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationS
 	private final IFileUriProvider uriProvider;
 
 	public ExoPlayerPlaybackPreparer(
+		Context context,
 		SpawnMediaSources mediaSourceProvider,
 		TrackSelector trackSelector,
 		LoadControl loadControl,
 		RenderersFactory renderersFactory,
 		Handler handler,
 		IFileUriProvider uriProvider) {
-
+		this.context = context;
 		this.trackSelector = trackSelector;
 		this.loadControl = loadControl;
 		this.renderersFactory = renderersFactory;
@@ -40,6 +44,7 @@ public final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationS
 	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
 		return uriProvider.promiseFileUri(serviceFile)
 			.eventually(uri -> new PreparedExoPlayerPromise(
+				context,
 				mediaSourceProvider,
 				trackSelector,
 				loadControl,

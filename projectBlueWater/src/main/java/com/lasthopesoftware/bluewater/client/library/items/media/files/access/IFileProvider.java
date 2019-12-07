@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface IFileProvider {
-	Promise<List<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params);
+	Promise<Collection<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params);
 }

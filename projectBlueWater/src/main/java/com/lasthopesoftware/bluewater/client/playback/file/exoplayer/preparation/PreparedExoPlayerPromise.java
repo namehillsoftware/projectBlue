@@ -1,9 +1,18 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
+
 import com.annimon.stream.Stream;
-import com.google.android.exoplayer2.*;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.RenderersFactory;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -25,6 +34,7 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationTok
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,13 +61,15 @@ implements
 
 	private boolean isResolved;
 
-	PreparedExoPlayerPromise(SpawnMediaSources mediaSourceProvider,
-							 TrackSelector trackSelector,
-							 LoadControl loadControl,
-							 RenderersFactory renderersFactory,
-							 Handler handler,
-							 Uri uri,
-							 long prepareAt) {
+	PreparedExoPlayerPromise(
+		Context context,
+		SpawnMediaSources mediaSourceProvider,
+		TrackSelector trackSelector,
+		LoadControl loadControl,
+		RenderersFactory renderersFactory,
+		Handler handler,
+		Uri uri,
+		long prepareAt) {
 
 		respondToCancellation(this);
 
@@ -84,6 +96,7 @@ implements
 				.toArray(MediaCodecAudioRenderer[]::new);
 
 		exoPlayer = ExoPlayerFactory.newInstance(
+			context,
 			audioRenderers,
 			trackSelector,
 			loadControl,

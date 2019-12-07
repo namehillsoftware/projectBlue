@@ -1,13 +1,14 @@
 package com.lasthopesoftware.bluewater.client.library.items.access;
 
 import android.util.LruCache;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
-import okhttp3.ResponseBody;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
+
+import okhttp3.ResponseBody;
 
 public class ItemProvider implements ProvideItems {
 
@@ -61,7 +64,7 @@ public class ItemProvider implements ProvideItems {
 
 					return connectionProvider.promiseResponse(
 						LibraryViewsByConnectionProvider.browseLibraryParameter,
-						"ID=" + String.valueOf(itemKey),
+						"ID=" + itemKey,
 						"Version=2").then(response -> {
 							final ResponseBody body = response.body();
 							if (body == null) return Collections.emptyList();

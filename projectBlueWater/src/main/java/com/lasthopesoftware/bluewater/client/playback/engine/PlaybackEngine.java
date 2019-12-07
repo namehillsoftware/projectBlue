@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -65,10 +66,10 @@ public class PlaybackEngine implements IChangePlaylistPosition, IPlaybackEngineB
 		this.playbackBootstrapper = playbackBootstrapper;
 	}
 
-	public Promise<Void> startPlaylist(final List<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
+	public Promise<Void> startPlaylist(final Collection<ServiceFile> playlist, final int playlistPosition, final int filePosition) {
 		logger.info("Starting playback");
 
-		this.playlist = playlist;
+		this.playlist = playlist instanceof List ? (List<ServiceFile>)playlist : new ArrayList<>(playlist);
 
 		return updateLibraryPlaylistPositions(playlistPosition, filePosition).then(new VoidResponse<>(this::resumePlaybackFromNowPlaying));
 	}

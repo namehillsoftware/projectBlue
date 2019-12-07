@@ -7,16 +7,17 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.st
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
-import java.util.List;
+import java.util.Collection;
 
-public final class FileProvider implements IFileProvider, PromisedResponse<String, List<ServiceFile>> {
+public final class FileProvider implements IFileProvider, PromisedResponse<String, Collection<ServiceFile>> {
 	private final FileStringListProvider fileStringListProvider;
 
 	public FileProvider(FileStringListProvider fileStringListProvider) {
 		this.fileStringListProvider = fileStringListProvider;
 	}
 
-	public Promise<List<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params) {
+	@Override
+	public Promise<Collection<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params) {
 		return
 			fileStringListProvider
 				.promiseFileStringList(option, params)
@@ -24,7 +25,7 @@ public final class FileProvider implements IFileProvider, PromisedResponse<Strin
 	}
 
 	@Override
-	public Promise<List<ServiceFile>> promiseResponse(String stringList) {
+	public Promise<Collection<ServiceFile>> promiseResponse(String stringList) {
 		return FileStringListUtilities.promiseParsedFileStringList(stringList);
 	}
 }

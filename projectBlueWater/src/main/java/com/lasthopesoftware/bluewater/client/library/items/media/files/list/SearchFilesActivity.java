@@ -8,7 +8,9 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ViewAnimator;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -31,11 +33,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
-import java.util.List;
+import java.util.Collection;
 
 import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
-public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
+public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<Collection<ServiceFile>, Void> {
 
 	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
@@ -78,7 +80,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 		fileListView.findView().setVisibility(View.VISIBLE);
 		pbLoading.findView().setVisibility(View.INVISIBLE);
 
-		final PromisedResponse<List<ServiceFile>, Void> onSearchFilesComplete = LoopedInPromise.response(this, this);
+		final PromisedResponse<Collection<ServiceFile>, Void> onSearchFilesComplete = LoopedInPromise.response(this, this);
 
 		final Runnable fillFileListAction = new Runnable() {
 			@Override
@@ -99,7 +101,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 	}
 
 	@Override
-	public Void respond(List<ServiceFile> serviceFiles) {
+	public Void respond(Collection<ServiceFile> serviceFiles) {
 		if (serviceFiles == null) return null;
 
 		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

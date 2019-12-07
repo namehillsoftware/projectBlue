@@ -97,7 +97,7 @@ dependencies {
 	implementation "androidx.media:media:1.1.0"
 	implementation 'com.google.android.material:material:1.0.0'
 	implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-	implementation 'joda-time:joda-time:2.10.3'
+	implementation 'joda-time:joda-time:2.10.5'
 	implementation 'commons-io:commons-io:2.4'
 	implementation('com.github.worker8:tourguide:1.0.19-SNAPSHOT@aar') {
 		transitive = true
@@ -107,22 +107,22 @@ dependencies {
 		// workaround issue #73
 		exclude group: 'com.google.android', module: 'android'
 	}
-	implementation 'org.slf4j:slf4j-api:1.7.28'
+	implementation 'org.slf4j:slf4j-api:1.7.29'
 	implementation 'com.annimon:stream:1.2.1'
 	implementation 'com.namehillsoftware:handoff:0.17.1'
-	implementation 'io.reactivex.rxjava2:rxjava:2.2.12'
+	implementation 'io.reactivex.rxjava2:rxjava:2.2.15'
 	implementation 'com.namehillsoftware:lazy-j:0.11.0'
 	implementation 'com.github.danrien:xmlwise:master-SNAPSHOT'
-	implementation 'com.google.android.exoplayer:exoplayer-core:2.9.3'
-	implementation 'com.google.android.exoplayer:extension-okhttp:2.9.3'
-	implementation 'com.squareup.okio:okio:2.4.0'
-	implementation 'com.squareup.okhttp3:okhttp:4.2.0'
+	implementation 'com.google.android.exoplayer:exoplayer-core:2.10.8'
+	implementation 'com.google.android.exoplayer:extension-okhttp:2.10.8'
+	implementation 'com.squareup.okio:okio:2.4.1'
+	implementation 'com.squareup.okhttp3:okhttp:4.2.2'
 	implementation 'com.github.namehillsoftware:artful:0.2.0'
 	implementation 'com.android.support:multidex:1.0.3'
 	testImplementation 'junit:junit:4.12'
-    testImplementation 'org.mockito:mockito-core:3.0.0'
-    testImplementation 'org.assertj:assertj-core:3.13.2'
-    testImplementation 'org.robolectric:robolectric:4.3'
+	testImplementation 'org.mockito:mockito-core:3.2.0'
+	testImplementation 'org.assertj:assertj-core:3.14.0'
+	testImplementation 'org.robolectric:robolectric:4.3.1'
     testImplementation 'commons-codec:commons-codec:1.11'
     testImplementation 'androidx.test:core:1.2.0'
 }
