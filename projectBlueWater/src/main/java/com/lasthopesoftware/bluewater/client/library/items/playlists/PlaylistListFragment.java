@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -41,19 +40,24 @@ public class PlaylistListFragment extends Fragment {
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		final RelativeLayout itemListLayout = (RelativeLayout) inflater.inflate(R.layout.activity_view_items, container, false);
+		return inflater.inflate(R.layout.activity_view_items, container, false);
+	}
 
-		final ListView playlistView = itemListLayout.findViewById(R.id.lvItems);
-		final ProgressBar loadingView = itemListLayout.findViewById(R.id.pbLoadingItems);
+	@Override
+	public void onStart() {
+		super.onStart();
+
+		final FragmentActivity activity = getActivity();
+
+		if (activity == null) return;
+
+		final ListView playlistView = activity.findViewById(R.id.lvItems);
+		final ProgressBar loadingView = activity.findViewById(R.id.pbLoadingItems);
 
 		playlistView.setVisibility(View.INVISIBLE);
 
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
 		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
-
-		final FragmentActivity activity = getActivity();
-
-		if (activity == null) return itemListLayout;
 
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
@@ -83,8 +87,6 @@ public class PlaylistListFragment extends Fragment {
 
 				playlistFillAction.run();
 			}));
-
-		return itemListLayout;
 	}
 
 	public void setOnItemListMenuChangeHandler(IItemListMenuChangeHandler itemListMenuChangeHandler) {

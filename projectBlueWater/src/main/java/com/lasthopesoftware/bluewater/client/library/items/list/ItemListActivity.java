@@ -84,14 +84,14 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+	public void onStart() {
+    	super.onStart();
 
-        InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
 			.then(new VoidResponse<>(doRestore -> {
 				if (!doRestore) hydrateItems();
 			}));
-    }
+	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -118,12 +118,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 
 	@Override
 	public Void respond(List<Item> items) {
-		if (items == null) return null;
-
-		buildItemListView(items);
-
-		itemListView.findView().setVisibility(View.VISIBLE);
-		pbLoading.findView().setVisibility(View.INVISIBLE);
+		if (items != null) buildItemListView(items);
 
 		return null;
 	}
@@ -145,6 +140,9 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 				localItemListView.setAdapter(itemListAdapter);
 				localItemListView.setOnItemClickListener(new ClickItemListener(items, pbLoading.findView()));
 				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+
+				itemListView.findView().setVisibility(View.VISIBLE);
+				pbLoading.findView().setVisibility(View.INVISIBLE);
 			}), this));
 	}
 
