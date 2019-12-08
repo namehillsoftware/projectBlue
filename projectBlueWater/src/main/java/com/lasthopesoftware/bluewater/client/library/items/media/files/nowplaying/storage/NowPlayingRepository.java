@@ -2,9 +2,12 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -52,7 +55,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 							.then(files -> {
 								final NowPlaying nowPlaying =
 									new NowPlaying(
-										files,
+										files instanceof List ? (List<ServiceFile>)files : new ArrayList<>(files),
 										library.getNowPlayingId(),
 										library.getNowPlayingProgress(),
 										library.isRepeating());

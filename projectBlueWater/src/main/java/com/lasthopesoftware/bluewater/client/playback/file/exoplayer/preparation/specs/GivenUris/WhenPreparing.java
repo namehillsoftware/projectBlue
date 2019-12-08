@@ -4,13 +4,18 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+
 import androidx.annotation.Nullable;
-import com.google.android.exoplayer2.ExoPlayer;
+import androidx.test.core.app.ApplicationProvider;
+
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.SeekParameters;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
-import com.google.android.exoplayer2.source.*;
+import com.google.android.exoplayer2.source.BaseMediaSource;
+import com.google.android.exoplayer2.source.MediaPeriod;
+import com.google.android.exoplayer2.source.SampleStream;
+import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.Allocator;
@@ -25,6 +30,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePro
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.robolectric.annotation.Config;
@@ -56,6 +62,7 @@ public class WhenPreparing extends AndroidContext {
 		when(loadControl.getAllocator()).thenReturn(new DefaultAllocator(true, 1024));
 
 		final ExoPlayerPlaybackPreparer preparer = new ExoPlayerPlaybackPreparer(
+			ApplicationProvider.getApplicationContext(),
 			uri -> new FakeMediaSource(),
 			new DefaultTrackSelector(),
 			loadControl,
@@ -99,9 +106,10 @@ public class WhenPreparing extends AndroidContext {
 	}
 
 	private final class FakeMediaSource extends BaseMediaSource {
+
 		@Override
-		protected void prepareSourceInternal(ExoPlayer player, boolean isTopLevelSource, @Nullable TransferListener mediaTransferListener) {
-			refreshSourceInfo(new SinglePeriodTimeline(1000, false, false), null);
+		protected void prepareSourceInternal(@Nullable TransferListener mediaTransferListener) {
+
 		}
 
 		@Override
@@ -115,7 +123,7 @@ public class WhenPreparing extends AndroidContext {
 		}
 
 		@Override
-		public MediaPeriod createPeriod(MediaPeriodId id, Allocator allocator) {
+		public MediaPeriod createPeriod(MediaPeriodId id, Allocator allocator, long startPositionUs) {
 			return new MediaPeriod() {
 				@Override
 				public void prepare(Callback callback, long positionUs) {

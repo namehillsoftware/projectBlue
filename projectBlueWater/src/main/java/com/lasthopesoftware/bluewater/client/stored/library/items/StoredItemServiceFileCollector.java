@@ -15,6 +15,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
 import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,12 +53,12 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 			final Promise<Collection<StoredItem>> promisedStoredItems = storedItemAccess.promiseStoredItems();
 			cancellationProxy.doCancel(promisedStoredItems);
 
-			final Promise<Collection<List<ServiceFile>>> promisedServiceFileLists = promisedStoredItems
+			final Promise<Collection<Collection<ServiceFile>>> promisedServiceFileLists = promisedStoredItems
 				.eventually(storedItems -> {
 					if (cancellationProxy.isCancelled())
 						return new Promise<>(new CancellationException());
 
-					final Stream<Promise<List<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
+					final Stream<Promise<Collection<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
 						.map(storedItem -> promiseServiceFiles(storedItem, cancellationProxy));
 
 					return Promise.whenAll(mappedFileDataPromises.toList());
@@ -72,7 +73,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		});
 	}
 
-	private Promise<List<ServiceFile>> promiseServiceFiles(StoredItem storedItem, CancellationProxy cancellationProxy) {
+	private Promise<Collection<ServiceFile>> promiseServiceFiles(StoredItem storedItem, CancellationProxy cancellationProxy) {
 		switch (storedItem.getItemType()) {
 			case ITEM:
 				return promiseServiceFiles(new Item(storedItem.getServiceId()), cancellationProxy);
@@ -83,7 +84,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		}
 	}
 
-	private Promise<List<ServiceFile>> promiseServiceFiles(Item item, CancellationProxy cancellationProxy) {
+	private Promise<Collection<ServiceFile>> promiseServiceFiles(Item item, CancellationProxy cancellationProxy) {
 		final String[] parameters = fileListParameters.getFileListParameters(item);
 
 		final Promise<List<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
@@ -94,7 +95,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 			.then(forward(), new ExceptionHandler(item, storedItemAccess));
 	}
 
-	private Promise<List<ServiceFile>> promiseServiceFiles(Playlist playlist, CancellationProxy cancellationProxy) {
+	private Promise<Collection<ServiceFile>> promiseServiceFiles(Playlist playlist, CancellationProxy cancellationProxy) {
 		final String[] parameters = fileListParameters.getFileListParameters(playlist);
 
 		final Promise<List<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
@@ -105,7 +106,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 			.then(forward(), new ExceptionHandler(playlist, storedItemAccess));
 	}
 
-	private static class ExceptionHandler implements ImmediateResponse<Throwable, List<ServiceFile>> {
+	private static class ExceptionHandler implements ImmediateResponse<Throwable, Collection<ServiceFile>> {
 		private final IItem item;
 		private final IStoredItemAccess storedItemAccess;
 

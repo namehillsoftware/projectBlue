@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.content.Context;
 import android.os.Handler;
+
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.RenderersFactory;
@@ -14,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.joda.time.Minutes;
 
 
@@ -27,8 +29,10 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	private final BestMatchUriProvider bestMatchUriProvider;
 	private final SpawnMediaSources mediaSourceProvider;
 	private final RenderersFactory renderersFactory;
+	private final Context context;
 
 	public ExoPlayerPlayableFilePreparationSourceProvider(Context context, Handler handler, SpawnMediaSources mediaSourceProvider, BestMatchUriProvider bestMatchUriProvider) {
+		this.context = context;
 		this.handler = handler;
 		this.bestMatchUriProvider = bestMatchUriProvider;
 
@@ -45,6 +49,7 @@ public class ExoPlayerPlayableFilePreparationSourceProvider implements IPlayable
 	@Override
 	public PlayableFilePreparationSource providePlayableFilePreparationSource() {
 		return new ExoPlayerPlaybackPreparer(
+			context,
 			mediaSourceProvider,
 			trackSelector.getObject(),
 			loadControl.getObject(),

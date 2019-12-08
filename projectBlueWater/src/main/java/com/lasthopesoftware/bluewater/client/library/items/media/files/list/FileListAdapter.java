@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.list;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
+
 import com.lasthopesoftware.bluewater.client.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileListItemMenuBuilder;

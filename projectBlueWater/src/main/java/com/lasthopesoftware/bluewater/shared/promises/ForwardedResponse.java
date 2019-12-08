@@ -4,19 +4,19 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-public class ForwardedResponse<T> implements ImmediateResponse<T, T> {
+public class ForwardedResponse<Resolution extends Response, Response> implements ImmediateResponse<Resolution, Response> {
 
-	private static final CreateAndHold<ForwardedResponse<?>> singlePassThrough = new Lazy<>(ForwardedResponse::new);
+	private static final CreateAndHold<ForwardedResponse<?, ?>> singlePassThrough = new Lazy<>(ForwardedResponse::new);
 
 	@SuppressWarnings("unchecked")
-	public static <T> ForwardedResponse<T> forward() {
-		return (ForwardedResponse<T>) singlePassThrough.getObject();
+	public static <Resolution extends Response, Response> ForwardedResponse<Resolution, Response> forward() {
+		return (ForwardedResponse<Resolution, Response>) singlePassThrough.getObject();
 	}
 
 	private ForwardedResponse() {}
 
 	@Override
-	public T respond(T t) {
-		return t;
+	public Response respond(Resolution resolution) {
+		return resolution;
 	}
 }

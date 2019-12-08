@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayi
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -10,7 +10,7 @@ import java.util.List;
  */
 
 public class NowPlaying {
-	public List<ServiceFile> playlist = new ArrayList<>();
+	public List<ServiceFile> playlist = Collections.emptyList();
 	public int playlistPosition;
 	public long filePosition;
 	public boolean isRepeating;
