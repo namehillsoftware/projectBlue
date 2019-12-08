@@ -1,11 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.access;
 
-import android.util.LruCache;
-
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.slf4j.Logger;
@@ -21,19 +18,6 @@ import okhttp3.ResponseBody;
 public class ItemProvider implements ProvideItems {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemProvider.class);
-
-    private static class ItemHolder {
-        ItemHolder(Integer revision, List<Item> items) {
-            this.revision = revision;
-            this.items = items;
-        }
-
-        final Integer revision;
-        public final List<Item> items;
-    }
-
-    private static final int maxSize = 50;
-    private static final LruCache<UrlKeyHolder<Integer>, ItemHolder> itemsCache = new LruCache<>(maxSize);
 
 	private final IConnectionProvider connectionProvider;
 

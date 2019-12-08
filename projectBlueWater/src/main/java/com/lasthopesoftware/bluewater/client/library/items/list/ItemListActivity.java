@@ -78,9 +78,6 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY);
         if (mItemId == 0) mItemId = getIntent().getIntExtra(KEY, 0);
 
-	    itemListView.findView().setVisibility(View.INVISIBLE);
-		pbLoading.findView().setVisibility(View.VISIBLE);
-
         setTitle(getIntent().getStringExtra(VALUE));
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
@@ -104,6 +101,9 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 	}
 
 	private void hydrateItems() {
+		itemListView.findView().setVisibility(View.INVISIBLE);
+		pbLoading.findView().setVisibility(View.VISIBLE);
+
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.eventually(c -> {
 				final ItemProvider itemProvider = new ItemProvider(c);
