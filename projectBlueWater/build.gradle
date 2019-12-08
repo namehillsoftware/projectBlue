@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode getGeneratedVersionCode()
         versionName project.version
 		multiDexEnabled true
