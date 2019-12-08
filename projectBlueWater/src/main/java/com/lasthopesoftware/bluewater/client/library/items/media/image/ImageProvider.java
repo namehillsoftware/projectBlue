@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.resources.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -27,6 +28,8 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +42,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import okhttp3.ResponseBody;
 
@@ -47,7 +49,7 @@ public class ImageProvider {
 	
 	private static final String IMAGE_FORMAT = "jpg";
 	
-	private static final ExecutorService imageAccessExecutor = Executors.newSingleThreadExecutor();
+	private static final CreateAndHold<ExecutorService> imageAccessExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
 	
 	private static final Logger logger = LoggerFactory.getLogger(ImageProvider.class);
 
@@ -114,7 +116,7 @@ public class ImageProvider {
 						return artist + ":" + albumOrTrackName;
 					})
 					.eventually(uniqueKey -> {
-						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryWriter(uniqueKey), imageAccessExecutor);
+						final Promise<Bitmap> memoryTask = new QueuedPromise<>(new ImageMemoryWriter(uniqueKey), imageAccessExecutor.getObject());
 
 						return memoryTask.eventually(bitmap -> {
 							if (bitmap != null) return new Promise<>(bitmap);
@@ -149,7 +151,7 @@ public class ImageProvider {
 												diskFileAccessTimeUpdater);
 
 										return imageDiskCache.promiseCachedFile(uniqueKey)
-											.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor))
+											.eventually(imageFile -> new QueuedPromise<>(new ImageDiskCacheWriter(uniqueKey, imageFile), imageAccessExecutor.getObject()))
 											.eventually(imageBitmap -> imageBitmap != null
 													? new Promise<>(imageBitmap)
 													: promiseImage(connectionProvider, uniqueKey, imageDiskCache, serviceFile.getKey()),
@@ -174,7 +176,7 @@ public class ImageProvider {
 				try {
 					return new QueuedPromise<>(
 						new RemoteImageAccessWriter(uniqueKey, imageDiskCache, body.bytes()),
-						imageAccessExecutor);
+						imageAccessExecutor.getObject());
 				} finally {
 					body.close();
 				}

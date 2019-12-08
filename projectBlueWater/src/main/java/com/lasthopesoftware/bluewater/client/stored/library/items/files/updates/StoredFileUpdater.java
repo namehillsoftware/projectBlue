@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates;
 
 import android.content.Context;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
@@ -18,6 +19,7 @@ import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +89,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 					}
 
 					return null;
-				}, storedFileAccessExecutor)
+				}, storedFileAccessExecutor())
 					.eventually(v -> storedFiles.promiseStoredFile(library, serviceFile)))
 			.eventually(storedFile -> {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
@@ -148,7 +150,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 					updateStoredFile(repositoryAccessHelper, storedFile);
 					return storedFile;
 				}
-			}, storedFileAccessExecutor));
+			}, storedFileAccessExecutor()));
 	}
 
 	private static String replaceReservedCharsAndPath(String path) {

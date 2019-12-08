@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval;
 
 import android.content.Context;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
@@ -25,7 +26,7 @@ public class StoredFileQuery implements GetStoredFiles {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return getStoredFile(library, repositoryAccessHelper, serviceFile);
 			}
-		}, storedFileAccessExecutor);
+		}, storedFileAccessExecutor());
 	}
 
 	@Override
@@ -34,7 +35,7 @@ public class StoredFileQuery implements GetStoredFiles {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return getStoredFile(repositoryAccessHelper, storedFileId);
 			}
-		}, storedFileAccessExecutor);
+		}, storedFileAccessExecutor());
 	}
 
 	private StoredFile getStoredFile(Library library, RepositoryAccessHelper helper, ServiceFile serviceFile) {

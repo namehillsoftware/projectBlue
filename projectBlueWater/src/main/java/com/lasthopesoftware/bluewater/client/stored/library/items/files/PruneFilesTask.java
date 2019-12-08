@@ -4,19 +4,20 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.resources.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, Void> {
-	private static final ExecutorService pruneFilesExecutor = Executors.newSingleThreadExecutor();
+	private static final CreateAndHold<ExecutorService> pruneFilesExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
 
 	private final Lazy<Set<Integer>> lazyServiceIdsToKeep;
 	private final StoredFileAccess storedFileAccess;
@@ -64,6 +65,6 @@ final class PruneFilesTask implements PromisedResponse<Collection<StoredFile>, V
 			}
 
 			return null;
-		}, pruneFilesExecutor);
+		}, pruneFilesExecutor.getObject());
 	}
 }
