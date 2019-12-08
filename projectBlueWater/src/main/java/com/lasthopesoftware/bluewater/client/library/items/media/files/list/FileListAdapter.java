@@ -12,13 +12,13 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.File
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.handlers.ViewChangedHandler;
 
-import java.util.Collection;
+import java.util.List;
 
 class FileListAdapter extends AbstractFileListAdapter {
 
     private final FileListItemMenuBuilder fileListItemMenuBuilder;
 
-	FileListAdapter(Context context, int resource, Collection<ServiceFile> serviceFiles, IItemListMenuChangeHandler itemListMenuChangeHandler, INowPlayingFileProvider nowPlayingFileProvider) {
+	FileListAdapter(Context context, int resource, List<ServiceFile> serviceFiles, IItemListMenuChangeHandler itemListMenuChangeHandler, INowPlayingFileProvider nowPlayingFileProvider) {
 		super(context, resource, serviceFiles);
 
         final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();

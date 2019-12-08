@@ -5,11 +5,14 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.pa
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-public final class FileProvider implements IFileProvider, PromisedResponse<String, Collection<ServiceFile>> {
+public final class FileProvider implements IFileProvider, PromisedResponse<String, Collection<ServiceFile>>, ImmediateResponse<Collection<ServiceFile>, List<ServiceFile>> {
 	private final FileStringListProvider fileStringListProvider;
 
 	public FileProvider(FileStringListProvider fileStringListProvider) {
@@ -17,15 +20,23 @@ public final class FileProvider implements IFileProvider, PromisedResponse<Strin
 	}
 
 	@Override
-	public Promise<Collection<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params) {
+	public Promise<List<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params) {
 		return
 			fileStringListProvider
 				.promiseFileStringList(option, params)
-				.eventually(this);
+				.eventually(this)
+				.then(this);
 	}
 
 	@Override
 	public Promise<Collection<ServiceFile>> promiseResponse(String stringList) {
 		return FileStringListUtilities.promiseParsedFileStringList(stringList);
+	}
+
+	@Override
+	public List<ServiceFile> respond(Collection<ServiceFile> serviceFiles) {
+		return serviceFiles instanceof List
+			? (List<ServiceFile>)serviceFiles
+			: new ArrayList<>(serviceFiles);
 	}
 }

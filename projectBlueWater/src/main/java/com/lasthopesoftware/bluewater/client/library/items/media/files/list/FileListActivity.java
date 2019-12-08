@@ -37,11 +37,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
-import java.util.Collection;
+import java.util.List;
 
 import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
-public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<Collection<ServiceFile>, Void> {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(FileListActivity.class);
 	private static final String key = magicPropertyBuilder.buildProperty("key");
@@ -81,7 +81,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
 
-		final PromisedResponse<Collection<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
+		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
 
 		final String[] parameters = FileListParameters.getInstance().getFileListParameters(new Item(itemId));
 
@@ -104,7 +104,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	}
 
 	@Override
-	public Void respond(Collection<ServiceFile> serviceFiles) {
+	public Void respond(List<ServiceFile> serviceFiles) {
 		if (serviceFiles == null) return null;
 
 		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();

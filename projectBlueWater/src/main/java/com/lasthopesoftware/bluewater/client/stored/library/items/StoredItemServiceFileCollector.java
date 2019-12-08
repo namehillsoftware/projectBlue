@@ -87,7 +87,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	private Promise<Collection<ServiceFile>> promiseServiceFiles(Item item, CancellationProxy cancellationProxy) {
 		final String[] parameters = fileListParameters.getFileListParameters(item);
 
-		final Promise<Collection<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+		final Promise<List<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 
 		cancellationProxy.doCancel(serviceFilesPromise);
 
@@ -98,7 +98,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	private Promise<Collection<ServiceFile>> promiseServiceFiles(Playlist playlist, CancellationProxy cancellationProxy) {
 		final String[] parameters = fileListParameters.getFileListParameters(playlist);
 
-		final Promise<Collection<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+		final Promise<List<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
 
 		cancellationProxy.doCancel(serviceFilesPromise);
 
