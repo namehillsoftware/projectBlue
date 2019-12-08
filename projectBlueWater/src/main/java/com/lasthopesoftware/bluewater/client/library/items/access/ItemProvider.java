@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.library.items.access;
 import android.util.LruCache;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.access.RevisionChecker;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
@@ -48,44 +47,21 @@ public class ItemProvider implements ProvideItems {
 
 	@Override
     public Promise<List<Item>> promiseItems(int itemKey) {
-		return
-			RevisionChecker.promiseRevision(connectionProvider)
-				.eventually(serverRevision -> {
-					final UrlKeyHolder<Integer> boxedItemKey = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), itemKey);
+		return connectionProvider.promiseResponse(
+			LibraryViewsByConnectionProvider.browseLibraryParameter,
+			"ID=" + itemKey,
+			"Version=2").then(response -> {
+			final ResponseBody body = response.body();
+			if (body == null) return Collections.emptyList();
 
-					final ItemHolder itemHolder;
-					synchronized (itemsCache) {
-						itemHolder = itemsCache.get(boxedItemKey);
-					}
-
-					if (itemHolder != null && itemHolder.revision.equals(serverRevision)) {
-						return new Promise<>(itemHolder.items);
-					}
-
-					return connectionProvider.promiseResponse(
-						LibraryViewsByConnectionProvider.browseLibraryParameter,
-						"ID=" + itemKey,
-						"Version=2").then(response -> {
-							final ResponseBody body = response.body();
-							if (body == null) return Collections.emptyList();
-
-							try (final InputStream is = body.byteStream()) {
-								final List<Item> items = ItemResponse.GetItems(is);
-
-								final ItemHolder newItemHolder = new ItemHolder(serverRevision, items);
-
-								synchronized (itemsCache) {
-									itemsCache.put(boxedItemKey, newItemHolder);
-								}
-
-								return items;
-							} catch (IOException e) {
-								logger.error("There was an error getting the inputstream", e);
-								throw e;
-							} finally {
-								body.close();
-							}
-					});
-				});
+			try (final InputStream is = body.byteStream()) {
+				return ItemResponse.GetItems(is);
+			} catch (IOException e) {
+				logger.error("There was an error getting the inputstream", e);
+				throw e;
+			} finally {
+				body.close();
+			}
+		});
 	}
 }

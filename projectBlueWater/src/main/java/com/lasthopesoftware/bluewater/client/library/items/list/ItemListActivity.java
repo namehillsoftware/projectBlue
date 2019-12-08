@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.library.items.list;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -7,7 +8,9 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ViewAnimator;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -33,6 +36,7 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.List;
 
@@ -45,6 +49,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     public static final String KEY = magicPropertyBuilder.buildProperty("key");
     public static final String VALUE = magicPropertyBuilder.buildProperty("value");
 
+	private final CreateAndHold<PromisedResponse<List<Item>, Void>> itemProviderComplete = new Lazy<>(() -> LoopedInPromise.response(this, this));
     private final LazyViewFinder<ListView> itemListView = new LazyViewFinder<>(this, R.id.lvItems);
     private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 	private final CreateAndHold<ISelectedBrowserLibraryProvider> lazySpecificLibraryProvider =
@@ -79,28 +84,37 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
         setTitle(getIntent().getStringExtra(VALUE));
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
-
-		final PromisedResponse<List<Item>, Void> itemProviderComplete = LoopedInPromise.response(this, this);
-
-		final Runnable fillItemsRunnable = new Runnable() {
-
-			@Override
-			public void run() {
-				SessionConnection.getInstance(ItemListActivity.this).promiseSessionConnection()
-					.eventually(c -> {
-						final ItemProvider itemProvider = new ItemProvider(c);
-						return itemProvider.promiseItems(mItemId);
-					})
-					.eventually(itemProviderComplete)
-					.excuse(new HandleViewIoException(ItemListActivity.this, this))
-					.excuse(forward())
-					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(ItemListActivity.this), ItemListActivity.this))
-					.then(new VoidResponse<>(v -> finish()));
-			}
-		};
-
-		fillItemsRunnable.run();
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+			.then(new VoidResponse<>(doRestore -> {
+				if (!doRestore) hydrateItems();
+			}));
+    }
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) hydrateItems();
+
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	private void hydrateItems() {
+		SessionConnection.getInstance(this).promiseSessionConnection()
+			.eventually(c -> {
+				final ItemProvider itemProvider = new ItemProvider(c);
+				return itemProvider.promiseItems(mItemId);
+			})
+			.eventually(itemProviderComplete.getObject())
+			.excuse(new HandleViewIoException(this, this::hydrateItems))
+			.excuse(forward())
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
+			.then(new VoidResponse<>(v -> finish()));
+	}
 
 	@Override
 	public Void respond(List<Item> items) {
@@ -132,14 +146,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 				localItemListView.setOnItemClickListener(new ClickItemListener(items, pbLoading.findView()));
 				localItemListView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 			}), this));
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        InstantiateSessionConnectionActivity.restoreSessionConnection(this);
-    }
+	}
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
