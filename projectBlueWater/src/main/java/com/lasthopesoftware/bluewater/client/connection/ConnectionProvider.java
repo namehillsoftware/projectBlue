@@ -5,13 +5,15 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import okhttp3.CacheControl;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public class ConnectionProvider implements IConnectionProvider {
 
@@ -49,7 +51,7 @@ public class ConnectionProvider implements IConnectionProvider {
 	private Call callServer(String... params) throws MalformedURLException {
 		final URL url = new URL(urlProvider.getUrl(params));
 
-		final Request request = new Request.Builder().url(url).build();
+		final Request request = new Request.Builder().url(url).cacheControl(CacheControl.FORCE_NETWORK).build();
 		return lazyOkHttpClient.getObject().newCall(request);
 	}
 }
