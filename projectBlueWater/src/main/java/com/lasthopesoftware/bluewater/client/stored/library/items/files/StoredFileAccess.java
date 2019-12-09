@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
-import com.lasthopesoftware.resources.CachedSingleThreadExecutor;
+import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.CreateAndHold;

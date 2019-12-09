@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.okhttp;
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.resources.CachedSingleThreadExecutor;
+import com.lasthopesoftware.resources.executors.CachedManyThreadExecutor;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -32,7 +32,7 @@ import okhttp3.Request;
 
 public class OkHttpFactory implements ProvideOkHttpClients {
 
-	private static final CreateAndHold<ExecutorService> executor = new Lazy<>(CachedSingleThreadExecutor::new);
+	private static final CreateAndHold<ExecutorService> executor = new Lazy<>(() -> new CachedManyThreadExecutor(3, 5, TimeUnit.MINUTES));
 
 	private static final CreateAndHold<OkHttpClient.Builder> lazyCommonBuilder = new AbstractSynchronousLazy<OkHttpClient.Builder>() {
 		@Override
