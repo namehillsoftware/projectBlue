@@ -55,6 +55,7 @@ public class PlaylistListFragment extends Fragment {
 		final ProgressBar loadingView = activity.findViewById(R.id.pbLoadingItems);
 
 		playlistView.setVisibility(View.INVISIBLE);
+		loadingView.setVisibility(View.VISIBLE);
 
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
 		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
