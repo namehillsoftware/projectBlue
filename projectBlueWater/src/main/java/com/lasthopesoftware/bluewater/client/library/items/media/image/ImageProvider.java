@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.st
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.resources.CachedSingleThreadExecutor;
+import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;

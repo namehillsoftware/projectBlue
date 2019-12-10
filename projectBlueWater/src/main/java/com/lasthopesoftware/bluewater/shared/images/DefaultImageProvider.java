@@ -7,7 +7,7 @@ import android.graphics.BitmapFactory;
 import android.util.DisplayMetrics;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.resources.CachedSingleThreadExecutor;
+import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.CreateAndHold;

@@ -9,7 +9,6 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import okhttp3.CacheControl;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -51,7 +50,7 @@ public class ConnectionProvider implements IConnectionProvider {
 	private Call callServer(String... params) throws MalformedURLException {
 		final URL url = new URL(urlProvider.getUrl(params));
 
-		final Request request = new Request.Builder().url(url).cacheControl(CacheControl.FORCE_NETWORK).build();
+		final Request request = new Request.Builder().url(url).build();
 		return lazyOkHttpClient.getObject().newCall(request);
 	}
 }
