@@ -44,21 +44,6 @@ public class ItemListFragment extends Fragment {
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
-	private CreateAndHold<RelativeLayout> lazyLayout = new AbstractSynchronousLazy<RelativeLayout>() {
-		@Override
-		protected RelativeLayout create() {
-			final Activity activity = getActivity();
-
-			final RelativeLayout layout = new RelativeLayout(activity);
-			layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-
-			layout.addView(lazyProgressBar.getObject());
-			layout.addView(lazyListView.getObject());
-
-			return layout;
-		}
-	};
-
 	private CreateAndHold<ListView> lazyListView = new AbstractSynchronousLazy<ListView>() {
 		@Override
 		protected ListView create() {
@@ -76,6 +61,21 @@ public class ItemListFragment extends Fragment {
 			pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
 			pbLoading.setLayoutParams(pbParams);
 			return pbLoading;
+		}
+	};
+
+	private CreateAndHold<RelativeLayout> lazyLayout = new AbstractSynchronousLazy<RelativeLayout>() {
+		@Override
+		protected RelativeLayout create() {
+			final Activity activity = getActivity();
+
+			final RelativeLayout layout = new RelativeLayout(activity);
+			layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
+			layout.addView(lazyProgressBar.getObject());
+			layout.addView(lazyListView.getObject());
+
+			return layout;
 		}
 	};
 
@@ -108,16 +108,14 @@ public class ItemListFragment extends Fragment {
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.then(new VoidResponse<>(activeLibrary -> {
-				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(result -> {
-					if (result == null || result.size() == 0) return null;
+				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(new VoidResponse<>(result -> {
+					if (result == null || result.size() == 0) return;
 
 					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
 					final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-					FillStandardItemView(category);
-
-					return null;
-				}, activity);
+					fillStandardItemView(category);
+				}), activity);
 
 				final Runnable fillItemsRunnable = new Runnable() {
 
@@ -136,7 +134,7 @@ public class ItemListFragment extends Fragment {
 			}));
 	}
 
-	private void FillStandardItemView(final IItem category) {
+	private void fillStandardItemView(final IItem category) {
 		final Activity activity = getActivity();
 		if (activity == null) return;
 
