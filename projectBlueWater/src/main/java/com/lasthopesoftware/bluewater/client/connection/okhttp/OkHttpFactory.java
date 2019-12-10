@@ -55,7 +55,6 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 					final Request.Builder requestBuilder = chain.request().newBuilder().addHeader("Connection", "close");
 					return chain.proceed(requestBuilder.build());
 				})
-				.cache(null)
 				.readTimeout(3, TimeUnit.MINUTES)
 				.connectTimeout(5, TimeUnit.SECONDS)
 				.dispatcher(new Dispatcher(executor.getObject()));
