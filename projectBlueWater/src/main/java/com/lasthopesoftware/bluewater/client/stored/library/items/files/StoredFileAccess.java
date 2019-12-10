@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files;
 
 import android.content.Context;
 import android.database.SQLException;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
@@ -11,20 +12,26 @@ import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder;
+import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public final class StoredFileAccess implements IStoredFileAccess {
 
-	public static final Executor storedFileAccessExecutor = Executors.newSingleThreadExecutor();
+	public static Executor storedFileAccessExecutor() {
+		return storedFileAccessExecutor.getObject();
+	}
+
+	private static final CreateAndHold<Executor> storedFileAccessExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileAccess.class);
 
@@ -68,7 +75,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return getStoredFile(repositoryAccessHelper, storedFileId);
 			}
-		}, storedFileAccessExecutor);
+		}, storedFileAccessExecutor.getObject());
 	}
 
 	@Override
@@ -81,7 +88,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return getStoredFile(library, repositoryAccessHelper, serviceFile);
 			}
-		}, storedFileAccessExecutor);
+		}, storedFileAccessExecutor.getObject());
 	}
 
 	@Override
@@ -94,7 +101,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, false)
 					.fetch(StoredFile.class);
 			}
-		}, storedFileAccessExecutor);
+		}, storedFileAccessExecutor.getObject());
 	}
 
 	@Override
@@ -117,7 +124,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 			storedFile.setIsDownloadComplete(true);
 			return storedFile;
-		}, storedFileAccessExecutor);
+		}, storedFileAccessExecutor.getObject());
 	}
 
 	@Override
@@ -139,7 +146,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 
 				return null;
 			}
-		}, storedFileAccessExecutor);
+		}, storedFileAccessExecutor.getObject());
 	}
 
 	@Override
@@ -199,7 +206,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	void deleteStoredFile(final StoredFile storedFile) {
-		storedFileAccessExecutor.execute(() -> {
+		storedFileAccessExecutor.getObject().execute(() -> {
 			try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (final CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 

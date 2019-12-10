@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.specs.GivenAMediaFile;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
@@ -7,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
+
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.concurrent.ExecutionException;
 
@@ -22,7 +24,7 @@ public class WhenAddingTheFile extends AndroidContext {
 	@Override
 	public void before() throws ExecutionException, InterruptedException {
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			mock(GetAllStoredFilesInLibrary.class));
 
 		final Library library = new Library().setId(15);

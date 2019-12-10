@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.access;
 
 import android.content.Context;
 import android.database.SQLException;
+
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
@@ -12,6 +13,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.MessageWriter;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,17 +28,17 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 
 	@Override
 	public Promise<Library> getLibrary(int libraryId) {
-		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId), RepositoryAccessHelper.databaseExecutor());
 	}
 
 	@Override
 	public Promise<Collection<Library>> getAllLibraries() {
-		return new QueuedPromise<>(new GetAllLibrariesWriter(context), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(new GetAllLibrariesWriter(context), RepositoryAccessHelper.databaseExecutor());
 	}
 
 	@Override
 	public Promise<Library> saveLibrary(Library library) {
-		return new QueuedPromise<>(new SaveLibraryWriter(context, library), RepositoryAccessHelper.databaseExecutor);
+		return new QueuedPromise<>(new SaveLibraryWriter(context, library), RepositoryAccessHelper.databaseExecutor());
 	}
 
 	private static class GetAllLibrariesWriter implements MessageWriter<Collection<Library>> {

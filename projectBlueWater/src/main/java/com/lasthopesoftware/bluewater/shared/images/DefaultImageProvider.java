@@ -5,17 +5,19 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.DisplayMetrics;
+
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+import com.namehillsoftware.lazyj.CreateAndHold;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class DefaultImageProvider {
 
-	private static final ExecutorService defaultImageAccessExecutor = Executors.newSingleThreadExecutor();
-	private static final Object fillerBitmapSyncObj = new Object();
+	private static final CreateAndHold<ExecutorService> defaultImageAccessExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
 
 	private static Bitmap fillerBitmap;
 
@@ -28,7 +30,7 @@ public class DefaultImageProvider {
 	public Promise<Bitmap> promiseFileBitmap() {
 		return fillerBitmap != null
 			? new Promise<>(getBitmapCopy(fillerBitmap))
-			: new QueuedPromise<>(this::getFillerBitmap, defaultImageAccessExecutor);
+			: new QueuedPromise<>(this::getFillerBitmap, defaultImageAccessExecutor.getObject());
 	}
 
 	private Bitmap getFillerBitmap() {

@@ -29,6 +29,10 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
+import com.namehillsoftware.lazyj.CreateAndHold;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -40,6 +44,41 @@ public class ItemListFragment extends Fragment {
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
+	private CreateAndHold<ListView> lazyListView = new AbstractSynchronousLazy<ListView>() {
+		@Override
+		protected ListView create() {
+			final ListView listView = new ListView(getActivity());
+			listView.setVisibility(View.INVISIBLE);
+			return listView;
+		}
+	};
+
+	private CreateAndHold<ProgressBar> lazyProgressBar = new AbstractSynchronousLazy<ProgressBar>() {
+		@Override
+		protected ProgressBar create() {
+			final ProgressBar pbLoading = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleLarge);
+			final RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+			pbLoading.setLayoutParams(pbParams);
+			return pbLoading;
+		}
+	};
+
+	private CreateAndHold<RelativeLayout> lazyLayout = new AbstractSynchronousLazy<RelativeLayout>() {
+		@Override
+		protected RelativeLayout create() {
+			final Activity activity = getActivity();
+
+			final RelativeLayout layout = new RelativeLayout(activity);
+			layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
+			layout.addView(lazyProgressBar.getObject());
+			layout.addView(lazyListView.getObject());
+
+			return layout;
+		}
+	};
+
 	public static ItemListFragment getPreparedFragment(final int libraryViewId) {
 		final ItemListFragment returnFragment = new ItemListFragment();
 		final Bundle args = new Bundle();
@@ -49,17 +88,19 @@ public class ItemListFragment extends Fragment {
 	}
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
+	public View onCreateView(@NotNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
+		return lazyLayout.getObject();
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+
 		final Activity activity = getActivity();
+		if (activity == null) return;
 
-		final RelativeLayout layout = new RelativeLayout(activity);
-		layout.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-
-		final ProgressBar pbLoading = new ProgressBar(activity, null, android.R.attr.progressBarStyleLarge);
-		final RelativeLayout.LayoutParams pbParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		pbParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-		pbLoading.setLayoutParams(pbParams);
-		layout.addView(pbLoading);
+		lazyListView.getObject().setVisibility(View.INVISIBLE);
+		lazyProgressBar.getObject().setVisibility(View.VISIBLE);
 
 		final ILibraryProvider libraryProvider = new LibraryRepository(activity);
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(activity);
@@ -67,16 +108,14 @@ public class ItemListFragment extends Fragment {
 		libraryProvider
 			.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId())
 			.then(new VoidResponse<>(activeLibrary -> {
-				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(result -> {
-					if (result == null || result.size() == 0) return null;
+				final PromisedResponse<List<Item>, Void> onGetVisibleViewsCompleteListener = LoopedInPromise.response(new VoidResponse<>(result -> {
+					if (result == null || result.size() == 0) return;
 
 					final int categoryPosition = getArguments().getInt(ARG_CATEGORY_POSITION);
 					final IItem category = categoryPosition < result.size() ? result.get(categoryPosition) : result.get(result.size() - 1);
 
-					layout.addView(BuildStandardItemView(activity, category, pbLoading));
-
-					return null;
-				}, activity);
+					fillStandardItemView(category);
+				}), activity);
 
 				final Runnable fillItemsRunnable = new Runnable() {
 
@@ -93,13 +132,11 @@ public class ItemListFragment extends Fragment {
 
 				fillItemsRunnable.run();
 			}));
-
-		return layout;
 	}
 
-	private ListView BuildStandardItemView(final Activity activity, final IItem category, final View loadingView) {
-		final ListView listView = new ListView(activity);
-		listView.setVisibility(View.INVISIBLE);
+	private void fillStandardItemView(final IItem category) {
+		final Activity activity = getActivity();
+		if (activity == null) return;
 
 		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
 		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
@@ -109,8 +146,8 @@ public class ItemListFragment extends Fragment {
 			.then(new VoidResponse<>(library -> {
 				PromisedResponse<List<Item>, Void> onGetLibraryViewItemResultsComplete = LoopedInPromise.response(new OnGetLibraryViewItemResultsComplete(
 					activity,
-					listView,
-					loadingView,
+					lazyListView.getObject(),
+					lazyProgressBar.getObject(),
 					itemListMenuChangeHandler,
 					FileListParameters.getInstance(),
 					new StoredItemAccess(activity, library),
@@ -131,8 +168,6 @@ public class ItemListFragment extends Fragment {
 
 				fillItemsRunnable.run();
 			}));
-
-		return listView;
 	}
 
 	public void setOnItemListMenuChangeHandler(IItemListMenuChangeHandler itemListMenuChangeHandler) {

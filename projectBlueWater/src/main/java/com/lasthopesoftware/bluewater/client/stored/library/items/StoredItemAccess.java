@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items;
 
 import android.content.Context;
+
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
@@ -64,11 +65,11 @@ public final class StoredItemAccess implements IStoredItemAccess {
 				final IItem inferredItem = inferItem(item);
 				return isItemMarkedForSync(repositoryAccessHelper, library, inferredItem, StoredItemHelpers.getListType(inferredItem));
 			}
-		}, RepositoryAccessHelper.databaseExecutor);
+		}, RepositoryAccessHelper.databaseExecutor());
 	}
 
 	private void enableItemSync(final IItem item, final StoredItem.ItemType itemType) {
-		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+		RepositoryAccessHelper.databaseExecutor().execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				if (isItemMarkedForSync(repositoryAccessHelper, library, item, itemType))
 					return;
@@ -88,7 +89,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 	}
 
 	private void disableItemSync(final IItem item, final StoredItem.ItemType itemType) {
-		RepositoryAccessHelper.databaseExecutor.execute(() -> {
+		RepositoryAccessHelper.databaseExecutor().execute(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 					repositoryAccessHelper
@@ -118,7 +119,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 						.addParameter(StoredItem.libraryIdColumnName, library.getId())
 						.fetch(StoredItem.class);
 			}
-		}, RepositoryAccessHelper.databaseExecutor);
+		}, RepositoryAccessHelper.databaseExecutor());
 	}
 
 	private static IItem inferItem(IItem item) {

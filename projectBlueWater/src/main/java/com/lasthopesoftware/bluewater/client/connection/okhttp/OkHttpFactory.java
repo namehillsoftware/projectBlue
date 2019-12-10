@@ -1,17 +1,15 @@
 package com.lasthopesoftware.bluewater.client.connection.okhttp;
 
 import android.os.Build;
+
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
+import com.lasthopesoftware.resources.executors.CachedManyThreadExecutor;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
-import okhttp3.Dispatcher;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 
-import javax.net.ssl.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyManagementException;
@@ -19,12 +17,26 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
+import okhttp3.Dispatcher;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 public class OkHttpFactory implements ProvideOkHttpClients {
 
 	private static final CreateAndHold<ExecutorService> executor = new Lazy<>(() -> {
-		final int maxDownloadThreadPoolSize = 6;
+		final int maxDownloadThreadPoolSize = 3;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			return new ForkJoinPool(
 				maxDownloadThreadPoolSize,
@@ -32,10 +44,7 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 				null, true);
 		}
 
-		return new ThreadPoolExecutor(
-			0, 6,
-			1, TimeUnit.MINUTES,
-			new LinkedBlockingQueue<>());
+		return new CachedManyThreadExecutor(maxDownloadThreadPoolSize, 5, TimeUnit.MINUTES);
 	});
 
 	private static final CreateAndHold<OkHttpClient.Builder> lazyCommonBuilder = new AbstractSynchronousLazy<OkHttpClient.Builder>() {
