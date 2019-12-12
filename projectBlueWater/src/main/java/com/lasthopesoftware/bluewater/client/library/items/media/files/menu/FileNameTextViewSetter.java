@@ -17,6 +17,7 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.SSLProtocolException;
+
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+import static com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.delay;
 
 public class FileNameTextViewSetter {
 
@@ -76,35 +80,40 @@ public class FileNameTextViewSetter {
 		public void run() {
 			textView.setText(R.string.lbl_loading);
 
-			SessionConnection.getInstance(textView.getContext()).promiseSessionConnection()
-				.eventually(connectionProvider -> {
-					if (isUpdateCancelled()) {
-						resolve(null);
-						return new Promise<>(Collections.emptyMap());
-					}
+			final Promise<Void> promisedViewSet =
+				SessionConnection.getInstance(textView.getContext()).promiseSessionConnection()
+					.eventually(connectionProvider -> {
+						if (isUpdateCancelled()) {
+							resolve(null);
+							return new Promise<>(Collections.emptyMap());
+						}
 
-					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-					final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
-							new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
+						final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+						final CachedFilePropertiesProvider cachedFilePropertiesProvider =
+							new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
+								new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
-					final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
+						final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
 
-					cancellationProxy.doCancel(filePropertiesPromise);
+						cancellationProxy.doCancel(filePropertiesPromise);
 
-					return filePropertiesPromise;
-				})
-				.eventually(LoopedInPromise.response(properties -> {
-					if (isUpdateCancelled()) return resolve();
+						return filePropertiesPromise;
+					})
+					.eventually(LoopedInPromise.response(properties -> {
+						if (isUpdateCancelled()) return resolve();
 
-					final String fileName = properties.get(FilePropertiesProvider.NAME);
+						final String fileName = properties.get(FilePropertiesProvider.NAME);
 
-					if (fileName != null)
-						textView.setText(fileName);
+						if (fileName != null)
+							textView.setText(fileName);
 
-					return resolve();
-				}, handler))
-				.excuse(e -> e)
+						return resolve();
+					}, handler));
+
+			Promise.whenAll(promisedViewSet, delay(Duration.standardMinutes(1))).then(v -> resolve());
+
+			promisedViewSet
+				.excuse(forward())
 				.eventually(e -> new QueuedPromise<>(() -> {
 					if (isUpdateCancelled()) return resolve();
 
