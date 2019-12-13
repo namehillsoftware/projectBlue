@@ -110,9 +110,14 @@ public class FileNameTextViewSetter {
 						return resolve();
 					}, handler));
 
-			Promise.whenAll(promisedViewSet, delay(Duration.standardMinutes(1))).then(v -> resolve());
+			final Promise<Void> delayPromise = delay(Duration.standardMinutes(1));
+			cancellationProxy.doCancel(delayPromise);
 
-			promisedViewSet
+			Promise.whenAny(promisedViewSet, delayPromise)
+				.then(v -> {
+					cancellationProxy.run();
+					return resolve();
+				})
 				.excuse(forward())
 				.eventually(e -> new QueuedPromise<>(() -> {
 					if (isUpdateCancelled()) return resolve();

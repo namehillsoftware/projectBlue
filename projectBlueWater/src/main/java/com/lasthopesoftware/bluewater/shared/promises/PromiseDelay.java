@@ -17,7 +17,9 @@ public final class PromiseDelay<Response> extends Promise<Response> {
 	}
 
 	private PromiseDelay(Duration delay) {
-		delayTimer.getObject().schedule(new DelayedResolution(), delay.getMillis());
+		final DelayedResolution delayedResolution = new DelayedResolution();
+		delayTimer.getObject().schedule(delayedResolution, delay.getMillis());
+		respondToCancellation(delayedResolution::cancel);
 	}
 
 	private final class DelayedResolution extends TimerTask {
@@ -25,6 +27,11 @@ public final class PromiseDelay<Response> extends Promise<Response> {
 		@Override
 		public void run() {
 			resolve(null);
+		}
+
+		@Override
+		public boolean cancel() {
+			return super.cancel();
 		}
 	}
 }
