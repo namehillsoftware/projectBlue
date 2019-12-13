@@ -9,7 +9,7 @@ import org.joda.time.Duration;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class PromiseDelay<Response> extends Promise<Response> {
+public final class PromiseDelay<Response> extends Promise<Response> {
 	private static final CreateAndHold<Timer> delayTimer = new Lazy<>(Timer::new);
 
 	public static <Response> Promise<Response> delay(Duration delay) {
@@ -20,7 +20,7 @@ public class PromiseDelay<Response> extends Promise<Response> {
 		delayTimer.getObject().schedule(new DelayedResolution(), delay.getMillis());
 	}
 
-	private class DelayedResolution extends TimerTask {
+	private final class DelayedResolution extends TimerTask {
 
 		@Override
 		public void run() {
