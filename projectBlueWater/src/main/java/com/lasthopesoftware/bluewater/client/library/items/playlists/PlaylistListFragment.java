@@ -40,7 +40,7 @@ public class PlaylistListFragment extends Fragment {
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
-	private CreateAndHold<ListView> lazyListView = new AbstractSynchronousLazy<ListView>() {
+	private final CreateAndHold<ListView> lazyListView = new AbstractSynchronousLazy<ListView>() {
 		@Override
 		protected ListView create() {
 			final ListView listView = new ListView(getActivity());
@@ -49,7 +49,7 @@ public class PlaylistListFragment extends Fragment {
 		}
 	};
 
-	private CreateAndHold<ProgressBar> lazyProgressBar = new AbstractSynchronousLazy<ProgressBar>() {
+	private final CreateAndHold<ProgressBar> lazyProgressBar = new AbstractSynchronousLazy<ProgressBar>() {
 		@Override
 		protected ProgressBar create() {
 			final ProgressBar pbLoading = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleLarge);
@@ -60,7 +60,7 @@ public class PlaylistListFragment extends Fragment {
 		}
 	};
 
-	private CreateAndHold<RelativeLayout> lazyLayout = new AbstractSynchronousLazy<RelativeLayout>() {
+	private final CreateAndHold<RelativeLayout> lazyLayout = new AbstractSynchronousLazy<RelativeLayout>() {
 		@Override
 		protected RelativeLayout create() {
 			final Activity activity = getActivity();

@@ -36,15 +36,17 @@ import okhttp3.Request;
 public class OkHttpFactory implements ProvideOkHttpClients {
 
 	private static final CreateAndHold<ExecutorService> executor = new Lazy<>(() -> {
-		final int maxDownloadThreadPoolSize = 3;
+		final int maxDownloadThreadPoolSize = 4;
+		final int downloadThreadPoolSize = Math.min(maxDownloadThreadPoolSize, Runtime.getRuntime().availableProcessors());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			return new ForkJoinPool(
-				maxDownloadThreadPoolSize,
+				downloadThreadPoolSize,
 				ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-				null, true);
+				null,
+				true);
 		}
 
-		return new CachedManyThreadExecutor(maxDownloadThreadPoolSize, 5, TimeUnit.MINUTES);
+		return new CachedManyThreadExecutor(downloadThreadPoolSize, 5, TimeUnit.MINUTES);
 	});
 
 	private static final CreateAndHold<OkHttpClient.Builder> lazyCommonBuilder = new AbstractSynchronousLazy<OkHttpClient.Builder>() {

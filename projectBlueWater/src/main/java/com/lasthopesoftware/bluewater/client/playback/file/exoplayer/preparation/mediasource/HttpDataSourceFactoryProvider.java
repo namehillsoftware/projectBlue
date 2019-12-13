@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
+import com.lasthopesoftware.resources.executors.CachedManyThreadExecutor;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.concurrent.ExecutorService;
@@ -19,7 +19,7 @@ import okhttp3.Dispatcher;
 
 public class HttpDataSourceFactoryProvider implements ProvideHttpDataSourceFactory {
 
-	private static final Lazy<ExecutorService> lazyExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
+	private static final Lazy<ExecutorService> lazyExecutor = new Lazy<>(() -> new CachedManyThreadExecutor(2, 60, TimeUnit.SECONDS));
 
 	private final Context context;
 	private final IConnectionProvider connectionProvider;
