@@ -11,7 +11,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class PromiseDelay<Response> extends Promise<Response> {
+public final class PromiseDelay<Response> extends Promise<Response> implements Runnable {
 	private static final CreateAndHold<ScheduledExecutorService> delayScheduler =
 		new Lazy<>(() -> Executors.newScheduledThreadPool(0));
 
@@ -21,11 +21,26 @@ public final class PromiseDelay<Response> extends Promise<Response> {
 
 	private PromiseDelay(Duration delay) {
 		final ScheduledFuture<?> future = delayScheduler.getObject()
-			.schedule(
-				() -> resolve(null),
-				delay.getMillis(),
-				TimeUnit.MILLISECONDS);
+			.schedule(this, delay.getMillis(),	TimeUnit.MILLISECONDS);
 
-		respondToCancellation(() -> future.cancel(false));
+		respondToCancellation(new FutureCancellation(future));
+	}
+
+	@Override
+	public void run() {
+		resolve(null);
+	}
+
+	private static class FutureCancellation implements Runnable {
+		private final ScheduledFuture<?> future;
+
+		FutureCancellation(ScheduledFuture<?> future) {
+			this.future = future;
+		}
+
+		@Override
+		public void run() {
+			future.cancel(false);
+		}
 	}
 }
