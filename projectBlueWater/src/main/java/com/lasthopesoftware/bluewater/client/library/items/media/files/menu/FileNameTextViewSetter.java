@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.propertie
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
@@ -27,7 +28,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import javax.net.ssl.SSLProtocolException;
 
@@ -37,7 +37,9 @@ import static com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.delay;
 public class FileNameTextViewSetter {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileNameTextViewSetter.class);
-	private static final CreateAndHold<Executor> errorExecutor = new Lazy<>(Executors::newSingleThreadExecutor);
+	private static final CreateAndHold<Executor> errorExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
+
+	private static final Duration timeoutDuration = Duration.standardMinutes(1);
 
 	private final TextView textView;
 	private final Handler handler;
@@ -110,7 +112,7 @@ public class FileNameTextViewSetter {
 						return resolve();
 					}, handler));
 
-			final Promise<Void> delayPromise = delay(Duration.standardMinutes(1));
+			final Promise<Void> delayPromise = delay(timeoutDuration);
 			cancellationProxy.doCancel(delayPromise);
 
 			Promise.whenAny(promisedViewSet, delayPromise)

@@ -28,10 +28,5 @@ public final class PromiseDelay<Response> extends Promise<Response> {
 		public void run() {
 			resolve(null);
 		}
-
-		@Override
-		public boolean cancel() {
-			return super.cancel();
-		}
 	}
 }
