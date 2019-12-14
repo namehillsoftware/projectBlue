@@ -20,17 +20,12 @@ public final class PromiseDelay<Response> extends Promise<Response> {
 	}
 
 	private PromiseDelay(Duration delay) {
-		final DelayedResolution delayedResolution = new DelayedResolution();
 		final ScheduledFuture<?> future = delayScheduler.getObject()
-			.schedule(delayedResolution, delay.getMillis(), TimeUnit.MILLISECONDS);
+			.schedule(
+				() -> resolve(null),
+				delay.getMillis(),
+				TimeUnit.MILLISECONDS);
+
 		respondToCancellation(() -> future.cancel(false));
-	}
-
-	private final class DelayedResolution implements Runnable {
-
-		@Override
-		public void run() {
-			resolve(null);
-		}
 	}
 }
