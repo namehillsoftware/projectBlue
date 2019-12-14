@@ -101,7 +101,7 @@ public class FilePropertiesProvider implements IFilePropertiesProvider {
 				final XmlElement parent = xml.get(0);
 
 				final HashMap<String, String> returnProperties = new HashMap<>(parent.size());
-				for (XmlElement el : parent)
+				for (final XmlElement el : parent)
 					returnProperties.put(el.getAttribute("Name"), el.getValue());
 
 				final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
