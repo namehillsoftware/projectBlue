@@ -577,6 +577,11 @@ implements OnAudioFocusChangeListener
 		// Should be modified to save its state locally in the future.
 		this.startId = startId;
 
+		if (intent == null || intent.getAction() == null) {
+			stopSelf(startId);
+			return START_NOT_STICKY;
+		}
+
 		final String action = intent.getAction();
 		if (Action.killMusicService.equals(action) || !Action.validActions.contains(action)) {
 			stopSelf(startId);
