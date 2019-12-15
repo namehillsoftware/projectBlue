@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.client.stored.sync;
 
 import android.content.Intent;
+
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
@@ -16,10 +18,12 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
-import io.reactivex.Completable;
-import io.reactivex.exceptions.CompositeException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.reactivex.Completable;
+import io.reactivex.exceptions.CompositeException;
 
 public class StoredFileSynchronization implements SynchronizeStoredFiles {
 
@@ -69,16 +73,13 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 				switch (storedFileJobStatus.storedFileJobState) {
 					case Queued:
 						sendStoredFileBroadcast(onFileQueuedEvent, storedFileJobStatus.storedFile);
-						return Completable.complete();
 					case Downloading:
 						sendStoredFileBroadcast(onFileDownloadingEvent, storedFileJobStatus.storedFile);
-						return Completable.complete();
 					case Downloaded:
 						sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobStatus.storedFile);
+					default:
 						return Completable.complete();
 				}
-
-				return Completable.complete();
 			}, true)
 			.onErrorComplete(this::handleError)
 			.doOnComplete(this::sendStoppedSync)
