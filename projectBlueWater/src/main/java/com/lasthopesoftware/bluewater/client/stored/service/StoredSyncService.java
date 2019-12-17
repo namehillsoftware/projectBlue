@@ -110,10 +110,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	}
 
 	public static void cancelSync(Context context) {
-		final Intent intent = new Intent(context, StoredSyncService.class);
-		intent.setAction(cancelSyncAction);
-
-		context.startService(intent);
+		context.startService(getSelfIntent(context, cancelSyncAction));
 	}
 
 	public static boolean isSyncRunning() {
@@ -128,6 +125,13 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		} catch (SecurityException e) {
 			logger.warn("A security exception occurred while trying to start the service", e);
 		}
+	}
+
+	private static Intent getSelfIntent(Context context, String action) {
+		final Intent intent = new Intent(context, StoredSyncService.class);
+		intent.setAction(action);
+
+		return intent;
 	}
 
 	private final AbstractSynchronousLazy<SharedPreferences> lazySharedPreferences = new Lazy<>(() -> PreferenceManager.getDefaultSharedPreferences(this));
@@ -407,6 +411,15 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		if (notificationText != null)
 			notifyBuilder.setContentText(notificationText);
 		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent.getObject(), 0));
+
+		notifyBuilder.addAction(
+			0,
+			getString(R.string.btn_cancel),
+			PendingIntent.getService(
+				this,
+				0,
+				getSelfIntent(this, cancelSyncAction),
+				PendingIntent.FLAG_UPDATE_CURRENT));
 
 		notifyBuilder.setOngoing(true);
 
