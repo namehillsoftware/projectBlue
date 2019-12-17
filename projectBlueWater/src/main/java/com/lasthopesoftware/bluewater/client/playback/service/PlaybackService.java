@@ -879,7 +879,9 @@ implements OnAudioFocusChangeListener
 
 	private void handleBuildConnectionStatusChange(final int status) {
 		final Builder notifyBuilder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
-		notifyBuilder.setContentTitle(getText(R.string.title_svc_connecting_to_server));
+		notifyBuilder
+			.setOngoing(false)
+			.setContentTitle(getText(R.string.title_svc_connecting_to_server));
 		switch (status) {
 			case BuildingSessionConnectionStatus.GettingLibrary:
 				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details));
