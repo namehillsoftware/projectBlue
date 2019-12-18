@@ -424,7 +424,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			notifyBuilder.setContentText(notificationText);
 		notifyBuilder.setContentIntent(lazyShowDownloadsIntent.getObject());
 
-		notifyBuilder.addAction(0, 	getString(R.string.btn_cancel), lazyCancelIntent.getObject());
+		notifyBuilder.addAction(0, getString(R.string.btn_cancel), lazyCancelIntent.getObject());
 
 		notifyBuilder.setOngoing(true);
 
