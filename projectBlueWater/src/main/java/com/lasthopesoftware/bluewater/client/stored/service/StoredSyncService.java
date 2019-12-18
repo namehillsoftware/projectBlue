@@ -287,6 +287,18 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		}
 	};
 
+	private final CreateAndHold<PendingIntent> lazyShowDownloadsIntent = new Lazy<>(() -> PendingIntent.getActivity(
+		this,
+		0,
+		browseLibraryIntent.getObject(),
+		0));
+
+	private final CreateAndHold<PendingIntent> lazyCancelIntent = new Lazy<>(() -> PendingIntent.getService(
+		this,
+		0,
+		getSelfIntent(this, cancelSyncAction),
+		PendingIntent.FLAG_UPDATE_CURRENT));
+
 	private List<BroadcastReceiver> broadcastReceivers = new ArrayList<>();
 
 	@Override
@@ -410,16 +422,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		if (notificationText != null)
 			notifyBuilder.setContentText(notificationText);
-		notifyBuilder.setContentIntent(PendingIntent.getActivity(this, 0, browseLibraryIntent.getObject(), 0));
+		notifyBuilder.setContentIntent(lazyShowDownloadsIntent.getObject());
 
-		notifyBuilder.addAction(
-			0,
-			getString(R.string.btn_cancel),
-			PendingIntent.getService(
-				this,
-				0,
-				getSelfIntent(this, cancelSyncAction),
-				PendingIntent.FLAG_UPDATE_CURRENT));
+		notifyBuilder.addAction(0, 	getString(R.string.btn_cancel), lazyCancelIntent.getObject());
 
 		notifyBuilder.setOngoing(true);
 
