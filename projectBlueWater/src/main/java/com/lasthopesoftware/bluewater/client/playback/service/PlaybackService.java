@@ -1139,11 +1139,9 @@ implements OnAudioFocusChangeListener
 		
 	@Override
 	public void onDestroy() {
+
 		if (lazyNotificationController.isCreated())
 			lazyNotificationController.getObject().removeAllNotifications();
-
-		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
-		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
 
 		if (playlistPlaybackBootstrapper != null) {
 			try {
@@ -1171,12 +1169,6 @@ implements OnAudioFocusChangeListener
 
 		if (areListenersRegistered) unregisterListeners();
 
-		if (remoteControlProxy != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
-
-		if (playbackNotificationRouter != null)
-			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
-
 		if (remoteControlReceiver.isCreated())
 			audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject());
 
@@ -1194,12 +1186,23 @@ implements OnAudioFocusChangeListener
 		if (filePositionSubscription != null)
 			filePositionSubscription.dispose();
 
-		if (cache != null) {
+		if (cache != null)
 			cache.release();
-		}
 
 		if (nowPlayingNotificationBuilder != null)
 			nowPlayingNotificationBuilder.close();
+
+		if (!localBroadcastManagerLazy.isCreated()) return;
+
+		localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
+		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged);
+		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged);
+
+		if (remoteControlProxy != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
+
+		if (playbackNotificationRouter != null)
+			localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
 	}
 
 	/* End Event Handlers */
