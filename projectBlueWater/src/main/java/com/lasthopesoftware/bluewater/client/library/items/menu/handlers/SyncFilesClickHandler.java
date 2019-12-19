@@ -12,22 +12,23 @@ import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService;
  * Created by david on 7/18/15.
  */
 public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
-	private final StoredItemAccess mSyncListManager;
-	private boolean mIsSynced;
-	private final IItem mItem;
+	private final StoredItemAccess syncListManager;
+	private boolean isSynced;
+	private final Library library;
+	private final IItem item;
 
-	public SyncFilesClickHandler(NotifyOnFlipViewAnimator menuContainer, Library library, IItem item, boolean isSynced) {
+	SyncFilesClickHandler(NotifyOnFlipViewAnimator menuContainer, Library library, IItem item, boolean isSynced) {
 		super(menuContainer);
-
-		mItem = item;
-		mIsSynced = isSynced;
-		mSyncListManager = new StoredItemAccess(menuContainer.getContext(), library);
+		this.library = library;
+		this.item = item;
+		this.isSynced = isSynced;
+		syncListManager = new StoredItemAccess(menuContainer.getContext());
 	}
 
 	@Override
 	public void onClick(View v) {
-		mIsSynced = !mIsSynced;
-		mSyncListManager.toggleSync(mItem, mIsSynced);
+		isSynced = !isSynced;
+		syncListManager.toggleSync(library.getLibraryId(), item, isSynced);
 
 		StoredSyncService.doSyncUninterrupted(v.getContext());
 

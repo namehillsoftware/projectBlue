@@ -150,7 +150,7 @@ public class ItemListFragment extends Fragment {
 					lazyProgressBar.getObject(),
 					itemListMenuChangeHandler,
 					FileListParameters.getInstance(),
-					new StoredItemAccess(activity, library),
+					new StoredItemAccess(activity),
 					library), activity);
 
 				final Runnable fillItemsRunnable = new Runnable() {

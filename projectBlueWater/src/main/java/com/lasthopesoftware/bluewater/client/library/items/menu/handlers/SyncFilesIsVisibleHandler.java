@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.menu.handlers;
 
 import android.view.View;
 import android.widget.ImageButton;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.menu.NotifyOnFlipViewAnimator;
@@ -31,7 +32,7 @@ public class SyncFilesIsVisibleHandler implements View.OnLayoutChangeListener {
 		if (!v.isShown()) return;
 
 		storedItemAccess
-			.isItemMarkedForSync(item)
+			.isItemMarkedForSync(library.getLibraryId(), item)
 			.eventually(LoopedInPromise.response(isSynced -> {
 				if (!v.isShown()) return null;
 

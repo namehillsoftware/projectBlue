@@ -231,6 +231,10 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return this;
 	}
 
+	public LibraryId getLibraryId() {
+		return new LibraryId(this.id);
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;

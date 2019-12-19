@@ -15,7 +15,7 @@ public class StoredItemsChecker implements CheckIfAnyStoredItemsExist {
 
 	@Override
 	public Promise<Boolean> promiseIsAnyStoredItemsOrFiles(Library library) {
-		return storedItemAccess.promiseStoredItems()
+		return storedItemAccess.promiseStoredItems(library.getLibraryId())
 			.eventually(items -> !items.isEmpty()
 				? new Promise<>(true)
 				: checkForAnyStoredFiles.promiseIsAnyStoredFiles(library));
