@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session;
 import android.content.Context;
 import android.content.Intent;
 
+import androidx.annotation.IntDef;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
@@ -34,6 +35,8 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -232,7 +235,7 @@ public class SessionConnection {
 			});
 	}
 
-	private void doStateChange(final int status) {
+	private void doStateChange(@BuildingSessionConnectionStatus.ConnectionStatus final int status) {
 		final Intent broadcastIntent = new Intent(buildSessionBroadcast);
 		broadcastIntent.putExtra(buildSessionBroadcastStatus, status);
 		localBroadcastManager.sendBroadcast(broadcastIntent);
@@ -242,6 +245,10 @@ public class SessionConnection {
 	}
 
 	public static class BuildingSessionConnectionStatus {
+
+		@Retention(RetentionPolicy.SOURCE)
+		@IntDef({GettingLibrary, GettingLibraryFailed, BuildingConnection, BuildingConnectionFailed, GettingView, GettingViewFailed, BuildingSessionComplete})
+		@interface ConnectionStatus{}
 		public static final int GettingLibrary = 1;
 		public static final int GettingLibraryFailed = 2;
 		public static final int BuildingConnection = 3;
