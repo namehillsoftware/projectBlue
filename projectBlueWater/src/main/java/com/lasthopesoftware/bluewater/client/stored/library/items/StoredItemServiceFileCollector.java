@@ -60,7 +60,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 						return new Promise<>(new CancellationException());
 
 					final Stream<Promise<Collection<ServiceFile>>> mappedFileDataPromises = Stream.of(storedItems)
-						.map(storedItem -> promiseServiceFiles(storedItem, cancellationProxy));
+						.map(storedItem -> promiseServiceFiles(libraryId, storedItem, cancellationProxy));
 
 					return Promise.whenAll(mappedFileDataPromises.toList());
 				});
@@ -74,12 +74,12 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		});
 	}
 
-	private Promise<Collection<ServiceFile>> promiseServiceFiles(StoredItem storedItem, CancellationProxy cancellationProxy) {
+	private Promise<Collection<ServiceFile>> promiseServiceFiles(LibraryId libraryId, StoredItem storedItem, CancellationProxy cancellationProxy) {
 		switch (storedItem.getItemType()) {
 			case ITEM:
-				return promiseServiceFiles(new Item(storedItem.getServiceId()), cancellationProxy);
+				return promiseServiceFiles(libraryId, new Item(storedItem.getServiceId()), cancellationProxy);
 			case PLAYLIST:
-				return promiseServiceFiles(new Playlist(storedItem.getServiceId()), cancellationProxy);
+				return promiseServiceFiles(libraryId, new Playlist(storedItem.getServiceId()), cancellationProxy);
 			default:
 				return new Promise<>(Collections.emptyList());
 		}
@@ -93,10 +93,10 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		cancellationProxy.doCancel(serviceFilesPromise);
 
 		return serviceFilesPromise
-			.then(forward(), new ExceptionHandler(item, storedItemAccess));
+			.then(forward(), new ExceptionHandler(libraryId, item, storedItemAccess));
 	}
 
-	private Promise<Collection<ServiceFile>> promiseServiceFiles(Playlist playlist, CancellationProxy cancellationProxy) {
+	private Promise<Collection<ServiceFile>> promiseServiceFiles(LibraryId libraryId, Playlist playlist, CancellationProxy cancellationProxy) {
 		final String[] parameters = fileListParameters.getFileListParameters(playlist);
 
 		final Promise<List<ServiceFile>> serviceFilesPromise = fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
@@ -104,7 +104,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 		cancellationProxy.doCancel(serviceFilesPromise);
 
 		return serviceFilesPromise
-			.then(forward(), new ExceptionHandler(playlist, storedItemAccess));
+			.then(forward(), new ExceptionHandler(libraryId, playlist, storedItemAccess));
 	}
 
 	private static class ExceptionHandler implements ImmediateResponse<Throwable, Collection<ServiceFile>> {

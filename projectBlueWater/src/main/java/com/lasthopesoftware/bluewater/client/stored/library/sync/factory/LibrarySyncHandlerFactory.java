@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.factory;
 
 import android.content.Context;
+
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
@@ -96,9 +97,7 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 			cachedFilePropertiesProvider,
 			syncDirectory);
 
-		final StoredItemAccess storedItemAccess = new StoredItemAccess(
-			context,
-			library);
+		final StoredItemAccess storedItemAccess = new StoredItemAccess(context);
 
 		return new LibrarySyncHandler(
 			library,

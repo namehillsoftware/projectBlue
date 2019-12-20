@@ -4,11 +4,13 @@ import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,16 +33,16 @@ public class WhenCollectingTheAssociatedServiceFiles {
 		final IStoredItemAccess storedItemAccess =
 			new IStoredItemAccess() {
 				@Override
-				public void toggleSync(IItem item, boolean enable) {
+				public void toggleSync(LibraryId libraryId, IItem item, boolean enable) {
 				}
 
 				@Override
-				public Promise<Boolean> isItemMarkedForSync(IItem item) {
+				public Promise<Boolean> isItemMarkedForSync(LibraryId libraryId, IItem item) {
 					return null;
 				}
 
 				@Override
-				public Promise<Collection<StoredItem>> promiseStoredItems() {
+				public Promise<Collection<StoredItem>> promiseStoredItems(LibraryId libraryId) {
 					return new Promise<>(Collections.emptyList());
 				}
 			};
@@ -53,8 +55,8 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			FileListParameters.getInstance());
 
 		collectedFiles =
-			new FuturePromise<>(serviceFileCollector
-			.promiseServiceFilesToSync()).get(1, TimeUnit.SECONDS);
+			new FuturePromise<>(serviceFileCollector.promiseServiceFilesToSync(new LibraryId(14)))
+				.get(1, TimeUnit.SECONDS);
 	}
 
 	@Test

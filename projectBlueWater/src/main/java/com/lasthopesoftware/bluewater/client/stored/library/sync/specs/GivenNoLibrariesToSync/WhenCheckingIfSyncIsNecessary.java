@@ -18,7 +18,7 @@ public class WhenCheckingIfSyncIsNecessary {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final SyncChecker syncChecker = new SyncChecker(() -> new Promise<>(Collections.emptySet()));
+		final SyncChecker syncChecker = new SyncChecker((l) -> new Promise<>(Collections.emptySet()));
 		isSyncNeeded = new FuturePromise<>(syncChecker.promiseIsSyncNeeded()).get();
 	}
 

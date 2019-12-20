@@ -1,15 +1,17 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAnEmptySetOfStoredItems;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemsChecker;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
-import edu.emory.mathcs.backport.java.util.Collections;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -26,7 +28,7 @@ public class WhenCheckingIfAnyStoredItemsExist {
 	@BeforeClass
 	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 		final IStoredItemAccess storedItemAccess = mock(IStoredItemAccess.class);
-		when(storedItemAccess.promiseStoredItems())
+		when(storedItemAccess.promiseStoredItems(new LibraryId(13)))
 			.thenReturn(new Promise<>(Collections.emptyList()));
 		final CheckForAnyStoredFiles checkForAnyStoredFiles = mock(CheckForAnyStoredFiles.class);
 		when(checkForAnyStoredFiles.promiseIsAnyStoredFiles(any()))
@@ -35,7 +37,7 @@ public class WhenCheckingIfAnyStoredItemsExist {
 
 		isAny =
 			new FuturePromise<>(
-				storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new Library()))
+				storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new Library().setId(13)))
 			.get(1000, TimeUnit.SECONDS);
 	}
 

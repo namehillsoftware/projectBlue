@@ -19,7 +19,7 @@ public class WhenCheckingIfSyncIsNecessary {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final SyncChecker syncChecker = new SyncChecker(() -> new Promise<>(Arrays.asList(new ServiceFile(1), new ServiceFile(18))));
+		final SyncChecker syncChecker = new SyncChecker((l) -> new Promise<>(Arrays.asList(new ServiceFile(1), new ServiceFile(18))));
 		isSyncNeeded = new FuturePromise<>(syncChecker.promiseIsSyncNeeded()).get();
 	}
 

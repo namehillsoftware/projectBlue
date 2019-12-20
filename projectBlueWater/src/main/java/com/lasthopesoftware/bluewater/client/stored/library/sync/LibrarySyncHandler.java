@@ -15,12 +15,14 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
 import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import io.reactivex.Observable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
+
+import io.reactivex.Observable;
 
 public class LibrarySyncHandler {
 
@@ -47,7 +49,7 @@ public class LibrarySyncHandler {
 
 	public Observable<StoredFileJobStatus> observeLibrarySync() {
 
-		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
+		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync(library.getLibraryId());
 
 		return StreamedPromise.stream(new Promise<HashSet<ServiceFile>>(messenger -> {
 			final CancellationProxy cancellationProxy = new CancellationProxy();

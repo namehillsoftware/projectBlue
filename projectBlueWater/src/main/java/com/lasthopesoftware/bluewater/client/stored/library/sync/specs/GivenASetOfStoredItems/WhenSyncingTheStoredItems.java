@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IF
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
@@ -15,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.namehillsoftware.handoff.promises.Promise;
-import io.reactivex.Observable;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -24,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import io.reactivex.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,7 +42,7 @@ public class WhenSyncingTheStoredItems {
 	@BeforeClass
 	public static void before() {
 		final IStoredItemAccess storedItemAccessMock = mock(IStoredItemAccess.class);
-		when(storedItemAccessMock.promiseStoredItems())
+		when(storedItemAccessMock.promiseStoredItems(new LibraryId(52)))
 			.thenReturn(new Promise<>(Collections.singleton(
 				new StoredItem(1, 14, StoredItem.ItemType.PLAYLIST))));
 
