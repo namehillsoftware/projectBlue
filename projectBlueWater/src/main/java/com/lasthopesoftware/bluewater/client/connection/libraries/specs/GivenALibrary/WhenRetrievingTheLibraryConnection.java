@@ -42,10 +42,10 @@ public class WhenRetrievingTheLibraryConnection {
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(urlProvider));
 
-		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider();
+		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(null, null);
 
 		connectionProvider = new FuturePromise<>(libraryConnectionProvider
-			.buildLibraryConnection(new LibraryId(3))
+			.promiseLibraryConnection(new LibraryId(3))
 			.updates(statuses::add)).get();
 	}
 

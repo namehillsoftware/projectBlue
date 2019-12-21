@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.specs.GivenALibrary.AndGettingALiveUrlThrowsAnException;
+package com.lasthopesoftware.bluewater.client.connection.libraries.specs.GivenALibrary.AndALiveUrlIsNotFound;
 
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
@@ -16,7 +16,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -43,23 +42,38 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
-			.thenReturn(new Promise<>(new IOException("An error!")))
+			.thenReturn(Promise.empty())
 			.thenReturn(new Promise<>(firstUrlProvider));
 
-//		(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
+		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
+
+//		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
+//			final SessionConnection sessionConnection = new SessionConnection(
+//				localBroadcastManager,
+//				fakeSelectedLibraryProvider,
+//				libraryProvider,
+//				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
+//				Promise::new,
+//				liveUrlProvider,
+//				mock(TestConnections.class),
+//				OkHttpFactory.getInstance());
+//
+//			connectionProvider = new FuturePromise<>(
+//				sessionConnection.promiseSessionConnection()
+//					.eventually(
+//						c -> sessionConnection.promiseSessionConnection(),
+//						e -> sessionConnection.promiseSessionConnection())).get();
+//		}
+
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(null, null);
 
-		connectionProvider = new FuturePromise<>(
-			libraryConnectionProvider
-				.promiseLibraryConnection(new LibraryId(2))
-				.updates(statuses::add)
-				.eventually(
-					c -> libraryConnectionProvider
-						.promiseLibraryConnection(new LibraryId(2))
-						.updates(statuses::add),
-					e -> libraryConnectionProvider
-						.promiseLibraryConnection(new LibraryId(2))
-						.updates(statuses::add))).get();
+		final LibraryId libraryId = new LibraryId(2);
+		connectionProvider = new FuturePromise<>(libraryConnectionProvider
+			.promiseLibraryConnection(libraryId)
+			.updates(statuses::add)
+			.eventually(
+				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add),
+				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add))).get();
 	}
 
 	@Test

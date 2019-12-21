@@ -44,11 +44,11 @@ public class WhenRetrievingTheLibraryConnection {
 
 //		(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 
-		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider();
+		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(null, null);
 
 		try {
 			connectionProvider = new FuturePromise<>(libraryConnectionProvider
-				.buildLibraryConnection(new LibraryId(2))
+				.promiseLibraryConnection(new LibraryId(2))
 				.updates(statuses::add)).get();
 		} catch (ExecutionException e) {
 			if (e.getCause() instanceof IOException)

@@ -1,9 +1,10 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.specs.GivenALibrary.AndGettingALiveUrlThrowsAnException;
+package com.lasthopesoftware.bluewater.client.connection.libraries.specs.GivenALibrary.AndALiveUrlIsNotFound.AndAConnectionIsStillAlive;
 
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -16,19 +17,19 @@ import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenRetrievingTheLibraryConnectionTwice {
+public class WhenGettingATestedLibraryConnection {
 
-	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static final List<BuildingConnectionStatus> statuses = new ArrayList<>();
+	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static IConnectionProvider connectionProvider;
 
 	@BeforeClass
@@ -43,23 +44,43 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
-			.thenReturn(new Promise<>(new IOException("An error!")))
+			.thenReturn(Promise.empty())
 			.thenReturn(new Promise<>(firstUrlProvider));
 
-//		(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
+		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
+
+		final TestConnections testConnections = mock(TestConnections.class);
+		when(testConnections.promiseIsConnectionPossible(any()))
+				.thenReturn(new Promise<>(false));
+
+//		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
+//			final SessionConnection sessionConnection = new SessionConnection(
+//				localBroadcastManager,
+//				fakeSelectedLibraryProvider,
+//				libraryProvider,
+//				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
+//				Promise::new,
+//				liveUrlProvider,
+//				testConnections,
+//				OkHttpFactory.getInstance());
+//
+//			connectionProvider = new FuturePromise<>(
+//				sessionConnection.promiseSessionConnection()
+//					.eventually(
+//						c -> sessionConnection.promiseTestedSessionConnection(),
+//						e -> sessionConnection.promiseTestedSessionConnection())).get();
+//		}
+
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(null, null);
 
-		connectionProvider = new FuturePromise<>(
-			libraryConnectionProvider
-				.promiseLibraryConnection(new LibraryId(2))
-				.updates(statuses::add)
-				.eventually(
-					c -> libraryConnectionProvider
-						.promiseLibraryConnection(new LibraryId(2))
-						.updates(statuses::add),
-					e -> libraryConnectionProvider
-						.promiseLibraryConnection(new LibraryId(2))
-						.updates(statuses::add))).get();
+		final LibraryId libraryId = new LibraryId(2);
+		connectionProvider = new FuturePromise<>(libraryConnectionProvider
+			.promiseLibraryConnection(libraryId)
+			.updates(statuses::add)
+			.eventually(
+				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add),
+				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add)))
+			.get();
 	}
 
 	@Test

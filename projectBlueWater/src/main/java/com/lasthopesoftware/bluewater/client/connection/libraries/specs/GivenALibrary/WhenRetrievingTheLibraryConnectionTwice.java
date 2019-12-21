@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.assertj.core.api.Assertions;
@@ -27,7 +26,6 @@ import static org.mockito.Mockito.when;
 
 public class WhenRetrievingTheLibraryConnectionTwice {
 
-	private static final BroadcastRecorder broadcastRecorder = new BroadcastRecorder();
 	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static final List<BuildingConnectionStatus> statuses = new ArrayList<>();
 	private static IConnectionProvider connectionProvider;
@@ -48,13 +46,13 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 
 		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
-		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider();
+		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(null, null);
 
 		connectionProvider = new FuturePromise<>(libraryConnectionProvider
-			.buildLibraryConnection(new LibraryId(2))
+			.promiseLibraryConnection(new LibraryId(2))
 			.updates(statuses::add)).get();
 		secondConnectionProvider = new FuturePromise<>(libraryConnectionProvider
-			.buildLibraryConnection(new LibraryId(2))
+			.promiseLibraryConnection(new LibraryId(2))
 			.updates(statuses::add)).get();
 	}
 
