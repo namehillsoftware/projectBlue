@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -41,7 +42,8 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
@@ -55,7 +57,7 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 			OkHttpFactory.getInstance());
 
-		connectionProvider = new FuturePromise<>(
+		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(
 			libraryConnectionProvider
 				.promiseLibraryConnection(new LibraryId(2))
 				.updates(statuses::add)
@@ -65,7 +67,11 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 						.updates(statuses::add),
 					e -> libraryConnectionProvider
 						.promiseLibraryConnection(new LibraryId(2))
-						.updates(statuses::add))).get();
+						.updates(statuses::add)));
+
+		libraryDeferredPromise.resolve();
+
+		connectionProvider = futureConnectionProvider.get();
 	}
 
 	@Test

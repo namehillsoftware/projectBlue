@@ -5,10 +5,12 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -21,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -40,10 +44,12 @@ public class WhenRetrievingTheLibraryConnection {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
-		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(new IOException()));
+		final DeferredPromise<IUrlProvider> deferredUrlPromise = new DeferredPromise<>(new IOException());
+		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(deferredUrlPromise);
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
@@ -52,11 +58,16 @@ public class WhenRetrievingTheLibraryConnection {
 			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 			OkHttpFactory.getInstance());
 
+		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
+			.promiseLibraryConnection(new LibraryId(2))
+			.updates(statuses::add));
+
+		libraryDeferredPromise.resolve();
+		deferredUrlPromise.resolve();
+
 		try {
-			connectionProvider = new FuturePromise<>(libraryConnectionProvider
-				.promiseLibraryConnection(new LibraryId(2))
-				.updates(statuses::add)).get();
-		} catch (ExecutionException e) {
+			connectionProvider = futureConnectionProvider.get(30, TimeUnit.SECONDS);
+		} catch (ExecutionException | TimeoutException e) {
 			if (e.getCause() instanceof IOException)
 				exception = (IOException) e.getCause();
 		}

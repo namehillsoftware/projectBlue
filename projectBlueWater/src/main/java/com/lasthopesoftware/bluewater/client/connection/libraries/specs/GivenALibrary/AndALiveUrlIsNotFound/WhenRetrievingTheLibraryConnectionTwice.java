@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -40,30 +41,13 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
 			.thenReturn(Promise.empty())
 			.thenReturn(new Promise<>(firstUrlProvider));
-
-		//		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
-//			final SessionConnection sessionConnection = new SessionConnection(
-//				localBroadcastManager,
-//				fakeSelectedLibraryProvider,
-//				libraryProvider,
-//				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
-//				Promise::new,
-//				liveUrlProvider,
-//				mock(TestConnections.class),
-//				OkHttpFactory.getInstance());
-//
-//			connectionProvider = new FuturePromise<>(
-//				sessionConnection.promiseSessionConnection()
-//					.eventually(
-//						c -> sessionConnection.promiseSessionConnection(),
-//						e -> sessionConnection.promiseSessionConnection())).get();
-//		}
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
@@ -73,12 +57,17 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			OkHttpFactory.getInstance());
 
 		final LibraryId libraryId = new LibraryId(2);
-		connectionProvider = new FuturePromise<>(libraryConnectionProvider
+
+		final FuturePromise<IConnectionProvider> futureConnectionProvider =  new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(libraryId)
 			.updates(statuses::add)
 			.eventually(
-				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add),
-				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add))).get();
+				c -> libraryConnectionProvider.promiseLibraryConnection(libraryId).updates(statuses::add),
+				c -> libraryConnectionProvider.promiseLibraryConnection(libraryId).updates(statuses::add)));
+
+		libraryDeferredPromise.resolve();
+
+		connectionProvider = futureConnectionProvider.get();
 	}
 
 	@Test
