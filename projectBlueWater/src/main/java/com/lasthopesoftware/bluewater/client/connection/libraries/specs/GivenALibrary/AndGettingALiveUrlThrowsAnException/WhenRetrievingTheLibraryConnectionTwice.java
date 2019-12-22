@@ -4,11 +4,12 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -18,6 +19,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -46,8 +48,12 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			.thenReturn(new Promise<>(new IOException("An error!")))
 			.thenReturn(new Promise<>(firstUrlProvider));
 
-//		(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
-		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(null, null);
+		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
+			libraryProvider,
+			Promise::new,
+			liveUrlProvider,
+			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
+			OkHttpFactory.getInstance());
 
 		connectionProvider = new FuturePromise<>(
 			libraryConnectionProvider
@@ -78,15 +84,5 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.GettingView,
 				BuildingConnectionStatus.BuildingSessionComplete);
-	}
-
-	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
-
-		final int selectedLibraryId = 2;
-
-		@Override
-		public int getSelectedLibraryId() {
-			return selectedLibraryId;
-		}
 	}
 }

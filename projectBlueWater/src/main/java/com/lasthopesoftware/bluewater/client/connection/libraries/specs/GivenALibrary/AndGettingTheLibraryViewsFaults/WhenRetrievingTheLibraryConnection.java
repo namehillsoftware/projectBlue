@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -44,9 +45,12 @@ public class WhenRetrievingTheLibraryConnection {
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(urlProvider));
 
-//		(provider) -> new Promise<>(new IOException("An error! :O")),
-
-		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(null, null);
+		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
+			libraryProvider,
+			Promise::new,
+			liveUrlProvider,
+			(provider) -> new Promise<>(new IOException("An error! :O")),
+			OkHttpFactory.getInstance());
 
 		try {
 			connectionProvider = new FuturePromise<>(libraryConnectionProvider

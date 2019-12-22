@@ -9,15 +9,15 @@ open class ProgressingPromise<Progress, Resolution> : Promise<Resolution> {
 	private val updateListeners = ConcurrentLinkedQueue<OneParameterAction<Progress>>()
 	private var p: Progress? = null
 
-	constructor(resolution: Resolution) : super(resolution)
+	constructor(resolution: Resolution?) : super(resolution)
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 
-	var progress: Progress?
+	open var progress: Progress?
 		get() {
 			return p
 		}
-		private set(value) {
+		set(value) {
 			p = value
 		}
 

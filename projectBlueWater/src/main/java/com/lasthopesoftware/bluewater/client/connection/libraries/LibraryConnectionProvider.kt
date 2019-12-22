@@ -13,32 +13,52 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViewsUsingConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
-import com.namehillsoftware.handoff.promises.Promise
+import com.vedsoft.futures.runnables.OneParameterAction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class LibraryConnectionProvider(private val libraryProvider: ILibraryProvider, private val libraryStorage: ILibraryStorage, private val liveUrlProvider: ProvideLiveUrl, private val libraryViewsProvider: ProvideLibraryViewsUsingConnection, private val okHttpFactory: OkHttpFactory) : ProvideLibraryConnections {
+class LibraryConnectionProvider(
+	private val libraryProvider: ILibraryProvider,
+	private val libraryStorage: ILibraryStorage,
+	private val liveUrlProvider: ProvideLiveUrl,
+	private val libraryViewsProvider: ProvideLibraryViewsUsingConnection,
+	private val okHttpFactory: OkHttpFactory) : ProvideLibraryConnections {
 
 	private val cachedConnectionProviders = ConcurrentHashMap<LibraryId, IConnectionProvider>()
 	private val promisedConnectionProvidersCache = HashMap<LibraryId, ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>>()
 	private val buildingConnectionPromiseSync = Any()
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
-		var cachedConnectionProvider = cachedConnectionProviders[libraryId]
+		val cachedConnectionProvider = cachedConnectionProviders[libraryId]
 		if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
 
 		synchronized(buildingConnectionPromiseSync) {
-			cachedConnectionProvider = cachedConnectionProviders[libraryId]
+			val cachedConnectionProvider = cachedConnectionProviders[libraryId]
 			if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
 
-			if (!promisedConnectionProvidersCache.containsKey(libraryId)) promisedConnectionProvidersCache[libraryId] = ProgressingPromise(null)
+			if (!promisedConnectionProvidersCache.containsKey(libraryId))
+				promisedConnectionProvidersCache[libraryId] = ProgressingPromise(null as IConnectionProvider?)
+
 			val cachedPromisedProvider = promisedConnectionProvidersCache[libraryId]
-			val nextPromisedConnectionProvider = cachedPromisedProvider!!.eventually(
-				{ c: IConnectionProvider? ->
-					c?.let { Promise(it) }
-						?: promiseUpdatedCachedConnection(libraryId)
+			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+				init {
+					cachedPromisedProvider!!.then(
+						{ c: IConnectionProvider? ->
+							if (c != null) {
+								resolve(c)
+								return@then
+							}
+
+							promiseUpdatedCachedConnection(libraryId)
+								.updates(OneParameterAction { reportProgress(it) })
+								.then({resolve(it)}, {reject(it)})
+						}
+					) { e: Throwable? -> promiseUpdatedCachedConnection(libraryId)
+						.updates(OneParameterAction { reportProgress(it) })
+						.then({resolve(it)}, {reject(it)})
+					}
 				}
-			) { e: Throwable? -> promiseUpdatedCachedConnection(libraryId) }
+			}
 			promisedConnectionProvidersCache[libraryId] = nextPromisedConnectionProvider
 			return nextPromisedConnectionProvider
 		}
@@ -49,11 +69,16 @@ class LibraryConnectionProvider(private val libraryProvider: ILibraryProvider, p
 	}
 
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
-		return promiseBuiltSessionConnection(libraryId)
-			.then { c: IConnectionProvider? ->
-				if (c != null) cachedConnectionProviders[libraryId] = c
-				c
+		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+			init {
+				promiseBuiltSessionConnection(libraryId)
+					.updates(OneParameterAction { reportProgress(it) })
+					.then({ c: IConnectionProvider? ->
+						if (c != null) cachedConnectionProviders[libraryId] = c
+						resolve(c)
+					}, { e: Throwable? -> reject(e) })
 			}
+		}
 	}
 
 	private fun promiseBuiltSessionConnection(selectedLibraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
