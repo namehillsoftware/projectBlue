@@ -129,13 +129,22 @@ class LibraryConnectionProvider(
 										library.selectedViewType = Library.ViewType.StandardServerView
 										libraryStorage
 											.saveLibrary(library)
-											.then {
+											.then { savedLibrary: Library? ->
 												reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
 												resolve(localConnectionProvider)
 											}
-									}, { reportProgress(BuildingConnectionStatus.GettingViewFailed) })
-							}, { reportProgress(BuildingConnectionStatus.BuildingConnectionFailed) })
-					}, { reportProgress(BuildingConnectionStatus.GettingLibraryFailed) })
+									}, {
+										reportProgress(BuildingConnectionStatus.GettingViewFailed)
+										reject(it)
+									})
+							}, {
+								reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
+								reject(it)
+							})
+					}, {
+						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+						reject(it)
+					})
 			}
 		}
 	}

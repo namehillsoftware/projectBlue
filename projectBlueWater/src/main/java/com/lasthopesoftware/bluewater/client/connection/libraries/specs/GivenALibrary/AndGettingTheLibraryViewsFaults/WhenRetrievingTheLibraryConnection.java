@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -20,6 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -40,7 +43,8 @@ public class WhenRetrievingTheLibraryConnection {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(urlProvider));
@@ -52,11 +56,15 @@ public class WhenRetrievingTheLibraryConnection {
 			(provider) -> new Promise<>(new IOException("An error! :O")),
 			OkHttpFactory.getInstance());
 
+		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
+			.promiseLibraryConnection(new LibraryId(2))
+			.updates(statuses::add));
+
+		libraryDeferredPromise.resolve();
+
 		try {
-			connectionProvider = new FuturePromise<>(libraryConnectionProvider
-				.promiseLibraryConnection(new LibraryId(3))
-				.updates(statuses::add)).get();
-		} catch (ExecutionException e) {
+			connectionProvider = futureConnectionProvider.get(30, TimeUnit.SECONDS);
+		} catch (ExecutionException | TimeoutException e) {
 			if (e.getCause() instanceof IOException)
 				exception = (IOException) e.getCause();
 		}

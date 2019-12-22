@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -41,24 +42,11 @@ public class WhenRetrievingTheLibraryConnection {
 			.setSelectedView(3);
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(urlProvider));
-
-//		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
-//			final SessionConnection sessionConnection = new SessionConnection(
-//				localBroadcastManager,
-//				() -> 2,
-//				libraryProvider,
-//				(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
-//				Promise::new,
-//				liveUrlProvider,
-//				mock(TestConnections.class),
-//				OkHttpFactory.getInstance());
-
-//			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
-//		}
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
@@ -67,9 +55,13 @@ public class WhenRetrievingTheLibraryConnection {
 			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 			OkHttpFactory.getInstance());
 
-		connectionProvider = new FuturePromise<>(libraryConnectionProvider
-			.promiseLibraryConnection(new LibraryId(3))
-			.updates(statuses::add)).get();
+		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
+			.promiseLibraryConnection(new LibraryId(2))
+			.updates(statuses::add));
+
+		libraryDeferredPromise.resolve();
+
+		connectionProvider = futureConnectionProvider.get();
 	}
 
 	@Test
