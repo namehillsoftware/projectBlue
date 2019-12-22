@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -36,13 +37,14 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-
 		final Library library = new Library()
 			.setId(2)
 			.setAccessCode("aB5nf");
 
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(firstUrlProvider));
@@ -54,12 +56,18 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 			OkHttpFactory.getInstance());
 
-		connectionProvider = new FuturePromise<>(libraryConnectionProvider
+		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(new LibraryId(2))
-			.updates(statuses::add)).get();
-		secondConnectionProvider = new FuturePromise<>(libraryConnectionProvider
+			.updates(statuses::add));
+
+		final FuturePromise<IConnectionProvider> secondFutureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(new LibraryId(2))
-			.updates(statuses::add)).get();
+			.updates(statuses::add));
+
+		libraryDeferredPromise.resolve();
+
+		connectionProvider = futureConnectionProvider.get();
+		secondConnectionProvider = secondFutureConnectionProvider.get();
 	}
 
 	@Test

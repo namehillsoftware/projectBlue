@@ -43,9 +43,9 @@ class LibraryConnectionProvider(
 			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 				init {
 					cachedPromisedProvider!!.then(
-						{ c: IConnectionProvider? ->
-							if (c != null) {
-								resolve(c)
+						{
+							if (it != null) {
+								resolve(it)
 								return@then
 							}
 
@@ -53,9 +53,10 @@ class LibraryConnectionProvider(
 								.updates(OneParameterAction { reportProgress(it) })
 								.then({resolve(it)}, {reject(it)})
 						}
-					) { e: Throwable? -> promiseUpdatedCachedConnection(libraryId)
-						.updates(OneParameterAction { reportProgress(it) })
-						.then({resolve(it)}, {reject(it)})
+					) {
+						promiseUpdatedCachedConnection(libraryId)
+							.updates(OneParameterAction { reportProgress(it) })
+							.then({resolve(it)}, {reject(it)})
 					}
 				}
 			}
@@ -93,6 +94,7 @@ class LibraryConnectionProvider(
 							resolve(null)
 							return@then
 						}
+
 						reportProgress(BuildingConnectionStatus.BuildingConnection)
 
 						liveUrlProvider
@@ -127,7 +129,7 @@ class LibraryConnectionProvider(
 										library.selectedViewType = Library.ViewType.StandardServerView
 										libraryStorage
 											.saveLibrary(library)
-											.then { savedLibrary: Library? ->
+											.then {
 												reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
 												resolve(localConnectionProvider)
 											}

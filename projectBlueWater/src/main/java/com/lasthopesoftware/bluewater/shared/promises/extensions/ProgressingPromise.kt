@@ -13,20 +13,20 @@ open class ProgressingPromise<Progress, Resolution> : Promise<Resolution> {
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 
-	open var progress: Progress?
+	open val progress: Progress?
 		get() {
 			return p
 		}
-		set(value) {
-			p = value
-		}
 
 	protected fun reportProgress(progress: Progress) {
-		this.progress = progress;
+		this.p = progress
 		for (action in updateListeners) action.runWith(progress)
 	}
 
 	fun updates(action: OneParameterAction<Progress>): ProgressingPromise<Progress, Resolution> {
+		val currentProgress = p;
+		if (currentProgress != null)
+			action.runWith(currentProgress)
 		updateListeners.add(action)
 		return this
 	}
