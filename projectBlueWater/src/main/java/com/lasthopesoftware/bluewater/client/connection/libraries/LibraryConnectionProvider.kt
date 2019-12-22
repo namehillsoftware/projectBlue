@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage
@@ -22,11 +23,49 @@ class LibraryConnectionProvider(
 	private val libraryStorage: ILibraryStorage,
 	private val liveUrlProvider: ProvideLiveUrl,
 	private val libraryViewsProvider: ProvideLibraryViewsUsingConnection,
+	private val connectionTester: TestConnections,
 	private val okHttpFactory: OkHttpFactory) : ProvideLibraryConnections {
 
 	private val cachedConnectionProviders = ConcurrentHashMap<LibraryId, IConnectionProvider>()
 	private val promisedConnectionProvidersCache = HashMap<LibraryId, ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>>()
 	private val buildingConnectionPromiseSync = Any()
+
+	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
+		synchronized(buildingConnectionPromiseSync) {
+			if (!promisedConnectionProvidersCache.containsKey(libraryId)) promisedConnectionProvidersCache[libraryId] = ProgressingPromise(null as IConnectionProvider?)
+
+			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+				init {
+					promisedConnectionProvidersCache[libraryId]
+					?.then(
+					{
+						c ->
+						if (c != null) connectionTester.promiseIsConnectionPossible(c)
+							.then({ result ->
+								if (result) resolve(c)
+								else promiseUpdatedCachedConnection(libraryId)
+									.updates(OneParameterAction { reportProgress(it) })
+									.then({resolve(it)}, {reject(it)})
+							}, {
+								promiseUpdatedCachedConnection(libraryId)
+									.updates(OneParameterAction { reportProgress(it) })
+									.then({resolve(it)}, {reject(it)})
+							})
+						else promiseUpdatedCachedConnection(libraryId)
+							.updates(OneParameterAction { reportProgress(it) })
+							.then({resolve(it)}, {reject(it)})
+					},
+					{
+						promiseUpdatedCachedConnection(libraryId)
+							.updates(OneParameterAction { reportProgress(it) })
+							.then({resolve(it)}, {reject(it)})
+					})
+				}
+			}
+			promisedConnectionProvidersCache[libraryId] = promisedTestConnectionProvider
+			return promisedTestConnectionProvider
+		}
+	}
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		val cachedConnectionProvider = cachedConnectionProviders[libraryId]
@@ -63,10 +102,6 @@ class LibraryConnectionProvider(
 			promisedConnectionProvidersCache[libraryId] = nextPromisedConnectionProvider
 			return nextPromisedConnectionProvider
 		}
-	}
-
-	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 	}
 
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {

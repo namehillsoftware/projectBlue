@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -43,7 +44,8 @@ public class WhenGettingATestedLibraryConnection {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(firstUrlProvider));
@@ -57,18 +59,22 @@ public class WhenGettingATestedLibraryConnection {
 			Promise::new,
 			liveUrlProvider,
 			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
+			testConnections,
 			OkHttpFactory.getInstance());
 
 		final LibraryId libraryId = new LibraryId(2);
-		connectionProvider = new FuturePromise<>(libraryConnectionProvider
+		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(libraryId)
-			.updates(statuses::add))
-			.get();
+			.updates(statuses::add));
 
-		secondConnectionProvider = new FuturePromise<>(libraryConnectionProvider
+		final FuturePromise<IConnectionProvider> secondFutureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseTestedLibraryConnection(libraryId)
-			.updates(statuses::add))
-			.get();
+			.updates(statuses::add));
+
+		libraryDeferredPromise.resolve();
+
+		connectionProvider = futureConnectionProvider.get();
+		secondConnectionProvider = secondFutureConnectionProvider.get();
 	}
 
 	@Test
