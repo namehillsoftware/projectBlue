@@ -1,12 +1,11 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
-import com.namehillsoftware.handoff.promises.Promise
 import com.vedsoft.futures.runnables.OneParameterAction
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
-open class ProgressingPromise<Progress, Resolution> : Promise<Resolution> {
+open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress, Resolution> {
 	private val updateListeners = ConcurrentLinkedQueue<OneParameterAction<Progress>>()
 	private val atomicProgress: AtomicReference<Progress?> = AtomicReference()
 
@@ -14,7 +13,7 @@ open class ProgressingPromise<Progress, Resolution> : Promise<Resolution> {
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 
-	open val progress: Progress?
+	override val progress: Progress?
 		get() {
 			return atomicProgress.get()
 		}

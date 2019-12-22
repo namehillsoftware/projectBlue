@@ -1,6 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer;
 
-import com.google.android.exoplayer2.*;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
@@ -8,10 +12,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback.PromisedPlayedExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +39,9 @@ implements
 		}
 	};
 
-	private final CreateAndHold<ProgressingPromise<Duration, PlayedFile>> exoPlayerPositionSource = new AbstractSynchronousLazy<ProgressingPromise<Duration, PlayedFile>>() {
+	private final CreateAndHold<ProgressedPromise<Duration, PlayedFile>> exoPlayerPositionSource = new AbstractSynchronousLazy<ProgressedPromise<Duration, PlayedFile>>() {
 		@Override
-		protected ProgressingPromise<Duration, PlayedFile> create() {
+		protected ProgressedPromise<Duration, PlayedFile> create() {
 			return new PromisedPlayedExoPlayer(
 				exoPlayer,
 				lazyFileProgressReader.getObject(),
@@ -65,7 +70,7 @@ implements
 	}
 
 	@Override
-	public ProgressingPromise<Duration, PlayedFile> promisePlayedFile() {
+	public ProgressedPromise<Duration, PlayedFile> promisePlayedFile() {
 		return exoPlayerPositionSource.getObject();
 	}
 
