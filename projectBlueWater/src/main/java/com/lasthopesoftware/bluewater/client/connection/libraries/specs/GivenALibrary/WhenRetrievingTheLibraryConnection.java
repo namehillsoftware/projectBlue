@@ -50,7 +50,6 @@ public class WhenRetrievingTheLibraryConnection {
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
 			Promise::new,
-			liveUrlProvider,
 			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 			mock(TestConnections.class),
 			OkHttpFactory.getInstance());
@@ -75,7 +74,6 @@ public class WhenRetrievingTheLibraryConnection {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.GettingView,
 				BuildingConnectionStatus.BuildingSessionComplete);
 	}
 }

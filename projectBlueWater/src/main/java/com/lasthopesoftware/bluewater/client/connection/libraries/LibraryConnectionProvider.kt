@@ -6,13 +6,8 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage
-import com.lasthopesoftware.bluewater.client.library.items.Item
-import com.lasthopesoftware.bluewater.client.library.repository.Library
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViewsUsingConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.vedsoft.futures.runnables.OneParameterAction
 import java.util.*
@@ -20,9 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class LibraryConnectionProvider(
 	private val libraryProvider: ILibraryProvider,
-	private val libraryStorage: ILibraryStorage,
 	private val liveUrlProvider: ProvideLiveUrl,
-	private val libraryViewsProvider: ProvideLibraryViewsUsingConnection,
 	private val connectionTester: TestConnections,
 	private val okHttpFactory: OkHttpFactory) : ProvideLibraryConnections {
 
@@ -34,31 +27,25 @@ class LibraryConnectionProvider(
 		synchronized(buildingConnectionPromiseSync) {
 			if (!promisedConnectionProvidersCache.containsKey(libraryId)) promisedConnectionProvidersCache[libraryId] = ProgressingPromise(null as IConnectionProvider?)
 
-			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
-				init {
-					promisedConnectionProvidersCache[libraryId]
-					?.then(
-					{
-						c ->
+			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
+			{
+				init
+				{
+					promisedConnectionProvidersCache[libraryId]?.then(
+					{ c ->
 						if (c != null) connectionTester.promiseIsConnectionPossible(c)
-							.then({ result ->
+							.then(
+							{ result ->
 								if (result) resolve(c)
-								else promiseUpdatedCachedConnection(libraryId)
-									.updates(OneParameterAction { reportProgress(it) })
-									.then({resolve(it)}, {reject(it)})
-							}, {
-								promiseUpdatedCachedConnection(libraryId)
-									.updates(OneParameterAction { reportProgress(it) })
-									.then({resolve(it)}, {reject(it)})
+								else proxy(promiseUpdatedCachedConnection(libraryId))
+							},
+							{
+								proxy(promiseUpdatedCachedConnection(libraryId))
 							})
-						else promiseUpdatedCachedConnection(libraryId)
-							.updates(OneParameterAction { reportProgress(it) })
-							.then({resolve(it)}, {reject(it)})
+						else proxy(promiseUpdatedCachedConnection(libraryId))
 					},
 					{
-						promiseUpdatedCachedConnection(libraryId)
-							.updates(OneParameterAction { reportProgress(it) })
-							.then({resolve(it)}, {reject(it)})
+						proxy(promiseUpdatedCachedConnection(libraryId))
 					})
 				}
 			}
@@ -79,24 +66,18 @@ class LibraryConnectionProvider(
 				promisedConnectionProvidersCache[libraryId] = ProgressingPromise(null as IConnectionProvider?)
 
 			val cachedPromisedProvider = promisedConnectionProvidersCache[libraryId]
-			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
-				init {
+			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
+			{
+				init
+				{
 					cachedPromisedProvider!!.then(
-						{
-							if (it != null) {
-								resolve(it)
-								return@then
-							}
-
-							promiseUpdatedCachedConnection(libraryId)
-								.updates(OneParameterAction { reportProgress(it) })
-								.then({resolve(it)}, {reject(it)})
-						}
-					) {
-						promiseUpdatedCachedConnection(libraryId)
-							.updates(OneParameterAction { reportProgress(it) })
-							.then({resolve(it)}, {reject(it)})
-					}
+					{
+						if (it != null) resolve(it)
+						else proxy(promiseUpdatedCachedConnection(libraryId))
+					},
+					{
+						proxy(promiseUpdatedCachedConnection(libraryId))
+					})
 				}
 			}
 			promisedConnectionProvidersCache[libraryId] = nextPromisedConnectionProvider
@@ -106,77 +87,64 @@ class LibraryConnectionProvider(
 
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
-			init {
+			init
+			{
 				promiseBuiltSessionConnection(libraryId)
 					.updates(OneParameterAction { reportProgress(it) })
-					.then({ c: IConnectionProvider? ->
+					.then(
+					{ c ->
 						if (c != null) cachedConnectionProviders[libraryId] = c
 						resolve(c)
-					}, { e: Throwable? -> reject(e) })
+					},
+					{ reject(it) })
 			}
 		}
 	}
 
 	private fun promiseBuiltSessionConnection(selectedLibraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
-		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
-			init {
+		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
+		{
+			init
+			{
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				libraryProvider
 					.getLibrary(selectedLibraryId.id)
-					.then({ library: Library? ->
-						if (library?.accessCode?.isEmpty() == true) {
-							reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-							resolve(null)
-							return@then
-						}
+					.then(
+					{ library ->
+						when(library?.accessCode?.isEmpty())
+						{
+							true ->
+							{
+								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+								resolve(null)
+							}
+							else ->
+							{
+								reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-						reportProgress(BuildingConnectionStatus.BuildingConnection)
-
-						liveUrlProvider
-							.promiseLiveUrl(library)
-							.then({ urlProvider: IUrlProvider? ->
-								if (urlProvider == null) {
-									reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-									resolve(null)
-									return@then
-								}
-
-								val localConnectionProvider: IConnectionProvider = ConnectionProvider(urlProvider, okHttpFactory)
-								if (library!!.selectedView >= 0) {
-									reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
-									resolve(localConnectionProvider)
-									return@then
-								}
-
-								reportProgress(BuildingConnectionStatus.GettingView)
-
-								libraryViewsProvider
-									.promiseLibraryViewsFromConnection(localConnectionProvider)
-									.then({ libraryViews: List<Item>? ->
-										if (libraryViews == null || libraryViews.isEmpty()) {
-											reportProgress(BuildingConnectionStatus.GettingViewFailed)
+								liveUrlProvider
+									.promiseLiveUrl(library)
+									.then(
+									onFulfilled@{ urlProvider ->
+										if (urlProvider == null)
+										{
+											reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
 											resolve(null)
-											return@then
+											return@onFulfilled
 										}
 
-										val selectedView = libraryViews[0].key
-										library.selectedView = selectedView
-										library.selectedViewType = Library.ViewType.StandardServerView
-										libraryStorage
-											.saveLibrary(library)
-											.then { savedLibrary: Library? ->
-												reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
-												resolve(localConnectionProvider)
-											}
-									}, {
-										reportProgress(BuildingConnectionStatus.GettingViewFailed)
+										val localConnectionProvider = ConnectionProvider(urlProvider, okHttpFactory)
+										reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
+										resolve(localConnectionProvider)
+									},
+									{
+										reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
 										reject(it)
 									})
-							}, {
-								reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-								reject(it)
-							})
-					}, {
+							}
+						}
+					},
+					{
 						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 						reject(it)
 					})

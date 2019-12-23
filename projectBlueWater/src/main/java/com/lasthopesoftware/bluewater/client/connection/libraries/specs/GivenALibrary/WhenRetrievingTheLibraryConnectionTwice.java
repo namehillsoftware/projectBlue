@@ -8,10 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -21,7 +19,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -52,9 +49,7 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
-			Promise::new,
 			liveUrlProvider,
-			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 			mock(TestConnections.class),
 			OkHttpFactory.getInstance());
 
@@ -83,17 +78,6 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.GettingView,
 				BuildingConnectionStatus.BuildingSessionComplete);
-	}
-
-	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
-
-		int selectedLibraryId;
-
-		@Override
-		public int getSelectedLibraryId() {
-			return selectedLibraryId;
-		}
 	}
 }

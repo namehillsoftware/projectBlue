@@ -30,4 +30,12 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		updateListeners.add(action)
 		return this
 	}
+
+	fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromise<Progress, Resolution> {
+		source
+			.updates(OneParameterAction { reportProgress(it) })
+			.then({resolve(it)}, {reject(it)})
+
+		return this
+	}
 }

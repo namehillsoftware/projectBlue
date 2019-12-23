@@ -14,3 +14,4 @@ charset = utf-8
 indent_style = tab
 trim_trailing_whitespace = true
 indent_size = tab
+max_line_length = 120

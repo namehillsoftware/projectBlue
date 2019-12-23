@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
@@ -20,7 +19,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -58,10 +56,8 @@ public class WhenGettingATestedLibraryConnection {
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
-			Promise::new,
 			liveUrlProvider,
-			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
-			mock(TestConnections.class),
+			connectionsTester,
 			OkHttpFactory.getInstance());
 
 		final LibraryId libraryId = new LibraryId(2);
@@ -69,14 +65,12 @@ public class WhenGettingATestedLibraryConnection {
 			.promiseLibraryConnection(libraryId)
 			.updates(statuses::add));
 
-		final FuturePromise<IConnectionProvider> secondFutureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
-			.promiseTestedLibraryConnection(libraryId)
-			.updates(statuses::add));
-
 		libraryDeferredPromise.resolve();
-
 		connectionProvider = futureConnectionProvider.get(30, TimeUnit.SECONDS);
-		secondConnectionProvider = secondFutureConnectionProvider.get(30, TimeUnit.SECONDS);
+
+		secondConnectionProvider = new FuturePromise<>(libraryConnectionProvider
+			.promiseTestedLibraryConnection(libraryId)
+			.updates(statuses::add)).get();
 	}
 
 	@Test
@@ -90,7 +84,6 @@ public class WhenGettingATestedLibraryConnection {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.GettingView,
 				BuildingConnectionStatus.BuildingSessionComplete);
 	}
 }

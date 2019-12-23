@@ -52,9 +52,7 @@ public class WhenRetrievingTheLibraryConnection {
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
-			Promise::new,
 			liveUrlProvider,
-			(provider) -> new Promise<>(new IOException("An error! :O")),
 			mock(TestConnections.class),
 			OkHttpFactory.getInstance());
 

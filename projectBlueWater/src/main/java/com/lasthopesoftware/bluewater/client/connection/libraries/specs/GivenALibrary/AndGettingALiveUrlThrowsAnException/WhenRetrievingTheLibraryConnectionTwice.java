@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
@@ -21,7 +20,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -43,8 +41,11 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
-		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
+		final DeferredPromise<Library> firstDeferredLibrary = new DeferredPromise<>(library);
+		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2))
+			.thenReturn(firstDeferredLibrary)
+			.thenReturn(secondDeferredLibrary);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
@@ -53,9 +54,7 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
-			Promise::new,
 			liveUrlProvider,
-			(provider) -> new Promise<>(Collections.singletonList(new Item(5))),
 			mock(TestConnections.class),
 			OkHttpFactory.getInstance());
 
@@ -71,7 +70,8 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 						.promiseLibraryConnection(new LibraryId(2))
 						.updates(statuses::add)));
 
-		libraryDeferredPromise.resolve();
+		firstDeferredLibrary.resolve();
+		secondDeferredLibrary.resolve();
 
 		connectionProvider = futureConnectionProvider.get();
 	}
@@ -90,7 +90,6 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 				BuildingConnectionStatus.BuildingConnectionFailed,
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.GettingView,
 				BuildingConnectionStatus.BuildingSessionComplete);
 	}
 }
