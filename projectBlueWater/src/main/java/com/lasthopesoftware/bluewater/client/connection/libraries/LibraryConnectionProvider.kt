@@ -125,17 +125,20 @@ class LibraryConnectionProvider(
 								liveUrlProvider
 									.promiseLiveUrl(library)
 									.then(
-									onFulfilled@{ urlProvider ->
-										if (urlProvider == null)
+									{
+										when(it)
 										{
-											reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-											resolve(null)
-											return@onFulfilled
+											null ->
+											{
+												reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
+												resolve(null)
+											}
+											else ->
+											{
+												reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
+												resolve(ConnectionProvider(it, okHttpFactory))
+											}
 										}
-
-										val localConnectionProvider = ConnectionProvider(urlProvider, okHttpFactory)
-										reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
-										resolve(localConnectionProvider)
 									},
 									{
 										reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
