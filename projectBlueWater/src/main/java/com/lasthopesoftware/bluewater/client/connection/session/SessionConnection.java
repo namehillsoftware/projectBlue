@@ -6,23 +6,18 @@ import android.content.Intent;
 import androidx.annotation.IntDef;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViewsUsingConnection;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
@@ -37,8 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -68,17 +61,9 @@ public class SessionConnection {
 
 	private static volatile SessionConnection sessionConnectionInstance;
 
-	private final ConcurrentHashMap<Integer, IConnectionProvider> cachedConnectionProviders = new ConcurrentHashMap<>();
-	private final HashMap<Integer, Promise<IConnectionProvider>> promisedConnectionProvidersCache = new HashMap<>();
-
 	private final LocalBroadcastManager localBroadcastManager;
 	private final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider;
-	private final ILibraryProvider libraryProvider;
-	private final ProvideLibraryViewsUsingConnection libraryViewsProvider;
-	private final ILibraryStorage libraryStorage;
-	private final ProvideLiveUrl liveUrlProvider;
-	private final TestConnections connectionTester;
-	private final OkHttpFactory okHttpFactory;
+	private final ProvideLibraryConnections libraryConnections;
 
 	public static synchronized SessionConnection getInstance(Context context) {
 		if (sessionConnectionInstance != null) return sessionConnectionInstance;
@@ -88,151 +73,34 @@ public class SessionConnection {
 		return sessionConnectionInstance = new SessionConnection(
 			LocalBroadcastManager.getInstance(applicationContext),
 			new SelectedBrowserLibraryIdentifierProvider(applicationContext),
-			new LibraryRepository(applicationContext),
-			new LibraryViewsByConnectionProvider(),
-			new LibraryRepository(applicationContext),
-			new LiveUrlProvider(
-				new ActiveNetworkFinder(applicationContext),
-				lazyUrlScanner.getObject()),
-			new ConnectionTester(),
-			OkHttpFactory.getInstance());
+			new LibraryConnectionProvider(
+				new LibraryRepository(applicationContext),
+				new LiveUrlProvider(
+					new ActiveNetworkFinder(applicationContext),
+					lazyUrlScanner.getObject()),
+				new ConnectionTester(),
+				OkHttpFactory.getInstance()));
 	}
 
 	public SessionConnection(
 		LocalBroadcastManager localBroadcastManager,
 		ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider,
-		ILibraryProvider libraryProvider,
-		ProvideLibraryViewsUsingConnection libraryViewsProvider,
-		ILibraryStorage libraryStorage,
-		ProvideLiveUrl liveUrlProvider,
-		TestConnections connectionTester,
-		OkHttpFactory okHttpFactory) {
+		ProvideLibraryConnections libraryConnections) {
 		this.localBroadcastManager = localBroadcastManager;
 		this.selectedLibraryIdentifierProvider = selectedLibraryIdentifierProvider;
-		this.libraryProvider = libraryProvider;
-		this.libraryViewsProvider = libraryViewsProvider;
-		this.libraryStorage = libraryStorage;
-		this.liveUrlProvider = liveUrlProvider;
-		this.connectionTester = connectionTester;
-		this.okHttpFactory = okHttpFactory;
+		this.libraryConnections = libraryConnections;
 	}
 
 	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
-		synchronized (buildingConnectionPromiseSync) {
-			if (!promisedConnectionProvidersCache.containsKey(newSelectedLibraryId))
-				promisedConnectionProvidersCache.put(newSelectedLibraryId, Promise.empty());
-
-			final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
-
-			final Promise<IConnectionProvider> promisedTestConnectionProvider = cachedPromisedProvider
-				.eventually(c -> c != null
-					? connectionTester.promiseIsConnectionPossible(c)
-						.eventually(result -> result
-							? new Promise<>(c)
-							: promiseUpdatedCachedConnection(newSelectedLibraryId))
-					: promiseUpdatedCachedConnection(newSelectedLibraryId),
-				e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
-
-			promisedConnectionProvidersCache.put(newSelectedLibraryId, promisedTestConnectionProvider);
-			return promisedTestConnectionProvider;
-		}
+		return libraryConnections.promiseTestedLibraryConnection(new LibraryId(newSelectedLibraryId));
 	}
 
 	public Promise<IConnectionProvider> promiseSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
-		IConnectionProvider cachedConnectionProvider = cachedConnectionProviders.get(newSelectedLibraryId);
-		if (cachedConnectionProvider != null) return new Promise<>(cachedConnectionProvider);
-
-		synchronized (buildingConnectionPromiseSync) {
-			cachedConnectionProvider = cachedConnectionProviders.get(newSelectedLibraryId);
-			if (cachedConnectionProvider != null) return new Promise<>(cachedConnectionProvider);
-
-			if (!promisedConnectionProvidersCache.containsKey(newSelectedLibraryId))
-				promisedConnectionProvidersCache.put(newSelectedLibraryId, Promise.empty());
-
-			final Promise<IConnectionProvider> cachedPromisedProvider = promisedConnectionProvidersCache.get(newSelectedLibraryId);
-
-			final Promise<IConnectionProvider> nextPromisedConnectionProvider = cachedPromisedProvider.eventually(
-				c -> c != null ? new Promise<>(c) : promiseUpdatedCachedConnection(newSelectedLibraryId),
-				e -> promiseUpdatedCachedConnection(newSelectedLibraryId));
-
-			promisedConnectionProvidersCache.put(newSelectedLibraryId, nextPromisedConnectionProvider);
-
-			return nextPromisedConnectionProvider;
-		}
-	}
-
-	private Promise<IConnectionProvider> promiseUpdatedCachedConnection(int libraryId) {
-		return promiseBuiltSessionConnection(libraryId)
-			.then(c -> {
-				if (c != null)
-					cachedConnectionProviders.put(libraryId, c);
-				return c;
-			});
-	}
-
-	private Promise<IConnectionProvider> promiseBuiltSessionConnection(final int selectedLibraryId) {
-		doStateChange(BuildingSessionConnectionStatus.GettingLibrary);
-		return libraryProvider
-			.getLibrary(selectedLibraryId)
-			.eventually(library -> {
-				if (library == null || library.getAccessCode() == null || library.getAccessCode().isEmpty()) {
-					doStateChange(BuildingSessionConnectionStatus.GettingLibraryFailed);
-					return Promise.empty();
-				}
-
-				doStateChange(BuildingSessionConnectionStatus.BuildingConnection);
-
-				return liveUrlProvider
-					.promiseLiveUrl(library)
-					.eventually(urlProvider -> {
-						if (urlProvider == null) {
-							doStateChange(BuildingSessionConnectionStatus.BuildingConnectionFailed);
-							return Promise.empty();
-						}
-
-						final IConnectionProvider localConnectionProvider = new ConnectionProvider(urlProvider, okHttpFactory);
-
-						if (library.getSelectedView() >= 0) {
-							doStateChange(BuildingSessionConnectionStatus.BuildingSessionComplete);
-							return new Promise<>(localConnectionProvider);
-						}
-
-						doStateChange(BuildingSessionConnectionStatus.GettingView);
-
-						return libraryViewsProvider
-							.promiseLibraryViewsFromConnection(localConnectionProvider)
-							.eventually(libraryViews -> {
-								if (libraryViews == null || libraryViews.size() == 0) {
-									doStateChange(BuildingSessionConnectionStatus.GettingViewFailed);
-									return Promise.empty();
-								}
-
-								final int selectedView = libraryViews.get(0).getKey();
-								library.setSelectedView(selectedView);
-								library.setSelectedViewType(Library.ViewType.StandardServerView);
-
-								return libraryStorage
-									.saveLibrary(library)
-									.then(savedLibrary -> {
-										doStateChange(BuildingSessionConnectionStatus.BuildingSessionComplete);
-										return localConnectionProvider;
-									});
-							}, e -> {
-								doStateChange(BuildingSessionConnectionStatus.GettingViewFailed);
-								return new Promise<>(e);
-							});
-					}, e -> {
-						doStateChange(BuildingSessionConnectionStatus.BuildingConnectionFailed);
-						return new Promise<>(e);
-					});
-			}, e -> {
-				doStateChange(BuildingSessionConnectionStatus.GettingLibraryFailed);
-				return new Promise<>(e);
-			});
+		return libraryConnections.promiseLibraryConnection(new LibraryId(newSelectedLibraryId));
 	}
 
 	private void doStateChange(@BuildingSessionConnectionStatus.ConnectionStatus final int status) {
