@@ -25,8 +25,6 @@ class LibraryConnectionProvider(
 
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		synchronized(buildingConnectionPromiseSync) {
-			if (!promisedConnectionProvidersCache.containsKey(libraryId)) promisedConnectionProvidersCache[libraryId] = ProgressingPromise(null as IConnectionProvider?)
-
 			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
 			{
 				init
@@ -47,6 +45,7 @@ class LibraryConnectionProvider(
 					{
 						proxy(promiseUpdatedCachedConnection(libraryId))
 					})
+					?: proxy(promiseUpdatedCachedConnection(libraryId))
 				}
 			}
 			promisedConnectionProvidersCache[libraryId] = promisedTestConnectionProvider
@@ -62,15 +61,11 @@ class LibraryConnectionProvider(
 			val cachedConnectionProvider = cachedConnectionProviders[libraryId]
 			if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
 
-			if (!promisedConnectionProvidersCache.containsKey(libraryId))
-				promisedConnectionProvidersCache[libraryId] = ProgressingPromise(null as IConnectionProvider?)
-
-			val cachedPromisedProvider = promisedConnectionProvidersCache[libraryId]
 			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
 			{
 				init
 				{
-					cachedPromisedProvider!!.then(
+					promisedConnectionProvidersCache[libraryId]?.then(
 					{
 						if (it != null) resolve(it)
 						else proxy(promiseUpdatedCachedConnection(libraryId))
@@ -78,6 +73,7 @@ class LibraryConnectionProvider(
 					{
 						proxy(promiseUpdatedCachedConnection(libraryId))
 					})
+					?: proxy(promiseUpdatedCachedConnection(libraryId))
 				}
 			}
 			promisedConnectionProvidersCache[libraryId] = nextPromisedConnectionProvider
