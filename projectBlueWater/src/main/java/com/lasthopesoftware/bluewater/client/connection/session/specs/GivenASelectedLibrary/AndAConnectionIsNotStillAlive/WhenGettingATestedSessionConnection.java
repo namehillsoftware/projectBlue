@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -53,7 +54,11 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> firstDeferredLibrary = new DeferredPromise<>(library);
+		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2))
+			.thenReturn(firstDeferredLibrary)
+			.thenReturn(secondDeferredLibrary);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(firstUrlProvider));
@@ -80,8 +85,13 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 					testConnections,
 					OkHttpFactory.getInstance()));
 
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
-			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection()).get();
+			final FuturePromise<IConnectionProvider> firstFutureConnection = new FuturePromise<>(sessionConnection.promiseSessionConnection());
+			firstDeferredLibrary.resolve();
+			connectionProvider = firstFutureConnection.get();
+
+			final FuturePromise<IConnectionProvider> secondFutureConnection = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection());
+			secondDeferredLibrary.resolve();
+			secondConnectionProvider = secondFutureConnection.get();
 		}
 	}
 
