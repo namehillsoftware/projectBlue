@@ -86,6 +86,6 @@ public class WhenGettingATestedLibraryConnection {
 				BuildingConnectionStatus.BuildingConnectionFailed,
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingSessionComplete);
+				BuildingConnectionStatus.BuildingConnectionComplete);
 	}
 }

@@ -131,7 +131,7 @@ class LibraryConnectionProvider(
 											}
 											else ->
 											{
-												reportProgress(BuildingConnectionStatus.BuildingSessionComplete)
+												reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
 												resolve(ConnectionProvider(it, okHttpFactory))
 											}
 										}

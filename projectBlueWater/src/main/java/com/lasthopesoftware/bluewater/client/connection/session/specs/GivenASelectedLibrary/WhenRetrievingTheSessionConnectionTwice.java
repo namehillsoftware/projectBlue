@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnection;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingView;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -92,7 +91,6 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 			.containsExactly(
 				GettingLibrary,
 				BuildingConnection,
-				GettingView,
 				BuildingSessionComplete);
 	}
 

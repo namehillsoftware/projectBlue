@@ -78,6 +78,6 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingSessionComplete);
+				BuildingConnectionStatus.BuildingConnectionComplete);
 	}
 }

@@ -8,7 +8,9 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.TextView;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
@@ -109,12 +111,6 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 			lblConnectionStatusView.setText(R.string.lbl_error_connecting_try_again);
-			return;
-		case BuildingSessionConnectionStatus.GettingView:
-			lblConnectionStatusView.setText(R.string.lbl_getting_library_views);
-			return;
-		case BuildingSessionConnectionStatus.GettingViewFailed:
-			lblConnectionStatusView.setText(R.string.lbl_library_no_views);
 			return;
 		case BuildingSessionConnectionStatus.BuildingSessionComplete:
 			lblConnectionStatusView.setText(R.string.lbl_connected);

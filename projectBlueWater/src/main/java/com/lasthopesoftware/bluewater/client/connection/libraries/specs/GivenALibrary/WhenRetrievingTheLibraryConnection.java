@@ -71,6 +71,6 @@ public class WhenRetrievingTheLibraryConnection {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingSessionComplete);
+				BuildingConnectionStatus.BuildingConnectionComplete);
 	}
 }

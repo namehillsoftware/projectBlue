@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -33,7 +33,6 @@ import static com.lasthopesoftware.bluewater.client.connection.session.SessionCo
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnectionFailed;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingView;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -54,14 +53,16 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
+		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2))
+			.thenReturn(libraryDeferredPromise)
+			.thenReturn(secondDeferredLibrary);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
 			.thenReturn(Promise.empty())
 			.thenReturn(new Promise<>(firstUrlProvider));
-
-		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
 		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
 		localBroadcastManager.registerReceiver(
@@ -82,11 +83,23 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 					testConnections,
 					OkHttpFactory.getInstance()));
 
-			connectionProvider = new FuturePromise<>(
+			final FuturePromise<IConnectionProvider> promisedConnectionProvider = new FuturePromise<>(
 				sessionConnection.promiseSessionConnection()
 					.eventually(
-						c -> sessionConnection.promiseTestedSessionConnection(),
-						e -> sessionConnection.promiseTestedSessionConnection())).get();
+						c -> {
+							final Promise<IConnectionProvider> promise = sessionConnection.promiseTestedSessionConnection();
+							secondDeferredLibrary.resolve();
+							return promise;
+						},
+						e -> {
+							final Promise<IConnectionProvider> promise = sessionConnection.promiseTestedSessionConnection();
+							secondDeferredLibrary.resolve();
+							return promise;
+						}));
+
+			libraryDeferredPromise.resolve();
+
+			connectionProvider = promisedConnectionProvider.get();
 		}
 	}
 
@@ -104,17 +117,6 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 				BuildingConnectionFailed,
 				GettingLibrary,
 				BuildingConnection,
-				GettingView,
 				BuildingSessionComplete);
-	}
-
-	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
-
-		final int selectedLibraryId = 2;
-
-		@Override
-		public int getSelectedLibraryId() {
-			return selectedLibraryId;
-		}
 	}
 }

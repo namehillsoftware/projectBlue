@@ -5,7 +5,5 @@ enum class BuildingConnectionStatus {
 	GettingLibraryFailed,
 	BuildingConnection,
 	BuildingConnectionFailed,
-	GettingView,
-	GettingViewFailed,
-	BuildingSessionComplete
+	BuildingConnectionComplete
 }

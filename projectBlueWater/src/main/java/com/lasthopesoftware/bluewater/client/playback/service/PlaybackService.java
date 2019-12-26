@@ -895,12 +895,6 @@ implements OnAudioFocusChangeListener
 			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
 				return;
-			case BuildingSessionConnectionStatus.GettingView:
-				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
-				break;
-			case BuildingSessionConnectionStatus.GettingViewFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
-				return;
 		}
 		lazyNotificationController.getObject().notifyForeground(
 			buildFullNotification(notifyBuilder),

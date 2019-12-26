@@ -6,6 +6,7 @@ import android.content.Intent;
 import androidx.annotation.IntDef;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
@@ -26,6 +27,7 @@ import com.lasthopesoftware.resources.strings.Base64Encoder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
+import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +38,12 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 
-public class SessionConnection {
+public class SessionConnection implements OneParameterAction<BuildingConnectionStatus> {
 
 	public static final String buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcast");
 	public static final String buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcastStatus");
 
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
-	private static final Object buildingConnectionPromiseSync = new Object();
 
 	private static final int buildConnectionTimeoutTime = 10000;
 
@@ -94,35 +95,55 @@ public class SessionConnection {
 	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
-		return libraryConnections.promiseTestedLibraryConnection(new LibraryId(newSelectedLibraryId));
+		return libraryConnections
+			.promiseTestedLibraryConnection(new LibraryId(newSelectedLibraryId))
+			.updates(this);
 	}
 
 	public Promise<IConnectionProvider> promiseSessionConnection() {
 		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
-		return libraryConnections.promiseLibraryConnection(new LibraryId(newSelectedLibraryId));
+		return libraryConnections
+			.promiseLibraryConnection(new LibraryId(newSelectedLibraryId))
+			.updates(this);
 	}
 
-	private void doStateChange(@BuildingSessionConnectionStatus.ConnectionStatus final int status) {
+	@Override
+	public void runWith(BuildingConnectionStatus connectionStatus) {
+		doStateChange(connectionStatus);
+	}
+
+	private void doStateChange(BuildingConnectionStatus status) {
 		final Intent broadcastIntent = new Intent(buildSessionBroadcast);
-		broadcastIntent.putExtra(buildSessionBroadcastStatus, status);
+		broadcastIntent.putExtra(buildSessionBroadcastStatus, BuildingSessionConnectionStatus.GetSessionConnectionStatus(status));
 		localBroadcastManager.sendBroadcast(broadcastIntent);
 
-		if (status == BuildingSessionConnectionStatus.BuildingSessionComplete)
+		if (status == BuildingConnectionStatus.BuildingConnectionComplete)
 			logger.info("Session started.");
 	}
 
 	public static class BuildingSessionConnectionStatus {
 
 		@Retention(RetentionPolicy.SOURCE)
-		@IntDef({GettingLibrary, GettingLibraryFailed, BuildingConnection, BuildingConnectionFailed, GettingView, GettingViewFailed, BuildingSessionComplete})
-		@interface ConnectionStatus{}
+		@IntDef({GettingLibrary, GettingLibraryFailed, BuildingConnection, BuildingConnectionFailed, BuildingSessionComplete})
+		@interface SessionConnectionStatus {}
 		public static final int GettingLibrary = 1;
 		public static final int GettingLibraryFailed = 2;
 		public static final int BuildingConnection = 3;
 		public static final int BuildingConnectionFailed = 4;
-		public static final int GettingView = 5;
-		public static final int GettingViewFailed = 6;
 		public static final int BuildingSessionComplete = 7;
+
+		@SessionConnectionStatus
+		static int GetSessionConnectionStatus(BuildingConnectionStatus connectionStatus) {
+			switch (connectionStatus) {
+				case GettingLibrary: return GettingLibrary;
+				case GettingLibraryFailed: return GettingLibraryFailed;
+				case BuildingConnection: return BuildingConnection;
+				case BuildingConnectionFailed: return BuildingConnectionFailed;
+				case BuildingConnectionComplete: return BuildingSessionComplete;
+			}
+
+			throw new IndexOutOfBoundsException();
+		}
 	}
 }

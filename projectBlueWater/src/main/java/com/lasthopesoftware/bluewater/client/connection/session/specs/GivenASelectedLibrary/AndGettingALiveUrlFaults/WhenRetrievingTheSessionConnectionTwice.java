@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -34,7 +33,6 @@ import static com.lasthopesoftware.bluewater.client.connection.session.SessionCo
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnectionFailed;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingView;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -60,8 +58,6 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		when(liveUrlProvider.promiseLiveUrl(library))
 			.thenReturn(new Promise<>(new IOException("An error!")))
 			.thenReturn(new Promise<>(firstUrlProvider));
-
-		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
 		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
 		localBroadcastManager.registerReceiver(
@@ -100,17 +96,6 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 				BuildingConnectionFailed,
 				GettingLibrary,
 				BuildingConnection,
-				GettingView,
 				BuildingSessionComplete);
-	}
-
-	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
-
-		final int selectedLibraryId = 2;
-
-		@Override
-		public int getSelectedLibraryId() {
-			return selectedLibraryId;
-		}
 	}
 }
