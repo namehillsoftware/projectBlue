@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -52,14 +52,16 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> deferredLibrary = new DeferredPromise<>(library);
+		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2))
+			.thenReturn(deferredLibrary)
+			.thenReturn(secondDeferredLibrary);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library))
 			.thenReturn(Promise.empty())
 			.thenReturn(new Promise<>(firstUrlProvider));
-
-		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
 		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
 		localBroadcastManager.registerReceiver(
@@ -76,11 +78,16 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 					mock(TestConnections.class),
 					OkHttpFactory.getInstance()));
 
-			connectionProvider = new FuturePromise<>(
+			final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(
 				sessionConnection.promiseSessionConnection()
 					.eventually(
 						c -> sessionConnection.promiseSessionConnection(),
-						e -> sessionConnection.promiseSessionConnection())).get();
+						e -> sessionConnection.promiseSessionConnection()));
+
+			deferredLibrary.resolve();
+			secondDeferredLibrary.resolve();
+
+			connectionProvider = futureConnectionProvider.get();
 		}
 	}
 
@@ -99,15 +106,5 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 				GettingLibrary,
 				BuildingConnection,
 				BuildingSessionComplete);
-	}
-
-	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {
-
-		final int selectedLibraryId = 2;
-
-		@Override
-		public int getSelectedLibraryId() {
-			return selectedLibraryId;
-		}
 	}
 }

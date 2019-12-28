@@ -109,7 +109,7 @@ class LibraryConnectionProvider(
 					{ library ->
 						when(library?.accessCode?.isEmpty())
 						{
-							true ->
+							null, true ->
 							{
 								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 								resolve(null)

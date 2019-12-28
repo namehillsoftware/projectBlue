@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -56,8 +57,10 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		final Library secondLibrary = new Library().setId(1).setAccessCode("b");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
-		when(libraryProvider.getLibrary(1)).thenReturn(new Promise<>(secondLibrary));
+		final DeferredPromise<Library> deferredLibrary = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(deferredLibrary);
+		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(secondLibrary);
+		when(libraryProvider.getLibrary(1)).thenReturn(secondDeferredLibrary);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(new IOException("An error!")));
@@ -81,17 +84,23 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 					mock(TestConnections.class),
 					OkHttpFactory.getInstance()));
 
-			connectionProvider = new FuturePromise<>(
+			final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(
 				sessionConnection.promiseSessionConnection()
 					.eventually(
 						c -> {
 							fakeSelectedLibraryProvider.selectedLibraryId = 1;
-							return sessionConnection.promiseSessionConnection();
+							final Promise<IConnectionProvider> promise = sessionConnection.promiseSessionConnection();
+							secondDeferredLibrary.resolve();
+							return promise;
 						},
 						e -> {
 							fakeSelectedLibraryProvider.selectedLibraryId = 1;
-							return sessionConnection.promiseSessionConnection();
-						})).get();
+							final Promise<IConnectionProvider> promise = sessionConnection.promiseSessionConnection();
+							secondDeferredLibrary.resolve();
+							return promise;
+						}));
+			deferredLibrary.resolve();
+			connectionProvider = futureConnectionProvider.get();
 		}
 	}
 

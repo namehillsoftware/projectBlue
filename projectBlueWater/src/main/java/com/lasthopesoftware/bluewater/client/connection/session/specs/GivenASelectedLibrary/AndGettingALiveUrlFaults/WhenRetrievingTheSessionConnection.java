@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.specs.SessionCon
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -50,7 +51,8 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> deferredLibrary = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2)).thenReturn(deferredLibrary);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(new IOException()));
@@ -71,7 +73,9 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 					OkHttpFactory.getInstance()));
 
 			try {
-				connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
+				final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection());
+				deferredLibrary.resolve();
+				connectionProvider = futureConnectionProvider.get();
 			} catch (ExecutionException e) {
 				if (e.getCause() instanceof IOException)
 					exception = (IOException) e.getCause();

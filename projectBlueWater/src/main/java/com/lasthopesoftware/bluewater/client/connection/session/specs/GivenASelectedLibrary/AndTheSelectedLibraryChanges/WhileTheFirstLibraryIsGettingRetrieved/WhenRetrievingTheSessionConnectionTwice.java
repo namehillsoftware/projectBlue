@@ -54,7 +54,11 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		final Library secondLibrary = new Library().setId(1).setAccessCode("b");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise<Library> deferredLibrary = new com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise<>(library);
+		final com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise<Library> secondDeferredLibrary = new com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2))
+			.thenReturn(deferredLibrary)
+			.thenReturn(secondDeferredLibrary);
 
 		final DeferredPromise<Library> deferredSelectedLibraryPromise = new DeferredPromise<>();
 		when(libraryProvider.getLibrary(1)).thenReturn(deferredSelectedLibraryPromise);
@@ -83,10 +87,14 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 
 			final Promise<IConnectionProvider> promisedConnectionProvider = sessionConnection.promiseSessionConnection();
 
+			deferredLibrary.resolve();
+
 			fakeSelectedLibraryProvider.selectedLibraryId = 1;
 
 			final Promise<IConnectionProvider> secondPromisedConnectionProvider = promisedConnectionProvider
 					.eventually(p -> sessionConnection.promiseSessionConnection());
+
+			secondDeferredLibrary.resolve();
 
 			deferredSelectedLibraryPromise.sendResolution(secondLibrary);
 

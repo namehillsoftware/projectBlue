@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASel
 import android.content.IntentFilter;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
@@ -16,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -24,7 +26,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ExecutionException;
@@ -53,14 +54,18 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(new Promise<>(library));
+		final DeferredPromise<Library> deferredLibrary = new DeferredPromise<>(library);
+		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
+		when(libraryProvider.getLibrary(2))
+			.thenReturn(deferredLibrary)
+			.thenReturn(secondDeferredLibrary);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(firstUrlProvider));
 
 		final FakeSelectedLibraryProvider fakeSelectedLibraryProvider = new FakeSelectedLibraryProvider();
 
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(ApplicationProvider.getApplicationContext());
 		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
@@ -80,8 +85,13 @@ public class WhenGettingATestedSessionConnection extends AndroidContext {
 					connectionsTester,
 					OkHttpFactory.getInstance()));
 
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
-			secondConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection()).get();
+			FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection());
+			deferredLibrary.resolve();
+			connectionProvider = futureConnectionProvider.get();
+
+			futureConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection());
+			secondDeferredLibrary.resolve();
+			secondConnectionProvider = futureConnectionProvider.get();
 		}
 	}
 
