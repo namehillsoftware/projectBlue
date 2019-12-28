@@ -237,15 +237,21 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	}
 
 	private void displayLibrary(final Library library) {
-		final Library.ViewType selectedViewType = library.getSelectedViewType();
-
-		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
+		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, library.getSelectedViewType(), library.getSelectedView()));
 
 		PromisedResponse<List<Item>, Void> onCompleteAction =
 			LoopedInPromise.response(new VoidResponse<>(items -> {
 				if (isStopped || items == null) return;
 
 				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+
+				if (library.getSelectedView() < 0) {
+					final int selectedView = items.get(0).getKey();
+					library.setSelectedView(selectedView);
+					library.setSelectedViewType(Library.ViewType.StandardServerView);
+				}
+
+				final Library.ViewType selectedViewType = library.getSelectedViewType();
 
 				selectViewsListView.findView().setAdapter(new SelectViewAdapter(this, items, selectedViewType, library.getSelectedView()));
 				selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
