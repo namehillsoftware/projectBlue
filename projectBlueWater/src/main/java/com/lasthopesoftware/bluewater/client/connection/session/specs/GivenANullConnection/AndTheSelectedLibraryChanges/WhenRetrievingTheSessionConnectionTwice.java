@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenANullLibrary.AndTheSelectedLibraryChanges;
+package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenANullConnection.AndTheSelectedLibraryChanges;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -44,7 +44,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 			fakeSelectedLibraryProvider.selectedLibraryId = -1;
 			final SessionConnection sessionConnection = new SessionConnection(
 				ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(ApplicationProvider.getApplicationContext()),
-				() -> 2,
+				fakeSelectedLibraryProvider,
 				libraryConnections);
 
 			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();

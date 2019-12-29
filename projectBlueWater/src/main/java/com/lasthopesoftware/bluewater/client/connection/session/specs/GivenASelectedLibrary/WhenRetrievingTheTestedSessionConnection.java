@@ -1,26 +1,24 @@
-package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary.AndALiveUrlIsNotFound.AndAConnectionIsStillAlive;
+package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenASelectedLibrary;
 
 import android.content.IntentFilter;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
+import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.specs.SessionConnectionReservation;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredProgressingPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
-import com.namehillsoftware.handoff.promises.Promise;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -30,91 +28,58 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ExecutionException;
 
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnection;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingConnectionFailed;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenGettingATestedSessionConnection extends AndroidContext {
+public class WhenRetrievingTheTestedSessionConnection extends AndroidContext {
 
 	private static final BroadcastRecorder broadcastRecorder = new BroadcastRecorder();
-	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
+	private static final IUrlProvider urlProvider = mock(IUrlProvider.class);
 	private static IConnectionProvider connectionProvider;
 
 	@Override
 	public void before() throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException, InvocationTargetException {
-
-		final Library library = new Library()
-			.setId(2)
-			.setAccessCode("aB5nf");
-
-		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
-		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
-		when(libraryProvider.getLibrary(2))
-			.thenReturn(libraryDeferredPromise)
-			.thenReturn(secondDeferredLibrary);
-
-		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
-		when(liveUrlProvider.promiseLiveUrl(library))
-			.thenReturn(Promise.empty())
-			.thenReturn(new Promise<>(firstUrlProvider));
 
 		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
 		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
 			new IntentFilter(SessionConnection.buildSessionBroadcast));
 
-		final TestConnections testConnections = mock(TestConnections.class);
-		when(testConnections.promiseIsConnectionPossible(any()))
-				.thenReturn(new Promise<>(false));
+		final ProvideLibraryConnections libraryConnections = mock(ProvideLibraryConnections.class);
+		final DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider> deferredConnectionProvider = new DeferredProgressingPromise<>();
+		when(libraryConnections.promiseTestedLibraryConnection(new LibraryId(51)))
+			.thenReturn(deferredConnectionProvider);
 
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
 				localBroadcastManager,
-				() -> 2,
-				new LibraryConnectionProvider(
-					libraryProvider,
-					liveUrlProvider,
-					testConnections,
-					OkHttpFactory.getInstance()));
+				() -> 51,
+				libraryConnections);
 
-			final FuturePromise<IConnectionProvider> promisedConnectionProvider = new FuturePromise<>(
-				sessionConnection.promiseSessionConnection()
-					.eventually(
-						c -> {
-							final Promise<IConnectionProvider> promise = sessionConnection.promiseTestedSessionConnection();
-							secondDeferredLibrary.resolve();
-							return promise;
-						},
-						e -> {
-							final Promise<IConnectionProvider> promise = sessionConnection.promiseTestedSessionConnection();
-							secondDeferredLibrary.resolve();
-							return promise;
-						}));
+			final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection());
 
-			libraryDeferredPromise.resolve();
+			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary);
+			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection);
+			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete);
+			deferredConnectionProvider.sendResolution(new ConnectionProvider(urlProvider, OkHttpFactory.getInstance()));
 
-			connectionProvider = promisedConnectionProvider.get();
+			connectionProvider = futureConnectionProvider.get();
 		}
 	}
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.getUrlProvider()).isEqualTo(firstUrlProvider);
+		assertThat(connectionProvider.getUrlProvider()).isEqualTo(urlProvider);
 	}
 
 	@Test
 	public void thenGettingLibraryIsBroadcast() {
 		Assertions.assertThat(Stream.of(broadcastRecorder.recordedIntents).map(i -> i.getIntExtra(buildSessionBroadcastStatus, -1)).toList())
 			.containsExactly(
-				GettingLibrary,
-				BuildingConnection,
-				BuildingConnectionFailed,
 				GettingLibrary,
 				BuildingConnection,
 				BuildingSessionComplete);
