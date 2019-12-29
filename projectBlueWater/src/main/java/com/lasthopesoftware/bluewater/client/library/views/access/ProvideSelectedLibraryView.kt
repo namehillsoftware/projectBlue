@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.views.access
 
-import com.lasthopesoftware.bluewater.client.library.items.Item
+import com.lasthopesoftware.bluewater.client.library.views.ViewItem
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ProvideSelectedLibraryView {
-	fun promiseSelectedOrDefaultView(): Promise<Item?>
+	fun promiseSelectedOrDefaultView(): Promise<ViewItem?>
 }

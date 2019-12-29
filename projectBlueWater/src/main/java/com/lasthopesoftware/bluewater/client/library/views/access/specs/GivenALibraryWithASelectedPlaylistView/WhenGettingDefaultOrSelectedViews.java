@@ -1,6 +1,7 @@
-package com.lasthopesoftware.bluewater.client.library.views.access.specs.GivenALibraryWithoutSelectedViews;
+package com.lasthopesoftware.bluewater.client.library.views.access.specs.GivenALibraryWithASelectedPlaylistView;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.views.PlaylistViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.StandardViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.ViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.access.SelectedLibraryViewProvider;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenGettingDefaultOrSelectedViews {
 
-	private static StandardViewItem expectedView = new StandardViewItem(2, null);
+	private static PlaylistViewItem expectedView = new PlaylistViewItem(8);
 	private static ViewItem selectedLibraryView;
 	private static Library savedLibrary;
 
@@ -25,12 +26,12 @@ public class WhenGettingDefaultOrSelectedViews {
 	public static void before() throws ExecutionException, InterruptedException {
 		final SelectedLibraryViewProvider selectedLibraryViewProvider =
 			new SelectedLibraryViewProvider(
-				() -> new Promise<>(new Library()),
+				() -> new Promise<>(new Library().setSelectedView(8)),
 				() -> new Promise<>(
 					Arrays.asList(
-						new StandardViewItem(2, null),
-						new StandardViewItem(1, null),
-						new StandardViewItem(14, null))),
+						new StandardViewItem(3, null),
+						new StandardViewItem(5, null),
+						new PlaylistViewItem(8))),
 				library -> {
 					savedLibrary = library;
 					return new Promise<>(library);
@@ -44,12 +45,7 @@ public class WhenGettingDefaultOrSelectedViews {
 	}
 
 	@Test
-	public void thenTheSelectedViewKeyIsSaved() {
-		assertThat(savedLibrary.getSelectedView()).isEqualTo(expectedView.getKey());
-	}
-
-	@Test
-	public void thenTheSelectedViewTypeIsStandard() {
-		assertThat(savedLibrary.getSelectedViewType()).isEqualTo(Library.ViewType.StandardServerView);
+	public void thenTheLibraryIsNotSaved() {
+		assertThat(savedLibrary).isNull();
 	}
 }

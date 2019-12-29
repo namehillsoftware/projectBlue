@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistLis
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
+import com.lasthopesoftware.bluewater.client.library.views.ViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViews;
@@ -67,6 +68,8 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -265,7 +268,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private void displayLibrary(final Library library) {
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, library.getSelectedViewType(), library.getSelectedView()));
 
-		final PromisedResponse<List<Item>, Void> onCompleteAction =
+		final PromisedResponse<Collection<ViewItem>, Void> onCompleteAction =
 			LoopedInPromise.response(new VoidResponse<>(items -> {
 				if (isStopped || items == null) return;
 
@@ -327,9 +330,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		getLibraryViewsRunnable.run();
 	}
 
-	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
+	private OnItemClickListener getOnSelectViewClickListener(final Collection<ViewItem> items) {
 		return (parent, view, position, id) -> {
-			final Item selectedItem = items.get(position);
+			final Item selectedItem = (items instanceof List ? (List<ViewItem>)items : new ArrayList<>(items)).get(position);
 			updateSelectedView(KnownViews.Playlists.equals(selectedItem.getValue())
 				? Library.ViewType.PlaylistView
 				: Library.ViewType.StandardServerView, selectedItem.getKey());

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.library.views.access.specs.GivenALibraryWithSelectedViews;
+package com.lasthopesoftware.bluewater.client.library.views.access.specs.GivenALibraryWithAStandardSelectedView.AndNoReturnedViews;
 
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -9,14 +9,13 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenGettingDefaultOrSelectedViews {
 
-	private static Item expectedView = new Item(5);
 	private static Item selectedLibraryView;
 	private static Library savedLibrary;
 
@@ -25,11 +24,7 @@ public class WhenGettingDefaultOrSelectedViews {
 		final SelectedLibraryViewProvider selectedLibraryViewProvider =
 			new SelectedLibraryViewProvider(
 				() -> new Promise<>(new Library().setSelectedView(5)),
-				() -> new Promise<>(
-					Arrays.asList(
-						new Item(3),
-						new Item(5),
-						new Item(8))),
+				() -> new Promise<>(Collections.emptyList()),
 				library -> {
 					savedLibrary = library;
 					return new Promise<>(library);
@@ -38,8 +33,8 @@ public class WhenGettingDefaultOrSelectedViews {
 	}
 
 	@Test
-	public void thenTheSelectedViewsAreCorrect() {
-		assertThat(selectedLibraryView).isEqualTo(expectedView);
+	public void thenNoSelectedViewIsReturned() {
+		assertThat(selectedLibraryView).isNull();
 	}
 
 	@Test
