@@ -13,14 +13,19 @@ class SelectedLibraryViewProvider(
 	override fun promiseSelectedOrDefaultView(): Promise<Item?> {
 		val promisedSelectedLibrary = selectedLibrary.browserLibrary;
 		return libraryViews.promiseLibraryViews().eventually { views ->
-			promisedSelectedLibrary.eventually { library ->
-				if (library.selectedView > 0) Promise(views.first { it.key == library.selectedView })
-				else {
-					val selectedView = views.first()
-					library.selectedView = selectedView.key
-					library.selectedViewType = Library.ViewType.StandardServerView
-					libraryStorage.saveLibrary(library).then { selectedView }
+			if (views.size > 0) {
+				promisedSelectedLibrary.eventually { library ->
+					if (library.selectedView > 0) Promise(views.first { it.key == library.selectedView })
+					else {
+						val selectedView = views.first()
+						library.selectedView = selectedView.key
+						library.selectedViewType = Library.ViewType.StandardServerView
+						libraryStorage.saveLibrary(library).then { selectedView }
+					}
 				}
+			}
+			else {
+				Promise.empty()
 			}
 		}
 	}
