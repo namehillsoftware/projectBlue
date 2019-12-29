@@ -13,7 +13,7 @@ class SelectedLibraryViewProvider(
 	override fun promiseSelectedOrDefaultView(): Promise<Item?> {
 		val promisedSelectedLibrary = selectedLibrary.browserLibrary;
 		return libraryViews.promiseLibraryViews().eventually { views ->
-			if (views.size > 0) {
+			if (views.isNotEmpty()) {
 				promisedSelectedLibrary.eventually { library ->
 					if (library.selectedView > 0) Promise(views.first { it.key == library.selectedView })
 					else {

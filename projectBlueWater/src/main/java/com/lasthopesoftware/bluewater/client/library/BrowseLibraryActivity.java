@@ -27,7 +27,8 @@ import androidx.viewpager.widget.ViewPager;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.ProvideSessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
@@ -42,6 +43,10 @@ import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
 import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViews;
+import com.lasthopesoftware.bluewater.client.library.views.access.ProvideSelectedLibraryView;
+import com.lasthopesoftware.bluewater.client.library.views.access.SelectedLibraryViewProvider;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
@@ -137,6 +142,27 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	};
 
 	private final CreateAndHold<LocalBroadcastManager> lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
+
+	private final CreateAndHold<ProvideSessionConnection> lazySessionConnectionProvider = new Lazy<>(() -> new SessionConnectionProvider(this));
+
+	private final CreateAndHold<ProvideLibraryViews> lazyLibraryViewsProvider = new AbstractSynchronousLazy<ProvideLibraryViews>() {
+		@Override
+		protected ProvideLibraryViews create() {
+			return new LibraryViewsProvider(
+				lazySessionConnectionProvider.getObject(),
+				new LibraryViewsByConnectionProvider());
+		}
+	};
+
+	private final CreateAndHold<ProvideSelectedLibraryView> lazySelectedLibraryViews = new AbstractSynchronousLazy<ProvideSelectedLibraryView>() {
+		@Override
+		protected ProvideSelectedLibraryView create() {
+			return new SelectedLibraryViewProvider(
+				lazySelectedBrowserLibraryProvider.getObject(),
+				lazyLibraryViewsProvider.getObject(),
+				new LibraryRepository(BrowseLibraryActivity.this));
+		}
+	};
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -239,17 +265,11 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private void displayLibrary(final Library library) {
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, library.getSelectedViewType(), library.getSelectedView()));
 
-		PromisedResponse<List<Item>, Void> onCompleteAction =
+		final PromisedResponse<List<Item>, Void> onCompleteAction =
 			LoopedInPromise.response(new VoidResponse<>(items -> {
 				if (isStopped || items == null) return;
 
 				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
-
-				if (library.getSelectedView() < 0) {
-					final int selectedView = items.get(0).getKey();
-					library.setSelectedView(selectedView);
-					library.setSelectedViewType(Library.ViewType.StandardServerView);
-				}
 
 				final Library.ViewType selectedViewType = library.getSelectedViewType();
 
@@ -290,9 +310,9 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		final Runnable getLibraryViewsRunnable = new Runnable() {
 			@Override
 			public void run() {
-				SessionConnection.getInstance(BrowseLibraryActivity.this)
-					.promiseSessionConnection()
-					.eventually(LibraryViewsByConnectionProvider::provide)
+				lazySelectedLibraryViews.getObject()
+					.promiseSelectedOrDefaultView()
+					.eventually(selectedView -> lazyLibraryViewsProvider.getObject().promiseLibraryViews())
 					.eventually(onCompleteAction)
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
 					.excuse(forward())
