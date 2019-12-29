@@ -41,7 +41,9 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistListFragment;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
+import com.lasthopesoftware.bluewater.client.library.views.DownloadViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
+import com.lasthopesoftware.bluewater.client.library.views.PlaylistViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.ViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
@@ -60,7 +62,6 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -268,55 +269,15 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private void displayLibrary(final Library library) {
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, library.getSelectedViewType(), library.getSelectedView()));
 
-		final PromisedResponse<Collection<ViewItem>, Void> onCompleteAction =
-			LoopedInPromise.response(new VoidResponse<>(items -> {
-				if (isStopped || items == null) return;
-
-				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
-
-				final Library.ViewType selectedViewType = library.getSelectedViewType();
-
-				selectViewsListView.findView().setAdapter(new SelectViewAdapter(this, items, selectedViewType, library.getSelectedView()));
-				selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
-
-				hideAllViews();
-				if (!Library.ViewType.serverViewTypes.contains(selectedViewType)) {
-					oldTitle = specialViews.get(0);
-					getSupportActionBar().setTitle(oldTitle);
-
-					final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
-					swapFragments(activeFileDownloadsFragment);
-
-					return;
-				}
-
-				for (IItem item : items) {
-					if (item.getKey() != library.getSelectedView()) continue;
-					oldTitle = item.getValue();
-					getSupportActionBar().setTitle(oldTitle);
-					break;
-				}
-
-				if (selectedViewType == Library.ViewType.PlaylistView) {
-					final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
-					playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-					swapFragments(playlistListFragment);
-
-					return;
-				}
-
-				final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
-				browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-				swapFragments(browseLibraryViewsFragment);
-			}), this);
-
 		final Runnable getLibraryViewsRunnable = new Runnable() {
 			@Override
 			public void run() {
 				lazySelectedLibraryViews.getObject()
 					.promiseSelectedOrDefaultView()
-					.eventually(selectedView -> lazyLibraryViewsProvider.getObject().promiseLibraryViews())
-					.eventually(onCompleteAction)
+					.eventually(selectedView -> lazyLibraryViewsProvider.getObject().promiseLibraryViews()
+						.eventually(LoopedInPromise.response(
+							new VoidResponse<>(items -> updateLibraryView(selectedView, items)),
+							BrowseLibraryActivity.this)))
 					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
 					.excuse(forward())
 					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this), BrowseLibraryActivity.this))
@@ -328,6 +289,45 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 		};
 
 		getLibraryViewsRunnable.run();
+	}
+
+	private void updateLibraryView(final ViewItem selectedView, final Collection<ViewItem> items) {
+		if (isStopped || items == null) return;
+
+		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+
+		selectViewsListView.findView().setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedView.getKey()));
+		selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
+
+		hideAllViews();
+		if (selectedView instanceof DownloadViewItem) {
+			oldTitle = specialViews.get(0);
+			getSupportActionBar().setTitle(oldTitle);
+
+			final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
+			swapFragments(activeFileDownloadsFragment);
+
+			return;
+		}
+
+		for (IItem item : items) {
+			if (item.getKey() != selectedView.getKey()) continue;
+			oldTitle = item.getValue();
+			getSupportActionBar().setTitle(oldTitle);
+			break;
+		}
+
+		if (selectedView instanceof PlaylistViewItem) {
+			final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+			playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+			swapFragments(playlistListFragment);
+
+			return;
+		}
+
+		final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
+		browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+		swapFragments(browseLibraryViewsFragment);
 	}
 
 	private OnItemClickListener getOnSelectViewClickListener(final Collection<ViewItem> items) {
