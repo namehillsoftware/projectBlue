@@ -296,7 +296,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
 
-		selectViewsListView.findView().setAdapter(new SelectViewAdapter(BrowseLibraryActivity.this, items, selectedView.getKey()));
+		selectViewsListView.findView().setAdapter(new SelectViewAdapter(this, items, selectedView.getKey()));
 		selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
 
 		hideAllViews();
@@ -319,14 +319,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		if (selectedView instanceof PlaylistViewItem) {
 			final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
-			playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+			playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(this));
 			swapFragments(playlistListFragment);
 
 			return;
 		}
 
 		final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
-		browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
+		browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(this));
 		swapFragments(browseLibraryViewsFragment);
 	}
 
