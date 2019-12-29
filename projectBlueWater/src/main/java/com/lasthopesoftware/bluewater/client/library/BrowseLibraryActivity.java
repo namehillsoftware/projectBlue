@@ -76,7 +76,7 @@ import java.util.List;
 
 import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
-public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
+public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer, Runnable {
 
 	public static final String showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
 
@@ -269,26 +269,24 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	private void displayLibrary(final Library library) {
 		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, library.getSelectedViewType(), library.getSelectedView()));
 
-		final Runnable getLibraryViewsRunnable = new Runnable() {
-			@Override
-			public void run() {
-				lazySelectedLibraryViews.getObject()
-					.promiseSelectedOrDefaultView()
-					.eventually(selectedView -> lazyLibraryViewsProvider.getObject().promiseLibraryViews()
-						.eventually(LoopedInPromise.response(
-							new VoidResponse<>(items -> updateLibraryView(selectedView, items)),
-							BrowseLibraryActivity.this)))
-					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
-					.excuse(forward())
-					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this), BrowseLibraryActivity.this))
-					.then(new VoidResponse<>(v -> {
-						ApplicationSettingsActivity.launch(BrowseLibraryActivity.this);
-						finish();
-					}));
-			}
-		};
+		run();
+	}
 
-		getLibraryViewsRunnable.run();
+	@Override
+	public void run() {
+		lazySelectedLibraryViews.getObject()
+			.promiseSelectedOrDefaultView()
+			.eventually(selectedView -> lazyLibraryViewsProvider.getObject().promiseLibraryViews()
+				.eventually(LoopedInPromise.response(
+					new VoidResponse<>(items -> updateLibraryView(selectedView, items)),
+					this)))
+			.excuse(new HandleViewIoException(this, this))
+			.excuse(forward())
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
+			.then(new VoidResponse<>(v -> {
+				ApplicationSettingsActivity.launch(this);
+				finish();
+			}));
 	}
 
 	private void updateLibraryView(final ViewItem selectedView, final Collection<ViewItem> items) {
