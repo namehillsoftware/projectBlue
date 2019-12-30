@@ -164,7 +164,7 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 			return new SelectedLibraryViewProvider(
 				lazySelectedBrowserLibraryProvider.getObject(),
 				lazyLibraryViewsProvider.getObject(),
-				new LibraryRepository(BrowseLibraryActivity.this));
+				lazyLibraryRepository.getObject());
 		}
 	};
 
@@ -256,10 +256,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				if (showDownloadsAction.equals(getIntent().getAction())) {
 					library.setSelectedView(0);
 					library.setSelectedViewType(Library.ViewType.DownloadView);
-					lazyLibraryRepository.getObject().saveLibrary(library);
+					lazyLibraryRepository.getObject().saveLibrary(library)
+						.eventually(LoopedInPromise.response(new VoidResponse<>(this::displayLibrary), this));
 
 					// Clear the action
 					getIntent().setAction(null);
+					return;
 				}
 
 				displayLibrary(library);
@@ -343,15 +345,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
+			.then(new VoidResponse<>(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);
 				library.setSelectedViewType(selectedViewType);
-				lazyLibraryRepository.getObject().saveLibrary(library);
-
-				displayLibrary(library);
-			}), this));
+				lazyLibraryRepository.getObject().saveLibrary(library)
+					.eventually(LoopedInPromise.response(new VoidResponse<>(this::displayLibrary), this));
+			}));
 	}
 
 	@Override
