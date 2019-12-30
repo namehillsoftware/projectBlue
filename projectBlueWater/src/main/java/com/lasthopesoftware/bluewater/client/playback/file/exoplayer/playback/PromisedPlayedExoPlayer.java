@@ -1,14 +1,19 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback;
 
-import com.google.android.exoplayer2.*;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -20,7 +25,7 @@ import java.net.ProtocolException;
 
 public class PromisedPlayedExoPlayer
 extends
-	ProgressingPromise<Duration, PlayedFile>
+	ProgressedPromise<Duration, PlayedFile>
 implements
 	PlayedFile,
 	Player.EventListener {

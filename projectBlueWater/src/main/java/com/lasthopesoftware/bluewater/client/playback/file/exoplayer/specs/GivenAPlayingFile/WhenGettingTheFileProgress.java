@@ -3,8 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.Give
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,7 +35,7 @@ public class WhenGettingTheFileProgress {
 		new FuturePromise<>(exoPlayerPlaybackHandler
 			.promisePlayback()
 			.then(p -> {
-				final ProgressingPromise<Duration, PlayedFile> returnPromise = p.promisePlayedFile();
+				final ProgressedPromise<Duration, PlayedFile> returnPromise = p.promisePlayedFile();
 
 				progress = returnPromise.getProgress();
 

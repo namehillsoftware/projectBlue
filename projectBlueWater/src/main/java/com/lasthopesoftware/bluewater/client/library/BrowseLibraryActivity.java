@@ -27,7 +27,8 @@ import androidx.viewpager.widget.ViewPager;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.ProvideSessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.access.SelectedBrowserLibraryProvider;
@@ -40,8 +41,15 @@ import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAni
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistListFragment;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.views.BrowseLibraryViewsFragment;
+import com.lasthopesoftware.bluewater.client.library.views.DownloadViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
+import com.lasthopesoftware.bluewater.client.library.views.PlaylistViewItem;
+import com.lasthopesoftware.bluewater.client.library.views.ViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsByConnectionProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.LibraryViewsProvider;
+import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViews;
+import com.lasthopesoftware.bluewater.client.library.views.access.ProvideSelectedLibraryView;
+import com.lasthopesoftware.bluewater.client.library.views.access.SelectedLibraryViewProvider;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectStaticViewAdapter;
 import com.lasthopesoftware.bluewater.client.library.views.adapters.SelectViewAdapter;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
@@ -54,7 +62,6 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -62,12 +69,14 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
-public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer {
+public class BrowseLibraryActivity extends AppCompatActivity implements IItemListViewContainer, Runnable {
 
 	public static final String showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryActivity.class, "showDownloadsAction");
 
@@ -137,6 +146,27 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	};
 
 	private final CreateAndHold<LocalBroadcastManager> lazyLocalBroadcastManager = new Lazy<>(() -> LocalBroadcastManager.getInstance(this));
+
+	private final CreateAndHold<ProvideSessionConnection> lazySessionConnectionProvider = new Lazy<>(() -> new SessionConnectionProvider(this));
+
+	private final CreateAndHold<ProvideLibraryViews> lazyLibraryViewsProvider = new AbstractSynchronousLazy<ProvideLibraryViews>() {
+		@Override
+		protected ProvideLibraryViews create() {
+			return new LibraryViewsProvider(
+				lazySessionConnectionProvider.getObject(),
+				new LibraryViewsByConnectionProvider());
+		}
+	};
+
+	private final CreateAndHold<ProvideSelectedLibraryView> lazySelectedLibraryViews = new AbstractSynchronousLazy<ProvideSelectedLibraryView>() {
+		@Override
+		protected ProvideSelectedLibraryView create() {
+			return new SelectedLibraryViewProvider(
+				lazySelectedBrowserLibraryProvider.getObject(),
+				lazyLibraryViewsProvider.getObject(),
+				lazyLibraryRepository.getObject());
+		}
+	};
 
 	private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -226,10 +256,12 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 				if (showDownloadsAction.equals(getIntent().getAction())) {
 					library.setSelectedView(0);
 					library.setSelectedViewType(Library.ViewType.DownloadView);
-					lazyLibraryRepository.getObject().saveLibrary(library);
+					lazyLibraryRepository.getObject().saveLibrary(library)
+						.eventually(LoopedInPromise.response(new VoidResponse<>(this::displayLibrary), this));
 
 					// Clear the action
 					getIntent().setAction(null);
+					return;
 				}
 
 				displayLibrary(library);
@@ -237,73 +269,70 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 	}
 
 	private void displayLibrary(final Library library) {
-		final Library.ViewType selectedViewType = library.getSelectedViewType();
+		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, library.getSelectedViewType(), library.getSelectedView()));
 
-		specialLibraryItemsListView.findView().setAdapter(new SelectStaticViewAdapter(this, specialViews, selectedViewType, library.getSelectedView()));
-
-		PromisedResponse<List<Item>, Void> onCompleteAction =
-			LoopedInPromise.response(new VoidResponse<>(items -> {
-				if (isStopped || items == null) return;
-
-				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
-
-				selectViewsListView.findView().setAdapter(new SelectViewAdapter(this, items, selectedViewType, library.getSelectedView()));
-				selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
-
-				hideAllViews();
-				if (!Library.ViewType.serverViewTypes.contains(selectedViewType)) {
-					oldTitle = specialViews.get(0);
-					getSupportActionBar().setTitle(oldTitle);
-
-					final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
-					swapFragments(activeFileDownloadsFragment);
-
-					return;
-				}
-
-				for (IItem item : items) {
-					if (item.getKey() != library.getSelectedView()) continue;
-					oldTitle = item.getValue();
-					getSupportActionBar().setTitle(oldTitle);
-					break;
-				}
-
-				if (selectedViewType == Library.ViewType.PlaylistView) {
-					final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
-					playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-					swapFragments(playlistListFragment);
-
-					return;
-				}
-
-				final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
-				browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(BrowseLibraryActivity.this));
-				swapFragments(browseLibraryViewsFragment);
-			}), this);
-
-		final Runnable getLibraryViewsRunnable = new Runnable() {
-			@Override
-			public void run() {
-				SessionConnection.getInstance(BrowseLibraryActivity.this)
-					.promiseSessionConnection()
-					.eventually(LibraryViewsByConnectionProvider::provide)
-					.eventually(onCompleteAction)
-					.excuse(new HandleViewIoException(BrowseLibraryActivity.this, this))
-					.excuse(forward())
-					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(BrowseLibraryActivity.this), BrowseLibraryActivity.this))
-					.then(new VoidResponse<>(v -> {
-						ApplicationSettingsActivity.launch(BrowseLibraryActivity.this);
-						finish();
-					}));
-			}
-		};
-
-		getLibraryViewsRunnable.run();
+		run();
 	}
 
-	private OnItemClickListener getOnSelectViewClickListener(final List<Item> items) {
+	@Override
+	public void run() {
+		lazySelectedLibraryViews.getObject()
+			.promiseSelectedOrDefaultView()
+			.eventually(selectedView -> lazyLibraryViewsProvider.getObject().promiseLibraryViews()
+				.eventually(LoopedInPromise.response(
+					new VoidResponse<>(items -> updateLibraryView(selectedView, items)),
+					this)))
+			.excuse(new HandleViewIoException(this, this))
+			.excuse(forward())
+			.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
+			.then(new VoidResponse<>(v -> {
+				ApplicationSettingsActivity.launch(this);
+				finish();
+			}));
+	}
+
+	private void updateLibraryView(final ViewItem selectedView, final Collection<ViewItem> items) {
+		if (isStopped || items == null) return;
+
+		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator);
+
+		selectViewsListView.findView().setAdapter(new SelectViewAdapter(this, items, selectedView.getKey()));
+		selectViewsListView.findView().setOnItemClickListener(getOnSelectViewClickListener(items));
+
+		hideAllViews();
+		if (selectedView instanceof DownloadViewItem) {
+			oldTitle = specialViews.get(0);
+			getSupportActionBar().setTitle(oldTitle);
+
+			final ActiveFileDownloadsFragment activeFileDownloadsFragment = new ActiveFileDownloadsFragment();
+			swapFragments(activeFileDownloadsFragment);
+
+			return;
+		}
+
+		for (IItem item : items) {
+			if (item.getKey() != selectedView.getKey()) continue;
+			oldTitle = item.getValue();
+			getSupportActionBar().setTitle(oldTitle);
+			break;
+		}
+
+		if (selectedView instanceof PlaylistViewItem) {
+			final PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+			playlistListFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(this));
+			swapFragments(playlistListFragment);
+
+			return;
+		}
+
+		final BrowseLibraryViewsFragment browseLibraryViewsFragment = new BrowseLibraryViewsFragment();
+		browseLibraryViewsFragment.setOnItemListMenuChangeHandler(new ItemListMenuChangeHandler(this));
+		swapFragments(browseLibraryViewsFragment);
+	}
+
+	private OnItemClickListener getOnSelectViewClickListener(final Collection<ViewItem> items) {
 		return (parent, view, position, id) -> {
-			final Item selectedItem = items.get(position);
+			final Item selectedItem = (items instanceof List ? (List<ViewItem>)items : new ArrayList<>(items)).get(position);
 			updateSelectedView(KnownViews.Playlists.equals(selectedItem.getValue())
 				? Library.ViewType.PlaylistView
 				: Library.ViewType.StandardServerView, selectedItem.getKey());
@@ -316,15 +345,14 @@ public class BrowseLibraryActivity extends AppCompatActivity implements IItemLis
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.getBrowserLibrary()
-			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
+			.then(new VoidResponse<>(library -> {
 				if (selectedViewType == library.getSelectedViewType() && library.getSelectedView() == selectedViewKey) return;
 
 				library.setSelectedView(selectedViewKey);
 				library.setSelectedViewType(selectedViewType);
-				lazyLibraryRepository.getObject().saveLibrary(library);
-
-				displayLibrary(library);
-			}), this));
+				lazyLibraryRepository.getObject().saveLibrary(library)
+					.eventually(LoopedInPromise.response(new VoidResponse<>(this::displayLibrary), this));
+			}));
 	}
 
 	@Override

@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.library.views.access;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.Item;
+import com.lasthopesoftware.bluewater.client.library.views.ViewItem;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface ProvideLibraryViewsUsingConnection {
-	Promise<List<Item>> promiseLibraryViewsFromConnection(IConnectionProvider connectionProvider);
+	Promise<Collection<ViewItem>> promiseLibraryViewsFromConnection(IConnectionProvider connectionProvider);
 }

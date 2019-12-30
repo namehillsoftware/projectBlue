@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.joda.time.Duration;
 
 public class EmptyPlaybackHandler
@@ -43,7 +45,7 @@ implements
 	}
 
 	@Override
-	public ProgressingPromise<Duration, PlayedFile> promisePlayedFile() {
+	public ProgressedPromise<Duration, PlayedFile> promisePlayedFile() {
 		return new ProgressingPromise<Duration, PlayedFile>() {
 			{
 				resolve(null);

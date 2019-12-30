@@ -109,7 +109,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
@@ -895,12 +895,6 @@ implements OnAudioFocusChangeListener
 			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
 				return;
-			case BuildingSessionConnectionStatus.GettingView:
-				notifyBuilder.setContentText(getText(R.string.lbl_getting_library_views));
-				break;
-			case BuildingSessionConnectionStatus.GettingViewFailed:
-				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_library_no_views), Toast.LENGTH_SHORT).show();
-				return;
 		}
 		lazyNotificationController.getObject().notifyForeground(
 			buildFullNotification(notifyBuilder),
@@ -1098,7 +1092,7 @@ implements OnAudioFocusChangeListener
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile());
 		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
-		final ProgressingPromise<Duration, PlayedFile> promisedPlayedFile = playingFile.promisePlayedFile();
+		final ProgressedPromise<Duration, PlayedFile> promisedPlayedFile = playingFile.promisePlayedFile();
 		final Disposable localSubscription = filePositionSubscription =
 			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.getObject())
 				.map(t -> promisedPlayedFile.getProgress())
@@ -1106,7 +1100,6 @@ implements OnAudioFocusChangeListener
 				.subscribe(new TrackPositionBroadcaster(
 					localBroadcastManagerLazy.getObject(),
 					playingFile));
-
 
 		promisedPlayedFile.then(p -> {
 			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());

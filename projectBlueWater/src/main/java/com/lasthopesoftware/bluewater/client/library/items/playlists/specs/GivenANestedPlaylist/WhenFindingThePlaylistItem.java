@@ -4,14 +4,20 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.access.ProvideItems;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.PlaylistItemFinder;
-import com.lasthopesoftware.bluewater.client.library.views.KnownViews;
+import com.lasthopesoftware.bluewater.client.library.views.PlaylistViewItem;
+import com.lasthopesoftware.bluewater.client.library.views.StandardViewItem;
 import com.lasthopesoftware.bluewater.client.library.views.access.ProvideLibraryViews;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -34,8 +40,8 @@ public class WhenFindingThePlaylistItem {
 		final ProvideLibraryViews libraryViews = mock(ProvideLibraryViews.class);
 		when(libraryViews.promiseLibraryViews())
 			.thenReturn(new Promise<>(Arrays.asList(
-				new Item(2),
-				new Item(16, KnownViews.Playlists))));
+				new StandardViewItem(2, "Music"),
+				new PlaylistViewItem(16))));
 
 		final ProvideItems itemProvider = mock(ProvideItems.class);
 		when(itemProvider.promiseItems(anyInt()))
