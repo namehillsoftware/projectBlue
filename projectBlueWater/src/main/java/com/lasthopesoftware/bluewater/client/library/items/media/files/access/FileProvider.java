@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
@@ -24,6 +25,15 @@ public final class FileProvider implements IFileProvider, PromisedResponse<Strin
 		return
 			fileStringListProvider
 				.promiseFileStringList(option, params)
+				.eventually(this)
+				.then(this);
+	}
+
+	@Override
+	public Promise<List<ServiceFile>> promiseFiles(LibraryId libraryId, FileListParameters.Options option, String... params) {
+		return
+			fileStringListProvider
+				.promiseFileStringList(libraryId, option, params)
 				.eventually(this)
 				.then(this);
 	}
