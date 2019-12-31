@@ -7,6 +7,4 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 public interface GetStoredFiles {
 	Promise<StoredFile> promiseStoredFile(LibraryId libraryId, ServiceFile serviceFile);
-
-	Promise<StoredFile> promiseStoredFile(int storedFileId);
 }

@@ -29,15 +29,6 @@ public class StoredFileQuery implements GetStoredFiles {
 		}, storedFileAccessExecutor());
 	}
 
-	@Override
-	public Promise<StoredFile> promiseStoredFile(int storedFileId) {
-		return new QueuedPromise<>(() -> {
-			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				return getStoredFile(repositoryAccessHelper, storedFileId);
-			}
-		}, storedFileAccessExecutor());
-	}
-
 	private StoredFile getStoredFile(LibraryId libraryId, RepositoryAccessHelper helper, ServiceFile serviceFile) {
 		return
 			helper
