@@ -6,15 +6,17 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
+
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,7 +44,7 @@ public class WhenDownloading {
 		when(fakeConnectionProvider.promiseResponse(any())).thenReturn(new Promise<>(responseBuilder.build()));
 
 		final StoredFileDownloader downloader = new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), fakeConnectionProvider);
-		inputStream = new FuturePromise<>(downloader.promiseDownload(new StoredFile().setServiceId(4))).get();
+		inputStream = new FuturePromise<>(downloader.promiseDownload(job.getLibraryId(), new StoredFile().setServiceId(4))).get();
 	}
 
 	@Test

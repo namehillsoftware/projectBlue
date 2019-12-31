@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -36,7 +37,7 @@ public class WhenProcessingTheJob {
 				return file;
 			},
 			mock(IStoredFileAccess.class),
-			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
+			(libraryId, f) -> new Promise<>(new ByteArrayInputStream(new byte[0])),
 			f -> false,
 			f -> true,
 			(is, f) -> {});

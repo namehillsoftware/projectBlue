@@ -5,7 +5,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
@@ -31,12 +31,12 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	private static final Logger logger = LoggerFactory.getLogger(StoredItemServiceFileCollector.class);
 
 	private final IStoredItemAccess storedItemAccess;
-	private final IFileProvider fileProvider;
+	private final ProvideFiles fileProvider;
 	private final IFileListParameterProvider fileListParameters;
 
 	public StoredItemServiceFileCollector(
 		IStoredItemAccess storedItemAccess,
-		IFileProvider fileProvider,
+		ProvideFiles fileProvider,
 		IFileListParameterProvider fileListParameters) {
 		this.storedItemAccess = storedItemAccess;
 		this.fileProvider = fileProvider;
@@ -89,8 +89,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 
 		cancellationProxy.doCancel(serviceFilesPromise);
 
-		return serviceFilesPromise
-			.excuse(new ExceptionHandler(libraryId, item, storedItemAccess));
+		return serviceFilesPromise.excuse(new ExceptionHandler(libraryId, item, storedItemAccess));
 	}
 
 	private Promise<Collection<ServiceFile>> promiseServiceFiles(LibraryId libraryId, Playlist playlist, CancellationProxy cancellationProxy) {
@@ -100,8 +99,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 
 		cancellationProxy.doCancel(serviceFilesPromise);
 
-		return serviceFilesPromise
-			.excuse(new ExceptionHandler(libraryId, playlist, storedItemAccess));
+		return serviceFilesPromise.excuse(new ExceptionHandler(libraryId, playlist, storedItemAccess));
 	}
 
 	private static class ExceptionHandler implements ImmediateResponse<Throwable, Collection<ServiceFile>> {

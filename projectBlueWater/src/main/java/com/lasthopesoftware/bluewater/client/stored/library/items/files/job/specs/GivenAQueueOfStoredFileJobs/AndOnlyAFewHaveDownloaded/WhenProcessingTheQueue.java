@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAQueueOfStoredFileJobs.AndOnlyAFewHaveDownloaded;
 
 import android.os.Build;
+
 import androidx.annotation.RequiresApi;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
@@ -14,14 +16,20 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.spec
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.namehillsoftware.handoff.promises.Promise;
-import io.reactivex.Observer;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -65,7 +73,7 @@ public class WhenProcessingTheQueue {
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
 			storedFilesAccess,
-			f -> {
+			(libraryId, f) -> {
 				if (Arrays.asList(expectedDownloadedStoredFiles).contains(f))
 					return new Promise<>(new ByteArrayInputStream(new byte[0]));
 

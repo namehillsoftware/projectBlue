@@ -10,8 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -22,8 +21,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 public class WhenProcessingTheJob {
 
@@ -39,7 +43,7 @@ public class WhenProcessingTheJob {
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
 			storedFileAccess,
-			f -> deferredPromise,
+			(libraryId, f) -> deferredPromise,
 			f -> false,
 			f -> true,
 			(is, f) -> {});

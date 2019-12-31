@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job;
 
 import androidx.annotation.NonNull;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
@@ -15,9 +16,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import io.reactivex.Observable;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,10 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
@@ -135,7 +138,7 @@ public class StoredFileJobProcessor implements ProcessStoredFileJobs {
 
 			observer.onNext(new StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading));
 
-			final Promise<InputStream> promisedDownload = storedFiles.promiseDownload(storedFile);
+			final Promise<InputStream> promisedDownload = storedFiles.promiseDownload(job.getLibraryId(), storedFile);
 			cancellationProxy.doCancel(promisedDownload);
 
 			return promisedDownload.then(inputStream -> {

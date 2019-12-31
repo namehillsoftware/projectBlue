@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -29,6 +30,11 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 	@Override
 	public Promise<Library> getLibrary(int libraryId) {
 		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId), RepositoryAccessHelper.databaseExecutor());
+	}
+
+	@Override
+	public Promise<Library> getLibrary(LibraryId libraryId) {
+		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId.getId()), RepositoryAccessHelper.databaseExecutor());
 	}
 
 	@Override

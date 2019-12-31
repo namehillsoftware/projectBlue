@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenASe
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -48,7 +48,7 @@ public class WhenSyncingTheStoredItems {
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
-		final IFileProvider mockFileProvider = mock(IFileProvider.class);
+		final ProvideFiles mockFileProvider = mock(ProvideFiles.class);
 		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(14))))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),

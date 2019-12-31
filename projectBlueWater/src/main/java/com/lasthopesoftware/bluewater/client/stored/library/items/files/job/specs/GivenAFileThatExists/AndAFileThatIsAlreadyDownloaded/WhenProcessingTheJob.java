@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -36,7 +37,7 @@ public class WhenProcessingTheJob {
 				return mockFile;
 			},
 			mock(IStoredFileAccess.class),
-			f -> Promise.empty(),
+			(libraryId, f) -> Promise.empty(),
 			f -> true,
 			mock(IFileWritePossibleArbitrator.class),
 			(is, f) -> {});

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.retriev
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
@@ -20,12 +20,12 @@ public class StoredFilesCollection implements GetAllStoredFilesInLibrary {
 	}
 
 	@Override
-	public Promise<Collection<StoredFile>> promiseAllStoredFiles(Library library) {
+	public Promise<Collection<StoredFile>> promiseAllStoredFiles(LibraryId libraryId) {
 		return new QueuedPromise<>(() -> {
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return repositoryAccessHelper
 					.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
-					.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
+					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.getId())
 					.fetch(StoredFile.class);
 			}
 		}, StoredFileAccess.storedFileAccessExecutor());

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAS
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
@@ -47,7 +47,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 				new StoredItem(1, 3, StoredItem.ItemType.ITEM))));
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
-		final IFileProvider fileProvider = mock(IFileProvider.class);
+		final ProvideFiles fileProvider = mock(ProvideFiles.class);
 		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
 			.thenAnswer(e -> new Promise<>(firstItemExpectedFiles));
 		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
