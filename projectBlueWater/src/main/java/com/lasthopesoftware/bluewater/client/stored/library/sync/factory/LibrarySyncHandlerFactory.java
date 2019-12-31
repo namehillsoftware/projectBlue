@@ -3,8 +3,10 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.factory;
 import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.FileProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
@@ -43,6 +45,8 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 	private final IFileReadPossibleArbitrator fileReadPossibleArbitrator;
 	private final IFileWritePossibleArbitrator fileWritePossibleArbitrator;
 	private final IFileStreamWriter fileStreamWriter;
+	private final ILibraryProvider libraryProvider;
+	private final ProvideLibraryConnections libraryConnections;
 
 	public LibrarySyncHandlerFactory(
 		IStoredFileAccess storedFileAccess,
@@ -53,7 +57,9 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 		IServiceFileUriQueryParamsProvider serviceFileUriQueryParamsProvider,
 		IFileReadPossibleArbitrator fileReadPossibleArbitrator,
 		IFileWritePossibleArbitrator fileWritePossibleArbitrator,
-		IFileStreamWriter fileStreamWriter) {
+		IFileStreamWriter fileStreamWriter,
+		ILibraryProvider libraryProvider,
+		ProvideLibraryConnections libraryConnections) {
 		this.storedFileAccess = storedFileAccess;
 		this.context = context;
 		this.storageReadPermissionsPossible = storageReadPermissionsPossible;
@@ -63,6 +69,8 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 		this.fileReadPossibleArbitrator = fileReadPossibleArbitrator;
 		this.fileWritePossibleArbitrator = fileWritePossibleArbitrator;
 		this.fileStreamWriter = fileStreamWriter;
+		this.libraryProvider = libraryProvider;
+		this.libraryConnections = libraryConnections;
 	}
 
 	@Override
@@ -94,13 +102,13 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 				cursorProvider,
 				storageReadPermissionsPossible),
 			new StoredFileQuery(context),
+			libraryProvider,
 			cachedFilePropertiesProvider,
 			syncDirectory);
 
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context);
 
 		return new LibrarySyncHandler(
-			library,
 			new StoredItemServiceFileCollector(
 				storedItemAccess,
 				new FileProvider(new FileStringListProvider(connectionProvider)),
@@ -110,10 +118,9 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 			new StoredFileJobProcessor(
 				storedFileSystemFileProducer,
 				storedFileAccess,
-				new StoredFileDownloader(serviceFileUriQueryParamsProvider, connectionProvider),
+				new StoredFileDownloader(serviceFileUriQueryParamsProvider, libraryConnections),
 				fileReadPossibleArbitrator,
 				fileWritePossibleArbitrator,
-				fileStreamWriter)
-		);
+				fileStreamWriter));
 	}
 }
