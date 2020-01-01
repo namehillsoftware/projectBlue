@@ -6,16 +6,13 @@ import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise;
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 
@@ -41,18 +38,15 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 	private static final Logger logger = LoggerFactory.getLogger(StoredFileSynchronization.class);
 	private final ILibraryProvider libraryProvider;
 	private final LocalBroadcastManager localBroadcastManager;
-	private final BuildUrlProviders urlProviders;
-	private final ProduceLibrarySyncHandlers librarySyncHandlersProduction;
+	private LibrarySyncHandler syncHandler;
 
 	public StoredFileSynchronization(
 		ILibraryProvider libraryProvider,
 		LocalBroadcastManager localBroadcastManager,
-		BuildUrlProviders urlProviders,
-		ProduceLibrarySyncHandlers librarySyncHandlersProduction) {
+		LibrarySyncHandler syncHandler) {
 		this.libraryProvider = libraryProvider;
 		this.localBroadcastManager = localBroadcastManager;
-		this.urlProviders = urlProviders;
-		this.librarySyncHandlersProduction = librarySyncHandlersProduction;
+		this.syncHandler = syncHandler;
 	}
 
 	@Override
@@ -62,13 +56,7 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
 		return StreamedPromise.stream(libraryProvider.getAllLibraries())
-			.map(library -> {
-				if (library.isSyncLocalConnectionsOnly()) library.setLocalOnly(true);
-
-				return ObservedPromise.observe(urlProviders.promiseBuiltUrlProvider(library)
-					.then(urlProvider -> librarySyncHandlersProduction.getNewSyncHandler(urlProvider, library)));
-			})
-			.flatMap(o -> o.flatMap(LibrarySyncHandler::observeLibrarySync, true))
+			.flatMap(library -> syncHandler.observeLibrarySync(library.getLibraryId()))
 			.flatMapCompletable(storedFileJobStatus -> {
 				switch (storedFileJobStatus.storedFileJobState) {
 					case Queued:

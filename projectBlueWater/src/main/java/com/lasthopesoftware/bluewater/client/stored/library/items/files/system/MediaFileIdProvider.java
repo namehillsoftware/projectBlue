@@ -2,10 +2,13 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system;
 
 import android.database.Cursor;
 import android.provider.MediaStore;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,13 +28,13 @@ public class MediaFileIdProvider implements ImmediateResponse<Cursor, Integer> {
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 	}
 
-	public Promise<Integer> getMediaId(ServiceFile serviceFile) {
+	public Promise<Integer> getMediaId(LibraryId libraryId, ServiceFile serviceFile) {
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
 			return new Promise<>(-1);
 
 		return
 			mediaQueryCursorProvider
-				.getMediaQueryCursor(serviceFile)
+				.getMediaQueryCursor(libraryId, serviceFile)
 				.then(this);
 	}
 

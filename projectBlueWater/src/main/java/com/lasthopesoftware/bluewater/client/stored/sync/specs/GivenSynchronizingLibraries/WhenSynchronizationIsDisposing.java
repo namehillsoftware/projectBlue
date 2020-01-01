@@ -2,10 +2,11 @@ package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizi
 
 import android.content.Context;
 import android.content.IntentFilter;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.test.core.app.ApplicationProvider;
+
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
@@ -18,7 +19,7 @@ import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
-import io.reactivex.Observable;
+
 import org.junit.Test;
 
 import java.io.File;
@@ -26,7 +27,14 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.*;
+import io.reactivex.Observable;
+
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileDownloadedEvent;
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileDownloadingEvent;
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileQueuedEvent;
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onSyncStartEvent;
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onSyncStopEvent;
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.storedFileEventKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -81,7 +89,6 @@ public class WhenSynchronizationIsDisposing extends AndroidContext {
 		final StoredFileSynchronization synchronization = new StoredFileSynchronization(
 			libraryProvider,
 			localBroadcastManager,
-			library -> new Promise<>(mock(IUrlProvider.class)),
 			syncHandlers);
 
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);

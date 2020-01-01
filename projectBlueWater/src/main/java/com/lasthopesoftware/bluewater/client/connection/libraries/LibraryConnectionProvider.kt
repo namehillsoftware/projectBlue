@@ -94,7 +94,7 @@ class LibraryConnectionProvider(
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 			init {
-				promiseBuiltSessionConnection(libraryId)
+				promiseBuiltConnection(libraryId)
 					.updates(OneParameterAction { reportProgress(it) })
 					.then(
 						{ c ->
@@ -106,7 +106,7 @@ class LibraryConnectionProvider(
 		}
 	}
 
-	private fun promiseBuiltSessionConnection(selectedLibraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
+	private fun promiseBuiltConnection(selectedLibraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 			init {
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
@@ -115,11 +115,7 @@ class LibraryConnectionProvider(
 					.then(
 						{ library ->
 							when (library?.accessCode?.isEmpty()) {
-								null, true -> {
-									reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-									resolve(null)
-								}
-								else -> {
+								false -> {
 									reportProgress(BuildingConnectionStatus.BuildingConnection)
 
 									liveUrlProvider
@@ -141,6 +137,10 @@ class LibraryConnectionProvider(
 												reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
 												reject(it)
 											})
+								}
+								else -> {
+									reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+									resolve(null)
 								}
 							}
 						},
