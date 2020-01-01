@@ -5,7 +5,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.IFileListParameterProvider;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
@@ -31,12 +31,12 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 	private static final Logger logger = LoggerFactory.getLogger(StoredItemServiceFileCollector.class);
 
 	private final IStoredItemAccess storedItemAccess;
-	private final ProvideFiles fileProvider;
+	private final ProvideLibraryFiles fileProvider;
 	private final IFileListParameterProvider fileListParameters;
 
 	public StoredItemServiceFileCollector(
 		IStoredItemAccess storedItemAccess,
-		ProvideFiles fileProvider,
+		ProvideLibraryFiles fileProvider,
 		IFileListParameterProvider fileListParameters) {
 		this.storedItemAccess = storedItemAccess;
 		this.fileProvider = fileProvider;

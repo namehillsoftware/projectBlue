@@ -1,17 +1,31 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
+import android.content.Context
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders
+import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.resources.network.ActiveNetworkFinder
+import com.lasthopesoftware.resources.strings.Base64Encoder
+import com.namehillsoftware.lazyj.AbstractSynchronousLazy
+import com.namehillsoftware.lazyj.CreateAndHold
 import com.vedsoft.futures.runnables.OneParameterAction
+import okhttp3.OkHttpClient
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 class LibraryConnectionProvider(
 	private val libraryProvider: ILibraryProvider,
@@ -148,6 +162,32 @@ class LibraryConnectionProvider(
 						reject(it)
 					})
 			}
+		}
+	}
+
+	companion object Instance {
+		private const val buildConnectionTimeoutTime = 10000
+
+		private val lazyUrlScanner: CreateAndHold<BuildUrlProviders> = object : AbstractSynchronousLazy<BuildUrlProviders>() {
+			override fun create(): BuildUrlProviders {
+				val client = OkHttpClient.Builder()
+					.connectTimeout(buildConnectionTimeoutTime.toLong(), TimeUnit.MILLISECONDS)
+					.build()
+				val serverLookup = ServerLookup(ServerInfoXmlRequest(client))
+				val connectionTester = ConnectionTester()
+				return UrlScanner(Base64Encoder(), connectionTester, serverLookup, OkHttpFactory.getInstance())
+			}
+		}
+
+		fun get(context: Context): LibraryConnectionProvider {
+			val applicationContext = context.applicationContext
+			return LibraryConnectionProvider(
+				LibraryRepository(applicationContext),
+				LiveUrlProvider(
+					ActiveNetworkFinder(applicationContext),
+					lazyUrlScanner.getObject()),
+				ConnectionTester(),
+				OkHttpFactory.getInstance())
 		}
 	}
 }

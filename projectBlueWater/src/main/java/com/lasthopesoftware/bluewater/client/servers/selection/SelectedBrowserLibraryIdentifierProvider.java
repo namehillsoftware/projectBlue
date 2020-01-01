@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.client.servers.selection;
 import android.content.Context;
 import android.preference.PreferenceManager;
 
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+
 /**
  * Created by david on 2/12/17.
  */
@@ -15,7 +17,8 @@ public class SelectedBrowserLibraryIdentifierProvider implements ISelectedLibrar
 	}
 
 	@Override
-	public int getSelectedLibraryId() {
-		return PreferenceManager.getDefaultSharedPreferences(context).getInt(LibrarySelectionKey.chosenLibraryKey, -1);
+	public LibraryId getSelectedLibraryId() {
+		final int libraryId = PreferenceManager.getDefaultSharedPreferences(context).getInt(LibrarySelectionKey.chosenLibraryKey, -1);
+		return libraryId > -1 ? new LibraryId(libraryId) : null;
 	}
 }
