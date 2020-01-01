@@ -1,7 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
 
 import android.content.Intent;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 
 public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
@@ -12,7 +15,7 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
     }
 
     @Override
-    public void sendPlaybackBroadcast(final String broadcastMessage, final int libraryId, final PositionedFile positionedFile) {
+    public void sendPlaybackBroadcast(final String broadcastMessage, final LibraryId libraryId, final PositionedFile positionedFile) {
         final Intent playbackBroadcastIntent = new Intent(broadcastMessage);
 
         final int currentPlaylistPosition = positionedFile.getPlaylistPosition();
@@ -21,7 +24,7 @@ public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {
 
         playbackBroadcastIntent
 			.putExtra(PlaylistEvents.PlaylistParameters.playlistPosition, currentPlaylistPosition)
-			.putExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, libraryId)
+			.putExtra(PlaylistEvents.PlaybackFileParameters.fileLibraryId, libraryId.getId())
 			.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, fileKey);
 
         localBroadcastManager.sendBroadcast(playbackBroadcastIntent);

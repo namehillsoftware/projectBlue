@@ -57,7 +57,7 @@ public class WhenRetrievingTheTestedSessionConnection extends AndroidContext {
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			final SessionConnection sessionConnection = new SessionConnection(
 				localBroadcastManager,
-				() -> 51,
+				() -> new LibraryId(51),
 				libraryConnections);
 
 			final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(sessionConnection.promiseTestedSessionConnection());

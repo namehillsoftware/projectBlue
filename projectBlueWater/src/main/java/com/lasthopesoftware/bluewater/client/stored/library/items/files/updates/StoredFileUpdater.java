@@ -113,7 +113,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 						storedFile.setIsOwner(false);
 						return
 							mediaFileIdProvider
-								.getMediaId(serviceFile)
+								.getMediaId(libraryId, serviceFile)
 								.then(mediaId -> {
 									storedFile.setStoredMediaId(mediaId);
 									return storedFile;

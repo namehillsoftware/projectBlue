@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.download.specs.GivenARequestForAStoredFile.ThatReturnsA404;
 
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.specs.FakeLibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -21,10 +22,10 @@ public class WhenDownloading {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
+		final FakeLibraryConnectionProvider fakeConnectionProvider = new FakeLibraryConnectionProvider();
 
 		final StoredFileDownloader downloader = new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), fakeConnectionProvider);
-		inputStream = new FuturePromise<>(downloader.promiseDownload(job.getLibraryId(), new StoredFile().setServiceId(4))).get();
+		inputStream = new FuturePromise<>(downloader.promiseDownload(new LibraryId(2), new StoredFile().setServiceId(4))).get();
 	}
 
 	@Test

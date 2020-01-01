@@ -10,6 +10,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
@@ -91,22 +92,22 @@ public class WhenTheFileChanges extends AndroidContext {
 
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistStart,
-			1,
+			new LibraryId(1),
 			new PositionedFile(1, new ServiceFile(1)));
 
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistChange,
-			1,
+			new LibraryId(1),
 			new PositionedFile(1, new ServiceFile(1)));
 
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistStop,
-			1,
+			new LibraryId(1),
 			new PositionedFile(1, new ServiceFile(1)));
 
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistChange,
-			1,
+			new LibraryId(1),
 			new PositionedFile(1, new ServiceFile(2)));
 	}
 

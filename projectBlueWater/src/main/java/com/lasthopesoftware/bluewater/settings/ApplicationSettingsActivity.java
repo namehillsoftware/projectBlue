@@ -192,7 +192,7 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		libraryProvider
 			.getAllLibraries()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(libraries -> {
-				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
+				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId().getId();
 
 				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
 
