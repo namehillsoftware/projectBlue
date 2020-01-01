@@ -182,18 +182,17 @@ class LibraryConnectionProvider(
 		}
 
 		fun get(context: Context): LibraryConnectionProvider {
-			var next: LibraryConnectionProvider
-			do {
-				next = libraryConnectionProviderReference.get() ?: LibraryConnectionProvider(
+			val connectionProvider = libraryConnectionProviderReference.get() ?: LibraryConnectionProvider(
 					LibraryRepository(context.applicationContext),
 					LiveUrlProvider(
 						ActiveNetworkFinder(context.applicationContext),
 						lazyUrlScanner.getObject()),
 					ConnectionTester(),
 					OkHttpFactory.getInstance())
-			} while (!libraryConnectionProviderReference.compareAndSet(null, next))
 
-			return next
+			libraryConnectionProviderReference.compareAndSet(null, connectionProvider)
+
+			return connectionProvider
 		}
 	}
 }
