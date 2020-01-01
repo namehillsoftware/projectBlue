@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.IFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.ProvideFilePropertiesForSession;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.IPlaystatsUpdate;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
@@ -12,13 +12,13 @@ import com.namehillsoftware.handoff.promises.Promise;
 public class PlaystatsUpdateSelector {
 
 	private final IConnectionProvider connectionProvider;
-	private final IFilePropertiesProvider filePropertiesProvider;
+	private final ProvideFilePropertiesForSession filePropertiesProvider;
 	private final FilePropertiesStorage filePropertiesStorage;
 	private final IProgramVersionProvider programVersionProvider;
 
 	private volatile Promise<IPlaystatsUpdate> promisedPlaystatsUpdater = Promise.empty();
 
-	public PlaystatsUpdateSelector(IConnectionProvider connectionProvider, IFilePropertiesProvider filePropertiesProvider, FilePropertiesStorage filePropertiesStorage, IProgramVersionProvider programVersionProvider) {
+	public PlaystatsUpdateSelector(IConnectionProvider connectionProvider, ProvideFilePropertiesForSession filePropertiesProvider, FilePropertiesStorage filePropertiesStorage, IProgramVersionProvider programVersionProvider) {
 		this.connectionProvider = connectionProvider;
 		this.filePropertiesProvider = filePropertiesProvider;
 		this.filePropertiesStorage = filePropertiesStorage;

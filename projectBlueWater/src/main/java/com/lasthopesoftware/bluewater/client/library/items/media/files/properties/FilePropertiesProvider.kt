@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.*
 
-class LibraryFilePropertiesProvider(private val libraryConnections: ProvideLibraryConnections, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideLibraryFileProperties {
+class FilePropertiesProvider(private val libraryConnections: ProvideLibraryConnections, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideLibraryFileProperties {
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
 		return libraryConnections.promiseLibraryConnection(libraryId).eventually { connectionProvider ->
 			RevisionChecker.promiseRevision(connectionProvider).eventually { revision: Int ->
@@ -23,5 +23,4 @@ class LibraryFilePropertiesProvider(private val libraryConnections: ProvideLibra
 			}
 		}
 	}
-
 }

@@ -3,19 +3,20 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 
 class PebbleFileChangedProxy extends BroadcastReceiver {
 
 	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
 
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 
-	public PebbleFileChangedProxy(CachedFilePropertiesProvider cachedFilePropertiesProvider) {
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+	public PebbleFileChangedProxy(CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider) {
+		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 	}
 
 	@Override
@@ -23,12 +24,12 @@ class PebbleFileChangedProxy extends BroadcastReceiver {
 		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
 		if (fileKey < 0) return;
 
-		cachedFilePropertiesProvider
+		cachedSessionFilePropertiesProvider
 			.promiseFileProperties(new ServiceFile(fileKey))
 			.then(fileProperties -> {
-				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(FilePropertiesProvider.NAME);
-				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+				final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
+				final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
 
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", artist);

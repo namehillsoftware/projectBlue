@@ -12,12 +12,12 @@ import com.namehillsoftware.handoff.promises.Promise;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FilePropertiesProvider implements IFilePropertiesProvider {
+public class SessionFilePropertiesProvider implements ProvideFilePropertiesForSession {
 
 	private final IConnectionProvider connectionProvider;
 	private final IFilePropertiesContainerRepository filePropertiesContainerProvider;
 
-	public FilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
+	public SessionFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
 		this.connectionProvider = connectionProvider;
 		this.filePropertiesContainerProvider = filePropertiesContainerProvider;
 	}

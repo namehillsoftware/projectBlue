@@ -8,8 +8,8 @@ import androidx.core.app.NotificationCompat;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
@@ -25,7 +25,7 @@ implements
 	AutoCloseable {
 
 	private final IConnectionProvider connectionProvider;
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 	private final ImageProvider imageProvider;
 	private final Context context;
 	private final SetupMediaStyleNotifications mediaStyleNotificationSetup;
@@ -50,11 +50,11 @@ implements
 
 	private ViewStructure viewStructure;
 
-	public NowPlayingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationSetup, IConnectionProvider connectionProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider) {
+	public NowPlayingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationSetup, IConnectionProvider connectionProvider, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ImageProvider imageProvider) {
 		this.context = context;
 		this.mediaStyleNotificationSetup = mediaStyleNotificationSetup;
 		this.connectionProvider = connectionProvider;
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 		this.imageProvider = imageProvider;
 	}
 
@@ -74,12 +74,12 @@ implements
 			viewStructure.promisedNowPlayingImage = imageProvider.promiseFileBitmap(serviceFile);
 
 		if (viewStructure.promisedFileProperties == null)
-			viewStructure.promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
+			viewStructure.promisedFileProperties = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile);
 
 		return viewStructure.promisedFileProperties
 			.eventually(fileProperties -> {
-				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(FilePropertiesProvider.NAME);
+				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+				final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
 
 				final NotificationCompat.Builder builder =
 					addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), isPlaying)

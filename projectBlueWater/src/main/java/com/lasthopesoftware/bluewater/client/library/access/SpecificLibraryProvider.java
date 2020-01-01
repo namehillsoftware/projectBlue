@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.library.access;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.namehillsoftware.handoff.promises.Promise;
 
 /**
@@ -9,10 +10,10 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 public class SpecificLibraryProvider implements ISpecificLibraryProvider {
 
-	private final int libraryId;
+	private final LibraryId libraryId;
 	private final ILibraryProvider libraryProvider;
 
-	public SpecificLibraryProvider(int libraryId, ILibraryProvider libraryProvider) {
+	public SpecificLibraryProvider(LibraryId libraryId, ILibraryProvider libraryProvider) {
 		this.libraryId = libraryId;
 		this.libraryProvider = libraryProvider;
 	}

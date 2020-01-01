@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.factory.specs.GivenTheVersionProviderGivesAnError;
 
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.IPlaystatsUpdate;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -38,7 +39,7 @@ public class WhenAttemptingToGetThePlaystatsUpdaterAgain {
 		final FakeFilePropertiesContainer fakeFilePropertiesContainer = new FakeFilePropertiesContainer();
 		final PlaystatsUpdateSelector playstatsUpdateSelector = new PlaystatsUpdateSelector(
 			fakeConnectionProvider,
-			new FilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer, ParsingScheduler.instance()),
+			new SessionFilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer, ParsingScheduler.instance()),
 			new FilePropertiesStorage(fakeConnectionProvider, fakeFilePropertiesContainer),
 			programVersionProvider);
 

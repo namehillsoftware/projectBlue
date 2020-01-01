@@ -5,13 +5,15 @@ import android.graphics.Bitmap;
 import android.media.MediaMetadataEditor;
 import android.media.MediaMetadataRetriever;
 import android.media.RemoteControlClient;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +29,7 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 			RemoteControlClient.FLAG_KEY_MEDIA_STOP;
 
 	private final Context context;
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 	private final ImageProvider imageProvider;
 	private final RemoteControlClient remoteControlClient;
 
@@ -36,9 +38,9 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 	private volatile boolean isPlaying;
 	private Bitmap remoteClientBitmap;
 
-	public RemoteControlClientBroadcaster(Context context, CachedFilePropertiesProvider cachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
+	public RemoteControlClientBroadcaster(Context context, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
 		this.context = context;
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 		this.imageProvider = imageProvider;
 		this.remoteControlClient = remoteControlClient;
 		remoteControlClient.setTransportControlFlags(standardControlFlags);
@@ -69,14 +71,14 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
-		cachedFilePropertiesProvider
+		cachedSessionFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.eventually(LoopedInPromise.response(fileProperties -> {
-				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(FilePropertiesProvider.NAME);
-				final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+				final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
+				final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
 				final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-				final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
+				final String trackNumberString = fileProperties.get(SessionFilePropertiesProvider.TRACK);
 				final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
 				final RemoteControlClient.MetadataEditor metaData = remoteControlClient.editMetadata(true);

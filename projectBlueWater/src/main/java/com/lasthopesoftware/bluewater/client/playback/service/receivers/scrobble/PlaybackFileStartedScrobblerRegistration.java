@@ -5,12 +5,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
@@ -25,11 +26,11 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 
 	@Override
 	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
-		final CachedFilePropertiesProvider filePropertiesProvider =
-			new CachedFilePropertiesProvider(
+		final CachedSessionFilePropertiesProvider filePropertiesProvider =
+			new CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				FilePropertyCache.getInstance(),
-				new FilePropertiesProvider(
+				new SessionFilePropertiesProvider(
 					connectionProvider,
 					FilePropertyCache.getInstance(),
 					ParsingScheduler.instance()));
@@ -44,11 +45,11 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 
 	private static class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
 
-		private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+		private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 		private final ScrobbleIntentProvider scrobbleIntentProvider;
 
-		public PlaybackFileChangedScrobbleDroidProxy(CachedFilePropertiesProvider cachedFilePropertiesProvider, ScrobbleIntentProvider scrobbleIntentProvider) {
-			this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+		public PlaybackFileChangedScrobbleDroidProxy(CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ScrobbleIntentProvider scrobbleIntentProvider) {
+			this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 			this.scrobbleIntentProvider = scrobbleIntentProvider;
 		}
 
@@ -57,14 +58,14 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 			final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
 			if (fileKey < 0) return;
 
-			cachedFilePropertiesProvider
+			cachedSessionFilePropertiesProvider
 				.promiseFileProperties(new ServiceFile(fileKey))
 				.then(new VoidResponse<>(fileProperties -> {
-					final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
-					final String name = fileProperties.get(FilePropertiesProvider.NAME);
-					final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+					final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+					final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
+					final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
 					final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-					final String trackNumberString = fileProperties.get(FilePropertiesProvider.TRACK);
+					final String trackNumberString = fileProperties.get(SessionFilePropertiesProvider.TRACK);
 					final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
 					final Intent scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true);

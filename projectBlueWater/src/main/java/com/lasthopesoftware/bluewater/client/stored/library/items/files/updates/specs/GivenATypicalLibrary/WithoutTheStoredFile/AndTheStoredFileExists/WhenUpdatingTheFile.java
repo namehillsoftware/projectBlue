@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.specs.GivenATypicalLibrary.WithoutTheStoredFile.AndTheStoredFileExists;
 
 import android.net.Uri;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeCachedFilesPropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeCachedSessionFilesPropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
@@ -15,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLo
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -40,13 +42,13 @@ public class WhenUpdatingTheFile extends AndroidContext {
 		when(mediaFileIdProvider.getMediaId(new ServiceFile(4)))
 			.thenReturn(new Promise<>(12));
 
-		final FakeCachedFilesPropertiesProvider filePropertiesProvider = new FakeCachedFilesPropertiesProvider();
+		final FakeCachedSessionFilesPropertiesProvider filePropertiesProvider = new FakeCachedSessionFilesPropertiesProvider();
 		filePropertiesProvider.addFilePropertiesToCache(
 			new ServiceFile(4),
 			new HashMap<String, String>() {{
-				put(FilePropertiesProvider.ARTIST, "artist");
-				put(FilePropertiesProvider.ALBUM, "album");
-				put(FilePropertiesProvider.FILENAME, "my-filename.mp3");
+				put(SessionFilePropertiesProvider.ARTIST, "artist");
+				put(SessionFilePropertiesProvider.ALBUM, "album");
+				put(SessionFilePropertiesProvider.FILENAME, "my-filename.mp3");
 			}});
 
 		final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(

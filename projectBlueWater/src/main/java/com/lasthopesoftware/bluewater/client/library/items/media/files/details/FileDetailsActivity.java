@@ -14,8 +14,10 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
@@ -25,9 +27,9 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
@@ -40,11 +42,17 @@ import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 
@@ -57,13 +65,13 @@ public class FileDetailsActivity extends AppCompatActivity {
 	private Bitmap mFileImage;
 
 	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-		FilePropertiesProvider.AUDIO_ANALYSIS_INFO,
-		FilePropertiesProvider.GET_COVER_ART_INFO,
-		FilePropertiesProvider.IMAGE_FILE,
-		FilePropertiesProvider.KEY,
-		FilePropertiesProvider.STACK_FILES,
-		FilePropertiesProvider.STACK_TOP,
-		FilePropertiesProvider.STACK_VIEW)));
+		SessionFilePropertiesProvider.AUDIO_ANALYSIS_INFO,
+		SessionFilePropertiesProvider.GET_COVER_ART_INFO,
+		SessionFilePropertiesProvider.IMAGE_FILE,
+		SessionFilePropertiesProvider.KEY,
+		SessionFilePropertiesProvider.STACK_FILES,
+		SessionFilePropertiesProvider.STACK_TOP,
+		SessionFilePropertiesProvider.STACK_VIEW)));
 
 	private static final AbstractSynchronousLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
 			new AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
@@ -135,12 +143,12 @@ public class FileDetailsActivity extends AppCompatActivity {
 		artistTextViewFinder.findView().setText(getText(R.string.lbl_loading));
 
 		SessionConnection.getInstance(this).promiseSessionConnection()
-			.then(c -> new FormattedFilePropertiesProvider(c, FilePropertyCache.getInstance(), ParsingScheduler.instance()))
+			.then(c -> new FormattedSessionFilePropertiesProvider(c, FilePropertyCache.getInstance(), ParsingScheduler.instance()))
 			.eventually(f -> f.promiseFileProperties(new ServiceFile(fileKey)))
 			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
-				final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
 				if (artist != null)
 					this.artistTextViewFinder.findView().setText(artist);
 
@@ -164,8 +172,8 @@ public class FileDetailsActivity extends AppCompatActivity {
 //			@Override
 //			public Float onExecute(ISimpleTask<Void, Void, Float> owner, Void... params) throws Exception {
 //
-//				if (filePropertiesProvider.getProperty(FilePropertiesProvider.RATING) != null && !filePropertiesProvider.getProperty(FilePropertiesProvider.RATING).isEmpty())
-//					return Float.valueOf(filePropertiesProvider.getProperty(FilePropertiesProvider.RATING));
+//				if (filePropertiesProvider.getProperty(SessionFilePropertiesProvider.RATING) != null && !filePropertiesProvider.getProperty(SessionFilePropertiesProvider.RATING).isEmpty())
+//					return Float.valueOf(filePropertiesProvider.getProperty(SessionFilePropertiesProvider.RATING));
 //
 //				return (float) 0;
 //			}
@@ -183,7 +191,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 //					@Override
 //					public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
 //						if (!fromUser) return;
-//						filePropertiesProvider.setProperty(FilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
+//						filePropertiesProvider.setProperty(SessionFilePropertiesProvider.RATING, String.valueOf(Math.round(rating)));
 //					}
 //				});
 //			}
@@ -194,11 +202,11 @@ public class FileDetailsActivity extends AppCompatActivity {
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.eventually(connectionProvider -> {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-				final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-					new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
-						new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
+				final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
+					new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
+						new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
-				return new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider)
+				return new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedSessionFilePropertiesProvider)
 					.promiseFileBitmap(new ServiceFile(fileKey));
 			})
 			.eventually(bitmap ->
@@ -216,7 +224,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	}
 
 	private void setFileNameFromProperties(Map<String, String> fileProperties) {
-		final String fileName = fileProperties.get(FilePropertiesProvider.NAME);
+		final String fileName = fileProperties.get(SessionFilePropertiesProvider.NAME);
 		if (fileName == null) return;
 
 		final TextView fileNameTextView = fileNameTextViewFinder.findView();

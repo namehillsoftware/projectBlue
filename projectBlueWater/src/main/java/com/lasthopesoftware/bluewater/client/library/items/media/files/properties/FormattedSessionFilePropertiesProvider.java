@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
+public class FormattedSessionFilePropertiesProvider extends SessionFilePropertiesProvider {
 	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<>(() -> new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter());
 	
 	private static final Lazy<DateTimeFormatterBuilder> dateFormatterBuilder =
@@ -72,7 +72,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 								DATE_FIRST_RATED,
 								DATE_LAST_OPENED))));
 	
-	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
+	public FormattedSessionFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
 		super(connectionProvider, filePropertiesContainerProvider, parsingScheduler);
 	}
 
@@ -81,7 +81,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		return
 			super
 				.promiseFileProperties(serviceFile)
-				.then(FormattedFilePropertiesProvider::buildFormattedReadonlyProperties);
+				.then(FormattedSessionFilePropertiesProvider::buildFormattedReadonlyProperties);
 	}
 
 	/* Formatted properties helpers */

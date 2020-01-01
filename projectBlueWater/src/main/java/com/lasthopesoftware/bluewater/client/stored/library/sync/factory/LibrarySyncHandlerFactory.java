@@ -12,8 +12,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.access.Fi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.FileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.IFileStreamWriter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
@@ -78,17 +78,17 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 		final ConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, OkHttpFactory.getInstance());
 
 		final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
+		final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider = new CachedSessionFilePropertiesProvider(
 			connectionProvider,
 			filePropertyCache,
-			new FilePropertiesProvider(
+			new SessionFilePropertiesProvider(
 				connectionProvider,
 				filePropertyCache,
 				ParsingScheduler.instance()));
 
 		final MediaQueryCursorProvider cursorProvider = new MediaQueryCursorProvider(
 			context,
-			cachedFilePropertiesProvider);
+			cachedSessionFilePropertiesProvider);
 
 		final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
 			context,
@@ -103,7 +103,7 @@ public class LibrarySyncHandlerFactory implements ProduceLibrarySyncHandlers {
 				storageReadPermissionsPossible),
 			new StoredFileQuery(context),
 			libraryProvider,
-			cachedFilePropertiesProvider,
+			cachedSessionFilePropertiesProvider,
 			syncDirectory);
 
 		final StoredItemAccess storedItemAccess = new StoredItemAccess(context);

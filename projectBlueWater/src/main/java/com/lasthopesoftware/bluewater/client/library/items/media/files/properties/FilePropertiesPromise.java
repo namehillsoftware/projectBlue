@@ -80,7 +80,7 @@ final class FilePropertiesPromise extends Promise<Map<String, String>> {
 
 				return returnProperties;
 			} catch (IOException | XmlParseException e) {
-				LoggerFactory.getLogger(FilePropertiesProvider.class).error(e.toString(), e);
+				LoggerFactory.getLogger(SessionFilePropertiesProvider.class).error(e.toString(), e);
 				throw e;
 			} finally {
 				body.close();

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.service.receivers.file;
 
 import android.content.Context;
+
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
@@ -8,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class StoredFileDownloadingNotifier implements ReceiveStoredFileEvent {
 
-	private static Map<Integer, CachedFilePropertiesProvider> filePropertiesProviderCache = new ConcurrentHashMap<>();
+	private static Map<Integer, CachedSessionFilePropertiesProvider> filePropertiesProviderCache = new ConcurrentHashMap<>();
 
 	private final CreateAndHold<String> downloadingStatusLabel = new AbstractSynchronousLazy<String>() {
 		@Override
@@ -60,9 +61,9 @@ public class StoredFileDownloadingNotifier implements ReceiveStoredFileEvent {
 	public Promise<Void> receive(int storedFileId) {
 		return storedFileAccess.getStoredFile(storedFileId)
 			.eventually(storedFile -> {
-				final CachedFilePropertiesProvider cachedFilePropertiesProvider = filePropertiesProviderCache.get(storedFile.getLibraryId());
-				if (cachedFilePropertiesProvider != null) {
-					notifyOfFileDownload(cachedFilePropertiesProvider, storedFile);
+				final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider = filePropertiesProviderCache.get(storedFile.getLibraryId());
+				if (cachedSessionFilePropertiesProvider != null) {
+					notifyOfFileDownload(cachedSessionFilePropertiesProvider, storedFile);
 					return Promise.empty();
 				}
 
@@ -71,8 +72,8 @@ public class StoredFileDownloadingNotifier implements ReceiveStoredFileEvent {
 					.then(new VoidResponse<>(urlProvider -> {
 						final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, OkHttpFactory.getInstance());
 						final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-						final CachedFilePropertiesProvider filePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
-							new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
+						final CachedSessionFilePropertiesProvider filePropertiesProvider = new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
+							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
 						filePropertiesProviderCache.put(storedFile.getLibraryId(), filePropertiesProvider);
 						notifyOfFileDownload(filePropertiesProvider, storedFile);
@@ -85,9 +86,9 @@ public class StoredFileDownloadingNotifier implements ReceiveStoredFileEvent {
 		return Collections.singleton(StoredFileSynchronization.onFileDownloadingEvent);
 	}
 
-	private void notifyOfFileDownload(CachedFilePropertiesProvider filePropertiesProvider, StoredFile storedFile) {
+	private void notifyOfFileDownload(CachedSessionFilePropertiesProvider filePropertiesProvider, StoredFile storedFile) {
 		filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
-			.then(new VoidResponse<>(fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), fileProperties.get(FilePropertiesProvider.NAME)))))
+			.then(new VoidResponse<>(fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), fileProperties.get(SessionFilePropertiesProvider.NAME)))))
 			.excuse(new VoidResponse<>(exception -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)))));
 	}
 }

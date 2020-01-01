@@ -3,10 +3,11 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices
 
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
@@ -20,11 +21,11 @@ public class PebbleFileChangedNotificationRegistration implements IConnectionDep
 
 	@Override
 	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
-		final CachedFilePropertiesProvider filePropertiesProvider =
-			new CachedFilePropertiesProvider(
+		final CachedSessionFilePropertiesProvider filePropertiesProvider =
+			new CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				FilePropertyCache.getInstance(),
-				new FilePropertiesProvider(
+				new SessionFilePropertiesProvider(
 					connectionProvider,
 					FilePropertyCache.getInstance(),
 					ParsingScheduler.instance()));

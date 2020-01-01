@@ -6,8 +6,8 @@ import android.widget.TextView;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
@@ -91,11 +91,11 @@ public class FileNameTextViewSetter {
 						}
 
 						final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-						final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-							new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
-								new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
+						final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
+							new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
+								new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
 
-						final Promise<Map<String, String>> filePropertiesPromise = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
+						final Promise<Map<String, String>> filePropertiesPromise = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile);
 
 						cancellationProxy.doCancel(filePropertiesPromise);
 
@@ -104,7 +104,7 @@ public class FileNameTextViewSetter {
 					.eventually(LoopedInPromise.response(properties -> {
 						if (isUpdateCancelled()) return resolve();
 
-						final String fileName = properties.get(FilePropertiesProvider.NAME);
+						final String fileName = properties.get(SessionFilePropertiesProvider.NAME);
 
 						if (fileName != null)
 							textView.setText(fileName);

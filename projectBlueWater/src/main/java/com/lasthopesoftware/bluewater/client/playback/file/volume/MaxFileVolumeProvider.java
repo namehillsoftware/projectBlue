@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,12 +23,12 @@ public class MaxFileVolumeProvider implements ProvideMaxFileVolume {
 
 	private static final Promise<Float> promisedUnityVolume = new Promise<>(UnityVolume);
 
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 	private final IVolumeLevelSettings volumeLevelSettings;
 
-	public MaxFileVolumeProvider(IVolumeLevelSettings volumeLevelSettings, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+	public MaxFileVolumeProvider(IVolumeLevelSettings volumeLevelSettings, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider) {
 		this.volumeLevelSettings = volumeLevelSettings;
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 	}
 
 	@Override
@@ -36,13 +37,13 @@ public class MaxFileVolumeProvider implements ProvideMaxFileVolume {
 			return promisedUnityVolume;
 
 		return
-			cachedFilePropertiesProvider
+			cachedSessionFilePropertiesProvider
 				.promiseFileProperties(serviceFile)
 				.then(fileProperties -> {
-					if (!fileProperties.containsKey(FilePropertiesProvider.VolumeLevelR128))
+					if (!fileProperties.containsKey(SessionFilePropertiesProvider.VolumeLevelR128))
 						return UnityVolume;
 
-					final String r128VolumeLevelString = fileProperties.get(FilePropertiesProvider.VolumeLevelR128);
+					final String r128VolumeLevelString = fileProperties.get(SessionFilePropertiesProvider.VolumeLevelR128);
 					try {
 						final float r128VolumeLevel = Float.parseFloat(r128VolumeLevelString);
 

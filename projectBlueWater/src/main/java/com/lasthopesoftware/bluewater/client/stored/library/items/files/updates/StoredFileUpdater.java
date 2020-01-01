@@ -4,8 +4,8 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
@@ -62,7 +62,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 	private final MediaFileIdProvider mediaFileIdProvider;
 	private final GetStoredFiles storedFiles;
 	private final ILibraryProvider libraryProvider;
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 	private final LookupSyncDirectory lookupSyncDirectory;
 
 	public StoredFileUpdater(
@@ -71,14 +71,14 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 		MediaFileIdProvider mediaFileIdProvider,
 		GetStoredFiles storedFiles,
 		ILibraryProvider libraryProvider,
-		CachedFilePropertiesProvider cachedFilePropertiesProvider,
+		CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider,
 		LookupSyncDirectory lookupSyncDirectory) {
 		this.context = context;
 		this.mediaFileUriProvider = mediaFileUriProvider;
 		this.mediaFileIdProvider = mediaFileIdProvider;
 		this.storedFiles = storedFiles;
 		this.libraryProvider = libraryProvider;
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 		this.lookupSyncDirectory = lookupSyncDirectory;
 	}
 
@@ -122,24 +122,24 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 			}))
 			.eventually(storedFile -> storedFile.getPath() != null
 				? new Promise<>(storedFile)
-				: cachedFilePropertiesProvider
+				: cachedSessionFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(libraryId)
 						.then(syncDrive -> {
 							String fullPath = syncDrive.getPath();
 
-							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+							String artist = fileProperties.get(SessionFilePropertiesProvider.ALBUM_ARTIST);
 							if (artist == null)
-								artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+								artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
 
 							if (artist != null)
 								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(artist.trim()));
 
-							final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+							final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
 							if (album != null)
 								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(album.trim()));
 
-							String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
+							String fileName = fileProperties.get(SessionFilePropertiesProvider.FILENAME);
 							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
 							final int extensionIndex = fileName.lastIndexOf('.');

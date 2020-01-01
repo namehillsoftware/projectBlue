@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.di
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileAccessTimeUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.Messenger;
@@ -62,17 +62,17 @@ public class ImageProvider {
 	private final Context context;
 	private final IConnectionProvider connectionProvider;
 	private final IDiskCacheDirectoryProvider diskCacheDirectoryProvider;
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 
-	public ImageProvider(final Context context, IConnectionProvider connectionProvider, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider) {
+	public ImageProvider(final Context context, IConnectionProvider connectionProvider, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider) {
 		this.context = context;
 		this.connectionProvider = connectionProvider;
 		this.diskCacheDirectoryProvider = diskCacheDirectoryProvider;
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 	}
 
 	public Promise<Bitmap> promiseFileBitmap(ServiceFile serviceFile) {
-		return new Promise<>(new ImageOperator(context, connectionProvider, diskCacheDirectoryProvider, cachedFilePropertiesProvider, serviceFile));
+		return new Promise<>(new ImageOperator(context, connectionProvider, diskCacheDirectoryProvider, cachedSessionFilePropertiesProvider, serviceFile));
 	}
 
 	private static class ImageOperator implements MessengerOperator<Bitmap> {
@@ -80,20 +80,20 @@ public class ImageProvider {
 		private final Context context;
 		private final IConnectionProvider connectionProvider;
 		private final IDiskCacheDirectoryProvider diskCacheDirectoryProvider;
-		private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+		private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 		private final ServiceFile serviceFile;
 
-		ImageOperator(Context context, IConnectionProvider connectionProvider, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, CachedFilePropertiesProvider cachedFilePropertiesProvider, ServiceFile serviceFile) {
+		ImageOperator(Context context, IConnectionProvider connectionProvider, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ServiceFile serviceFile) {
 			this.context = context;
 			this.connectionProvider = connectionProvider;
 			this.diskCacheDirectoryProvider = diskCacheDirectoryProvider;
-			this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+			this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
 			this.serviceFile = serviceFile;
 		}
 
 		@Override
 		public void send(Messenger<Bitmap> messenger) {
-			final Promise<Map<String, String>> promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(serviceFile);
+			final Promise<Map<String, String>> promisedFileProperties = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile);
 
 			final CancellationProxy cancellationProxy = new CancellationProxy();
 			messenger.cancellationRequested(cancellationProxy);
@@ -105,13 +105,13 @@ public class ImageProvider {
 					.then(fileProperties -> {
 						// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 						// artists), and then by artist if that field is empty
-						String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+						String artist = fileProperties.get(SessionFilePropertiesProvider.ALBUM_ARTIST);
 						if (artist == null || artist.isEmpty())
-							artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+							artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
 
-						String albumOrTrackName = fileProperties.get(FilePropertiesProvider.ALBUM);
+						String albumOrTrackName = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
 						if (albumOrTrackName == null)
-							albumOrTrackName = fileProperties.get(FilePropertiesProvider.NAME);
+							albumOrTrackName = fileProperties.get(SessionFilePropertiesProvider.NAME);
 
 						return artist + ":" + albumOrTrackName;
 					})
