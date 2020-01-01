@@ -39,27 +39,25 @@ class LibraryConnectionProvider(
 
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		synchronized(buildingConnectionPromiseSync) {
-			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
-			{
-				init
-				{
+			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+				init {
 					promisedConnectionProvidersCache[libraryId]?.then(
-					{ c ->
-						if (c != null) connectionTester.promiseIsConnectionPossible(c)
-							.then(
-							{ result ->
-								if (result) resolve(c)
-								else proxy(promiseUpdatedCachedConnection(libraryId))
-							},
-							{
-								proxy(promiseUpdatedCachedConnection(libraryId))
-							})
-						else proxy(promiseUpdatedCachedConnection(libraryId))
-					},
-					{
-						proxy(promiseUpdatedCachedConnection(libraryId))
-					})
-					?: proxy(promiseUpdatedCachedConnection(libraryId))
+						{ c ->
+							if (c != null) connectionTester.promiseIsConnectionPossible(c)
+								.then(
+									{ result ->
+										if (result) resolve(c)
+										else proxy(promiseUpdatedCachedConnection(libraryId))
+									},
+									{
+										proxy(promiseUpdatedCachedConnection(libraryId))
+									})
+							else proxy(promiseUpdatedCachedConnection(libraryId))
+						},
+						{
+							proxy(promiseUpdatedCachedConnection(libraryId))
+						})
+						?: proxy(promiseUpdatedCachedConnection(libraryId))
 				}
 			}
 			promisedConnectionProvidersCache[libraryId] = promisedTestConnectionProvider
@@ -75,19 +73,17 @@ class LibraryConnectionProvider(
 			val cachedConnectionProvider = cachedConnectionProviders[libraryId]
 			if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
 
-			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
-			{
-				init
-				{
+			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+				init {
 					promisedConnectionProvidersCache[libraryId]?.then(
-					{
-						if (it != null) resolve(it)
-						else proxy(promiseUpdatedCachedConnection(libraryId))
-					},
-					{
-						proxy(promiseUpdatedCachedConnection(libraryId))
-					})
-					?: proxy(promiseUpdatedCachedConnection(libraryId))
+						{
+							if (it != null) resolve(it)
+							else proxy(promiseUpdatedCachedConnection(libraryId))
+						},
+						{
+							proxy(promiseUpdatedCachedConnection(libraryId))
+						})
+						?: proxy(promiseUpdatedCachedConnection(libraryId))
 				}
 			}
 			promisedConnectionProvidersCache[libraryId] = nextPromisedConnectionProvider
@@ -97,70 +93,61 @@ class LibraryConnectionProvider(
 
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
-			init
-			{
+			init {
 				promiseBuiltSessionConnection(libraryId)
 					.updates(OneParameterAction { reportProgress(it) })
 					.then(
-					{ c ->
-						if (c != null) cachedConnectionProviders[libraryId] = c
-						resolve(c)
-					},
-					{ reject(it) })
+						{ c ->
+							if (c != null) cachedConnectionProviders[libraryId] = c
+							resolve(c)
+						},
+						{ reject(it) })
 			}
 		}
 	}
 
 	private fun promiseBuiltSessionConnection(selectedLibraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
-		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
-		{
-			init
-			{
+		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+			init {
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				libraryProvider
 					.getLibrary(selectedLibraryId.id)
 					.then(
-					{ library ->
-						when(library?.accessCode?.isEmpty())
-						{
-							null, true ->
-							{
-								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-								resolve(null)
-							}
-							else ->
-							{
-								reportProgress(BuildingConnectionStatus.BuildingConnection)
+						{ library ->
+							when (library?.accessCode?.isEmpty()) {
+								null, true -> {
+									reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+									resolve(null)
+								}
+								else -> {
+									reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-								liveUrlProvider
-									.promiseLiveUrl(library)
-									.then(
-									{
-										when(it)
-										{
-											null ->
+									liveUrlProvider
+										.promiseLiveUrl(library)
+										.then(
+											{
+												when (it) {
+													null -> {
+														reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
+														resolve(null)
+													}
+													else -> {
+														reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
+														resolve(ConnectionProvider(it, okHttpFactory))
+													}
+												}
+											},
 											{
 												reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-												resolve(null)
-											}
-											else ->
-											{
-												reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
-												resolve(ConnectionProvider(it, okHttpFactory))
-											}
-										}
-									},
-									{
-										reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-										reject(it)
-									})
+												reject(it)
+											})
+								}
 							}
-						}
-					},
-					{
-						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-						reject(it)
-					})
+						},
+						{
+							reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+							reject(it)
+						})
 			}
 		}
 	}
@@ -182,7 +169,8 @@ class LibraryConnectionProvider(
 		}
 
 		fun get(context: Context): LibraryConnectionProvider {
-			val connectionProvider = libraryConnectionProviderReference.get() ?: LibraryConnectionProvider(
+			val connectionProvider = libraryConnectionProviderReference.get()
+				?: LibraryConnectionProvider(
 					LibraryRepository(context.applicationContext),
 					LiveUrlProvider(
 						ActiveNetworkFinder(context.applicationContext),
