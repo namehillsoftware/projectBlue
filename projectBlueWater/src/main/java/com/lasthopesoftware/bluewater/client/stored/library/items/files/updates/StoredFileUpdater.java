@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
@@ -62,7 +62,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 	private final MediaFileIdProvider mediaFileIdProvider;
 	private final GetStoredFiles storedFiles;
 	private final ILibraryProvider libraryProvider;
-	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
+	private final CachedFilePropertiesProvider cachedSessionFilePropertiesProvider;
 	private final LookupSyncDirectory lookupSyncDirectory;
 
 	public StoredFileUpdater(
@@ -71,14 +71,14 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 		MediaFileIdProvider mediaFileIdProvider,
 		GetStoredFiles storedFiles,
 		ILibraryProvider libraryProvider,
-		CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider,
+		CachedFilePropertiesProvider cachedFilePropertiesProvider,
 		LookupSyncDirectory lookupSyncDirectory) {
 		this.context = context;
 		this.mediaFileUriProvider = mediaFileUriProvider;
 		this.mediaFileIdProvider = mediaFileIdProvider;
 		this.storedFiles = storedFiles;
 		this.libraryProvider = libraryProvider;
-		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
+		this.cachedSessionFilePropertiesProvider = cachedFilePropertiesProvider;
 		this.lookupSyncDirectory = lookupSyncDirectory;
 	}
 
@@ -123,7 +123,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 			.eventually(storedFile -> storedFile.getPath() != null
 				? new Promise<>(storedFile)
 				: cachedSessionFilePropertiesProvider
-					.promiseFileProperties(serviceFile)
+					.promiseFileProperties(libraryId, serviceFile)
 					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(libraryId)
 						.then(syncDrive -> {
 							String fullPath = syncDrive.getPath();
