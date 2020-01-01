@@ -20,12 +20,12 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
-import com.namehillsoftware.lazyj.CreateAndHold
 import com.vedsoft.futures.runnables.OneParameterAction
 import okhttp3.OkHttpClient
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class LibraryConnectionProvider(
 	private val libraryProvider: ILibraryProvider,
@@ -168,7 +168,9 @@ class LibraryConnectionProvider(
 	companion object Instance {
 		private const val buildConnectionTimeoutTime = 10000
 
-		private val lazyUrlScanner: CreateAndHold<BuildUrlProviders> = object : AbstractSynchronousLazy<BuildUrlProviders>() {
+		private val libraryConnectionProviderReference = AtomicReference<LibraryConnectionProvider>()
+
+		private val lazyUrlScanner = object : AbstractSynchronousLazy<BuildUrlProviders>() {
 			override fun create(): BuildUrlProviders {
 				val client = OkHttpClient.Builder()
 					.connectTimeout(buildConnectionTimeoutTime.toLong(), TimeUnit.MILLISECONDS)
@@ -180,14 +182,18 @@ class LibraryConnectionProvider(
 		}
 
 		fun get(context: Context): LibraryConnectionProvider {
-			val applicationContext = context.applicationContext
-			return LibraryConnectionProvider(
-				LibraryRepository(applicationContext),
-				LiveUrlProvider(
-					ActiveNetworkFinder(applicationContext),
-					lazyUrlScanner.getObject()),
-				ConnectionTester(),
-				OkHttpFactory.getInstance())
+			var next: LibraryConnectionProvider
+			do {
+				next = libraryConnectionProviderReference.get() ?: LibraryConnectionProvider(
+					LibraryRepository(context.applicationContext),
+					LiveUrlProvider(
+						ActiveNetworkFinder(context.applicationContext),
+						lazyUrlScanner.getObject()),
+					ConnectionTester(),
+					OkHttpFactory.getInstance())
+			} while (!libraryConnectionProviderReference.compareAndSet(null, next))
+
+			return next
 		}
 	}
 }
