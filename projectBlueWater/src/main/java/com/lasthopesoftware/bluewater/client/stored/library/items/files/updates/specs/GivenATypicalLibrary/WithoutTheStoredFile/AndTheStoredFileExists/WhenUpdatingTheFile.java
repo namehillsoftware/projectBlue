@@ -2,11 +2,13 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import android.net.Uri;
 
-import com.annimon.stream.Stream;
+import androidx.test.core.app.ApplicationProvider;
+
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeCachedSessionFilesPropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilesPropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
@@ -18,9 +20,9 @@ import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -39,10 +41,10 @@ public class WhenUpdatingTheFile extends AndroidContext {
 			.thenReturn(new Promise<>(Uri.fromFile(new File("/custom-root/a-file.mp3"))));
 
 		final MediaFileIdProvider mediaFileIdProvider = mock(MediaFileIdProvider.class);
-		when(mediaFileIdProvider.getMediaId(new ServiceFile(4)))
+		when(mediaFileIdProvider.getMediaId(new LibraryId(14), new ServiceFile(4)))
 			.thenReturn(new Promise<>(12));
 
-		final FakeCachedSessionFilesPropertiesProvider filePropertiesProvider = new FakeCachedSessionFilesPropertiesProvider();
+		final FakeFilesPropertiesProvider filePropertiesProvider = new FakeFilesPropertiesProvider();
 		filePropertiesProvider.addFilePropertiesToCache(
 			new ServiceFile(4),
 			new HashMap<String, String>() {{
@@ -52,28 +54,27 @@ public class WhenUpdatingTheFile extends AndroidContext {
 			}});
 
 		final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			mediaFileUriProvider,
 			mediaFileIdProvider,
-			new StoredFileQuery(RuntimeEnvironment.application),
+			new StoredFileQuery(ApplicationProvider.getApplicationContext()),
+			mock(ILibraryProvider.class),
 			filePropertiesProvider,
 			new SyncDirectoryLookup(
-				() -> new Promise<>(Stream.of(new File("/my-public-drive"))),
-				() -> new Promise<>(Stream.empty())));
+				mock(ILibraryProvider.class),
+				() -> new Promise<>(Collections.singletonList(new File("/my-public-drive"))),
+				() -> new Promise<>(Collections.emptyList())));
 
 		storedFile = new FuturePromise<>(storedFileUpdater.promiseStoredFileUpdate(
-			new Library()
-				.setIsUsingExistingFiles(true)
-				.setId(14)
-				.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL),
+			new LibraryId(14),
 			new ServiceFile(4))).get();
 	}
 
 	@Test
 	public void thenTheFileIsInsertedIntoTheDatabase() throws ExecutionException, InterruptedException {
 		assertThat(new FuturePromise<>(
-			new StoredFileQuery(RuntimeEnvironment.application).promiseStoredFile(
-				new Library().setId(14), new ServiceFile(4))).get()).isNotNull();
+			new StoredFileQuery(ApplicationProvider.getApplicationContext()).promiseStoredFile(
+				new LibraryId(14), new ServiceFile(4))).get()).isNotNull();
 	}
 
 	@Test

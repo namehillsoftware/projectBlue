@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheSubsriptionIsDisposedAfterItBeginsDownloading;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
@@ -38,7 +38,6 @@ public class WhenProcessingTheJob {
 	@BeforeClass
 	public static void before() {
 		final DeferredPromise<InputStream> deferredPromise = new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
-		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
@@ -48,7 +47,7 @@ public class WhenProcessingTheJob {
 			f -> true,
 			(is, f) -> {});
 
-		storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
+		storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(new LibraryId(55), new ServiceFile(1), storedFile)))
 			.blockingSubscribe(new Observer<StoredFileJobStatus>() {
 				private Disposable disposable;
 

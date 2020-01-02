@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenACancellationWhileGettingStoredItems;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -50,8 +51,9 @@ public class WhenSyncingTheStoredItems {
 			}
 		};
 
-		final ProvideFiles mockFileProvider = mock(ProvideFiles.class);
+		final ProvideLibraryFiles mockFileProvider = mock(ProvideLibraryFiles.class);
 		when(mockFileProvider.promiseFiles(
+			new LibraryId(13),
 			FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
@@ -63,13 +65,12 @@ public class WhenSyncingTheStoredItems {
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			new Library(),
 			new StoredItemServiceFileCollector(
 				deferredStoredItemAccess,
 				mockFileProvider,
 				FileListParameters.getInstance()),
 			storedFileAccess,
-			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
+			(l, f) -> new Promise<>(new StoredFile(new Library().setId(l.getId()), 1, f, "fake-file-name", true)),
 			jobs -> Observable.fromIterable(jobs).flatMap(job -> Observable.just(
 				new StoredFileJobStatus(
 					mock(File.class),
@@ -80,7 +81,7 @@ public class WhenSyncingTheStoredItems {
 					job.getStoredFile(),
 					StoredFileJobState.Downloaded))));
 
-		final Observable<StoredFile> syncedFiles = librarySyncHandler.observeLibrarySync().map(j -> j.storedFile);
+		final Observable<StoredFile> syncedFiles = librarySyncHandler.observeLibrarySync(new LibraryId(5)).map(j -> j.storedFile);
 
 		syncedFiles.blockingSubscribe(new Observer<StoredFile>() {
 			@Override

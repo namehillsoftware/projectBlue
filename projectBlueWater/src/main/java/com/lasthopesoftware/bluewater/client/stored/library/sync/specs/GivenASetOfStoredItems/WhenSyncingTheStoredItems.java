@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenASe
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
@@ -48,8 +48,8 @@ public class WhenSyncingTheStoredItems {
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
-		final ProvideFiles mockFileProvider = mock(ProvideFiles.class);
-		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(14))))
+		final ProvideLibraryFiles mockFileProvider = mock(ProvideLibraryFiles.class);
+		when(mockFileProvider.promiseFiles(new LibraryId(52), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(14))))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
 				new ServiceFile(2),
@@ -60,13 +60,12 @@ public class WhenSyncingTheStoredItems {
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			new Library(),
 			new StoredItemServiceFileCollector(
 				storedItemAccessMock,
 				mockFileProvider,
 				fileListParameters),
 			storedFileAccess,
-			(l, sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
+			(l, sf) -> new Promise<>(new StoredFile(new Library().setId(l.getId()), 1, sf, "fake-file-name", true)),
 			jobs -> Observable.fromIterable(jobs).flatMap(job ->
 				Observable.just(new StoredFileJobStatus(
 					mock(File.class),
@@ -78,7 +77,7 @@ public class WhenSyncingTheStoredItems {
 					StoredFileJobState.Downloaded)))
 		);
 
-		storedFileJobResults = librarySyncHandler.observeLibrarySync()
+		storedFileJobResults = librarySyncHandler.observeLibrarySync(new LibraryId(52))
 			.filter(j -> j.storedFileJobState == StoredFileJobState.Downloaded)
 			.map(j -> j.storedFile)
 			.toList()

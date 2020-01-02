@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAS
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
@@ -51,16 +51,16 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			new StoredItem(1, 5, StoredItem.ItemType.PLAYLIST));
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
-		final ProvideFiles fileProvider = mock(ProvideFiles.class);
+		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
 		when(fileProvider.promiseFiles(any(), any()))
 			.thenReturn(new Promise<>(Collections.emptyList()));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
 			.thenReturn(new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
 			.thenReturn(new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
 			.thenReturn(new Promise<>(thirdItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(5))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(5))))
 			.thenReturn(new Promise<>(fourthItemExpectedFiles));
 
 		final ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems = mock(ConvertStoredPlaylistsToStoredItems.class);

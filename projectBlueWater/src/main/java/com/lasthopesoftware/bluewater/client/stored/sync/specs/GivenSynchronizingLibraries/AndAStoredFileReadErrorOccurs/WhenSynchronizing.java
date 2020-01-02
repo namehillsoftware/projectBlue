@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.ProduceLibrarySyncHandlers;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -36,6 +35,7 @@ import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchr
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileReadErrorEvent;
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.storedFileEventKey;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -67,33 +67,29 @@ public class WhenSynchronizing extends AndroidContext {
 		when(libraryProvider.getAllLibraries())
 			.thenReturn(new Promise<>(Collections.singletonList(new Library().setId(4))));
 
-		final ProduceLibrarySyncHandlers syncHandlers = (urlProvider, library) -> {
-			final LibrarySyncHandler librarySyncHandler = mock(LibrarySyncHandler.class);
-			when(librarySyncHandler.observeLibrarySync())
-				.thenReturn(Observable.concat(
-					Observable
-						.fromArray(storedFiles)
-						.filter(f -> f.getServiceId() != 7)
-						.flatMap(f -> Observable.just(
+		final LibrarySyncHandler librarySyncHandler = mock(LibrarySyncHandler.class);
+		when(librarySyncHandler.observeLibrarySync(any()))
+			.thenReturn(Observable.concat(
+				Observable
+					.fromArray(storedFiles)
+					.filter(f -> f.getServiceId() != 7)
+					.flatMap(f -> Observable.just(
+						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
+						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading),
+						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloaded))),
+				Observable
+					.fromArray(storedFiles)
+					.filter(f -> f.getServiceId() == 7)
+					.flatMap(f ->
+						Observable.concat(Observable.just(
 							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading),
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloaded))),
-					Observable
-						.fromArray(storedFiles)
-						.filter(f -> f.getServiceId() == 7)
-						.flatMap(f ->
-							Observable.concat(Observable.just(
-								new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
-								new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading)),
+							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading)),
 							Observable.error(new StoredFileReadException(mock(File.class), f))), true)));
-
-			return librarySyncHandler;
-		};
 
 		final StoredFileSynchronization synchronization = new StoredFileSynchronization(
 			libraryProvider,
 			localBroadcastManager,
-			syncHandlers);
+			librarySyncHandler);
 
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);
 		intentFilter.addAction(onFileDownloadingEvent);

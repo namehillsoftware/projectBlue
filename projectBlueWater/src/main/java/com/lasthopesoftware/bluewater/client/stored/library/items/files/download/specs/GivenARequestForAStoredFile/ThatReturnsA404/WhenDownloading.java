@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +23,7 @@ public class WhenDownloading {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final FakeLibraryConnectionProvider fakeConnectionProvider = new FakeLibraryConnectionProvider();
+		final FakeLibraryConnectionProvider fakeConnectionProvider = new FakeLibraryConnectionProvider(new HashMap<>());
 
 		final StoredFileDownloader downloader = new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), fakeConnectionProvider);
 		inputStream = new FuturePromise<>(downloader.promiseDownload(new LibraryId(2), new StoredFile().setServiceId(4))).get();

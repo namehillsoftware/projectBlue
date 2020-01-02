@@ -1,6 +1,5 @@
 package com.lasthopesoftware.storage.directories.specs;
 
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.storage.directories.GetPublicDirectories;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -13,8 +12,8 @@ public class FakePublicDirectoryLookup implements GetPublicDirectories {
 	private final List<File> files = new ArrayList<>();
 
 	@Override
-	public Promise<Stream<File>> promisePublicDrives() {
-		return new Promise<>(Stream.of(files));
+	public Promise<List<File>> promisePublicDrives() {
+		return new Promise<>(files);
 	}
 
 	public void addDirectory(String filePath, long freeSpace) {

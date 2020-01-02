@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
@@ -52,7 +53,7 @@ public class WhenProcessingTheJob {
 			(is, f) -> { throw new IOException(); });
 
 		storedFileJobProcessor.observeStoredFileDownload(
-			Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
+			Collections.singleton(new StoredFileJob(new LibraryId(5), new ServiceFile(1), storedFile)))
 			.map(f -> f.storedFileJobState)
 			.blockingSubscribe(
 				storedFileJobState -> states.add(storedFileJobState),

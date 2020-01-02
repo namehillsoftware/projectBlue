@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.library.items.media.files.properties
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository
@@ -12,7 +11,6 @@ import com.namehillsoftware.handoff.promises.Promise
  * Created by david on 3/7/16.
  */
 class CachedFilePropertiesProvider(private val libraryConnections: ProvideLibraryConnections, private val filePropertiesContainerRepository: IFilePropertiesContainerRepository, private val filePropertiesProvider: ProvideLibraryFileProperties) : ProvideLibraryFileProperties {
-	private val connectionProvider: IConnectionProvider? = null
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
 		return libraryConnections.promiseLibraryConnection(libraryId)
 			.eventually { connectionProvider ->

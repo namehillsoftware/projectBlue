@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.spe
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
@@ -43,8 +44,11 @@ public class WhenProcessingTheJob {
 			f -> true,
 			(is, f) -> {});
 
-		jobStates = storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(
-			new StoredFileJob(new ServiceFile(1), storedFile))).map(s -> s.storedFileJobState).toList().blockingGet();
+		jobStates = storedFileJobProcessor.observeStoredFileDownload(
+			Collections.singleton(new StoredFileJob(new LibraryId(4), new ServiceFile(1), storedFile)))
+				.map(s -> s.storedFileJobState)
+				.toList()
+				.blockingGet();
 	}
 
 	@Test

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAS
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
@@ -50,12 +50,12 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
-		final ProvideFiles fileProvider = mock(ProvideFiles.class);
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
+		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
+		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
 			.thenReturn(new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
+		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
 			.thenReturn(new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
+		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
 			.thenReturn(new Promise<>(thirdItemExpectedFiles));
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(

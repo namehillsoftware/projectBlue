@@ -1,9 +1,12 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.download.specs.GivenARequestForAStoredFile.ThatReturnsNull;
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -43,8 +46,11 @@ public class WhenDownloading {
 		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 		when(fakeConnectionProvider.promiseResponse(any())).thenReturn(new Promise<>(responseBuilder.build()));
 
-		final StoredFileDownloader downloader = new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), fakeConnectionProvider);
-		inputStream = new FuturePromise<>(downloader.promiseDownload(job.getLibraryId(), new StoredFile().setServiceId(4))).get();
+		final ProvideLibraryConnections libraryConnections = mock(ProvideLibraryConnections.class);
+		when(libraryConnections.promiseLibraryConnection(new LibraryId(4))).thenReturn(new ProgressingPromise<>(fakeConnectionProvider));
+
+		final StoredFileDownloader downloader = new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), libraryConnections);
+		inputStream = new FuturePromise<>(downloader.promiseDownload(new LibraryId(4), new StoredFile().setServiceId(4))).get();
 	}
 
 	@Test

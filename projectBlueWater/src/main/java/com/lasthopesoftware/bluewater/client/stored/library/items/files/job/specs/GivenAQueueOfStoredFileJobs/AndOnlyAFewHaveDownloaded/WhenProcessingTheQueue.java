@@ -8,6 +8,7 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
@@ -37,13 +38,13 @@ import static org.mockito.Mockito.mock;
 public class WhenProcessingTheQueue {
 
 	private static final Set<StoredFileJob> storedFileJobs = new HashSet<>(Arrays.asList(
-		new StoredFileJob(new ServiceFile(1), new StoredFile().setServiceId(1).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(2), new StoredFile().setServiceId(2).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(4), new StoredFile().setServiceId(4).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(5), new StoredFile().setServiceId(5).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(7), new StoredFile().setServiceId(7).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1)),
-		new StoredFileJob(new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1))));
+		new StoredFileJob(new LibraryId(1), new ServiceFile(1), new StoredFile().setServiceId(1).setLibraryId(1)),
+		new StoredFileJob(new LibraryId(1), new ServiceFile(2), new StoredFile().setServiceId(2).setLibraryId(1)),
+		new StoredFileJob(new LibraryId(1), new ServiceFile(4), new StoredFile().setServiceId(4).setLibraryId(1)),
+		new StoredFileJob(new LibraryId(1), new ServiceFile(5), new StoredFile().setServiceId(5).setLibraryId(1)),
+		new StoredFileJob(new LibraryId(1), new ServiceFile(7), new StoredFile().setServiceId(7).setLibraryId(1)),
+		new StoredFileJob(new LibraryId(1), new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1)),
+		new StoredFileJob(new LibraryId(1), new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1))));
 
 	private static final StoredFile[] expectedDownloadingStoredFiles = new StoredFile[] {
 		new StoredFile().setServiceId(1).setLibraryId(1),

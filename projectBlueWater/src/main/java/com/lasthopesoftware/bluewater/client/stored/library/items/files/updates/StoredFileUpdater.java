@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.ProvideLibraryFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
@@ -62,7 +62,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 	private final MediaFileIdProvider mediaFileIdProvider;
 	private final GetStoredFiles storedFiles;
 	private final ILibraryProvider libraryProvider;
-	private final CachedFilePropertiesProvider cachedSessionFilePropertiesProvider;
+	private final ProvideLibraryFileProperties libraryFileProperties;
 	private final LookupSyncDirectory lookupSyncDirectory;
 
 	public StoredFileUpdater(
@@ -71,14 +71,14 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 		MediaFileIdProvider mediaFileIdProvider,
 		GetStoredFiles storedFiles,
 		ILibraryProvider libraryProvider,
-		CachedFilePropertiesProvider cachedFilePropertiesProvider,
+		ProvideLibraryFileProperties libraryFileProperties,
 		LookupSyncDirectory lookupSyncDirectory) {
 		this.context = context;
 		this.mediaFileUriProvider = mediaFileUriProvider;
 		this.mediaFileIdProvider = mediaFileIdProvider;
 		this.storedFiles = storedFiles;
 		this.libraryProvider = libraryProvider;
-		this.cachedSessionFilePropertiesProvider = cachedFilePropertiesProvider;
+		this.libraryFileProperties = libraryFileProperties;
 		this.lookupSyncDirectory = lookupSyncDirectory;
 	}
 
@@ -122,7 +122,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 			}))
 			.eventually(storedFile -> storedFile.getPath() != null
 				? new Promise<>(storedFile)
-				: cachedSessionFilePropertiesProvider
+				: libraryFileProperties
 					.promiseFileProperties(libraryId, serviceFile)
 					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(libraryId)
 						.then(syncDrive -> {

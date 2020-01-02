@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAn
 
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideFiles;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
@@ -47,7 +47,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 				}
 			};
 
-		final ProvideFiles fileProvider = mock(ProvideFiles.class);
+		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
 			storedItemAccess,
