@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
+import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
+
 public class StoredItemServiceFileCollector implements CollectServiceFilesForSync {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoredItemServiceFileCollector.class);
@@ -89,7 +91,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 
 		cancellationProxy.doCancel(serviceFilesPromise);
 
-		return serviceFilesPromise.excuse(new ExceptionHandler(libraryId, item, storedItemAccess));
+		return serviceFilesPromise.then(forward(), new ExceptionHandler(libraryId, item, storedItemAccess));
 	}
 
 	private Promise<Collection<ServiceFile>> promiseServiceFiles(LibraryId libraryId, Playlist playlist, CancellationProxy cancellationProxy) {
@@ -99,7 +101,7 @@ public class StoredItemServiceFileCollector implements CollectServiceFilesForSyn
 
 		cancellationProxy.doCancel(serviceFilesPromise);
 
-		return serviceFilesPromise.excuse(new ExceptionHandler(libraryId, playlist, storedItemAccess));
+		return serviceFilesPromise.then(forward(), new ExceptionHandler(libraryId, playlist, storedItemAccess));
 	}
 
 	private static class ExceptionHandler implements ImmediateResponse<Throwable, Collection<ServiceFile>> {

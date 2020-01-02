@@ -36,14 +36,13 @@ import static org.mockito.Mockito.when;
 public class WhenSyncingTheStoredItems {
 
 	private static List<StoredFile> storedFileJobResults = new ArrayList<>();
-	private static List<StoredFile> queuedStoredFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() {
 		final IStoredItemAccess storedItemAccessMock = mock(IStoredItemAccess.class);
 		when(storedItemAccessMock.promiseStoredItems(new LibraryId(52)))
 			.thenReturn(new Promise<>(Collections.singleton(
-				new StoredItem(1, 14, StoredItem.ItemType.PLAYLIST))));
+				new StoredItem(52, 14, StoredItem.ItemType.PLAYLIST))));
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
