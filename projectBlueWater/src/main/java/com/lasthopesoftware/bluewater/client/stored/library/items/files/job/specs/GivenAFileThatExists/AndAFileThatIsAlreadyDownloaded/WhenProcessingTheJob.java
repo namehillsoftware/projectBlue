@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatExists.AndAFileThatIsAlreadyDownloaded;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
@@ -28,7 +27,7 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() {
-		final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+		final StoredFile storedFile = new StoredFile(new LibraryId(10), 1, new ServiceFile(1), "test-path", true);
 		storedFile.setIsDownloadComplete(true);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(

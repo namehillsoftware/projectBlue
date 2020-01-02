@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
@@ -65,7 +64,7 @@ public class WhenSyncingTheStoredItems {
 				mockFileProvider,
 				fileListParameters),
 			storedFileAccess,
-			(l, sf) -> new Promise<>(new StoredFile(new Library().setId(l.getId()), 1, sf, "fake-file-name", true)),
+			(l, sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
 			jobs -> Observable.fromIterable(jobs).flatMap(job ->
 				Observable.just(new StoredFileJobStatus(
 					mock(File.class),

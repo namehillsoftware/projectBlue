@@ -5,7 +5,6 @@ import android.os.Build;
 import androidx.annotation.RequiresApi;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.when;
 public class WhenProcessingTheJob {
 
 	private static Throwable storedFileWriteException;
-	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+	private static final StoredFile storedFile = new StoredFile(new LibraryId(5), 1, new ServiceFile(1), "test-path", true);
 	private static List<StoredFileJobState> states = new ArrayList<>();
 
 	@RequiresApi(api = Build.VERSION_CODES.N)

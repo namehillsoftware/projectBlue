@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatExists.AndAnImpossibleFileRead;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
@@ -45,7 +44,7 @@ public class WhenProcessingTheJob {
 			Collections.singleton(new StoredFileJob(
 				new LibraryId(12),
 				new ServiceFile(1),
-				new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true))))
+				new StoredFile(new LibraryId(12), 1, new ServiceFile(1), "test-path", true))))
 			.map(j -> j.storedFileJobState)
 			.toList()
 			.blockingGet();

@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 
@@ -98,7 +99,7 @@ public class WhenSynchronizing extends AndroidContext {
 			broadcastRecorder,
 			intentFilter);
 
-		synchronization.streamFileSynchronization().blockingAwait();
+		synchronization.streamFileSynchronization().blockingAwait(10, TimeUnit.SECONDS);
 	}
 
 	@Test

@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenACa
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
@@ -70,7 +69,7 @@ public class WhenSyncingTheStoredItems {
 				mockFileProvider,
 				FileListParameters.getInstance()),
 			storedFileAccess,
-			(l, f) -> new Promise<>(new StoredFile(new Library().setId(l.getId()), 1, f, "fake-file-name", true)),
+			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
 			jobs -> Observable.fromIterable(jobs).flatMap(job -> Observable.just(
 				new StoredFileJobStatus(
 					mock(File.class),

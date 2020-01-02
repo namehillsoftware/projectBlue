@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
@@ -68,7 +67,7 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				mockFileProvider,
 				fileListParameters),
 			storedFileAccess,
-			(l, f) -> new Promise<>(new StoredFile(new Library().setId(l.getId()), 1, f, "fake-file-name", true)),
+			(l, f) -> new Promise<>(new StoredFile(l, 1, f, "fake-file-name", true)),
 			new StoredFileJobProcessor(
 				new StoredFileSystemFileProducer(),
 				storedFileAccess,
