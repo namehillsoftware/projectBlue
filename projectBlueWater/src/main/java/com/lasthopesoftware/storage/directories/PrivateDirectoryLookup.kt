@@ -6,7 +6,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.File
 
 class PrivateDirectoryLookup(private val context: Context) : GetPrivateDirectories {
-	override fun promisePrivateDrives(): Promise<List<File>> {
+	override fun promisePrivateDrives(): Promise<Collection<File>> {
 		return Promise(listOf(*context.getExternalFilesDirs(Environment.DIRECTORY_MUSIC)))
 	}
 

@@ -94,6 +94,8 @@ public class SessionConnection implements OneParameterAction<BuildingConnectionS
 	public Promise<IConnectionProvider> promiseSessionConnection() {
 		final LibraryId newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
+		if (newSelectedLibraryId == null) return Promise.empty();
+
 		return libraryConnections
 			.promiseLibraryConnection(newSelectedLibraryId)
 			.updates(this);

@@ -4,5 +4,5 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.File
 
 interface GetPublicDirectories {
-	fun promisePublicDrives(): Promise<List<File>>
+	fun promisePublicDrives(): Promise<Collection<File>>
 }

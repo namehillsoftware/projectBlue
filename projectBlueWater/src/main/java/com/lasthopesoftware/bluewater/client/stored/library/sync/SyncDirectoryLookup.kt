@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync
 
+import com.annimon.stream.Stream
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.library.repository.Library
 import com.lasthopesoftware.bluewater.client.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
 import com.lasthopesoftware.storage.directories.GetPrivateDirectories
@@ -16,25 +16,25 @@ class SyncDirectoryLookup(
 
 	override fun promiseSyncDirectory(libraryId: LibraryId): Promise<File> {
 		return getExternalFilesDirectoriesStream(libraryId)
-			.then { files -> files.maxBy { it.freeSpace } }
+			.then { files -> files.sortBy { f -> f.freeSpace }.findLast().orElse(null) }
 	}
 
-	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<List<File>> {
+	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<Stream<File>> {
 		return libraryProvider.getLibrary(libraryId)
-			.eventually { library: Library ->
+			.eventually { library ->
 				when (library.syncedFileLocation) {
 					SyncedFileLocation.EXTERNAL -> publicDrives.promisePublicDrives().promiseDirectoriesWithLibrary(libraryId)
 					SyncedFileLocation.INTERNAL -> privateDrives.promisePrivateDrives().promiseDirectoriesWithLibrary(libraryId)
-					SyncedFileLocation.CUSTOM -> Promise(listOf(File(library.customSyncedFilesPath)))
-					else -> Promise(emptyList())
+					SyncedFileLocation.CUSTOM -> Promise(Stream.of(File(library.customSyncedFilesPath)))
+					else -> Promise(Stream.empty())
 				}
 			}
 	}
 
-	private fun Promise<List<File>>.promiseDirectoriesWithLibrary(libraryId: LibraryId): Promise<List<File>> {
-		if (libraryId.id < 0) return this
+	private fun Promise<Collection<File>>.promiseDirectoriesWithLibrary(libraryId: LibraryId): Promise<Stream<File>> {
+		val promisedStream = this.then { Stream.of(it) }
+		if (libraryId.id < 0) return promisedStream
 		val libraryIdString = libraryId.id.toString()
-		return this.then { files -> files.map { f -> File(f, libraryIdString) } }
+		return promisedStream.then { files -> files.map { f -> File(f, libraryIdString) } }
 	}
-
 }

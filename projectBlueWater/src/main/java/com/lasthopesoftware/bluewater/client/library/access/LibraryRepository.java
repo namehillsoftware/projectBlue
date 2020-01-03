@@ -29,12 +29,12 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 
 	@Override
 	public Promise<Library> getLibrary(int libraryId) {
-		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId), RepositoryAccessHelper.databaseExecutor());
+		return new QueuedPromise<>(new GetLibraryWriter(context, new LibraryId(libraryId)), RepositoryAccessHelper.databaseExecutor());
 	}
 
 	@Override
 	public Promise<Library> getLibrary(LibraryId libraryId) {
-		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId.getId()), RepositoryAccessHelper.databaseExecutor());
+		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId), RepositoryAccessHelper.databaseExecutor());
 	}
 
 	@Override
@@ -68,23 +68,27 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 
 	private static class GetLibraryWriter implements MessageWriter<Library> {
 
-		private int libraryId;
+		private LibraryId libraryId;
 		private Context context;
 
-		private GetLibraryWriter(Context context, int libraryId) {
+		private GetLibraryWriter(Context context, LibraryId libraryId) {
 			this.libraryId = libraryId;
 			this.context = context;
 		}
 
 		@Override
 		public Library prepareMessage() {
-			if (libraryId < 0) return null;
+			if (libraryId == null) return null;
+
+			final int libraryInt = libraryId.getId();
+
+			if (libraryInt < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 				return
 					repositoryAccessHelper
 						.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
-						.addParameter("id", libraryId)
+						.addParameter("id", libraryInt)
 						.fetchFirst(Library.class);
 			}
 		}

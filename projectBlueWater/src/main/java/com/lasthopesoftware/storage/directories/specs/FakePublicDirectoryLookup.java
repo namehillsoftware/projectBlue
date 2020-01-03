@@ -5,6 +5,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class FakePublicDirectoryLookup implements GetPublicDirectories {
@@ -12,7 +13,7 @@ public class FakePublicDirectoryLookup implements GetPublicDirectories {
 	private final List<File> files = new ArrayList<>();
 
 	@Override
-	public Promise<List<File>> promisePublicDrives() {
+	public Promise<Collection<File>> promisePublicDrives() {
 		return new Promise<>(files);
 	}
 
