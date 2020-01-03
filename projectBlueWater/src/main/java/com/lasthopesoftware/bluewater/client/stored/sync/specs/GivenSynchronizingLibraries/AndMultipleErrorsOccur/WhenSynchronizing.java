@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
@@ -39,7 +40,6 @@ import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchr
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onSyncStopEvent;
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.storedFileEventKey;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -74,7 +74,7 @@ public class WhenSynchronizing extends AndroidContext {
 			.thenReturn(new Promise<>(Collections.singletonList(new Library().setId(4))));
 
 		final LibrarySyncHandler librarySyncHandler = mock(LibrarySyncHandler.class);
-		when(librarySyncHandler.observeLibrarySync(any()))
+		when(librarySyncHandler.observeLibrarySync(new LibraryId(4)))
 			.thenReturn(Observable.concatArrayDelayError(
 				Observable
 					.fromArray(storedFiles)

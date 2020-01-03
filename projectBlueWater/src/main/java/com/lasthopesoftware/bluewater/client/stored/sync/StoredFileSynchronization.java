@@ -56,18 +56,21 @@ public class StoredFileSynchronization implements SynchronizeStoredFiles {
 		localBroadcastManager.sendBroadcast(new Intent(onSyncStartEvent));
 
 		return StreamedPromise.stream(libraryProvider.getAllLibraries())
-			.flatMap(library -> syncHandler.observeLibrarySync(library.getLibraryId()))
+			.flatMap(library -> syncHandler.observeLibrarySync(library.getLibraryId()), true)
 			.flatMapCompletable(storedFileJobStatus -> {
 				switch (storedFileJobStatus.storedFileJobState) {
 					case Queued:
 						sendStoredFileBroadcast(onFileQueuedEvent, storedFileJobStatus.storedFile);
+						return Completable.complete();
 					case Downloading:
 						sendStoredFileBroadcast(onFileDownloadingEvent, storedFileJobStatus.storedFile);
+						return Completable.complete();
 					case Downloaded:
 						sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobStatus.storedFile);
-					default:
 						return Completable.complete();
 				}
+
+				return Completable.complete();
 			}, true)
 			.onErrorComplete(this::handleError)
 			.doOnComplete(this::sendStoppedSync)
