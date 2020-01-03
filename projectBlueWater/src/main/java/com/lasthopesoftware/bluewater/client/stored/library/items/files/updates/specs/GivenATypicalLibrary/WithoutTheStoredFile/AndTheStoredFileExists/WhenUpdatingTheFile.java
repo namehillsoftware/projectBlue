@@ -4,10 +4,11 @@ import android.net.Uri;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilesPropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
@@ -53,15 +54,20 @@ public class WhenUpdatingTheFile extends AndroidContext {
 				put(SessionFilePropertiesProvider.FILENAME, "my-filename.mp3");
 			}});
 
+		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Collections.singleton(new Library()
+			.setIsUsingExistingFiles(true)
+			.setId(14)
+			.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)));
+
 		final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
 			ApplicationProvider.getApplicationContext(),
 			mediaFileUriProvider,
 			mediaFileIdProvider,
 			new StoredFileQuery(ApplicationProvider.getApplicationContext()),
-			mock(ILibraryProvider.class),
+			fakeLibraryProvider,
 			filePropertiesProvider,
 			new SyncDirectoryLookup(
-				mock(ILibraryProvider.class),
+				fakeLibraryProvider,
 				() -> new Promise<>(Collections.singletonList(new File("/my-public-drive"))),
 				() -> new Promise<>(Collections.emptyList())));
 

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenACustomStoragePreference;
 
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -11,10 +12,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class WhenLookingUpTheSyncDrive {
 
@@ -32,17 +33,17 @@ public class WhenLookingUpTheSyncDrive {
 		fakePrivateDirectoryLookup.addDirectory("fake-private-path", 3);
 		fakePrivateDirectoryLookup.addDirectory("/fake-private-path", 5);
 
+		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Collections.singletonList(new Library()
+			.setId(14)
+			.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM)
+			.setCustomSyncedFilesPath("/stoarage2/my-second-card")));
+
 		final SyncDirectoryLookup syncDirectoryLookup = new SyncDirectoryLookup(
-			mock(ILibraryProvider.class),
+			fakeLibraryProvider,
 			publicDrives,
 			fakePrivateDirectoryLookup);
 
-		file = new FuturePromise<>(
-			syncDirectoryLookup.promiseSyncDirectory(
-				new LibraryId(14)
-				/*new Library()
-				.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM)
-				.setCustomSyncedFilesPath("/stoarage2/my-second-card")*/)).get();
+		file = new FuturePromise<>(syncDirectoryLookup.promiseSyncDirectory(new LibraryId(14))).get();
 	}
 
 	@Test
