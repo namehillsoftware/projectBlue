@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.specs.GivenATypicalLibrary.WithNoStoredFiles;
 
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.CountStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -27,7 +28,7 @@ public class WhenCheckingForAnyStoredFiles {
 		final StoredFilesChecker storedFilesChecker = new StoredFilesChecker(countStoredFilesInLibrary);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		storedFilesChecker.promiseIsAnyStoredFiles(new Library())
+		storedFilesChecker.promiseIsAnyStoredFiles(new LibraryId(3))
 			.then(any -> {
 				isAny = any;
 				countDownLatch.countDown();

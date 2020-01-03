@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files;
 
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class StoredFilesChecker implements CheckForAnyStoredFiles {
@@ -12,8 +12,8 @@ public class StoredFilesChecker implements CheckForAnyStoredFiles {
 	}
 
 	@Override
-	public Promise<Boolean> promiseIsAnyStoredFiles(Library library) {
-		return countStoredFiles.promiseStoredFilesCount(library)
+	public Promise<Boolean> promiseIsAnyStoredFiles(LibraryId libraryId) {
+		return countStoredFiles.promiseStoredFilesCount(libraryId)
 			.then(count -> count > 0);
 	}
 }

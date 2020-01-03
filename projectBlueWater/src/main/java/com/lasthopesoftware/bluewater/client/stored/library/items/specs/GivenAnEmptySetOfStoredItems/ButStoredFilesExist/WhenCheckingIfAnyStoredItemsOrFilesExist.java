@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAnEmptySetOfStoredItems.ButStoredFilesExist;
 
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemsChecker;
@@ -37,7 +36,7 @@ public class WhenCheckingIfAnyStoredItemsOrFilesExist {
 		final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, checkForAnyStoredFiles);
 
 		isAny =
-			new FuturePromise<>(storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new Library().setId(10)))
+			new FuturePromise<>(storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new LibraryId(10)))
 				.get(1, TimeUnit.SECONDS);
 	}
 
