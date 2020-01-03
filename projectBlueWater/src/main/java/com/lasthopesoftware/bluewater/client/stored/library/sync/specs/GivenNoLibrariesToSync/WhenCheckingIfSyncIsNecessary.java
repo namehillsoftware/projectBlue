@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenNoLibrariesToSync;
 
+import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -7,6 +9,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
@@ -18,7 +21,13 @@ public class WhenCheckingIfSyncIsNecessary {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final SyncChecker syncChecker = new SyncChecker((l) -> new Promise<>(Collections.emptySet()));
+		final SyncChecker syncChecker = new SyncChecker(
+			new FakeLibraryProvider(Arrays.asList(
+				new Library().setId(3),
+				new Library().setId(11),
+				new Library().setId(10),
+				new Library().setId(14))),
+			(l) -> new Promise<>(Collections.emptySet()));
 		isSyncNeeded = new FuturePromise<>(syncChecker.promiseIsSyncNeeded()).get();
 	}
 

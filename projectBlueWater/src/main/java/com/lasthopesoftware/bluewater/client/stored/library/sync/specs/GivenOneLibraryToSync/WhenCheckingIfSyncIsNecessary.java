@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenLibrariesToSync;
+package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenOneLibraryToSync;
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
@@ -25,17 +25,17 @@ public class WhenCheckingIfSyncIsNecessary {
 	public static void before() throws ExecutionException, InterruptedException {
 		final ILibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Arrays.asList(
 			new Library().setId(3),
+			new Library().setId(11),
 			new Library().setId(10)));
 
 		final SyncChecker syncChecker = new SyncChecker(
 			fakeLibraryProvider,
 			(l) -> {
 				switch (l.getId()) {
-					case 3: return new Promise<>(Arrays.asList(new ServiceFile(1), new ServiceFile(18)));
-					case 10: return new Promise<>(Arrays.asList(new ServiceFile(3), new ServiceFile(6)));
+					case 11: return new Promise<>(Arrays.asList(new ServiceFile(3), new ServiceFile(6)));
 					default: return new Promise<>(Collections.emptyList());
 				}
-			});
+		});
 		isSyncNeeded = new FuturePromise<>(syncChecker.promiseIsSyncNeeded()).get();
 	}
 
