@@ -101,10 +101,10 @@ public class SyncSchedulingWorker extends ListenableWorker {
 			.then(new VoidResponse<>(isNeeded -> {
 				if (isNeeded)
 					StoredSyncService.doSync(context);
+
+				futureResult.set(Result.success());
 			}))
-			.then(
-				v -> futureResult.set(Result.success()),
-				futureResult::setException);
+			.excuse(futureResult::setException);
 		return futureResult;
 	}
 
