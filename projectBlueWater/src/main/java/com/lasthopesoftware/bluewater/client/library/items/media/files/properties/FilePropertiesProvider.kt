@@ -12,7 +12,7 @@ import java.util.*
 class FilePropertiesProvider(private val libraryConnections: ProvideLibraryConnections, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideLibraryFileProperties {
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
 		return libraryConnections.promiseLibraryConnection(libraryId).eventually { connectionProvider ->
-			RevisionChecker.promiseRevision(connectionProvider).eventually { revision: Int ->
+			RevisionChecker.promiseRevision(connectionProvider).eventually { revision ->
 				val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
 				val filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder)
 
