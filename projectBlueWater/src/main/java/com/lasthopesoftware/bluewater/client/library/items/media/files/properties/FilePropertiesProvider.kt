@@ -16,7 +16,7 @@ class FilePropertiesProvider(private val libraryConnections: ProvideLibraryConne
 				val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
 				val filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder)
 
-				if (filePropertiesContainer.properties.isNotEmpty() && revision == filePropertiesContainer.revision)
+				if (filePropertiesContainer != null && filePropertiesContainer.properties.isNotEmpty() && revision == filePropertiesContainer.revision)
 					Promise<Map<String, String>>(HashMap(filePropertiesContainer.properties))
 				else
 					FilePropertiesPromise(connectionProvider, filePropertiesContainerProvider, serviceFile, revision)
