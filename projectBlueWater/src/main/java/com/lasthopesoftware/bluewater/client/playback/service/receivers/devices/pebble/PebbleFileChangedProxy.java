@@ -6,7 +6,7 @@ import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 
 class PebbleFileChangedProxy extends BroadcastReceiver {
@@ -27,9 +27,9 @@ class PebbleFileChangedProxy extends BroadcastReceiver {
 		cachedSessionFilePropertiesProvider
 			.promiseFileProperties(new ServiceFile(fileKey))
 			.then(fileProperties -> {
-				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
-				final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
+				final String artist = fileProperties.get(KnownFileProperties.ARTIST);
+				final String name = fileProperties.get(KnownFileProperties.NAME);
+				final String album = fileProperties.get(KnownFileProperties.ALBUM);
 
 				final Intent pebbleIntent = new Intent(PEBBLE_NOTIFY_INTENT);
 				pebbleIntent.putExtra("artist", artist);

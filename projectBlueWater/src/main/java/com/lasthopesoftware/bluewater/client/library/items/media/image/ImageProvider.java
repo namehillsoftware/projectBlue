@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.pe
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.persistence.DiskFileCachePersistence;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.namehillsoftware.handoff.Messenger;
@@ -105,13 +105,13 @@ public class ImageProvider {
 					.then(fileProperties -> {
 						// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 						// artists), and then by artist if that field is empty
-						String artist = fileProperties.get(SessionFilePropertiesProvider.ALBUM_ARTIST);
+						String artist = fileProperties.get(KnownFileProperties.ALBUM_ARTIST);
 						if (artist == null || artist.isEmpty())
-							artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+							artist = fileProperties.get(KnownFileProperties.ARTIST);
 
-						String albumOrTrackName = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
+						String albumOrTrackName = fileProperties.get(KnownFileProperties.ALBUM);
 						if (albumOrTrackName == null)
-							albumOrTrackName = fileProperties.get(SessionFilePropertiesProvider.NAME);
+							albumOrTrackName = fileProperties.get(KnownFileProperties.NAME);
 
 						return artist + ":" + albumOrTrackName;
 					})

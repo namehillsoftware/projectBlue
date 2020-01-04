@@ -4,7 +4,7 @@ import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilesPropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
@@ -48,9 +48,9 @@ public class WhenUpdatingTheFile extends AndroidContext {
 		filePropertiesProvider.addFilePropertiesToCache(
 			new ServiceFile(4),
 			new HashMap<String, String>() {{
-				put(SessionFilePropertiesProvider.ARTIST, "artist");
-				put(SessionFilePropertiesProvider.ALBUM, "album");
-				put(SessionFilePropertiesProvider.FILENAME, "my-filename.mp3");
+				put(KnownFileProperties.ARTIST, "artist");
+				put(KnownFileProperties.ALBUM, "album");
+				put(KnownFileProperties.FILENAME, "my-filename.mp3");
 			}});
 
 		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Collections.singleton(

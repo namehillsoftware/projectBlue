@@ -15,7 +15,7 @@ import androidx.annotation.RequiresApi;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -103,11 +103,11 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 		cachedSessionFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.eventually(LoopedInPromise.response(fileProperties -> {
-				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
-				final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
+				final String artist = fileProperties.get(KnownFileProperties.ARTIST);
+				final String name = fileProperties.get(KnownFileProperties.NAME);
+				final String album = fileProperties.get(KnownFileProperties.ALBUM);
 				final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-				final String trackNumberString = fileProperties.get(SessionFilePropertiesProvider.TRACK);
+				final String trackNumberString = fileProperties.get(KnownFileProperties.TRACK);
 				final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
 				final MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder(mediaMetadata);

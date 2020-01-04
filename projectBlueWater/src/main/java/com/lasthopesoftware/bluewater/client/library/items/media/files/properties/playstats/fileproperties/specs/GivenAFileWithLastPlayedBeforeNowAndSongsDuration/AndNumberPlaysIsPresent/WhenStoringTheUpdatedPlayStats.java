@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResp
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeRevisionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
@@ -39,11 +40,11 @@ public class WhenStoringTheUpdatedPlayStats {
 				"<Item>\n" +
 					"<Field Name=\"Key\">23</Field>\n" +
 					"<Field Name=\"Media Type\">Audio</Field>\n" +
-					"<Field Name=\"" + SessionFilePropertiesProvider.LAST_PLAYED + "\">" + String.valueOf(originalLastPlayed) + "</Field>\n" +
+					"<Field Name=\"" + KnownFileProperties.LAST_PLAYED + "\">" + String.valueOf(originalLastPlayed) + "</Field>\n" +
 					"<Field Name=\"Rating\">4</Field>\n" +
 					"<Field Name=\"File Size\">2345088</Field>\n" +
-					"<Field Name=\"" + SessionFilePropertiesProvider.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
-					"<Field Name=\"" + SessionFilePropertiesProvider.NUMBER_PLAYS + "\">52</Field>\n" +
+					"<Field Name=\"" + KnownFileProperties.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
+					"<Field Name=\"" + KnownFileProperties.NUMBER_PLAYS + "\">52</Field>\n" +
 				"</Item>\n" +
 			"</MPL>\n").getBytes()),
 			"File/GetInfo", "File=23");
@@ -72,11 +73,11 @@ public class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	public void thenTheLastPlayedIsRecent() {
-		assertThat(Long.parseLong(fileProperties.get(SessionFilePropertiesProvider.LAST_PLAYED))).isGreaterThan(originalLastPlayed);
+		assertThat(Long.parseLong(fileProperties.get(KnownFileProperties.LAST_PLAYED))).isGreaterThan(originalLastPlayed);
 	}
 
 	@Test
 	public void thenTheNumberPlaysIsIncremented() {
-		assertThat(fileProperties.get(SessionFilePropertiesProvider.NUMBER_PLAYS)).isEqualTo("53");
+		assertThat(fileProperties.get(KnownFileProperties.NUMBER_PLAYS)).isEqualTo("53");
 	}
 }

@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDep
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
@@ -61,11 +62,11 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 			cachedSessionFilePropertiesProvider
 				.promiseFileProperties(new ServiceFile(fileKey))
 				.then(new VoidResponse<>(fileProperties -> {
-					final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
-					final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
-					final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
+					final String artist = fileProperties.get(KnownFileProperties.ARTIST);
+					final String name = fileProperties.get(KnownFileProperties.NAME);
+					final String album = fileProperties.get(KnownFileProperties.ALBUM);
 					final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-					final String trackNumberString = fileProperties.get(SessionFilePropertiesProvider.TRACK);
+					final String trackNumberString = fileProperties.get(KnownFileProperties.TRACK);
 					final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
 
 					final Intent scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true);

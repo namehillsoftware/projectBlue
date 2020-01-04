@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
@@ -49,8 +50,8 @@ public class WhenBuildingTheLoadingNotification extends AndroidContext {
 			new ServiceFile(3),
 			new HashMap<String, String>() {
 				{
-					put(SessionFilePropertiesProvider.ARTIST, "test-artist");
-					put(SessionFilePropertiesProvider.NAME, "song");
+					put(KnownFileProperties.ARTIST, "test-artist");
+					put(KnownFileProperties.NAME, "song");
 				}
 			});
 

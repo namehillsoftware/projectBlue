@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
@@ -89,7 +90,7 @@ public class StoredFileDownloadingNotifier implements ReceiveStoredFileEvent {
 
 	private void notifyOfFileDownload(CachedSessionFilePropertiesProvider filePropertiesProvider, StoredFile storedFile) {
 		filePropertiesProvider.promiseFileProperties(new ServiceFile(storedFile.getServiceId()))
-			.then(new VoidResponse<>(fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), fileProperties.get(SessionFilePropertiesProvider.NAME)))))
+			.then(new VoidResponse<>(fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), fileProperties.get(KnownFileProperties.NAME)))))
 			.excuse(new VoidResponse<>(exception -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file)))));
 	}
 }

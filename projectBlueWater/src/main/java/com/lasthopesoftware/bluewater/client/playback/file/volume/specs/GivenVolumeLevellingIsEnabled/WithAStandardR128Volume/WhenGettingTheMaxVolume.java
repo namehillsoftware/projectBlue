@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
@@ -39,7 +40,7 @@ public class WhenGettingTheMaxVolume {
 		final IFilePropertiesContainerRepository repository = mock(IFilePropertiesContainerRepository.class);
 		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(1))))
 			.thenReturn(new FilePropertiesContainer(0, new HashMap<String, String>() {{
-				put(SessionFilePropertiesProvider.VolumeLevelR128, "-13.5");
+				put(KnownFileProperties.VolumeLevelR128, "-13.5");
 			}}));
 
 		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, repository, ParsingScheduler.instance());

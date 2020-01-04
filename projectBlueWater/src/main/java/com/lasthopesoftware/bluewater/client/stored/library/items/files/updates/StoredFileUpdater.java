@@ -4,8 +4,8 @@ import android.content.Context;
 
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.ProvideLibraryFileProperties;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
@@ -128,18 +128,18 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 						.then(syncDrive -> {
 							String fullPath = syncDrive.getPath();
 
-							String artist = fileProperties.get(SessionFilePropertiesProvider.ALBUM_ARTIST);
+							String artist = fileProperties.get(KnownFileProperties.ALBUM_ARTIST);
 							if (artist == null)
-								artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+								artist = fileProperties.get(KnownFileProperties.ARTIST);
 
 							if (artist != null)
 								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(artist.trim()));
 
-							final String album = fileProperties.get(SessionFilePropertiesProvider.ALBUM);
+							final String album = fileProperties.get(KnownFileProperties.ALBUM);
 							if (album != null)
 								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(album.trim()));
 
-							String fileName = fileProperties.get(SessionFilePropertiesProvider.FILENAME);
+							String fileName = fileProperties.get(KnownFileProperties.FILENAME);
 							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
 							final int extensionIndex = fileName.lastIndexOf('.');

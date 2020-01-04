@@ -51,6 +51,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -577,15 +578,15 @@ implements
 	}
 
 	private Void setFileProperties(final ServiceFile serviceFile, final long initialFilePosition, Map<String, String> fileProperties) {
-		final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+		final String artist = fileProperties.get(KnownFileProperties.ARTIST);
 		nowPlayingArtist.findView().setText(artist);
 
-		final String title = fileProperties.get(SessionFilePropertiesProvider.NAME);
+		final String title = fileProperties.get(KnownFileProperties.NAME);
 		nowPlayingTitle.findView().setText(title);
 		nowPlayingTitle.findView().setSelected(true);
 
 		Float fileRating = null;
-		final String stringRating = fileProperties.get(SessionFilePropertiesProvider.RATING);
+		final String stringRating = fileProperties.get(KnownFileProperties.RATING);
 		try {
 			if (stringRating != null && !stringRating.isEmpty())
 				fileRating = Float.valueOf(stringRating);
@@ -613,8 +614,8 @@ implements
 
 			final String stringRating = String.valueOf(Math.round(newRating));
 			SessionConnection.getInstance(this).promiseSessionConnection()
-				.then(new VoidResponse<>(c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, SessionFilePropertiesProvider.RATING, stringRating, false)));
-			viewStructure.fileProperties.put(SessionFilePropertiesProvider.RATING, stringRating);
+				.then(new VoidResponse<>(c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, KnownFileProperties.RATING, stringRating, false)));
+			viewStructure.fileProperties.put(KnownFileProperties.RATING, stringRating);
 		});
 
 		songRatingBar.setEnabled(true);

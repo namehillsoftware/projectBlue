@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
@@ -78,8 +78,8 @@ implements
 
 		return viewStructure.promisedFileProperties
 			.eventually(fileProperties -> {
-				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
-				final String name = fileProperties.get(SessionFilePropertiesProvider.NAME);
+				final String artist = fileProperties.get(KnownFileProperties.ARTIST);
+				final String name = fileProperties.get(KnownFileProperties.NAME);
 
 				final NotificationCompat.Builder builder =
 					addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), isPlaying)

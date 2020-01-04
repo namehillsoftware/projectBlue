@@ -5,7 +5,7 @@ import android.database.Cursor
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -30,7 +30,7 @@ class MediaQueryCursorProvider(context: Context, cachedFilePropertiesProvider: C
 
 	@Throws(Exception::class)
 	override fun respond(fileProperties: Map<String, String>): Cursor? {
-		val originalFilename = fileProperties[SessionFilePropertiesProvider.FILENAME]
+		val originalFilename = fileProperties[KnownFileProperties.FILENAME]
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")
 
 		val filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'))
@@ -41,13 +41,13 @@ class MediaQueryCursorProvider(context: Context, cachedFilePropertiesProvider: C
 		val params = ArrayList<String>(5)
 		params.add(filename)
 		querySb
-			.appendPropertyFilter(params, MediaStore.Audio.Media.ARTIST, fileProperties[SessionFilePropertiesProvider.ARTIST])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.ARTIST, fileProperties[KnownFileProperties.ARTIST])
 			.appendAnd()
-			.appendPropertyFilter(params, MediaStore.Audio.Media.ALBUM, fileProperties[SessionFilePropertiesProvider.ALBUM])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.ALBUM, fileProperties[KnownFileProperties.ALBUM])
 			.appendAnd()
-			.appendPropertyFilter(params, MediaStore.Audio.Media.TITLE, fileProperties[SessionFilePropertiesProvider.NAME])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.TITLE, fileProperties[KnownFileProperties.NAME])
 			.appendAnd()
-			.appendPropertyFilter(params, MediaStore.Audio.Media.TRACK, fileProperties[SessionFilePropertiesProvider.TRACK])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.TRACK, fileProperties[KnownFileProperties.TRACK])
 
 		return context.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaQueryProjection, querySb.toString(), params.toTypedArray(), null)
 	}

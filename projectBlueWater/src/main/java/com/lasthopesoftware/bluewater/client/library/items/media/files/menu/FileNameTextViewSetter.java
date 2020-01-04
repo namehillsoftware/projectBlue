@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -104,7 +105,7 @@ public class FileNameTextViewSetter {
 					.eventually(LoopedInPromise.response(properties -> {
 						if (isUpdateCancelled()) return resolve();
 
-						final String fileName = properties.get(SessionFilePropertiesProvider.NAME);
+						final String fileName = properties.get(KnownFileProperties.NAME);
 
 						if (fileName != null)
 							textView.setText(fileName);

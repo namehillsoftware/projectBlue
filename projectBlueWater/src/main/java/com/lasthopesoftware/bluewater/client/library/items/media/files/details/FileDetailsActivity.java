@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.di
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FormattedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -65,13 +66,13 @@ public class FileDetailsActivity extends AppCompatActivity {
 	private Bitmap mFileImage;
 
 	private static final Set<String> PROPERTIES_TO_SKIP = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-		SessionFilePropertiesProvider.AUDIO_ANALYSIS_INFO,
-		SessionFilePropertiesProvider.GET_COVER_ART_INFO,
-		SessionFilePropertiesProvider.IMAGE_FILE,
-		SessionFilePropertiesProvider.KEY,
-		SessionFilePropertiesProvider.STACK_FILES,
-		SessionFilePropertiesProvider.STACK_TOP,
-		SessionFilePropertiesProvider.STACK_VIEW)));
+		KnownFileProperties.AUDIO_ANALYSIS_INFO,
+		KnownFileProperties.GET_COVER_ART_INFO,
+		KnownFileProperties.IMAGE_FILE,
+		KnownFileProperties.KEY,
+		KnownFileProperties.STACK_FILES,
+		KnownFileProperties.STACK_TOP,
+		KnownFileProperties.STACK_VIEW)));
 
 	private static final AbstractSynchronousLazy<RelativeLayout.LayoutParams> imgFileThumbnailLayoutParams =
 			new AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
@@ -148,7 +149,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 			.eventually(LoopedInPromise.response(new VoidResponse<>(fileProperties -> {
 				setFileNameFromProperties(fileProperties);
 
-				final String artist = fileProperties.get(SessionFilePropertiesProvider.ARTIST);
+				final String artist = fileProperties.get(KnownFileProperties.ARTIST);
 				if (artist != null)
 					this.artistTextViewFinder.findView().setText(artist);
 
@@ -224,7 +225,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 	}
 
 	private void setFileNameFromProperties(Map<String, String> fileProperties) {
-		final String fileName = fileProperties.get(SessionFilePropertiesProvider.NAME);
+		final String fileName = fileProperties.get(KnownFileProperties.NAME);
 		if (fileName == null) return;
 
 		final TextView fileNameTextView = fileNameTextViewFinder.findView();

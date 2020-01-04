@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -40,10 +40,10 @@ public class MaxFileVolumeProvider implements ProvideMaxFileVolume {
 			cachedSessionFilePropertiesProvider
 				.promiseFileProperties(serviceFile)
 				.then(fileProperties -> {
-					if (!fileProperties.containsKey(SessionFilePropertiesProvider.VolumeLevelR128))
+					if (!fileProperties.containsKey(KnownFileProperties.VolumeLevelR128))
 						return UnityVolume;
 
-					final String r128VolumeLevelString = fileProperties.get(SessionFilePropertiesProvider.VolumeLevelR128);
+					final String r128VolumeLevelString = fileProperties.get(KnownFileProperties.VolumeLevelR128);
 					try {
 						final float r128VolumeLevel = Float.parseFloat(r128VolumeLevelString);
 

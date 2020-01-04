@@ -10,7 +10,7 @@ public class FilePropertyHelpers {
 	 * Get the duration of the serviceFile in milliseconds
 	 */
 	public static int parseDurationIntoMilliseconds(Map<String, String> fileProperties) {
-		String durationToParse = fileProperties.get(SessionFilePropertiesProvider.DURATION);
+		String durationToParse = fileProperties.get(KnownFileProperties.DURATION);
 		if (durationToParse != null && !durationToParse.isEmpty())
 			return (int) (Double.parseDouble(durationToParse) * 1000);
 
