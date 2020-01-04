@@ -2,10 +2,12 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import android.content.Context;
 
+import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.ProvideLibraryFileProperties;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetStoredFiles;
@@ -59,7 +61,8 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 	private final MediaFileUriProvider mediaFileUriProvider;
 	private final MediaFileIdProvider mediaFileIdProvider;
 	private final GetStoredFiles storedFiles;
-	private final CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private final ILibraryProvider libraryProvider;
+	private final ProvideLibraryFileProperties libraryFileProperties;
 	private final LookupSyncDirectory lookupSyncDirectory;
 
 	public StoredFileUpdater(
@@ -67,31 +70,35 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 		MediaFileUriProvider mediaFileUriProvider,
 		MediaFileIdProvider mediaFileIdProvider,
 		GetStoredFiles storedFiles,
-		CachedFilePropertiesProvider cachedFilePropertiesProvider,
+		ILibraryProvider libraryProvider,
+		ProvideLibraryFileProperties libraryFileProperties,
 		LookupSyncDirectory lookupSyncDirectory) {
 		this.context = context;
 		this.mediaFileUriProvider = mediaFileUriProvider;
 		this.mediaFileIdProvider = mediaFileIdProvider;
 		this.storedFiles = storedFiles;
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider;
+		this.libraryProvider = libraryProvider;
+		this.libraryFileProperties = libraryFileProperties;
 		this.lookupSyncDirectory = lookupSyncDirectory;
 	}
 
 	@Override
-	public Promise<StoredFile> promiseStoredFileUpdate(Library library, ServiceFile serviceFile) {
-		return storedFiles.promiseStoredFile(library, serviceFile)
+	public Promise<StoredFile> promiseStoredFileUpdate(LibraryId libraryId, ServiceFile serviceFile) {
+		final Promise<Library> promisedLibrary = libraryProvider.getLibrary(libraryId);
+
+		return storedFiles.promiseStoredFile(libraryId, serviceFile)
 			.eventually(storedFile -> storedFile != null
 				? new Promise<>(storedFile)
 				: new QueuedPromise<>(() -> {
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 						logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
-						createStoredFile(library, repositoryAccessHelper, serviceFile);
+						createStoredFile(libraryId, repositoryAccessHelper, serviceFile);
 					}
 
 					return null;
 				}, storedFileAccessExecutor())
-					.eventually(v -> storedFiles.promiseStoredFile(library, serviceFile)))
-			.eventually(storedFile -> {
+					.eventually(v -> storedFiles.promiseStoredFile(libraryId, serviceFile)))
+			.eventually(storedFile -> promisedLibrary.eventually(library -> {
 				if (storedFile.getPath() != null || !library.isUsingExistingFiles())
 					return new Promise<>(storedFile);
 
@@ -106,33 +113,33 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 						storedFile.setIsOwner(false);
 						return
 							mediaFileIdProvider
-								.getMediaId(serviceFile)
+								.getMediaId(libraryId, serviceFile)
 								.then(mediaId -> {
 									storedFile.setStoredMediaId(mediaId);
 									return storedFile;
 								});
 					});
-			})
+			}))
 			.eventually(storedFile -> storedFile.getPath() != null
 				? new Promise<>(storedFile)
-				: cachedFilePropertiesProvider
-					.promiseFileProperties(serviceFile)
-					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(library)
+				: libraryFileProperties
+					.promiseFileProperties(libraryId, serviceFile)
+					.eventually(fileProperties -> lookupSyncDirectory.promiseSyncDirectory(libraryId)
 						.then(syncDrive -> {
 							String fullPath = syncDrive.getPath();
 
-							String artist = fileProperties.get(FilePropertiesProvider.ALBUM_ARTIST);
+							String artist = fileProperties.get(KnownFileProperties.ALBUM_ARTIST);
 							if (artist == null)
-								artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+								artist = fileProperties.get(KnownFileProperties.ARTIST);
 
 							if (artist != null)
 								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(artist.trim()));
 
-							final String album = fileProperties.get(FilePropertiesProvider.ALBUM);
+							final String album = fileProperties.get(KnownFileProperties.ALBUM);
 							if (album != null)
 								fullPath = FilenameUtils.concat(fullPath, replaceReservedCharsAndPath(album.trim()));
 
-							String fileName = fileProperties.get(FilePropertiesProvider.FILENAME);
+							String fileName = fileProperties.get(KnownFileProperties.FILENAME);
 							fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
 
 							final int extensionIndex = fileName.lastIndexOf('.');
@@ -157,12 +164,12 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 		return reservedCharactersPattern.getObject().matcher(path).replaceAll("_");
 	}
 
-	private void createStoredFile(Library library, RepositoryAccessHelper repositoryAccessHelper, ServiceFile serviceFile) {
+	private void createStoredFile(LibraryId libraryId, RepositoryAccessHelper repositoryAccessHelper, ServiceFile serviceFile) {
 		try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
 			repositoryAccessHelper
 				.mapSql(insertSql.getObject())
 				.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.getKey())
-				.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.getId())
+				.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.getId())
 				.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
 				.execute();
 

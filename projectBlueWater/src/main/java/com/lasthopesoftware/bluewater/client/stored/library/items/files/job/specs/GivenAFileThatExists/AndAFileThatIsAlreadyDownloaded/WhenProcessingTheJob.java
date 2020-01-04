@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatExists.AndAFileThatIsAlreadyDownloaded;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -26,7 +27,7 @@ public class WhenProcessingTheJob {
 
 	@BeforeClass
 	public static void before() {
-		final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+		final StoredFile storedFile = new StoredFile(new LibraryId(10), 1, new ServiceFile(1), "test-path", true);
 		storedFile.setIsDownloadComplete(true);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
@@ -36,13 +37,13 @@ public class WhenProcessingTheJob {
 				return mockFile;
 			},
 			mock(IStoredFileAccess.class),
-			f -> Promise.empty(),
+			(libraryId, f) -> Promise.empty(),
 			f -> true,
 			mock(IFileWritePossibleArbitrator.class),
 			(is, f) -> {});
 
 		storedFileJobStatus = storedFileJobProcessor.observeStoredFileDownload(
-			Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
+			Collections.singleton(new StoredFileJob(new LibraryId(10), new ServiceFile(1), storedFile)))
 			.map(f -> f.storedFileJobState)
 			.toList().blockingGet();
 	}

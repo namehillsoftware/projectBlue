@@ -1,13 +1,14 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.WithParentDirectory.ThatCannotBeCreated;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+	private static final StoredFile storedFile = new StoredFile(new LibraryId(7), 1, new ServiceFile(1), "test-path", true);
 	private static StorageCreatePathException storageCreatePathException;
 
 	@BeforeClass
@@ -36,14 +37,14 @@ public class WhenProcessingTheJob {
 				return file;
 			},
 			mock(IStoredFileAccess.class),
-			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
+			(libraryId, f) -> new Promise<>(new ByteArrayInputStream(new byte[0])),
 			f -> false,
 			f -> true,
 			(is, f) -> {});
 
 		try {
 			storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(
-				new StoredFileJob(new ServiceFile(1), storedFile))).blockingSubscribe();
+				new StoredFileJob(new LibraryId(7), new ServiceFile(1), storedFile))).blockingSubscribe();
 		} catch (Throwable e) {
 			if (e.getCause() instanceof StorageCreatePathException)
 				storageCreatePathException = (StorageCreatePathException)e.getCause();

@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.repository;
 
 import androidx.annotation.Keep;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 
 import java.util.Objects;
 
@@ -19,8 +20,8 @@ public final class StoredFile {
 
 	public StoredFile() {}
 
-	public StoredFile(Library library, int storedMediaId, ServiceFile serviceFile, String path, boolean isOwner) {
-		this.libraryId = library.getId();
+	public StoredFile(LibraryId libraryId, int storedMediaId, ServiceFile serviceFile, String path, boolean isOwner) {
+		this.libraryId = libraryId.getId();
 		this.storedMediaId = storedMediaId;
 		this.serviceId = serviceFile.getKey();
 		this.path = path;

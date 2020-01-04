@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.specs.GivenATypicalLibrary.WithTheStoredFile.InAnotherLocation;
 
-import com.annimon.stream.Stream;
+import androidx.test.core.app.ApplicationProvider;
+
+import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeCachedFilesPropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilesPropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
@@ -14,10 +17,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLo
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -37,42 +41,49 @@ public class WhenUpdatingTheFile extends AndroidContext {
 			.thenReturn(Promise.empty());
 
 		final MediaFileIdProvider mediaFileIdProvider = mock(MediaFileIdProvider.class);
-		when(mediaFileIdProvider.getMediaId(any()))
+		when(mediaFileIdProvider.getMediaId(any(), any()))
 			.thenReturn(Promise.empty());
 
-		final FakeCachedFilesPropertiesProvider filePropertiesProvider = new FakeCachedFilesPropertiesProvider();
+		final FakeFilesPropertiesProvider filePropertiesProvider = new FakeFilesPropertiesProvider();
 		filePropertiesProvider.addFilePropertiesToCache(
 			new ServiceFile(4),
 			new HashMap<String, String>() {{
-				put(FilePropertiesProvider.ARTIST, "artist");
-				put(FilePropertiesProvider.ALBUM, "album");
-				put(FilePropertiesProvider.FILENAME, "my-filename.mp3");
+				put(KnownFileProperties.ARTIST, "artist");
+				put(KnownFileProperties.ALBUM, "album");
+				put(KnownFileProperties.FILENAME, "my-filename.mp3");
 			}});
 
+		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Collections.singletonList(new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)));
+
 		new FuturePromise<>(new StoredFileUpdater(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			mediaFileUriProvider,
 			mediaFileIdProvider,
-			new StoredFileQuery(RuntimeEnvironment.application),
+			new StoredFileQuery(ApplicationProvider.getApplicationContext()),
+			fakeLibraryProvider,
 			filePropertiesProvider,
 			new SyncDirectoryLookup(
-				() -> new Promise<>(Stream.of(new File("/my-public-drive-1"))),
-				() -> new Promise<>(Stream.empty()))).promiseStoredFileUpdate(
-			new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL),
+				fakeLibraryProvider,
+				() -> new Promise<>(Collections.singletonList(new File("/my-public-drive-1"))),
+				() -> new Promise<>(Collections.emptyList()))).promiseStoredFileUpdate(
+					new LibraryId(14),
 			new ServiceFile(4))).get();
 
+
 		final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			mediaFileUriProvider,
 			mediaFileIdProvider,
-			new StoredFileQuery(RuntimeEnvironment.application),
+			new StoredFileQuery(ApplicationProvider.getApplicationContext()),
+			fakeLibraryProvider,
 			filePropertiesProvider,
 			new SyncDirectoryLookup(
-				() -> new Promise<>(Stream.of(new File("/my-public-drive"))),
-				() -> new Promise<>(Stream.empty())));
+				fakeLibraryProvider,
+				() -> new Promise<>(Collections.singletonList(new File("/my-public-drive"))),
+				() -> new Promise<>(Collections.emptyList())));
 
 		storedFile = new FuturePromise<>(storedFileUpdater.promiseStoredFileUpdate(
-			new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL),
+			new LibraryId(14),
 			new ServiceFile(4))).get();
 	}
 

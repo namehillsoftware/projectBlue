@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items;
 
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -14,10 +14,10 @@ public class StoredItemsChecker implements CheckIfAnyStoredItemsExist {
 	}
 
 	@Override
-	public Promise<Boolean> promiseIsAnyStoredItemsOrFiles(Library library) {
-		return storedItemAccess.promiseStoredItems()
+	public Promise<Boolean> promiseIsAnyStoredItemsOrFiles(LibraryId libraryId) {
+		return storedItemAccess.promiseStoredItems(libraryId)
 			.eventually(items -> !items.isEmpty()
 				? new Promise<>(true)
-				: checkForAnyStoredFiles.promiseIsAnyStoredFiles(library));
+				: checkForAnyStoredFiles.promiseIsAnyStoredFiles(libraryId));
 	}
 }

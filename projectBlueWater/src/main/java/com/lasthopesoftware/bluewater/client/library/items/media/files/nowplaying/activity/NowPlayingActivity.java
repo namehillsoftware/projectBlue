@@ -48,10 +48,11 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplayin
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.library.items.menu.LongClickViewAnimatorListener;
@@ -192,8 +193,8 @@ implements
 						NowPlayingActivity.this,
 						connectionProvider,
 						new AndroidDiskCacheDirectoryProvider(NowPlayingActivity.this),
-						new CachedFilePropertiesProvider(connectionProvider, filePropertyCache,
-							new FilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance())));
+						new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
+							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance())));
 				});
 		}
 	};
@@ -523,9 +524,9 @@ implements
 
 				disableViewWithMessage();
 
-				final FilePropertiesProvider filePropertiesProvider =
-					new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance());
-				filePropertiesProvider
+				final SessionFilePropertiesProvider sessionFilePropertiesProvider =
+					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance());
+				sessionFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually(fileProperties -> {
 						if (localViewStructure != viewStructure) return Promise.empty();
@@ -577,15 +578,15 @@ implements
 	}
 
 	private Void setFileProperties(final ServiceFile serviceFile, final long initialFilePosition, Map<String, String> fileProperties) {
-		final String artist = fileProperties.get(FilePropertiesProvider.ARTIST);
+		final String artist = fileProperties.get(KnownFileProperties.ARTIST);
 		nowPlayingArtist.findView().setText(artist);
 
-		final String title = fileProperties.get(FilePropertiesProvider.NAME);
+		final String title = fileProperties.get(KnownFileProperties.NAME);
 		nowPlayingTitle.findView().setText(title);
 		nowPlayingTitle.findView().setSelected(true);
 
 		Float fileRating = null;
-		final String stringRating = fileProperties.get(FilePropertiesProvider.RATING);
+		final String stringRating = fileProperties.get(KnownFileProperties.RATING);
 		try {
 			if (stringRating != null && !stringRating.isEmpty())
 				fileRating = Float.valueOf(stringRating);
@@ -613,8 +614,8 @@ implements
 
 			final String stringRating = String.valueOf(Math.round(newRating));
 			SessionConnection.getInstance(this).promiseSessionConnection()
-				.then(new VoidResponse<>(c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, FilePropertiesProvider.RATING, stringRating, false)));
-			viewStructure.fileProperties.put(FilePropertiesProvider.RATING, stringRating);
+				.then(new VoidResponse<>(c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, KnownFileProperties.RATING, stringRating, false)));
+			viewStructure.fileProperties.put(KnownFileProperties.RATING, stringRating);
 		});
 
 		songRatingBar.setEnabled(true);

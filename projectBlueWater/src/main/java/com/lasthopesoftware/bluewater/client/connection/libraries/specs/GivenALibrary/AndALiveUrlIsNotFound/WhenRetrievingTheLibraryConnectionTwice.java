@@ -42,7 +42,7 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
 		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
 		final DeferredPromise<Library> secondLibraryDeferredPromise = new DeferredPromise<>(library);
-		when(libraryProvider.getLibrary(2))
+		when(libraryProvider.getLibrary(new LibraryId(2)))
 			.thenReturn(libraryDeferredPromise)
 			.thenReturn(secondLibraryDeferredPromise);
 

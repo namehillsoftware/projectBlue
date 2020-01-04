@@ -28,6 +28,7 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		if (currentProgress != null)
 			action.runWith(currentProgress)
 		updateListeners.add(action)
+		must { updateListeners.remove(action) }
 		return this
 	}
 

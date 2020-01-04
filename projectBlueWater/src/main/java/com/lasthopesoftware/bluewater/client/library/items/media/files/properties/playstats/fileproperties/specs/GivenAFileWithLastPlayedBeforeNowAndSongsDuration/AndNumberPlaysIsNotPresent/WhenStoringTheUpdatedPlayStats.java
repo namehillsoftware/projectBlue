@@ -3,11 +3,13 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.library.access.specs.FakeRevisionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
+
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
@@ -38,24 +40,24 @@ public class WhenStoringTheUpdatedPlayStats {
 				"<Item>\n" +
 					"<Field Name=\"Key\">23</Field>\n" +
 					"<Field Name=\"Media Type\">Audio</Field>\n" +
-					"<Field Name=\"" + FilePropertiesProvider.LAST_PLAYED + "\">" + String.valueOf(lastPlayed) + "</Field>\n" +
+					"<Field Name=\"" + KnownFileProperties.LAST_PLAYED + "\">" + String.valueOf(lastPlayed) + "</Field>\n" +
 					"<Field Name=\"Rating\">4</Field>\n" +
 					"<Field Name=\"File Size\">2345088</Field>\n" +
-					"<Field Name=\"" + FilePropertiesProvider.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
+					"<Field Name=\"" + KnownFileProperties.DURATION + "\">" + String.valueOf(duration) + "</Field>\n" +
 				"</Item>\n" +
 			"</MPL>\n").getBytes()),
 			"File/GetInfo", "File=23");
 
 		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, filePropertiesContainer, ParsingScheduler.instance());
+		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, filePropertiesContainer, ParsingScheduler.instance());
 
-		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(filePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
+		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(sessionFilePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
 
 		final ServiceFile serviceFile = new ServiceFile(23);
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		filePropertiesPlayStatsUpdater
 			.promisePlaystatsUpdate(serviceFile)
-			.eventually(o -> filePropertiesProvider.promiseFileProperties(serviceFile))
+			.eventually(o -> sessionFilePropertiesProvider.promiseFileProperties(serviceFile))
 			.then(o -> {
 				fileProperties = o;
 				countDownLatch.countDown();
@@ -71,11 +73,11 @@ public class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	public void thenTheLastPlayedIsRecent() {
-		assertThat(Long.parseLong(fileProperties.get(FilePropertiesProvider.LAST_PLAYED))).isCloseTo(Duration.millis(System.currentTimeMillis()).getStandardSeconds(), offset(10L));
+		assertThat(Long.parseLong(fileProperties.get(KnownFileProperties.LAST_PLAYED))).isCloseTo(Duration.millis(System.currentTimeMillis()).getStandardSeconds(), offset(10L));
 	}
 
 	@Test
 	public void thenTheNumberPlaysIsIncremented() {
-		assertThat(fileProperties.get(FilePropertiesProvider.NUMBER_PLAYS)).isEqualTo("1");
+		assertThat(fileProperties.get(KnownFileProperties.NUMBER_PLAYS)).isEqualTo("1");
 	}
 }

@@ -9,8 +9,9 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
@@ -50,8 +51,8 @@ public class WhenBuildingTheNotification extends AndroidContext {
 			new ServiceFile(3),
 			new HashMap<String, String>() {
 				{
-					put(FilePropertiesProvider.ARTIST, "test-artist");
-					put(FilePropertiesProvider.NAME, "song");
+					put(KnownFileProperties.ARTIST, "test-artist");
+					put(KnownFileProperties.NAME, "song");
 				}
 			});
 
@@ -65,10 +66,10 @@ public class WhenBuildingTheNotification extends AndroidContext {
 			ApplicationProvider.getApplicationContext(),
 			() -> spiedBuilder,
 			connectionProvider,
-			new CachedFilePropertiesProvider(
+			new CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				containerRepository,
-				new FilePropertiesProvider(
+				new SessionFilePropertiesProvider(
 					connectionProvider,
 					containerRepository,
 					ParsingScheduler.instance())),

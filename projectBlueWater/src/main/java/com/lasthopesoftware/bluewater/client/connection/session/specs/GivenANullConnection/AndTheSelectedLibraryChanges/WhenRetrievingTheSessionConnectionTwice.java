@@ -65,8 +65,8 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		int selectedLibraryId;
 
 		@Override
-		public int getSelectedLibraryId() {
-			return selectedLibraryId;
+		public LibraryId getSelectedLibraryId() {
+			return new LibraryId(selectedLibraryId);
 		}
 	}
 }

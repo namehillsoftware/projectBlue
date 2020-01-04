@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.specs;
 
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.namehillsoftware.handoff.Messenger;
@@ -21,17 +22,17 @@ public abstract class FakeDeferredStoredItemAccess implements IStoredItemAccess 
 	protected abstract Collection<StoredItem> getStoredItems();
 
 	@Override
-	public void toggleSync(IItem item, boolean enable) {
+	public void toggleSync(LibraryId libraryId, IItem item, boolean enable) {
 
 	}
 
 	@Override
-	public Promise<Boolean> isItemMarkedForSync(IItem item) {
+	public Promise<Boolean> isItemMarkedForSync(LibraryId libraryId, IItem item) {
 		return new Promise<>(false);
 	}
 
 	@Override
-	public Promise<Collection<StoredItem>> promiseStoredItems() {
+	public Promise<Collection<StoredItem>> promiseStoredItems(LibraryId libraryId) {
 		return new Promise<>((m -> messenger = m));
 	}
 }

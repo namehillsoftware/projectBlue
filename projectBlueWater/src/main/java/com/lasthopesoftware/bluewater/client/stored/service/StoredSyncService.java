@@ -22,24 +22,44 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.LibraryFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.LibraryFileStringListProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.factory.LibrarySyncHandlerFactory;
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.ReceiveStoredFileEvent;
@@ -53,6 +73,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.SynchronizeStoredFiles;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
@@ -220,26 +241,70 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private final CreateAndHold<ILibraryProvider> lazyLibraryRepository = new Lazy<>(() -> new LibraryRepository(this));
 
+	private final CreateAndHold<ISelectedLibraryIdentifierProvider> lazyLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
+
 	private final CreateAndHold<SynchronizeStoredFiles> lazyStoredFilesSynchronization = new AbstractSynchronousLazy<SynchronizeStoredFiles>() {
 		@Override
 		protected SynchronizeStoredFiles create() {
 			final StoredSyncService storedSyncService = StoredSyncService.this;
 
+			final StoredItemAccess storedItemAccess = new StoredItemAccess(storedSyncService);
+
+			final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
+				new SyncLibraryProvider(lazyLibraryRepository.getObject()),
+					new LiveUrlProvider(
+						new ActiveNetworkFinder(storedSyncService),
+						lazyUrlScanner.getObject()),
+					new ConnectionTester(),
+					OkHttpFactory.getInstance());
+
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
+				libraryConnectionProvider,
+				filePropertyCache,
+				new FilePropertiesProvider(
+					libraryConnectionProvider,
+					filePropertyCache));
+
+			final MediaQueryCursorProvider cursorProvider = new MediaQueryCursorProvider(
+				storedSyncService,
+				cachedFilePropertiesProvider);
+
+			final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
+				storedSyncService,
+				new MediaFileUriProvider(
+					storedSyncService,
+					cursorProvider,
+					lazyReadPermissionArbitratorForOs.getObject(),
+					lazyLibraryIdentifierProvider.getObject(),
+					true),
+				new MediaFileIdProvider(
+					cursorProvider,
+					lazyReadPermissionArbitratorForOs.getObject()),
+				new StoredFileQuery(storedSyncService),
+				lazyLibraryRepository.getObject(),
+				cachedFilePropertiesProvider,
+				new SyncDirectoryLookup(lazyLibraryRepository.getObject(), new PublicDirectoryLookup(storedSyncService), new PrivateDirectoryLookup(storedSyncService)));
+
+			final LibrarySyncHandler syncHandler = new LibrarySyncHandler(
+				new StoredItemServiceFileCollector(
+					storedItemAccess,
+					new LibraryFileProvider(new LibraryFileStringListProvider(libraryConnectionProvider)),
+					FileListParameters.getInstance()),
+				lazyStoredFileAccess.getObject(),
+				storedFileUpdater,
+				new StoredFileJobProcessor(
+					new StoredFileSystemFileProducer(),
+					lazyStoredFileAccess.getObject(),
+					new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), libraryConnectionProvider),
+					new FileReadPossibleArbitrator(),
+					new FileWritePossibleArbitrator(),
+					new FileStreamWriter()));
+
 			return new StoredFileSynchronization(
 				lazyLibraryRepository.getObject(),
 				lazyBroadcastManager.getObject(),
-				lazyUrlScanner.getObject(),
-				new LibrarySyncHandlerFactory(
-					lazyStoredFileAccess.getObject(),
-					storedSyncService,
-					lazyReadPermissionArbitratorForOs.getObject(),
-					new SyncDirectoryLookup(new PublicDirectoryLookup(storedSyncService), new PrivateDirectoryLookup(storedSyncService)),
-					new StoredFileSystemFileProducer(),
-					new ServiceFileUriQueryParamsProvider(),
-					new FileReadPossibleArbitrator(),
-					new FileWritePossibleArbitrator(),
-					new FileStreamWriter())
-			);
+				syncHandler);
 		}
 	};
 

@@ -12,13 +12,13 @@ import java.util.Map;
 /**
  * Created by david on 3/7/16.
  */
-public class CachedFilePropertiesProvider implements IFilePropertiesProvider {
+public class CachedSessionFilePropertiesProvider implements ProvideFilePropertiesForSession {
 
 	private final IConnectionProvider connectionProvider;
-	private final IFilePropertiesProvider filePropertiesProvider;
+	private final ProvideFilePropertiesForSession filePropertiesProvider;
 	private final IFilePropertiesContainerRepository filePropertiesContainerRepository;
 
-	public CachedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, IFilePropertiesProvider filePropertiesProvider) {
+	public CachedSessionFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerRepository, ProvideFilePropertiesForSession filePropertiesProvider) {
 		this.connectionProvider = connectionProvider;
 		this.filePropertiesContainerRepository = filePropertiesContainerRepository;
 		this.filePropertiesProvider = filePropertiesProvider;

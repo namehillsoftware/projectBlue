@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -19,5 +20,5 @@ public interface IStoredFileAccess {
 
 	Promise<Void> addMediaFile(Library library, ServiceFile serviceFile, int mediaFileId, String filePath);
 
-	Promise<Void> pruneStoredFiles(Library library, Set<ServiceFile> serviceFilesToKeep);
+	Promise<Void> pruneStoredFiles(LibraryId libraryId, Set<ServiceFile> serviceFilesToKeep);
 }

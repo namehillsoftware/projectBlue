@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.specs.GivenATypicalLibrary;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
@@ -9,6 +11,7 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
+
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -48,8 +51,8 @@ public class WhenCollectingTheStoredFiles extends AndroidContext {
 			}
 		}
 
-		final StoredFilesCollection storedFilesCollection = new StoredFilesCollection(RuntimeEnvironment.application);
-		storedFiles = new FuturePromise<>(storedFilesCollection.promiseAllStoredFiles(new Library().setId(5))).get();
+		final StoredFilesCollection storedFilesCollection = new StoredFilesCollection(ApplicationProvider.getApplicationContext());
+		storedFiles = new FuturePromise<>(storedFilesCollection.promiseAllStoredFiles(new LibraryId(5))).get();
 	}
 
 	@Test

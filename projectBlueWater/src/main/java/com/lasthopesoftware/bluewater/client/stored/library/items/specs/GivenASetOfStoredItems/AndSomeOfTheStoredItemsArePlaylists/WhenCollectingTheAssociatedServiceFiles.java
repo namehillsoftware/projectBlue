@@ -3,19 +3,25 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAS
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.ConvertStoredPlaylistsToStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.specs.FakeStoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,16 +51,16 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			new StoredItem(1, 5, StoredItem.ItemType.PLAYLIST));
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
-		final IFileProvider fileProvider = mock(IFileProvider.class);
+		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
 		when(fileProvider.promiseFiles(any(), any()))
 			.thenReturn(new Promise<>(Collections.emptyList()));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
 			.thenReturn(new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
 			.thenReturn(new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
 			.thenReturn(new Promise<>(thirdItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(5))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(5))))
 			.thenReturn(new Promise<>(fourthItemExpectedFiles));
 
 		final ConvertStoredPlaylistsToStoredItems storedPlaylistsToStoredItems = mock(ConvertStoredPlaylistsToStoredItems.class);
@@ -68,7 +74,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		collectedFiles =
 			new FuturePromise<>(serviceFileCollector
-			.promiseServiceFilesToSync()).get(1, TimeUnit.SECONDS);
+			.promiseServiceFilesToSync(new LibraryId(5))).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test

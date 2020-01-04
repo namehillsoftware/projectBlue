@@ -1,13 +1,14 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.AndTheInputStreamCannotBeOpened;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenProcessingTheJob {
 
-	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+	private static final StoredFile storedFile = new StoredFile(new LibraryId(6), 1, new ServiceFile(1), "test-path", true);
 	private static List<StoredFileJobState> jobStates;
 
 	@BeforeClass
@@ -37,13 +38,13 @@ public class WhenProcessingTheJob {
 				return file;
 			},
 			mock(IStoredFileAccess.class),
-			f -> new Promise<>(new IOException()),
+			(libraryId, f) -> new Promise<>(new IOException()),
 			f -> false,
 			f -> true,
 			(is, f) -> {});
 
 		jobStates = storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(
-			new StoredFileJob(new ServiceFile(1), storedFile))).map(j -> j.storedFileJobState).toList().blockingGet();
+			new StoredFileJob(new LibraryId(6), new ServiceFile(1), storedFile))).map(j -> j.storedFileJobState).toList().blockingGet();
 	}
 
 	@Test

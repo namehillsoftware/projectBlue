@@ -106,7 +106,7 @@ public class PlaylistListFragment extends Fragment {
 							lazyProgressBar.getObject(),
 							itemListMenuChangeHandler,
 							FileListParameters.getInstance(),
-							new StoredItemAccess(activity, library),
+							new StoredItemAccess(activity),
 							library), activity);
 
 				final Runnable playlistFillAction = new Runnable() {

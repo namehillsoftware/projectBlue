@@ -3,17 +3,23 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAS
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -34,19 +40,19 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 
 		final IStoredItemAccess storedItemAccess = mock(IStoredItemAccess.class);
-		when(storedItemAccess.promiseStoredItems())
+		when(storedItemAccess.promiseStoredItems(new LibraryId(15)))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new StoredItem(1, 1, StoredItem.ItemType.ITEM),
 				new StoredItem(1, 2, StoredItem.ItemType.ITEM),
 				new StoredItem(1, 3, StoredItem.ItemType.ITEM))));
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
-		final IFileProvider fileProvider = mock(IFileProvider.class);
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
+		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
+		when(fileProvider.promiseFiles(new LibraryId(15), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
 			.thenAnswer(e -> new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
+		when(fileProvider.promiseFiles(new LibraryId(15), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
 			.thenAnswer(e -> new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
+		when(fileProvider.promiseFiles(new LibraryId(15), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
 			.thenAnswer(e -> new Promise<>(thirdItemExpectedFiles));
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
@@ -56,7 +62,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		collectedFiles =
 			new FuturePromise<>(serviceFileCollector
-			.promiseServiceFilesToSync()).get(1, TimeUnit.SECONDS);
+			.promiseServiceFilesToSync(new LibraryId(15))).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test

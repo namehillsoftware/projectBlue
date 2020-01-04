@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenACancellationWhileGettingStoredItems;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -13,19 +13,28 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.specs.FakeDeferredStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.namehillsoftware.handoff.promises.Promise;
-import io.reactivex.Observable;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class WhenSyncingTheStoredItems {
 
@@ -41,8 +50,9 @@ public class WhenSyncingTheStoredItems {
 			}
 		};
 
-		final IFileProvider mockFileProvider = mock(IFileProvider.class);
+		final ProvideLibraryFiles mockFileProvider = mock(ProvideLibraryFiles.class);
 		when(mockFileProvider.promiseFiles(
+			new LibraryId(13),
 			FileListParameters.Options.None, "Playlist/Files", "Playlist=14"))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
@@ -54,7 +64,6 @@ public class WhenSyncingTheStoredItems {
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			new Library(),
 			new StoredItemServiceFileCollector(
 				deferredStoredItemAccess,
 				mockFileProvider,
@@ -71,7 +80,7 @@ public class WhenSyncingTheStoredItems {
 					job.getStoredFile(),
 					StoredFileJobState.Downloaded))));
 
-		final Observable<StoredFile> syncedFiles = librarySyncHandler.observeLibrarySync().map(j -> j.storedFile);
+		final Observable<StoredFile> syncedFiles = librarySyncHandler.observeLibrarySync(new LibraryId(5)).map(j -> j.storedFile);
 
 		syncedFiles.blockingSubscribe(new Observer<StoredFile>() {
 			@Override

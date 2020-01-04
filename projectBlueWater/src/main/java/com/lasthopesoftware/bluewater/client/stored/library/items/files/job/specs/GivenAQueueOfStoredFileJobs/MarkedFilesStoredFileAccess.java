@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.spe
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -41,7 +42,7 @@ public class MarkedFilesStoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<Void> pruneStoredFiles(Library library, Set<ServiceFile> serviceFilesToKeep) {
+	public Promise<Void> pruneStoredFiles(LibraryId libraryId, Set<ServiceFile> serviceFilesToKeep) {
 		return Promise.empty();
 	}
 }

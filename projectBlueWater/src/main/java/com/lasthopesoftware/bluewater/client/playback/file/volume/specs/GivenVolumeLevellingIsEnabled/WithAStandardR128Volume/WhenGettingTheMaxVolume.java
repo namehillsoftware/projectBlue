@@ -4,14 +4,16 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenVo
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -38,22 +40,22 @@ public class WhenGettingTheMaxVolume {
 		final IFilePropertiesContainerRepository repository = mock(IFilePropertiesContainerRepository.class);
 		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(1))))
 			.thenReturn(new FilePropertiesContainer(0, new HashMap<String, String>() {{
-				put(FilePropertiesProvider.VolumeLevelR128, "-13.5");
+				put(KnownFileProperties.VolumeLevelR128, "-13.5");
 			}}));
 
-		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(connectionProvider, repository, ParsingScheduler.instance());
+		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, repository, ParsingScheduler.instance());
 
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-			new CachedFilePropertiesProvider(
+		final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
+			new CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				repository,
-				filePropertiesProvider);
+				sessionFilePropertiesProvider);
 
 		final IVolumeLevelSettings volumeLevelSettings = mock(IVolumeLevelSettings.class);
 		when(volumeLevelSettings.isVolumeLevellingEnabled()).thenReturn(true);
 
 		final MaxFileVolumeProvider maxFileVolumeProvider =
-			new MaxFileVolumeProvider(volumeLevelSettings, cachedFilePropertiesProvider);
+			new MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		maxFileVolumeProvider

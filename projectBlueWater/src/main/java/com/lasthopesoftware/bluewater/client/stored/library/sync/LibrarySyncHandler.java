@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.ProcessStoredFileJobs;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
@@ -15,39 +15,38 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy;
 import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import io.reactivex.Observable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
 
+import io.reactivex.Observable;
+
 public class LibrarySyncHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(LibrarySyncHandler.class);
 
 	private final ProcessStoredFileJobs storedFileJobsProcessor;
-	private final Library library;
 	private final CollectServiceFilesForSync serviceFilesToSyncCollector;
 	private final IStoredFileAccess storedFileAccess;
 	private final UpdateStoredFiles storedFileUpdater;
 
 	public LibrarySyncHandler(
-		Library library,
 		CollectServiceFilesForSync serviceFilesToSyncCollector,
 		IStoredFileAccess storedFileAccess,
 		UpdateStoredFiles storedFileUpdater,
 		ProcessStoredFileJobs storedFileJobsProcessor) {
-		this.library = library;
 		this.serviceFilesToSyncCollector = serviceFilesToSyncCollector;
 		this.storedFileAccess = storedFileAccess;
 		this.storedFileUpdater = storedFileUpdater;
 		this.storedFileJobsProcessor = storedFileJobsProcessor;
 	}
 
-	public Observable<StoredFileJobStatus> observeLibrarySync() {
+	public Observable<StoredFileJobStatus> observeLibrarySync(LibraryId libraryId) {
 
-		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync();
+		final Promise<Collection<ServiceFile>> promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId);
 
 		return StreamedPromise.stream(new Promise<HashSet<ServiceFile>>(messenger -> {
 			final CancellationProxy cancellationProxy = new CancellationProxy();
@@ -56,7 +55,7 @@ public class LibrarySyncHandler {
 			promisedServiceFilesToSync
 				.eventually(allServiceFilesToSync -> {
 					final HashSet<ServiceFile> serviceFilesSet = allServiceFilesToSync instanceof HashSet ? (HashSet<ServiceFile>)allServiceFilesToSync : new HashSet<>(allServiceFilesToSync);
-					final Promise<Void> pruneFilesTask = storedFileAccess.pruneStoredFiles(library, serviceFilesSet);
+					final Promise<Void> pruneFilesTask = storedFileAccess.pruneStoredFiles(libraryId, serviceFilesSet);
 					cancellationProxy.doCancel(pruneFilesTask);
 					pruneFilesTask.excuse(new VoidResponse<>(e -> logger.warn("There was an error pruning the files", e)));
 
@@ -66,12 +65,12 @@ public class LibrarySyncHandler {
 			}))
 			.map(serviceFile -> {
 				final Promise<StoredFileJob> promiseDownloadedStoredFile = storedFileUpdater
-					.promiseStoredFileUpdate(library, serviceFile)
+					.promiseStoredFileUpdate(libraryId, serviceFile)
 					.then(storedFile -> {
 						if (storedFile == null || storedFile.isDownloadComplete())
 							return null;
 
-						return new StoredFileJob(serviceFile, storedFile);
+						return new StoredFileJob(libraryId, serviceFile, storedFile);
 					});
 
 				promiseDownloadedStoredFile

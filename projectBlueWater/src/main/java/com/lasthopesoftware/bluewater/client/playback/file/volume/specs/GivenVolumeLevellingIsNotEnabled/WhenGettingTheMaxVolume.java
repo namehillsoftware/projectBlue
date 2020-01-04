@@ -3,11 +3,12 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenVo
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.IFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.ProvideFilePropertiesForSession;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -22,16 +23,16 @@ public class WhenGettingTheMaxVolume {
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
-		final CachedFilePropertiesProvider cachedFilePropertiesProvider =
-			new CachedFilePropertiesProvider(
+		final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
+			new CachedSessionFilePropertiesProvider(
 				mock(IConnectionProvider.class),
 				mock(IFilePropertiesContainerRepository.class),
-				mock(IFilePropertiesProvider.class));
+				mock(ProvideFilePropertiesForSession.class));
 
 		final IVolumeLevelSettings volumeLevelSettings = mock(IVolumeLevelSettings.class);
 
 		final MaxFileVolumeProvider maxFileVolumeProvider =
-			new MaxFileVolumeProvider(volumeLevelSettings, cachedFilePropertiesProvider);
+			new MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		maxFileVolumeProvider

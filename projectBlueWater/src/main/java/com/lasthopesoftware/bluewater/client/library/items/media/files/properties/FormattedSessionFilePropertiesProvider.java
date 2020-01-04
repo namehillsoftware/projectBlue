@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
+public class FormattedSessionFilePropertiesProvider extends SessionFilePropertiesProvider {
 	private static final Lazy<DateTimeFormatter> yearFormatter = new Lazy<>(() -> new DateTimeFormatterBuilder().appendYear(4, 4).toFormatter());
 	
 	private static final Lazy<DateTimeFormatterBuilder> dateFormatterBuilder =
@@ -63,16 +63,16 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 			new Lazy<>(() -> Collections.unmodifiableSet(
 					new HashSet<>(
 							Arrays.asList(
-								LAST_PLAYED,
-								LAST_SKIPPED,
-								DATE_CREATED,
-								DATE_IMPORTED,
-								DATE_MODIFIED,
-								DATE_TAGGED,
-								DATE_FIRST_RATED,
-								DATE_LAST_OPENED))));
+								KnownFileProperties.LAST_PLAYED,
+								KnownFileProperties.LAST_SKIPPED,
+								KnownFileProperties.DATE_CREATED,
+								KnownFileProperties.DATE_IMPORTED,
+								KnownFileProperties.DATE_MODIFIED,
+								KnownFileProperties.DATE_TAGGED,
+								KnownFileProperties.DATE_FIRST_RATED,
+								KnownFileProperties.DATE_LAST_OPENED))));
 	
-	public FormattedFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
+	public FormattedSessionFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
 		super(connectionProvider, filePropertiesContainerProvider, parsingScheduler);
 	}
 
@@ -81,7 +81,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 		return
 			super
 				.promiseFileProperties(serviceFile)
-				.then(FormattedFilePropertiesProvider::buildFormattedReadonlyProperties);
+				.then(FormattedSessionFilePropertiesProvider::buildFormattedReadonlyProperties);
 	}
 
 	/* Formatted properties helpers */
@@ -103,7 +103,7 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 			return dateTime.toString(dateTimeFormatter.getObject());
 		}
 		
-		if (DATE.equals(name)) {
+		if (KnownFileProperties.DATE.equals(name)) {
 			String daysValue = value;
 			final int periodPos = daysValue.indexOf('.');
 			if (periodPos > -1)
@@ -114,12 +114,12 @@ public class FormattedFilePropertiesProvider extends FilePropertiesProvider {
 			return returnDate.toString(returnDate.getMonthOfYear() == 1 && returnDate.getDayOfMonth() == 1 ? yearFormatter.getObject() : dateFormatter.getObject());
 		}
 		
-		if (FILE_SIZE.equals(name)) {
+		if (KnownFileProperties.FILE_SIZE.equals(name)) {
 			final double fileSizeBytes = Math.ceil(Long.valueOf(value).doubleValue() / 1024 / 1024 * 100) / 100;
 			return fileSizeBytes + " MB";
 		}
 		
-		if (DURATION.equals(name)) {
+		if (KnownFileProperties.DURATION.equals(name)) {
 			return Duration.standardSeconds(Double.valueOf(value).longValue()).toPeriod().toString(minutesAndSecondsFormatter.getObject());
 		}
 		

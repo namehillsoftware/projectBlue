@@ -6,6 +6,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 
 import java.util.List;
 
-public interface IFileProvider {
+public interface ProvideFiles {
 	Promise<List<ServiceFile>> promiseFiles(FileListParameters.Options option, String... params);
 }

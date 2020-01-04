@@ -5,6 +5,7 @@ import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary;
@@ -150,8 +151,8 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<Void> pruneStoredFiles(Library library, final Set<ServiceFile> serviceFilesToKeep) {
-		return getAllStoredFilesInLibrary.promiseAllStoredFiles(library)
+	public Promise<Void> pruneStoredFiles(LibraryId libraryId, final Set<ServiceFile> serviceFilesToKeep) {
+		return getAllStoredFilesInLibrary.promiseAllStoredFiles(libraryId)
 			.eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}
 

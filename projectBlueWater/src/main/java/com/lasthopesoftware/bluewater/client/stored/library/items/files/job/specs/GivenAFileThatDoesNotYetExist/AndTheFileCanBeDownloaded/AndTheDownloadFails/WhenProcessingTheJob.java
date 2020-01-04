@@ -1,15 +1,18 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheDownloadFails;
 
 import android.os.Build;
+
 import androidx.annotation.RequiresApi;
+
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -27,7 +30,7 @@ import static org.mockito.Mockito.when;
 public class WhenProcessingTheJob {
 
 	private static Throwable storedFileWriteException;
-	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+	private static final StoredFile storedFile = new StoredFile(new LibraryId(5), 1, new ServiceFile(1), "test-path", true);
 	private static List<StoredFileJobState> states = new ArrayList<>();
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
@@ -43,13 +46,13 @@ public class WhenProcessingTheJob {
 				return file;
 			},
 			mock(IStoredFileAccess.class),
-			f -> new Promise<>(new ByteArrayInputStream(new byte[0])),
+			(libraryId, f) -> new Promise<>(new ByteArrayInputStream(new byte[0])),
 			f -> false,
 			f -> true,
 			(is, f) -> { throw new IOException(); });
 
 		storedFileJobProcessor.observeStoredFileDownload(
-			Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
+			Collections.singleton(new StoredFileJob(new LibraryId(5), new ServiceFile(1), storedFile)))
 			.map(f -> f.storedFileJobState)
 			.blockingSubscribe(
 				storedFileJobState -> states.add(storedFileJobState),

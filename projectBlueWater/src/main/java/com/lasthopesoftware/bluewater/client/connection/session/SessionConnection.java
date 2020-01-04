@@ -10,19 +10,16 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
-import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
-import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.lasthopesoftware.resources.strings.Base64Encoder;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -74,13 +71,7 @@ public class SessionConnection implements OneParameterAction<BuildingConnectionS
 		return sessionConnectionInstance = new SessionConnection(
 			LocalBroadcastManager.getInstance(applicationContext),
 			new SelectedBrowserLibraryIdentifierProvider(applicationContext),
-			new LibraryConnectionProvider(
-				new LibraryRepository(applicationContext),
-				new LiveUrlProvider(
-					new ActiveNetworkFinder(applicationContext),
-					lazyUrlScanner.getObject()),
-				new ConnectionTester(),
-				OkHttpFactory.getInstance()));
+			LibraryConnectionProvider.Instance.get(applicationContext));
 	}
 
 	public SessionConnection(
@@ -93,18 +84,20 @@ public class SessionConnection implements OneParameterAction<BuildingConnectionS
 	}
 
 	public Promise<IConnectionProvider> promiseTestedSessionConnection() {
-		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
+		final LibraryId newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
 
 		return libraryConnections
-			.promiseTestedLibraryConnection(new LibraryId(newSelectedLibraryId))
+			.promiseTestedLibraryConnection(newSelectedLibraryId)
 			.updates(this);
 	}
 
 	public Promise<IConnectionProvider> promiseSessionConnection() {
-		final int newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
+		final LibraryId newSelectedLibraryId = selectedLibraryIdentifierProvider.getSelectedLibraryId();
+
+		if (newSelectedLibraryId == null) return Promise.empty();
 
 		return libraryConnections
-			.promiseLibraryConnection(new LibraryId(newSelectedLibraryId))
+			.promiseLibraryConnection(newSelectedLibraryId)
 			.updates(this);
 	}
 

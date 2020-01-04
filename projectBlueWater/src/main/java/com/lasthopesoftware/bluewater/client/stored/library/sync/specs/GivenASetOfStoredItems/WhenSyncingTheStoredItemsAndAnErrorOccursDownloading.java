@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenASe
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.IFileProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
@@ -16,8 +16,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.namehillsoftware.handoff.promises.Promise;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -27,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,14 +44,14 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 	@BeforeClass
 	public static void before() {
 		final IStoredItemAccess storedItemAccessMock = mock(IStoredItemAccess.class);
-		when(storedItemAccessMock.promiseStoredItems())
+		when(storedItemAccessMock.promiseStoredItems(new LibraryId(42)))
 			.thenReturn(new Promise<>(Collections.singleton(
 				new StoredItem(1, 14, StoredItem.ItemType.ITEM))));
 
 		final FileListParameters fileListParameters = FileListParameters.getInstance();
 
-		final IFileProvider mockFileProvider = mock(IFileProvider.class);
-		when(mockFileProvider.promiseFiles(FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(14))))
+		final ProvideLibraryFiles mockFileProvider = mock(ProvideLibraryFiles.class);
+		when(mockFileProvider.promiseFiles(new LibraryId(42), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(14))))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new ServiceFile(1),
 				new ServiceFile(2),
@@ -60,7 +62,6 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
 		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
-			new Library(),
 			new StoredItemServiceFileCollector(
 				storedItemAccessMock,
 				mockFileProvider,
@@ -70,14 +71,14 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			new StoredFileJobProcessor(
 				new StoredFileSystemFileProducer(),
 				storedFileAccess,
-				f -> f.getServiceId() == 2
+				(libraryId, f) -> f.getServiceId() == 2
 					? new Promise<>(new IOException())
 					: new Promise<>(new ByteArrayInputStream(new byte[0])),
 				f -> true,
 				f -> true,
 				(i, f) -> {}));
 
-		librarySyncHandler.observeLibrarySync()
+		librarySyncHandler.observeLibrarySync(new LibraryId(42))
 			.filter(j -> j.storedFileJobState == StoredFileJobState.Downloaded)
 			.map(j -> j.storedFile)
 			.blockingSubscribe(new Observer<StoredFile>() {

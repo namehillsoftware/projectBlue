@@ -40,7 +40,7 @@ public class WhenRetrievingTheLibraryConnection {
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
 		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
-		when(libraryProvider.getLibrary(3)).thenReturn(libraryDeferredPromise);
+		when(libraryProvider.getLibrary(new LibraryId(3))).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(urlProvider));

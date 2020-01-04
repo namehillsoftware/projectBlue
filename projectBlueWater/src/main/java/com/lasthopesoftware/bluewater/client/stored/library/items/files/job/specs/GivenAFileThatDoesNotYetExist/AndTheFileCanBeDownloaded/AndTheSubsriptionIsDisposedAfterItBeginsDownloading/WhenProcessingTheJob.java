@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.specs.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheSubsriptionIsDisposedAfterItBeginsDownloading;
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
@@ -10,8 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -22,29 +20,33 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 public class WhenProcessingTheJob {
 
-	private static final StoredFile storedFile = new StoredFile(new Library(), 1, new ServiceFile(1), "test-path", true);
+	private static final StoredFile storedFile = new StoredFile(new LibraryId(55), 1, new ServiceFile(1), "test-path", true);
 	private static final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 	private static List<StoredFileJobState> states = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() {
 		final DeferredPromise<InputStream> deferredPromise = new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
-		final IConnectionProvider fakeConnectionProvider = mock(IConnectionProvider.class);
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
 			storedFileAccess,
-			f -> deferredPromise,
+			(libraryId, f) -> deferredPromise,
 			f -> false,
 			f -> true,
 			(is, f) -> {});
 
-		storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(new ServiceFile(1), storedFile)))
+		storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(new LibraryId(55), new ServiceFile(1), storedFile)))
 			.blockingSubscribe(new Observer<StoredFileJobStatus>() {
 				private Disposable disposable;
 

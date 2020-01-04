@@ -2,10 +2,11 @@ package com.lasthopesoftware.bluewater.client.library.items.media.files.properti
 
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesStorage;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
@@ -26,7 +27,7 @@ public class UpdatePlayStatsOnCompleteRegistration implements IConnectionDepende
 		return new UpdatePlayStatsOnPlaybackCompleteReceiver(
 			new PlaystatsUpdateSelector(
 				connectionProvider,
-				new FilePropertiesProvider(connectionProvider, cache, ParsingScheduler.instance()),
+				new SessionFilePropertiesProvider(connectionProvider, cache, ParsingScheduler.instance()),
 				new FilePropertiesStorage(connectionProvider, cache),
 				new ProgramVersionProvider(connectionProvider)));
 	}

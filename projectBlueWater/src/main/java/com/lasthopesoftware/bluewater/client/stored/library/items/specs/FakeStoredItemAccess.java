@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.specs;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -22,7 +23,7 @@ public class FakeStoredItemAccess implements IStoredItemAccess {
 	}
 
 	@Override
-	public void toggleSync(IItem item, boolean enable) {
+	public void toggleSync(LibraryId libraryId, IItem item, boolean enable) {
 		if (enable)
 			inMemoryStoredItems.add(new StoredItem(1, item.getKey(), getListType(item)));
 		else
@@ -30,12 +31,12 @@ public class FakeStoredItemAccess implements IStoredItemAccess {
 	}
 
 	@Override
-	public Promise<Boolean> isItemMarkedForSync(IItem item) {
+	public Promise<Boolean> isItemMarkedForSync(LibraryId libraryId, IItem item) {
 		return new Promise<>(!findMatchingItems(item).isEmpty());
 	}
 
 	@Override
-	public Promise<Collection<StoredItem>> promiseStoredItems() {
+	public Promise<Collection<StoredItem>> promiseStoredItems(LibraryId libraryId) {
 		return new Promise<>(inMemoryStoredItems);
 	}
 

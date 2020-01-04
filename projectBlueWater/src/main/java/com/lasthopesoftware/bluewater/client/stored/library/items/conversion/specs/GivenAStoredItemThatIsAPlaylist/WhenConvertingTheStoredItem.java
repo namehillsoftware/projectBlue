@@ -3,11 +3,14 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.conversion.sp
 import com.lasthopesoftware.bluewater.client.library.items.Item;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.FindPlaylistItem;
 import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.StoredPlaylistItemsConverter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.specs.FakeStoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -37,6 +40,7 @@ public class WhenConvertingTheStoredItem {
 			.thenReturn(new Promise<>(new Item(34)));
 
 		final StoredPlaylistItemsConverter playlistItemsConverter = new StoredPlaylistItemsConverter(
+			() -> new Promise<>(new Library().setId(14)),
 			playlistItem,
 			storedItemAccess);
 		convertedItem = new FuturePromise<>(playlistItemsConverter.promiseConvertedStoredItem(storedItem)).get();
@@ -54,11 +58,11 @@ public class WhenConvertingTheStoredItem {
 
 	@Test
 	public void thenTheConvertedItemIsMarkedForSync() throws ExecutionException, InterruptedException {
-		assertThat(new FuturePromise<>(storedItemAccess.isItemMarkedForSync(new Item(34))).get()).isTrue();
+		assertThat(new FuturePromise<>(storedItemAccess.isItemMarkedForSync(new LibraryId(14), new Item(34))).get()).isTrue();
 	}
 
 	@Test
 	public void thenTheOriginalItemIsNotMarkedForSync() throws ExecutionException, InterruptedException {
-		assertThat(new FuturePromise<>(storedItemAccess.isItemMarkedForSync(new Playlist(15))).get()).isFalse();
+		assertThat(new FuturePromise<>(storedItemAccess.isItemMarkedForSync(new LibraryId(14), new Playlist(15))).get()).isFalse();
 	}
 }

@@ -34,6 +34,7 @@ import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvicto
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
@@ -52,7 +53,10 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.cached.di
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.ProvideLibraryFileProperties;
+import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.RemoteFileUriProvider;
@@ -408,6 +412,15 @@ implements OnAudioFocusChangeListener
 		}
 	};
 
+	private final CreateAndHold<ProvideLibraryFileProperties> lazyFileProperties = new Lazy<>(() -> new FilePropertiesProvider(
+		LibraryConnectionProvider.Instance.get(this),
+		FilePropertyCache.getInstance()));
+
+	private final CreateAndHold<CachedFilePropertiesProvider> lazyCachedFileProperties = new Lazy<>(() -> new CachedFilePropertiesProvider(
+		LibraryConnectionProvider.Instance.get(this),
+		FilePropertyCache.getInstance(),
+		lazyFileProperties.getObject()));
+
 	private final CreateAndHold<AudioBecomingNoisyReceiver> lazyAudioBecomingNoisyReceiver = new Lazy<>(AudioBecomingNoisyReceiver::new);
 
 	private final CreateAndHold<ControlNotifications> lazyNotificationController = new Lazy<>(() -> new NotificationsController(this, notificationManagerLazy.getObject()));
@@ -420,7 +433,7 @@ implements OnAudioFocusChangeListener
 	private Promise<PlaybackEngine> playbackEnginePromise;
 	private PlaybackEngine playbackEngine;
 	private PreparedPlaybackQueueResourceManagement playbackQueues;
-	private CachedFilePropertiesProvider cachedFilePropertiesProvider;
+	private CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
 	private PositionedPlayingFile positionedPlayingFile;
 	private boolean isPlaying;
 	private Disposable filePositionSubscription;
@@ -731,22 +744,22 @@ implements OnAudioFocusChangeListener
 				throw new PlaybackEngineInitializationException("connectionProvider was null!");
 
 			return extractorHandler.getObject().then(handler -> {
-				cachedFilePropertiesProvider = new CachedFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(),
-					new FilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
+				cachedSessionFilePropertiesProvider = new CachedSessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(),
+					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
 				if (remoteControlProxy != null)
 					localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
-				final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedFilePropertiesProvider);
+				final ImageProvider imageProvider = new ImageProvider(this, connectionProvider, new AndroidDiskCacheDirectoryProvider(this), cachedSessionFilePropertiesProvider);
 				remoteControlProxy =
 					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
 						? new MediaSessionBroadcaster(
 							this,
-							cachedFilePropertiesProvider,
+						cachedSessionFilePropertiesProvider,
 							imageProvider,
 							lazyMediaSession.getObject())
 						: new RemoteControlClientBroadcaster(
 							this,
-							cachedFilePropertiesProvider,
+						cachedSessionFilePropertiesProvider,
 							imageProvider,
 							remoteControlClient.getObject()));
 
@@ -774,7 +787,7 @@ implements OnAudioFocusChangeListener
 							this,
 							lazyMediaStyleNotificationSetup.getObject(),
 							connectionProvider,
-							cachedFilePropertiesProvider,
+							cachedSessionFilePropertiesProvider,
 							imageProvider),
 						lazyPlaybackStartingNotificationBuilder.getObject()));
 
@@ -823,9 +836,9 @@ implements OnAudioFocusChangeListener
 						new CachedFilesProvider(this, new AudioCacheConfiguration(library))),
 					new MediaFileUriProvider(
 						this,
-						new MediaQueryCursorProvider(this, cachedFilePropertiesProvider),
+						new MediaQueryCursorProvider(this, lazyCachedFileProperties.getObject()),
 						arbitratorForOs,
-						library,
+						lazyChosenLibraryIdentifierProvider.getObject(),
 						false),
 					remoteFileUriProvider);
 
@@ -844,7 +857,7 @@ implements OnAudioFocusChangeListener
 						playbackEngineBuilder.build(library),
 						new MaxFileVolumeProvider(
 							lazyVolumeLevelSettings.getObject(),
-							cachedFilePropertiesProvider));
+							cachedSessionFilePropertiesProvider));
 
 				if (playbackQueues != null)
 					playbackQueues.close();

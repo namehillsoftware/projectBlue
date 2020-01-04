@@ -42,7 +42,7 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getLibrary(2)).thenReturn(libraryDeferredPromise);
+		when(libraryProvider.getLibrary(new LibraryId(2))).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
 		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(firstUrlProvider));
