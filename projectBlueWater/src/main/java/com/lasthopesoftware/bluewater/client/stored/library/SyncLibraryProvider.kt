@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
 class SyncLibraryProvider(private val libraryProvider: ILibraryProvider) : ILibraryProvider {
-	override fun getAllLibraries(): Promise<MutableCollection<Library>> {
-		return libraryProvider.allLibraries.then { l -> l.map { it.transformConnectionSetting() }.toMutableList() }
+	override fun getAllLibraries(): Promise<Collection<Library>> {
+		return libraryProvider.allLibraries.then { l -> l.map { it.transformConnectionSetting() } }
 	}
 
 	override fun getLibrary(libraryId: LibraryId?): Promise<Library> {
