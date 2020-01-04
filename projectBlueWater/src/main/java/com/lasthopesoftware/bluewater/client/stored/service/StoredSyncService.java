@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProv
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
@@ -243,6 +244,32 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 	private final CreateAndHold<ISelectedLibraryIdentifierProvider> lazyLibraryIdentifierProvider = new Lazy<>(() -> new SelectedBrowserLibraryIdentifierProvider(this));
 
+	private final CreateAndHold<ProvideLibraryConnections> lazyLibraryConnections = new AbstractSynchronousLazy<ProvideLibraryConnections>() {
+		@Override
+		protected ProvideLibraryConnections create() {
+			return new LibraryConnectionProvider(
+				new SyncLibraryProvider(lazyLibraryRepository.getObject()),
+				new LiveUrlProvider(
+					new ActiveNetworkFinder(StoredSyncService.this),
+					lazyUrlScanner.getObject()),
+				new ConnectionTester(),
+				OkHttpFactory.getInstance());
+		}
+	};
+
+	private final CreateAndHold<CachedFilePropertiesProvider> lazyFileProperties = new AbstractSynchronousLazy<CachedFilePropertiesProvider>() {
+		@Override
+		protected CachedFilePropertiesProvider create() {
+			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
+			return new CachedFilePropertiesProvider(
+				lazyLibraryConnections.getObject(),
+				filePropertyCache,
+				new FilePropertiesProvider(
+					lazyLibraryConnections.getObject(),
+					filePropertyCache));
+		}
+	};
+
 	private final CreateAndHold<SynchronizeStoredFiles> lazyStoredFilesSynchronization = new AbstractSynchronousLazy<SynchronizeStoredFiles>() {
 		@Override
 		protected SynchronizeStoredFiles create() {
@@ -250,25 +277,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 
 			final StoredItemAccess storedItemAccess = new StoredItemAccess(storedSyncService);
 
-			final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
-				new SyncLibraryProvider(lazyLibraryRepository.getObject()),
-					new LiveUrlProvider(
-						new ActiveNetworkFinder(storedSyncService),
-						lazyUrlScanner.getObject()),
-					new ConnectionTester(),
-					OkHttpFactory.getInstance());
-
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-			final CachedFilePropertiesProvider cachedFilePropertiesProvider = new CachedFilePropertiesProvider(
-				libraryConnectionProvider,
-				filePropertyCache,
-				new FilePropertiesProvider(
-					libraryConnectionProvider,
-					filePropertyCache));
-
 			final MediaQueryCursorProvider cursorProvider = new MediaQueryCursorProvider(
 				storedSyncService,
-				cachedFilePropertiesProvider);
+				lazyFileProperties.getObject());
 
 			final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
 				storedSyncService,
@@ -283,20 +294,20 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 					lazyReadPermissionArbitratorForOs.getObject()),
 				new StoredFileQuery(storedSyncService),
 				lazyLibraryRepository.getObject(),
-				cachedFilePropertiesProvider,
+				lazyFileProperties.getObject(),
 				new SyncDirectoryLookup(lazyLibraryRepository.getObject(), new PublicDirectoryLookup(storedSyncService), new PrivateDirectoryLookup(storedSyncService)));
 
 			final LibrarySyncHandler syncHandler = new LibrarySyncHandler(
 				new StoredItemServiceFileCollector(
 					storedItemAccess,
-					new LibraryFileProvider(new LibraryFileStringListProvider(libraryConnectionProvider)),
+					new LibraryFileProvider(new LibraryFileStringListProvider(lazyLibraryConnections.getObject())),
 					FileListParameters.getInstance()),
 				lazyStoredFileAccess.getObject(),
 				storedFileUpdater,
 				new StoredFileJobProcessor(
 					new StoredFileSystemFileProducer(),
 					lazyStoredFileAccess.getObject(),
-					new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), libraryConnectionProvider),
+					new StoredFileDownloader(new ServiceFileUriQueryParamsProvider(), lazyLibraryConnections.getObject()),
 					new FileReadPossibleArbitrator(),
 					new FileWritePossibleArbitrator(),
 					new FileStreamWriter()));
@@ -314,8 +325,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			final StoredSyncService storedSyncService = StoredSyncService.this;
 			final StoredFileDownloadingNotifier storedFileDownloadingNotifier = new StoredFileDownloadingNotifier(
 				lazyStoredFileAccess.getObject(),
-				lazyLibraryRepository.getObject(),
-				lazyUrlScanner.getObject(),
+				lazyFileProperties.getObject(),
 				storedSyncService,
 				storedSyncService);
 
