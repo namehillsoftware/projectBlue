@@ -123,6 +123,7 @@ dependencies {
 	implementation 'com.android.support:multidex:1.0.3'
 	implementation 'androidx.core:core-ktx:1.1.0'
 	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+	implementation 'com.google.guava:guava:28.2-android'
 	testImplementation 'junit:junit:4.12'
 	testImplementation 'org.mockito:mockito-core:3.2.0'
 	testImplementation 'org.assertj:assertj-core:3.14.0'
