@@ -7,13 +7,17 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class SyncLibraryProvider(private val libraryProvider: ILibraryProvider) : ILibraryProvider {
 	override fun getAllLibraries(): Promise<MutableCollection<Library>> {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+		return libraryProvider.allLibraries.then { l -> l.map { it.transformConnectionSetting() }.toMutableList() }
 	}
 
 	override fun getLibrary(libraryId: LibraryId?): Promise<Library> {
 		return libraryProvider.getLibrary(libraryId).then {
-			it.isLocalOnly = it.isSyncLocalConnectionsOnly
-			it
+			it.transformConnectionSetting()
 		}
+	}
+
+	private fun Library.transformConnectionSetting(): Library {
+		this.isLocalOnly = this.isSyncLocalConnectionsOnly
+		return this
 	}
 }
