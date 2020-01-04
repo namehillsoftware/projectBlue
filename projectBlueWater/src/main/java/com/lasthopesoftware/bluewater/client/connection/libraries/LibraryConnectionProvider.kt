@@ -111,7 +111,7 @@ class LibraryConnectionProvider(
 			init {
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				libraryProvider
-					.getLibrary(selectedLibraryId.id)
+					.getLibrary(selectedLibraryId)
 					.then(
 						{ library ->
 							when (library?.accessCode?.isEmpty()) {

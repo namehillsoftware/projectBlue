@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.library.permissions.storage.request
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.IStorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration;
@@ -109,7 +110,7 @@ public class MainApplication extends MultiDexApplication {
 				if (mediaFilePath == null || mediaFilePath.isEmpty()) return;
 
 				new LibraryRepository(context)
-					.getLibrary(libraryId)
+					.getLibrary(new LibraryId(libraryId))
 					.eventually(library ->
 						AccessConfigurationBuilder.buildConfiguration(context, library).then(new VoidResponse<>(urlProvider -> {
 							if (urlProvider == null) return;

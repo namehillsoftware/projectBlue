@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.servers.selection;
 
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.namehillsoftware.handoff.promises.Promise;
 
 /**
@@ -8,5 +9,5 @@ import com.namehillsoftware.handoff.promises.Promise;
  */
 
 public interface IBrowserLibrarySelection {
-	Promise<Library> selectBrowserLibrary(int libraryId);
+	Promise<Library> selectBrowserLibrary(LibraryId libraryId);
 }

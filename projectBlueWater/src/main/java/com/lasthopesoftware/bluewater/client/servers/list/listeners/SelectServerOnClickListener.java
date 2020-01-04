@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.servers.list.listeners;
 
 import android.view.View;
+
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.servers.selection.IBrowserLibrarySelection;
@@ -19,7 +20,7 @@ public class SelectServerOnClickListener implements View.OnClickListener {
 
 	@Override
 	public void onClick(View v) {
-		browserLibrarySelection.selectBrowserLibrary(library.getId());
+		browserLibrarySelection.selectBrowserLibrary(library.getLibraryId());
 
 		InstantiateSessionConnectionActivity.startNewConnection(v.getContext());
 	}

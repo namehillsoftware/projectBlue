@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFi
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
@@ -67,7 +68,7 @@ public class StoredFileDownloadingNotifier implements ReceiveStoredFileEvent {
 					return Promise.empty();
 				}
 
-				return libraryProvider.getLibrary(storedFile.getLibraryId())
+				return libraryProvider.getLibrary(new LibraryId(storedFile.getLibraryId()))
 					.eventually(urlProviders::promiseBuiltUrlProvider)
 					.then(new VoidResponse<>(urlProvider -> {
 						final IConnectionProvider connectionProvider = new ConnectionProvider(urlProvider, OkHttpFactory.getInstance());

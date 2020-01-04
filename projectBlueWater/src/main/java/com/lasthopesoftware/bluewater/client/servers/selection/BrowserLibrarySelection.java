@@ -4,9 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -28,14 +31,15 @@ public class BrowserLibrarySelection implements IBrowserLibrarySelection {
 	}
 
 	@Override
-	public Promise<Library> selectBrowserLibrary(int libraryId) {
+	public Promise<Library> selectBrowserLibrary(LibraryId libraryId) {
 		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-		if (libraryId == sharedPreferences.getInt(LibrarySelectionKey.chosenLibraryKey, -1)) return libraryProvider.getLibrary(libraryId);
+		if (libraryId.getId() == sharedPreferences.getInt(LibrarySelectionKey.chosenLibraryKey, -1))
+			return libraryProvider.getLibrary(libraryId);
 
-		sharedPreferences.edit().putInt(LibrarySelectionKey.chosenLibraryKey, libraryId).apply();
+		sharedPreferences.edit().putInt(LibrarySelectionKey.chosenLibraryKey, libraryId.getId()).apply();
 
 		final Intent broadcastIntent = new Intent(libraryChosenEvent);
-		broadcastIntent.putExtra(LibrarySelectionKey.chosenLibraryKey, libraryId);
+		broadcastIntent.putExtra(LibrarySelectionKey.chosenLibraryKey, libraryId.getId());
 		localBroadcastManager.sendBroadcast(broadcastIntent);
 
 		return libraryProvider.getLibrary(libraryId);

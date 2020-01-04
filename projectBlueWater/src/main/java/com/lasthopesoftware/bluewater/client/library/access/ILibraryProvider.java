@@ -10,7 +10,6 @@ import java.util.Collection;
  * Created by david on 2/18/17.
  */
 public interface ILibraryProvider {
-	Promise<Library> getLibrary(int libraryId);
 	Promise<Library> getLibrary(LibraryId libraryId);
 	Promise<Collection<Library>> getAllLibraries();
 }

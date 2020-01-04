@@ -10,11 +10,10 @@ class SyncLibraryProvider(private val libraryProvider: ILibraryProvider) : ILibr
 		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 	}
 
-	override fun getLibrary(libraryId: Int): Promise<Library> {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-
 	override fun getLibrary(libraryId: LibraryId?): Promise<Library> {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+		return libraryProvider.getLibrary(libraryId).then {
+			it.isLocalOnly = it.isSyncLocalConnectionsOnly
+			it
+		}
 	}
 }

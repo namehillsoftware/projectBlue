@@ -16,11 +16,6 @@ public class FakeLibraryProvider implements ILibraryProvider {
 	}
 
 	@Override
-	public Promise<Library> getLibrary(int libraryId) {
-		return new Promise<>(Stream.of(libraries).filter(l -> l.getId() == libraryId).findFirst().get());
-	}
-
-	@Override
 	public Promise<Library> getLibrary(LibraryId libraryId) {
 		return new Promise<>(Stream.of(libraries).filter(l -> l.getLibraryId().equals(libraryId)).findFirst().get());
 	}

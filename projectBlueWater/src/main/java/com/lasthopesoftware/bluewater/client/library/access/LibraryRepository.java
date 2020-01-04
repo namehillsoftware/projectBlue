@@ -28,11 +28,6 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 	}
 
 	@Override
-	public Promise<Library> getLibrary(int libraryId) {
-		return new QueuedPromise<>(new GetLibraryWriter(context, new LibraryId(libraryId)), RepositoryAccessHelper.databaseExecutor());
-	}
-
-	@Override
 	public Promise<Library> getLibrary(LibraryId libraryId) {
 		return new QueuedPromise<>(new GetLibraryWriter(context, libraryId), RepositoryAccessHelper.databaseExecutor());
 	}

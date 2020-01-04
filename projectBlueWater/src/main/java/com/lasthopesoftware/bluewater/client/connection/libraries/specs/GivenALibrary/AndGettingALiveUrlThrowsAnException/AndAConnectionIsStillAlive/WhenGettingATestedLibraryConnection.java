@@ -43,7 +43,7 @@ public class WhenGettingATestedLibraryConnection {
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
 		final DeferredPromise<Library> firstDeferredLibrary = new DeferredPromise<>(library);
 		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
-		when(libraryProvider.getLibrary(2))
+		when(libraryProvider.getLibrary(new LibraryId(2)))
 			.thenReturn(firstDeferredLibrary)
 			.thenReturn(secondDeferredLibrary);
 
