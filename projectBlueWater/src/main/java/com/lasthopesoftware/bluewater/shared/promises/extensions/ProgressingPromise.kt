@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress, Resolution> {
 	private val updateListeners = ConcurrentLinkedQueue<OneParameterAction<Progress>>()
 	private val atomicProgress: AtomicReference<Progress?> = AtomicReference()
+	private var isResolved = false
 
 	constructor(resolution: Resolution?) : super(resolution)
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
@@ -27,12 +28,19 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		val currentProgress = atomicProgress.get()
 		if (currentProgress != null)
 			action.runWith(currentProgress)
-		updateListeners.add(action)
-		must { updateListeners.remove(action) }
+
+		if (!isResolved) {
+			updateListeners.add(action)
+			must {
+				isResolved = true
+				updateListeners.remove(action)
+			}
+		}
+
 		return this
 	}
 
-	fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromise<Progress, Resolution> {
+	protected fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromise<Progress, Resolution> {
 		source
 			.updates(OneParameterAction { reportProgress(it) })
 			.then({resolve(it)}, {reject(it)})
