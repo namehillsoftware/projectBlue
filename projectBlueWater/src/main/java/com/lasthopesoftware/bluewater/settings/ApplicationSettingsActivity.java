@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
@@ -192,9 +193,9 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		libraryProvider
 			.getAllLibraries()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(libraries -> {
-				final int chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId().getId();
+				final LibraryId chosenLibraryId = new SelectedBrowserLibraryIdentifierProvider(this).getSelectedLibraryId();
 
-				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getId() == chosenLibraryId).findFirst();
+				final Optional<Library> selectedBrowserLibrary = Stream.of(libraries).filter(l -> l.getLibraryId() == chosenLibraryId).findFirst();
 
 				serverListView.findView().setAdapter(
 					new ServerListAdapter(
