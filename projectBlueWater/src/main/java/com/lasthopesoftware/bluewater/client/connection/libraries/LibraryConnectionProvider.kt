@@ -45,6 +45,9 @@ class LibraryConnectionProvider(
 						?.then({ c ->
 							when (c) {
 								null -> {
+									proxy(promiseUpdatedCachedConnection(libraryId))
+								}
+								else -> {
 									connectionTester.promiseIsConnectionPossible(c)
 										.then({ result ->
 											if (result) resolve(c)
@@ -52,9 +55,6 @@ class LibraryConnectionProvider(
 										}, {
 											proxy(promiseUpdatedCachedConnection(libraryId))
 										})
-								}
-								else -> {
-									proxy(promiseUpdatedCachedConnection(libraryId))
 								}
 							}
 						}, {
