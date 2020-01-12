@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.connection.builder;
 
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.resources.strings.EncodeToBase64;
 import com.namehillsoftware.handoff.promises.Promise;
 

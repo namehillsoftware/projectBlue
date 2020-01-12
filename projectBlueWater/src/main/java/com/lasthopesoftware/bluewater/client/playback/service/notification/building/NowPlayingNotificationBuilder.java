@@ -6,11 +6,11 @@ import android.graphics.Bitmap;
 import androidx.core.app.NotificationCompat;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.namehillsoftware.handoff.promises.Promise;

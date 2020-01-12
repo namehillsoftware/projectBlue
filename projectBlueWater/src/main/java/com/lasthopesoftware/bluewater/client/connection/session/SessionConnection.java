@@ -6,6 +6,7 @@ import android.content.Intent;
 import androidx.annotation.IntDef;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
@@ -16,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;

@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.live;
 
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.resources.network.LookupActiveNetwork;
 import com.namehillsoftware.handoff.promises.Promise;
 

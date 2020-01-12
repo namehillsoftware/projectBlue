@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.specs.GivenASetOfLibraries.AndSomeSyncOnlyOnLocalConnections;
 
-import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.specs.FakeLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 

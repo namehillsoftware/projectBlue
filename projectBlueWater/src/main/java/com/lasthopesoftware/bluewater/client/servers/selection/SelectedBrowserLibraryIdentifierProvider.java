@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.servers.selection;
 import android.content.Context;
 import android.preference.PreferenceManager;
 
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 
 /**
  * Created by david on 2/12/17.

@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.specs.GivenAPreparingFile;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.specs.FakeFilePreparer;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

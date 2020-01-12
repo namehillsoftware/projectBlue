@@ -12,8 +12,8 @@ import android.widget.TextView;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus;
-import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
@@ -35,7 +35,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
 		protected Intent create() {
-			final Intent browseLibraryIntent = new Intent(InstantiateSessionConnectionActivity.this, BrowseLibraryActivity.class);
+			final Intent browseLibraryIntent = new Intent(InstantiateSessionConnectionActivity.this, BrowserEntryActivity.class);
 			browseLibraryIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 			return browseLibraryIntent;
 		}

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

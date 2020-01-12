@@ -7,11 +7,11 @@ import androidx.work.*
 import com.annimon.stream.Stream
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
-import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync

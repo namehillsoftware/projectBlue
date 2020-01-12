@@ -1,6 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import android.content.Context
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -13,9 +16,6 @@ import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLoo
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
@@ -41,20 +41,23 @@ class LibraryConnectionProvider(
 		synchronized(buildingConnectionPromiseSync) {
 			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 				init {
-					promisedConnectionProvidersCache[libraryId]?.then(
-						{ c ->
-							if (c != null) connectionTester.promiseIsConnectionPossible(c)
-								.then(
-									{ result ->
-										if (result) resolve(c)
-										else proxy(promiseUpdatedCachedConnection(libraryId))
-									},
-									{
-										proxy(promiseUpdatedCachedConnection(libraryId))
-									})
-							else proxy(promiseUpdatedCachedConnection(libraryId))
-						},
-						{
+					promisedConnectionProvidersCache[libraryId]
+						?.then({ c ->
+							when (c) {
+								null -> {
+									connectionTester.promiseIsConnectionPossible(c)
+										.then({ result ->
+											if (result) resolve(c)
+											else proxy(promiseUpdatedCachedConnection(libraryId))
+										}, {
+											proxy(promiseUpdatedCachedConnection(libraryId))
+										})
+								}
+								else -> {
+									proxy(promiseUpdatedCachedConnection(libraryId))
+								}
+							}
+						}, {
 							proxy(promiseUpdatedCachedConnection(libraryId))
 						})
 						?: proxy(promiseUpdatedCachedConnection(libraryId))
@@ -75,15 +78,13 @@ class LibraryConnectionProvider(
 
 			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 				init {
-					promisedConnectionProvidersCache[libraryId]?.then(
-						{
-							if (it != null) resolve(it)
-							else proxy(promiseUpdatedCachedConnection(libraryId))
-						},
-						{
-							proxy(promiseUpdatedCachedConnection(libraryId))
-						})
-						?: proxy(promiseUpdatedCachedConnection(libraryId))
+					promisedConnectionProvidersCache[libraryId]?.then({
+						if (it != null) resolve(it)
+						else proxy(promiseUpdatedCachedConnection(libraryId))
+					}, {
+						proxy(promiseUpdatedCachedConnection(libraryId))
+					})
+					?: proxy(promiseUpdatedCachedConnection(libraryId))
 				}
 			}
 			promisedConnectionProvidersCache[libraryId] = nextPromisedConnectionProvider
@@ -96,12 +97,10 @@ class LibraryConnectionProvider(
 			init {
 				promiseBuiltConnection(libraryId)
 					.updates(OneParameterAction { reportProgress(it) })
-					.then(
-						{ c ->
-							if (c != null) cachedConnectionProviders[libraryId] = c
-							resolve(c)
-						},
-						{ reject(it) })
+					.then({ c ->
+						if (c != null) cachedConnectionProviders[libraryId] = c
+						resolve(c)
+					}, { reject(it) })
 			}
 		}
 	}
@@ -112,42 +111,39 @@ class LibraryConnectionProvider(
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				libraryProvider
 					.getLibrary(selectedLibraryId)
-					.then(
-						{ library ->
-							when (library?.accessCode?.isEmpty()) {
-								false -> {
-									reportProgress(BuildingConnectionStatus.BuildingConnection)
+					.then({ library ->
+						when (library?.accessCode?.isEmpty()) {
+							false -> {
+								reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-									liveUrlProvider
-										.promiseLiveUrl(library)
-										.then(
-											{
-												when (it) {
-													null -> {
-														reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-														resolve(null)
-													}
-													else -> {
-														reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
-														resolve(ConnectionProvider(it, okHttpFactory))
-													}
-												}
-											},
-											{
+								liveUrlProvider
+									.promiseLiveUrl(library)
+									.then({
+										when (it) {
+											null -> {
 												reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-												reject(it)
-											})
-								}
-								else -> {
-									reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-									resolve(null)
-								}
+												resolve(null)
+											}
+											else -> {
+												reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
+												resolve(ConnectionProvider(it, okHttpFactory))
+											}
+										}
+									}, {
+										reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
+										reject(it)
+									})
 							}
-						},
-						{
-							reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-							reject(it)
-						})
+							else -> {
+								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+								resolve(null)
+							}
+						}
+					},
+					{
+						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+						reject(it)
+					})
 			}
 		}
 	}

@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.specs.GivenLibrariesToSync;
 
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.specs.FakeLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;

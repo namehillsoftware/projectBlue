@@ -4,7 +4,7 @@ import android.content.Intent;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 
 public class LocalPlaybackBroadcaster implements IPlaybackBroadcaster {

@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.viewholder;
 
 import android.widget.TextView;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.menu.FileNameTextViewSetter;
+
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class ActiveFileDownloadsViewHolder {

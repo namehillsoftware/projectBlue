@@ -8,7 +8,7 @@ import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.uri.BestMatchUriProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderersFactory;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources;

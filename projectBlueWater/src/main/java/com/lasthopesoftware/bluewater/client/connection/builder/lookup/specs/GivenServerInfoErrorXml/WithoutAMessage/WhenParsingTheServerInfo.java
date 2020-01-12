@@ -1,17 +1,19 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup.specs.GivenServerInfoErrorXml.WithoutAMessage;
 
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerDiscoveryException;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
-import xmlwise.XmlParseException;
-import xmlwise.Xmlwise;
 
 import java.util.concurrent.ExecutionException;
+
+import xmlwise.XmlParseException;
+import xmlwise.Xmlwise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

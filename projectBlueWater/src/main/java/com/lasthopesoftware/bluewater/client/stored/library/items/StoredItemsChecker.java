@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items;
 
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles;
 import com.namehillsoftware.handoff.promises.Promise;
 

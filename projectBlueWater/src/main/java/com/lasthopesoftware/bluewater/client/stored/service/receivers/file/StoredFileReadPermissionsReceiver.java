@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.service.receivers.file;
 
-import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.IStorageReadPermissionsRequestedBroadcast;
+import com.lasthopesoftware.bluewater.client.browsing.library.request.read.IStorageReadPermissionsRequestedBroadcast;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;

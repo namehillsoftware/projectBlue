@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenTwoQueuesThatEventuallyDiverge;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

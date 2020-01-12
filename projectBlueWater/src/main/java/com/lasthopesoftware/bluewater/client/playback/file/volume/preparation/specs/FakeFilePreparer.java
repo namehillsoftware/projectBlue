@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.specs;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;

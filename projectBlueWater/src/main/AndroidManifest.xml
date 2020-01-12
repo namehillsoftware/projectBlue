@@ -59,7 +59,7 @@
                 android:label="@string/layout_settings">
         </activity>
         <activity
-                android:name=".client.library.BrowseLibraryActivity"
+                android:name=".client.browsing.BrowserEntryActivity"
                 android:label="@string/app_name"
                 android:launchMode="singleTop">
             <intent-filter>
@@ -69,29 +69,29 @@
             </intent-filter>
         </activity>
         <activity
-                android:name=".client.library.items.list.ItemListActivity"
+                android:name=".client.browsing.items.list.ItemListActivity"
                 android:label="@string/title_activity_file_view">
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity"/>
+                    android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity"/>
         </activity>
         <activity
-                android:name=".client.library.items.media.files.list.FileListActivity"
+                android:name=".client.browsing.items.media.files.list.FileListActivity"
                 android:label="@string/title_activity_file_view">
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity"/>
+                    android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity"/>
         </activity>
         <activity
-                android:name=".client.library.items.media.files.details.FileDetailsActivity"
+                android:name=".client.browsing.items.media.files.details.FileDetailsActivity"
                 android:label="@string/title_activity_file_view"
                 android:launchMode="singleTask">
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.library.items.media.files.list.FileListActivity"/>
+                    android:value="com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity"/>
         </activity>
         <activity
-                android:name=".client.library.items.media.files.list.SearchFilesActivity"
+                android:name=".client.browsing.items.media.files.list.SearchFilesActivity"
                 android:label="@string/title_activity_search_files"
                 android:launchMode="singleTop">
             <intent-filter>
@@ -103,10 +103,10 @@
                     android:resource="@xml/searchable"/>
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity"/>
+                    android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity"/>
         </activity>
         <activity
-                android:name=".client.library.items.media.files.nowplaying.activity.NowPlayingActivity"
+                android:name=".client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity"
                 android:label="@string/title_activity_view_now_playing"
                 android:launchMode="singleTask"
                 android:theme="@style/NowPlayingTheme">

@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.retriev
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;

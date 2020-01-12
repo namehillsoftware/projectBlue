@@ -4,12 +4,12 @@ import android.net.Uri;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.lasthopesoftware.bluewater.client.library.access.specs.FakeLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.specs.FakeFilesPropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.specs.FakeFilesPropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.specs.FakeLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
