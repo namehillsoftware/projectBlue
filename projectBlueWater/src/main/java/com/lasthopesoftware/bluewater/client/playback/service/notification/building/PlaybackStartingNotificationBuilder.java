@@ -9,7 +9,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.activity.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.resources.notifications.ProduceNotificationBuilders;

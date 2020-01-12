@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider;
@@ -10,7 +10,9 @@ import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+
 import junit.framework.Assert;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

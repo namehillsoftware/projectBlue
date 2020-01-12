@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync
 
 import com.annimon.stream.Stream
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.library.repository.Library.SyncedFileLocation
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.storage.directories.GetPrivateDirectories
 import com.lasthopesoftware.storage.directories.GetPublicDirectories
 import com.namehillsoftware.handoff.promises.Promise

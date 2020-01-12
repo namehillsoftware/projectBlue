@@ -4,12 +4,14 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
+
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.list.AbstractFileListAdapter;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.AbstractFileListAdapter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 

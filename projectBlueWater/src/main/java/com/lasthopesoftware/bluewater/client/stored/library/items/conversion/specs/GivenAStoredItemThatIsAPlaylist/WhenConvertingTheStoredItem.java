@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.conversion.specs.GivenAStoredItemThatIsAPlaylist;
 
-import com.lasthopesoftware.bluewater.client.library.items.Item;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.FindPlaylistItem;
-import com.lasthopesoftware.bluewater.client.library.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.FindPlaylistItem;
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.conversion.StoredPlaylistItemsConverter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.specs.FakeStoredItemAccess;

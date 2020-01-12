@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.retriev
 import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;

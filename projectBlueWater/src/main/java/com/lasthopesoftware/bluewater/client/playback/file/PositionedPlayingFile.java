@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.file;
 
 import androidx.annotation.NonNull;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
 
 public final class PositionedPlayingFile implements Comparable<PositionedPlayingFile> {

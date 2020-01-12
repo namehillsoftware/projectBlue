@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.specs.GivenAMediaFile.ThatIsInAnotherLibrary;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.specs.AndroidContext;
+
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 

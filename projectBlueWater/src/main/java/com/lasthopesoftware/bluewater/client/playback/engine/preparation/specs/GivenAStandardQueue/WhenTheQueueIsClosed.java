@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.specs.GivenAStandardQueue;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

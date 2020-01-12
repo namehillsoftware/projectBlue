@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 
 public interface NotifyOfPlaybackEvents {
 	void notifyPlaying();

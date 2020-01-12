@@ -6,12 +6,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.specs.SessionConnectionReservation;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredProgressingPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;

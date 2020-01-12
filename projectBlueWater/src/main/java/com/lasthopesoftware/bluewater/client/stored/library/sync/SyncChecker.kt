@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync
 
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.namehillsoftware.handoff.promises.Promise
 
 class SyncChecker(private val libraryProvider: ILibraryProvider, private val serviceFilesForSync: CollectServiceFilesForSync) : CheckForSync {

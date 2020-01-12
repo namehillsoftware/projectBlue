@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation.queues;
 
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 
 import java.util.List;
 

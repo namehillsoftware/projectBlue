@@ -21,6 +21,20 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.broadcasts.ScanMediaFileBroadcaster;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.io.FileStreamWriter;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster;
+import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
@@ -29,20 +43,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
-import com.lasthopesoftware.bluewater.client.library.BrowseLibraryActivity;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFileUriQueryParamsProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.LibraryFileProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.access.stringlist.LibraryFileStringListProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.broadcasts.ScanMediaFileBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.io.FileStreamWriter;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.FilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.read.StorageReadPermissionsRequestedBroadcaster;
-import com.lasthopesoftware.bluewater.client.library.permissions.storage.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider;
@@ -198,8 +198,8 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
 		@Override
 		protected final Intent create() {
-			final Intent browseLibraryIntent = new Intent(StoredSyncService.this, BrowseLibraryActivity.class);
-			browseLibraryIntent.setAction(BrowseLibraryActivity.showDownloadsAction);
+			final Intent browseLibraryIntent = new Intent(StoredSyncService.this, BrowserEntryActivity.class);
+			browseLibraryIntent.setAction(BrowserEntryActivity.showDownloadsAction);
 			browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 			return browseLibraryIntent;
 		}

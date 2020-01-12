@@ -21,9 +21,9 @@ import androidx.core.app.ActivityCompat;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
-import com.lasthopesoftware.bluewater.client.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.read.IApplicationReadPermissionsRequirementsProvider;
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;

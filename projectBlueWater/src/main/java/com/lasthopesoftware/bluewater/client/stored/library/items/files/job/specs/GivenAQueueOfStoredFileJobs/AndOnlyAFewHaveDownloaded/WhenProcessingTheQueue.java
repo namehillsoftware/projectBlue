@@ -5,10 +5,10 @@ import android.os.Build;
 import androidx.annotation.RequiresApi;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;

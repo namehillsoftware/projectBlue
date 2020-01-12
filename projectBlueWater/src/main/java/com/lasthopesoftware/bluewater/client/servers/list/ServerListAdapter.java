@@ -8,11 +8,17 @@ import android.content.IntentFilter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibrarySession;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibrarySession;
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener;
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServerOnClickListener;
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;

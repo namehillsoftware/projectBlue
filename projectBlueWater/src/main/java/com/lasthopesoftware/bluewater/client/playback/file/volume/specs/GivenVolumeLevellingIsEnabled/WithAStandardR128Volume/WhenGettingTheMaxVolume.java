@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenVolumeLevellingIsEnabled.WithAStandardR128Volume;
 
 
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.SessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.FilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;

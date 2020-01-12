@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.live.specs.GivenANetworkExists.AndThUrlIsNotBuilt;
 
 import android.net.NetworkInfo;
+
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

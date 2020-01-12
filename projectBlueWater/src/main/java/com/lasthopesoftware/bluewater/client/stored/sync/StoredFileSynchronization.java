@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;

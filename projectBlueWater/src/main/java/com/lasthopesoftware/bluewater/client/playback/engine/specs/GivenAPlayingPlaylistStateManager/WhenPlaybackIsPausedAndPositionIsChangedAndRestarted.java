@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayin
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryStorage;
-import com.lasthopesoftware.bluewater.client.library.access.ISpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlaying;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;

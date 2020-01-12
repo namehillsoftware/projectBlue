@@ -7,9 +7,9 @@ import android.preference.PreferenceManager;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.namehillsoftware.handoff.promises.Promise;
 

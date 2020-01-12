@@ -3,7 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
+
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents;
 import com.vedsoft.futures.runnables.OneParameterAction;

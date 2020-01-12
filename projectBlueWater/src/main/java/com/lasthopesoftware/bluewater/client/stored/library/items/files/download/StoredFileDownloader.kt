@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.IServiceFileUriQueryParamsProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.client.library.items.media.files.IServiceFileUriQueryParamsProvider
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy

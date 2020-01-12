@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.specs.GivenVolumeLevellingIsNotEnabled;
 
 
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideFilePropertiesForSession;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.ProvideFilePropertiesForSession;
-import com.lasthopesoftware.bluewater.client.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
 
