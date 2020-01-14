@@ -496,9 +496,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 		notifyBuilder
 			.setSmallIcon(R.drawable.ic_stat_water_drop_white)
 			.setContentIntent(lazyShowDownloadsIntent.getObject())
-			.addAction(0, getString(R.string.btn_cancel), lazyCancelIntent.getObject())
+			.addAction(0, getString(R.string.stop_sync_button), lazyCancelIntent.getObject())
 			.setOngoing(true)
-			.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.setPriority(NotificationCompat.PRIORITY_LOW);
 
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
