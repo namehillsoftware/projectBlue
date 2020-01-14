@@ -493,17 +493,17 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	@Override
 	public void notify(String notificationText) {
 		final NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(this, lazyActiveNotificationChannelId.getObject());
-		notifyBuilder.setSmallIcon(R.drawable.ic_stat_water_drop_white);
+		notifyBuilder
+			.setSmallIcon(R.drawable.ic_stat_water_drop_white)
+			.setContentIntent(lazyShowDownloadsIntent.getObject())
+			.addAction(0, getString(R.string.stop_sync_button), lazyCancelIntent.getObject())
+			.setOngoing(true)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+			.setPriority(NotificationCompat.PRIORITY_LOW);
+
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		if (notificationText != null)
 			notifyBuilder.setContentText(notificationText);
-		notifyBuilder.setContentIntent(lazyShowDownloadsIntent.getObject());
-
-		notifyBuilder.addAction(0, getString(R.string.btn_cancel), lazyCancelIntent.getObject());
-
-		notifyBuilder.setOngoing(true);
-
-		notifyBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
 		final Notification syncNotification = notifyBuilder.build();
 
