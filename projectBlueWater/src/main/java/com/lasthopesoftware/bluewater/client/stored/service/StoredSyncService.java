@@ -62,6 +62,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification;
+import com.lasthopesoftware.bluewater.client.stored.service.notifications.SyncChannelProperties;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.ReceiveStoredFileEvent;
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileBroadcastReceiver;
@@ -77,7 +78,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
-import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
 import com.lasthopesoftware.resources.strings.Base64Encoder;
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup;
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup;
@@ -215,7 +215,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new AbstractSynchronousLazy<ChannelConfiguration>() {
 		@Override
 		protected ChannelConfiguration create() {
-			return new SharedChannelProperties(StoredSyncService.this);
+			return new SyncChannelProperties(StoredSyncService.this);
 		}
 	};
 
