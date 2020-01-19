@@ -76,6 +76,8 @@ import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
+import com.lasthopesoftware.resources.notifications.NoOpChannelActivator;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ActivateChannel;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.strings.Base64Encoder;
@@ -100,6 +102,8 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
+
+import static androidx.core.app.NotificationCompat.CATEGORY_PROGRESS;
 
 public class StoredSyncService extends Service implements PostSyncNotification {
 
@@ -189,7 +193,9 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private final CreateAndHold<String> lazyActiveNotificationChannelId = new AbstractSynchronousLazy<String>() {
 		@Override
 		protected String create() {
-			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
+			final ActivateChannel notificationChannelActivator = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
+				? new NotificationChannelActivator(notificationManagerLazy.getObject())
+				: new NoOpChannelActivator();
 
 			return notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 		}
@@ -499,7 +505,8 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			.addAction(0, getString(R.string.stop_sync_button), lazyCancelIntent.getObject())
 			.setOngoing(true)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-			.setPriority(NotificationCompat.PRIORITY_LOW);
+			.setPriority(NotificationCompat.PRIORITY_MIN)
+			.setCategory(CATEGORY_PROGRESS);
 
 		notifyBuilder.setContentTitle(getText(R.string.title_sync_files));
 		if (notificationText != null)

@@ -4,6 +4,9 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 
+import androidx.annotation.RequiresApi;
+
+@RequiresApi(Build.VERSION_CODES.O)
 public class NotificationChannelActivator implements ActivateChannel {
 
 	private final NotificationManager notificationManager;
@@ -14,8 +17,6 @@ public class NotificationChannelActivator implements ActivateChannel {
 
 	@Override
 	public String activateChannel(ChannelConfiguration channelConfiguration) {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return channelConfiguration.getChannelId();
-
 		final NotificationChannel channel = new NotificationChannel(
 			channelConfiguration.getChannelId(),
 			channelConfiguration.getChannelName(),
