@@ -1,7 +1,5 @@
 FROM gradle:6.0.1-jdk8
 
-LABEL Description="This image provides a base Android development environment for React Native, and may be used to run tests."
-
 # set default build arguments
 ARG SDK_VERSION=sdk-tools-linux-4333796.zip
 ARG ANDROID_BUILD_VERSION=29
@@ -40,8 +38,6 @@ RUN curl -sS https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk
         "extras;android;m2repository"
 
 WORKDIR /src
-
-COPY . .
 
 ENTRYPOINT [ "gradle", "-PdisablePreDex" ]
 
