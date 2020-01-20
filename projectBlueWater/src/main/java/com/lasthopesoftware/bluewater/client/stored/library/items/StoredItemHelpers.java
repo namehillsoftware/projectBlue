@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
 
 public class StoredItemHelpers {
 

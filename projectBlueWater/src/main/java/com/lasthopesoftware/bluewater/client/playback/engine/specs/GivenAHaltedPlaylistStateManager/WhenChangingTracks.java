@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistStateManager;
 
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.repository.FilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;

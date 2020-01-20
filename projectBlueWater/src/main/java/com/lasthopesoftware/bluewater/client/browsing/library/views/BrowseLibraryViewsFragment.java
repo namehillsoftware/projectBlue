@@ -17,12 +17,12 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.lasthopesoftware.bluewater.R;
+import com.lasthopesoftware.bluewater.client.browsing.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.access.ItemProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;

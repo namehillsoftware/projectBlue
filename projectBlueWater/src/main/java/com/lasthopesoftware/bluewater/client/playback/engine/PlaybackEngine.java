@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.nowplaying.storage.INowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.nowplaying.storage.NowPlaying;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted;
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted;

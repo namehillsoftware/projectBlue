@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenAnEmptySetOfStoredItems;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.access.ProvideLibraryFiles;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access
 
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemResponse
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RevisionChecker
-import com.lasthopesoftware.bluewater.client.browsing.library.items.access.ItemResponse
 import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem

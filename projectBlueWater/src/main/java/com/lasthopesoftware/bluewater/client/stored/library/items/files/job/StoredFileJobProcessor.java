@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job;
 
 import androidx.annotation.NonNull;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.io.IFileStreamWriter;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.io.IFileStreamWriter;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles;

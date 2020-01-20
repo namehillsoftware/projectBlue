@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.specs;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.IItem;
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;

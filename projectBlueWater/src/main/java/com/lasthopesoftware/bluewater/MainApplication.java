@@ -14,9 +14,9 @@ import androidx.multidex.MultiDexApplication;
 import androidx.work.Configuration;
 import androidx.work.WorkManager;
 
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.IStorageReadPermissionsRequestNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder;

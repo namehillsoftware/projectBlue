@@ -4,9 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 
 class PebbleFileChangedProxy extends BroadcastReceiver {

@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system
 import android.content.Context
 import android.database.Cursor
 import android.provider.MediaStore
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse

@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.stored.library.items;
 
 import android.content.Context;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.IItem;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.library.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
+import com.lasthopesoftware.bluewater.client.browsing.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
@@ -42,7 +42,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 				" AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
 				" AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
 			.addParameter(StoredItem.serviceIdColumnName, item.getKey())
-			.addParameter(StoredItem.libraryIdColumnName, libraryId.getId())
+			.addParameter(StoredItem.libraryIdColumnName, libraryId)
 			.addParameter(StoredItem.itemTypeColumnName, itemType)
 			.fetchFirst(StoredItem.class);
 	}

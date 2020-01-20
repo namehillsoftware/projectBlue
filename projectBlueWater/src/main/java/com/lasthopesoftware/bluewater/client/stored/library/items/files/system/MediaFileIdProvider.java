@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system;
 import android.database.Cursor;
 import android.provider.MediaStore;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;

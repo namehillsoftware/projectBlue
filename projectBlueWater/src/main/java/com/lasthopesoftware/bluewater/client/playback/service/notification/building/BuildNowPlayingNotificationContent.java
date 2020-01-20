@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.buil
 
 import androidx.core.app.NotificationCompat;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public interface BuildNowPlayingNotificationContent {
