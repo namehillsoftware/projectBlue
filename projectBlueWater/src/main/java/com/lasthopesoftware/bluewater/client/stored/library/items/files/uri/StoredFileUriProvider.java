@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.uri;
 import android.net.Uri;
 import android.os.Environment;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;

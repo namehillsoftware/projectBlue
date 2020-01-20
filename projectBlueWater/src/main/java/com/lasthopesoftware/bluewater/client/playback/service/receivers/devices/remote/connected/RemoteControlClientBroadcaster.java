@@ -6,11 +6,11 @@ import android.media.MediaMetadataEditor;
 import android.media.MediaMetadataRetriever;
 import android.media.RemoteControlClient;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.FilePropertyHelpers;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 

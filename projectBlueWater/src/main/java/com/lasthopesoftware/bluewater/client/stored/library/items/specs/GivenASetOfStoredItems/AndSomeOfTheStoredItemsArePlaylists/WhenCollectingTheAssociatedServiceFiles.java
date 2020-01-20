@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.specs.GivenASetOfStoredItems.AndSomeOfTheStoredItemsArePlaylists;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.access.ProvideLibraryFiles;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.access.parameters.FileListParameters;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;

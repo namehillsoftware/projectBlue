@@ -4,7 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityCreator;

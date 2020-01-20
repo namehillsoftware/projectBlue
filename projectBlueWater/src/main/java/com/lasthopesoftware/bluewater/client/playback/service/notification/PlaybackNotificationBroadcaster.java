@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification;
 
 import android.app.Notification;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildPlaybackStartingNotification;
 import com.lasthopesoftware.resources.notifications.control.ControlNotifications;

@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.specs.FakeFilesPropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.specs.FakeLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.specs.FakeFilesPropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;

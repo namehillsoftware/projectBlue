@@ -4,9 +4,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListFragment;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.list.ItemListFragment;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 
 import java.util.ArrayList;
 import java.util.List;

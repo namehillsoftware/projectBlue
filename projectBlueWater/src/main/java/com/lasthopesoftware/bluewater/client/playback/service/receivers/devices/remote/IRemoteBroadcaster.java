@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
 
 public interface IRemoteBroadcaster {
 	void setPlaying();

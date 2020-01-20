@@ -7,9 +7,9 @@ import android.provider.MediaStore;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.ProvideFileUrisForLibrary;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.uri.IFileUriProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.uri.ProvideFileUrisForLibrary;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider;

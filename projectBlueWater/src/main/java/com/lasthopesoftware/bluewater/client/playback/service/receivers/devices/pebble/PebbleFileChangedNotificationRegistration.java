@@ -4,9 +4,9 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.CachedSessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;

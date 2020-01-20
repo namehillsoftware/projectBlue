@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access.specs.GivenALibraryWithAStandardSelectedView.AndNoReturnedViews;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.Item;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;

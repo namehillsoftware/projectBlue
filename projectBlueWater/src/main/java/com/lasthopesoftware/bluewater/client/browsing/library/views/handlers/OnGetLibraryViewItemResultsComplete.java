@@ -5,12 +5,12 @@ import android.view.View;
 import android.widget.ListView;
 
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ClickItemListener;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.list.ClickItemListener;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.list.DemoableItemListAdapter;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.media.files.access.parameters.IFileListParameterProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;

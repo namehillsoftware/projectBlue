@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.conversion;
 
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.FindPlaylistItem;
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.playlists.FindPlaylistItem;
+import com.lasthopesoftware.bluewater.client.browsing.library.items.playlists.Playlist;
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelpers;
