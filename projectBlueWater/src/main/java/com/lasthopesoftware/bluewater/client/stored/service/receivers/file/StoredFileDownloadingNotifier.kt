@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ResponseAction
 import com.namehillsoftware.handoff.promises.response.VoidResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 import com.namehillsoftware.lazyj.CreateAndHold
@@ -38,7 +37,7 @@ class StoredFileDownloadingNotifier(
 
 	private fun notifyOfFileDownload(storedFile: StoredFile): Promise<Void> {
 		return fileProperties.promiseFileProperties(LibraryId(storedFile.libraryId), ServiceFile(storedFile.serviceId))
-			.then(VoidResponse(ResponseAction { fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), fileProperties[KnownFileProperties.NAME])) }))
-			.excuse(VoidResponse(ResponseAction<Throwable> { syncNotification.notify(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file))) }))
+			.then(VoidResponse { fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel.getObject(), fileProperties[KnownFileProperties.NAME])) })
+			.excuse(VoidResponse { syncNotification.notify(String.format(downloadingStatusLabel.getObject(), context.getString(R.string.unknown_file))) })
 	}
 }

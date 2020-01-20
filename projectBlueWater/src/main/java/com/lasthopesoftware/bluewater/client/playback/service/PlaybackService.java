@@ -115,9 +115,11 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
+import com.lasthopesoftware.resources.notifications.NoOpChannelActivator;
 import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer;
 import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
 import com.lasthopesoftware.resources.notifications.control.NotificationsController;
+import com.lasthopesoftware.resources.notifications.notificationchannel.ActivateChannel;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
@@ -357,7 +359,9 @@ implements OnAudioFocusChangeListener
 	private final CreateAndHold<PlaybackNotificationsConfiguration> lazyPlaybackNotificationsConfiguration = new AbstractSynchronousLazy<PlaybackNotificationsConfiguration>() {
 		@Override
 		protected PlaybackNotificationsConfiguration create() {
-			final NotificationChannelActivator notificationChannelActivator = new NotificationChannelActivator(notificationManagerLazy.getObject());
+			final ActivateChannel notificationChannelActivator = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
+				? new NotificationChannelActivator(notificationManagerLazy.getObject())
+				: new NoOpChannelActivator();
 
 			final String channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
 			
