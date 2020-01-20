@@ -24,7 +24,7 @@ class SyncChannelProperties(private val context: Context) : ChannelConfiguration
 		get() {	return Companion.channelImportance }
 
 	companion object {
-		private const val channelId = "MusicCanoeSync"
+		private const val channelId = "ProjectBlueSync"
 		private val channelImportance =
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) 1
 			else NotificationManager.IMPORTANCE_MIN
