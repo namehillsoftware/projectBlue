@@ -1,5 +1,7 @@
 ![project blue](design/feature-graphic/feature_graphic.png)
 
+![](https://github.com/actions/namehillsoftware/projectBlue/workflows/.github/workflows/build.yml/badge.svg)
+
 ### Alternative, open source streaming music player for [JRiver Media Center](http://jriver.com/)
 
 Project Blue is published on the Play Store - https://play.google.com/store/apps/details?id=com.lasthopesoftware.bluewater.
