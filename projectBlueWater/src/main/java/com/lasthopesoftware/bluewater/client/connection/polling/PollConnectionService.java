@@ -40,10 +40,10 @@ public class PollConnectionService extends Service {
 				public void onServiceDisconnected(ComponentName name) {}
 			}, BIND_AUTO_CREATE));
 
-		return promiseConnectedService.eventually(s -> s.pollConnectionService.lazyConnectionPoller.getObject()
-			.must(() -> {
-				context.unbindService(s.serviceConnection);
-			}));
+		return promiseConnectedService
+			.eventually(s ->
+				s.pollConnectionService.lazyConnectionPoller.getObject()
+					.must(() -> context.unbindService(s.serviceConnection)));
 	}
 
 	private static final HashSet<Runnable> uniqueOnConnectionLostListeners = new HashSet<>();
@@ -66,7 +66,7 @@ public class PollConnectionService extends Service {
 
 	private final Lazy<Handler> lazyHandler = new Lazy<>(() -> new Handler(getMainLooper()));
 
-	private CreateAndHold<Promise<IConnectionProvider>> lazyConnectionPoller = new AbstractSynchronousLazy<Promise<IConnectionProvider>>() {
+	private final CreateAndHold<Promise<IConnectionProvider>> lazyConnectionPoller = new AbstractSynchronousLazy<Promise<IConnectionProvider>>() {
 		@Override
 		protected Promise<IConnectionProvider> create() {
 			for (final Runnable connectionLostListener : uniqueOnConnectionLostListeners)

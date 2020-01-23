@@ -42,7 +42,7 @@ public final class StoredItemAccess implements IStoredItemAccess {
 				" AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
 				" AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
 			.addParameter(StoredItem.serviceIdColumnName, item.getKey())
-			.addParameter(StoredItem.libraryIdColumnName, libraryId)
+			.addParameter(StoredItem.libraryIdColumnName, libraryId.getId())
 			.addParameter(StoredItem.itemTypeColumnName, itemType)
 			.fetchFirst(StoredItem.class);
 	}
