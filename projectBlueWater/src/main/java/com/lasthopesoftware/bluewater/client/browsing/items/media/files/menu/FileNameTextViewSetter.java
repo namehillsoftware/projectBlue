@@ -10,14 +10,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor;
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
 
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -28,7 +26,6 @@ import java.net.SocketException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.Executor;
 
 import javax.net.ssl.SSLProtocolException;
 
@@ -38,7 +35,6 @@ import static com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.delay;
 public class FileNameTextViewSetter {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileNameTextViewSetter.class);
-	private static final CreateAndHold<Executor> errorExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
 
 	private static final Duration timeoutDuration = Duration.standardMinutes(1);
 
@@ -120,9 +116,7 @@ public class FileNameTextViewSetter {
 				.must(() -> {
 					cancellationProxy.run();
 					resolve(null);
-				});
-
-			promisedViewSet
+				})
 				.excuse(forward())
 				.eventually(e -> new QueuedPromise<>(() -> {
 					if (isUpdateCancelled()) return null;
@@ -150,7 +144,7 @@ public class FileNameTextViewSetter {
 					logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
 
 					return null;
-				}, errorExecutor.getObject()));
+				}, LoggerUncaughtExceptionHandler.getErrorExecutor()));
 		}
 
 		private boolean isUpdateCancelled() {
