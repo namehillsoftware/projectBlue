@@ -80,7 +80,7 @@ public class FileNameTextViewSetter {
 			final Promise<Void> promisedViewSet =
 				SessionConnection.getInstance(textView.getContext()).promiseSessionConnection()
 					.eventually(connectionProvider -> {
-						if (isUpdateCancelled()) {
+						if (cancellationProxy.isCancelled()) {
 							resolve(null);
 							return new Promise<>(Collections.emptyMap());
 						}
@@ -97,7 +97,7 @@ public class FileNameTextViewSetter {
 						return filePropertiesPromise;
 					})
 					.eventually(LoopedInPromise.response(properties -> {
-						if (isUpdateCancelled()) return null;
+						if (cancellationProxy.isCancelled()) return null;
 
 						final String fileName = properties.get(KnownFileProperties.NAME);
 
@@ -117,7 +117,7 @@ public class FileNameTextViewSetter {
 				})
 				.excuse(forward())
 				.eventually(e -> new QueuedPromise<>(() -> {
-					if (isUpdateCancelled()) return null;
+					if (cancellationProxy.isCancelled()) return null;
 
 					if (e instanceof CancellationException) return null;
 
@@ -143,11 +143,6 @@ public class FileNameTextViewSetter {
 
 					return null;
 				}, LoggerUncaughtExceptionHandler.getErrorExecutor()));
-		}
-
-		private boolean isUpdateCancelled() {
-			return currentlyPromisedTextViewUpdate != this
-				|| cancellationProxy.isCancelled();
 		}
 	}
 }
