@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.namehillsoftware.handoff.Messenger;
+import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -22,7 +23,7 @@ import com.namehillsoftware.lazyj.Lazy;
 import java.util.HashSet;
 import java.util.concurrent.CancellationException;
 
-public class PollConnectionService extends Service {
+public class PollConnectionService extends Service implements MessengerOperator<IConnectionProvider> {
 
 	public static Promise<IConnectionProvider> pollSessionConnection(Context context) {
 		final Promise<PollConnectionServiceConnectionHolder> promiseConnectedService =
@@ -72,19 +73,21 @@ public class PollConnectionService extends Service {
 			for (final Runnable connectionLostListener : uniqueOnConnectionLostListeners)
 				connectionLostListener.run();
 
-			return new Promise<>(m -> {
-
-				final CancellationToken cancellationToken = new CancellationToken();
-				m.cancellationRequested(cancellationToken);
-
-				pollSessionConnection(m, cancellationToken, 1000);
-			});
+			return new Promise<>(PollConnectionService.this);
 		}
 	};
 
 	@Override
 	public IBinder onBind(Intent intent) {
 		return lazyBinder.getObject();
+	}
+
+	@Override
+	public void send(Messenger<IConnectionProvider> messenger) {
+		final CancellationToken cancellationToken = new CancellationToken();
+		messenger.cancellationRequested(cancellationToken);
+
+		pollSessionConnection(messenger, cancellationToken, 1000);
 	}
 
 	private void pollSessionConnection(Messenger<IConnectionProvider> messenger, CancellationToken cancellationToken, int connectionTime) {

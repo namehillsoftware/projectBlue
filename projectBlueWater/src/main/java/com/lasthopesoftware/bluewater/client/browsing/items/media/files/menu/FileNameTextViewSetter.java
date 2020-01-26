@@ -41,7 +41,7 @@ public class FileNameTextViewSetter {
 	private final TextView textView;
 	private final Handler handler;
 
-	private volatile PromisedTextViewUpdate currentlyPromisedTextViewUpdate;
+	private volatile Promise<Void> currentlyPromisedTextViewUpdate = Promise.empty();
 
 	public FileNameTextViewSetter(TextView textView) {
 		this.textView = textView;
@@ -49,11 +49,11 @@ public class FileNameTextViewSetter {
 	}
 
 	public synchronized Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
-		if (currentlyPromisedTextViewUpdate != null)
-			currentlyPromisedTextViewUpdate.cancel();
+		currentlyPromisedTextViewUpdate.cancel();
 
-		currentlyPromisedTextViewUpdate = new PromisedTextViewUpdate(serviceFile);
-		currentlyPromisedTextViewUpdate.beginUpdate();
+		currentlyPromisedTextViewUpdate = currentlyPromisedTextViewUpdate
+			.eventually(v -> new PromisedTextViewUpdate(serviceFile));
+
 		return currentlyPromisedTextViewUpdate;
 	}
 
@@ -66,9 +66,7 @@ public class FileNameTextViewSetter {
 			this.serviceFile = serviceFile;
 
 			respondToCancellation(cancellationProxy);
-		}
 
-		void beginUpdate() {
 			if (handler.getLooper().getThread() == Thread.currentThread())
 				run();
 			else
