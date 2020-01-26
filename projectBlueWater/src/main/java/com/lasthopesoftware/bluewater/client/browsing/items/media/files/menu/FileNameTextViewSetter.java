@@ -36,7 +36,7 @@ public class FileNameTextViewSetter {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileNameTextViewSetter.class);
 
-	private static final Duration timeoutDuration = Duration.standardMinutes(1);
+	private static final Duration timeoutDuration = Duration.standardSeconds(30);
 
 	private final TextView textView;
 	private final Handler handler;
