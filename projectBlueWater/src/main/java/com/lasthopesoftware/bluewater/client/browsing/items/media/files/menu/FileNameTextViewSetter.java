@@ -36,11 +36,12 @@ public class FileNameTextViewSetter {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileNameTextViewSetter.class);
 
-	private static final Duration timeoutDuration = Duration.standardSeconds(30);
+	private static final Duration timeoutDuration = Duration.standardMinutes(1);
 
 	private final TextView textView;
 	private final Handler handler;
 
+	private volatile Promise<Void> actualPromisedTextViewUpdate = Promise.empty();
 	private volatile Promise<Void> currentlyPromisedTextViewUpdate = Promise.empty();
 
 	public FileNameTextViewSetter(TextView textView) {
@@ -49,12 +50,12 @@ public class FileNameTextViewSetter {
 	}
 
 	public synchronized Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
-		currentlyPromisedTextViewUpdate.cancel();
+		actualPromisedTextViewUpdate.cancel();
 
-		currentlyPromisedTextViewUpdate = currentlyPromisedTextViewUpdate
-			.eventually(v -> new PromisedTextViewUpdate(serviceFile));
+		actualPromisedTextViewUpdate = actualPromisedTextViewUpdate
+			.eventually(v -> currentlyPromisedTextViewUpdate = new PromisedTextViewUpdate(serviceFile));
 
-		return currentlyPromisedTextViewUpdate;
+		return actualPromisedTextViewUpdate;
 	}
 
 	private class PromisedTextViewUpdate extends Promise<Void> implements Runnable {
@@ -80,7 +81,7 @@ public class FileNameTextViewSetter {
 			final Promise<Void> promisedViewSet =
 				SessionConnection.getInstance(textView.getContext()).promiseSessionConnection()
 					.eventually(connectionProvider -> {
-						if (cancellationProxy.isCancelled()) {
+						if (isUpdateCancelled()) {
 							resolve(null);
 							return new Promise<>(Collections.emptyMap());
 						}
@@ -97,7 +98,7 @@ public class FileNameTextViewSetter {
 						return filePropertiesPromise;
 					})
 					.eventually(LoopedInPromise.response(properties -> {
-						if (cancellationProxy.isCancelled()) return null;
+						if (isUpdateCancelled()) return null;
 
 						final String fileName = properties.get(KnownFileProperties.NAME);
 
@@ -117,7 +118,7 @@ public class FileNameTextViewSetter {
 				})
 				.excuse(forward())
 				.eventually(e -> new QueuedPromise<>(() -> {
-					if (cancellationProxy.isCancelled()) return null;
+					if (isUpdateCancelled()) return null;
 
 					if (e instanceof CancellationException) return null;
 
@@ -143,6 +144,10 @@ public class FileNameTextViewSetter {
 
 					return null;
 				}, LoggerUncaughtExceptionHandler.getErrorExecutor()));
+		}
+
+		private boolean isUpdateCancelled() {
+			return currentlyPromisedTextViewUpdate != this || cancellationProxy.isCancelled();
 		}
 	}
 }
