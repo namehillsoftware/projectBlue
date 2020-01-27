@@ -78,10 +78,6 @@ public class NotificationsController implements ControlNotifications {
 		}
 	}
 
-	private boolean isAnyNotificationForeground() {
-		return !isAllNotificationsBackground();
-	}
-
 	private boolean isAllNotificationsBackground() {
 		return isAllNotificationsBackgroundExcept(null);
 	}
