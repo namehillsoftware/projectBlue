@@ -913,6 +913,8 @@ implements OnAudioFocusChangeListener
 			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
 				return;
+			default:
+				return;
 		}
 		lazyNotificationController.getObject().notifyForeground(
 			buildFullNotification(notifyBuilder),
