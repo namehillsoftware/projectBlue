@@ -293,11 +293,11 @@ implements OnAudioFocusChangeListener
 
 	/* End streamer intent helpers */
 
-	private static final String wifiLockSvcName =  MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "wifiLockSvcName");
 	private static final String mediaSessionTag = MagicPropertyBuilder.buildMagicPropertyName(PlaybackService.class, "mediaSessionTag");
 
 	private static final int playingNotificationId = 42;
 	private static final int startingNotificationId = 53;
+	private static final int connectingNotificationId = 70;
 
 	private static final int maxErrors = 3;
 	private static final int errorCountResetDuration = 1000;
@@ -614,9 +614,8 @@ implements OnAudioFocusChangeListener
 			.eventually(v -> lazySelectedLibraryProvider.getObject().getBrowserLibrary())
 			.eventually(this::initializePlaybackPlaylistStateManagerSerially)
 			.eventually(m -> actOnIntent(intent))
-			.then(
-				new VoidResponse<>(v -> lazyNotificationController.getObject().removeNotification(startingNotificationId)),
-				UnhandledRejectionHandler);
+			.must(() -> lazyNotificationController.getObject().removeNotification(startingNotificationId))
+			.excuse(UnhandledRejectionHandler);
 
 		return START_NOT_STICKY;
 	}
@@ -736,14 +735,7 @@ implements OnAudioFocusChangeListener
 		if (playbackEngine != null)
 			playbackEngine.close();
 
-		localBroadcastManagerLazy.getObject()
-			.registerReceiver(
-				buildSessionReceiver,
-				new IntentFilter(SessionConnection.buildSessionBroadcast));
-
-		return SessionConnection.getInstance(this).promiseSessionConnection().eventually(connectionProvider -> {
-			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
-
+		return getSessionConnection().eventually(connectionProvider -> {
 			if (connectionProvider == null)
 				throw new PlaybackEngineInitializationException("connectionProvider was null!");
 
@@ -888,9 +880,18 @@ implements OnAudioFocusChangeListener
 
 				return playbackEngine;
 			});
-		}, e -> {
+		});
+	}
+
+	private Promise<IConnectionProvider> getSessionConnection() {
+		localBroadcastManagerLazy.getObject()
+			.registerReceiver(
+				buildSessionReceiver,
+				new IntentFilter(SessionConnection.buildSessionBroadcast));
+
+		return SessionConnection.getInstance(this).promiseSessionConnection().must(() -> {
 			localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver);
-			throw e;
+			lazyNotificationController.getObject().removeNotification(connectingNotificationId);
 		});
 	}
 
@@ -912,10 +913,12 @@ implements OnAudioFocusChangeListener
 			case BuildingSessionConnectionStatus.BuildingConnectionFailed:
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show();
 				return;
+			default:
+				return;
 		}
 		lazyNotificationController.getObject().notifyForeground(
 			buildFullNotification(notifyBuilder),
-			playingNotificationId);
+			connectingNotificationId);
 	}
 	
 	private void handlePlaybackStarted() {
