@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -33,7 +32,6 @@ import java.util.concurrent.CancellationException;
 
 import javax.net.ssl.SSLProtocolException;
 
-import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
 import static com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.delay;
 
 public class FileNameTextViewSetter {
@@ -134,11 +132,13 @@ public class FileNameTextViewSetter {
 					// Finally, always resolve the parent promise
 					resolve(null);
 				})
-				.excuse(forward())
-				.eventually(e -> new QueuedPromise<>(() -> {
-					handleError(e);
+				.excuse(e -> {
+					LoggerUncaughtExceptionHandler
+						.getErrorExecutor()
+						.execute(() -> handleError(e));
+
 					return null;
-				}, LoggerUncaughtExceptionHandler.getErrorExecutor()));
+				});
 		}
 
 		@Override
