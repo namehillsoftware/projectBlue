@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
+import com.namehillsoftware.handoff.promises.response.EventualAction;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -57,14 +58,12 @@ public class FileNameTextViewSetter {
 		promisedState.cancel();
 
 		promisedState = promisedState
-			.eventually(
-				new EventualTextViewUpdate<>(serviceFile),
-				new EventualTextViewUpdate<>(serviceFile));
+			.inevitably(new EventualTextViewUpdate(serviceFile));
 
 		return promisedState;
 	}
 
-	private class EventualTextViewUpdate<Resolution> implements PromisedResponse<Resolution, Void> {
+	private class EventualTextViewUpdate implements EventualAction {
 
 		private final ServiceFile serviceFile;
 
@@ -73,7 +72,7 @@ public class FileNameTextViewSetter {
 		}
 
 		@Override
-		public Promise<Void> promiseResponse(Resolution resolution) {
+		public Promise<?> promiseAction() {
 			synchronized (textViewUpdateSync) {
 				currentlyPromisedTextViewUpdate = new PromisedTextViewUpdate(serviceFile);
 				currentlyPromisedTextViewUpdate.beginUpdate();
