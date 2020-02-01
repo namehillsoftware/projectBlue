@@ -35,18 +35,20 @@ import okhttp3.Request;
 
 public class OkHttpFactory implements ProvideOkHttpClients {
 
-	private static final CreateAndHold<ExecutorService> executor = new Lazy<>(() -> {
+	private static final CreateAndHold<Dispatcher> dispatcher = new Lazy<>(() -> {
 		final int maxDownloadThreadPoolSize = 4;
 		final int downloadThreadPoolSize = Math.min(maxDownloadThreadPoolSize, Runtime.getRuntime().availableProcessors());
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			return new ForkJoinPool(
-				downloadThreadPoolSize,
-				ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-				null,
-				true);
-		}
 
-		return new CachedManyThreadExecutor(downloadThreadPoolSize, 5, TimeUnit.MINUTES);
+		final ExecutorService executorService = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+			? new ForkJoinPool(downloadThreadPoolSize, ForkJoinPool.defaultForkJoinWorkerThreadFactory,	null,true)
+			: new CachedManyThreadExecutor(downloadThreadPoolSize, 5, TimeUnit.MINUTES);
+
+		final int requestPoolSize = downloadThreadPoolSize * 3;
+
+		final Dispatcher dispatcher = new Dispatcher(executorService);
+		dispatcher.setMaxRequests(requestPoolSize);
+		dispatcher.setMaxRequestsPerHost(requestPoolSize);
+		return dispatcher;
 	});
 
 	private static final CreateAndHold<OkHttpClient.Builder> lazyCommonBuilder = new AbstractSynchronousLazy<OkHttpClient.Builder>() {
@@ -58,9 +60,8 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 					return chain.proceed(requestBuilder.build());
 				})
 				.cache(null)
-				.readTimeout(3, TimeUnit.MINUTES)
-				.connectTimeout(5, TimeUnit.SECONDS)
-				.dispatcher(new Dispatcher(executor.getObject()));
+				.readTimeout(1, TimeUnit.MINUTES)
+				.dispatcher(dispatcher.getObject());
 		}
 	};
 
