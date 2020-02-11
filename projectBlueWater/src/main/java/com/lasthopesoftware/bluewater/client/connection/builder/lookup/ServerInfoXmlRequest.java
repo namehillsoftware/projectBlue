@@ -21,7 +21,7 @@ public class ServerInfoXmlRequest implements RequestServerInfoXml {
 	@Override
 	public Promise<XmlElement> promiseServerInfoXml(Library library) {
 		final Request request = new Request.Builder()
-			.url("http://webplay.jriver.com/libraryserver/lookup?id=" + library.getAccessCode())
+			.url("https://webplay.jriver.com/libraryserver/lookup?id=" + library.getAccessCode())
 			.build();
 
 		return new HttpPromisedResponse(client.newCall(request))
