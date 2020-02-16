@@ -35,6 +35,9 @@ public class WhenParsingTheServerInfo {
 					"<ip>108.491.23.154</ip>\n" +
 					"<port>52199</port>\n" +
 					"<localiplist>169.254.72.216,192.168.1.50</localiplist>\n" +
+					"<macaddresslist>\n" +
+						"5c-f3-70-8b-db-e9,b4-2e-99-31-f7-eb\n" +
+					"</macaddresslist>\n" +
 				"</Response>")));
 
 		final ServerLookup serverLookup = new ServerLookup(serverInfoXml);
@@ -64,5 +67,10 @@ public class WhenParsingTheServerInfo {
 	@Test
 	public void thenTheCertificateFingerprintIsCorrectIsNull() {
 		assertThat(serverInfo.getCertificateFingerprint()).isNull();
+	}
+
+	@Test
+	public void thenTheMacAddressesAreCorrect() {
+		assertThat(serverInfo.getMacAddresses()).containsExactlyInAnyOrder("5c-f3-70-8b-db-e9", "b4-2e-99-31-f7-eb");
 	}
 }

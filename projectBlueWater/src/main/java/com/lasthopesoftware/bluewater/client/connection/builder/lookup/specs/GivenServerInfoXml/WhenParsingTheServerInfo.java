@@ -36,6 +36,9 @@ public class WhenParsingTheServerInfo {
 					"<port>52199</port>\n" +
 					"<localiplist>169.254.72.216,192.168.1.50</localiplist>\n" +
 					"<certificate_fingerprint>746E06046B44CED35658F300DB2D08A799DEBC7E</certificate_fingerprint>\n" +
+					"<macaddresslist>\n" +
+						"5c-f3-70-8b-db-e9,16-15-f4-b9-cd-15,b4-2e-99-31-f7-eb\n" +
+					"</macaddresslist>\n" +
 					"<https_port>52200</https_port>\n" +
 				"</Response>")));
 
@@ -50,7 +53,7 @@ public class WhenParsingTheServerInfo {
 
 	@Test
 	public void thenTheLocalIpsAreCorrect() {
-		assertThat(serverInfo.getLocalIps()).contains("169.254.72.216", "192.168.1.50");
+		assertThat(serverInfo.getLocalIps()).containsExactlyInAnyOrder("169.254.72.216", "192.168.1.50");
 	}
 
 	@Test
@@ -66,5 +69,10 @@ public class WhenParsingTheServerInfo {
 	@Test
 	public void thenTheCertificateFingerprintIsCorrect() {
 		assertThat(serverInfo.getCertificateFingerprint()).isEqualToIgnoringCase("746E06046B44CED35658F300DB2D08A799DEBC7E");
+	}
+
+	@Test
+	public void thenTheMacAddressesAreCorrect() {
+		assertThat(serverInfo.getMacAddresses()).containsExactlyInAnyOrder("5c-f3-70-8b-db-e9", "16-15-f4-b9-cd-15", "b4-2e-99-31-f7-eb");
 	}
 }

@@ -15,8 +15,8 @@ class ServerInfoXmlRequest(private val client: OkHttpClient) : RequestServerInfo
 			.build()
 
 		return HttpPromisedResponse(client.newCall(request))
-			.then {	response ->
-				response.body?.use { b ->
+			.then {	r ->
+				r.body?.use { b ->
 					Xmlwise.createXml(b.string())
 				}
 			}

@@ -14,6 +14,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,11 +38,13 @@ public class WhenScanningForUrls {
 
 		final LookupServers serverLookup = mock(LookupServers.class);
 		when(serverLookup.promiseServerInformation(argThat(a -> "gooPc".equals(a.getAccessCode()))))
-			.thenReturn(new Promise<>(new ServerInfo()
-				.setRemoteIp("1.2.3.4")
-				.setHttpPort(143)
-				.setHttpsPort(452)
-				.setCertificateFingerprint(null)));
+			.thenReturn(new Promise<>(new ServerInfo(
+				143,
+				452,
+				"1.2.3.4",
+				Collections.emptyList(),
+				Collections.emptyList(),
+				null)));
 
 		final UrlScanner urlScanner = new UrlScanner(
 			mock(EncodeToBase64.class),

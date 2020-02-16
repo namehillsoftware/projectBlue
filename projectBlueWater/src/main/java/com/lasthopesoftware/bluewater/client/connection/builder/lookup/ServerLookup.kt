@@ -37,7 +37,7 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 					remoteIp = remoteIp.value,
 					localIps = listOf(*localIps.value.split(",").toTypedArray()),
 					httpPort = portXml.value.toInt(),
-					macAddresses = listOf(*macAddresses.value.split(",").toTypedArray()))
+					macAddresses = listOf(*macAddresses.value.trim().split(",").toTypedArray()))
 
 				if (it.contains(httpsPortElement))
 					serverInfo = serverInfo.copy(httpsPort = it.getUnique(httpsPortElement).value.toInt())

@@ -7,18 +7,18 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.http.RealResponseBody;
 import okio.Buffer;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 
 public class FakeConnectionProvider implements IConnectionProvider {
@@ -85,10 +85,6 @@ public class FakeConnectionProvider implements IConnectionProvider {
 
 	@Override
 	public IUrlProvider getUrlProvider() {
-		try {
-			return new MediaServerUrlProvider(null, "test", 80);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
+		return new MediaServerUrlProvider(null, "test", 80);
 	}
 }
