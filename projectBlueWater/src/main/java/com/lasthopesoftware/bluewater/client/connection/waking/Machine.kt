@@ -2,4 +2,4 @@ package com.lasthopesoftware.bluewater.client.connection.waking
 
 import java.net.URL
 
-data class SleepingMachine(val url: URL, val macAddress: String)
+data class Machine(val url: URL, val macAddress: String)
