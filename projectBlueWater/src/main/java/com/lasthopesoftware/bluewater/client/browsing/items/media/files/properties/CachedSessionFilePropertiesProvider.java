@@ -26,7 +26,7 @@ public class CachedSessionFilePropertiesProvider implements ProvideFilePropertie
 
 	@Override
 	public Promise<Map<String, String>> promiseFileProperties(ServiceFile serviceFile) {
-		final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
+		final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.urlProvider.getBaseUrl(), serviceFile);
 
 		final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder);
 

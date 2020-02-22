@@ -60,7 +60,7 @@ implements
 
 	@Override
 	public synchronized Promise<NotificationCompat.Builder> promiseNowPlayingNotification(ServiceFile serviceFile, boolean isPlaying) {
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey());
+		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.urlProvider.getBaseUrl(), serviceFile.getKey());
 
 		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
 			viewStructure.release();

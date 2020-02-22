@@ -47,7 +47,7 @@ public class FilePropertiesStorage {
 
 		promisedUpdate.eventually(v -> RevisionChecker.promiseRevision(connectionProvider))
 			.then(revision -> {
-				final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
+				final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.urlProvider.getBaseUrl(), serviceFile);
 				final FilePropertiesContainer filePropertiesContainer = filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder);
 
 				if (filePropertiesContainer.revision == revision) filePropertiesContainer.updateProperty(property, value);

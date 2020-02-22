@@ -15,18 +15,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenSendingAWakeSignal {
 
-	private static Boolean wasSent;
+	private static final byte[] expectedBytes = { -1, -1, -1, -1, -1, -1, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37, 1, 88, -121, -6, -111, 37 };
+
+	private static byte[] sentBytes;
 
 	@BeforeClass
 	public static void before() throws MalformedURLException, ExecutionException, InterruptedException {
 		final ServerAlarm serverAlarm = new ServerAlarm();
-		wasSent = new FuturePromise<>(serverAlarm.promiseWakeRequest(new Machine(
+		sentBytes = new FuturePromise<>(serverAlarm.promiseWakeRequest(new Machine(
 			new URL("http://my-sleeping-beauty"),
-			"01-58-87-HA-91-25"))).get();
+			"01-58-87-FA-91-25"))).get();
 	}
 
 	@Test
 	public void thenTheSignalIsSent() {
-		assertThat(wasSent).isTrue();
+		assertThat(sentBytes).containsExactly(expectedBytes);
 	}
 }

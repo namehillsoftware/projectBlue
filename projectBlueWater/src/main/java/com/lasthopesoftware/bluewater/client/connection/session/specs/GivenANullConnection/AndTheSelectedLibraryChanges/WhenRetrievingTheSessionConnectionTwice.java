@@ -21,7 +21,6 @@ import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ExecutionException;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -57,7 +56,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.getUrlProvider()).isEqualTo(firstUrlProvider);
+		assertThat(connectionProvider.urlProvider).isEqualTo(firstUrlProvider);
 	}
 
 	private static class FakeSelectedLibraryProvider implements ISelectedLibraryIdentifierProvider {

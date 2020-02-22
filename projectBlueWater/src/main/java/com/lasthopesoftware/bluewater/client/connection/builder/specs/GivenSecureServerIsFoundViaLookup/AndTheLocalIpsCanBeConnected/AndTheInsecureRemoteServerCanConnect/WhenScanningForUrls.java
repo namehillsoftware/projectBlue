@@ -35,7 +35,7 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(false));
 
 		when(connectionTester.promiseIsConnectionPossible(argThat(a -> {
-				final String baseUrl = a.getUrlProvider().getBaseUrl();
+				final String baseUrl = a.urlProvider.getBaseUrl();
 				return "http://1.2.3.4:143/MCWS/v1/".equals(baseUrl)
 					|| "https://192.168.1.56:452/MCWS/v1/".equals(baseUrl);
 			})))

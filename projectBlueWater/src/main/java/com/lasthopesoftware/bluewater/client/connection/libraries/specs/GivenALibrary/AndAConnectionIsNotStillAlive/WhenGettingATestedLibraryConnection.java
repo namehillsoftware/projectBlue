@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -79,7 +78,7 @@ public class WhenGettingATestedLibraryConnection {
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(secondConnectionProvider.getUrlProvider()).isEqualTo(connectionProvider.getUrlProvider());
+		assertThat(secondConnectionProvider.urlProvider).isEqualTo(connectionProvider.urlProvider);
 	}
 
 	@Test

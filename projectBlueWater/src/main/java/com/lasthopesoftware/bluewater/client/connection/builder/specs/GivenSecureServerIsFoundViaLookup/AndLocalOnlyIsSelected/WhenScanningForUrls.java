@@ -38,7 +38,7 @@ public class WhenScanningForUrls {
 			Arrays.asList(
 				"http://192.168.1.56:143/MCWS/v1/",
 				"https://192.168.1.56:143/MCWS/v1/",
-				"http://1.2.3.4:143/MCWS/v1/").contains(a.getUrlProvider().getBaseUrl()))))
+				"http://1.2.3.4:143/MCWS/v1/").contains(a.urlProvider.getBaseUrl()))))
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);

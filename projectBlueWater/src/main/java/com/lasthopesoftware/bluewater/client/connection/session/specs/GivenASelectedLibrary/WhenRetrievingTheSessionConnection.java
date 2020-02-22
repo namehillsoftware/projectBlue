@@ -31,7 +31,6 @@ import static com.lasthopesoftware.bluewater.client.connection.session.SessionCo
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -73,7 +72,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.getUrlProvider()).isEqualTo(urlProvider);
+		assertThat(connectionProvider.urlProvider).isEqualTo(urlProvider);
 	}
 
 	@Test

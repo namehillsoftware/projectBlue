@@ -27,7 +27,7 @@ public class RevisionChecker {
 	}
 
     private static Integer getCachedRevision(IConnectionProvider connectionProvider) {
-        final String serverUrl = connectionProvider.getUrlProvider().getBaseUrl();
+        final String serverUrl = connectionProvider.urlProvider.getBaseUrl();
         if (!cachedRevisions.containsKey(serverUrl))
             cachedRevisions.put(serverUrl, badRevision);
 
@@ -39,7 +39,7 @@ public class RevisionChecker {
     }
 
 	private Promise<Integer> getRevision() {
-		final String baseServerUrl = connectionProvider.getUrlProvider().getBaseUrl();
+		final String baseServerUrl = connectionProvider.urlProvider.getBaseUrl();
 		final Long lastRevisionCheckedTime = lastRevisions.get(baseServerUrl);
         if (lastRevisionCheckedTime != null && !getCachedRevision(connectionProvider).equals(badRevision) && System.currentTimeMillis() - checkedExpirationTime < lastRevisionCheckedTime) {
             return new Promise<>(getCachedRevision(connectionProvider));
