@@ -15,7 +15,7 @@ class ServerAlarm(private val connectionProvider: IConnectionProvider) : WakeSer
 			System.arraycopy(macBytes, 0, bytes, i, macBytes.size);
 		}
 
-		return connectionProvider.promiseSentPacket(bytes);
+		return connectionProvider.promiseSentPacket(bytes)
 	}
 
 	companion object {
