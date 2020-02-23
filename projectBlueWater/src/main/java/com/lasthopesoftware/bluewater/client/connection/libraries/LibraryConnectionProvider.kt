@@ -111,37 +111,34 @@ class LibraryConnectionProvider(
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				libraryProvider
 					.getLibrary(selectedLibraryId)
-					.then({ library ->
+					.eventually({ library ->
 						when (library?.accessCode?.isEmpty()) {
 							false -> {
 								reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-								liveUrlProvider
-									.promiseLiveUrl(library)
-									.then({
-										when (it) {
-											null -> {
-												reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-												resolve(null)
-											}
-											else -> {
-												reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
-												resolve(ConnectionProvider(it, okHttpFactory))
-											}
-										}
-									}, {
-										reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-										reject(it)
-									})
+								liveUrlProvider.promiseLiveUrl(library)
 							}
 							else -> {
 								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 								resolve(null)
+								empty()
 							}
 						}
-					},
-					{
+					}, {
 						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+						reject(it)
+						empty()
+					})
+					.then({
+						if (it != null) {
+							reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
+							resolve(ConnectionProvider(it, okHttpFactory))
+						} else {
+							reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
+							resolve(null)
+						}
+					}, {
+						reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
 						reject(it)
 					})
 			}
