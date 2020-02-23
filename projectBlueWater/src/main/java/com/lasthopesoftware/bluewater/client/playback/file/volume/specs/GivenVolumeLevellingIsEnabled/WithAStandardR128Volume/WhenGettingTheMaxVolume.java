@@ -35,7 +35,7 @@ public class WhenGettingTheMaxVolume {
 		when(urlProvider.getBaseUrl()).thenReturn("");
 
 		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-		when(connectionProvider.urlProvider).thenReturn(urlProvider);
+		when(connectionProvider.getUrlProvider()).thenReturn(urlProvider);
 
 		final IFilePropertiesContainerRepository repository = mock(IFilePropertiesContainerRepository.class);
 		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(1))))

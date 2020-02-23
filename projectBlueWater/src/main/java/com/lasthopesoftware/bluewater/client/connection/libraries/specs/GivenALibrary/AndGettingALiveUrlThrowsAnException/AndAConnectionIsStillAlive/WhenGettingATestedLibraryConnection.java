@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredP
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -73,12 +73,12 @@ public class WhenGettingATestedLibraryConnection {
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.urlProvider).isEqualTo(firstUrlProvider);
+		assertThat(connectionProvider.getUrlProvider()).isEqualTo(firstUrlProvider);
 	}
 
 	@Test
 	public void thenGettingLibraryIsBroadcast() {
-		Assertions.assertThat(statuses)
+		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,

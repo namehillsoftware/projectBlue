@@ -8,12 +8,15 @@ import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvid
 import com.namehillsoftware.handoff.promises.Promise;
 import com.vedsoft.futures.callables.CarelessOneParameterFunction;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import kotlin.Unit;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -86,5 +89,11 @@ public class FakeConnectionProvider implements IConnectionProvider {
 	@Override
 	public IUrlProvider getUrlProvider() {
 		return new MediaServerUrlProvider(null, "test", 80);
+	}
+
+	@NotNull
+	@Override
+	public Promise<Unit> promiseSentPacket(@NotNull byte[] packet) {
+		return new Promise<>(Unit.INSTANCE);
 	}
 }

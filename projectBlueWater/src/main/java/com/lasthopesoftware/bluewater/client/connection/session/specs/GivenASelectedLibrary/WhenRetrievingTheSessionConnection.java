@@ -20,7 +20,6 @@ import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.specs.AndroidContext;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
 
@@ -31,6 +30,7 @@ import static com.lasthopesoftware.bluewater.client.connection.session.SessionCo
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
 import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -72,12 +72,12 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 
 	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.urlProvider).isEqualTo(urlProvider);
+		assertThat(connectionProvider.getUrlProvider()).isEqualTo(urlProvider);
 	}
 
 	@Test
 	public void thenGettingLibraryIsBroadcast() {
-		Assertions.assertThat(Stream.of(broadcastRecorder.recordedIntents).map(i -> i.getIntExtra(buildSessionBroadcastStatus, -1)).toList())
+		assertThat(Stream.of(broadcastRecorder.recordedIntents).map(i -> i.getIntExtra(buildSessionBroadcastStatus, -1)).toList())
 			.containsExactly(
 				GettingLibrary,
 				BuildingConnection,

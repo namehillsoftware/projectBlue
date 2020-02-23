@@ -421,7 +421,7 @@ implements
 				.promiseSessionConnection()
 				.eventually(LoopedInPromise.response(connectionProvider -> {
 					final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
-					final long filePosition = connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.urlProvider.getBaseUrl(), serviceFile.getKey()))
+					final long filePosition = connectionProvider != null && viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 						? viewStructure.filePosition
 						: np.filePosition;
 
@@ -489,7 +489,7 @@ implements
 					final ServiceFile serviceFile = np.playlist.get(playlistPosition);
 
 					final long filePosition =
-						viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.urlProvider.getBaseUrl(), serviceFile.getKey()))
+						viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
 							? viewStructure.filePosition
 							: 0;
 
@@ -503,7 +503,7 @@ implements
 	private void setView(final ServiceFile serviceFile, final long initialFilePosition) {
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(connectionProvider -> {
-				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.urlProvider.getBaseUrl(), serviceFile.getKey());
+				final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey());
 
 				if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
 					viewStructure.release();

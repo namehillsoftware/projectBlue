@@ -34,7 +34,7 @@ public class HttpDataSourceFactoryProvider implements ProvideHttpDataSourceFacto
 	@Override
 	public HttpDataSource.Factory getHttpDataSourceFactory(Library library) {
 		return new OkHttpDataSourceFactory(
-			okHttpClients.getOkHttpClient(connectionProvider.urlProvider).newBuilder()
+			okHttpClients.getOkHttpClient(connectionProvider.getUrlProvider()).newBuilder()
 				.readTimeout(45, TimeUnit.SECONDS)
 				.retryOnConnectionFailure(false)
 				.dispatcher(new Dispatcher(lazyExecutor.getObject()))

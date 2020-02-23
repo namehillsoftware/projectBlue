@@ -75,7 +75,7 @@ final class FilePropertiesPromise extends Promise<Map<String, String>> {
 				for (final XmlElement el : parent)
 					returnProperties.put(el.getAttribute("Name"), el.getValue());
 
-				final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.urlProvider.getBaseUrl(), serviceFile);
+				final UrlKeyHolder<ServiceFile> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile);
 				filePropertiesContainerProvider.putFilePropertiesContainer(urlKeyHolder, new FilePropertiesContainer(serverRevision, returnProperties));
 
 				return returnProperties;

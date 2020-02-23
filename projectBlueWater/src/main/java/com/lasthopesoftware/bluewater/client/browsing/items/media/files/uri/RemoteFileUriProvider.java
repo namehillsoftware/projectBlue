@@ -29,7 +29,7 @@ public class RemoteFileUriProvider implements IFileUriProvider {
 		 */
 
 		final String itemUrl =
-			connectionProvider.urlProvider
+			connectionProvider.getUrlProvider()
 				.getUrl(serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile));
 
 		return new Promise<>(Uri.parse(itemUrl));
