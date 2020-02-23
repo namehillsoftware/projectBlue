@@ -20,7 +20,7 @@ class ServerAlarm(private val connectionProvider: IConnectionProvider) : WakeSer
 
 	companion object {
 		private fun getMacBytes(macStr: String): ByteArray {
-			val hex = macStr.split(":", "-").toTypedArray()
+			val hex = macStr.split(":", "-")
 			require(hex.size == 6) { "Invalid MAC address." }
 			try {
 				return hex.map { it.toInt(16).toByte() }.toByteArray()

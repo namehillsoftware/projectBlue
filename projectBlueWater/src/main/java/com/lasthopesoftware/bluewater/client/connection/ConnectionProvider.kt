@@ -14,14 +14,15 @@ import okhttp3.Request
 import okhttp3.Response
 import java.net.*
 
-class ConnectionProvider(urlProvider: IUrlProvider?, okHttpClients: ProvideOkHttpClients?) : IConnectionProvider {
-	override val urlProvider: IUrlProvider
+class ConnectionProvider(urlProvider: IUrlProvider, okHttpClients: ProvideOkHttpClients) : IConnectionProvider {
 	private val okHttpClients: ProvideOkHttpClients
 	private val lazyOkHttpClient: CreateAndHold<OkHttpClient> = object : AbstractSynchronousLazy<OkHttpClient>() {
 		override fun create(): OkHttpClient {
-			return okHttpClients!!.getOkHttpClient(urlProvider)
+			return okHttpClients.getOkHttpClient(urlProvider)
 		}
 	}
+
+	override val urlProvider: IUrlProvider
 
 	override fun promiseResponse(vararg params: String): Promise<Response> {
 		return try {
