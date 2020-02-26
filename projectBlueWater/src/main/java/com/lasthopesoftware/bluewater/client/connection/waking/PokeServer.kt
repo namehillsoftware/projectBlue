@@ -2,6 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.namehillsoftware.handoff.promises.Promise
 
-interface WakeServer {
-	fun promiseWakeRequest(machine: Machine): Promise<Unit>
+interface PokeServer {
+	fun promiseWakeSignal(machine: Machine): Promise<Unit>
 }

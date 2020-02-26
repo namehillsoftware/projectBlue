@@ -9,21 +9,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders;
-import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
-import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.resources.strings.Base64Encoder;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.CreateAndHold;
 import com.vedsoft.futures.runnables.OneParameterAction;
 
 import org.slf4j.Logger;
@@ -31,9 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.OkHttpClient;
 
 public class SessionConnection implements OneParameterAction<BuildingConnectionStatus> {
 
@@ -41,21 +29,6 @@ public class SessionConnection implements OneParameterAction<BuildingConnectionS
 	public static final String buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection.class, "buildSessionBroadcastStatus");
 
 	private static final Logger logger = LoggerFactory.getLogger(SessionConnection.class);
-
-	private static final int buildConnectionTimeoutTime = 10000;
-
-	private static final CreateAndHold<BuildUrlProviders> lazyUrlScanner = new AbstractSynchronousLazy<BuildUrlProviders>() {
-		@Override
-		protected BuildUrlProviders create() {
-			final OkHttpClient client = new OkHttpClient.Builder()
-				.connectTimeout(buildConnectionTimeoutTime, TimeUnit.MILLISECONDS)
-				.build();
-			final ServerLookup serverLookup = new ServerLookup(new ServerInfoXmlRequest(client));
-			final ConnectionTester connectionTester = new ConnectionTester();
-
-			return new UrlScanner(new Base64Encoder(), connectionTester, serverLookup, OkHttpFactory.getInstance());
-		}
-	};
 
 	private static volatile SessionConnection sessionConnectionInstance;
 

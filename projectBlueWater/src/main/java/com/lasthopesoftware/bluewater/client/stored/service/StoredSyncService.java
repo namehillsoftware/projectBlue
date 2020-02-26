@@ -237,7 +237,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			return new UrlScanner(
 				new Base64Encoder(),
 				new ConnectionTester(),
-				new ServerLookup(new ServerInfoXmlRequest(client)),
+				new ServerLookup(new ServerInfoXmlRequest(lazyLibraryRepository.getObject(), client)),
 				OkHttpFactory.getInstance());
 		}
 	};

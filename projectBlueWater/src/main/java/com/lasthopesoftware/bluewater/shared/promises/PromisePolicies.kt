@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.shared.promises
 import com.namehillsoftware.handoff.promises.Promise
 
 object PromisePolicies {
-	fun <Resolution>repeat(function: () -> Promise<Resolution>, maximumRepeats: Int) : Promise<Resolution> {
-		return RepeatMachine(function, maximumRepeats).repeat()
+	fun <Resolution>repeat(function: () -> Promise<Resolution>, repetitions: Int) : Promise<Resolution> {
+		return RepeatMachine(function, repetitions).repeat()
 	}
 
 	private class RepeatMachine<Resolution>(private val function: () -> Promise<Resolution>, private val maximumRepeats: Int) {
@@ -13,7 +13,7 @@ object PromisePolicies {
 		fun repeat(): Promise<Resolution> {
 			return function()
 				.eventually {
-					if (++repeatCount > maximumRepeats) repeat()
+					if (++repeatCount <= maximumRepeats) repeat()
 					else Promise(it)
 				}
 		}

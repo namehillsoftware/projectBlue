@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
@@ -37,7 +38,7 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
-		when(serverLookup.promiseServerInformation(argThat(a -> "gooPc".equals(a.getAccessCode()))))
+		when(serverLookup.promiseServerInformation(new LibraryId(55)))
 			.thenReturn(new Promise<>(new ServerInfo(
 				143,
 				null,
@@ -54,6 +55,7 @@ public class WhenScanningForUrls {
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
+				.setId(55)
 				.setAccessCode("gooPc"))).get();
 	}
 

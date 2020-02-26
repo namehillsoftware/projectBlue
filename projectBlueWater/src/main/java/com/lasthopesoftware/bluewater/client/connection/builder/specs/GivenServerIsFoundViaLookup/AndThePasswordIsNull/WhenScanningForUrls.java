@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndThePasswordIsNull;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
@@ -36,7 +37,7 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
-		when(serverLookup.promiseServerInformation(argThat(a -> "gooPc".equals(a.getAccessCode()))))
+		when(serverLookup.promiseServerInformation(new LibraryId(63)))
 			.thenReturn(new Promise<>(new ServerInfo(
 				143,
 				null,
@@ -53,6 +54,7 @@ public class WhenScanningForUrls {
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
+				.setId(63)
 				.setAccessCode("gooPc")
 				.setUserName("user")
 				.setPassword(null))).get();

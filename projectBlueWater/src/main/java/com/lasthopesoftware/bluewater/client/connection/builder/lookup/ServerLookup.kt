@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : LookupServers {
@@ -18,14 +18,14 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 		private const val macAddressElement = "macaddresslist"
 	}
 
-	override fun promiseServerInformation(library: Library): Promise<ServerInfo?> {
-		return serverInfoXmlRequest.promiseServerInfoXml(library)
+	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> {
+		return serverInfoXmlRequest.promiseServerInfoXml(libraryId)
 			.then {
 				if (it == null) return@then null
 
 				if (it.containsAttribute(statusAttribute) && errorStatusValue == it.getAttribute(statusAttribute)) {
-					if (it.contains(msgElement)) throw ServerDiscoveryException(library, it.getUnique(msgElement).value)
-					throw ServerDiscoveryException(library)
+					if (it.contains(msgElement)) throw ServerDiscoveryException(libraryId, it.getUnique(msgElement).value)
+					throw ServerDiscoveryException(libraryId)
 				}
 
 				val remoteIp = it.getUnique(ipElement)

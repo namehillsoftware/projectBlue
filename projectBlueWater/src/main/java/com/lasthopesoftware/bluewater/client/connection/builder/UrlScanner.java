@@ -53,7 +53,7 @@ public class UrlScanner implements BuildUrlProviders {
 		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider, okHttpClients))
 			.eventually(isValid -> isValid
 				? new Promise<>(mediaServerUrlProvider)
-				: serverLookup.promiseServerInformation(library)
+				: serverLookup.promiseServerInformation(library.getLibraryId())
 				.eventually(info -> {
 					final int httpPort = info.getHttpPort();
 					final String remoteIp = info.getRemoteIp();
