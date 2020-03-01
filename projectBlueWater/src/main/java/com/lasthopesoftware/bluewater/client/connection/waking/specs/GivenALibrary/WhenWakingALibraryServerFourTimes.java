@@ -23,7 +23,7 @@ import kotlin.Unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenWakingALibraryServer {
+public class WhenWakingALibraryServerFourTimes {
 
 	private static final MachineAddress[] expectedPokedMachineAddresses = new MachineAddress[] {
 		new MachineAddress("local-address", "AB-E0-9F-24-F5"),
@@ -48,7 +48,7 @@ public class WhenWakingALibraryServer {
 				null));
 
 		final PokeServer pokeServer = (machineAddress, times, duration) -> {
-			if (times == 10 && Duration.standardHours(10).equals(duration)) {
+			if (times == 4 && Duration.standardSeconds(60).equals(duration)) {
 				pokedMachineAddresses.add(machineAddress);
 			}
 			return new Promise<>(Unit.INSTANCE);
@@ -57,7 +57,7 @@ public class WhenWakingALibraryServer {
 		final ServerAlarm serverAlarm = new ServerAlarm(
 			servers,
 			pokeServer,
-			new AlarmConfiguration(10, Duration.standardHours(10)));
+			new AlarmConfiguration(4, Duration.standardMinutes(1)));
 		new FuturePromise<>(serverAlarm.awakeLibraryServer(new LibraryId(14))).get();
 	}
 

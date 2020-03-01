@@ -7,8 +7,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
 class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
-	override fun promiseWakeSignal(machine: Machine): Promise<Unit> {
-		val macBytes = getMacBytes(machine.macAddress)
+	override fun promiseWakeSignal(machineAddress: MachineAddress, timesToSendSignal: Int, durationBetween: Duration): Promise<Unit> {
+		val macBytes = getMacBytes(machineAddress.macAddress)
 		val bytes = ByteArray(6 + 16 * macBytes.size)
 		for (i in 0..5) {
 			bytes[i] = 0xff.toByte()
@@ -19,9 +19,9 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 		}
 
 		return PromisePolicies.repeat({
-			packetSender.promiseSentPackets(machine.url, bytes)
-				.eventually { delay<Unit>(Duration.standardSeconds(5)) }
-		}, 3)
+			packetSender.promiseSentPackets(machineAddress.host, port, bytes)
+				.eventually { delay<Unit>(durationBetween) }
+		}, timesToSendSignal)
 	}
 
 	companion object {
@@ -34,5 +34,7 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 				throw IllegalArgumentException("Invalid hex digit in MAC address.")
 			}
 		}
+
+		private const val port = 9
 	}
 }

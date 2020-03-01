@@ -13,7 +13,7 @@ object PromisePolicies {
 		fun repeat(): Promise<Resolution> {
 			return function()
 				.eventually {
-					if (++repeatCount <= maximumRepeats) repeat()
+					if (++repeatCount < maximumRepeats) repeat()
 					else Promise(it)
 				}
 		}
