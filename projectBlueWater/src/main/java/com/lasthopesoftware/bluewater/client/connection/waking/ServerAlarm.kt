@@ -8,12 +8,7 @@ class ServerAlarm(private val serverLookup: LookupServers, private val server: P
 	override fun awakeLibraryServer(libraryId: LibraryId): Promise<Unit> {
 		return serverLookup.promiseServerInformation(libraryId)
 			.eventually { serverInfo ->
-				val ips = ArrayList<String>()
-				if (serverInfo != null) {
-					if (serverInfo.remoteIp != null) ips.add(serverInfo.remoteIp)
-					ips.addAll(serverInfo.localIps)
-				}
-
+				val ips = serverInfo?.remoteIp?.let { serverInfo.localIps.plus(it) } ?: emptyList()
 				val macAddresses = serverInfo?.macAddresses ?: emptyList()
 				val addresses = ips.flatMap { ip -> macAddresses.map { m -> MachineAddress(ip, m) } }
 
