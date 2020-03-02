@@ -152,7 +152,8 @@ class LibraryConnectionProvider(
 
 			private fun wakeAndBuildConnection(library: Library): Promise<IUrlProvider> {
 				reportProgress(BuildingConnectionStatus.SendingWakeSignal)
-				return wakeAlarm.awakeLibraryServer(selectedLibraryId)
+				return wakeAlarm
+					.awakeLibraryServer(selectedLibraryId)
 					.eventually { buildConnection(library) }
 			}
 
