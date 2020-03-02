@@ -19,12 +19,14 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 		}
 
 		return PromisePolicies.repeat({
-			packetSender.promiseSentPackets(machineAddress.host, port, bytes)
+			packetSender.promiseSentPackets(machineAddress.host, wakePort, bytes)
 				.eventually { delay<Unit>(durationBetween) }
 		}, timesToSendSignal)
 	}
 
 	companion object {
+		private const val wakePort = 9
+
 		private fun getMacBytes(macStr: String): ByteArray {
 			val hex = macStr.split(":", "-")
 			require(hex.size == 6) { "Invalid MAC address." }
@@ -34,7 +36,5 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 				throw IllegalArgumentException("Invalid hex digit in MAC address.")
 			}
 		}
-
-		private const val port = 9
 	}
 }

@@ -33,9 +33,10 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	public static final String isSyncLocalConnectionsOnlyColumn = "isSyncLocalConnectionsOnly";
 	public static final String userNameColumn = "userName";
 	public static final String passwordColumn = "password";
+	public static final String isWakeOnLanEnabledColumn = "isWakeOnLanEnabled";
 
 	private int id = -1;
-	
+
 	// Remote connection fields
 	private String libraryName;
 	private String accessCode;
@@ -52,6 +53,7 @@ public class Library implements IEntityCreator, IEntityUpdater {
 	private SyncedFileLocation syncedFileLocation;
 	private boolean isUsingExistingFiles;
 	private boolean isSyncLocalConnectionsOnly;
+	private boolean isWakeOnLanEnabled;
 
 	/**
 	 * @return the nowPlayingId
@@ -66,7 +68,7 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		this.nowPlayingId = nowPlayingId;
 		return this;
 	}
-	
+
 	/**
 	 * @return the mLibraryName
 	 */
@@ -107,11 +109,11 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		this.nowPlayingProgress = nowPlayingProgress;
 		return this;
 	}
-		
+
 	public String getSavedTracksString() {
 		return savedTracksString;
 	}
-	
+
 	public Library setSavedTracksString(String savedTracksString) {
 		this.savedTracksString = savedTracksString;
 		return this;
@@ -199,6 +201,13 @@ public class Library implements IEntityCreator, IEntityUpdater {
 		return this;
 	}
 
+	public boolean isWakeOnLanEnabled() { return isWakeOnLanEnabled; }
+
+	public Library setIsWakeOnLanEnabled(boolean isWakeOnLanEnabled) {
+		this.isWakeOnLanEnabled = isWakeOnLanEnabled;
+		return this;
+	}
+
 	public ViewType getSelectedViewType() {
 		return selectedViewType;
 	}
@@ -250,7 +259,24 @@ public class Library implements IEntityCreator, IEntityUpdater {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL("CREATE TABLE `LIBRARIES` (`accessCode` VARCHAR(30) , `userName` VARCHAR , `password` VARCHAR , `customSyncedFilesPath` VARCHAR , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `isLocalOnly` SMALLINT , `isRepeating` SMALLINT , `isSyncLocalConnectionsOnly` SMALLINT , `isUsingExistingFiles` SMALLINT , `libraryName` VARCHAR(50) , `nowPlayingId` INTEGER DEFAULT -1 NOT NULL , `nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , `savedTracksString` VARCHAR , `selectedView` INTEGER DEFAULT -1 NOT NULL , `selectedViewType` VARCHAR , `syncedFileLocation` VARCHAR )");
+		db.execSQL("CREATE TABLE `LIBRARIES` (" +
+			"`accessCode` VARCHAR(30) , " +
+			"`userName` VARCHAR , " +
+			"`password` VARCHAR , " +
+			"`customSyncedFilesPath` VARCHAR , " +
+			"`id` INTEGER PRIMARY KEY AUTOINCREMENT , " +
+			"`isLocalOnly` SMALLINT , " +
+			"`isRepeating` SMALLINT , " +
+			"`isSyncLocalConnectionsOnly` SMALLINT , " +
+			"`isUsingExistingFiles` SMALLINT , " +
+			"`" + isWakeOnLanEnabledColumn + "` SMALLINT , " +
+			"`libraryName` VARCHAR(50) , " +
+			"`nowPlayingId` INTEGER DEFAULT -1 NOT NULL , " +
+			"`nowPlayingProgress` INTEGER DEFAULT -1 NOT NULL , " +
+			"`savedTracksString` VARCHAR , " +
+			"`selectedView` INTEGER DEFAULT -1 NOT NULL , " +
+			"`selectedViewType` VARCHAR , " +
+			"`syncedFileLocation` VARCHAR )");
 	}
 
 	@Override
@@ -304,6 +330,10 @@ public class Library implements IEntityCreator, IEntityUpdater {
 					} while (cursor.moveToNext());
 				}
 			}
+		}
+
+		if (oldVersion < 8) {
+			db.execSQL("ALTER TABLE `LIBRARIES` add column `" + isWakeOnLanEnabledColumn + "` SMALLINT;");
 		}
 	}
 

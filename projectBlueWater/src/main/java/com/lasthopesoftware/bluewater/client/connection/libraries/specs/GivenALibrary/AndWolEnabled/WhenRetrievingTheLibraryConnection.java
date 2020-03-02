@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.specs.GivenALibrary.AndALiveUrlIsNotFound.AndAConnectionIsStillAlive;
+package com.lasthopesoftware.bluewater.client.connection.libraries.specs.GivenALibrary.AndWolEnabled;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.waking.specs.NoopServerAlarm;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -22,64 +21,60 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import kotlin.Unit;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenGettingATestedLibraryConnection {
+public class WhenRetrievingTheLibraryConnection {
 
+	private static final IUrlProvider urlProvider = mock(IUrlProvider.class);
 	private static final List<BuildingConnectionStatus> statuses = new ArrayList<>();
-	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static IConnectionProvider connectionProvider;
+	private static boolean isLibraryServerWoken;
 
 	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException {
-
+	public static void before() throws ExecutionException, InterruptedException {
 		final Library library = new Library()
-			.setId(2)
+			.setId(3)
+			.setIsWakeOnLanEnabled(true)
 			.setAccessCode("aB5nf");
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
 		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(library);
-		final DeferredPromise<Library> secondLibraryDeferredPromise = new DeferredPromise<>(library);
-		when(libraryProvider.getLibrary(new LibraryId(2)))
-			.thenReturn(libraryDeferredPromise)
-			.thenReturn(secondLibraryDeferredPromise);
+		when(libraryProvider.getLibrary(new LibraryId(3))).thenReturn(libraryDeferredPromise);
 
 		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
-		when(liveUrlProvider.promiseLiveUrl(library))
-			.thenReturn(Promise.empty())
-			.thenReturn(new Promise<>(firstUrlProvider));
-
-		final TestConnections testConnections = mock(TestConnections.class);
-		when(testConnections.promiseIsConnectionPossible(any()))
-				.thenReturn(new Promise<>(false));
+		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(urlProvider));
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
-			new NoopServerAlarm(),
+			libraryId -> {
+				isLibraryServerWoken = true;
+				return new Promise<>(Unit.INSTANCE);
+			},
 			liveUrlProvider,
-			testConnections,
+			mock(TestConnections.class),
 			OkHttpFactory.getInstance());
 
-		final LibraryId libraryId = new LibraryId(2);
 		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
-			.promiseLibraryConnection(libraryId)
-			.updates(statuses::add)
-			.eventually(
-				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add),
-				c -> libraryConnectionProvider.promiseTestedLibraryConnection(libraryId).updates(statuses::add)));
+			.promiseLibraryConnection(new LibraryId(3))
+			.updates(statuses::add));
 
 		libraryDeferredPromise.resolve();
-		secondLibraryDeferredPromise.resolve();
 
 		connectionProvider = futureConnectionProvider.get();
 	}
 
 	@Test
+	public void thenTheLibraryIsWoken() {
+		assertThat(isLibraryServerWoken).isTrue();
+	}
+
+	@Test
 	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.getUrlProvider()).isEqualTo(firstUrlProvider);
+		assertThat(connectionProvider.getUrlProvider()).isEqualTo(urlProvider);
 	}
 
 	@Test
@@ -87,9 +82,7 @@ public class WhenGettingATestedLibraryConnection {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionFailed,
-				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.SendingWakeSignal,
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionComplete);
 	}

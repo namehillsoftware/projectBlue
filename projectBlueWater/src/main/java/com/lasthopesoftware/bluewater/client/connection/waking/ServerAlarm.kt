@@ -14,7 +14,10 @@ class ServerAlarm(private val serverLookup: LookupServers, private val server: P
 
 				Promise.whenAll(
 					addresses.map {
-						server.promiseWakeSignal(it, alarmConfiguration.timesToWake, alarmConfiguration.timesBetweenWaking)
+						server.promiseWakeSignal(
+							it,
+							alarmConfiguration.timesToWake,
+							alarmConfiguration.timesBetweenWaking)
 					})
 			}
 			.then { Unit }

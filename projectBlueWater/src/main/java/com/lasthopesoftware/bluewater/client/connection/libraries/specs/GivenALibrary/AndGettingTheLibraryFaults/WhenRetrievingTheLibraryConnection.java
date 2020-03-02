@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
+import com.lasthopesoftware.bluewater.client.connection.waking.specs.NoopServerAlarm;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.DeferredPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -52,6 +53,7 @@ public class WhenRetrievingTheLibraryConnection {
 
 		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
 			libraryProvider,
+			new NoopServerAlarm(),
 			liveUrlProvider,
 			mock(TestConnections.class),
 			OkHttpFactory.getInstance());
