@@ -131,8 +131,8 @@ class EditClientSettingsActivity : AppCompatActivity() {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(LibraryId(libraryId))
-			.eventually(LoopedInPromise.response(VoidResponse(label@ ResponseAction<Library> { result ->
-				if (result == null) return@label
+			.eventually(LoopedInPromise.response(VoidResponse(ResponseAction<Library> { result ->
+				if (result == null) return@ResponseAction
 
 				library = result
 				chkLocalOnly.findView().isChecked = result.isLocalOnly
