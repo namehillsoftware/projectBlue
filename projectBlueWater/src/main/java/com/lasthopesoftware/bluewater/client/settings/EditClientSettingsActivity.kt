@@ -51,30 +51,32 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val connectionButtonListener = View.OnClickListener {
 		saveButton.findView().isEnabled = false
 
-		if (library == null) {
-			library = Library()
-			library!!.nowPlayingId = -1
+		var localLibrary = library;
+		if (localLibrary == null) {
+			localLibrary = Library()
+			library = localLibrary
+			localLibrary.nowPlayingId = -1
 		}
 
-		library!!.accessCode = txtAccessCode.findView().text.toString()
-		library!!.userName = txtUserName.findView().text.toString()
-		library!!.password = txtPassword.findView().text.toString()
-		library!!.isLocalOnly = chkLocalOnly.findView().isChecked
-		library!!.customSyncedFilesPath = txtSyncPath.findView().text.toString()
+		localLibrary.accessCode = txtAccessCode.findView().text.toString()
+		localLibrary.userName = txtUserName.findView().text.toString()
+		localLibrary.password = txtPassword.findView().text.toString()
+		localLibrary.isLocalOnly = chkLocalOnly.findView().isChecked
+		localLibrary.customSyncedFilesPath = txtSyncPath.findView().text.toString()
 
 		when (rgSyncFileOptions.findView().checkedRadioButtonId) {
-			R.id.rbPublicLocation -> library!!.syncedFileLocation = SyncedFileLocation.EXTERNAL
-			R.id.rbPrivateToApp -> library!!.syncedFileLocation = SyncedFileLocation.INTERNAL
-			R.id.rbCustomLocation -> library!!.syncedFileLocation = SyncedFileLocation.CUSTOM
+			R.id.rbPublicLocation -> localLibrary.syncedFileLocation = SyncedFileLocation.EXTERNAL
+			R.id.rbPrivateToApp -> localLibrary.syncedFileLocation = SyncedFileLocation.INTERNAL
+			R.id.rbCustomLocation -> localLibrary.syncedFileLocation = SyncedFileLocation.CUSTOM
 		}
 
-		library!!.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked)
-		library!!.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked)
-		library!!.setIsWakeOnLanEnabled(chkIsWakeOnLanEnabled.findView().isChecked)
+		localLibrary.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked)
+		localLibrary.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked)
+		localLibrary.setIsWakeOnLanEnabled(chkIsWakeOnLanEnabled.findView().isChecked)
 
 		val permissionsToRequest = ArrayList<String>(2)
-		if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(library!!)) permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-		if (applicationWritePermissionsRequirementsProviderLazy.getObject().isWritePermissionsRequiredForLibrary(library!!)) permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+		if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(localLibrary)) permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+		if (applicationWritePermissionsRequirementsProviderLazy.getObject().isWritePermissionsRequiredForLibrary(localLibrary)) permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 		if (permissionsToRequest.size > 0) {
 			val permissionsToRequestArray = permissionsToRequest.toTypedArray()
 			ActivityCompat.requestPermissions(this@EditClientSettingsActivity, permissionsToRequestArray, permissionsRequestInteger)
@@ -140,7 +142,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 				chkIsUsingLocalConnectionForSync.findView().isChecked = result.isSyncLocalConnectionsOnly
 				chkIsWakeOnLanEnabled.findView().isChecked = result.isWakeOnLanEnabled
 				val customSyncPath = result.customSyncedFilesPath
-				if (customSyncPath != null && !customSyncPath.isEmpty()) syncPathTextView.text = customSyncPath
+				if (customSyncPath != null && customSyncPath.isNotEmpty()) syncPathTextView.text = customSyncPath
 
 				when (result.syncedFileLocation) {
 					SyncedFileLocation.EXTERNAL -> syncFilesRadioGroup.check(R.id.rbPublicLocation)
