@@ -126,7 +126,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 
 		lazyLibraryProvider.getObject()
 			.getLibrary(LibraryId(libraryId))
-			.eventually(LoopedInPromise.response({ result ->
+			.eventually(LoopedInPromise.response<Library, Unit>({ result ->
 				if (result == null) return@response
 
 				library = result
@@ -149,6 +149,8 @@ class EditClientSettingsActivity : AppCompatActivity() {
 				txtAccessCode.findView().setText(result.accessCode)
 				txtUserName.findView().setText(result.userName)
 				txtPassword.findView().setText(result.password)
+
+				Unit
 			}, this))
 	}
 
@@ -166,7 +168,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	}
 
 	private fun saveLibraryAndFinish() {
-		lazyLibraryProvider.getObject().saveLibrary(library).eventually(LoopedInPromise.response({
+		lazyLibraryProvider.getObject().saveLibrary(library).eventually(LoopedInPromise.response<Library, Unit>({
 			saveButton.findView().text = getText(R.string.btn_saved)
 			finish()
 		}, this))
