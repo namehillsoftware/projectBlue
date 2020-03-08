@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenSecureServerIsFoundViaLookup.AndTheLocalIpsCanBeConnected;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
@@ -15,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,16 +39,17 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
-		when(serverLookup.promiseServerInformation(argThat(a -> "gooPc".equals(a.getAccessCode()))))
+		when(serverLookup.promiseServerInformation(new LibraryId(5)))
 			.thenReturn(new Promise<>(
-				new ServerInfo()
-					.setRemoteIp("1.2.3.4")
-					.setHttpPort(143)
-					.setHttpsPort(452)
-					.setLocalIps(Arrays.asList(
+				new ServerInfo(
+					143,
+					452,
+					"1.2.3.4",
+					Arrays.asList(
 						"53.24.19.245",
-						"192.168.1.56"))
-					.setCertificateFingerprint("2386166660562C5AAA1253B2BED7C2483F9C2D45")));
+						"192.168.1.56"),
+					Collections.emptyList(),
+					"2386166660562C5AAA1253B2BED7C2483F9C2D45")));
 
 		final UrlScanner urlScanner = new UrlScanner(
 			mock(EncodeToBase64.class),
@@ -56,6 +59,7 @@ public class WhenScanningForUrls {
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
+				.setId(5)
 				.setAccessCode("gooPc"))).get();
 	}
 

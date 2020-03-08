@@ -25,7 +25,7 @@ public class RepositoryAccessHelper extends SQLiteOpenHelper implements Closeabl
 
 	private static final CreateAndHold<ExecutorService> databaseExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
 
-	private static final int DATABASE_VERSION = 7;
+	private static final int DATABASE_VERSION = 8;
 	private static final String DATABASE_NAME = "sessions_db";
 
 	private final static Lazy<IEntityCreator[]> entityCreators = new Lazy<>(() -> new IEntityCreator[]{new Library(), new StoredFileEntityCreator(), new StoredItem(), new CachedFile()});

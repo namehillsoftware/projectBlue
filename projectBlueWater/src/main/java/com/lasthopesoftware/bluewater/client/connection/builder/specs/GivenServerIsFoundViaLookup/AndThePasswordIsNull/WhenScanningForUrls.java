@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.specs.GivenServerIsFoundViaLookup.AndThePasswordIsNull;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
@@ -13,6 +14,7 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,8 +37,14 @@ public class WhenScanningForUrls {
 			.thenReturn(new Promise<>(true));
 
 		final LookupServers serverLookup = mock(LookupServers.class);
-		when(serverLookup.promiseServerInformation(argThat(a -> "gooPc".equals(a.getAccessCode()))))
-			.thenReturn(new Promise<>(new ServerInfo().setRemoteIp("1.2.3.4").setHttpPort(143)));
+		when(serverLookup.promiseServerInformation(new LibraryId(63)))
+			.thenReturn(new Promise<>(new ServerInfo(
+				143,
+				null,
+				"1.2.3.4",
+				Collections.emptyList(),
+				Collections.emptyList(),
+				null)));
 
 		final UrlScanner urlScanner = new UrlScanner(
 			decodedString -> decodedString,
@@ -46,6 +54,7 @@ public class WhenScanningForUrls {
 
 		urlProvider = new FuturePromise<>(
 			urlScanner.promiseBuiltUrlProvider(new Library()
+				.setId(63)
 				.setAccessCode("gooPc")
 				.setUserName("user")
 				.setPassword(null))).get();

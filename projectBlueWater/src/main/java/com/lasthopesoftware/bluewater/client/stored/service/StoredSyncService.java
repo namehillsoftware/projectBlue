@@ -36,7 +36,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
-import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
@@ -45,7 +44,6 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
@@ -75,7 +73,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.SynchronizeStoredFiles;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.resources.network.ActiveNetworkFinder;
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ActivateChannel;
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
@@ -237,7 +234,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 			return new UrlScanner(
 				new Base64Encoder(),
 				new ConnectionTester(),
-				new ServerLookup(new ServerInfoXmlRequest(client)),
+				new ServerLookup(new ServerInfoXmlRequest(lazyLibraryRepository.getObject(), client)),
 				OkHttpFactory.getInstance());
 		}
 	};
@@ -253,13 +250,7 @@ public class StoredSyncService extends Service implements PostSyncNotification {
 	private final CreateAndHold<ProvideLibraryConnections> lazyLibraryConnections = new AbstractSynchronousLazy<ProvideLibraryConnections>() {
 		@Override
 		protected ProvideLibraryConnections create() {
-			return new LibraryConnectionProvider(
-				new SyncLibraryProvider(lazyLibraryRepository.getObject()),
-				new LiveUrlProvider(
-					new ActiveNetworkFinder(StoredSyncService.this),
-					lazyUrlScanner.getObject()),
-				new ConnectionTester(),
-				OkHttpFactory.getInstance());
+			return LibraryConnectionProvider.Instance.get(StoredSyncService.this);
 		}
 	};
 

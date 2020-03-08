@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup.specs.GivenServerInfoErrorXml.WithoutAMessage;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerDiscoveryException;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
@@ -36,7 +36,7 @@ public class WhenParsingTheServerInfo {
 		final ServerLookup serverLookup = new ServerLookup(serverInfoXml);
 
 		try {
-			new FuturePromise<>(serverLookup.promiseServerInformation(new Library())).get();
+			new FuturePromise<>(serverLookup.promiseServerInformation(new LibraryId(5))).get();
 		} catch (ExecutionException e) {
 			if (e.getCause() instanceof ServerDiscoveryException)
 				exception = (ServerDiscoveryException)e.getCause();
