@@ -55,7 +55,7 @@ class SessionConnection(
 		const val BuildingSessionComplete = 6
 
 		@SessionConnectionStatus
-		fun getSessionConnectionStatus(connectionStatus: BuildingConnectionStatus?): Int {
+		fun getSessionConnectionStatus(connectionStatus: BuildingConnectionStatus): Int {
 			return when (connectionStatus) {
 				BuildingConnectionStatus.GettingLibrary -> GettingLibrary
 				BuildingConnectionStatus.SendingWakeSignal -> SendingWakeSignal
@@ -63,7 +63,6 @@ class SessionConnection(
 				BuildingConnectionStatus.BuildingConnection -> BuildingConnection
 				BuildingConnectionStatus.BuildingConnectionFailed -> BuildingConnectionFailed
 				BuildingConnectionStatus.BuildingConnectionComplete -> BuildingSessionComplete
-				else -> throw IndexOutOfBoundsException()
 			}
 		}
 
