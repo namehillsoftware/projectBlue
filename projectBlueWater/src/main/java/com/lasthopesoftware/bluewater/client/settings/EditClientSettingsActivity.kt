@@ -46,7 +46,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val connectionButtonListener = View.OnClickListener {
 		saveButton.findView().isEnabled = false
 
-		val localLibrary = library ?: Library().setNowPlayingId(-1)
+		val localLibrary = library ?: Library(_nowPlayingId = -1)
 
 		library = localLibrary
 			.setAccessCode(txtAccessCode.findView().text.toString())

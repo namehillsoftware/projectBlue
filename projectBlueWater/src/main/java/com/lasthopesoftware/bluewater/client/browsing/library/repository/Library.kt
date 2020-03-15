@@ -8,79 +8,48 @@ import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import java.util.*
 
 @Keep
-class Library : IEntityCreator, IEntityUpdater {
-	/**
-	 * @return the id
-	 */
-	var id = -1
-		private set
+data class Library(
+	private var _id: Int = -1,
+	private var _libraryName: String? = null,
+	private var _accessCode: String? = null,
+	private var _userName: String? = null,
+	private var _password: String? = null,
+	private var _isLocalOnly: Boolean = false,
+	private var _isRepeating: Boolean = false,
+	private var _nowPlayingId: Int = -1,
+	private var _nowPlayingProgress: Long = -1,
+	private var _selectedViewType: ViewType? = null,
+	private var _selectedView: Int = -1,
+	private var _savedTracksString: String? = null,
+	private var _customSyncedFilesPath: String? = null,
+	private var _syncedFileLocation: SyncedFileLocation? = null,
+	private var _isUsingExistingFiles: Boolean = false,
+	private var _isSyncLocalConnectionsOnly: Boolean = false,
+	private var _isWakeOnLanEnabled: Boolean = false) : IEntityCreator, IEntityUpdater {
 
-	/**
-	 * @return the mLibraryName
-	 */
-	// Remote connection fields
-	var libraryName: String? = null
-		private set
-
-	/**
-	 * @return the mAccessCode
-	 */
-	var accessCode: String? = null
-		private set
-	var userName: String? = null
-		private set
-	var password: String? = null
-		private set
-
-	/**
-	 * @return the isLocalOnly
-	 */
-	var isLocalOnly = false
-		private set
-
-	/**
-	 * @return the isRepeating
-	 */
-	var isRepeating = false
-		private set
-
-	/**
-	 * @return the nowPlayingId
-	 */
-	var nowPlayingId = -1
-		private set
-
-	/**
-	 * @return the nowPlayingProgress
-	 */
-	var nowPlayingProgress: Long = -1
-		private set
-	var selectedViewType: ViewType? = null
-		private set
-
-	/**
-	 * @return the selectedView
-	 */
-	var selectedView = -1
-		private set
-	var savedTracksString: String? = null
-		private set
-	var customSyncedFilesPath: String? = null
-		private set
-	var syncedFileLocation: SyncedFileLocation? = null
-		private set
-	var isUsingExistingFiles = false
-		private set
-	var isSyncLocalConnectionsOnly = false
-		private set
-	var isWakeOnLanEnabled = false
-		private set
+	val id: Int get() = _id
+	val libraryName: String? get() = _libraryName
+	val accessCode: String? get() = _accessCode
+	val userName: String? get() = _userName
+	val password: String? get() = _password
+	val isLocalOnly: Boolean get() = _isLocalOnly
+	val isRepeating: Boolean get() = _isRepeating
+	val nowPlayingId: Int get() = _nowPlayingId
+	val nowPlayingProgress: Long get() = _nowPlayingProgress
+	val selectedViewType: ViewType? get() = _selectedViewType
+	val selectedView: Int get() = _selectedView
+	val savedTracksString: String? get() = _savedTracksString
+	val customSyncedFilesPath: String? get() = _customSyncedFilesPath
+	val syncedFileLocation: SyncedFileLocation? get() = _syncedFileLocation
+	val isUsingExistingFiles: Boolean get() = _isUsingExistingFiles
+	val isSyncLocalConnectionsOnly: Boolean get() = _isSyncLocalConnectionsOnly
+	val isWakeOnLanEnabled: Boolean get() = _isWakeOnLanEnabled
 
 	/**
 	 * @param nowPlayingId the nowPlayingId to set
 	 */
 	fun setNowPlayingId(nowPlayingId: Int): Library {
-		this.nowPlayingId = nowPlayingId
+		_nowPlayingId = nowPlayingId
 		return this
 	}
 
@@ -88,7 +57,7 @@ class Library : IEntityCreator, IEntityUpdater {
 	 * @param libraryName the mLibraryName to set
 	 */
 	fun setLibraryName(libraryName: String?): Library {
-		this.libraryName = libraryName
+		_libraryName = libraryName
 		return this
 	}
 
@@ -96,7 +65,7 @@ class Library : IEntityCreator, IEntityUpdater {
 	 * @param accessCode the mAccessCode to set
 	 */
 	fun setAccessCode(accessCode: String?): Library {
-		this.accessCode = accessCode
+		_accessCode = accessCode
 		return this
 	}
 
@@ -104,12 +73,12 @@ class Library : IEntityCreator, IEntityUpdater {
 	 * @param nowPlayingProgress the nowPlayingProgress to set
 	 */
 	fun setNowPlayingProgress(nowPlayingProgress: Long): Library {
-		this.nowPlayingProgress = nowPlayingProgress
+		_nowPlayingProgress = nowPlayingProgress
 		return this
 	}
 
 	fun setSavedTracksString(savedTracksString: String?): Library {
-		this.savedTracksString = savedTracksString
+		_savedTracksString = savedTracksString
 		return this
 	}
 
@@ -117,7 +86,7 @@ class Library : IEntityCreator, IEntityUpdater {
 	 * @param isLocalOnly the isLocalOnly to set
 	 */
 	fun setLocalOnly(isLocalOnly: Boolean): Library {
-		this.isLocalOnly = isLocalOnly
+		_isLocalOnly = isLocalOnly
 		return this
 	}
 
@@ -125,7 +94,7 @@ class Library : IEntityCreator, IEntityUpdater {
 	 * @param selectedView the selectedView to set
 	 */
 	fun setSelectedView(selectedView: Int): Library {
-		this.selectedView = selectedView
+		_selectedView = selectedView
 		return this
 	}
 
@@ -133,52 +102,52 @@ class Library : IEntityCreator, IEntityUpdater {
 	 * @param isRepeating the isRepeating to set
 	 */
 	fun setRepeating(isRepeating: Boolean): Library {
-		this.isRepeating = isRepeating
+		_isRepeating = isRepeating
 		return this
 	}
 
 	fun setCustomSyncedFilesPath(customSyncedFilesPath: String?): Library {
-		this.customSyncedFilesPath = customSyncedFilesPath
+		this._customSyncedFilesPath = customSyncedFilesPath
 		return this
 	}
 
 	fun setSyncedFileLocation(syncedFileLocation: SyncedFileLocation?): Library {
-		this.syncedFileLocation = syncedFileLocation
+		_syncedFileLocation = syncedFileLocation
 		return this
 	}
 
 	fun setIsUsingExistingFiles(isUsingExistingFiles: Boolean): Library {
-		this.isUsingExistingFiles = isUsingExistingFiles
+		_isUsingExistingFiles = isUsingExistingFiles
 		return this
 	}
 
 	fun setIsSyncLocalConnectionsOnly(isSyncLocalConnections: Boolean): Library {
-		isSyncLocalConnectionsOnly = isSyncLocalConnections
+		_isSyncLocalConnectionsOnly = isSyncLocalConnections
 		return this
 	}
 
 	fun setIsWakeOnLanEnabled(isWakeOnLanEnabled: Boolean): Library {
-		this.isWakeOnLanEnabled = isWakeOnLanEnabled
+		_isWakeOnLanEnabled = isWakeOnLanEnabled
 		return this
 	}
 
 	fun setSelectedViewType(selectedViewType: ViewType?): Library {
-		this.selectedViewType = selectedViewType
+		_selectedViewType = selectedViewType
 		return this
 	}
 
 	fun setId(id: Int): Library {
-		this.id = id
+		_id = id
 		return this
 	}
 
 	fun setUserName(userName: String?): Library {
-		this.userName = userName
+		_userName = userName
 		return this
 	}
 
 	fun setPassword(password: String?): Library {
-		this.password = password
+		_password = password
 		return this
 	}
 
@@ -237,7 +206,7 @@ class Library : IEntityCreator, IEntityUpdater {
 							))
 							continue
 						}
-						if (userCredentials.size > 0) {
+						if (userCredentials.isNotEmpty()) {
 							db.execSQL(
 								"UPDATE `" + tableName + "` " +
 									" SET `" + userNameColumn + "` = ? " +
