@@ -85,8 +85,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
+import com.lasthopesoftware.bluewater.client.playback.service.exceptions.BreakConnection;
+import com.lasthopesoftware.bluewater.client.playback.service.exceptions.ConnectionCircuitTracker;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.PlaybackStartingNotificationBuilder;
@@ -299,9 +301,6 @@ implements OnAudioFocusChangeListener
 	private static final int startingNotificationId = 53;
 	private static final int connectingNotificationId = 70;
 
-	private static final int maxErrors = 3;
-	private static final int errorCountResetDuration = 1000;
-
 	private static final CreateAndHold<Scheduler> lazyObservationScheduler = new AbstractSynchronousLazy<Scheduler>() {
 		@Override
 		protected Scheduler create() {
@@ -356,16 +355,16 @@ implements OnAudioFocusChangeListener
 	private final CreateAndHold<PlaylistVolumeManager> lazyPlaylistVolumeManager = new Lazy<>(() -> new PlaylistVolumeManager(1.0f));
 	private final CreateAndHold<IVolumeLevelSettings> lazyVolumeLevelSettings = new Lazy<>(() -> new VolumeLevelSettings(this));
 	private final CreateAndHold<ChannelConfiguration> lazyChannelConfiguration = new Lazy<>(() -> new SharedChannelProperties(this));
-	private final CreateAndHold<PlaybackNotificationsConfiguration> lazyPlaybackNotificationsConfiguration = new AbstractSynchronousLazy<PlaybackNotificationsConfiguration>() {
+	private final CreateAndHold<NotificationsConfiguration> lazyPlaybackNotificationsConfiguration = new AbstractSynchronousLazy<NotificationsConfiguration>() {
 		@Override
-		protected PlaybackNotificationsConfiguration create() {
+		protected NotificationsConfiguration create() {
 			final ActivateChannel notificationChannelActivator = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
 				? new NotificationChannelActivator(notificationManagerLazy.getObject())
 				: new NoOpChannelActivator();
 
 			final String channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
-			
-			return new PlaybackNotificationsConfiguration(channelName, playingNotificationId);
+
+			return new NotificationsConfiguration(channelName, playingNotificationId);
 		}
 	};
 	private final CreateAndHold<MediaStyleNotificationSetup> lazyMediaStyleNotificationSetup = new AbstractSynchronousLazy<MediaStyleNotificationSetup>() {
@@ -429,8 +428,7 @@ implements OnAudioFocusChangeListener
 
 	private final CreateAndHold<ControlNotifications> lazyNotificationController = new Lazy<>(() -> new NotificationsController(this, notificationManagerLazy.getObject()));
 
-	private int numberOfErrors = 0;
-	private long lastErrorTime = 0;
+	private final CreateAndHold<BreakConnection> lazyDisconnectionTracker = new Lazy<>(() -> new ConnectionCircuitTracker());
 
 	private boolean areListenersRegistered = false;
 
@@ -449,8 +447,6 @@ implements OnAudioFocusChangeListener
 	private PowerManager.WakeLock wakeLock = null;
 	private SimpleCache cache;
 	private int startId;
-
-	private Promise<IConnectionProvider> pollingSessionConnection;
 
 	private final CreateAndHold<ImmediateResponse<IConnectionProvider, Void>> connectionRegainedListener = new AbstractSynchronousLazy<ImmediateResponse<IConnectionProvider, Void>>() {
 		@Override
@@ -532,10 +528,10 @@ implements OnAudioFocusChangeListener
 			.then(new VoidResponse<>(b -> lazyNotificationController.getObject().notifyForeground(
 				b.build(), startingNotificationId)));
 	}
-	
+
 	private void registerListeners() {
 		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-				
+
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
 		wakeLock.acquire();
 
@@ -544,10 +540,10 @@ implements OnAudioFocusChangeListener
 		registerReceiver(
 			lazyAudioBecomingNoisyReceiver.getObject(),
 			new IntentFilter(ACTION_AUDIO_BECOMING_NOISY));
-        
+
 		areListenersRegistered = true;
 	}
-	
+
 	private void registerRemoteClientControl() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			lazyMediaSession.getObject().setActive(true);
@@ -557,10 +553,10 @@ implements OnAudioFocusChangeListener
 		audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver.getObject());
 		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient.getObject());
 	}
-	
+
 	private void unregisterListeners() {
 		audioManagerLazy.getObject().abandonAudioFocus(this);
-		
+
 		if (wakeLock != null) {
 			if (wakeLock.isHeld()) wakeLock.release();
 			wakeLock = null;
@@ -568,10 +564,10 @@ implements OnAudioFocusChangeListener
 
 		if (lazyAudioBecomingNoisyReceiver.isCreated())
 			unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject());
-		
+
 		areListenersRegistered = false;
 	}
-	
+
 	/* Begin Event Handlers */
 
 	@Override
@@ -695,11 +691,6 @@ implements OnAudioFocusChangeListener
 				.then(this::broadcastChangedFile);
 		}
 
-		if (pollingSessionConnection != null && action.equals(Action.stopWaitingForConnection)) {
-			pollingSessionConnection.cancel();
-			return Promise.empty();
-		}
-
 		if (action.equals(Action.addFileToPlaylist)) {
 			final int fileKey = intent.getIntExtra(Action.Bag.playlistPosition, -1);
 			if (fileKey < 0) return Promise.empty();
@@ -721,7 +712,7 @@ implements OnAudioFocusChangeListener
 
 		return Promise.empty();
 	}
-	
+
 	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) {
 		return playbackEnginePromise =
 			playbackEnginePromise != null
@@ -920,7 +911,7 @@ implements OnAudioFocusChangeListener
 			buildFullNotification(notifyBuilder),
 			connectingNotificationId);
 	}
-	
+
 	private void handlePlaybackStarted() {
 		isPlaying = true;
 		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted();
@@ -1017,37 +1008,9 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void handleDisconnection() {
-		final long currentErrorTime = System.currentTimeMillis();
-		// Stop handling errors if more than the max errors has occurred
-		if (++numberOfErrors > maxErrors) {
-			// and the last error time is less than the error count reset duration
-			if (currentErrorTime <= lastErrorTime + errorCountResetDuration) {
-				logger.warn("Number of errors has not surpassed " + maxErrors + " in less than " + errorCountResetDuration + "ms. Closing and restarting playlist manager.");
+		if (!lazyDisconnectionTracker.getObject().isConnectionPastThreshold()) return;
 
-				closeAndRestartPlaylistManager();
-				return;
-			}
-
-			// reset the error count if enough time has elapsed to reset the error count
-			numberOfErrors = 1;
-		}
-
-		lastErrorTime = currentErrorTime;
-
-		final Builder builder = new Builder(this, lazyPlaybackNotificationsConfiguration.getObject().getNotificationChannel());
-		builder.setOngoing(true);
-		// Add intent for canceling waiting for connection to come back
-		final Intent intent = new Intent(this, PlaybackService.class);
-		intent.setAction(Action.stopWaitingForConnection);
-		PendingIntent pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		builder.setContentIntent(pi);
-
-		builder.setContentTitle(getText(R.string.lbl_waiting_for_connection));
-		builder.setContentText(getText(R.string.lbl_click_to_cancel));
-		lazyNotificationController.getObject().notifyBackground(buildFullNotification(builder), playingNotificationId);
-
-		pollingSessionConnection = PollConnectionService.pollSessionConnection(this);
-		pollingSessionConnection
+		PollConnectionService.pollSessionConnection(this, true)
 			.then(connectionRegainedListener.getObject(), onPollingCancelledListener.getObject());
 	}
 
@@ -1081,7 +1044,7 @@ implements OnAudioFocusChangeListener
 
 			return;
 		}
-		
+
 		if (playbackEngine == null || !playbackEngine.isPlaying()) return;
 
 	    switch (focusChange) {
@@ -1149,7 +1112,7 @@ implements OnAudioFocusChangeListener
 
 		killService(this);
 	}
-		
+
 	@Override
 	public void onDestroy() {
 
@@ -1219,9 +1182,9 @@ implements OnAudioFocusChangeListener
 	}
 
 	/* End Event Handlers */
-	
+
 	/* Begin Binder Code */
-	
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		return lazyBinder.getObject();
@@ -1245,7 +1208,6 @@ implements OnAudioFocusChangeListener
 		private static final String previous = magicPropertyBuilder.buildProperty("previous");
 		private static final String next = magicPropertyBuilder.buildProperty("then");
 		private static final String seekTo = magicPropertyBuilder.buildProperty("seekTo");
-		private static final String stopWaitingForConnection = magicPropertyBuilder.buildProperty("stopWaitingForConnection");
 		private static final String addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist");
 		private static final String removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist");
 		private static final String killMusicService = magicPropertyBuilder.buildProperty("killMusicService");
@@ -1259,7 +1221,6 @@ implements OnAudioFocusChangeListener
 			seekTo,
 			repeating,
 			completing,
-			stopWaitingForConnection,
 			addFileToPlaylist,
 			removeFileAtPositionFromPlaylist));
 

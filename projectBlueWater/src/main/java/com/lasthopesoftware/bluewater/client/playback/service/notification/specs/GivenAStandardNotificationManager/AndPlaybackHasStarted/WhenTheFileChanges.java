@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.spec
 import android.app.Notification;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
 import com.lasthopesoftware.specs.AndroidContext;
@@ -36,7 +36,7 @@ public class WhenTheFileChanges extends AndroidContext {
 		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
 			new PlaybackNotificationBroadcaster(
 				notificationController,
-				new PlaybackNotificationsConfiguration("", 43),
+				new NotificationsConfiguration("", 43),
 				notificationContentBuilder,
 				() -> new Promise<>(newFakeBuilder(new Notification())));
 

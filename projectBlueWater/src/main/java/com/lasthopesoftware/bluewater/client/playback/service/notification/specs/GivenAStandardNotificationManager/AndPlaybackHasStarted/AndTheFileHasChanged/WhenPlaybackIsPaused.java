@@ -6,8 +6,8 @@ import android.app.Service;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.resources.notifications.control.NotificationsController;
 import com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder;
@@ -48,7 +48,7 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 				new NotificationsController(
 					service.getObject(),
 					notificationManager),
-				new PlaybackNotificationsConfiguration("",43),
+				new NotificationsConfiguration("",43),
 				notificationContentBuilder,
 				() -> new Promise<>(newFakeBuilder(new Notification())));
 
