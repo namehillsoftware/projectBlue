@@ -50,8 +50,9 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 			return promiseConnectedService
 				.eventually { s ->
-					s.pollConnectionService.withNotification = s.pollConnectionService.withNotification || withNotification
-					s.pollConnectionService.lazyConnectionPoller.getObject()
+					val connectionService = s.pollConnectionService;
+					connectionService.withNotification = connectionService.withNotification || withNotification
+					connectionService.lazyConnectionPoller.getObject()
 						.must { context.unbindService(s.serviceConnection) }
 				}
 		}
