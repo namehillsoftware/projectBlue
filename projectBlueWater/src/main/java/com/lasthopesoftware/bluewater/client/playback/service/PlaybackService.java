@@ -364,7 +364,7 @@ implements OnAudioFocusChangeListener
 				: new NoOpChannelActivator();
 
 			final String channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject());
-			
+
 			return new PlaybackNotificationsConfiguration(channelName, playingNotificationId);
 		}
 	};
@@ -532,10 +532,10 @@ implements OnAudioFocusChangeListener
 			.then(new VoidResponse<>(b -> lazyNotificationController.getObject().notifyForeground(
 				b.build(), startingNotificationId)));
 	}
-	
+
 	private void registerListeners() {
 		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-				
+
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ON_AFTER_RELEASE, MediaPlayer.class.getName());
 		wakeLock.acquire();
 
@@ -544,10 +544,10 @@ implements OnAudioFocusChangeListener
 		registerReceiver(
 			lazyAudioBecomingNoisyReceiver.getObject(),
 			new IntentFilter(ACTION_AUDIO_BECOMING_NOISY));
-        
+
 		areListenersRegistered = true;
 	}
-	
+
 	private void registerRemoteClientControl() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			lazyMediaSession.getObject().setActive(true);
@@ -557,10 +557,10 @@ implements OnAudioFocusChangeListener
 		audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver.getObject());
 		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient.getObject());
 	}
-	
+
 	private void unregisterListeners() {
 		audioManagerLazy.getObject().abandonAudioFocus(this);
-		
+
 		if (wakeLock != null) {
 			if (wakeLock.isHeld()) wakeLock.release();
 			wakeLock = null;
@@ -568,10 +568,10 @@ implements OnAudioFocusChangeListener
 
 		if (lazyAudioBecomingNoisyReceiver.isCreated())
 			unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject());
-		
+
 		areListenersRegistered = false;
 	}
-	
+
 	/* Begin Event Handlers */
 
 	@Override
@@ -721,7 +721,7 @@ implements OnAudioFocusChangeListener
 
 		return Promise.empty();
 	}
-	
+
 	private synchronized Promise<PlaybackEngine> initializePlaybackPlaylistStateManagerSerially(Library library) {
 		return playbackEnginePromise =
 			playbackEnginePromise != null
@@ -907,6 +907,9 @@ implements OnAudioFocusChangeListener
 			case BuildingSessionConnectionStatus.GettingLibraryFailed:
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
 				return;
+			case BuildingSessionConnectionStatus.SendingWakeSignal:
+				notifyBuilder.setContentText(getString(R.string.sending_wake_signal));
+				break;
 			case BuildingSessionConnectionStatus.BuildingConnection:
 				notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
 				break;
@@ -920,7 +923,7 @@ implements OnAudioFocusChangeListener
 			buildFullNotification(notifyBuilder),
 			connectingNotificationId);
 	}
-	
+
 	private void handlePlaybackStarted() {
 		isPlaying = true;
 		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted();
@@ -1081,7 +1084,7 @@ implements OnAudioFocusChangeListener
 
 			return;
 		}
-		
+
 		if (playbackEngine == null || !playbackEngine.isPlaying()) return;
 
 	    switch (focusChange) {
@@ -1149,7 +1152,7 @@ implements OnAudioFocusChangeListener
 
 		killService(this);
 	}
-		
+
 	@Override
 	public void onDestroy() {
 
@@ -1219,9 +1222,9 @@ implements OnAudioFocusChangeListener
 	}
 
 	/* End Event Handlers */
-	
+
 	/* Begin Binder Code */
-	
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		return lazyBinder.getObject();
