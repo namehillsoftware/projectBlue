@@ -91,4 +91,5 @@
     <string name="notification_settings_tutorial_title">Notification Settings</string>
     <string name="notification_settings_tutorial">Getting sounds when playback changes? Click on \'%1$s\' and then change the importance of %2$s to "Medium" to disable playback sounds.</string>
     <string name="wake_on_lan_setting">Wake on LAN</string>
+    <string name="sending_wake_signal">Sending wake signal to server</string>
 </resources>

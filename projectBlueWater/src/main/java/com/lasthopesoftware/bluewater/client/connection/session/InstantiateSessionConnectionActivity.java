@@ -23,13 +23,13 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.Lazy;
 
 public class InstantiateSessionConnectionActivity extends Activity {
-	
+
 	public static final int ACTIVITY_ID = 2032;
-	
+
 	private static final String START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(InstantiateSessionConnectionActivity.class, "START_ACTIVITY_FOR_RETURN");
-	
+
 	private static final int ACTIVITY_LAUNCH_DELAY = 1500;
-	
+
 	private LazyViewFinder<TextView> lblConnectionStatus = new LazyViewFinder<>(this, R.id.lblConnectionStatus);
 	private final Lazy<Intent> selectServerIntent = new Lazy<Intent>(() -> new Intent(this, ApplicationSettingsActivity.class));
 	private final AbstractSynchronousLazy<Intent> browseLibraryIntent = new AbstractSynchronousLazy<Intent>() {
@@ -49,7 +49,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			handleBuildStatusChange(intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1));
 		}
 	};
-	
+
 	/*
 	 * Returns true if the session needs to be restored,
 	 * false if it doesn't
@@ -70,7 +70,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 	public static void startNewConnection(final Context context) {
 		context.startActivity(new Intent(context, InstantiateSessionConnectionActivity.class));
 	}
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -96,7 +96,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 				return null;
 			}, this));
 	}
-	
+
 	private void handleBuildStatusChange(int status) {
 		final TextView lblConnectionStatusView = lblConnectionStatus.findView();
 		switch (status) {
@@ -105,6 +105,9 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			return;
 		case BuildingSessionConnectionStatus.GettingLibraryFailed:
 			lblConnectionStatusView.setText(R.string.lbl_please_connect_to_valid_server);
+			return;
+		case BuildingSessionConnectionStatus.SendingWakeSignal:
+			lblConnectionStatusView.setText(R.string.sending_wake_signal);
 			return;
 		case BuildingSessionConnectionStatus.BuildingConnection:
 			lblConnectionStatusView.setText(R.string.lbl_connecting_to_server_library);
@@ -116,25 +119,25 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			lblConnectionStatusView.setText(R.string.lbl_connected);
 		}
 	}
-	
+
 	private void launchActivityDelayed(Intent intent) {
 		final Handler handler = new Handler();
 		handler.postDelayed(new LaunchRunnable(this, intent), ACTIVITY_LAUNCH_DELAY);
 	}
-	
+
 	private static class LaunchRunnable implements Runnable {
 		private final Intent intent;
 		private final Context context;
-		
+
 		public LaunchRunnable(final Context context, final Intent intent) {
 			this.intent = intent;
 			this.context = context;
 		}
-		
+
 		@Override
 		public void run() {
 			context.startActivity(intent);
 		}
-		
+
 	}
 }
