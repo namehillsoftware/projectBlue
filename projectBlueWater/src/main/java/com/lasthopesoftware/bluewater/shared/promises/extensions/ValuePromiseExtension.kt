@@ -10,4 +10,8 @@ fun <T> T.toPromise(): Promise<T> {
 	}
 }
 
+fun Unit.toPromise(): Promise<Unit> {
+	return UnitPromise
+}
+
 private object UnitPromise : Promise<Unit>(Unit)
