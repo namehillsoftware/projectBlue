@@ -100,6 +100,10 @@ class LibraryConnectionProvider(
 		}
 	}
 
+	override fun isConnectionActive(libraryId: LibraryId): Boolean {
+		return cachedConnectionProviders[libraryId] != null
+	}
+
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
 		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 			init {
