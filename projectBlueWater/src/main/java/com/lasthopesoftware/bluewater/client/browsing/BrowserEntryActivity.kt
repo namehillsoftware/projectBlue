@@ -33,12 +33,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SelectedBro
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.*
+import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsByConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectViewAdapter
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.session.ProvideSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionProvider
 import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey
@@ -57,7 +58,6 @@ import com.namehillsoftware.lazyj.CreateAndHold
 import com.namehillsoftware.lazyj.Lazy
 import org.slf4j.LoggerFactory
 import java.util.*
-import java.util.concurrent.Callable
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 	/**
@@ -117,25 +117,21 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 	}
 
-	private val lazyLocalBroadcastManager: CreateAndHold<LocalBroadcastManager> = Lazy(Callable { LocalBroadcastManager.getInstance(this) })
+	private val lazyLocalBroadcastManager = Lazy { LocalBroadcastManager.getInstance(this) }
 
-	private val lazySessionConnectionProvider: CreateAndHold<ProvideSessionConnection> = Lazy(Callable { SessionConnectionProvider(this) })
+	private val lazySessionConnectionProvider = Lazy { SessionConnectionProvider(this) }
 
-	private val lazyLibraryViewsProvider: CreateAndHold<ProvideLibraryViews> = object : AbstractSynchronousLazy<ProvideLibraryViews>() {
-		override fun create(): ProvideLibraryViews {
-			return LibraryViewsProvider(
-				lazySessionConnectionProvider.getObject(),
-				LibraryViewsByConnectionProvider())
-		}
+	private val lazyLibraryViewsProvider = Lazy {
+		LibraryViewsProvider(
+			lazySessionConnectionProvider.getObject(),
+			LibraryViewsByConnectionProvider())
 	}
 
-	private val lazySelectedLibraryViews: CreateAndHold<ProvideSelectedLibraryView> = object : AbstractSynchronousLazy<ProvideSelectedLibraryView>() {
-		override fun create(): ProvideSelectedLibraryView {
-			return SelectedLibraryViewProvider(
-				lazySelectedBrowserLibraryProvider.getObject(),
-				lazyLibraryViewsProvider.getObject(),
-				lazyLibraryRepository.getObject())
-		}
+	private val lazySelectedLibraryViews = Lazy {
+		SelectedLibraryViewProvider(
+			lazySelectedBrowserLibraryProvider.getObject(),
+			lazyLibraryViewsProvider.getObject(),
+			lazyLibraryRepository.getObject())
 	}
 
 	private var viewAnimator: ViewAnimator? = null
@@ -181,7 +177,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	public override fun onResume() {
 		super.onResume()
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-			.eventually(LoopedInPromise.response({ restore -> if (!restore!!) startLibrary() }, this))
+			.eventually(LoopedInPromise.response({ restore: Boolean -> if (!restore) startLibrary() }, this))
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -202,7 +198,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.browserLibrary
-			.eventually(LoopedInPromise.response({ library ->
+			.eventually(LoopedInPromise.response({ library: Library? ->
 				when {
 					library == null -> {
 						// No library, must bail out
@@ -212,7 +208,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 						library.setSelectedView(0)
 						library.setSelectedViewType(ViewType.DownloadView)
 						lazyLibraryRepository.getObject().saveLibrary(library)
-							.eventually(LoopedInPromise.response({ displayLibrary(it) }, this))
+							.eventually(LoopedInPromise.response({ l: Library -> displayLibrary(l) }, this))
 
 						// Clear the action
 						intent.action = null
@@ -235,11 +231,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			.eventually { selectedView ->
 				lazyLibraryViewsProvider.getObject().promiseLibraryViews()
 					.eventually(LoopedInPromise.response(
-						{ items -> updateLibraryView(selectedView!!, items) },
+						{ items: Collection<ViewItem> -> updateLibraryView(selectedView!!, items) },
 						this))
 			}
 			.excuse(HandleViewIoException(this, this))
-			.excuse(ForwardedResponse.forward())
+			.excuse(ForwardedResponse.forward<Throwable, Throwable>())
 			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
 				ApplicationSettingsActivity.launch(this)
@@ -247,8 +243,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			}
 	}
 
-	private fun updateLibraryView(selectedView: ViewItem, items: Collection<ViewItem>?) {
-		if (isStopped || items == null) return
+	private fun updateLibraryView(selectedView: ViewItem, items: Collection<ViewItem>) {
+		if (isStopped) return
 
 		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 
@@ -298,14 +294,14 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.browserLibrary
-			.then(ImmediateResponse { library ->
+			.then(ImmediateResponse { library: Library ->
 				if (selectedViewType === library.selectedViewType && library.selectedView == selectedViewKey)
 					return@ImmediateResponse
 
 				library.setSelectedView(selectedViewKey)
 				library.setSelectedViewType(selectedViewType)
 				lazyLibraryRepository.getObject().saveLibrary(library)
-					.eventually(LoopedInPromise.response({ displayLibrary(it) }, this))
+					.eventually(LoopedInPromise.response({ l: Library -> displayLibrary(l) }, this))
 			})
 	}
 

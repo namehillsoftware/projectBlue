@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.Companion.getInstance
@@ -53,7 +54,7 @@ class InstantiateSessionConnectionActivity : Activity() {
 		localBroadcastManager.getObject().registerReceiver(buildSessionConnectionReceiver, IntentFilter(SessionConnection.buildSessionBroadcast))
 		getInstance(this)
 			.promiseSessionConnection()
-			.eventually(LoopedInPromise.response({ c ->
+			.eventually(LoopedInPromise.response({ c: IConnectionProvider? ->
 				if (c == null)
 					launchActivityDelayed(selectServerIntent.getObject())
 				else if (intent == null || START_ACTIVITY_FOR_RETURN != intent.action)
