@@ -27,6 +27,13 @@ class SessionConnection(
 			.updates(this)
 	}
 
+	fun isSessionConnectionActive(): Boolean {
+		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
+			?: return false
+
+		return libraryConnections.isConnectionActive(selectedLibraryId)
+	}
+
 	fun promiseSessionConnection(): Promise<IConnectionProvider> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()

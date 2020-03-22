@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.lazyj.Lazy
 
 class InstantiateSessionConnectionActivity : Activity() {
@@ -97,19 +96,16 @@ class InstantiateSessionConnectionActivity : Activity() {
 	 * false if it doesn't
 	 */
 		@JvmStatic
-		fun restoreSessionConnection(activity: Activity): Promise<Boolean> {
-			return getInstance(activity).promiseSessionConnection()
-				.eventually(LoopedInPromise.response({ c ->
-					when {
-						c != null -> {
-							val intent = Intent(activity, InstantiateSessionConnectionActivity::class.java)
-							intent.action = START_ACTIVITY_FOR_RETURN
-							activity.startActivityForResult(intent, ACTIVITY_ID)
-							true
-						}
-						else -> false
-					}
-				}, activity))
+		fun restoreSessionConnection(activity: Activity): Boolean {
+			return when (getInstance(activity).isSessionConnectionActive()) {
+				false -> {
+					val intent = Intent(activity, InstantiateSessionConnectionActivity::class.java)
+					intent.action = START_ACTIVITY_FOR_RETURN
+					activity.startActivityForResult(intent, ACTIVITY_ID)
+					true
+				}
+				else -> false
+			}
 		}
 
 		@JvmStatic

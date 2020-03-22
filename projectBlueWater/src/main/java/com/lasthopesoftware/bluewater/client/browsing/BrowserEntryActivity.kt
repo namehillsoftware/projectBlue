@@ -174,10 +174,10 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, _, _ -> updateSelectedView(ViewType.DownloadView, 0) }
 	}
 
-	public override fun onResume() {
-		super.onResume()
-		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-			.eventually(LoopedInPromise.response({ restore: Boolean -> if (!restore) startLibrary() }, this))
+	override fun onStart() {
+		super.onStart()
+		val restore = InstantiateSessionConnectionActivity.restoreSessionConnection(this)
+		if (!restore) startLibrary()
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
