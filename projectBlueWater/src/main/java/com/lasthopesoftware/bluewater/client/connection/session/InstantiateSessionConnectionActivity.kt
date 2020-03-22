@@ -11,7 +11,6 @@ import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.Companion.getInstance
@@ -19,6 +18,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.UnitPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.lazyj.Lazy
 
@@ -61,11 +61,11 @@ class InstantiateSessionConnectionActivity : Activity() {
 				else
 					finish()
 
-				Promise(Unit)
+				UnitPromise
 			}, this), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent.getObject())
 
-				Promise(Unit)
+				UnitPromise
 			}, this))
 			.must { localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver) }
 	}
@@ -98,12 +98,16 @@ class InstantiateSessionConnectionActivity : Activity() {
 		@JvmStatic
 		fun restoreSessionConnection(activity: Activity): Promise<Boolean> {
 			return getInstance(activity).promiseSessionConnection()
-				.eventually(LoopedInPromise.response({ c: IConnectionProvider? ->
-					if (c != null) return@response false
-					val intent = Intent(activity, InstantiateSessionConnectionActivity::class.java)
-					intent.action = START_ACTIVITY_FOR_RETURN
-					activity.startActivityForResult(intent, ACTIVITY_ID)
-					true
+				.eventually(LoopedInPromise.response({ c ->
+					when {
+						c != null -> {
+							val intent = Intent(activity, InstantiateSessionConnectionActivity::class.java)
+							intent.action = START_ACTIVITY_FOR_RETURN
+							activity.startActivityForResult(intent, ACTIVITY_ID)
+							true
+						}
+						else -> false
+					}
 				}, activity))
 		}
 
