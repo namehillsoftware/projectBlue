@@ -93,7 +93,7 @@ public class InstantiateSessionConnectionActivity extends Activity {
 			}, this), LoopedInPromise.response(e-> {
 				launchActivityDelayed(selectServerIntent.getObject());
 				localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver);
-				return null;
+				return Promise.empty();
 			}, this));
 	}
 

@@ -214,8 +214,8 @@ public class BrowserEntryActivity extends AppCompatActivity implements IItemList
 	}
 
 	@Override
-	public void onStart() {
-		super.onStart();
+	public void onResume() {
+		super.onResume();
 
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
 			.eventually(LoopedInPromise.response(new VoidResponse<>(restore -> {
@@ -404,7 +404,7 @@ public class BrowserEntryActivity extends AppCompatActivity implements IItemList
 			activeFragment = newFragment;
 		}
 	}
-	
+
 	@Override
 	public void onStop() {
 		isStopped = true;
