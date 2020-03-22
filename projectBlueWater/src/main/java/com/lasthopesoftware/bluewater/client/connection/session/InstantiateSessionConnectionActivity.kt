@@ -35,6 +35,8 @@ class InstantiateSessionConnectionActivity : Activity() {
 
 	private val localBroadcastManager = Lazy { LocalBroadcastManager.getInstance(this) }
 
+	private val handler = Lazy { Handler() }
+
 	private val buildSessionConnectionReceiver: BroadcastReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			handleBuildStatusChange(intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1))
@@ -52,9 +54,12 @@ class InstantiateSessionConnectionActivity : Activity() {
 		getInstance(this)
 			.promiseSessionConnection()
 			.eventually(LoopedInPromise.response({ c ->
-				if (c == null) launchActivityDelayed(selectServerIntent.getObject())
-				else if (intent == null || START_ACTIVITY_FOR_RETURN != intent.action) launchActivityDelayed(browseLibraryIntent.getObject())
-				else finish()
+				if (c == null)
+					launchActivityDelayed(selectServerIntent.getObject())
+				else if (intent == null || START_ACTIVITY_FOR_RETURN != intent.action)
+					launchActivityDelayed(browseLibraryIntent.getObject())
+				else
+					finish()
 
 				Promise(Unit)
 			}, this), LoopedInPromise.response({
@@ -78,8 +83,7 @@ class InstantiateSessionConnectionActivity : Activity() {
 	}
 
 	private fun launchActivityDelayed(intent: Intent) {
-		val handler = Handler()
-		handler.postDelayed({ startActivity(intent) }, ACTIVITY_LAUNCH_DELAY.toLong())
+		handler.getObject().postDelayed({ startActivity(intent) }, ACTIVITY_LAUNCH_DELAY.toLong())
 	}
 
 	companion object {
