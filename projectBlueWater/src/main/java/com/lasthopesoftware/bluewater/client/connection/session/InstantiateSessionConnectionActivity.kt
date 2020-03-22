@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.UnitPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.lazyj.Lazy
 
@@ -61,11 +61,11 @@ class InstantiateSessionConnectionActivity : Activity() {
 				else
 					finish()
 
-				UnitPromise
+				Unit.toPromise()
 			}, this), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent.getObject())
 
-				UnitPromise
+				Unit.toPromise()
 			}, this))
 			.must { localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver) }
 	}
