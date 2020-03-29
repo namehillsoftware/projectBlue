@@ -17,7 +17,6 @@ class SyncLibraryProvider(private val libraryProvider: ILibraryProvider) : ILibr
 	}
 
 	private fun Library.transformConnectionSetting(): Library {
-		this.isLocalOnly = this.isSyncLocalConnectionsOnly
-		return this
+		return this.setLocalOnly(this.isSyncLocalConnectionsOnly)
 	}
 }

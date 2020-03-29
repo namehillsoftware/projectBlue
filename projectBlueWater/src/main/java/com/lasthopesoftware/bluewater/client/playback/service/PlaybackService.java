@@ -898,6 +898,9 @@ implements OnAudioFocusChangeListener
 			case BuildingSessionConnectionStatus.GettingLibraryFailed:
 				Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show();
 				return;
+			case BuildingSessionConnectionStatus.SendingWakeSignal:
+				notifyBuilder.setContentText(getString(R.string.sending_wake_signal));
+				break;
 			case BuildingSessionConnectionStatus.BuildingConnection:
 				notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library));
 				break;

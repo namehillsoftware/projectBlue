@@ -277,7 +277,7 @@ implements
 			playButton.findView().setVisibility(View.INVISIBLE);
 			pauseButton.findView().setVisibility(View.VISIBLE);
 		});
-		
+
 		pauseButton.findView().setOnClickListener(v -> {
 			if (!nowPlayingToggledVisibilityControls.getObject().isVisible()) return;
 			PlaybackService.pause(v.getContext());
@@ -374,10 +374,8 @@ implements
 
 		updateKeepScreenOnStatus();
 
-		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-			.eventually(LoopedInPromise.response(new VoidResponse<>(restore -> {
-				if (!restore) initializeView();
-			}), messageHandler.getObject()));
+		final boolean restore = InstantiateSessionConnectionActivity.restoreSessionConnection(this);
+		if (!restore) initializeView();
 	}
 
 	@Override
@@ -455,7 +453,7 @@ implements
 				return null;
 			}, messageHandler.getObject()));
 	}
-	
+
 	private static void setRepeatingIcon(final ImageButton imageButton, boolean isRepeating) {
 		imageButton.setImageDrawable(ViewUtils.getDrawable(imageButton.getContext(), isRepeating ? R.drawable.av_repeat_dark : R.drawable.av_no_repeat_dark));
 	}
@@ -499,7 +497,7 @@ implements
 				}, messageHandler.getObject())))
 			.excuse(new VoidResponse<>(e -> logger.error("An error occurred while getting the Now Playing data", e)));
 	}
-	
+
 	private void setView(final ServiceFile serviceFile, final long initialFilePosition) {
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(connectionProvider -> {
@@ -645,7 +643,7 @@ implements
 
 		return false;
 	}
-	
+
 	private void displayImageBitmap() {
 		final ImageView nowPlayingImage = nowPlayingImageViewFinder.findView();
 		nowPlayingImage.setScaleType(ScaleType.CENTER_CROP);
@@ -675,7 +673,7 @@ implements
 
 		messageHandler.getObject().postDelayed(timerTask, 5000);
 	}
-	
+
 	private void resetViewOnReconnect(final ServiceFile serviceFile, final long position) {
 		PollConnectionService.pollSessionConnection(this).then(new VoidResponse<>(connectionProvider -> {
 			if (viewStructure == null || !serviceFile.equals(viewStructure.serviceFile)) return;

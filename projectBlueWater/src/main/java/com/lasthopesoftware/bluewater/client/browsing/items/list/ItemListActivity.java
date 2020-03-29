@@ -87,10 +87,9 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
 	public void onStart() {
     	super.onStart();
 
-		InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-			.then(new VoidResponse<>(doRestore -> {
-				if (!doRestore) hydrateItems();
-			}));
+		final boolean doRestore = InstantiateSessionConnectionActivity.restoreSessionConnection(this);
+		if (!doRestore)
+			hydrateItems();
 	}
 
 	@Override

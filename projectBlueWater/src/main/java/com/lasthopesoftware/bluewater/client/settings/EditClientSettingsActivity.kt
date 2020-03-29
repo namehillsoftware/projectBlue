@@ -46,24 +46,23 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val connectionButtonListener = View.OnClickListener {
 		saveButton.findView().isEnabled = false
 
-		val localLibrary = library ?: Library().setNowPlayingId(-1)
+		val localLibrary = library ?: Library(_nowPlayingId = -1)
+
 		library = localLibrary
-
-		localLibrary.accessCode = txtAccessCode.findView().text.toString()
-		localLibrary.userName = txtUserName.findView().text.toString()
-		localLibrary.password = txtPassword.findView().text.toString()
-		localLibrary.isLocalOnly = chkLocalOnly.findView().isChecked
-		localLibrary.customSyncedFilesPath = txtSyncPath.findView().text.toString()
-
-		when (rgSyncFileOptions.findView().checkedRadioButtonId) {
-			R.id.rbPublicLocation -> localLibrary.syncedFileLocation = SyncedFileLocation.EXTERNAL
-			R.id.rbPrivateToApp -> localLibrary.syncedFileLocation = SyncedFileLocation.INTERNAL
-			R.id.rbCustomLocation -> localLibrary.syncedFileLocation = SyncedFileLocation.CUSTOM
-		}
-
-		localLibrary.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked)
-		localLibrary.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked)
-		localLibrary.setIsWakeOnLanEnabled(chkIsWakeOnLanEnabled.findView().isChecked)
+			.setAccessCode(txtAccessCode.findView().text.toString())
+			.setUserName(txtUserName.findView().text.toString())
+			.setPassword(txtPassword.findView().text.toString())
+			.setLocalOnly(chkLocalOnly.findView().isChecked)
+			.setCustomSyncedFilesPath(txtSyncPath.findView().text.toString())
+			.setSyncedFileLocation(when (rgSyncFileOptions.findView().checkedRadioButtonId) {
+				R.id.rbPublicLocation -> SyncedFileLocation.EXTERNAL
+				R.id.rbPrivateToApp -> SyncedFileLocation.INTERNAL
+				R.id.rbCustomLocation -> SyncedFileLocation.CUSTOM
+				else -> null
+			})
+			.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked)
+			.setIsSyncLocalConnectionsOnly(chkIsUsingLocalConnectionForSync.findView().isChecked)
+			.setIsWakeOnLanEnabled(chkIsWakeOnLanEnabled.findView().isChecked)
 
 		val permissionsToRequest = ArrayList<String>(2)
 		if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(localLibrary))
