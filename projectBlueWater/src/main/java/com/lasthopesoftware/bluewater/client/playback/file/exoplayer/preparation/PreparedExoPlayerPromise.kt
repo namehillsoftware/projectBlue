@@ -142,8 +142,9 @@ internal class PreparedExoPlayerPromise(
 		exoPlayer?.stop()
 		exoPlayer?.release()
 
-		when (error) {
+		when (error.cause) {
 			is ParserException -> {
+				logger.warn("A parser exception occurred while preparing the file, skipping playback", error)
 				val emptyPlaybackHandler = EmptyPlaybackHandler(0)
 				resolve(PreparedPlayableFile(emptyPlaybackHandler, EmptyVolumeManager(), emptyPlaybackHandler))
 			}
