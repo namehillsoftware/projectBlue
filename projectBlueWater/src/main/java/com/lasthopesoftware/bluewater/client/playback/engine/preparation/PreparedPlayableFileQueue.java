@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
-import com.google.android.exoplayer2.ParserException;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
@@ -195,10 +194,6 @@ implements
 			return preparedPlaybackFilePromise.then(
 				handler -> new PositionedPreparedPlayableFile(positionedFile, handler),
 				error -> {
-					final Throwable cause = error.getCause();
-					if (cause instanceof ParserException) {
-
-					}
 					throw new PreparationException(positionedFile, error);
 				});
 		}
