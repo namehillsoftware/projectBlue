@@ -11,6 +11,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +32,12 @@ implements
 	private static final Logger logger = LoggerFactory.getLogger(PreparedPlayableFileQueue.class);
 
 	private final ReentrantReadWriteLock queueUpdateLock = new ReentrantReadWriteLock();
+	private final ConcurrentLinkedQueue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 	private final IPreparedPlaybackQueueConfiguration configuration;
 	private final PlayableFilePreparationSource playbackPreparer;
-	private final ConcurrentLinkedQueue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 	private IPositionedFileQueue positionedFileQueue;
-
 	private PositionedPreparingFile currentPreparingPlaybackHandlerPromise;
 
 	public PreparedPlayableFileQueue(IPreparedPlaybackQueueConfiguration configuration, PlayableFilePreparationSource playbackPreparer, IPositionedFileQueue positionedFileQueue) {

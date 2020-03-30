@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationsConfiguration;
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
 import com.lasthopesoftware.resources.notifications.ProduceNotificationBuilders;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
@@ -20,7 +20,7 @@ public class MediaStyleNotificationSetup implements SetupMediaStyleNotifications
 
 	private final Context context;
 	private final ProduceNotificationBuilders produceNotificationBuilders;
-	private final PlaybackNotificationsConfiguration configuration;
+	private final NotificationsConfiguration configuration;
 	private final MediaSessionCompat mediaSessionCompat;
 	private final CreateAndHold<PendingIntent> pendingNowPlayingIntent = new AbstractSynchronousLazy<PendingIntent>() {
 		@Override
@@ -32,7 +32,7 @@ public class MediaStyleNotificationSetup implements SetupMediaStyleNotifications
 		}
 	};
 
-	public MediaStyleNotificationSetup(Context context, ProduceNotificationBuilders produceNotificationBuilders, PlaybackNotificationsConfiguration configuration, MediaSessionCompat mediaSessionCompat) {
+	public MediaStyleNotificationSetup(Context context, ProduceNotificationBuilders produceNotificationBuilders, NotificationsConfiguration configuration, MediaSessionCompat mediaSessionCompat) {
 		this.context = context;
 		this.produceNotificationBuilders = produceNotificationBuilders;
 		this.configuration = configuration;

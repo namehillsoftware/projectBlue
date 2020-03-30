@@ -21,9 +21,9 @@ public class PlaybackNotificationBroadcaster implements NotifyOfPlaybackEvents {
 	private boolean isNotificationStarted;
 	private ServiceFile serviceFile;
 
-	public PlaybackNotificationBroadcaster(ControlNotifications notificationsController, PlaybackNotificationsConfiguration playbackNotificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder, BuildPlaybackStartingNotification playbackStartingNotification) {
+	public PlaybackNotificationBroadcaster(ControlNotifications notificationsController, NotificationsConfiguration notificationsConfiguration, BuildNowPlayingNotificationContent nowPlayingNotificationContentBuilder, BuildPlaybackStartingNotification playbackStartingNotification) {
 		this.notificationsController = notificationsController;
-		this.notificationId = playbackNotificationsConfiguration.getNotificationId();
+		this.notificationId = notificationsConfiguration.getNotificationId();
 		this.nowPlayingNotificationContentBuilder = nowPlayingNotificationContentBuilder;
 		this.playbackStartingNotification = playbackStartingNotification;
 	}
