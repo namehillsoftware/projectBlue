@@ -8,7 +8,7 @@ import java.io.IOException;
 public class PreparationException extends IOException {
 	private final PositionedFile positionedFile;
 
-	public PreparationException(PositionedFile positionedFile, Throwable cause) {
+	PreparationException(PositionedFile positionedFile, Throwable cause) {
 		super(cause);
 		this.positionedFile = positionedFile;
 	}

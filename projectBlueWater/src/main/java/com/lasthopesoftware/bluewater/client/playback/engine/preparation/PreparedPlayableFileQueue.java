@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
+import com.google.android.exoplayer2.ParserException;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
@@ -11,6 +12,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +33,12 @@ implements
 	private static final Logger logger = LoggerFactory.getLogger(PreparedPlayableFileQueue.class);
 
 	private final ReentrantReadWriteLock queueUpdateLock = new ReentrantReadWriteLock();
+	private final ConcurrentLinkedQueue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 	private final IPreparedPlaybackQueueConfiguration configuration;
 	private final PlayableFilePreparationSource playbackPreparer;
-	private final ConcurrentLinkedQueue<PositionedPreparingFile> bufferingMediaPlayerPromises = new ConcurrentLinkedQueue<>();
 
 	private IPositionedFileQueue positionedFileQueue;
-
 	private PositionedPreparingFile currentPreparingPlaybackHandlerPromise;
 
 	public PreparedPlayableFileQueue(IPreparedPlaybackQueueConfiguration configuration, PlayableFilePreparationSource playbackPreparer, IPositionedFileQueue positionedFileQueue) {
@@ -194,6 +195,10 @@ implements
 			return preparedPlaybackFilePromise.then(
 				handler -> new PositionedPreparedPlayableFile(positionedFile, handler),
 				error -> {
+					final Throwable cause = error.getCause();
+					if (cause instanceof ParserException) {
+
+					}
 					throw new PreparationException(positionedFile, error);
 				});
 		}
