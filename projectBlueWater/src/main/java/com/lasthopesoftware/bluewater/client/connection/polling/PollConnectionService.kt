@@ -115,13 +115,13 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		return START_NOT_STICKY
 	}
 
-	override fun send(messenger: Messenger<IConnectionProvider?>) {
+	override fun send(messenger: Messenger<IConnectionProvider>) {
 		val cancellationToken = CancellationToken()
 		messenger.cancellationRequested(cancellationToken)
 		pollSessionConnection(messenger, cancellationToken, 1000)
 	}
 
-	private fun pollSessionConnection(messenger: Messenger<IConnectionProvider?>, cancellationToken: CancellationToken, connectionTime: Int) {
+	private fun pollSessionConnection(messenger: Messenger<IConnectionProvider>, cancellationToken: CancellationToken, connectionTime: Int) {
 		if (cancellationToken.isCancelled) {
 			messenger.sendRejection(CancellationException("Polling the session connection was cancelled"))
 			return
@@ -154,7 +154,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 		val pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
-		val notificationsConfiguration = lazyNotificationsConfiguration.`object`
+		val notificationsConfiguration = lazyNotificationsConfiguration.getObject()
 
 		val builder = NotificationCompat.Builder(this, notificationsConfiguration.notificationChannel)
 			.setOngoing(true)
