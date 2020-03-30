@@ -34,7 +34,12 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 	companion object {
 		@JvmStatic
-		fun pollSessionConnection(context: Context, withNotification: Boolean = false): Promise<IConnectionProvider> {
+		fun pollSessionConnection(context: Context): Promise<IConnectionProvider> {
+			return pollSessionConnection(context, false)
+		}
+
+		@JvmStatic
+		fun pollSessionConnection(context: Context, withNotification: Boolean): Promise<IConnectionProvider> {
 			val promiseConnectedService = Promise { m: Messenger<PollConnectionServiceConnectionHolder> ->
 				context.bindService(Intent(context, PollConnectionService::class.java), object : ServiceConnection {
 					override fun onServiceConnected(name: ComponentName, service: IBinder) {
