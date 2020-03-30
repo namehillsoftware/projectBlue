@@ -62,7 +62,6 @@ internal class PreparedExoPlayerPromise(
 
 		if (cancellationToken.isCancelled) {
 			reject(CancellationException())
-			exoPlayer = null
 			return
 		}
 
@@ -110,12 +109,6 @@ internal class PreparedExoPlayerPromise(
 		reject(CancellationException())
 	}
 
-	override fun onTimelineChanged(timeline: Timeline, manifest: Any?, reason: Int) {}
-
-	override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {}
-
-	override fun onLoadingChanged(isLoading: Boolean) {}
-
 	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
 		if (isResolved || cancellationToken.isCancelled) return
 
@@ -161,6 +154,12 @@ internal class PreparedExoPlayerPromise(
 	override fun respond(throwable: Throwable) {
 		handleError(throwable)
 	}
+
+	override fun onTimelineChanged(timeline: Timeline, manifest: Any?, reason: Int) {}
+
+	override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {}
+
+	override fun onLoadingChanged(isLoading: Boolean) {}
 
 	override fun onRepeatModeChanged(repeatMode: Int) {}
 
