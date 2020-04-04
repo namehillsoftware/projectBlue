@@ -105,7 +105,7 @@ public class WhenPreparing extends AndroidContext {
 		assertThat(preparedFile.getBufferingPlaybackFile()).isInstanceOf(BufferingExoPlayer.class);
 	}
 
-	private final class FakeMediaSource extends BaseMediaSource {
+	private static final class FakeMediaSource extends BaseMediaSource {
 
 		@Override
 		protected void prepareSourceInternal(@Nullable TransferListener mediaTransferListener) {
@@ -177,6 +177,11 @@ public class WhenPreparing extends AndroidContext {
 
 				@Override
 				public boolean continueLoading(long positionUs) {
+					return false;
+				}
+
+				@Override
+				public boolean isLoading() {
 					return false;
 				}
 
