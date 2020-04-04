@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,10 +12,6 @@ implements
 	AudioRendererEventListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(AudioRenderingEventListener.class);
-
-	public static boolean isDebugEnabled() {
-		return logger.isDebugEnabled();
-	}
 
 	@Override
 	public void onAudioEnabled(DecoderCounters counters) {
@@ -64,6 +61,5 @@ implements
 		if (!logger.isDebugEnabled()) return;
 
 		logger.debug("Audio disabled.");
-
 	}
 }
