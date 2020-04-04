@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -58,11 +59,11 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 			.must { cachedFileOutputStream.close() }
 	}
 
-	override fun promiseCachedFile(uniqueKey: String): Promise<File> {
+	override fun promiseCachedFile(uniqueKey: String): Promise<File?> {
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
-			.eventually { cachedFile ->
-				if (cachedFile == null) return@eventually Promise.empty()
+			.eventually<File?> { cachedFile ->
+				if (cachedFile == null) return@eventually null.toPromise()
 				try {
 
 					val returnFile = File(cachedFile.fileName)
@@ -87,10 +88,10 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 
 					diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
 					logger.info("Returning cached file $uniqueKey")
-					Promise(returnFile)
+					returnFile.toPromise()
 				} catch (sqlException: SQLException) {
 					logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
-					Promise.empty()
+					null.toPromise()
 				}
 			}
 	}
@@ -114,7 +115,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 					logger.warn("There was an error trying to delete the cached file with id $cachedFileId", sqlException)
 				}
 			}
-			-1
+			-1L
 		}, RepositoryAccessHelper.databaseExecutor())
 	}
 
