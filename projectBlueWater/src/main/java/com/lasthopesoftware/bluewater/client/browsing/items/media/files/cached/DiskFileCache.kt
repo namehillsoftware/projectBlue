@@ -73,7 +73,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 						return@eventually deleteCachedFile(cachedFile.id).then { null }
 					}
 
-					// Remove the serviceFile and return null if it's past its expired time
+					// Remove the cached file and return null if it's past its expired time
 					if (expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime) {
 						logger.info("Cached file $uniqueKey expired. Deleting.")
 						return@eventually promiseDeletedFile(returnFile)
