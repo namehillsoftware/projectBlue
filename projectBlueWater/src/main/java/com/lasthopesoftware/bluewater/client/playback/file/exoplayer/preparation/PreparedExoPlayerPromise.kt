@@ -9,6 +9,7 @@ import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.trackselection.TrackSelector
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderingEventListener
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.EmptyRenderersListener
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.MetadataOutputLogger
 import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.TextOutputLogger
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
@@ -67,8 +68,8 @@ internal class PreparedExoPlayerPromise(
 
 		audioRenderers = renderersFactory.createRenderers(
 			handler,
-			null,
-			if (DebugFlag.getInstance().isDebugCompilation) AudioRenderingEventListener() else null,
+			EmptyRenderersListener,
+			if (DebugFlag.getInstance().isDebugCompilation) AudioRenderingEventListener() else EmptyRenderersListener,
 			lazyTextOutputLogger.getObject(),
 			lazyMetadataOutputLogger.getObject(),
 			null)

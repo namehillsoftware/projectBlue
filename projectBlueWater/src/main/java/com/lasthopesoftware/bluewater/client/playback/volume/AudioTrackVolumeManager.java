@@ -24,10 +24,10 @@ implements
 		this.volume = volume;
 
 		for (MediaCodecAudioRenderer renderer : audioRenderers) {
-			exoPlayer.sendMessages(new ExoPlayer.ExoPlayerMessage(
-				renderer,
-				C.MSG_SET_VOLUME,
-				this.volume));
+			exoPlayer.createMessage(renderer)
+				.setType(C.MSG_SET_VOLUME)
+				.setPayload(this.volume)
+				.send();
 		}
 
 		return this.volume;

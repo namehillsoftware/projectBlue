@@ -99,5 +99,4 @@ class SessionConnection(
 				get(applicationContext)).also { sessionConnectionInstance = it }
 		}
 	}
-
 }

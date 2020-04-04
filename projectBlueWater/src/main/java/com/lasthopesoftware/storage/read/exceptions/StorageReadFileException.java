@@ -11,7 +11,7 @@ public class StorageReadFileException extends IOException {
 	}
 
 	public StorageReadFileException(File file, Exception innerException) {
-		super("There was an error reading the serviceFile " + file + ".", innerException);
+		super("There was an error reading the file " + file + ".", innerException);
 
 		this.file = file;
 	}
