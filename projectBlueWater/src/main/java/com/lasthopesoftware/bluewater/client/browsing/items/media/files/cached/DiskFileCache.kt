@@ -63,32 +63,35 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
 			.eventually<File?> { cachedFile ->
-				if (cachedFile == null) return@eventually null.toPromise()
+				val fileName = cachedFile?.fileName ?: return@eventually null.toPromise()
 				try {
 
-					val returnFile = File(cachedFile.fileName)
+					val returnFile = File(fileName)
+
 					logger.info("Checking if " + cachedFile.fileName + " exists.")
 
-					if (!returnFile.exists()) {
-						logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
-						return@eventually deleteCachedFile(cachedFile.id).then { null }
+					when {
+						!returnFile.exists() -> {
+							logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
+							deleteCachedFile(cachedFile.id).then { null }
+						}
+						// Remove the cached file and return null if it's past its expired time
+						expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
+							logger.info("Cached file $uniqueKey expired. Deleting.")
+							promiseDeletedFile(returnFile)
+								.eventually { isDeleted ->
+									if (!isDeleted)
+										throw IOException("Unable to delete cached file " + returnFile.absolutePath)
+									deleteCachedFile(cachedFile.id)
+								}
+								.then { null }
+						}
+						else -> {
+							diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
+							logger.info("Returning cached file $uniqueKey")
+							returnFile.toPromise()
+						}
 					}
-
-					// Remove the cached file and return null if it's past its expired time
-					if (expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime) {
-						logger.info("Cached file $uniqueKey expired. Deleting.")
-						return@eventually promiseDeletedFile(returnFile)
-							.eventually { isDeleted ->
-								if (!isDeleted)
-									throw IOException("Unable to delete cached file " + returnFile.absolutePath)
-								deleteCachedFile(cachedFile.id)
-							}
-							.then { null }
-					}
-
-					diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
-					logger.info("Returning cached file $uniqueKey")
-					returnFile.toPromise()
 				} catch (sqlException: SQLException) {
 					logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
 					null.toPromise()
