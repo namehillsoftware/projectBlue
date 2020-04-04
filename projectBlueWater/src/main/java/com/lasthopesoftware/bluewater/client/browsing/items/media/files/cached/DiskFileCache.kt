@@ -63,7 +63,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
 			.eventually<File?> { cachedFile ->
-				val fileName = cachedFile?.fileName ?: return@eventually null.toPromise()
+				val fileName = cachedFile?.fileName ?: return@eventually Promise.empty()
 				try {
 
 					val returnFile = File(fileName)
@@ -82,6 +82,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 								.eventually { isDeleted ->
 									if (!isDeleted)
 										throw IOException("Unable to delete cached file " + returnFile.absolutePath)
+
 									deleteCachedFile(cachedFile.id)
 								}
 								.then { null }
@@ -94,7 +95,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 					}
 				} catch (sqlException: SQLException) {
 					logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
-					null.toPromise()
+					Promise.empty()
 				}
 			}
 	}
