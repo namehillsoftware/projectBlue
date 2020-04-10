@@ -128,12 +128,13 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(DiskFileCache::class.java)
+
 		private fun getTotalCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long {
 			return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute()
 		}
 
 		private fun promiseDeletedFile(file: File): Promise<Boolean> {
-			return QueuedPromise(MessageWriter { file.delete() }, AsyncTask.THREAD_POOL_EXECUTOR)
+			return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
 		}
 	}
 }
