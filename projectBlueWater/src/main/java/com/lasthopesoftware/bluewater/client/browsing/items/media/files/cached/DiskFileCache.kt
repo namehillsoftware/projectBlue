@@ -24,7 +24,8 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	private val syncObject = Object()
 	private val expirationTime = if (diskFileCacheConfiguration.cacheItemLifetime != null) diskFileCacheConfiguration.cacheItemLifetime.millis else -1
 
-	private var promisedDeletedFiles = Promise.empty<File?>()
+	@Volatile
+	private var promisedCachedFiles = Promise.empty<File?>()
 
 	override fun put(uniqueKey: String, fileData: ByteArray): Promise<CachedFile> {
 		val putPromise = cacheStreamSupplier
@@ -64,45 +65,42 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	}
 
 	override fun promiseCachedFile(uniqueKey: String): Promise<File?> {
+		return synchronized(syncObject) {
+			promisedCachedFiles = promisedCachedFiles.eventually {
+				promiseCachedFilesUnsynchronized(uniqueKey)
+			}
+
+			promisedCachedFiles
+		}
+	}
+
+	private fun promiseCachedFilesUnsynchronized(uniqueKey: String): Promise<File?> {
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
-			.eventually<File?> { cachedFile ->
-				val fileName = cachedFile?.fileName ?: return@eventually Promise.empty()
+			.eventually { cachedFile ->
+				val fileName = cachedFile?.fileName ?: return@eventually Promise.empty<File?>()
 				try {
 
 					val returnFile = File(fileName)
 
 					logger.info("Checking if " + cachedFile.fileName + " exists.")
 
-					synchronized(syncObject) {
-						when {
-							!returnFile.exists() -> {
-								logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
+					when {
+						!returnFile.exists() -> {
+							logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
 
-								promisedDeletedFiles = promisedDeletedFiles.eventually(
-									{ deleteCachedFile(cachedFile.id) },
-									{ deleteCachedFile(cachedFile.id) })
-									.then { null }
+							deleteCachedFile(cachedFile.id).then { null }
+						}
+						// Remove the cached file and return null if it's past its expired time
+						expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
+							logger.info("Cached file $uniqueKey expired. Deleting.")
 
-								promisedDeletedFiles
-							}
-							// Remove the cached file and return null if it's past its expired time
-							expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
-								logger.info("Cached file $uniqueKey expired. Deleting.")
-
-								promisedDeletedFiles = promisedDeletedFiles
-									.eventually(
-										{ promiseDeletedFile(cachedFile, returnFile) },
-										{ promiseDeletedFile(cachedFile, returnFile) })
-									.then { null }
-
-								promisedDeletedFiles
-							}
-							else -> {
-								diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
-								logger.info("Returning cached file $uniqueKey")
-								returnFile.toPromise()
-							}
+							promiseDeletedFile(cachedFile, returnFile).then { null }
+						}
+						else -> {
+							diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
+							logger.info("Returning cached file $uniqueKey")
+							returnFile.toPromise()
 						}
 					}
 				} catch (sqlException: SQLException) {
