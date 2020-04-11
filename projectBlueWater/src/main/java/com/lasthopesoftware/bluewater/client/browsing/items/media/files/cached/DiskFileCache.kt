@@ -20,7 +20,12 @@ import java.io.File
 import java.io.IOException
 
 class DiskFileCache(private val context: Context, private val diskCacheDirectory: IDiskCacheDirectoryProvider, private val diskFileCacheConfiguration: IDiskFileCacheConfiguration, private val cacheStreamSupplier: ICacheStreamSupplier, private val cachedFilesProvider: ICachedFilesProvider, private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater) : ICache {
-	private val expirationTime: Long = if (diskFileCacheConfiguration.cacheItemLifetime != null) diskFileCacheConfiguration.cacheItemLifetime.millis else -1
+
+	private val syncObject = Object()
+	private val expirationTime = if (diskFileCacheConfiguration.cacheItemLifetime != null) diskFileCacheConfiguration.cacheItemLifetime.millis else -1
+
+	@Volatile
+	private var promisedCachedFiles = Promise.empty<File?>()
 
 	override fun put(uniqueKey: String, fileData: ByteArray): Promise<CachedFile> {
 		val putPromise = cacheStreamSupplier
@@ -60,6 +65,16 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	}
 
 	override fun promiseCachedFile(uniqueKey: String): Promise<File?> {
+		return synchronized(syncObject) {
+			promisedCachedFiles = promisedCachedFiles.eventually {
+				promiseCachedFilesUnsynchronized(uniqueKey)
+			}
+
+			promisedCachedFiles
+		}
+	}
+
+	private fun promiseCachedFilesUnsynchronized(uniqueKey: String): Promise<File?> {
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
 			.eventually<File?> { cachedFile ->
@@ -73,19 +88,14 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 					when {
 						!returnFile.exists() -> {
 							logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
+
 							deleteCachedFile(cachedFile.id).then { null }
 						}
 						// Remove the cached file and return null if it's past its expired time
 						expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
 							logger.info("Cached file $uniqueKey expired. Deleting.")
-							promiseDeletedFile(returnFile)
-								.eventually { isDeleted ->
-									if (!isDeleted)
-										throw IOException("Unable to delete cached file " + returnFile.absolutePath)
 
-									deleteCachedFile(cachedFile.id)
-								}
-								.then { null }
+							promiseDeletedFile(cachedFile, returnFile).then { null }
 						}
 						else -> {
 							diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
@@ -97,6 +107,16 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 					logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
 					Promise.empty()
 				}
+			}
+	}
+
+	private fun promiseDeletedFile(cachedFile: CachedFile, file: File): Promise<Long> {
+		return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
+			.eventually { isDeleted ->
+				if (!isDeleted)
+					throw IOException("Unable to delete cached file " + file.absolutePath)
+
+				deleteCachedFile(cachedFile.id)
 			}
 	}
 
@@ -131,10 +151,6 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 
 		private fun getTotalCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long {
 			return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute()
-		}
-
-		private fun promiseDeletedFile(file: File): Promise<Boolean> {
-			return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
 		}
 	}
 }
