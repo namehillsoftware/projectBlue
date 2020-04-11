@@ -77,8 +77,8 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	private fun promiseCachedFilesUnsynchronized(uniqueKey: String): Promise<File?> {
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
-			.eventually { cachedFile ->
-				val fileName = cachedFile?.fileName ?: return@eventually Promise.empty<File?>()
+			.eventually<File?> { cachedFile ->
+				val fileName = cachedFile?.fileName ?: return@eventually Promise.empty()
 				try {
 
 					val returnFile = File(fileName)
