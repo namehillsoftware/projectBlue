@@ -78,22 +78,23 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 						when {
 							!returnFile.exists() -> {
 								logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
-								promisedDeletedFiles = promisedDeletedFiles.inevitably { deleteCachedFile(cachedFile.id) }
+
+								promisedDeletedFiles = promisedDeletedFiles.eventually(
+									{ deleteCachedFile(cachedFile.id) },
+									{ deleteCachedFile(cachedFile.id) })
+									.then { null }
+
 								promisedDeletedFiles
 							}
 							// Remove the cached file and return null if it's past its expired time
 							expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
 								logger.info("Cached file $uniqueKey expired. Deleting.")
 
-								promisedDeletedFiles = promisedDeletedFiles.inevitably {
-									promiseDeletedFile(returnFile)
-										.eventually { isDeleted ->
-											if (!isDeleted)
-												throw IOException("Unable to delete cached file " + returnFile.absolutePath)
-
-											deleteCachedFile(cachedFile.id)
-										}
-									}
+								promisedDeletedFiles = promisedDeletedFiles
+									.eventually(
+										{ promiseDeletedFile(cachedFile, returnFile) },
+										{ promiseDeletedFile(cachedFile, returnFile) })
+									.then { null }
 
 								promisedDeletedFiles
 							}
@@ -108,6 +109,16 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 					logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
 					Promise.empty()
 				}
+			}
+	}
+
+	private fun promiseDeletedFile(cachedFile: CachedFile, file: File): Promise<Long> {
+		return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
+			.eventually { isDeleted ->
+				if (!isDeleted)
+					throw IOException("Unable to delete cached file " + file.absolutePath)
+
+				deleteCachedFile(cachedFile.id)
 			}
 	}
 
@@ -142,10 +153,6 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 
 		private fun getTotalCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long {
 			return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute()
-		}
-
-		private fun promiseDeletedFile(file: File): Promise<Boolean> {
-			return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
 		}
 	}
 }
