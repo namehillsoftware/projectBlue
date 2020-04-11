@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
@@ -27,8 +28,9 @@ class DiskFileCacheFactory private constructor(private val context: Context, pri
 					synchronized(syncObject) {
 						when (val cache = sessionCaches[libraryId]) {
 							null -> {
-								sessionCaches[libraryId] = buildNewCache(library)
-								sessionCaches[libraryId]
+								val newCache = buildNewCache(library)
+								sessionCaches[libraryId] = newCache
+								newCache
 							}
 							else -> cache
 						}
@@ -38,8 +40,7 @@ class DiskFileCacheFactory private constructor(private val context: Context, pri
 	}
 
 	private fun getCacheFromMemory(libraryId: LibraryId): Promise<ICache>? {
-		val cache = sessionCaches[libraryId];
-		return if (cache != null) Promise(cache) else null
+		return sessionCaches[libraryId]?.toPromise()
 	}
 
 	private fun buildNewCache(library: Library): ICache {
