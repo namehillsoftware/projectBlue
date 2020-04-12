@@ -41,7 +41,7 @@ class InsertBuilder private constructor(private val tableName: String) {
 	}
 
 	companion object {
-		@kotlin.jvm.JvmStatic
+		@JvmStatic
 		fun fromTable(tableName: String): InsertBuilder {
 			return InsertBuilder(tableName)
 		}
