@@ -21,11 +21,7 @@ import java.io.IOException
 
 class DiskFileCache(private val context: Context, private val diskCacheDirectory: IDiskCacheDirectoryProvider, private val diskFileCacheConfiguration: IDiskFileCacheConfiguration, private val cacheStreamSupplier: ICacheStreamSupplier, private val cachedFilesProvider: ICachedFilesProvider, private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater) : ICache {
 
-	private val syncObject = Object()
-	private val expirationTime = if (diskFileCacheConfiguration.cacheItemLifetime != null) diskFileCacheConfiguration.cacheItemLifetime.millis else -1
-
-	@Volatile
-	private var promisedCachedFiles = Promise.empty<File?>()
+	private val expirationTime = diskFileCacheConfiguration.cacheItemLifetime?.millis ?: -1
 
 	override fun put(uniqueKey: String, fileData: ByteArray): Promise<CachedFile> {
 		val putPromise = cacheStreamSupplier
@@ -65,16 +61,6 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	}
 
 	override fun promiseCachedFile(uniqueKey: String): Promise<File?> {
-		return synchronized(syncObject) {
-			promisedCachedFiles = promisedCachedFiles.eventually {
-				promiseCachedFilesUnsynchronized(uniqueKey)
-			}
-
-			promisedCachedFiles
-		}
-	}
-
-	private fun promiseCachedFilesUnsynchronized(uniqueKey: String): Promise<File?> {
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
 			.eventually<File?> { cachedFile ->
