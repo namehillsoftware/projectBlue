@@ -100,10 +100,11 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	private fun promiseDeletedFile(cachedFile: CachedFile, file: File): Promise<Long> {
 		return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
 			.eventually { isDeleted ->
-				if (!isDeleted)
-					throw IOException("Unable to delete cached file " + file.absolutePath)
-
-				deleteCachedFile(cachedFile.id)
+				if (isDeleted) deleteCachedFile(cachedFile.id)
+				else {
+					logger.warn("Unable to delete cached file " + file.absolutePath)
+					Promise(-1L)
+				}
 			}
 	}
 
