@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.D
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransaction;
-import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
@@ -58,37 +57,5 @@ public class CachedFilesProvider implements ICachedFilesProvider {
 				throw e;
 			}
 		}
-	}
-
-	private long deleteCachedFile(final long cachedFileId) {
-		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-				logger.info("Deleting cached serviceFile with id " + cachedFileId);
-
-				if (logger.isDebugEnabled())
-					logger.debug("Cached serviceFile count: " + getTotalCachedFileCount(repositoryAccessHelper));
-
-				final long executionResult =
-					repositoryAccessHelper
-						.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
-						.addParameter("id", cachedFileId)
-						.execute();
-
-				if (logger.isDebugEnabled())
-					logger.debug("Cached serviceFile count: " + getTotalCachedFileCount(repositoryAccessHelper));
-
-				closeableTransaction.setTransactionSuccessful();
-
-				return executionResult;
-			} catch (SQLException sqlException) {
-				logger.warn("There was an error trying to delete the cached serviceFile with id " + cachedFileId, sqlException);
-			}
-		}
-
-		return -1;
-	}
-
-	private static long getTotalCachedFileCount(RepositoryAccessHelper repositoryAccessHelper) {
-		return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute();
 	}
 }

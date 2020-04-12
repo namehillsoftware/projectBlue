@@ -36,6 +36,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 				.addColumn(CachedFile.UNIQUE_KEY)
 				.addColumn(CachedFile.CREATED_TIME)
 				.addColumn(CachedFile.LAST_ACCESSED_TIME)
+				.withReplacement()
 				.build());
 
 	private final Context context;

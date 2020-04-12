@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -21,11 +20,7 @@ import java.io.IOException
 
 class DiskFileCache(private val context: Context, private val diskCacheDirectory: IDiskCacheDirectoryProvider, private val diskFileCacheConfiguration: IDiskFileCacheConfiguration, private val cacheStreamSupplier: ICacheStreamSupplier, private val cachedFilesProvider: ICachedFilesProvider, private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater) : ICache {
 
-	private val syncObject = Object()
-	private val expirationTime = if (diskFileCacheConfiguration.cacheItemLifetime != null) diskFileCacheConfiguration.cacheItemLifetime.millis else -1
-
-	@Volatile
-	private var promisedCachedFiles = Promise.empty<File?>()
+	private val expirationTime = diskFileCacheConfiguration.cacheItemLifetime?.millis ?: -1
 
 	override fun put(uniqueKey: String, fileData: ByteArray): Promise<CachedFile> {
 		val putPromise = cacheStreamSupplier
@@ -65,20 +60,10 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	}
 
 	override fun promiseCachedFile(uniqueKey: String): Promise<File?> {
-		return synchronized(syncObject) {
-			promisedCachedFiles = promisedCachedFiles.eventually {
-				promiseCachedFilesUnsynchronized(uniqueKey)
-			}
-
-			promisedCachedFiles
-		}
-	}
-
-	private fun promiseCachedFilesUnsynchronized(uniqueKey: String): Promise<File?> {
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
-			.eventually<File?> { cachedFile ->
-				val fileName = cachedFile?.fileName ?: return@eventually Promise.empty()
+			.then { cachedFile ->
+				val fileName = cachedFile?.fileName ?: return@then null
 				try {
 
 					val returnFile = File(fileName)
@@ -89,23 +74,25 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 						!returnFile.exists() -> {
 							logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
 
-							deleteCachedFile(cachedFile.id).then { null }
+							deleteCachedFile(cachedFile.id);
+							null
 						}
 						// Remove the cached file and return null if it's past its expired time
 						expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
 							logger.info("Cached file $uniqueKey expired. Deleting.")
 
-							promiseDeletedFile(cachedFile, returnFile).then { null }
+							promiseDeletedFile(cachedFile, returnFile)
+							null
 						}
 						else -> {
 							diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
 							logger.info("Returning cached file $uniqueKey")
-							returnFile.toPromise()
+							returnFile
 						}
 					}
 				} catch (sqlException: SQLException) {
 					logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
-					Promise.empty()
+					null
 				}
 			}
 	}
@@ -113,10 +100,11 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	private fun promiseDeletedFile(cachedFile: CachedFile, file: File): Promise<Long> {
 		return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
 			.eventually { isDeleted ->
-				if (!isDeleted)
-					throw IOException("Unable to delete cached file " + file.absolutePath)
-
-				deleteCachedFile(cachedFile.id)
+				if (isDeleted) deleteCachedFile(cachedFile.id)
+				else {
+					logger.warn("Unable to delete cached file " + file.absolutePath)
+					Promise(-1L)
+				}
 			}
 	}
 
