@@ -38,7 +38,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.Cach
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCacheFactory;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity;
@@ -741,7 +741,7 @@ implements OnAudioFocusChangeListener
 					lazyChosenLibraryIdentifierProvider.getObject(),
 					connectionProvider,
 					cachedSessionFilePropertiesProvider,
-					DiskFileCacheFactory.getInstance(this));
+					ImageDiskFileCacheFactory.getInstance(this));
 
 				remoteControlProxy =
 					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP

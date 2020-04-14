@@ -22,7 +22,7 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCacheFactory;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedSessionFilePropertiesProvider;
@@ -216,7 +216,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 					selectedLibraryIdentifierProvider,
 					connectionProvider,
 					cachedSessionFilePropertiesProvider,
-					DiskFileCacheFactory.getInstance(FileDetailsActivity.this))
+					ImageDiskFileCacheFactory.getInstance(FileDetailsActivity.this))
 					.promiseFileBitmap(new ServiceFile(fileKey));
 			})
 			.eventually(bitmap ->

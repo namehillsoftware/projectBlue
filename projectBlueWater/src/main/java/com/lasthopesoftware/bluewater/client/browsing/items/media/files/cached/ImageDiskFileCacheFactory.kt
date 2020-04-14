@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
-class DiskFileCacheFactory private constructor(private val context: Context, private val libraryProvider: ILibraryProvider, private val diskCacheDirectoryProvider: IDiskCacheDirectoryProvider) : IProvideCaches {
+class ImageDiskFileCacheFactory private constructor(private val context: Context, private val libraryProvider: ILibraryProvider, private val diskCacheDirectoryProvider: IDiskCacheDirectoryProvider) : IProvideCaches {
 
 	private val syncObject = Object()
 	private val sessionCaches = ConcurrentHashMap<LibraryId, ICache>()
@@ -69,17 +69,17 @@ class DiskFileCacheFactory private constructor(private val context: Context, pri
 
 	companion object {
 
-		private var instance: DiskFileCacheFactory? = null
+		private var instance: ImageDiskFileCacheFactory? = null
 
 		@JvmStatic
 		@Synchronized
-		fun getInstance(context: Context): DiskFileCacheFactory {
+		fun getInstance(context: Context): ImageDiskFileCacheFactory {
 			val cachedInstance = instance
 			if (cachedInstance != null) return cachedInstance
 
 			val libraryProvider = LibraryRepository(context)
 			val diskCacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(context)
-			val newInstance = DiskFileCacheFactory(context, libraryProvider, diskCacheDirectoryProvider)
+			val newInstance = ImageDiskFileCacheFactory(context, libraryProvider, diskCacheDirectoryProvider)
 			instance = newInstance
 			return newInstance
 		}

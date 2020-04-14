@@ -44,7 +44,7 @@ public class ImageProvider {
 
 	private static final String IMAGE_FORMAT = "jpg";
 
-	private static final CreateAndHold<ExecutorService> imageAccessExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
+	protected static final CreateAndHold<ExecutorService> imageAccessExecutor = new Lazy<>(CachedSingleThreadExecutor::new);
 
 	private static final Logger logger = LoggerFactory.getLogger(ImageProvider.class);
 

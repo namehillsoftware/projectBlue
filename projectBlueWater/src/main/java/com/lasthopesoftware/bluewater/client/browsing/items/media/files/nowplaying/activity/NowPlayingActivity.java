@@ -36,7 +36,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCacheFactory;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.list.NowPlayingFileListAdapter;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
@@ -197,7 +197,7 @@ implements
 						connectionProvider,
 						new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
 							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance())),
-						DiskFileCacheFactory.getInstance(NowPlayingActivity.this));
+						ImageDiskFileCacheFactory.getInstance(NowPlayingActivity.this));
 				});
 		}
 	};
