@@ -6,7 +6,6 @@ import androidx.collection.LruCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -22,7 +21,7 @@ import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.CancellationException
 
-class MemoryCachedImageProvider(selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider, connectionProvider: IConnectionProvider, private val cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider, caches: IProvideCaches)
+class MemoryCachedImageProvider(cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider, private val imageCacheKeys: LookupImageCacheKey, selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider, connectionProvider: IConnectionProvider, caches: IProvideCaches)
 	: ImageProvider(selectedLibraryIdentifierProvider, connectionProvider, cachedSessionFilePropertiesProvider, caches) {
 
 	companion object {
@@ -52,25 +51,26 @@ class MemoryCachedImageProvider(selectedLibraryIdentifierProvider: ISelectedLibr
 
 	inner class ImageOperator internal constructor(private val serviceFile: ServiceFile) : MessengerOperator<Bitmap> {
 		override fun send(messenger: Messenger<Bitmap>) {
-			val promisedFileProperties = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile)
+			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(serviceFile);
 
 			val cancellationProxy = CancellationProxy()
 			messenger.cancellationRequested(cancellationProxy)
-			cancellationProxy.doCancel(promisedFileProperties)
+			cancellationProxy.doCancel(promisedCacheKey)
 
 			val promiseProxy = PromiseProxy(messenger)
-			val promisedBitmap = promisedFileProperties
-				.then { fileProperties ->
-					// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
-					// artists), and then by artist if that field is empty
-					var artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
-					if (artist == null || artist.isEmpty()) artist = fileProperties[KnownFileProperties.ARTIST]
-
-					var albumOrTrackName = fileProperties[KnownFileProperties.ALBUM]
-					if (albumOrTrackName == null) albumOrTrackName = fileProperties[KnownFileProperties.NAME]
-
-					"$artist:$albumOrTrackName"
-				}.eventually { uniqueKey ->
+			val promisedBitmap = promisedCacheKey
+//				.then { fileProperties ->
+//					// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
+//					// artists), and then by artist if that field is empty
+//					var artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
+//					if (artist == null || artist.isEmpty()) artist = fileProperties[KnownFileProperties.ARTIST]
+//
+//					var albumOrTrackName = fileProperties[KnownFileProperties.ALBUM]
+//					if (albumOrTrackName == null) albumOrTrackName = fileProperties[KnownFileProperties.NAME]
+//
+//					"$artist:$albumOrTrackName"
+//				}
+				.eventually { uniqueKey ->
 					val memoryTask = QueuedPromise(ImageMemoryWriter(uniqueKey), imageAccessExecutor.getObject());
 
 					memoryTask.eventually { bitmap ->
