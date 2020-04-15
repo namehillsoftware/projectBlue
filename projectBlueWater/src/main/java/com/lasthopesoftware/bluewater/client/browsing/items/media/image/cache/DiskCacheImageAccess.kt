@@ -58,7 +58,10 @@ open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey,
 					caches.promiseCache(selectedLibraryIdentifierProvider.selectedLibraryId)
 						.eventually { cache ->
 							cache.promiseCachedFile(uniqueKey)
-								.eventually { imageFile -> QueuedPromise(ImageDiskCacheWriter(imageFile), ParsingScheduler.instance().scheduler) }
+								.eventually { imageFile ->
+									if (imageFile != null) QueuedPromise(ImageDiskCacheWriter(imageFile), ParsingScheduler.instance().scheduler)
+									else Promise(ByteArray(0))
+								}
 								.eventually { bytes ->
 									if (bytes.isNotEmpty()) Promise(bytes)
 									else super@DiskCacheImageAccess.promiseImageBytes(serviceFile)
