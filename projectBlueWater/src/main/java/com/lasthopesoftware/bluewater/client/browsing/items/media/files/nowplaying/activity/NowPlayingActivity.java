@@ -48,6 +48,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.ImageCacheKeyLookup;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider;
@@ -193,11 +195,12 @@ implements
 					final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingActivity.this);
 
 					return new ImageProvider(
-						selectedLibraryIdentifierProvider,
-						connectionProvider,
-						new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance())),
-						ImageDiskFileCacheFactory.getInstance(NowPlayingActivity.this));
+						new MemoryCachedImageAccess(
+							new ImageCacheKeyLookup(new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
+								new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()))),
+							ImageDiskFileCacheFactory.getInstance(NowPlayingActivity.this),
+							selectedLibraryIdentifierProvider,
+							connectionProvider));
 				});
 		}
 	};

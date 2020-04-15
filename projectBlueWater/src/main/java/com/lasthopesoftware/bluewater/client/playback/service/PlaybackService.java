@@ -52,6 +52,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.ImageCacheKeyLookup;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SelectedBrowserLibraryProvider;
@@ -738,10 +740,11 @@ implements OnAudioFocusChangeListener
 					localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
 				final ImageProvider imageProvider = new ImageProvider(
-					lazyChosenLibraryIdentifierProvider.getObject(),
-					connectionProvider,
-					cachedSessionFilePropertiesProvider,
-					ImageDiskFileCacheFactory.getInstance(this));
+					new MemoryCachedImageAccess(
+						new ImageCacheKeyLookup(cachedSessionFilePropertiesProvider),
+						ImageDiskFileCacheFactory.getInstance(this),
+						lazyChosenLibraryIdentifierProvider.getObject(),
+						connectionProvider));
 
 				remoteControlProxy =
 					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP

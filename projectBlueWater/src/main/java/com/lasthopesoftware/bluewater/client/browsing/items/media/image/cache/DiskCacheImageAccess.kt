@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.raw
+package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.LookupImageCacheKey
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler
@@ -17,7 +17,29 @@ import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 import java.io.*
 
-class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches, private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider, connectionProvider: IConnectionProvider) : RemoteImageAccess(connectionProvider) {
+open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches, private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider, connectionProvider: IConnectionProvider) : RemoteImageAccess(connectionProvider) {
+
+	companion object {
+		private val logger = LoggerFactory.getLogger(DiskCacheImageAccess::class.java)
+
+		fun getBytesFromFiles(file: File): ByteArray {
+			try {
+				FileInputStream(file).use { fis ->
+					ByteArrayOutputStream().use { buffer ->
+						IOUtils.copy(fis, buffer)
+						return buffer.toByteArray()
+					}
+				}
+			} catch (e: FileNotFoundException) {
+				logger.error("Could not find cached file.", e)
+				return ByteArray(0)
+			} catch (e: IOException) {
+				logger.error("Error reading cached file.", e)
+				return ByteArray(0)
+			}
+		}
+	}
+
 	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> {
 		return Promise(ImageOperator(serviceFile))
 	}
@@ -41,8 +63,8 @@ class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey, priv
 									if (bytes.isNotEmpty()) Promise(bytes)
 									else super@DiskCacheImageAccess.promiseImageBytes(serviceFile)
 										.then {
-											cache.put(uniqueKey, it)
-												.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
+											if (it.isNotEmpty())
+												cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
 
 											it
 										}
@@ -57,26 +79,5 @@ class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey, priv
 		override fun prepareMessage(): ByteArray {
 			return getBytesFromFiles(imageCacheFile)
 		}
-	}
-
-	companion object {
-		fun getBytesFromFiles(file: File): ByteArray {
-			try {
-				FileInputStream(file).use { fis ->
-					ByteArrayOutputStream().use { buffer ->
-						IOUtils.copy(fis, buffer)
-						return buffer.toByteArray()
-					}
-				}
-			} catch (e: FileNotFoundException) {
-				logger.error("Could not find cached file.", e)
-				return ByteArray(0)
-			} catch (e: IOException) {
-				logger.error("Error reading cached file.", e)
-				return ByteArray(0)
-			}
-		}
-
-		private val logger = LoggerFactory.getLogger(DiskCacheImageAccess::class.java)
 	}
 }

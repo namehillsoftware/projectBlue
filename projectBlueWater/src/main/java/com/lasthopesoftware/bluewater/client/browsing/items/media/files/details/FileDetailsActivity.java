@@ -30,6 +30,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.ImageCacheKeyLookup;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
@@ -213,10 +215,11 @@ public class FileDetailsActivity extends AppCompatActivity {
 					new SelectedBrowserLibraryIdentifierProvider(FileDetailsActivity.this);
 
 				return new ImageProvider(
-					selectedLibraryIdentifierProvider,
-					connectionProvider,
-					cachedSessionFilePropertiesProvider,
-					ImageDiskFileCacheFactory.getInstance(FileDetailsActivity.this))
+					new MemoryCachedImageAccess(
+						new ImageCacheKeyLookup(cachedSessionFilePropertiesProvider),
+						ImageDiskFileCacheFactory.getInstance(FileDetailsActivity.this),
+						selectedLibraryIdentifierProvider,
+						connectionProvider))
 					.promiseFileBitmap(new ServiceFile(fileKey));
 			})
 			.eventually(bitmap ->

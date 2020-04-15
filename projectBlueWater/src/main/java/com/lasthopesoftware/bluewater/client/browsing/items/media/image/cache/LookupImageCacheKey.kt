@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image
+package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.namehillsoftware.handoff.promises.Promise
