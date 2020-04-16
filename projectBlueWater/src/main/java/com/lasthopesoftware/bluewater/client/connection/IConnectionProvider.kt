@@ -6,6 +6,6 @@ import okhttp3.Response
 
 interface IConnectionProvider {
 	fun promiseResponse(vararg params: String): Promise<Response>
-	fun promiseSentPacket(packet: ByteArray): Promise<Unit>
+	fun promiseSentPacket(packets: ByteArray): Promise<Unit>
 	val urlProvider: IUrlProvider
 }

@@ -32,11 +32,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.ImageCacheKeyLookup;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
@@ -215,11 +217,12 @@ public class FileDetailsActivity extends AppCompatActivity {
 					new SelectedBrowserLibraryIdentifierProvider(FileDetailsActivity.this);
 
 				return new ImageProvider(
+					new StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 					new MemoryCachedImageAccess(
-						new ImageCacheKeyLookup(cachedSessionFilePropertiesProvider),
+						new ImageCacheKeyLookup(new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
+							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()))),
 						ImageDiskFileCacheFactory.getInstance(FileDetailsActivity.this),
-						selectedLibraryIdentifierProvider,
-						connectionProvider))
+						LibraryConnectionProvider.Instance.get(FileDetailsActivity.this)))
 					.promiseFileBitmap(new ServiceFile(fileKey));
 			})
 			.eventually(bitmap ->

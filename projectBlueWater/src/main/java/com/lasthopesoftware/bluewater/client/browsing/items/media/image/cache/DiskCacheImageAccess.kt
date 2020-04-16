@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteImageAccess
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
@@ -17,7 +17,7 @@ import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 import java.io.*
 
-open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches, private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider, connectionProvider: IConnectionProvider) : RemoteImageAccess(connectionProvider) {
+open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches, connectionProvider: ProvideLibraryConnections) : RemoteImageAccess(connectionProvider) {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(DiskCacheImageAccess::class.java)
@@ -40,11 +40,11 @@ open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey,
 		}
 	}
 
-	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> {
-		return Promise(ImageOperator(serviceFile))
+	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {
+		return Promise(ImageOperator(libraryId, serviceFile))
 	}
 
-	inner class ImageOperator internal constructor(private val serviceFile: ServiceFile) : MessengerOperator<ByteArray> {
+	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : MessengerOperator<ByteArray> {
 		override fun send(messenger: Messenger<ByteArray>) {
 			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(serviceFile);
 
@@ -55,7 +55,7 @@ open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey,
 			val promiseProxy = PromiseProxy(messenger)
 			val promisedBytes = promisedCacheKey
 				.eventually { uniqueKey ->
-					caches.promiseCache(selectedLibraryIdentifierProvider.selectedLibraryId)
+					caches.promiseCache(libraryId)
 						.eventually { cache ->
 							cache.promiseCachedFile(uniqueKey)
 								.eventually { imageFile ->
@@ -64,7 +64,7 @@ open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey,
 								}
 								.eventually { bytes ->
 									if (bytes != null && bytes.isNotEmpty()) Promise(bytes)
-									else super@DiskCacheImageAccess.promiseImageBytes(serviceFile)
+									else super@DiskCacheImageAccess.promiseImageBytes(libraryId, serviceFile)
 										.then {
 											if (it.isNotEmpty())
 												cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }

@@ -1,14 +1,15 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.image
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.lazyj.Lazy
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.io.IOException
 
-open class RemoteImageAccess(private val connectionProvider: IConnectionProvider) : GetRawImages {
+open class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnections) : GetRawImages {
 	companion object {
 		private const val IMAGE_FORMAT = "jpg"
 
@@ -17,9 +18,10 @@ open class RemoteImageAccess(private val connectionProvider: IConnectionProvider
 		private val emptyByteArray = Lazy { ByteArray(0) }
 	}
 
-	override fun promiseImageBytes(serviceFile: ServiceFile): Promise<ByteArray> {
+	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {
 		val fileKey = serviceFile.key
-		return connectionProvider.promiseResponse("File/GetImage", "File=$fileKey", "Type=Full", "Pad=1", "Format=$IMAGE_FORMAT", "FillTransparency=ffffff")
+		return connectionProvider.promiseLibraryConnection(libraryId)
+			.eventually { c -> c.promiseResponse("File/GetImage", "File=$fileKey", "Type=Full", "Pad=1", "Format=$IMAGE_FORMAT", "FillTransparency=ffffff") }
 			.then(
 				{ response -> response.body?.use { it.bytes() } ?: emptyByteArray.getObject() },
 				{ e ->

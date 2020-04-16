@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class NowPlayingFileProvider implements INowPlayingFileProvider {

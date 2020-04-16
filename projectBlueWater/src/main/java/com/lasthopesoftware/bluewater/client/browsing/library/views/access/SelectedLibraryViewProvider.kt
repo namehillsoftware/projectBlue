@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISelectedBrowserLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.views.DownloadViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem

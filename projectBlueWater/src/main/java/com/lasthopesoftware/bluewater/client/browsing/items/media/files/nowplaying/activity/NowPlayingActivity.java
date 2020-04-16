@@ -53,7 +53,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.Me
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
@@ -61,8 +65,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
@@ -195,12 +197,12 @@ implements
 					final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingActivity.this);
 
 					return new ImageProvider(
+						new StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 						new MemoryCachedImageAccess(
 							new ImageCacheKeyLookup(new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
 								new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()))),
 							ImageDiskFileCacheFactory.getInstance(NowPlayingActivity.this),
-							selectedLibraryIdentifierProvider,
-							connectionProvider));
+							LibraryConnectionProvider.Instance.get(NowPlayingActivity.this)));
 				});
 		}
 	};

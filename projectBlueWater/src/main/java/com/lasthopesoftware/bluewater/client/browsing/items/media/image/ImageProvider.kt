@@ -3,14 +3,15 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
-open class ImageProvider(private val rawImages: GetRawImages) {
+open class ImageProvider(private val selectedLibraryId: ISelectedLibraryIdentifierProvider, private val rawImages: GetRawImages) {
 	open fun promiseFileBitmap(serviceFile: ServiceFile?): Promise<Bitmap?>? {
-		return rawImages.promiseImageBytes(serviceFile!!)
+		return rawImages.promiseImageBytes(selectedLibraryId.selectedLibraryId, serviceFile!!)
 			.eventually { bytes: ByteArray -> QueuedPromise(BitmapWriter(bytes), ParsingScheduler.instance().scheduler) }
 	}
 

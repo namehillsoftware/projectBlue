@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.servers.selection;
+package com.lasthopesoftware.bluewater.client.browsing.library.access.session;
 
 /**
  * Created by david on 2/19/17.

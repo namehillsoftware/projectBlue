@@ -28,6 +28,8 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
@@ -37,8 +39,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.PlaybackEngineTypeSelectionView;
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter;
-import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
