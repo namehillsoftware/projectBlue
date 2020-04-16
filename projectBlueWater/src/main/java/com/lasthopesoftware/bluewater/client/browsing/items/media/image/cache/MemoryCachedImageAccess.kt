@@ -11,12 +11,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
-import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class MemoryCachedImageAccess private constructor(private val imageCacheKeys: LookupImageCacheKey, caches: IProvideCaches, connectionProvider: ProvideLibraryConnections)
 	: DiskCacheImageAccess(imageCacheKeys, caches, connectionProvider) {
@@ -24,20 +24,17 @@ class MemoryCachedImageAccess private constructor(private val imageCacheKeys: Lo
 	companion object {
 		private const val MAX_MEMORY_CACHE_SIZE = 10
 
-		private val imageMemoryCache = LruCache<String, ByteArray>(MAX_MEMORY_CACHE_SIZE)
-
-		private var instance: MemoryCachedImageAccess? = null
+		private lateinit var instance: MemoryCachedImageAccess
 
 		@Synchronized
 		@JvmStatic
 		fun getInstance(context: Context): MemoryCachedImageAccess {
-			val cachedInstance = instance
-			if (cachedInstance != null) return cachedInstance
+			if (::instance.isInitialized) return instance
 
 			val libraryConnectionProvider = LibraryConnectionProvider.get(context)
 			val filePropertiesCache = FilePropertyCache.getInstance()
 
-			val newInstance = MemoryCachedImageAccess(
+			instance = MemoryCachedImageAccess(
 				ImageCacheKeyLookup(CachedFilePropertiesProvider(
 					libraryConnectionProvider,
 					filePropertiesCache,
@@ -45,12 +42,16 @@ class MemoryCachedImageAccess private constructor(private val imageCacheKeys: Lo
 				ImageDiskFileCacheFactory.getInstance(context),
 				libraryConnectionProvider)
 
-			instance = newInstance
-			return newInstance
+			return instance
 		}
 	}
 
-	private val readWriteLock = ReentrantReadWriteLock()
+	private val syncObject = Object()
+
+	private val imageMemoryCache = LruCache<String, ByteArray>(MAX_MEMORY_CACHE_SIZE)
+
+	@Volatile
+	private var currentCacheAccessPromise = Promise(ByteArray(0))
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {
 		return Promise(ImageOperator(libraryId, serviceFile))
@@ -67,22 +68,23 @@ class MemoryCachedImageAccess private constructor(private val imageCacheKeys: Lo
 			val promiseProxy = PromiseProxy(messenger)
 			val promisedBytes = promisedCacheKey
 				.eventually { uniqueKey ->
-					var cachedBytes = imageMemoryCache[uniqueKey]
-					if (cachedBytes != null && cachedBytes.isNotEmpty()) return@eventually Promise(cachedBytes)
+					val cachedBytes = imageMemoryCache[uniqueKey]
+					if (cachedBytes != null && cachedBytes.isNotEmpty()) return@eventually cachedBytes.toPromise()
 
-					val lock = readWriteLock.writeLock()
-					cachedBytes = imageMemoryCache[uniqueKey]
-					if (cachedBytes != null && cachedBytes.isNotEmpty()) {
-						lock.unlock()
-						return@eventually Promise(cachedBytes)
+					synchronized(syncObject) {
+						currentCacheAccessPromise = currentCacheAccessPromise
+							.then { imageMemoryCache[uniqueKey] }
+							.eventually { bytes ->
+								if (bytes != null && bytes.isNotEmpty()) bytes.toPromise()
+								else super@MemoryCachedImageAccess.promiseImageBytes(libraryId, serviceFile)
+									.then {
+										if (it.isNotEmpty()) imageMemoryCache.put(uniqueKey, it)
+										it
+									}
+							}
+
+						currentCacheAccessPromise
 					}
-
-					super@MemoryCachedImageAccess.promiseImageBytes(libraryId, serviceFile)
-						.then {
-							if (it.isNotEmpty()) imageMemoryCache.put(uniqueKey, it)
-							it
-						}
-						.must { lock.unlock() }
 				}
 			promiseProxy.proxy(promisedBytes)
 		}
