@@ -73,7 +73,7 @@ class MemoryCachedImageAccess private constructor(private val imageCacheKeys: Lo
 
 					synchronized(syncObject) {
 						currentCacheAccessPromise = currentCacheAccessPromise
-							.then { imageMemoryCache[uniqueKey] }
+							.then({ imageMemoryCache[uniqueKey] }, { imageMemoryCache[uniqueKey] })
 							.eventually { bytes ->
 								if (bytes != null && bytes.isNotEmpty()) bytes.toPromise()
 								else super@MemoryCachedImageAccess.promiseImageBytes(libraryId, serviceFile)
