@@ -22,21 +22,16 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.ImageCacheKeyLookup;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
@@ -208,21 +203,13 @@ public class FileDetailsActivity extends AppCompatActivity {
 
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.eventually(connectionProvider -> {
-				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-				final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
-					new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-						new SessionFilePropertiesProvider(connectionProvider, filePropertyCache));
 
 				final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider =
 					new SelectedBrowserLibraryIdentifierProvider(FileDetailsActivity.this);
 
 				return new ImageProvider(
 					new StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
-					new MemoryCachedImageAccess(
-						new ImageCacheKeyLookup(new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache))),
-						ImageDiskFileCacheFactory.getInstance(FileDetailsActivity.this),
-						LibraryConnectionProvider.Instance.get(FileDetailsActivity.this)))
+					MemoryCachedImageAccess.getInstance(this))
 					.promiseFileBitmap(new ServiceFile(fileKey));
 			})
 			.eventually(bitmap ->

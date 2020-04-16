@@ -46,7 +46,7 @@ open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey,
 
 	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : MessengerOperator<ByteArray> {
 		override fun send(messenger: Messenger<ByteArray>) {
-			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(serviceFile);
+			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile);
 
 			val cancellationProxy = CancellationProxy()
 			messenger.cancellationRequested(cancellationProxy)

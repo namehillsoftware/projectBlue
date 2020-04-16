@@ -38,7 +38,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.Cach
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity;
@@ -52,7 +51,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.ImageCacheKeyLookup;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider;
@@ -129,7 +127,6 @@ import com.lasthopesoftware.resources.notifications.notificationchannel.Activate
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -742,10 +739,7 @@ implements OnAudioFocusChangeListener
 
 				final ImageProvider imageProvider = new ImageProvider(
 					new StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.getObject()),
-					new MemoryCachedImageAccess(
-						new ImageCacheKeyLookup(cachedSessionFilePropertiesProvider),
-						ImageDiskFileCacheFactory.getInstance(this),
-						LibraryConnectionProvider.Instance.get(this)));
+					MemoryCachedImageAccess.getInstance(this));
 
 				remoteControlProxy =
 					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
