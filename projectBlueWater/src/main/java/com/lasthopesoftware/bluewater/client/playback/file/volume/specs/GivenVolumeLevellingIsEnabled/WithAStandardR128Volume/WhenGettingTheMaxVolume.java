@@ -43,7 +43,7 @@ public class WhenGettingTheMaxVolume {
 				put(KnownFileProperties.VolumeLevelR128, "-13.5");
 			}}));
 
-		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, repository, ParsingScheduler.instance());
+		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, repository);
 
 		final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
 			new CachedSessionFilePropertiesProvider(

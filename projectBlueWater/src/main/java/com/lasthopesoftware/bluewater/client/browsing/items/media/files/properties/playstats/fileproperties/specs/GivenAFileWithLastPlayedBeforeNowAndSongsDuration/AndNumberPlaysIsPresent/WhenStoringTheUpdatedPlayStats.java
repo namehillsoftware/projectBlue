@@ -50,7 +50,7 @@ public class WhenStoringTheUpdatedPlayStats {
 			"File/GetInfo", "File=23");
 
 		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
-		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, filePropertiesContainer, ParsingScheduler.instance());
+		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, filePropertiesContainer);
 
 		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(sessionFilePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
 

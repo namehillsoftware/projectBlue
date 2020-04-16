@@ -211,7 +211,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 				final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 				final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
 					new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-						new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
+						new SessionFilePropertiesProvider(connectionProvider, filePropertyCache));
 
 				final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider =
 					new SelectedBrowserLibraryIdentifierProvider(FileDetailsActivity.this);
@@ -220,7 +220,7 @@ public class FileDetailsActivity extends AppCompatActivity {
 					new StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 					new MemoryCachedImageAccess(
 						new ImageCacheKeyLookup(new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()))),
+							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache))),
 						ImageDiskFileCacheFactory.getInstance(FileDetailsActivity.this),
 						LibraryConnectionProvider.Instance.get(FileDetailsActivity.this)))
 					.promiseFileBitmap(new ServiceFile(fileKey));

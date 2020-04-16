@@ -70,8 +70,8 @@ public class WhenBuildingTheLoadingNotification extends AndroidContext {
 				containerRepository,
 				new SessionFilePropertiesProvider(
 					connectionProvider,
-					containerRepository,
-					ParsingScheduler.instance())),
+					containerRepository
+				)),
 			imageProvider);
 
 		builder = npBuilder.getLoadingNotification(true);

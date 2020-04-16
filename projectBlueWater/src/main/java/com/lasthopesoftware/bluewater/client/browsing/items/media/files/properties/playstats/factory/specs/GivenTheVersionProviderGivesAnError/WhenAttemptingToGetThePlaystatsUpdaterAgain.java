@@ -39,7 +39,7 @@ public class WhenAttemptingToGetThePlaystatsUpdaterAgain {
 		final FakeFilePropertiesContainer fakeFilePropertiesContainer = new FakeFilePropertiesContainer();
 		final PlaystatsUpdateSelector playstatsUpdateSelector = new PlaystatsUpdateSelector(
 			fakeConnectionProvider,
-			new SessionFilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer, ParsingScheduler.instance()),
+			new SessionFilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer),
 			new FilePropertiesStorage(fakeConnectionProvider, fakeFilePropertiesContainer),
 			programVersionProvider);
 

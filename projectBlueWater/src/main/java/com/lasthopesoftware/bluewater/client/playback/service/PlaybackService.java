@@ -736,7 +736,7 @@ implements OnAudioFocusChangeListener
 
 			return extractorHandler.getObject().then(handler -> {
 				cachedSessionFilePropertiesProvider = new CachedSessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(),
-					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
+					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 				if (remoteControlProxy != null)
 					localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 

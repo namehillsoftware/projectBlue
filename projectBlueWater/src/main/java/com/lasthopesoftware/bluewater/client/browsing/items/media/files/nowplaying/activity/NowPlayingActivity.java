@@ -200,7 +200,7 @@ implements
 						new StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 						new MemoryCachedImageAccess(
 							new ImageCacheKeyLookup(new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-								new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()))),
+								new SessionFilePropertiesProvider(connectionProvider, filePropertyCache))),
 							ImageDiskFileCacheFactory.getInstance(NowPlayingActivity.this),
 							LibraryConnectionProvider.Instance.get(NowPlayingActivity.this)));
 				});
@@ -531,7 +531,7 @@ implements
 				disableViewWithMessage();
 
 				final SessionFilePropertiesProvider sessionFilePropertiesProvider =
-					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance());
+					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance());
 				sessionFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually(fileProperties -> {

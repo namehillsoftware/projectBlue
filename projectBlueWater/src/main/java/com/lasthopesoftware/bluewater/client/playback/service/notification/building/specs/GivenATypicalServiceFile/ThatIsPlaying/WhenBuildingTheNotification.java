@@ -71,8 +71,8 @@ public class WhenBuildingTheNotification extends AndroidContext {
 				containerRepository,
 				new SessionFilePropertiesProvider(
 					connectionProvider,
-					containerRepository,
-					ParsingScheduler.instance())),
+					containerRepository
+				)),
 			imageProvider);
 
 		builder = new FuturePromise<>(npBuilder.promiseNowPlayingNotification(new ServiceFile(3), true)).get();
