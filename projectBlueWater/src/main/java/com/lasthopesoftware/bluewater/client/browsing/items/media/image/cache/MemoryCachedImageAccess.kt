@@ -3,14 +3,14 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache
 import android.content.Context
 import androidx.collection.LruCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
@@ -18,8 +18,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 
-class MemoryCachedImageAccess private constructor(private val imageCacheKeys: LookupImageCacheKey, caches: IProvideCaches, connectionProvider: ProvideLibraryConnections)
-	: DiskCacheImageAccess(imageCacheKeys, caches, connectionProvider) {
+class MemoryCachedImageAccess(private val sourceImages: GetRawImages, private val imageCacheKeys: LookupImageCacheKey) : GetRawImages {
 
 	companion object {
 		private const val MAX_MEMORY_CACHE_SIZE = 10
@@ -33,14 +32,18 @@ class MemoryCachedImageAccess private constructor(private val imageCacheKeys: Lo
 
 			val libraryConnectionProvider = LibraryConnectionProvider.get(context)
 			val filePropertiesCache = FilePropertyCache.getInstance()
+			val imageCacheKeyLookup = ImageCacheKeyLookup(CachedFilePropertiesProvider(
+				libraryConnectionProvider,
+				filePropertiesCache,
+				FilePropertiesProvider(libraryConnectionProvider, filePropertiesCache)))
 
 			instance = MemoryCachedImageAccess(
-				ImageCacheKeyLookup(CachedFilePropertiesProvider(
-					libraryConnectionProvider,
-					filePropertiesCache,
-					FilePropertiesProvider(libraryConnectionProvider, filePropertiesCache))),
-				ImageDiskFileCacheFactory.getInstance(context),
-				libraryConnectionProvider)
+				DiskCacheImageAccess(
+					RemoteImageAccess(
+						libraryConnectionProvider),
+					imageCacheKeyLookup,
+					ImageDiskFileCacheFactory.getInstance(context)),
+				imageCacheKeyLookup)
 
 			return instance
 		}
@@ -69,14 +72,13 @@ class MemoryCachedImageAccess private constructor(private val imageCacheKeys: Lo
 			val promisedBytes = promisedCacheKey
 				.eventually { uniqueKey ->
 					val cachedBytes = imageMemoryCache[uniqueKey]
-					if (cachedBytes != null && cachedBytes.isNotEmpty()) return@eventually cachedBytes.toPromise()
-
-					synchronized(syncObject) {
+					if (cachedBytes != null && cachedBytes.isNotEmpty()) cachedBytes.toPromise()
+					else synchronized(syncObject) {
 						currentCacheAccessPromise = currentCacheAccessPromise
 							.then({ imageMemoryCache[uniqueKey] }, { imageMemoryCache[uniqueKey] })
 							.eventually { bytes ->
 								if (bytes != null && bytes.isNotEmpty()) bytes.toPromise()
-								else super@MemoryCachedImageAccess.promiseImageBytes(libraryId, serviceFile)
+								else sourceImages.promiseImageBytes(libraryId, serviceFile)
 									.then {
 										if (it.isNotEmpty()) imageMemoryCache.put(uniqueKey, it)
 										it

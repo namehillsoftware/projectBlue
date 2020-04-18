@@ -2,9 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
@@ -17,7 +16,7 @@ import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 import java.io.*
 
-open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches, connectionProvider: ProvideLibraryConnections) : RemoteImageAccess(connectionProvider) {
+class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches) : GetRawImages {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(DiskCacheImageAccess::class.java)
@@ -64,7 +63,7 @@ open class DiskCacheImageAccess(private val imageCacheKeys: LookupImageCacheKey,
 								}
 								.eventually { bytes ->
 									if (bytes != null && bytes.isNotEmpty()) Promise(bytes)
-									else super@DiskCacheImageAccess.promiseImageBytes(libraryId, serviceFile)
+									else sourceImages.promiseImageBytes(libraryId, serviceFile)
 										.then {
 											if (it.isNotEmpty())
 												cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }

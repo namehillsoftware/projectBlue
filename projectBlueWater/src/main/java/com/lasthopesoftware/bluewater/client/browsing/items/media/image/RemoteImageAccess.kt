@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.io.IOException
 
-open class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnections) : GetRawImages {
+class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnections) : GetRawImages {
 	companion object {
 		private const val IMAGE_FORMAT = "jpg"
 
