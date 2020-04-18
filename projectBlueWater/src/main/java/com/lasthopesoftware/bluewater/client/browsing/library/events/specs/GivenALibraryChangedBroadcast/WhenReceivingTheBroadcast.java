@@ -5,8 +5,8 @@ import android.content.Intent;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
-import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
-import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibrarySelectionKey;
 import com.lasthopesoftware.specs.AndroidContext;
 
 import org.junit.Test;

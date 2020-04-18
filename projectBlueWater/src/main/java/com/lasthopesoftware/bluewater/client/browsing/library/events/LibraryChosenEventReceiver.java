@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
-import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibrarySelectionKey;
 
 public class LibraryChosenEventReceiver extends BroadcastReceiver {
 

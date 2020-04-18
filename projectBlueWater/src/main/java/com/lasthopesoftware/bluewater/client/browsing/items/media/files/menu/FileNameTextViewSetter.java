@@ -148,7 +148,7 @@ public class FileNameTextViewSetter {
 			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
 			final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
 				new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-					new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance()));
+					new SessionFilePropertiesProvider(connectionProvider, filePropertyCache));
 
 			final Promise<Map<String, String>> filePropertiesPromise = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile);
 

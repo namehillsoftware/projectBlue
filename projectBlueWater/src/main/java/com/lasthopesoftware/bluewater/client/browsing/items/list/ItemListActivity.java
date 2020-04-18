@@ -18,13 +18,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.SelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;

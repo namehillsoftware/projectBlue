@@ -19,11 +19,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;

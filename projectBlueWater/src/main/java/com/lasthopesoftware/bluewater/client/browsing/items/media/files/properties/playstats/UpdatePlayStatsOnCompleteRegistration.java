@@ -27,7 +27,7 @@ public class UpdatePlayStatsOnCompleteRegistration implements IConnectionDepende
 		return new UpdatePlayStatsOnPlaybackCompleteReceiver(
 			new PlaystatsUpdateSelector(
 				connectionProvider,
-				new SessionFilePropertiesProvider(connectionProvider, cache, ParsingScheduler.instance()),
+				new SessionFilePropertiesProvider(connectionProvider, cache),
 				new FilePropertiesStorage(connectionProvider, cache),
 				new ProgramVersionProvider(connectionProvider)));
 	}

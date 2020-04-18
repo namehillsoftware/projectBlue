@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.specs.GivenANul
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
@@ -10,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.specs.SessionConnectionReservation;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;

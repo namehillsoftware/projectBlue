@@ -21,15 +21,13 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.SelectedBrowserLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
@@ -41,9 +39,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.Sel
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionProvider
-import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder

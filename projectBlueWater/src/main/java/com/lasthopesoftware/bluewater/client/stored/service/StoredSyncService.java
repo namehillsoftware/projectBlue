@@ -33,6 +33,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
@@ -42,8 +44,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;

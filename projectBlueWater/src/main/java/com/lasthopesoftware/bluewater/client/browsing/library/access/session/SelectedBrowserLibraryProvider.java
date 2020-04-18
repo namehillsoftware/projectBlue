@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.access;
+package com.lasthopesoftware.bluewater.client.browsing.library.access.session;
 
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
 /**

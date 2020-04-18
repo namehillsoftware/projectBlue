@@ -38,7 +38,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.Cach
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCacheFactory;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity;
@@ -52,10 +51,16 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.SelectedBrowserLibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibrarySelectionKey;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
@@ -101,10 +106,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.bluewater.client.servers.selection.BrowserLibrarySelection;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.LibrarySelectionKey;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection;
@@ -126,7 +127,6 @@ import com.lasthopesoftware.resources.notifications.notificationchannel.Activate
 import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
@@ -733,15 +733,13 @@ implements OnAudioFocusChangeListener
 
 			return extractorHandler.getObject().then(handler -> {
 				cachedSessionFilePropertiesProvider = new CachedSessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(),
-					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance()));
+					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 				if (remoteControlProxy != null)
 					localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy);
 
 				final ImageProvider imageProvider = new ImageProvider(
-					lazyChosenLibraryIdentifierProvider.getObject(),
-					connectionProvider,
-					cachedSessionFilePropertiesProvider,
-					DiskFileCacheFactory.getInstance(this));
+					new StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.getObject()),
+					MemoryCachedImageAccess.getInstance(this));
 
 				remoteControlProxy =
 					new RemoteControlProxy(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.servers.selection;
+package com.lasthopesoftware.bluewater.client.browsing.library.access.session;
 
 import android.content.Context;
 import android.preference.PreferenceManager;

@@ -36,21 +36,23 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCacheFactory;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.list.NowPlayingFileListAdapter;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter;
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService;
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog;
@@ -59,8 +61,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster;
-import com.lasthopesoftware.bluewater.client.servers.selection.ISelectedLibraryIdentifierProvider;
-import com.lasthopesoftware.bluewater.client.servers.selection.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.shared.GenericBinder;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
@@ -68,7 +68,6 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster;
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
@@ -188,16 +187,11 @@ implements
 		protected Promise<ImageProvider> create() {
 			return SessionConnection.getInstance(NowPlayingActivity.this).promiseSessionConnection()
 				.then(connectionProvider -> {
-					final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-
 					final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(NowPlayingActivity.this);
 
 					return new ImageProvider(
-						selectedLibraryIdentifierProvider,
-						connectionProvider,
-						new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-							new SessionFilePropertiesProvider(connectionProvider, filePropertyCache, ParsingScheduler.instance())),
-						DiskFileCacheFactory.getInstance(NowPlayingActivity.this));
+						new StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
+						MemoryCachedImageAccess.getInstance(NowPlayingActivity.this));
 				});
 		}
 	};
@@ -526,7 +520,7 @@ implements
 				disableViewWithMessage();
 
 				final SessionFilePropertiesProvider sessionFilePropertiesProvider =
-					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(), ParsingScheduler.instance());
+					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance());
 				sessionFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually(fileProperties -> {

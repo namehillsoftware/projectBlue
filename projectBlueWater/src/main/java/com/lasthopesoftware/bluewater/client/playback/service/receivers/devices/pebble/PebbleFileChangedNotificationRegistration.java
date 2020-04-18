@@ -27,8 +27,8 @@ public class PebbleFileChangedNotificationRegistration implements IConnectionDep
 				FilePropertyCache.getInstance(),
 				new SessionFilePropertiesProvider(
 					connectionProvider,
-					FilePropertyCache.getInstance(),
-					ParsingScheduler.instance()));
+					FilePropertyCache.getInstance()
+				));
 
 		return new PebbleFileChangedProxy(filePropertiesProvider);
 	}

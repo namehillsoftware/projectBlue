@@ -33,8 +33,8 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 				FilePropertyCache.getInstance(),
 				new SessionFilePropertiesProvider(
 					connectionProvider,
-					FilePropertyCache.getInstance(),
-					ParsingScheduler.instance()));
+					FilePropertyCache.getInstance()
+				));
 
 		return new PlaybackFileChangedScrobbleDroidProxy(filePropertiesProvider, ScrobbleIntentProvider.getInstance());
 	}

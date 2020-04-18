@@ -5,11 +5,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RevisionChecker
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.resources.scheduling.ScheduleParsingWork
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.*
 
-open class SessionFilePropertiesProvider(private val connectionProvider: IConnectionProvider, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository, parsingScheduler: ScheduleParsingWork?) : ProvideFilePropertiesForSession {
+open class SessionFilePropertiesProvider(private val connectionProvider: IConnectionProvider, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideFilePropertiesForSession {
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> {
 		return RevisionChecker.promiseRevision(connectionProvider).eventually { revision: Int ->
 			val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
