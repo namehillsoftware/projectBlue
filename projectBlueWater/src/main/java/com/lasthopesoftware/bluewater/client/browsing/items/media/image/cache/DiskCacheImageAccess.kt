@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
@@ -62,11 +63,9 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 									else Promise.empty<ByteArray?>()
 								}
 								.eventually { bytes ->
-									if (bytes != null && bytes.isNotEmpty()) Promise(bytes)
-									else sourceImages.promiseImageBytes(libraryId, serviceFile)
+									bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
 										.then {
-											if (it.isNotEmpty())
-												cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
+											cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
 
 											it
 										}

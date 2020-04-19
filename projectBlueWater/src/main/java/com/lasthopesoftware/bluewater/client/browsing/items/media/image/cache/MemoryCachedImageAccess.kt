@@ -77,12 +77,12 @@ class MemoryCachedImageAccess(private val sourceImages: GetRawImages, private va
 						currentCacheAccessPromise = currentCacheAccessPromise
 							.then({ imageMemoryCache[uniqueKey] }, { imageMemoryCache[uniqueKey] })
 							.eventually { bytes ->
-								if (bytes != null && bytes.isNotEmpty()) bytes.toPromise()
-								else sourceImages.promiseImageBytes(libraryId, serviceFile)
-									.then {
-										if (it.isNotEmpty()) imageMemoryCache.put(uniqueKey, it)
-										it
-									}
+								bytes?.toPromise() ?:
+									sourceImages.promiseImageBytes(libraryId, serviceFile)
+										.then {
+											imageMemoryCache.put(uniqueKey, it)
+											it
+										}
 							}
 
 						currentCacheAccessPromise
