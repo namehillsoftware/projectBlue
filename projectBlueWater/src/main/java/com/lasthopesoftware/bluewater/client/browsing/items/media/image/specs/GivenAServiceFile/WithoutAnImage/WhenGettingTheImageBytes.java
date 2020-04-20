@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.specs.GivenAServiceFile;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.image.specs.GivenAServiceFile.WithoutAnImage;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteImageAccess;
@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenGettingTheImage {
+public class WhenGettingTheImageBytes {
 
 	private static byte[] imageBytes;
 
@@ -25,7 +25,7 @@ public class WhenGettingTheImage {
 	public static void before() throws ExecutionException, InterruptedException {
 		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
 		fakeConnectionProvider.mapResponse(
-			p -> new FakeConnectionResponseTuple(200, new byte[] { 39, 127, 8 }),
+			p -> new FakeConnectionResponseTuple(500, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n".getBytes()),
 			"File/GetImage", "File=31", "Type=Full", "Pad=1", "Format=jpg", "FillTransparency=ffffff");
 
 		final RemoteImageAccess memoryCachedImageAccess = new RemoteImageAccess(
@@ -43,7 +43,7 @@ public class WhenGettingTheImage {
 	}
 
 	@Test
-	public void thenTheBytesAreCorrect() {
-		assertThat(imageBytes).isEqualTo(new byte[] { 39, 127, 8 });
+	public void thenTheBytesAreEmpty() {
+		assertThat(imageBytes).isEmpty();
 	}
 }

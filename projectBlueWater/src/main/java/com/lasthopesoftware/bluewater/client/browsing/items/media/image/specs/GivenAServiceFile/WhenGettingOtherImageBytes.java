@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WhenGettingAnotherImage {
+public class WhenGettingOtherImageBytes {
 
 	private static byte[] imageBytes;
 

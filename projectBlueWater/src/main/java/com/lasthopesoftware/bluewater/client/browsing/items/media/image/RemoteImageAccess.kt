@@ -15,6 +15,8 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 
 		private val logger = LoggerFactory.getLogger(RemoteImageAccess::class.java)
 
+		private val failureByteArray = Lazy { "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n".toByteArray() }
+
 		private val emptyByteArray = Lazy { ByteArray(0) }
 	}
 
@@ -23,7 +25,12 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 		return connectionProvider.promiseLibraryConnection(libraryId)
 			.eventually { c -> c.promiseResponse("File/GetImage", "File=$fileKey", "Type=Full", "Pad=1", "Format=$IMAGE_FORMAT", "FillTransparency=ffffff") }
 			.then(
-				{ response -> response.body?.use { it.bytes() } ?: emptyByteArray.getObject() },
+				{ response ->
+					when (response.code) {
+						200 -> response.body?.use { it.bytes() } ?: emptyByteArray.getObject()
+						else -> emptyByteArray.getObject()
+					}
+				},
 				{ e ->
 					when (e) {
 						is FileNotFoundException -> {
