@@ -151,8 +151,8 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 
 	@Throws(IOException::class)
 	private fun resumePlaybackFromNowPlaying(nowPlaying: NowPlaying) {
-		val positionedFileQueueProvider = positionedFileQueueProviders[nowPlaying.isRepeating]
-		val fileQueue = positionedFileQueueProvider!!.provideQueue(nowPlaying.playlist, nowPlaying.playlistPosition)
+		val positionedFileQueueProvider = positionedFileQueueProviders.getValue(nowPlaying.isRepeating)
+		val fileQueue = positionedFileQueueProvider.provideQueue(nowPlaying.playlist, nowPlaying.playlistPosition)
 		val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(fileQueue)
 		startPlayback(preparedPlaybackQueue, nowPlaying.filePosition)
 	}
