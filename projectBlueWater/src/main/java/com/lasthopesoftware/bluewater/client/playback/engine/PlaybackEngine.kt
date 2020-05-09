@@ -104,21 +104,17 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 	}
 
 	fun resume(): Promise<*> {
-		var resumePromise: Promise<*> = Promise.empty<Any>()
-		return if (activePlayer != null) {
-			resumePromise = activePlayer!!.resume()
+		val resumePromise = activePlayer?.resume();
+		return if (resumePromise != null) {
 			isPlaying = true
 			resumePromise
 		} else {
-			resumePromise
-				.eventually { restorePlaylistFromStorage() }
-				.then<Any?> { np -> resumePlaybackFromNowPlaying(np) }
+			restorePlaylistFromStorage().then { np -> resumePlaybackFromNowPlaying(np) }
 		}
 	}
 
 	fun pause(): Promise<*> {
-		var promisedPause: Promise<*> = Promise.empty<Any>()
-		if (activePlayer != null) promisedPause = activePlayer!!.pause()
+		val promisedPause = activePlayer?.pause() ?: Promise.empty<Any?>()
 		isPlaying = false
 		return if (positionedPlayingFile != null) promisedPause.eventually { saveStateToLibrary(positionedPlayingFile) }
 		else promisedPause
