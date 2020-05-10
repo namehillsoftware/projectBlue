@@ -30,7 +30,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	private var isStarted = false
 	private var emitter: ObservableEmitter<PositionedPlayingFile>? = null
 
-	private val pausedPromise = EventualAction {
+	private val newPausedPromiseAction = EventualAction {
 		val currentPlayingFile = positionedPlayingFile
 		currentPlayingFile
 			?.playingFile
@@ -41,21 +41,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 					currentPlayingFile.playableFileVolumeManager,
 					currentPlayingFile.asPositionedFile())
 				positionedPlayingFile = null
-			}
-			?: Promise.empty<Any>()
-	}
-
-	private val resumePromise = EventualAction {
-		val currentPlayableFile = positionedPlayableFile
-		currentPlayableFile
-			?.playableFile
-			?.promisePlayback()
-			?.then { p ->
-				positionedPlayingFile = PositionedPlayingFile(
-					p,
-					currentPlayableFile.playableFileVolumeManager,
-					currentPlayableFile.asPositionedFile())
-				positionedPlayableFile = null
 			}
 			?: Promise.empty<Any>()
 	}
@@ -71,24 +56,43 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	override fun pause(): Promise<*> {
 		synchronized(stateChangeSync) {
 			return lastStateChangePromise
-				.inevitably(pausedPromise).also { lastStateChangePromise = it }
+				.inevitably(newPausedPromiseAction)
+				.also { lastStateChangePromise = it }
 		}
 	}
 
-	override fun resume(): Promise<*> {
+	override fun resume(): Promise<PositionedPlayingFile?> {
 		synchronized(stateChangeSync) {
 			return lastStateChangePromise
-				.inevitably(resumePromise).also { lastStateChangePromise = it }
+				.eventually({ promiseResumption() }, { promiseResumption() })
+				.also { lastStateChangePromise = it }
 		}
 	}
 
-	override fun isPlaying(): Boolean {
-		return positionedPlayingFile != null
-	}
+	override val isPlaying: Boolean
+		get() {
+			return positionedPlayingFile != null
+		}
 
 	override fun setVolume(volume: Float) {
 		this.volume = volume
 		positionedPlayableFile?.playableFileVolumeManager?.volume = volume
+	}
+
+	private fun promiseResumption(): Promise<PositionedPlayingFile?> {
+		val currentPlayableFile = positionedPlayableFile
+		return currentPlayableFile
+			?.playableFile
+			?.promisePlayback()
+			?.then { p ->
+				positionedPlayingFile = PositionedPlayingFile(
+					p,
+					currentPlayableFile.playableFileVolumeManager,
+					currentPlayableFile.asPositionedFile())
+				positionedPlayableFile = null
+				return@then positionedPlayingFile
+			}
+			?: Promise.empty<PositionedPlayingFile>()
 	}
 
 	private fun setupNextPreparedFile(preparedPosition: Long = 0) {

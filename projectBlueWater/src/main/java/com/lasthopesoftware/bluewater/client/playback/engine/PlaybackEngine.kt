@@ -104,7 +104,7 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 		updatePreparedFileQueueUsingState(positionedFileQueueProviders.getValue(false))
 	}
 
-	fun resume(): Promise<*> {
+	fun resume(): Promise<PositionedPlayingFile?> {
 		val resumePromise = activePlayer?.resume()
 			?: return restorePlaylistFromStorage().then { resumePlaybackFromNowPlaying(it) }
 
@@ -181,17 +181,17 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 							e.positionedFile))
 				}
 				onPlaylistError?.runWith(e)
-			}
-		) {
-			isPlaying = false
-			positionedPlayingFile = null
-			activePlayer = null
-			changePosition(0, 0)
-				.then { positionedFile ->
-					onPlaylistReset?.onPlaylistReset(positionedFile)
-					onPlaybackCompleted?.onPlaybackCompleted()
-				}
-		}
+			},
+			{
+				isPlaying = false
+				positionedPlayingFile = null
+				activePlayer = null
+				changePosition(0, 0)
+					.then { positionedFile ->
+						onPlaylistReset?.onPlaylistReset(positionedFile)
+						onPlaybackCompleted?.onPlaybackCompleted()
+					}
+			})
 		return observable
 	}
 

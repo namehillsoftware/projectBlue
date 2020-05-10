@@ -60,7 +60,7 @@ implements
 
 	private void pause() {
 		isPlaying = false;
-		exoPlayer.stop();
+		exoPlayer.setPlayWhenReady(false);
 	}
 
 	@Override
