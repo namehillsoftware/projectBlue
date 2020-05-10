@@ -8,8 +8,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.EventualAction
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy
-import com.namehillsoftware.lazyj.CreateAndHold
 import io.reactivex.ObservableEmitter
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -24,49 +22,42 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	private val stateChangeSync = Any()
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 	private var positionedPlayableFile: PositionedPlayableFile? = null
-	private var lastStateChangePromise: Promise<*> = Promise.empty<Any>()
 	private var volume = 0f
+
+	private var lastStateChangePromise: Promise<*> = Promise.empty<Any>()
 
 	@Volatile
 	private var isStarted = false
 	private var emitter: ObservableEmitter<PositionedPlayingFile>? = null
 
-	private val lazyPausedPromise: CreateAndHold<EventualAction> = object : AbstractSynchronousLazy<EventualAction>() {
-		override fun create(): EventualAction {
-			return EventualAction {
-				val playingFile = positionedPlayingFile
-				playingFile
-					?.playingFile
-					?.promisePause()
-					?.then { p ->
-						positionedPlayableFile = PositionedPlayableFile(
-							p,
-							playingFile.playableFileVolumeManager,
-							playingFile.asPositionedFile())
-						positionedPlayingFile = null
-					}
-					?: Promise.empty<Any>()
+	private val pausedPromise = EventualAction {
+		val currentPlayingFile = positionedPlayingFile
+		currentPlayingFile
+			?.playingFile
+			?.promisePause()
+			?.then { p ->
+				positionedPlayableFile = PositionedPlayableFile(
+					p,
+					currentPlayingFile.playableFileVolumeManager,
+					currentPlayingFile.asPositionedFile())
+				positionedPlayingFile = null
 			}
-		}
+			?: Promise.empty<Any>()
 	}
 
-	private val lazyResumePromise: CreateAndHold<EventualAction> = object : AbstractSynchronousLazy<EventualAction>() {
-		override fun create(): EventualAction {
-			return EventualAction {
-				val playableFile = positionedPlayableFile
-				playableFile
-					?.playableFile
-					?.promisePlayback()
-					?.then { p ->
-						positionedPlayingFile = PositionedPlayingFile(
-							p,
-							playableFile.playableFileVolumeManager,
-							playableFile.asPositionedFile())
-						positionedPlayableFile = null
-					}
-					?: Promise.empty<Any>()
+	private val resumePromise = EventualAction {
+		val currentPlayableFile = positionedPlayableFile
+		currentPlayableFile
+			?.playableFile
+			?.promisePlayback()
+			?.then { p ->
+				positionedPlayingFile = PositionedPlayingFile(
+					p,
+					currentPlayableFile.playableFileVolumeManager,
+					currentPlayableFile.asPositionedFile())
+				positionedPlayableFile = null
 			}
-		}
+			?: Promise.empty<Any>()
 	}
 
 	override fun subscribe(e: ObservableEmitter<PositionedPlayingFile>) {
@@ -80,14 +71,14 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	override fun pause(): Promise<*> {
 		synchronized(stateChangeSync) {
 			return lastStateChangePromise
-				.inevitably(lazyPausedPromise.getObject()).also { lastStateChangePromise = it }
+				.inevitably(pausedPromise).also { lastStateChangePromise = it }
 		}
 	}
 
 	override fun resume(): Promise<*> {
 		synchronized(stateChangeSync) {
 			return lastStateChangePromise
-				.inevitably(lazyResumePromise.getObject()).also { lastStateChangePromise = it }
+				.inevitably(resumePromise).also { lastStateChangePromise = it }
 		}
 	}
 

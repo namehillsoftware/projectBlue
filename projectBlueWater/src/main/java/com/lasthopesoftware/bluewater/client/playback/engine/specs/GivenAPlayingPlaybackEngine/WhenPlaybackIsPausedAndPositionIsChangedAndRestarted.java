@@ -1,6 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaylistStateManager;
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaybackEngine;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
@@ -15,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fak
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,12 +34,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenChangingTracks {
+public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 
-	private static PositionedFile nextSwitchedFile;
-	private static PositionedPlayingFile latestFile;
-
-	private static List<PositionedPlayingFile> startedFiles = new ArrayList<>();
+	private static PlaybackEngine playbackEngine;
+	private static NowPlaying nowPlaying;
+	private static List<PositionedPlayingFile> positionedFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -50,22 +53,18 @@ public class WhenChangingTracks {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final PlaybackEngine playbackEngine = new PlaybackEngine(
+		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
+
+		playbackEngine = new PlaybackEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
-			new NowPlayingRepository(libraryProvider, libraryStorage),
+			nowPlayingRepository,
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
 
-		final CountDownLatch countDownLatch = new CountDownLatch(2);
-
 		playbackEngine
-			.setOnPlayingFileChanged(p -> {
-				startedFiles.add(p);
-				latestFile = p;
-				countDownLatch.countDown();
-			})
+			.setOnPlayingFileChanged(f -> positionedFiles.add(f))
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -75,41 +74,68 @@ public class WhenChangingTracks {
 					new ServiceFile(5)), 0, 0);
 
 		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-
-		playbackEngine.changePosition(3, 0).then(p -> {
-			nextSwitchedFile = p;
-			countDownLatch.countDown();
-			return null;
-		});
-
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 		playingPlaybackHandler.resolve();
+
+		playbackEngine.pause();
+
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		playbackEngine
+			.skipToNext()
+			.eventually(p -> playbackEngine.skipToNext())
+			.then(new VoidResponse<>(p -> playbackEngine.resume()))
+			.then(obs -> fakePlaybackPreparerProvider.deferredResolution.resolve())
+			.eventually(res -> nowPlayingRepository.getNowPlaying())
+			.then(np -> {
+				nowPlaying = np;
+				countDownLatch.countDown();
+				return null;
+			});
 
 		countDownLatch.await();
 	}
 
 	@Test
-	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
+	public void thenThePlaybackStateIsPlaying() {
+		assertThat(playbackEngine.isPlaying()).isTrue();
 	}
 
 	@Test
-	public void thenTheLatestObservedFileIsAtTheCorrectTrackPosition() {
-		assertThat(latestFile.getPlaylistPosition()).isEqualTo(3);
+	public void thenTheSavedPlaylistPositionIsCorrect() {
+		assertThat(nowPlaying.playlistPosition).isEqualTo(3);
 	}
 
 	@Test
-	public void thenTheFirstStartedFileIsCorrect() {
-		assertThat(startedFiles.get(0).asPositionedFile()).isEqualTo(new PositionedFile(0, new ServiceFile(1)));
+	public void thenTheSavedPlaylistIsCorrect() {
+		assertThat(nowPlaying.playlist)
+			.containsExactly(new ServiceFile(1),
+				new ServiceFile(2),
+				new ServiceFile(3),
+				new ServiceFile(4),
+				new ServiceFile(5));
 	}
 
 	@Test
-	public void thenTheChangedStartedFileIsCorrect() {
-		assertThat(startedFiles.get(1).asPositionedFile()).isEqualTo(new PositionedFile(3, new ServiceFile(4)));
+	public void thenTheObservedFileIsCorrect() {
+		assertThat(positionedFiles.get(positionedFiles.size() - 1).getPlaylistPosition()).isEqualTo(3);
 	}
 
 	@Test
-	public void thenThePlaylistIsStartedTwice() {
-		assertThat(startedFiles).hasSize(2);
+	public void thenTheFirstSkippedFileIsOnlyObservedOnce() {
+		assertThat(
+			Stream.of(positionedFiles)
+				.map(PositionedPlayingFile::asPositionedFile)
+				.collect(Collectors.toList()))
+			.containsOnlyOnce(new PositionedFile(1, new ServiceFile(2)));
+	}
+
+	@Test
+	public void thenTheSecondSkippedFileIsNotObserved() {
+		assertThat(
+			Stream.of(positionedFiles)
+				.map(PositionedPlayingFile::asPositionedFile)
+				.collect(Collectors.toList()))
+			.doesNotContain(new PositionedFile(2, new ServiceFile(3)));
 	}
 }

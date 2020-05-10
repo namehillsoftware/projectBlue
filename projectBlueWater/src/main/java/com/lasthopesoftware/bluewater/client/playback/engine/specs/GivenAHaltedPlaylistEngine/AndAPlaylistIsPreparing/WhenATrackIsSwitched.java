@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaylistStateManager.AndAnErrorOccurs;
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistEngine.AndAPlaylistIsPreparing;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
@@ -7,13 +7,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLi
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
-import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -23,29 +21,17 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenObservingPlayback {
+public class WhenATrackIsSwitched {
 
-	private static Throwable error;
+	private static PositionedFile nextSwitchedFile;
 
 	@BeforeClass
-	public static void context() {
-		final DeferredErrorPlaybackPreparer deferredErrorPlaybackPreparer = new DeferredErrorPlaybackPreparer();
-
-		final IPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new IPlayableFilePreparationSourceProvider() {
-			@Override
-			public PlayableFilePreparationSource providePlayableFilePreparationSource() {
-				return deferredErrorPlaybackPreparer;
-			}
-
-			@Override
-			public int getMaxQueueSize() {
-				return 1;
-			}
-		};
+	public static void before() {
+		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		final Library library = new Library();
 		library.setId(1);
@@ -59,13 +45,12 @@ public class WhenObservingPlayback {
 		final PlaybackEngine playbackEngine = new PlaybackEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
-				fakePlaybackPreparerProvider),
+				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
 
 		playbackEngine
-			.setOnPlaylistError(e -> error = e)
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -74,26 +59,13 @@ public class WhenObservingPlayback {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		deferredErrorPlaybackPreparer.resolve();
+		playbackEngine.changePosition(3, 0).then(p -> nextSwitchedFile = p);
+
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}
 
 	@Test
-	public void thenTheErrorIsBroadcast() {
-		assertThat(error).isNotNull();
-	}
-
-	private static class DeferredErrorPlaybackPreparer implements PlayableFilePreparationSource {
-
-		private Messenger<PreparedPlayableFile> reject;
-
-		void resolve() {
-			if (reject != null)
-				reject.sendRejection(new Exception());
-		}
-
-		@Override
-		public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
-			return new Promise<>(messenger -> reject = messenger);
-		}
+	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
+		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
 	}
 }
