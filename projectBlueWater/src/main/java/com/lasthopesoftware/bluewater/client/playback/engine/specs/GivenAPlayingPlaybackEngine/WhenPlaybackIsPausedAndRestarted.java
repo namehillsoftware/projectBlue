@@ -19,8 +19,10 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 public class WhenPlaybackIsPausedAndRestarted {
 
+	private static final List<ServiceFile> changedFiles = new ArrayList<>();
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
 	private static ResolveablePlaybackHandler resolveablePlaybackHandler;
@@ -56,6 +59,8 @@ public class WhenPlaybackIsPausedAndRestarted {
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+
+		playbackEngine.setOnPlayingFileChanged(f -> changedFiles.add(f.getServiceFile()));
 
 		playbackEngine
 			.startPlaylist(
@@ -99,6 +104,14 @@ public class WhenPlaybackIsPausedAndRestarted {
 	@Test
 	public void thenTheSavedPlaylistPositionIsCorrect() {
 		assertThat(nowPlaying.playlistPosition).isEqualTo(1);
+	}
+
+	@Test
+	public void thenTheChangedFilesAreCorrect() {
+		assertThat(changedFiles).containsExactly(
+			new ServiceFile(1),
+			new ServiceFile(2),
+			new ServiceFile(2));
 	}
 
 	@Test

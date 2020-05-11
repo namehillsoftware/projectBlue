@@ -32,7 +32,7 @@ public class ActivePlayer implements IActivePlayer, AutoCloseable {
 	}
 
 	@Override
-	public Promise<?> resume() {
+	public Promise<PositionedPlayingFile> resume() {
 		return playlistPlayer.resume();
 	}
 

@@ -104,8 +104,8 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 		updatePreparedFileQueueUsingState(positionedFileQueueProviders.getValue(false))
 	}
 
-	fun resume(): Promise<PositionedPlayingFile?> {
-		val resumePromise = activePlayer?.resume()
+	fun resume(): Promise<*> {
+		val resumePromise = activePlayer?.resume()?.then { onPlayingFileChanged?.onPlayingFileChanged(it) }
 			?: return restorePlaylistFromStorage().then { resumePlaybackFromNowPlaying(it) }
 
 		isPlaying = true

@@ -8,6 +8,6 @@ import io.reactivex.observables.ConnectableObservable;
 
 public interface IActivePlayer {
 	Promise<?> pause();
-	Promise<?> resume();
+	Promise<PositionedPlayingFile> resume();
 	ConnectableObservable<PositionedPlayingFile> observe();
 }
