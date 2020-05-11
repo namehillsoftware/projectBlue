@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.when;
 public class WhenResumingPlayback {
 
 	private FakeBufferingPlaybackHandler playbackHandler;
+	private PositionedPlayingFile playingFile;
 
 	@Before
 	public void before() throws ExecutionException, InterruptedException {
@@ -46,11 +48,21 @@ public class WhenResumingPlayback {
 
 		new FuturePromise<>(playlistPlayback.pause()).get();
 
-		new FuturePromise<>(playlistPlayback.resume()).get();
+		playingFile = new FuturePromise<>(playlistPlayback.resume()).get();
 	}
 
 	@Test
 	public void thenPlaybackIsResumed() {
 		assertThat(playbackHandler.isPlaying()).isTrue();
+	}
+
+	@Test
+	public void thenThePlaylistPositionIsCorrect() {
+		assertThat(playingFile.getPlaylistPosition()).isEqualTo(0);
+	}
+
+	@Test
+	public void thenThePlayingFileIsCorrect() {
+		assertThat(playingFile.getServiceFile()).isEqualTo(new ServiceFile(1));
 	}
 }

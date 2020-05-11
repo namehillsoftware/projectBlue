@@ -1,8 +1,6 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaylistStateManager;
-
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistEngine.AndPlaybackPlaysThroughCompletion;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
@@ -10,13 +8,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -24,22 +20,23 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenPlaybackCompletes {
+public class WhenObservingPlayback {
 
-	private static PlaybackEngine playbackEngine;
-	private static NowPlaying nowPlaying;
-	private static PositionedPlayingFile observedPlayingFile;
-	private static PositionedFile resetPositionedFile;
+	private static boolean isPlaying;
+	private static PositionedPlayingFile firstPlayingFile;
+	private static boolean isCompleted;
+	private static boolean playbackStarted;
 
 	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException {
+	public static void context() throws InterruptedException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		final Library library = new Library();
@@ -51,19 +48,27 @@ public class WhenPlaybackCompletes {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
-
-		playbackEngine = new PlaybackEngine(
+		final PlaybackEngine playbackEngine = new PlaybackEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
-			nowPlayingRepository,
+			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
 
+		final CountDownLatch countDownLatch = new CountDownLatch(6);
+
 		playbackEngine
-			.setOnPlayingFileChanged(f -> observedPlayingFile = f)
-			.setOnPlaylistReset(f -> resetPositionedFile = f)
+			.setOnPlaybackStarted(() -> playbackStarted = true)
+			.setOnPlayingFileChanged(p -> {
+				if (firstPlayingFile == null)
+					firstPlayingFile = p;
+				countDownLatch.countDown();
+			})
+			.setOnPlaybackCompleted(() -> {
+				isCompleted = true;
+				countDownLatch.countDown();
+			})
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -80,41 +85,28 @@ public class WhenPlaybackCompletes {
 		}
 		playingPlaybackHandler.resolve();
 
-		nowPlaying = new FuturePromise<>(nowPlayingRepository.getNowPlaying()).get();
+		countDownLatch.await(1, TimeUnit.SECONDS);
+
+		isPlaying = playbackEngine.isPlaying();
 	}
 
 	@Test
-	public void thenThePlaybackStateIsNotPlaying() {
-		assertThat(playbackEngine.isPlaying()).isFalse();
+	public void thenPlaybackIsStarted() {
+		assertThat(playbackStarted).isTrue();
 	}
 
 	@Test
-	public void thenTheObservedFilePositionIsCorrect() {
-		assertThat(observedPlayingFile.asPositionedFile()).isEqualTo(new PositionedFile(4, new ServiceFile(5)));
+	public void thenTheFirstPlayingFileIsTheFirstServiceFile() {
+		assertThat(firstPlayingFile.getServiceFile()).isEqualTo(new ServiceFile(1));
 	}
 
 	@Test
-	public void thenTheResetFilePositionIsZero() {
-		assertThat(resetPositionedFile).isEqualTo(new PositionedFile(0, new ServiceFile(1)));
+	public void thenThePlaylistIsNotPlaying() {
+		assertThat(isPlaying).isFalse();
 	}
 
 	@Test
-	public void thenTheSavedFilePositionIsCorrect() {
-		assertThat(nowPlaying.filePosition).isEqualTo(0);
-	}
-
-	@Test
-	public void thenTheSavedPlaylistPositionIsCorrect() {
-		assertThat(nowPlaying.playlistPosition).isEqualTo(0);
-	}
-
-	@Test
-	public void thenTheSavedPlaylistIsCorrect() {
-		assertThat(nowPlaying.playlist)
-			.containsExactly(new ServiceFile(1),
-				new ServiceFile(2),
-				new ServiceFile(3),
-				new ServiceFile(4),
-				new ServiceFile(5));
+	public void thenThePlaybackIsCompleted() {
+		assertThat(isCompleted).isTrue();
 	}
 }

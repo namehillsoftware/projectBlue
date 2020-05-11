@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaylistStateManager.AndAPreparationErrorOccurs;
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaybackEngine.AndAPreparationErrorOccurs;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;

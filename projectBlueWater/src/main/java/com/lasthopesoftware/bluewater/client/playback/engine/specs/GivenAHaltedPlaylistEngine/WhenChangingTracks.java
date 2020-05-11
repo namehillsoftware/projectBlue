@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistStateManager;
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistEngine;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;

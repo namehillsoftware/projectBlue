@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaylistStateManager.AndAnErrorOccurs;
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaybackEngine.AndAnErrorOccurs;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
