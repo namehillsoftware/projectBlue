@@ -31,16 +31,17 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	private var emitter: ObservableEmitter<PositionedPlayingFile>? = null
 
 	private val newPausedPromiseAction = EventualAction {
-		val currentPlayingFile = positionedPlayingFile
-		currentPlayingFile
-			?.playingFile
-			?.promisePause()
-			?.then { p ->
-				positionedPlayableFile = PositionedPlayableFile(
-					p,
-					currentPlayingFile.playableFileVolumeManager,
-					currentPlayingFile.asPositionedFile())
-				positionedPlayingFile = null
+		positionedPlayingFile
+			?.let {
+				it.playingFile
+					?.promisePause()
+					?.then { p ->
+						positionedPlayableFile = PositionedPlayableFile(
+							p,
+							it.playableFileVolumeManager,
+							it.asPositionedFile())
+						positionedPlayingFile = null
+					}
 			}
 			?: Promise.empty<Any>()
 	}
@@ -80,17 +81,18 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	}
 
 	private fun promiseResumption(): Promise<PositionedPlayingFile?> {
-		val currentPlayableFile = positionedPlayableFile
-		return currentPlayableFile
-			?.playableFile
-			?.promisePlayback()
-			?.then { p ->
-				positionedPlayingFile = PositionedPlayingFile(
-					p,
-					currentPlayableFile.playableFileVolumeManager,
-					currentPlayableFile.asPositionedFile())
-				positionedPlayableFile = null
-				return@then positionedPlayingFile
+		return positionedPlayableFile
+			?.let {
+				it.playableFile
+					?.promisePlayback()
+					?.then { p ->
+						positionedPlayingFile = PositionedPlayingFile(
+							p,
+							it.playableFileVolumeManager,
+							it.asPositionedFile())
+						positionedPlayableFile = null
+						positionedPlayingFile
+					}
 			}
 			?: Promise.empty<PositionedPlayingFile>()
 	}
