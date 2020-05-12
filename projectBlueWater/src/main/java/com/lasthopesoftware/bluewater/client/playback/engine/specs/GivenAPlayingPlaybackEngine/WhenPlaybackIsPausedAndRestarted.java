@@ -36,6 +36,7 @@ public class WhenPlaybackIsPausedAndRestarted {
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
 	private static ResolveablePlaybackHandler resolveablePlaybackHandler;
+	private static int playbackStartedCount;
 
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException {
@@ -60,7 +61,9 @@ public class WhenPlaybackIsPausedAndRestarted {
 			nowPlayingRepository,
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
 
-		playbackEngine.setOnPlayingFileChanged(f -> changedFiles.add(f.getServiceFile()));
+		playbackEngine
+			.setOnPlaybackStarted(() -> ++playbackStartedCount)
+			.setOnPlayingFileChanged(f -> changedFiles.add(f.getServiceFile()));
 
 		playbackEngine
 			.startPlaylist(
@@ -112,6 +115,11 @@ public class WhenPlaybackIsPausedAndRestarted {
 			new ServiceFile(1),
 			new ServiceFile(2),
 			new ServiceFile(2));
+	}
+
+	@Test
+	public void thenPlaybackHasBeenStartedTwice() {
+		assertThat(playbackStartedCount).isEqualTo(2);
 	}
 
 	@Test

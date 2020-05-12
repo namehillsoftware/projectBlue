@@ -105,11 +105,13 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 	}
 
 	fun resume(): Promise<*> {
-		val resumePromise = activePlayer?.resume()?.then { onPlayingFileChanged?.onPlayingFileChanged(it) }
+		return activePlayer
+			?.also {
+				onPlaybackStarted?.onPlaybackStarted()
+				isPlaying = true
+			}
+			?.resume()?.then { onPlayingFileChanged?.onPlayingFileChanged(it) }
 			?: return restorePlaylistFromStorage().then { resumePlaybackFromNowPlaying(it) }
-
-		isPlaying = true
-		return resumePromise
 	}
 
 	fun pause(): Promise<*> {
@@ -156,12 +158,12 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 
 	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Long): ConnectableObservable<PositionedPlayingFile> {
 		playbackSubscription?.dispose()
-		onPlaybackStarted?.onPlaybackStarted()
 
 		val newPlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition)
 		activePlayer = newPlayer
 
 		isPlaying = true
+		onPlaybackStarted?.onPlaybackStarted()
 
 		val observable = newPlayer.observe()
 
