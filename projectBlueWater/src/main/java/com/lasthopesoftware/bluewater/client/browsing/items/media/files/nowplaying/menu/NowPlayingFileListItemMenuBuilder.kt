@@ -17,14 +17,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.AbstractListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.namehillsoftware.handoff.promises.Promise
 import com.vedsoft.futures.runnables.OneParameterAction
 
 class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository) : AbstractListItemMenuBuilder<ServiceFile>() {
@@ -32,7 +30,6 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 
 	private class ViewHolder internal constructor(val fileListItemContainer: FileListItemContainer, val fileNameTextViewSetter: FileNameTextViewSetter, viewFileDetailsButtonFinder: LazyViewFinder<ImageButton>, playButtonFinder: LazyViewFinder<ImageButton>, private val removeButtonFinder: LazyViewFinder<ImageButton>) : BaseMenuViewHolder(viewFileDetailsButtonFinder, playButtonFinder) {
 		var fileListItemNowPlayingHandler: AbstractFileListItemNowPlayingHandler? = null
-		var filePropertiesProvider: Promise<*>? = null
 
 		val removeButton: ImageButton
 			get() = removeButtonFinder.findView()
@@ -65,10 +62,11 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 		val fileListItem = viewHolder.fileListItemContainer
 		val textView = fileListItem.findTextView()
 
-		viewHolder.filePropertiesProvider = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile)
+		viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile)
+
 		nowPlayingRepository
 			.nowPlaying
-			.eventually(LoopedInPromise.response<NowPlaying, Any?>({ np: NowPlaying ->
+			.eventually(LoopedInPromise.response({ np ->
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np.playlistPosition))
 			}, textView.context))
 
