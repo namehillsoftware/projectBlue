@@ -87,7 +87,7 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 		return viewFlipper
 	}
 
-	fun setOnPlaylistFileRemovedListener(onPlaylistFileRemovedListener: OneParameterAction<Int>?) {
+	fun setOnPlaylistFileRemovedListener(onPlaylistFileRemovedListener: OneParameterAction<Int>) {
 		this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener
 	}
 }
