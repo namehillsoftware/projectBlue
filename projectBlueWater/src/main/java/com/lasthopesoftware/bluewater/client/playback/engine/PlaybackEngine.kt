@@ -196,7 +196,7 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 		return observable
 	}
 
-	fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?> {
+	fun addFile(serviceFile: ServiceFile): Promise<NowPlaying> {
 		return nowPlayingRepository
 			.nowPlaying
 			.eventually { np ->
