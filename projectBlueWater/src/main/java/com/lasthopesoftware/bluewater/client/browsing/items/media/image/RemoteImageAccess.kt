@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.lazyj.Lazy
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -15,9 +14,7 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 
 		private val logger = LoggerFactory.getLogger(RemoteImageAccess::class.java)
 
-		private val failureByteArray = Lazy { "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n".toByteArray() }
-
-		private val emptyByteArray = Lazy { ByteArray(0) }
+		private val emptyByteArray = lazy { ByteArray(0) }
 	}
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {
@@ -27,19 +24,19 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 			.then(
 				{ response ->
 					when (response.code) {
-						200 -> response.body?.use { it.bytes() } ?: emptyByteArray.getObject()
-						else -> emptyByteArray.getObject()
+						200 -> response.body?.use { it.bytes() } ?: emptyByteArray.value
+						else -> emptyByteArray.value
 					}
 				},
 				{ e ->
 					when (e) {
 						is FileNotFoundException -> {
 							logger.warn("Image not found!")
-							emptyByteArray.getObject()
+							emptyByteArray.value
 						}
 						is IOException -> {
 							logger.error("There was an error getting the connection for images", e)
-							emptyByteArray.getObject()
+							emptyByteArray.value
 						}
 						else -> {
 							logger.error("There was an unexpected error getting the image for $fileKey", e)

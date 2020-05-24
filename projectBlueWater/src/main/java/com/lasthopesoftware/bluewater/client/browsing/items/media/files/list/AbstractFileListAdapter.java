@@ -14,7 +14,7 @@ public abstract class AbstractFileListAdapter extends ArrayAdapter<ServiceFile> 
 
 	protected AbstractFileListAdapter(Context context, int resource, List<ServiceFile> serviceFiles) {
 		super(context, resource, serviceFiles);
-		
+
 		this.serviceFiles = serviceFiles;
 	}
 

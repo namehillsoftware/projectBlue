@@ -48,7 +48,7 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 
 		nowPlayingRepository
 			.nowPlaying
-			.eventually(LoopedInPromise.response({ np ->
+			.eventually<Unit>(LoopedInPromise.response({ np ->
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np.playlistPosition))
 			}, textView.context))
 
