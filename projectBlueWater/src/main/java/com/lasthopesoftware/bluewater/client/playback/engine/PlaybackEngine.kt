@@ -71,13 +71,11 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 				it
 			}
 
-		return if (!isPlaying) nowPlayingPromise
-			.then { nowPlaying ->
+		return with(nowPlayingPromise) {
+			if (!isPlaying) then { nowPlaying ->
 				val serviceFile = nowPlaying.playlist[playlistPosition]
 				PositionedFile(playlistPosition, serviceFile)
-			}
-		else nowPlayingPromise
-			.eventually { nowPlaying ->
+			} else eventually { nowPlaying ->
 				object : Promise<PositionedFile>() {
 					init {
 						val queueProvider = positionedFileQueueProviders[nowPlaying.isRepeating]
@@ -92,6 +90,7 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 					}
 				}
 			}
+		}
 	}
 
 	fun playRepeatedly() {
@@ -197,7 +196,7 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 		return observable
 	}
 
-	fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?> {
+	fun addFile(serviceFile: ServiceFile): Promise<NowPlaying> {
 		return nowPlayingRepository
 			.nowPlaying
 			.eventually { np ->
@@ -205,10 +204,10 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 
 				val nowPlayingPromise = nowPlayingRepository.updateNowPlaying(np)
 
-				playlist?.add(serviceFile) ?: return@eventually nowPlayingPromise
-
-				updatePreparedFileQueueUsingState(positionedFileQueueProviders.getValue(np.isRepeating))
-				return@eventually nowPlayingPromise
+				playlist?.add(serviceFile)?.let {
+					updatePreparedFileQueueUsingState(positionedFileQueueProviders.getValue(np.isRepeating))
+					nowPlayingPromise
+				} ?: nowPlayingPromise
 			}
 	}
 
@@ -219,10 +218,10 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 				np.playlist.removeAt(position)
 				val libraryUpdatePromise = nowPlayingRepository.updateNowPlaying(np)
 
-				playlist?.removeAt(position) ?: return@eventually libraryUpdatePromise
-
-				updatePreparedFileQueueUsingState(positionedFileQueueProviders.getValue(np.isRepeating))
-				libraryUpdatePromise
+				playlist?.removeAt(position)?.let {
+					updatePreparedFileQueueUsingState(positionedFileQueueProviders.getValue(np.isRepeating))
+					libraryUpdatePromise
+				} ?: libraryUpdatePromise
 			}
 	}
 
