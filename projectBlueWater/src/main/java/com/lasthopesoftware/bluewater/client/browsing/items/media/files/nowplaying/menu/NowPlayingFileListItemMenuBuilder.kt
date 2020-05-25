@@ -7,8 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.BaseMenuViewHolder
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.RecyclerMenuViewHolder
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.ViewFileDetailsClickListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.AbstractFileListItemNowPlayingHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemContainer
@@ -16,8 +15,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.AbstractListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -25,9 +24,10 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.vedsoft.futures.runnables.OneParameterAction
 
-class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository)
-	: AbstractListItemMenuBuilder<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>() {
+class NowPlayingFileListItemMenuBuilder(
+	private val nowPlayingRepository: INowPlayingRepository) {
 	private var onPlaylistFileRemovedListener: OneParameterAction<Int>? = null
+	private var onViewChangedListener: OnViewChangedListener? = null
 
 	class ViewHolder internal constructor(
 		val fileListItemContainer: FileListItemContainer,
@@ -35,18 +35,18 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 		viewFileDetailsButtonFinder: LazyViewFinder<ImageButton>,
 		playButtonFinder: LazyViewFinder<ImageButton>,
 		private val removeButtonFinder: LazyViewFinder<ImageButton>)
-		: BaseMenuViewHolder(fileListItemContainer.viewAnimator, viewFileDetailsButtonFinder, playButtonFinder) {
+		: RecyclerMenuViewHolder(fileListItemContainer.viewAnimator, viewFileDetailsButtonFinder, playButtonFinder) {
 		var fileListItemNowPlayingHandler: AbstractFileListItemNowPlayingHandler? = null
 
 		val removeButton: ImageButton
 			get() = removeButtonFinder.findView()
 	}
 
-	fun setOnPlaylistFileRemovedListener(onPlaylistFileRemovedListener: OneParameterAction<Int>) {
-		this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener
+	fun setOnViewChangedListener(onViewChangedListener: OnViewChangedListener) {
+		this.onViewChangedListener = onViewChangedListener
 	}
 
-	override fun newViewHolder(parent: ViewGroup): ViewHolder {
+	fun newViewHolder(parent: ViewGroup): ViewHolder {
 		val fileItemMenu = FileListItemContainer(parent.context)
 		val viewFlipper = fileItemMenu.viewAnimator
 
@@ -64,7 +64,7 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 			LazyViewFinder(fileMenu, R.id.btnRemoveFromPlaylist))
 	}
 
-	override fun setupView(viewHolder: ViewHolder, positionedFile: PositionedFile) {
+	fun setupView(viewHolder: ViewHolder, positionedFile: PositionedFile) {
 		val fileListItem = viewHolder.fileListItemContainer
 		val textView = fileListItem.findTextView()
 

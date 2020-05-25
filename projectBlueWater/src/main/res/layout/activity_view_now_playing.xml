@@ -39,7 +39,7 @@
                 android:id="@+id/nowPlayingDrawerContainer"
                 android:background="@color/now_playing_list_color">
 
-                <ListView
+                <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/nowPlayingDrawerListView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

@@ -4,21 +4,25 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileDiffer
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
-class NowPlayingFileListAdapter(itemListMenuChangeHandler: IItemListMenuChangeHandler, private val serviceFiles: List<ServiceFile>, nowPlayingRepository: INowPlayingRepository)
-	: ListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>()/*, OneParameterAction<Int>*/ {
-	private val nowPlayingFileListItemMenuBuilder: NowPlayingFileListItemMenuBuilder
+class NowPlayingFileListAdapter(
+	itemListMenuChangeHandler: IItemListMenuChangeHandler,
+	private val serviceFiles: List<ServiceFile>,
+	nowPlayingRepository: INowPlayingRepository)
+	: ListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(ServiceFileDiffer)/*, OneParameterAction<Int>*/ {
+	private val nowPlayingFileListItemMenuBuilder = NowPlayingFileListItemMenuBuilder(nowPlayingRepository)
 
 	init {
 		val viewChangedHandler = ViewChangedHandler()
 		viewChangedHandler.setOnAllMenusHidden(itemListMenuChangeHandler)
 		viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler)
 		viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler)
-		nowPlayingFileListItemMenuBuilder = NowPlayingFileListItemMenuBuilder(nowPlayingRepository)
+
 		nowPlayingFileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler)
 	}
 
@@ -29,8 +33,4 @@ class NowPlayingFileListAdapter(itemListMenuChangeHandler: IItemListMenuChangeHa
 	override fun onBindViewHolder(holder: NowPlayingFileListItemMenuBuilder.ViewHolder, position: Int) {
 		nowPlayingFileListItemMenuBuilder.setupView(holder, PositionedFile(position, serviceFiles[position]))
 	}
-
-	/*override fun runWith(position: Int) {
-		handler.value.post { remove(getItem(position)) }
-	}*/
 }

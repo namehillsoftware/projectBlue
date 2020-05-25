@@ -19,7 +19,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
@@ -32,6 +31,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
@@ -203,7 +203,7 @@ implements
 		}
 	};
 
-	private final LazyViewFinder<ListView> nowPlayingDrawerListView = new LazyViewFinder<ListView>(this, R.id.nowPlayingDrawerListView);
+	private final LazyViewFinder<RecyclerView> nowPlayingDrawerListView = new LazyViewFinder<>(this, R.id.nowPlayingDrawerListView);
 
 	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.nowPlayingDrawer);
 
@@ -330,13 +330,12 @@ implements
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
-				final ListView listView = nowPlayingDrawerListView.findView();
-				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
+				final RecyclerView listView = nowPlayingDrawerListView.findView();
+//				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 
 				listView.setAdapter(
 					new NowPlayingFileListAdapter(
-						R.id.tvStandard,
-						NowPlayingActivity.this,
+						this,
 						nowPlaying.playlist,
 						lazyNowPlayingRepository.getObject()));
 				updateNowPlayingListViewPosition(nowPlaying.playlistPosition);
@@ -382,9 +381,9 @@ implements
 	}
 
 	private void updateNowPlayingListViewPosition(int newPosition) {
-		final ListView listView = nowPlayingDrawerListView.findView();
-		if (newPosition > -1 && newPosition < listView.getCount())
-			listView.setSelection(newPosition);
+		final RecyclerView listView = nowPlayingDrawerListView.findView();
+//		if (newPosition > -1 && newPosition < listView.getCount())
+//			listView.setSelection(newPosition);
 	}
 
 	private void setNowPlayingBackgroundBitmap() {
