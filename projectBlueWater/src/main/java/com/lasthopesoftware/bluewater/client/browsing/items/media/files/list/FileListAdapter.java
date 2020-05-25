@@ -19,7 +19,7 @@ class FileListAdapter extends AbstractFileListAdapter {
     private final FileListItemMenuBuilder fileListItemMenuBuilder;
 
 	FileListAdapter(Context context, int resource, List<ServiceFile> serviceFiles, IItemListMenuChangeHandler itemListMenuChangeHandler, INowPlayingFileProvider nowPlayingFileProvider) {
-		super(context, resource, serviceFiles);
+		super(serviceFiles);
 
         final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
         viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler);

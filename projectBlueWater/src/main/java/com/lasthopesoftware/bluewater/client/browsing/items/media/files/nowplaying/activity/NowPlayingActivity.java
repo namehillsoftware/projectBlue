@@ -335,7 +335,6 @@ implements
 
 				listView.setAdapter(
 					new NowPlayingFileListAdapter(
-						this,
 						R.id.tvStandard,
 						NowPlayingActivity.this,
 						nowPlaying.playlist,

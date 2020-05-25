@@ -20,7 +20,7 @@ import java.util.Collection;
 public class ActiveFileDownloadsAdapter extends AbstractFileListAdapter {
 
 	public ActiveFileDownloadsAdapter(Context context, Collection<StoredFile> storedFiles) {
-		super(context, R.id.tvStandard, Stream.of(storedFiles).map(s -> new ServiceFile(s.getServiceId())).collect(Collectors.toList()));
+		super(Stream.of(storedFiles).map(s -> new ServiceFile(s.getServiceId())).collect(Collectors.toList()));
 	}
 
 	@NonNull

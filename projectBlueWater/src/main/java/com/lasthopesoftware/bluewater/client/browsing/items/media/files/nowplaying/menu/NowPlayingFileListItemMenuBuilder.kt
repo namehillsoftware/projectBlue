@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplay
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -19,32 +18,61 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.AbstractListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.vedsoft.futures.runnables.OneParameterAction
 
-class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository) : AbstractListItemMenuBuilder<ServiceFile>() {
+class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository)
+	: AbstractListItemMenuBuilder<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>() {
 	private var onPlaylistFileRemovedListener: OneParameterAction<Int>? = null
 
-	private class ViewHolder internal constructor(val fileListItemContainer: FileListItemContainer, val fileNameTextViewSetter: FileNameTextViewSetter, viewFileDetailsButtonFinder: LazyViewFinder<ImageButton>, playButtonFinder: LazyViewFinder<ImageButton>, private val removeButtonFinder: LazyViewFinder<ImageButton>) : BaseMenuViewHolder(viewFileDetailsButtonFinder, playButtonFinder) {
+	class ViewHolder internal constructor(
+		val fileListItemContainer: FileListItemContainer,
+		val fileNameTextViewSetter: FileNameTextViewSetter,
+		viewFileDetailsButtonFinder: LazyViewFinder<ImageButton>,
+		playButtonFinder: LazyViewFinder<ImageButton>,
+		private val removeButtonFinder: LazyViewFinder<ImageButton>)
+		: BaseMenuViewHolder(fileListItemContainer.viewAnimator, viewFileDetailsButtonFinder, playButtonFinder) {
 		var fileListItemNowPlayingHandler: AbstractFileListItemNowPlayingHandler? = null
 
 		val removeButton: ImageButton
 			get() = removeButtonFinder.findView()
 	}
 
-	override fun getView(position: Int, serviceFile: ServiceFile, previousView: View?, parent: ViewGroup): View {
-		val convertView = previousView ?: getNewViewFlipper(parent)
+	fun setOnPlaylistFileRemovedListener(onPlaylistFileRemovedListener: OneParameterAction<Int>) {
+		this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener
+	}
 
-		val viewHolder = convertView.tag as ViewHolder
+	override fun newViewHolder(parent: ViewGroup): ViewHolder {
+		val fileItemMenu = FileListItemContainer(parent.context)
+		val viewFlipper = fileItemMenu.viewAnimator
 
+		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+		val fileMenu = inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false) as LinearLayout
+
+		viewFlipper.addView(fileMenu)
+		viewFlipper.setViewChangedListener(onViewChangedListener)
+
+		return ViewHolder(
+			fileItemMenu,
+			FileNameTextViewSetter(fileItemMenu.findTextView()),
+			LazyViewFinder(fileMenu, R.id.btnViewFileDetails),
+			LazyViewFinder(fileMenu, R.id.btnPlaySong),
+			LazyViewFinder(fileMenu, R.id.btnRemoveFromPlaylist))
+	}
+
+	override fun setupView(viewHolder: ViewHolder, positionedFile: PositionedFile) {
 		val fileListItem = viewHolder.fileListItemContainer
 		val textView = fileListItem.findTextView()
 
+		val serviceFile = positionedFile.serviceFile
+
 		viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile)
+
+		val position = positionedFile.playlistPosition
 
 		nowPlayingRepository
 			.nowPlaying
@@ -65,31 +93,5 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 		viewHolder.playButton.setOnClickListener(FileSeekToClickListener(viewFlipper, position))
 		viewHolder.viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewFlipper, serviceFile))
 		viewHolder.removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewFlipper, position, onPlaylistFileRemovedListener))
-
-		return viewFlipper
-	}
-
-	fun setOnPlaylistFileRemovedListener(onPlaylistFileRemovedListener: OneParameterAction<Int>) {
-		this.onPlaylistFileRemovedListener = onPlaylistFileRemovedListener
-	}
-
-	private fun getNewViewFlipper(parent: ViewGroup): NotifyOnFlipViewAnimator {
-		val fileItemMenu = FileListItemContainer(parent.context)
-		val viewFlipper = fileItemMenu.viewAnimator
-
-		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-		val fileMenu = inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false) as LinearLayout
-
-		viewFlipper.addView(fileMenu)
-		viewFlipper.tag = ViewHolder(
-			fileItemMenu,
-			FileNameTextViewSetter(fileItemMenu.findTextView()),
-			LazyViewFinder(fileMenu, R.id.btnViewFileDetails),
-			LazyViewFinder(fileMenu, R.id.btnPlaySong),
-			LazyViewFinder(fileMenu, R.id.btnRemoveFromPlaylist))
-
-		viewFlipper.setViewChangedListener(onViewChangedListener)
-
-		return viewFlipper
 	}
 }
