@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.vedsoft.futures.runnables.OneParameterAction
 
+
 class NowPlayingFileListItemMenuBuilder(
 	private val nowPlayingRepository: INowPlayingRepository) {
 	private var onPlaylistFileRemovedListener: OneParameterAction<Int>? = null
@@ -88,7 +89,10 @@ class NowPlayingFileListItemMenuBuilder(
 			}
 		}
 
+
 		val viewFlipper = fileListItem.viewAnimator
+		viewFlipper.setOnLongClickListener(LongClickViewAnimatorListener())
+
 		LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper)
 		viewHolder.playButton.setOnClickListener(FileSeekToClickListener(viewFlipper, position))
 		viewHolder.viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewFlipper, serviceFile))

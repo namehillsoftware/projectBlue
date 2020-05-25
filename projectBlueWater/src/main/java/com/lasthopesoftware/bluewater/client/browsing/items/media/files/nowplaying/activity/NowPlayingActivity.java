@@ -331,7 +331,6 @@ implements
 		lazyNowPlayingRepository.getObject().getNowPlaying()
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
 				final RecyclerView listView = nowPlayingDrawerListView.findView();
-//				listView.setOnItemLongClickListener(new LongClickViewAnimatorListener());
 
 				listView.setAdapter(
 					new NowPlayingFileListAdapter(

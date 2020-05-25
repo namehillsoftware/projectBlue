@@ -4,10 +4,10 @@ import androidx.recyclerview.widget.DiffUtil
 
 object ServiceFileDiffer : DiffUtil.ItemCallback<ServiceFile>() {
 	override fun areItemsTheSame(oldItem: ServiceFile, newItem: ServiceFile): Boolean {
-		TODO("Not yet implemented")
+		return oldItem == newItem
 	}
 
 	override fun areContentsTheSame(oldItem: ServiceFile, newItem: ServiceFile): Boolean {
-		TODO("Not yet implemented")
+		return areItemsTheSame(oldItem, newItem)
 	}
 }
