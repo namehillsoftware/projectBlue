@@ -75,10 +75,13 @@ class NowPlayingFileListItemMenuBuilder(
 
 		val position = positionedFile.playlistPosition
 
+		val viewFlipper = fileListItem.viewAnimator
+
 		nowPlayingRepository
 			.nowPlaying
 			.eventually<Unit>(LoopedInPromise.response({ np ->
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np.playlistPosition))
+				viewFlipper.isSelected = position == np.playlistPosition
 			}, textView.context))
 
 		viewHolder.fileListItemNowPlayingHandler?.release()
@@ -86,11 +89,10 @@ class NowPlayingFileListItemMenuBuilder(
 			override fun onReceive(context: Context, intent: Intent) {
 				val playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1)
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition))
+				viewFlipper.isSelected = position == playlistPosition
 			}
 		}
 
-
-		val viewFlipper = fileListItem.viewAnimator
 		viewFlipper.setOnLongClickListener(LongClickViewAnimatorListener())
 
 		LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper)
