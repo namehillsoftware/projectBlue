@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.lasthopesoftware.bluewater.R;
@@ -332,11 +333,12 @@ implements
 			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
 				final RecyclerView listView = nowPlayingDrawerListView.findView();
 
-				listView.setAdapter(
-					new NowPlayingFileListAdapter(
-						this,
-						nowPlaying.playlist,
-						lazyNowPlayingRepository.getObject()));
+				final NowPlayingFileListAdapter adapter = new NowPlayingFileListAdapter(
+					this,
+					lazyNowPlayingRepository.getObject());
+				listView.setAdapter(adapter);
+				listView.setLayoutManager(new LinearLayoutManager(this));
+				adapter.submitList(nowPlaying.playlist);
 				updateNowPlayingListViewPosition(nowPlaying.playlistPosition);
 				return null;
 			}, messageHandler.getObject()));

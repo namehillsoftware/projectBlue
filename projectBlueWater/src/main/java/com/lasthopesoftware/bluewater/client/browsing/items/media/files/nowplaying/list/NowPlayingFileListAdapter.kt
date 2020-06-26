@@ -10,10 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
-class NowPlayingFileListAdapter(
-	itemListMenuChangeHandler: IItemListMenuChangeHandler,
-	private val serviceFiles: List<ServiceFile>,
-	nowPlayingRepository: INowPlayingRepository)
+class NowPlayingFileListAdapter(itemListMenuChangeHandler: IItemListMenuChangeHandler,	nowPlayingRepository: INowPlayingRepository)
 	: ListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(ServiceFileDiffer)/*, OneParameterAction<Int>*/ {
 	private val nowPlayingFileListItemMenuBuilder = NowPlayingFileListItemMenuBuilder(nowPlayingRepository)
 
@@ -31,6 +28,6 @@ class NowPlayingFileListAdapter(
 	}
 
 	override fun onBindViewHolder(holder: NowPlayingFileListItemMenuBuilder.ViewHolder, position: Int) {
-		nowPlayingFileListItemMenuBuilder.setupView(holder, PositionedFile(position, serviceFiles[position]))
+		nowPlayingFileListItemMenuBuilder.setupView(holder, PositionedFile(position, getItem(position)))
 	}
 }
