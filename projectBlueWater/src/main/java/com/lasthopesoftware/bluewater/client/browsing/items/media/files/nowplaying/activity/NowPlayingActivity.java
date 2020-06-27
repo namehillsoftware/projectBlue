@@ -146,7 +146,7 @@ implements
 			if (playlistPosition < 0) return;
 
 			if (!isDrawerOpened)
-				updateNowPlayingListViewPosition(playlistPosition);
+				updateNowPlayingListViewPosition();
 
 			showNowPlayingControls();
 			updateKeepScreenOnStatus();
@@ -330,7 +330,7 @@ implements
 		setupNowPlayingListDrawer();
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
-			.eventually(LoopedInPromise.<NowPlaying, Void>response(nowPlaying -> {
+			.eventually(LoopedInPromise.response(new VoidResponse<>(nowPlaying -> {
 				final RecyclerView listView = nowPlayingDrawerListView.findView();
 
 				final NowPlayingFileListAdapter adapter = new NowPlayingFileListAdapter(
@@ -339,9 +339,8 @@ implements
 				listView.setAdapter(adapter);
 				listView.setLayoutManager(new LinearLayoutManager(this));
 				adapter.submitList(nowPlaying.playlist);
-				updateNowPlayingListViewPosition(nowPlaying.playlistPosition);
-				return null;
-			}, messageHandler.getObject()));
+				updateNowPlayingListViewPosition();
+			}), messageHandler.getObject()));
 	}
 
 	private void setupNowPlayingListDrawer() {
@@ -381,10 +380,16 @@ implements
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
-	private void updateNowPlayingListViewPosition(int newPosition) {
-		final RecyclerView listView = nowPlayingDrawerListView.findView();
-//		if (newPosition > -1 && newPosition < listView.getCount())
-//			listView.setSelection(newPosition);
+	private void updateNowPlayingListViewPosition() {
+		lazyNowPlayingRepository.getObject().getNowPlaying()
+			.eventually(LoopedInPromise.response(
+				new VoidResponse<>((nowPlaying) -> {
+					final int newPosition = nowPlaying.playlistPosition;
+					final RecyclerView listView = nowPlayingDrawerListView.findView();
+					if (newPosition > -1 && newPosition < nowPlaying.playlist.size())
+						listView.scrollToPosition(newPosition);
+				}),
+				messageHandler.getObject()));
 	}
 
 	private void setNowPlayingBackgroundBitmap() {

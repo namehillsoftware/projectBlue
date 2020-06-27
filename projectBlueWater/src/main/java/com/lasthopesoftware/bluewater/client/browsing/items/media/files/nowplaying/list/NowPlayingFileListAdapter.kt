@@ -10,7 +10,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplayi
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
-class NowPlayingFileListAdapter(itemListMenuChangeHandler: IItemListMenuChangeHandler,	nowPlayingRepository: INowPlayingRepository)
+class NowPlayingFileListAdapter(
+	itemListMenuChangeHandler: IItemListMenuChangeHandler,
+	nowPlayingRepository: INowPlayingRepository)
 	: ListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(ServiceFileDiffer)/*, OneParameterAction<Int>*/ {
 	private val nowPlayingFileListItemMenuBuilder = NowPlayingFileListItemMenuBuilder(nowPlayingRepository)
 
