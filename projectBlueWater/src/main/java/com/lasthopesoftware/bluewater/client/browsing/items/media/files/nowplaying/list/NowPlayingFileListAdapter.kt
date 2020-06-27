@@ -30,6 +30,6 @@ class NowPlayingFileListAdapter(
 	}
 
 	override fun onBindViewHolder(holder: NowPlayingFileListItemMenuBuilder.ViewHolder, position: Int) {
-		nowPlayingFileListItemMenuBuilder.setupView(holder, PositionedFile(position, getItem(position)))
+		holder.update(PositionedFile(position, getItem(position)))
 	}
 }
