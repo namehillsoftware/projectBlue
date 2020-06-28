@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
@@ -16,7 +17,7 @@ public class PlaybackFileStoppedScrobblerRegistration implements IConnectionDepe
 
 	private static final Collection<IntentFilter> intents =
 		Arrays.asList(
-			new IntentFilter(PlaylistEvents.onFileComplete),
+			new IntentFilter(PlaylistEvents.onPlaylistTrackComplete),
 			new IntentFilter(PlaylistEvents.onPlaylistStop),
 			new IntentFilter(PlaylistEvents.onPlaylistPause));
 

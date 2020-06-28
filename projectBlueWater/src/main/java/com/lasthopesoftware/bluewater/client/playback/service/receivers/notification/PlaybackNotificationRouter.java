@@ -24,7 +24,7 @@ public class PlaybackNotificationRouter extends BroadcastReceiver {
 		this.playbackNotificationBroadcaster = playbackNotificationBroadcaster;
 
 		mappedEvents = new HashMap<>(4);
-		mappedEvents.put(PlaylistEvents.onPlaylistChange, this::onPlaylistChange);
+		mappedEvents.put(PlaylistEvents.onPlaylistTrackChange, this::onPlaylistChange);
 		mappedEvents.put(PlaylistEvents.onPlaylistPause, i -> playbackNotificationBroadcaster.notifyPaused());
 		mappedEvents.put(PlaylistEvents.onPlaylistStart, i -> playbackNotificationBroadcaster.notifyPlaying());
 		mappedEvents.put(PlaylistEvents.onPlaylistStop, i -> playbackNotificationBroadcaster.notifyStopped());

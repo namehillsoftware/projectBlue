@@ -61,7 +61,7 @@ public class WhenTheFileChanges extends AndroidContext {
 				new Intent(PlaylistEvents.onPlaylistStart));
 
 		{
-			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
+			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistTrackChange);
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
 			playbackNotificationRouter
 				.onReceive(
@@ -75,7 +75,7 @@ public class WhenTheFileChanges extends AndroidContext {
 				new Intent(PlaylistEvents.onPlaylistPause));
 
 		{
-			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistChange);
+			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistTrackChange);
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2);
 			playbackNotificationRouter
 				.onReceive(

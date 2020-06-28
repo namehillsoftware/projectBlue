@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 class NowPlayingFileListAdapter(
 	itemListMenuChangeHandler: IItemListMenuChangeHandler,
 	nowPlayingRepository: INowPlayingRepository)
-	: ListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(ServiceFileDiffer)/*, OneParameterAction<Int>*/ {
+	: ListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(ServiceFileDiffer) {
 	private val nowPlayingFileListItemMenuBuilder = NowPlayingFileListItemMenuBuilder(nowPlayingRepository)
 
 	init {

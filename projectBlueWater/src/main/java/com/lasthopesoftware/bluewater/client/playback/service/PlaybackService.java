@@ -642,7 +642,8 @@ implements OnAudioFocusChangeListener
 					NowPlayingActivity.startNowPlayingActivity(this);
 
 					return promiseStartedPlaylist;
-				});
+				})
+				.then(new VoidResponse<>(playlist -> localBroadcastManagerLazy.getObject().sendBroadcast(new Intent(PlaylistEvents.onPlaylistChange))));
 		}
 
 		if (action.equals(Action.togglePlayPause))
@@ -698,6 +699,7 @@ implements OnAudioFocusChangeListener
 
 			return playbackEngine
 				.addFile(new ServiceFile(fileKey))
+				.then(new VoidResponse<>(playlist -> localBroadcastManagerLazy.getObject().sendBroadcast(new Intent(PlaylistEvents.onPlaylistChange))))
 				.eventually(LoopedInPromise.response(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return null;
@@ -708,7 +710,9 @@ implements OnAudioFocusChangeListener
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return Promise.empty();
 
-			return playbackEngine.removeFileAtPosition(filePosition);
+			return playbackEngine
+				.removeFileAtPosition(filePosition)
+				.then(new VoidResponse<>(playlist -> localBroadcastManagerLazy.getObject().sendBroadcast(new Intent(PlaylistEvents.onPlaylistChange))));
 		}
 
 		return Promise.empty();
@@ -1080,7 +1084,7 @@ implements OnAudioFocusChangeListener
 		if (playingFile instanceof EmptyPlaybackHandler) return;
 
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile());
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
 		final ProgressedPromise<Duration, PlayedFile> promisedPlayedFile = playingFile.promisePlayedFile();
 		final Disposable localSubscription = filePositionSubscription =
@@ -1092,7 +1096,7 @@ implements OnAudioFocusChangeListener
 					playingFile));
 
 		promisedPlayedFile.then(p -> {
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 			localSubscription.dispose();
 			return null;
 		});
@@ -1104,13 +1108,13 @@ implements OnAudioFocusChangeListener
 	private void broadcastResetPlaylist(PositionedFile positionedFile) {
 		lazyPlaybackBroadcaster.getObject()
 			.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistChange,
+				PlaylistEvents.onPlaylistTrackChange,
 				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
 				positionedFile);
 	}
 
 	private Void broadcastChangedFile(PositionedFile positionedFile) {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
 		return null;
 	}
 

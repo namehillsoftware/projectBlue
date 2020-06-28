@@ -117,6 +117,7 @@ implements
 	private final LazyViewFinder<ImageView> nowPlayingImageLoading = new LazyViewFinder<>(this, R.id.imgNowPlayingLoading);
 	private final LazyViewFinder<ProgressBar> loadingProgressBar = new LazyViewFinder<>(this, R.id.pbLoadingImg);
 	private final LazyViewFinder<ImageButton> viewNowPlayingListButton = new LazyViewFinder<>(this, R.id.viewNowPlayingListButton);
+	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.nowPlayingDrawer);
 
 	private final CreateAndHold<NowPlayingToggledVisibilityControls> nowPlayingToggledVisibilityControls = new AbstractSynchronousLazy<NowPlayingToggledVisibilityControls>() {
 		@Override
@@ -124,6 +125,7 @@ implements
 			return new NowPlayingToggledVisibilityControls(new LazyViewFinder<>(NowPlayingActivity.this, R.id.llNpButtons), new LazyViewFinder<>(NowPlayingActivity.this, R.id.menuControlsLinearLayout), songRating);
 		}
 	};
+
 	private final CreateAndHold<INowPlayingRepository> lazyNowPlayingRepository = new AbstractSynchronousLazy<INowPlayingRepository>() {
 		@Override
 		protected INowPlayingRepository create() {
@@ -137,49 +139,19 @@ implements
 					libraryRepository);
 		}
 	};
-	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(this);
 
-	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
+	private final CreateAndHold<NowPlayingFileListAdapter> lazyNowPlayingListAdapter = new Lazy<>(() ->
+		new NowPlayingFileListAdapter(
+			this,
+			lazyNowPlayingRepository.getObject()));
+
+	private final CreateAndHold<RecyclerView> nowPlayingDrawerListView = new AbstractSynchronousLazy<RecyclerView>() {
 		@Override
-		public void onReceive(Context context, Intent intent) {
-			final int playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1);
-			if (playlistPosition < 0) return;
-
-			if (!isDrawerOpened)
-				updateNowPlayingListViewPosition();
-
-			showNowPlayingControls();
-			updateKeepScreenOnStatus();
-
-			setView(playlistPosition);
-		}
-	};
-
-	private final BroadcastReceiver onPlaybackStartedReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			togglePlayingButtons(true);
-
-			updateKeepScreenOnStatus();
-		}
-	};
-
-	private final BroadcastReceiver onPlaybackStoppedReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			togglePlayingButtons(false);
-			disableKeepScreenOn();
-		}
-	};
-
-	private final BroadcastReceiver onTrackPositionChanged = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			final long fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
-			if (fileDuration > -1) setTrackDuration(fileDuration);
-
-			final long filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
-			if (filePosition > -1) setTrackProgress(filePosition);
+		protected RecyclerView create() {
+			final RecyclerView listView = findViewById(R.id.nowPlayingDrawerListView);
+			listView.setAdapter(lazyNowPlayingListAdapter.getObject());
+			listView.setLayoutManager(new LinearLayoutManager(NowPlayingActivity.this));
+			return listView;
 		}
 	};
 
@@ -203,10 +175,6 @@ implements
 			return new DefaultImageProvider(NowPlayingActivity.this).promiseFileBitmap();
 		}
 	};
-
-	private final LazyViewFinder<RecyclerView> nowPlayingDrawerListView = new LazyViewFinder<>(this, R.id.nowPlayingDrawerListView);
-
-	private final LazyViewFinder<DrawerLayout> drawerLayout = new LazyViewFinder<>(this, R.id.nowPlayingDrawer);
 
 	private final CreateAndHold<ActionBarDrawerToggle> drawerToggle = new AbstractSynchronousLazy<ActionBarDrawerToggle>() {
 		@Override
@@ -232,10 +200,68 @@ implements
 
 					isDrawerOpened = true;
 
-					nowPlayingDrawerListView.findView().bringToFront();
+					nowPlayingDrawerListView.getObject().bringToFront();
 					drawerLayout.findView().requestLayout();
 				}
 			};
+		}
+	};
+
+	private final Runnable onConnectionLostListener = () -> WaitForConnectionDialog.show(this);
+
+	private final BroadcastReceiver onPlaybackChangedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (!isDrawerOpened)
+				updateNowPlayingListViewPosition();
+
+			showNowPlayingControls();
+			updateKeepScreenOnStatus();
+
+			setView();
+		}
+	};
+
+	private final BroadcastReceiver onPlaybackStartedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			togglePlayingButtons(true);
+
+			updateKeepScreenOnStatus();
+		}
+	};
+
+	private final BroadcastReceiver onPlaybackStoppedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			togglePlayingButtons(false);
+			disableKeepScreenOn();
+		}
+	};
+
+	private final BroadcastReceiver onPlaylistChangedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			lazyNowPlayingRepository.getObject().getNowPlaying()
+				.eventually(LoopedInPromise.response(new VoidResponse<>(np -> {
+					lazyNowPlayingListAdapter.getObject().submitList(np.playlist);
+
+					if (!isDrawerOpened)
+						updateNowPlayingListViewPosition();
+
+					setView();
+				}), messageHandler.getObject()));
+		}
+	};
+
+	private final BroadcastReceiver onTrackPositionChanged = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final long fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration,-1);
+			if (fileDuration > -1) setTrackDuration(fileDuration);
+
+			final long filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1);
+			if (filePosition > -1) setTrackProgress(filePosition);
 		}
 	};
 
@@ -262,7 +288,8 @@ implements
 		localBroadcastManager = LocalBroadcastManager.getInstance(this);
 		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter);
 		localBroadcastManager.registerReceiver(onPlaybackStartedReceiver, new IntentFilter(PlaylistEvents.onPlaylistStart));
-		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(PlaylistEvents.onPlaylistChange));
+		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, new IntentFilter(PlaylistEvents.onPlaylistTrackChange));
+		localBroadcastManager.registerReceiver(onPlaylistChangedReceiver, new IntentFilter(PlaylistEvents.onPlaylistChange));
 		localBroadcastManager.registerReceiver(onTrackPositionChanged, new IntentFilter(TrackPositionBroadcaster.trackPositionUpdate));
 
 		PollConnectionService.addOnConnectionLostListener(onConnectionLostListener);
@@ -331,14 +358,7 @@ implements
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
 			.eventually(LoopedInPromise.response(new VoidResponse<>(nowPlaying -> {
-				final RecyclerView listView = nowPlayingDrawerListView.findView();
-
-				final NowPlayingFileListAdapter adapter = new NowPlayingFileListAdapter(
-					this,
-					lazyNowPlayingRepository.getObject());
-				listView.setAdapter(adapter);
-				listView.setLayoutManager(new LinearLayoutManager(this));
-				adapter.submitList(nowPlaying.playlist);
+				lazyNowPlayingListAdapter.getObject().submitList(nowPlaying.playlist);
 				updateNowPlayingListViewPosition();
 			}), messageHandler.getObject()));
 	}
@@ -385,9 +405,8 @@ implements
 			.eventually(LoopedInPromise.response(
 				new VoidResponse<>((nowPlaying) -> {
 					final int newPosition = nowPlaying.playlistPosition;
-					final RecyclerView listView = nowPlayingDrawerListView.findView();
 					if (newPosition > -1 && newPosition < nowPlaying.playlist.size())
-						listView.scrollToPosition(newPosition);
+						nowPlayingDrawerListView.getObject().scrollToPosition(newPosition);
 				}),
 				messageHandler.getObject()));
 	}
@@ -477,15 +496,15 @@ implements
 		pauseButton.findView().setVisibility(ViewUtils.getVisibility(isPlaying));
 	}
 
-	private void setView(final int playlistPosition) {
+	private void setView() {
 		lazyNowPlayingRepository.getObject()
 			.getNowPlaying()
 			.eventually(np -> SessionConnection.getInstance(this)
 				.promiseSessionConnection()
 				.eventually(LoopedInPromise.response(connectionProvider -> {
-					if (playlistPosition >= np.playlist.size()) return null;
+					if (np.playlistPosition >= np.playlist.size()) return null;
 
-					final ServiceFile serviceFile = np.playlist.get(playlistPosition);
+					final ServiceFile serviceFile = np.playlist.get(np.playlistPosition);
 
 					final long filePosition =
 						viewStructure != null && viewStructure.urlKeyHolder.equals(new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey()))
@@ -713,6 +732,7 @@ implements
 		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver);
 		localBroadcastManager.unregisterReceiver(onPlaybackStartedReceiver);
 		localBroadcastManager.unregisterReceiver(onPlaybackChangedReceiver);
+		localBroadcastManager.unregisterReceiver(onPlaylistChangedReceiver);
 		localBroadcastManager.unregisterReceiver(onTrackPositionChanged);
 
 		PollConnectionService.removeOnConnectionLostListener(onConnectionLostListener);

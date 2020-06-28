@@ -22,12 +22,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.vedsoft.futures.runnables.OneParameterAction
 
 
-class NowPlayingFileListItemMenuBuilder(
-	private val nowPlayingRepository: INowPlayingRepository) {
-	private var onPlaylistFileRemovedListener: OneParameterAction<Int>? = null
+class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository) {
+
 	private var onViewChangedListener: OnViewChangedListener? = null
 
 	fun setOnViewChangedListener(onViewChangedListener: OnViewChangedListener) {
@@ -90,7 +88,7 @@ class NowPlayingFileListItemMenuBuilder(
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper)
 			playButtonFinder.findView().setOnClickListener(FileSeekToClickListener(viewFlipper, position))
 			viewFileDetailsButtonFinder.findView().setOnClickListener(ViewFileDetailsClickListener(viewFlipper, serviceFile))
-			removeButtonFinder.findView().setOnClickListener(RemovePlaylistFileClickListener(viewFlipper, position, onPlaylistFileRemovedListener))
+			removeButtonFinder.findView().setOnClickListener(RemovePlaylistFileClickListener(viewFlipper, position))
 		}
 	}
 }
