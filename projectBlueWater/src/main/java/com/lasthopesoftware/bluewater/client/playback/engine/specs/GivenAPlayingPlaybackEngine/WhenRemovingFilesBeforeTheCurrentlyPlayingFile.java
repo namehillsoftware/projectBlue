@@ -54,6 +54,7 @@ public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 			new ServiceFile(3),
 			new ServiceFile(4),
 			new ServiceFile(5)))).get());
+		library.setNowPlayingId(2);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 		final ILibraryStorage libraryStorage = Promise::new;
@@ -72,11 +73,7 @@ public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
 
-		new FuturePromise<>(
-			playbackEngine
-				.changePosition(2, 0)
-				.eventually(f -> playbackEngine.resume()))
-			.get(1, TimeUnit.SECONDS);
+		new FuturePromise<>(playbackEngine.resume()).get(1, TimeUnit.SECONDS);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 
