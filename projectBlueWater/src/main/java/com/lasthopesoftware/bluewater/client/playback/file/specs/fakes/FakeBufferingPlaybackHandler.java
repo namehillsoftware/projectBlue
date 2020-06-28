@@ -18,7 +18,7 @@ implements
 	PlayedFile
 {
 	private boolean isPlaying;
-	private int currentPosition;
+	protected int currentPosition;
 
 	public boolean isPlaying() {
 		return isPlaying;

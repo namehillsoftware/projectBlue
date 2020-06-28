@@ -216,6 +216,19 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 			.nowPlaying
 			.eventually { np ->
 				np.playlist.removeAt(position)
+
+				if (np.playlistPosition > position) {
+					np.playlistPosition--
+
+					positionedPlayingFile?.let {
+						positionedPlayingFile = PositionedPlayingFile(
+							it.playlistPosition - 1,
+							it.playingFile,
+							it.playableFileVolumeManager,
+							it.serviceFile)
+					}
+				}
+
 				val libraryUpdatePromise = nowPlayingRepository.updateNowPlaying(np)
 
 				playlist?.removeAt(position)?.let {
@@ -226,8 +239,12 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 	}
 
 	private fun updatePreparedFileQueueUsingState(fileQueueProvider: IPositionedFileQueueProvider) {
-		if (playlist != null && positionedPlayingFile != null) preparedPlaybackQueueResourceManagement
-			.tryUpdateQueue(fileQueueProvider.provideQueue(playlist, positionedPlayingFile!!.playlistPosition + 1))
+		playlist?.let { pl ->
+			positionedPlayingFile?.let { f ->
+				preparedPlaybackQueueResourceManagement
+					.tryUpdateQueue(fileQueueProvider.provideQueue(pl, f.playlistPosition + 1))
+			}
+		}
 	}
 
 	private fun updateLibraryPlaylistPositions(playlistPosition: Int, filePosition: Int): Promise<NowPlaying> {

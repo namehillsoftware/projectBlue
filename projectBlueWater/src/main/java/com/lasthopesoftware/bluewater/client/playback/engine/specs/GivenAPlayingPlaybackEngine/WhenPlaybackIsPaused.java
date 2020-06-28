@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -31,7 +31,7 @@ public class WhenPlaybackIsPaused {
 
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
-	private static ResolveablePlaybackHandler resolveablePlaybackHandler;
+	private static ResolvablePlaybackHandler resolveablePlaybackHandler;
 
 	@BeforeClass
 	public static void before() throws InterruptedException {
@@ -65,7 +65,7 @@ public class WhenPlaybackIsPaused {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		final ResolvablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		playingPlaybackHandler.resolve();
 

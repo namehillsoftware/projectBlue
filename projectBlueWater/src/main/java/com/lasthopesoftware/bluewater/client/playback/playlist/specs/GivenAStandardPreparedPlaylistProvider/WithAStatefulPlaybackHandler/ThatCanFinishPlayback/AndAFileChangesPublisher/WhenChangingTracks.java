@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakeBufferingPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolvablePlaybackHandler;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
@@ -26,7 +26,7 @@ public class WhenChangingTracks {
 
 	@Before
 	public void context() {
-		final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
+		final ResolvablePlaybackHandler playbackHandler = new ResolvablePlaybackHandler();
 		final FakeBufferingPlaybackHandler playbackHandlerUnderTest = new FakeBufferingPlaybackHandler();
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =

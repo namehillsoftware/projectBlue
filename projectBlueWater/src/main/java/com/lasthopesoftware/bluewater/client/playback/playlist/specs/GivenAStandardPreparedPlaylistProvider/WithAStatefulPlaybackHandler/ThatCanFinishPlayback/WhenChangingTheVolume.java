@@ -23,8 +23,8 @@ public class WhenChangingTheVolume {
 
 	@BeforeClass
 	public static void before() {
-		final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
-		final ResolveablePlaybackHandler secondPlaybackHandler = new ResolveablePlaybackHandler();
+		final ResolvablePlaybackHandler playbackHandler = new ResolvablePlaybackHandler();
+		final ResolvablePlaybackHandler secondPlaybackHandler = new ResolvablePlaybackHandler();
 
 		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
 			new Promise<>(new PositionedPlayableFile(
