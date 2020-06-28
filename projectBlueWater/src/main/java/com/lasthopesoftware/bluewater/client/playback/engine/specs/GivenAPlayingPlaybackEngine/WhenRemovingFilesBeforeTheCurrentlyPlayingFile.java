@@ -90,6 +90,6 @@ public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	@Test
 	public void thenTheFileQueueIsShifted() {
-		verify(fileQueueProvider, times(1)).provideQueue(any(), intThat(i -> i == 2));
+		verify(fileQueueProvider, times(2)).provideQueue(any(), intThat(i -> i == 2));
 	}
 }
