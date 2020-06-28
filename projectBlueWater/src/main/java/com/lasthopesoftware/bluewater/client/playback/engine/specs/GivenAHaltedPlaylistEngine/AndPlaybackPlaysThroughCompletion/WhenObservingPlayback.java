@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -77,9 +77,9 @@ public class WhenObservingPlayback {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		ResolvablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		for (int i = 0; i < 4; i ++) {
-			final ResolveablePlaybackHandler newPlayingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+			final ResolvablePlaybackHandler newPlayingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 			playingPlaybackHandler.resolve();
 			playingPlaybackHandler = newPlayingPlaybackHandler;
 		}

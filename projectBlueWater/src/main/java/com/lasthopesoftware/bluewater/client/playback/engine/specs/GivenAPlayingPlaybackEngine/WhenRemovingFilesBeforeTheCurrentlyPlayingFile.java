@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistEngine;
+package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaybackEngine;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
@@ -31,13 +30,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.intThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class WhenChangingTracks {
+public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
+	private static CompletingFileQueueProvider fileQueueProvider = spy(new CompletingFileQueueProvider());
 	private static final Library library = new Library();
-	private static PositionedFile nextSwitchedFile;
 
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException, TimeoutException {
@@ -52,34 +56,40 @@ public class WhenChangingTracks {
 			new ServiceFile(5)))).get());
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
-
 		final ILibraryStorage libraryStorage = Promise::new;
 
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
-		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(4))))
+		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(5))))
 			.thenReturn(new FilePropertiesContainer(1, new HashMap<String, String>() {{
-					put(KnownFileProperties.DURATION, "100");
+				put(KnownFileProperties.DURATION, "100");
 			}}));
 
 		final PlaybackEngine playbackEngine = new PlaybackEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
-			Collections.singletonList(new CompletingFileQueueProvider()),
+			Collections.singletonList(fileQueueProvider),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
 
-		new FuturePromise<>(playbackEngine.changePosition(3, 0).then(p -> nextSwitchedFile = p))
+		new FuturePromise<>(
+			playbackEngine
+				.changePosition(2, 0)
+				.eventually(f -> playbackEngine.resume()))
 			.get(1, TimeUnit.SECONDS);
+
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		new FuturePromise<>(playbackEngine.removeFileAtPosition(0)).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test
-	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
+	public void thenTheCurrentlyPlayingFileShifts() {
+		assertThat(library.getNowPlayingId()).isEqualTo(1);
 	}
 
 	@Test
-	public void thenTheSavedLibraryIsAtTheCorrectTrackPosition() {
-		assertThat(library.getNowPlayingId()).isEqualTo(3);
+	public void thenTheFileQueueIsShifted() {
+		verify(fileQueueProvider, times(1)).provideQueue(any(), intThat(i -> i == 2));
 	}
 }

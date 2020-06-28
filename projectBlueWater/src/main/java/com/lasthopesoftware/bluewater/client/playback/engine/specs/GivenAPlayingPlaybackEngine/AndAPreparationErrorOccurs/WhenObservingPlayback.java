@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -112,8 +112,8 @@ public class WhenObservingPlayback {
 
 		private Messenger<PreparedPlayableFile> messenger;
 
-		ResolveablePlaybackHandler resolve() {
-			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
+		ResolvablePlaybackHandler resolve() {
+			final ResolvablePlaybackHandler playbackHandler = new ResolvablePlaybackHandler();
 			if (messenger != null)
 				messenger.sendResolution(new FakePreparedPlayableFile<>(playbackHandler));
 
