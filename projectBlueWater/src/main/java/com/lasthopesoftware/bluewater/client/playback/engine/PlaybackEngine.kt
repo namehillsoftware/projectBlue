@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeMana
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.VoidResponse
 import com.vedsoft.futures.runnables.OneParameterAction
@@ -78,9 +79,10 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 			} else eventually { nowPlaying ->
 				object : Promise<PositionedFile>() {
 					init {
-						val queueProvider = positionedFileQueueProviders[nowPlaying.isRepeating]
+						val queueProvider = positionedFileQueueProviders.getValue(nowPlaying.isRepeating)
 						try {
-							val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(queueProvider!!.provideQueue(playlist, playlistPosition))
+							val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement
+								.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition))
 							startPlayback(preparedPlaybackQueue, filePosition.toLong())
 								.firstElement()
 								.subscribe({ resolve(it.asPositionedFile()) }, { reject(it) })
@@ -214,6 +216,12 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 	fun removeFileAtPosition(position: Int): Promise<NowPlaying?> {
 		return nowPlayingRepository
 			.nowPlaying
+			.eventually { np ->
+				if (np.playlistPosition == position)
+					skipToNext().eventually { nowPlayingRepository.nowPlaying }
+				else
+					np.toPromise()
+			}
 			.eventually { np ->
 				np.playlist.removeAt(position)
 
