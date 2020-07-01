@@ -23,7 +23,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.observables.ConnectableObservable
 import org.jetbrains.annotations.Contract
 import org.slf4j.LoggerFactory
-import kotlin.math.min
+import kotlin.math.max
 
 class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>, private val nowPlayingRepository: INowPlayingRepository, private val playbackBootstrapper: IStartPlayback) : IChangePlaylistPosition, IPlaybackEngineBroadcaster, AutoCloseable {
 	private val preparedPlaybackQueueResourceManagement = managePlaybackQueues
@@ -296,7 +296,7 @@ class PlaybackEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQ
 
 		@Contract(pure = true)
 		private fun getPreviousPosition(startingPosition: Int): Int {
-			return min(startingPosition - 1, 0)
+			return max(startingPosition - 1, 0)
 		}
 	}
 }
