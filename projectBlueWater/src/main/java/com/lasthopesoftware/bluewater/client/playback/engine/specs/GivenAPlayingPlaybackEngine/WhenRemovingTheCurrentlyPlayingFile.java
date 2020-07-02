@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayin
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
@@ -77,7 +78,11 @@ public class WhenRemovingTheCurrentlyPlayingFile {
 
 		playbackEngine.setOnPlayingFileChanged(c -> positionedPlayingFile = c);
 
-		new FuturePromise<>(playbackEngine.removeFileAtPosition(3)).get(1, TimeUnit.SECONDS);
+		final FuturePromise<NowPlaying> futurePlaying = new FuturePromise<>(playbackEngine.removeFileAtPosition(3));
+
+		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		futurePlaying.get(1, TimeUnit.SECONDS);
 	}
 
 	@Test
