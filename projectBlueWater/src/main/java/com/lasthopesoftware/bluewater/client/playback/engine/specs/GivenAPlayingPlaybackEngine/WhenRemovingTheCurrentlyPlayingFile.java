@@ -52,8 +52,10 @@ public class WhenRemovingTheCurrentlyPlayingFile {
 			new ServiceFile(2),
 			new ServiceFile(3),
 			new ServiceFile(4),
-			new ServiceFile(5)))).get());
-		library.setNowPlayingId(3);
+			new ServiceFile(5),
+			new ServiceFile(13),
+			new ServiceFile(27)))).get());
+		library.setNowPlayingId(5);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 		final ILibraryStorage libraryStorage = Promise::new;
@@ -78,7 +80,7 @@ public class WhenRemovingTheCurrentlyPlayingFile {
 
 		playbackEngine.setOnPlayingFileChanged(c -> positionedPlayingFile = c);
 
-		final FuturePromise<NowPlaying> futurePlaying = new FuturePromise<>(playbackEngine.removeFileAtPosition(3));
+		final FuturePromise<NowPlaying> futurePlaying = new FuturePromise<>(playbackEngine.removeFileAtPosition(5));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 
@@ -87,11 +89,11 @@ public class WhenRemovingTheCurrentlyPlayingFile {
 
 	@Test
 	public void thenTheCurrentlyPlayingFilePositionIsTheSame() {
-		assertThat(library.getNowPlayingId()).isEqualTo(3);
+		assertThat(library.getNowPlayingId()).isEqualTo(5);
 	}
 
 	@Test
 	public void thenTheFileQueueIsShiftedToTheNextFile() {
-		assertThat(positionedPlayingFile.getServiceFile()).isEqualTo(new ServiceFile(4));
+		assertThat(positionedPlayingFile.getServiceFile()).isEqualTo(new ServiceFile(27));
 	}
 }
