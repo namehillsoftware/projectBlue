@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -19,6 +20,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -30,7 +32,7 @@ public class WhenATrackIsSwitched {
 	private static PositionedFile nextSwitchedFile;
 
 	@BeforeClass
-	public static void before() {
+	public static void before() throws ExecutionException, InterruptedException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		final Library library = new Library();
@@ -42,13 +44,13 @@ public class WhenATrackIsSwitched {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final PlaybackEngine playbackEngine = new PlaybackEngine(
+		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
 			.startPlaylist(
@@ -59,9 +61,12 @@ public class WhenATrackIsSwitched {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		playbackEngine.changePosition(3, 0).then(p -> nextSwitchedFile = p);
+		final FuturePromise<PositionedFile> futurePositionedFile =
+			new FuturePromise<>(playbackEngine.changePosition(3, 0));
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
+
+		nextSwitchedFile = futurePositionedFile.get();
 	}
 
 	@Test

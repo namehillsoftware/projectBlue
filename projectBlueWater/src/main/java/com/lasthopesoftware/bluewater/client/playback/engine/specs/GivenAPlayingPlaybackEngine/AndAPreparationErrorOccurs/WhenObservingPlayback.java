@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -25,7 +26,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +39,7 @@ public class WhenObservingPlayback {
 	private static NowPlaying nowPlaying;
 
 	@BeforeClass
-	public static void context() throws InterruptedException {
+	public static void context() throws InterruptedException, ExecutionException {
 		final DeferredErrorPlaybackPreparer deferredErrorPlaybackPreparer = new DeferredErrorPlaybackPreparer();
 
 		final IPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new IPlayableFilePreparationSourceProvider() {
@@ -63,13 +64,13 @@ public class WhenObservingPlayback {
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
-		final PlaybackEngine playbackEngine = new PlaybackEngine(
+		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				fakePlaybackPreparerProvider),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
 			.setOnPlaylistError(e -> {
@@ -87,15 +88,7 @@ public class WhenObservingPlayback {
 		deferredErrorPlaybackPreparer.resolve().resolve();
 		deferredErrorPlaybackPreparer.reject();
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		nowPlayingRepository.getNowPlaying()
-			.then(np -> {
-				nowPlaying = np;
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		nowPlaying = new FuturePromise<>(nowPlayingRepository.getNowPlaying()).get();
 	}
 
 	@Test
