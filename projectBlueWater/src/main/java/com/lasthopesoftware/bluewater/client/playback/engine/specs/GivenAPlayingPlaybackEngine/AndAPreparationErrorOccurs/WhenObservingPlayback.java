@@ -29,9 +29,6 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenObservingPlayback {
 
@@ -57,11 +54,8 @@ public class WhenObservingPlayback {
 		final Library library = new Library();
 		library.setId(1);
 
-		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
-		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));
-
-		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
-		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
+		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
+		final ILibraryStorage libraryStorage = Promise::new;
 
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
 		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
@@ -72,7 +66,7 @@ public class WhenObservingPlayback {
 			nowPlayingRepository,
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
-		playbackEngine
+		new FuturePromise<>(playbackEngine
 			.setOnPlaylistError(e -> {
 				if (e instanceof PreparationException)
 					error = (PreparationException)e;
@@ -83,7 +77,10 @@ public class WhenObservingPlayback {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)),
+				0,
+				0))
+			.get();
 
 		deferredErrorPlaybackPreparer.resolve().resolve();
 		deferredErrorPlaybackPreparer.reject();

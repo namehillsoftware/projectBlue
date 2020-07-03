@@ -50,7 +50,7 @@ public class WhenChangingToThePreviousTrack {
 			new ServiceFile(3),
 			new ServiceFile(4),
 			new ServiceFile(5)))).get());
-		library.setNowPlayingId(5);
+		library.setNowPlayingId(4);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 
@@ -75,11 +75,11 @@ public class WhenChangingToThePreviousTrack {
 
 	@Test
 	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(4);
+		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
 	}
 
 	@Test
 	public void thenTheSavedLibraryIsAtTheCorrectTrackPosition() {
-		assertThat(library.getNowPlayingId()).isEqualTo(4);
+		assertThat(library.getNowPlayingId()).isEqualTo(3);
 	}
 }
