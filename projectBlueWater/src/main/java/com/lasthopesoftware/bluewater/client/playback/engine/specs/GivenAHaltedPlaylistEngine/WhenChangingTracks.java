@@ -50,6 +50,7 @@ public class WhenChangingTracks {
 			new ServiceFile(3),
 			new ServiceFile(4),
 			new ServiceFile(5)))).get());
+		library.setNowPlayingId(0);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 
