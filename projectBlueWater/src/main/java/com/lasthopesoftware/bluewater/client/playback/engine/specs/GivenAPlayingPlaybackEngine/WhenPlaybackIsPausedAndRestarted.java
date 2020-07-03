@@ -53,13 +53,13 @@ public class WhenPlaybackIsPausedAndRestarted {
 
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
 
-		playbackEngine = new PlaybackEngine(
+		playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
 			.setOnPlaybackStarted(() -> ++playbackStartedCount)

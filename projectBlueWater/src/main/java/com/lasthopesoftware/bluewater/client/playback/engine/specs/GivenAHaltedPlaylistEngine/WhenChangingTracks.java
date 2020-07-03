@@ -61,16 +61,15 @@ public class WhenChangingTracks {
 					put(KnownFileProperties.DURATION, "100");
 			}}));
 
-		final PlaybackEngine playbackEngine = new PlaybackEngine(
+		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
-		new FuturePromise<>(playbackEngine.changePosition(3, 0).then(p -> nextSwitchedFile = p))
-			.get(1, TimeUnit.SECONDS);
+		nextSwitchedFile = new FuturePromise<>(playbackEngine.changePosition(3, 0)).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test

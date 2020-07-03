@@ -633,12 +633,13 @@ implements OnAudioFocusChangeListener
 			return FileStringListUtilities
 				.promiseParsedFileStringList(playlistString)
 				.eventually(playlist -> {
-					final Promise<Void> promiseStartedPlaylist = playbackEngine.startPlaylist(
+					final Promise<?> promiseStartedPlaylist = playbackEngine.startPlaylist(
 						playlist instanceof List
 							? (List<ServiceFile>)playlist
 							: new ArrayList<>(playlist),
 						playlistPosition,
 						0);
+
 					NowPlayingActivity.startNowPlayingActivity(this);
 
 					return promiseStartedPlaylist;
