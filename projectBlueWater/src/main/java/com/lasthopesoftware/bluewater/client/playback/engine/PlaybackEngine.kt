@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepara
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -29,9 +28,7 @@ class PlaybackEngine(
 	positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>,
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val playbackBootstrapper: IStartPlayback,
-	private var playlist: MutableList<ServiceFile>,
-	private var positionedProgressedFile: PositionedProgressedFile,
-	private var isRepeating: Boolean) :
+	nowPlaying: NowPlaying) :
 		IChangePlaylistPosition,
 		IPlaybackEngineBroadcaster,
 		AutoCloseable {
@@ -40,6 +37,13 @@ class PlaybackEngine(
 
 	var isPlaying = false
 		private set
+
+	private var playlist: MutableList<ServiceFile> = nowPlaying.playlist
+	private var positionedProgressedFile: PositionedProgressedFile = StaticProgressedFile(
+		nowPlaying.playlistPosition,
+		nowPlaying.filePosition,
+		nowPlaying.playlist[nowPlaying.playlistPosition])
+	private var isRepeating: Boolean = nowPlaying.isRepeating
 
 	private var playbackSubscription: Disposable? = null
 	private var activePlayer: IActivePlayer? = null
@@ -52,7 +56,7 @@ class PlaybackEngine(
 	fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<*> {
 		logger.info("Starting playback")
 		this.playlist = playlist
-		this.positionedProgressedFile = PositionedProgressedFile(
+		this.positionedProgressedFile = StaticProgressedFile(
 			playlistPosition,
 			filePosition.toLong(),
 			playlist[playlistPosition])
@@ -169,7 +173,7 @@ class PlaybackEngine(
 
 				if (positionedProgressedFile.playlistProgress > position) {
 					positionedProgressedFile.let {
-						positionedProgressedFile = PositionedProgressedFile(
+						positionedProgressedFile = StaticProgressedFile(
 							it.playlistProgress - 1,
 							it.fileProgress,
 							it.serviceFile)
@@ -202,10 +206,7 @@ class PlaybackEngine(
 		playbackSubscription = observable.subscribe(
 			{ p ->
 				isPlaying = true
-				positionedProgressedFile = PositionedProgressedFile(
-					p.playlistPosition,
-					p.playingFile.promisePlayedFile().progress?.millis ?: 0,
-					p.serviceFile)
+				positionedProgressedFile = ProgressingPositionedFile(p)
 				onPlayingFileChanged?.onPlayingFileChanged(p)
 				saveStateToLibrary()
 			},
@@ -240,9 +241,7 @@ class PlaybackEngine(
 			.eventually { np ->
 				np.playlist = playlist
 				np.playlistPosition = positionedProgressedFile.playlistProgress
-				np.filePosition = it.playingFile
-					.promisePlayedFile()
-					.progress.millis ?: 0
+				np.filePosition = positionedProgressedFile.fileProgress
 				nowPlayingRepository.updateNowPlaying(np)
 			}
 	}
@@ -279,13 +278,31 @@ class PlaybackEngine(
 						positionedFileQueueProviders,
 						nowPlayingRepository,
 						playbackBootstrapper,
-						np.playlist,
-						PositionedProgressedFile(
-							np.playlistPosition,
-							np.filePosition,
-							np.playlist[np.playlistPosition]),
-						np.isRepeating)
+						np)
 				}
 		}
+	}
+
+	private interface PositionedProgressedFile {
+		val playlistProgress: Int
+		val fileProgress: Long
+		val serviceFile: ServiceFile
+	}
+
+	private class StaticProgressedFile(
+		override val playlistProgress: Int,
+		override val fileProgress: Long,
+		override val serviceFile: ServiceFile)
+		: PositionedProgressedFile
+
+	private class ProgressingPositionedFile(val positionedPlayingFile: PositionedPlayingFile)
+		: PositionedProgressedFile {
+
+		override val playlistProgress = positionedPlayingFile.playlistPosition
+
+		override val serviceFile: ServiceFile = positionedPlayingFile.serviceFile
+
+		override val fileProgress: Long
+			get() = positionedPlayingFile.playingFile.promisePlayedFile().progress?.millis ?: 0
 	}
 }
