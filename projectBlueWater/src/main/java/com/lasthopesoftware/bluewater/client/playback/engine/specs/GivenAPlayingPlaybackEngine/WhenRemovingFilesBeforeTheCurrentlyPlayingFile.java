@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayin
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
@@ -14,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -42,6 +44,7 @@ public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	private static CompletingFileQueueProvider fileQueueProvider = spy(new CompletingFileQueueProvider());
 	private static final Library library = new Library();
+	private static NowPlaying nowPlaying;
 
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException, TimeoutException {
@@ -65,6 +68,8 @@ public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 				put(KnownFileProperties.DURATION, "100");
 			}}));
 
+		final NowPlayingRepository repository = new NowPlayingRepository(libraryProvider, libraryStorage);
+
 		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
@@ -75,9 +80,16 @@ public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 		new FuturePromise<>(playbackEngine.resume()).get(1, TimeUnit.SECONDS);
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
+		final ResolvablePlaybackHandler resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		resolvablePlaybackHandler.setCurrentPosition(35);
 
 		new FuturePromise<>(playbackEngine.removeFileAtPosition(0)).get(1, TimeUnit.SECONDS);
+
+		resolvablePlaybackHandler.setCurrentPosition(92);
+
+		new FuturePromise<>(playbackEngine.pause()).get();
+
+		nowPlaying = new FuturePromise<>(repository.getNowPlaying()).get();
 	}
 
 	@Test
@@ -88,5 +100,10 @@ public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 	@Test
 	public void thenTheFileQueueIsShifted() {
 		verify(fileQueueProvider, times(2)).provideQueue(any(), intThat(i -> i == 2));
+	}
+
+	@Test
+	public void thenTheCurrentlyPlayingFileStillTracksFileProgress() {
+		assertThat(nowPlaying.filePosition).isEqualTo(92);
 	}
 }

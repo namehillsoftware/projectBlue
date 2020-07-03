@@ -213,8 +213,7 @@ class PlaybackEngine(
 			{ p ->
 				isPlaying = true
 				positionedProgressedFile = ProgressingPositionedFile(p)
-				onPlayingFileChanged?.onPlayingFileChanged(p)
-				saveState()
+				saveState().then { onPlayingFileChanged?.onPlayingFileChanged(p) }
 			},
 			{ e ->
 				if (e is PreparationException) {

@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.namehillsoftware.handoff.promises.Promise;
