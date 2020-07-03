@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.EventualAction
 import io.reactivex.ObservableEmitter
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -30,22 +29,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	private var isStarted = false
 	private var emitter: ObservableEmitter<PositionedPlayingFile>? = null
 
-	private val newPausedPromiseAction = EventualAction {
-		positionedPlayingFile
-			?.let {
-				it.playingFile
-					?.promisePause()
-					?.then { p ->
-						positionedPlayableFile = PositionedPlayableFile(
-							p,
-							it.playableFileVolumeManager,
-							it.asPositionedFile())
-						positionedPlayingFile = null
-					}
-			}
-			?: Promise.empty<Any>()
-	}
-
 	override fun subscribe(e: ObservableEmitter<PositionedPlayingFile>) {
 		emitter = e
 		if (!isStarted) {
@@ -54,10 +37,10 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 		}
 	}
 
-	override fun pause(): Promise<*> {
+	override fun pause(): Promise<PositionedPlayableFile?> {
 		synchronized(stateChangeSync) {
 			return lastStateChangePromise
-				.inevitably(newPausedPromiseAction)
+				.eventually({ promisePause() }, { promisePause() })
 				.also { lastStateChangePromise = it }
 		}
 	}
@@ -80,21 +63,35 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 		positionedPlayableFile?.playableFileVolumeManager?.volume = volume
 	}
 
+	private fun promisePause(): Promise<PositionedPlayableFile?> {
+		return positionedPlayingFile
+			?.let {
+				it.playingFile
+					?.promisePause()
+					?.then { p ->
+						PositionedPlayableFile(p, it.playableFileVolumeManager,	it.asPositionedFile()).apply {
+							positionedPlayableFile = this
+							positionedPlayingFile = null
+						}
+					}
+			}
+			?: Promise(IllegalStateException("There must be a playing file in order to pause"))
+	}
+
 	private fun promiseResumption(): Promise<PositionedPlayingFile?> {
 		return positionedPlayableFile
 			?.let {
 				it.playableFile
 					?.promisePlayback()
 					?.then { p ->
-						positionedPlayingFile = PositionedPlayingFile(
-							p,
-							it.playableFileVolumeManager,
-							it.asPositionedFile())
-						positionedPlayableFile = null
+						PositionedPlayingFile(p, it.playableFileVolumeManager, it.asPositionedFile()).apply {
+							positionedPlayingFile = this
+							positionedPlayableFile = null
+						}
 						positionedPlayingFile
 					}
 			}
-			?: Promise.empty<PositionedPlayingFile>()
+			?: Promise(IllegalStateException("There must be a playable file in order to resume"))
 	}
 
 	private fun setupNextPreparedFile(preparedPosition: Long = 0) {

@@ -1,4 +1,4 @@
-FROM gradle:6.0.1-jdk8
+FROM gradle:6.5.1-jdk8
 
 # set default build arguments
 ARG SDK_VERSION=sdk-tools-linux-4333796.zip

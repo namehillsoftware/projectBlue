@@ -50,7 +50,7 @@ public class WhenChangingToThePreviousTrack {
 			new ServiceFile(3),
 			new ServiceFile(4),
 			new ServiceFile(5)))).get());
-		library.setNowPlayingId(5);
+		library.setNowPlayingId(4);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 
@@ -62,24 +62,24 @@ public class WhenChangingToThePreviousTrack {
 					put(KnownFileProperties.DURATION, "100");
 			}}));
 
-		final PlaybackEngine playbackEngine = new PlaybackEngine(
+		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
-		new FuturePromise<>(playbackEngine.skipToPrevious().then(p -> nextSwitchedFile = p)).get(1, TimeUnit.SECONDS);
+		nextSwitchedFile = new FuturePromise<>(playbackEngine.skipToPrevious()).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test
 	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(4);
+		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
 	}
 
 	@Test
 	public void thenTheSavedLibraryIsAtTheCorrectTrackPosition() {
-		assertThat(library.getNowPlayingId()).isEqualTo(4);
+		assertThat(library.getNowPlayingId()).isEqualTo(3);
 	}
 }

@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -35,7 +35,7 @@ public class WhenPlaybackIsPausedAndRestarted {
 	private static final List<ServiceFile> changedFiles = new ArrayList<>();
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
-	private static ResolveablePlaybackHandler resolveablePlaybackHandler;
+	private static ResolvablePlaybackHandler resolveablePlaybackHandler;
 	private static int playbackStartedCount;
 
 	@BeforeClass
@@ -53,13 +53,13 @@ public class WhenPlaybackIsPausedAndRestarted {
 
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
 
-		playbackEngine = new PlaybackEngine(
+		playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
 			.setOnPlaybackStarted(() -> ++playbackStartedCount)
@@ -74,7 +74,7 @@ public class WhenPlaybackIsPausedAndRestarted {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		final ResolveablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		final ResolvablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		playingPlaybackHandler.resolve();
 

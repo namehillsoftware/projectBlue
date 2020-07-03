@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHalted
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
@@ -12,8 +13,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
@@ -24,20 +25,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenChangingTracks {
+public class WhenSettingEngineToComplete {
 
 	private static final Library library = new Library();
-	private static PositionedFile nextSwitchedFile;
+	private static NowPlaying nowPlaying;
 
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException, TimeoutException {
@@ -51,6 +50,7 @@ public class WhenChangingTracks {
 			new ServiceFile(4),
 			new ServiceFile(5)))).get());
 		library.setNowPlayingId(0);
+		library.setRepeating(true);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 
@@ -62,24 +62,23 @@ public class WhenChangingTracks {
 					put(KnownFileProperties.DURATION, "100");
 			}}));
 
+		final NowPlayingRepository repository = new NowPlayingRepository(libraryProvider, libraryStorage);
+
 		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
-			Collections.singletonList(new CompletingFileQueueProvider()),
-			new NowPlayingRepository(libraryProvider, libraryStorage),
+			Arrays.asList(new CompletingFileQueueProvider(), new CyclicalFileQueueProvider()),
+			repository,
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
-		nextSwitchedFile = new FuturePromise<>(playbackEngine.changePosition(3, 0)).get(1, TimeUnit.SECONDS);
+		playbackEngine.playToCompletion();
+
+		nowPlaying = new FuturePromise<>(repository.getNowPlaying()).get();
 	}
 
 	@Test
-	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(3);
-	}
-
-	@Test
-	public void thenTheSavedLibraryIsAtTheCorrectTrackPosition() {
-		assertThat(library.getNowPlayingId()).isEqualTo(3);
+	public void thenNowPlayingIsSetToNotRepeating() {
+		assertThat(nowPlaying.isRepeating).isFalse();
 	}
 }
