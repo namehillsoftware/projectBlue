@@ -252,6 +252,7 @@ class PlaybackEngine(
 				np.playlist = playlist
 				np.playlistPosition = positionedProgressedFile.playlistPosition
 				np.filePosition = positionedProgressedFile.fileProgress
+				np.isRepeating = isRepeating
 				nowPlayingRepository.updateNowPlaying(np)
 			}
 	}
