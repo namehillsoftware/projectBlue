@@ -244,12 +244,15 @@ implements
 		public void onReceive(Context context, Intent intent) {
 			lazyNowPlayingRepository.getObject().getNowPlaying()
 				.eventually(LoopedInPromise.response(new VoidResponse<>(np -> {
-					lazyNowPlayingListAdapter.getObject().submitList(np.playlist);
+					lazyNowPlayingListAdapter.getObject()
+						.updateListEventually(np.playlist)
+						.eventually(LoopedInPromise.response(
+							new VoidResponse<>(u -> {
+								if (!isDrawerOpened)
+									updateNowPlayingListViewPosition();
 
-					if (!isDrawerOpened)
-						updateNowPlayingListViewPosition();
-
-					setView();
+								setView();
+							}), messageHandler.getObject()));
 				}), messageHandler.getObject()));
 		}
 	};
@@ -357,10 +360,13 @@ implements
 		setupNowPlayingListDrawer();
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
-			.eventually(LoopedInPromise.response(new VoidResponse<>(nowPlaying -> {
-				lazyNowPlayingListAdapter.getObject().submitList(nowPlaying.playlist);
-				updateNowPlayingListViewPosition();
-			}), messageHandler.getObject()));
+			.eventually(LoopedInPromise.response(new VoidResponse<>(nowPlaying ->
+				lazyNowPlayingListAdapter.getObject()
+					.updateListEventually(nowPlaying.playlist)
+					.eventually(LoopedInPromise.response(
+						new VoidResponse<>(u -> updateNowPlayingListViewPosition()),
+						messageHandler.getObject()))),
+				messageHandler.getObject()));
 	}
 
 	private void setupNowPlayingListDrawer() {
