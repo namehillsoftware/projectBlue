@@ -143,6 +143,7 @@ implements
 	private final CreateAndHold<NowPlayingFileListAdapter> lazyNowPlayingListAdapter = new Lazy<>(() ->
 		new NowPlayingFileListAdapter(
 			this,
+			this,
 			lazyNowPlayingRepository.getObject()));
 
 	private final CreateAndHold<RecyclerView> nowPlayingDrawerListView = new AbstractSynchronousLazy<RecyclerView>() {

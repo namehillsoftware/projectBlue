@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.list
 
+import android.content.Context
 import android.view.ViewGroup
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -11,9 +12,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 
 class NowPlayingFileListAdapter(
+	context: Context,
 	itemListMenuChangeHandler: IItemListMenuChangeHandler,
 	nowPlayingRepository: INowPlayingRepository)
-	: DeferredListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(ServiceFileDiffer) {
+	: DeferredListAdapter<ServiceFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(context, ServiceFileDiffer) {
 
 	private val nowPlayingFileListItemMenuBuilder = NowPlayingFileListItemMenuBuilder(nowPlayingRepository)
 
