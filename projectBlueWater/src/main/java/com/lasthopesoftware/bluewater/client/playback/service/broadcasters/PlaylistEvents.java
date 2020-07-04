@@ -12,8 +12,9 @@ public class PlaylistEvents {
 	public static final String onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart");
 	public static final String onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop");
 	public static final String onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause");
-	public static final String onFileComplete = magicPropertyBuilder.buildProperty("onFileComplete");
-	public static final String onFileStart = magicPropertyBuilder.buildProperty("onFileStart");
+	public static final String onPlaylistTrackComplete = magicPropertyBuilder.buildProperty("onPlaylistTrackComplete");
+	public static final String onPlaylistTrackChange = magicPropertyBuilder.buildProperty("onPlaylistTrackChange");
+	public static final String onPlaylistTrackStart = magicPropertyBuilder.buildProperty("onPlaylistTrackStart");
 
 	public static class PlaybackFileParameters {
 		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackFileParameters.class);

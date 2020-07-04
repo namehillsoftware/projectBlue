@@ -22,7 +22,7 @@ public class RemoteControlProxy extends BroadcastReceiver {
 		this.remoteBroadcaster = remoteBroadcaster;
 
 		mappedEvents = new HashMap<>(5);
-		mappedEvents.put(PlaylistEvents.onPlaylistChange, this::onPlaylistChange);
+		mappedEvents.put(PlaylistEvents.onPlaylistTrackChange, this::onPlaylistChange);
 		mappedEvents.put(PlaylistEvents.onPlaylistPause, i -> remoteBroadcaster.setPaused());
 		mappedEvents.put(PlaylistEvents.onPlaylistStart, i -> remoteBroadcaster.setPlaying());
 		mappedEvents.put(PlaylistEvents.onPlaylistStop, i -> remoteBroadcaster.setStopped());

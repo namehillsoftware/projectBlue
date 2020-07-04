@@ -40,8 +40,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider;
@@ -105,6 +103,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary;
@@ -643,7 +643,8 @@ implements OnAudioFocusChangeListener
 					NowPlayingActivity.startNowPlayingActivity(this);
 
 					return promiseStartedPlaylist;
-				});
+				})
+				.then(new VoidResponse<>(playlist -> localBroadcastManagerLazy.getObject().sendBroadcast(new Intent(PlaylistEvents.onPlaylistChange))));
 		}
 
 		if (action.equals(Action.togglePlayPause))
@@ -699,6 +700,7 @@ implements OnAudioFocusChangeListener
 
 			return playbackEngine
 				.addFile(new ServiceFile(fileKey))
+				.then(new VoidResponse<>(playlist -> localBroadcastManagerLazy.getObject().sendBroadcast(new Intent(PlaylistEvents.onPlaylistChange))))
 				.eventually(LoopedInPromise.response(library -> {
 					Toast.makeText(this, PlaybackService.this.getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show();
 					return null;
@@ -709,7 +711,9 @@ implements OnAudioFocusChangeListener
 			final int filePosition = intent.getIntExtra(Action.Bag.filePosition, -1);
 			if (filePosition < -1) return Promise.empty();
 
-			return playbackEngine.removeFileAtPosition(filePosition);
+			return playbackEngine
+				.removeFileAtPosition(filePosition)
+				.then(new VoidResponse<>(playlist -> localBroadcastManagerLazy.getObject().sendBroadcast(new Intent(PlaylistEvents.onPlaylistChange))));
 		}
 
 		return Promise.empty();
@@ -1081,7 +1085,7 @@ implements OnAudioFocusChangeListener
 		if (playingFile instanceof EmptyPlaybackHandler) return;
 
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile());
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackStart, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 
 		final ProgressedPromise<Duration, PlayedFile> promisedPlayedFile = playingFile.promisePlayedFile();
 		final Disposable localSubscription = filePositionSubscription =
@@ -1093,7 +1097,7 @@ implements OnAudioFocusChangeListener
 					playingFile));
 
 		promisedPlayedFile.then(p -> {
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onFileComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
+			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackComplete, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedPlayingFile.asPositionedFile());
 			localSubscription.dispose();
 			return null;
 		});
@@ -1105,13 +1109,13 @@ implements OnAudioFocusChangeListener
 	private void broadcastResetPlaylist(PositionedFile positionedFile) {
 		lazyPlaybackBroadcaster.getObject()
 			.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistChange,
+				PlaylistEvents.onPlaylistTrackChange,
 				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
 				positionedFile);
 	}
 
 	private Void broadcastChangedFile(PositionedFile positionedFile) {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
+		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackChange, lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(), positionedFile);
 		return null;
 	}
 

@@ -11,14 +11,21 @@ import android.widget.ViewAnimator;
  * @author david
  *
  */
-public class LongClickViewAnimatorListener implements OnItemLongClickListener {
-
-//    private ViewAnimator viewAnimator;
+public class LongClickViewAnimatorListener implements OnItemLongClickListener, View.OnLongClickListener {
 
 	@Override
 	public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-//        tryFlipToPreviousView(viewAnimator);
+		if (view instanceof ViewAnimator) {
+			final ViewAnimator viewAnimator = (ViewAnimator)view;
+			viewAnimator.showNext();
 
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean onLongClick(View view) {
 		if (view instanceof ViewAnimator) {
 			final ViewAnimator viewAnimator = (ViewAnimator)view;
 			viewAnimator.showNext();

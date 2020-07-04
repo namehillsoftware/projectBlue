@@ -96,7 +96,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			new PositionedFile(1, new ServiceFile(1)));
 
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
-			PlaylistEvents.onPlaylistChange,
+			PlaylistEvents.onPlaylistTrackChange,
 			new LibraryId(1),
 			new PositionedFile(1, new ServiceFile(1)));
 
@@ -106,7 +106,7 @@ public class WhenTheFileChanges extends AndroidContext {
 			new PositionedFile(1, new ServiceFile(1)));
 
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
-			PlaylistEvents.onPlaylistChange,
+			PlaylistEvents.onPlaylistTrackChange,
 			new LibraryId(1),
 			new PositionedFile(1, new ServiceFile(2)));
 	}

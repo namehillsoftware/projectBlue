@@ -14,7 +14,7 @@ abstract class AbstractFileListItemNowPlayingHandler(fileListItem: FileListItemC
 	private val localBroadcastManager = LocalBroadcastManager.getInstance(fileTextViewContainer.context)
 
 	init {
-		localBroadcastManager.registerReceiver(this, IntentFilter(PlaylistEvents.onPlaylistChange))
+		localBroadcastManager.registerReceiver(this, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
 		fileTextViewContainer.addOnAttachStateChangeListener(this)
 	}
 

@@ -9,8 +9,8 @@ import androidx.annotation.NonNull;
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.INowPlayingFileProvider;
 
 import java.util.List;
 

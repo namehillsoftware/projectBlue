@@ -11,14 +11,13 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public class UpdatePlayStatsOnCompleteRegistration implements IConnectionDependentReceiverRegistration {
 
-	private static final Collection<IntentFilter> intents = Collections.singleton(new IntentFilter(PlaylistEvents.onFileComplete));
+	private static final Collection<IntentFilter> intents = Collections.singleton(new IntentFilter(PlaylistEvents.onPlaylistTrackComplete));
 
 	@Override
 	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {

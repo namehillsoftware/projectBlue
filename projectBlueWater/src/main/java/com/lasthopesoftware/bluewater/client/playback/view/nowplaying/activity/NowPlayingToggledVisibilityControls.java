@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity;
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity;
 
 import android.view.View;
 import android.widget.LinearLayout;
