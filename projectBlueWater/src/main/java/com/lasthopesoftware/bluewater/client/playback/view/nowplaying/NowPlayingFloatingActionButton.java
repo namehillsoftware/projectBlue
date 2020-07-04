@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying;
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,8 +11,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 

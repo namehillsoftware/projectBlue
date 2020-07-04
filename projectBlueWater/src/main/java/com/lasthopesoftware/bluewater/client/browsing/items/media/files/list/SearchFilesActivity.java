@@ -19,12 +19,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.F
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.NowPlayingFileProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
@@ -57,12 +57,12 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
         nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
         handleIntent(getIntent());
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		return ViewUtils.buildStandardMenu(this, menu);
 	}
-	
+
 	@Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -71,7 +71,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 
 	private void handleIntent(Intent intent) {
 		if (!Intent.ACTION_SEARCH.equals(intent.getAction())) return;
-        
+
 		final String query = intent.getStringExtra(SearchManager.QUERY);
         if (query == null || query.isEmpty()) return;
 
@@ -126,7 +126,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 	@Override
 	public void onStart() {
 		super.onStart();
-		
+
 		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
 	}
 

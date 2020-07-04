@@ -15,13 +15,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.BaseMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.FilePlayClickListener;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.ViewFileDetailsClickListener;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.AbstractListItemMenuBuilder;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.AbstractMenuClickHandler;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.INowPlayingFileProvider;
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;

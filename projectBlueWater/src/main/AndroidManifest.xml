@@ -106,7 +106,7 @@
                     android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity"/>
         </activity>
         <activity
-                android:name=".client.browsing.items.media.files.nowplaying.activity.NowPlayingActivity"
+                android:name="com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity"
                 android:label="@string/title_activity_view_now_playing"
                 android:launchMode="singleTask"
                 android:theme="@style/NowPlayingTheme">

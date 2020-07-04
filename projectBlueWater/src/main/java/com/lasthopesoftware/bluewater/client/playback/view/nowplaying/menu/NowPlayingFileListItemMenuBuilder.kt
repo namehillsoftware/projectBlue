@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu
 
 import android.content.Context
 import android.content.Intent
@@ -12,13 +12,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.AbstractFileListItemNowPlayingHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.listeners.FileSeekToClickListener
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.listeners.RemovePlaylistFileClickListener
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.listeners.FileSeekToClickListener
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.listeners.RemovePlaylistFileClickListener
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise

@@ -3,8 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayin
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
@@ -16,6 +14,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying;
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;

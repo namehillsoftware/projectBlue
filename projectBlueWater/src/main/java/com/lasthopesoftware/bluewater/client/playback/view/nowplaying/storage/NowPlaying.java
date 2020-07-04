@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage;
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 

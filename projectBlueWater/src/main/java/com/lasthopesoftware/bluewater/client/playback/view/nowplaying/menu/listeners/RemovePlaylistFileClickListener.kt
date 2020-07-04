@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.menu.listeners
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.listeners
 
 import android.view.View
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator

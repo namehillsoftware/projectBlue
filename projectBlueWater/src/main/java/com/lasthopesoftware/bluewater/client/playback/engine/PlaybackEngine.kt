@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.INowPlayingRepository
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted
@@ -14,6 +12,8 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.vedsoft.futures.runnables.OneParameterAction
