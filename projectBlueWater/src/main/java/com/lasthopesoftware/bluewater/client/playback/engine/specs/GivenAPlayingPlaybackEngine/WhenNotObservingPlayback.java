@@ -10,8 +10,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -19,6 +20,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,7 +32,7 @@ public class WhenNotObservingPlayback {
 	private static PlaybackEngine playbackEngine;
 
 	@BeforeClass
-	public static void context() {
+	public static void context() throws ExecutionException, InterruptedException {
 		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
 
 		library = new Library();
@@ -43,13 +45,13 @@ public class WhenNotObservingPlayback {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		playbackEngine = new PlaybackEngine(
+		playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				() -> 1),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
 			.startPlaylist(
@@ -60,7 +62,7 @@ public class WhenNotObservingPlayback {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		final ResolveablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
+		final ResolvablePlaybackHandler resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 

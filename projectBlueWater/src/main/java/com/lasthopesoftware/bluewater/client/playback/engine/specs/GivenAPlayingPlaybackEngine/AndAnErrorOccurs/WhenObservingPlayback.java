@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -21,6 +22,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +34,7 @@ public class WhenObservingPlayback {
 	private static Throwable error;
 
 	@BeforeClass
-	public static void context() {
+	public static void context() throws ExecutionException, InterruptedException {
 		final DeferredErrorPlaybackPreparer deferredErrorPlaybackPreparer = new DeferredErrorPlaybackPreparer();
 
 		final IPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new IPlayableFilePreparationSourceProvider() {
@@ -56,13 +58,13 @@ public class WhenObservingPlayback {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
 
-		final PlaybackEngine playbackEngine = new PlaybackEngine(
+		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				fakePlaybackPreparerProvider),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
 			.setOnPlaylistError(e -> error = e)

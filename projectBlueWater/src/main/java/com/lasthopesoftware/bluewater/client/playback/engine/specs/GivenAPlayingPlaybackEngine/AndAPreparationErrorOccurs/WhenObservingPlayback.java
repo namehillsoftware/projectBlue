@@ -15,8 +15,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -25,12 +26,9 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenObservingPlayback {
 
@@ -38,7 +36,7 @@ public class WhenObservingPlayback {
 	private static NowPlaying nowPlaying;
 
 	@BeforeClass
-	public static void context() throws InterruptedException {
+	public static void context() throws InterruptedException, ExecutionException {
 		final DeferredErrorPlaybackPreparer deferredErrorPlaybackPreparer = new DeferredErrorPlaybackPreparer();
 
 		final IPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new IPlayableFilePreparationSourceProvider() {
@@ -56,22 +54,19 @@ public class WhenObservingPlayback {
 		final Library library = new Library();
 		library.setId(1);
 
-		final ISpecificLibraryProvider libraryProvider = mock(ISpecificLibraryProvider.class);
-		when(libraryProvider.getLibrary()).thenReturn(new Promise<>(library));
-
-		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
-		when(libraryStorage.saveLibrary(any())).thenReturn(new Promise<>(library));
+		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
+		final ILibraryStorage libraryStorage = Promise::new;
 
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
-		final PlaybackEngine playbackEngine = new PlaybackEngine(
+		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				fakePlaybackPreparerProvider),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			nowPlayingRepository,
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)));
+			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
-		playbackEngine
+		new FuturePromise<>(playbackEngine
 			.setOnPlaylistError(e -> {
 				if (e instanceof PreparationException)
 					error = (PreparationException)e;
@@ -82,20 +77,15 @@ public class WhenObservingPlayback {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)),
+				0,
+				0))
+			.get();
 
 		deferredErrorPlaybackPreparer.resolve().resolve();
 		deferredErrorPlaybackPreparer.reject();
 
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		nowPlayingRepository.getNowPlaying()
-			.then(np -> {
-				nowPlaying = np;
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+		nowPlaying = new FuturePromise<>(nowPlayingRepository.getNowPlaying()).get();
 	}
 
 	@Test
@@ -112,8 +102,8 @@ public class WhenObservingPlayback {
 
 		private Messenger<PreparedPlayableFile> messenger;
 
-		ResolveablePlaybackHandler resolve() {
-			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
+		ResolvablePlaybackHandler resolve() {
+			final ResolvablePlaybackHandler playbackHandler = new ResolvablePlaybackHandler();
 			if (messenger != null)
 				messenger.sendResolution(new FakePreparedPlayableFile<>(playbackHandler));
 

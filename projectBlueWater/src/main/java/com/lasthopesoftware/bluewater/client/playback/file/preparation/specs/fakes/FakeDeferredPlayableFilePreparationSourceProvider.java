@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayab
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.FakePreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.playlist.specs.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.ResolveablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
@@ -27,8 +27,8 @@ public class FakeDeferredPlayableFilePreparationSourceProvider implements IPlaya
 
 		private Messenger<PreparedPlayableFile> resolve;
 
-		public ResolveablePlaybackHandler resolve() {
-			final ResolveablePlaybackHandler playbackHandler = new ResolveablePlaybackHandler();
+		public ResolvablePlaybackHandler resolve() {
+			final ResolvablePlaybackHandler playbackHandler = new ResolvablePlaybackHandler();
 			if (resolve != null)
 				resolve.sendResolution(new FakePreparedPlayableFile<>(playbackHandler));
 			return playbackHandler;

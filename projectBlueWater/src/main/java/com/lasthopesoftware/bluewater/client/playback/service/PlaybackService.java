@@ -633,12 +633,13 @@ implements OnAudioFocusChangeListener
 			return FileStringListUtilities
 				.promiseParsedFileStringList(playlistString)
 				.eventually(playlist -> {
-					final Promise<Void> promiseStartedPlaylist = playbackEngine.startPlaylist(
+					final Promise<?> promiseStartedPlaylist = playbackEngine.startPlaylist(
 						playlist instanceof List
 							? (List<ServiceFile>)playlist
 							: new ArrayList<>(playlist),
 						playlistPosition,
 						0);
+
 					NowPlayingActivity.startNowPlayingActivity(this);
 
 					return promiseStartedPlaylist;
@@ -722,12 +723,12 @@ implements OnAudioFocusChangeListener
 		return playbackEnginePromise =
 			playbackEnginePromise != null
 				? playbackEnginePromise.eventually(
-					e -> initializePlaybackPlaylistStateManager(library),
-					e -> initializePlaybackPlaylistStateManager(library))
-				: initializePlaybackPlaylistStateManager(library);
+					e -> initializePlaybackEngine(library),
+					e -> initializePlaybackEngine(library))
+				: initializePlaybackEngine(library);
 	}
 
-	private Promise<PlaybackEngine> initializePlaybackPlaylistStateManager(Library library) {
+	private Promise<PlaybackEngine> initializePlaybackEngine(Library library) {
 		if (playbackEngine != null)
 			playbackEngine.close();
 
@@ -735,7 +736,7 @@ implements OnAudioFocusChangeListener
 			if (connectionProvider == null)
 				throw new PlaybackEngineInitializationException("connectionProvider was null!");
 
-			return extractorHandler.getObject().then(handler -> {
+			return extractorHandler.getObject().eventually(handler -> {
 				cachedSessionFilePropertiesProvider = new CachedSessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance(),
 					new SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()));
 				if (remoteControlProxy != null)
@@ -859,8 +860,7 @@ implements OnAudioFocusChangeListener
 
 				playbackQueues = new PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider);
 
-				playbackEngine =
-					new PlaybackEngine(
+				return PlaybackEngine.createEngine(
 						playbackQueues,
 						QueueProviders.providers(),
 						new NowPlayingRepository(
@@ -869,16 +869,17 @@ implements OnAudioFocusChangeListener
 								lazyLibraryRepository.getObject()),
 							lazyLibraryRepository.getObject()),
 						playlistPlaybackBootstrapper);
-
-				playbackEngine
-					.setOnPlaybackStarted(this::handlePlaybackStarted)
-					.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
-					.setOnPlaylistError(this::uncaughtExceptionHandler)
-					.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
-					.setOnPlaylistReset(this::broadcastResetPlaylist);
-
-				return playbackEngine;
 			});
+		})
+		.then(engine -> {
+			playbackEngine = engine;
+			engine
+				.setOnPlaybackStarted(this::handlePlaybackStarted)
+				.setOnPlayingFileChanged(this::changePositionedPlaybackFile)
+				.setOnPlaylistError(this::uncaughtExceptionHandler)
+				.setOnPlaybackCompleted(this::onPlaylistPlaybackComplete)
+				.setOnPlaylistReset(this::broadcastResetPlaylist);
+			return engine;
 		});
 	}
 
