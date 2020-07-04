@@ -244,7 +244,7 @@ implements
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			lazyNowPlayingRepository.getObject().getNowPlaying()
-				.eventually(LoopedInPromise.response(new VoidResponse<>(np -> {
+				.eventually(np ->
 					lazyNowPlayingListAdapter.getObject()
 						.updateListEventually(np.playlist)
 						.eventually(LoopedInPromise.response(
@@ -253,8 +253,7 @@ implements
 									updateNowPlayingListViewPosition();
 
 								setView();
-							}), messageHandler.getObject()));
-				}), messageHandler.getObject()));
+							}), messageHandler.getObject())));
 		}
 	};
 
@@ -361,13 +360,12 @@ implements
 		setupNowPlayingListDrawer();
 
 		lazyNowPlayingRepository.getObject().getNowPlaying()
-			.eventually(LoopedInPromise.response(new VoidResponse<>(nowPlaying ->
+			.eventually(nowPlaying ->
 				lazyNowPlayingListAdapter.getObject()
 					.updateListEventually(nowPlaying.playlist)
 					.eventually(LoopedInPromise.response(
 						new VoidResponse<>(u -> updateNowPlayingListViewPosition()),
-						messageHandler.getObject()))),
-				messageHandler.getObject()));
+						messageHandler.getObject())));
 	}
 
 	private void setupNowPlayingListDrawer() {

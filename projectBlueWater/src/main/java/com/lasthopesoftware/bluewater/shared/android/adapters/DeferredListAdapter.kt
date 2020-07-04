@@ -29,7 +29,8 @@ abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 	private inner class PromisedListUpdate(list: List<T>) : LoopedInPromise<Unit>(
 		MessengerOperator<Unit> {
 			try {
-				submitList(list) { it.sendResolution(Unit) }
+				// Pass in as a ListWrapper to ensure reference equality check always fails
+				submitList(list.toList()) { it.sendResolution(Unit) }
 			} catch(e: Throwable) {
 				it.sendRejection(e)
 			}
