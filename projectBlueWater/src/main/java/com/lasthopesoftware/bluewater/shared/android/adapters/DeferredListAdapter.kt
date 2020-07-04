@@ -1,20 +1,12 @@
 package com.lasthopesoftware.bluewater.shared.android.adapters
 
-import android.content.Context
-import android.os.Handler
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 
-abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
-	context: Context,
-	diffCallback: DiffUtil.ItemCallback<T>)
+abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(diffCallback: DiffUtil.ItemCallback<T>)
 	: ListAdapter<T, ViewHolder>(diffCallback) {
-
-	private val handler = lazy { Handler(context.mainLooper) }
 
 	@Volatile
 	private var currentUpdate: Promise<Unit> = Promise.empty()
@@ -26,14 +18,18 @@ abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 			.apply { currentUpdate = this }
 	}
 
-	private inner class PromisedListUpdate(list: List<T>) : LoopedInPromise<Unit>(
-		MessengerOperator<Unit> {
+	private inner class PromisedListUpdate(list: List<T>) : Promise<Unit>(), Runnable {
+
+		init {
 			try {
-				// Pass in as a ListWrapper to ensure reference equality check always fails
-				submitList(list.toList()) { it.sendResolution(Unit) }
+				submitList(list, this)
 			} catch(e: Throwable) {
-				it.sendRejection(e)
+				reject(e)
 			}
-		},
-		handler.value)
+		}
+
+		override fun run() {
+			resolve(Unit)
+		}
+	}
 }
