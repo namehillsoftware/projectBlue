@@ -40,9 +40,8 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 		}
 	}
 
-	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {
-		return Promise(ImageOperator(libraryId, serviceFile))
-	}
+	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> =
+		Promise(ImageOperator(libraryId, serviceFile))
 
 	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : MessengerOperator<ByteArray> {
 		override fun send(messenger: Messenger<ByteArray>) {
@@ -77,8 +76,6 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 	}
 
 	private class ImageDiskCacheWriter internal constructor(private val imageCacheFile: File) : MessageWriter<ByteArray> {
-		override fun prepareMessage(): ByteArray {
-			return getBytesFromFiles(imageCacheFile)
-		}
+		override fun prepareMessage(): ByteArray = getBytesFromFiles(imageCacheFile)
 	}
 }
