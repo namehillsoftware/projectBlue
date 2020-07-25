@@ -31,11 +31,7 @@ and testing purposes.
 ### Prerequisites
 
 Java SDK 8+ and the Android SDK are required to develop project blue. To perform a continuous integration 
-(CI) build, Docker and Docker Compose are required. To run a CI build, run the following command:
-
-```shell script
-./build.sh
-```
+(CI) build, Docker and Docker Compose are required.
 
 ### Installing
 
@@ -47,20 +43,34 @@ Java SDK 8+ and the Android SDK are required to develop project blue. To perform
 
 Run the tests via the IDE.
 
+## Running the Build
+
+Android Studio can perform the build. To run a CI build like it is run in Github, run the following command:
+
+```shell script
+./build.sh
+```
+
 ## Deployment
 
-Once changes are merged, a build will be deployed and published by myself, @danrien, the project blue maintainer.
+Once changes are merged, a build will be deployed and published by the project blue maintainer.
 
 ## Built With
 
 - [Gradle](https://gradle.org/) - Dependency and Build Management
+- [Android Studio and SDK](https://developer.android.com/studio/) - Tools and standard library for Android
+- [Kotlin](https://kotlinlang.org/) - Language project blue is migrating to
+- [Java](https://www.java.com/en/) - Majority of the project is written in Java
+- [Handoff](https://github.com/namehillsoftware/handoff) - Continuations library
 
 ## Contributing
 
 All code considered guilty until proven innocent! Please ensure that your code is proven with unit 
 tests before submitting a PR. No PR will be considered without the tests to back it up.
 
-Folder structure is organized by *context*, or rather, it moves away from the "sock drawer" folder structure
+All new changes should be written in Kotlin if possible.
+
+Folder structure is organized by **feature**, or rather, it doesn't use the "sock drawer" folder structure
 that Android follows. It is inspired by this post on AngularJS project structure (another Google framework that
 encourage sock drawer app structuring): http://cliffmeyers.com/blog/2013/4/21/code-organization-angularjs-javascript.
 This means everything is logically grouped in nested folders based on feature. Unfortunately, some 
@@ -83,10 +93,20 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## License
 
-This project is licensed under the GNU Lesser General Public License v3.0 - see the [LICENSE](LICENSE) file for details
+This project is licensed under the GNU Lesser General Public License v3.0 - see the [LICENSE](LICENSE) 
+file for details.
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+- [JRiver Media Center](https://jriver.com/)
+- [ExoPlayer](https://github.com/google/ExoPlayer)
+- [Lightweight Stream API](https://github.com/aNNiMON/Lightweight-Stream-API)
+- [RxJava](https://github.com/ReactiveX/RxJava)
+- [OkHttp](https://square.github.io/okhttp/)
+- [Okio](https://github.com/square/okio)
+- [Joda-Time](https://www.joda.org/joda-time/)
+- [SLF4J](http://www.slf4j.org/)
+- [JUnt](https://junit.org/)
+- [Mockito](https://site.mockito.org/)
+- [AssertJ](https://assertj.github.io/doc/)
+- [Robolectric](http://robolectric.org/)
