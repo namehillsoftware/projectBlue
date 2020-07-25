@@ -1,6 +1,6 @@
 # project blue
 
-![project blue](design/feature-graphic/feature_graphic.png)
+![project blue](design/clearstream_logo.png)
 
 project blue is an alternative, open source streaming music client for [JRiver Media Center](http://jriver.com/).
 
@@ -26,12 +26,12 @@ Download on the [Google Play Store](https://play.google.com/store/apps/details?i
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development 
-and testing purposes. See deployment for notes on how to deploy the project on a live system.
+and testing purposes.
 
 ### Prerequisites
 
-Java and the Android SDK are required to develop project blue. To perform a continuous integration (CI)
-build, Docker and Docker Compose are required. To run a CI build, run the following command:
+Java SDK 8+ and the Android SDK are required to develop project blue. To perform a continuous integration 
+(CI) build, Docker and Docker Compose are required. To run a CI build, run the following command:
 
 ```shell script
 ./build.sh
@@ -53,13 +53,12 @@ Once changes are merged, a build will be deployed and published by myself, @danr
 
 ## Built With
 
-* [Gradle](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+- [Gradle](https://gradle.org/) - Dependency and Build Management
 
 ## Contributing
 
-Finding issues and reporting them is contributing to making project blue better! Please submit any 
-issues that are found in the issues area.
+All code considered guilty until proven innocent! Please ensure that your code is proven with unit 
+tests before submitting a PR. No PR will be considered without the tests to back it up.
 
 Folder structure is organized by *context*, or rather, it moves away from the "sock drawer" folder structure
 that Android follows. It is inspired by this post on AngularJS project structure (another Google framework that
@@ -67,8 +66,11 @@ encourage sock drawer app structuring): http://cliffmeyers.com/blog/2013/4/21/co
 This means everything is logically grouped in nested folders based on feature. Unfortunately, some 
 areas, such as the `res` folders, do not allow such structuring.
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for more 
-details on our code of conduct, and the process for submitting pull requests to us.
+Finding issues and reporting them is also contributing to making project blue better! Please submit any 
+issues that are found in the issues area.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for more details on our code of conduct, and the 
+process for submitting pull requests to us.
 
 ## Versioning
 
