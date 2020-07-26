@@ -103,7 +103,7 @@ class FileDetailsActivity : AppCompatActivity() {
 				artistTextViewFinder.findView().text = artist
 
 				val filePropertyList = fileProperties.entries
-					.filter { e -> !PROPERTIES_TO_SKIP.contains(e.key) }
+					.filter { e -> !propertiesToSkip.contains(e.key) }
 					.sortedBy { e -> e.key }
 
 				lvFileDetails.findView().adapter = FileDetailsAdapter(this, R.id.linFileDetailsRow, filePropertyList)
@@ -165,7 +165,7 @@ class FileDetailsActivity : AppCompatActivity() {
 
 		private const val trackNameMarqueeDelay = 1500
 
-		private val PROPERTIES_TO_SKIP = setOf(
+		private val propertiesToSkip = setOf(
 			KnownFileProperties.AUDIO_ANALYSIS_INFO,
 			KnownFileProperties.GET_COVER_ART_INFO,
 			KnownFileProperties.IMAGE_FILE,
@@ -173,7 +173,8 @@ class FileDetailsActivity : AppCompatActivity() {
 			KnownFileProperties.STACK_FILES,
 			KnownFileProperties.STACK_TOP,
 			KnownFileProperties.STACK_VIEW,
-			KnownFileProperties.WAVEFORM)
+			KnownFileProperties.WAVEFORM,
+			KnownFileProperties.LengthInPcmBlocks)
 
 		private val imgFileThumbnailLayoutParams: AbstractSynchronousLazy<RelativeLayout.LayoutParams> = object : AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
 			override fun create(): RelativeLayout.LayoutParams {
