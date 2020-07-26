@@ -6,7 +6,6 @@ fun <T> T.toPromise(): Promise<T> {
 	@Suppress("UNCHECKED_CAST")
 	return when (this) {
 		is Unit -> UnitPromise as Promise<T>
-		null -> Promise.empty()
 		else -> Promise(this)
 	}
 }
