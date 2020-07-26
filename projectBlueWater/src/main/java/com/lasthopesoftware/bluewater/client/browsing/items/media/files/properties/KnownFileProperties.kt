@@ -19,8 +19,8 @@ object KnownFileProperties {
 	const val STACK_TOP = "Stack Top"
 	const val STACK_VIEW = "Stack View"
 	const val RATING = "Rating"
-	const val VolumeLevelR128 = "Volume Level (R128)"
 	const val LAST_SKIPPED = "Last Skipped"
+	const val LengthInPcmBlocks = "Length In PCM Blocks"
 	const val DATE_CREATED = "Date Created"
 	const val DATE_IMPORTED = "Date Imported"
 	const val DATE_MODIFIED = "Date Modified"
@@ -29,5 +29,6 @@ object KnownFileProperties {
 	const val DATE_LAST_OPENED = "Date Last Opened"
 	const val FILE_SIZE = "File Size"
 	const val DATE = "Date"
+	const val VolumeLevelR128 = "Volume Level (R128)"
 	const val WAVEFORM = "Waveform"
 }

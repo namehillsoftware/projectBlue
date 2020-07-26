@@ -33,19 +33,15 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.promiseExcuse
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.eventualExcuse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.namehillsoftware.handoff.promises.Promise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
-import com.namehillsoftware.lazyj.Lazy
-import java.util.concurrent.Callable
 
 class FileDetailsActivity : AppCompatActivity() {
 
 	private val lvFileDetails = LazyViewFinder<ListView>(this, R.id.lvFileDetails)
-
 	private val pbLoadingFileDetails = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingFileDetails)
-
 	private val pbLoadingFileThumbnail = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingFileThumbnail)
 	private val fileNameTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvFileName)
 	private val artistTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvArtist)
@@ -64,7 +60,14 @@ class FileDetailsActivity : AppCompatActivity() {
 		}
 	}
 
-	private val defaultImageProvider = Lazy(Callable { DefaultImageProvider(this) })
+	private val lazyImageProvider = lazy {
+		val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(this)
+		ImageProvider(
+			StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
+			MemoryCachedImageAccess.getInstance(this))
+	}
+
+	private val defaultImageProvider = lazy { DefaultImageProvider(this) }
 	private var fileKey = -1
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,7 +103,7 @@ class FileDetailsActivity : AppCompatActivity() {
 				artistTextViewFinder.findView().text = artist
 
 				val filePropertyList = fileProperties.entries
-					.filter { e -> !PROPERTIES_TO_SKIP.contains(e.key) }
+					.filter { e -> !propertiesToSkip.contains(e.key) }
 					.sortedBy { e -> e.key }
 
 				lvFileDetails.findView().adapter = FileDetailsAdapter(this, R.id.linFileDetailsRow, filePropertyList)
@@ -108,20 +111,14 @@ class FileDetailsActivity : AppCompatActivity() {
 				lvFileDetails.findView().visibility = View.VISIBLE
 			}, this))
 			.excuse(HandleViewIoException(this, Runnable { setView(fileKey) }))
-			.promiseExcuse()
+			.eventualExcuse()
 			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 
-		SessionConnection.getInstance(this).promiseSessionConnection()
-			.eventually {
-				val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(this@FileDetailsActivity)
-				ImageProvider(
-					StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
-					MemoryCachedImageAccess.getInstance(this))
-					.promiseFileBitmap(ServiceFile(fileKey))
-			}
+		lazyImageProvider.value
+			.promiseFileBitmap(ServiceFile(fileKey))
 			.eventually { bitmap ->
-				bitmap?.let { Promise(it) } ?: defaultImageProvider.getObject().promiseFileBitmap()
+				bitmap?.toPromise() ?: defaultImageProvider.value.promiseFileBitmap()
 			}
 			.eventually<Unit>(LoopedInPromise.response({ result ->
 				imgFileThumbnailBuilder.getObject().setImageBitmap(result)
@@ -135,7 +132,7 @@ class FileDetailsActivity : AppCompatActivity() {
 		val fileNameTextView = fileNameTextViewFinder.findView()
 		fileNameTextView.text = fileName
 		fileNameTextView.postDelayed({ fileNameTextView.isSelected = true }, trackNameMarqueeDelay.toLong())
-		val spannableString = SpannableString(String.format(getString(R.string.lbl_details), fileName))
+		val spannableString = SpannableString(getString(R.string.lbl_details).format(fileName))
 		spannableString.setSpan(StyleSpan(Typeface.BOLD), 0, fileName.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 		title = spannableString
 	}
@@ -168,7 +165,7 @@ class FileDetailsActivity : AppCompatActivity() {
 
 		private const val trackNameMarqueeDelay = 1500
 
-		private val PROPERTIES_TO_SKIP = setOf(
+		private val propertiesToSkip = setOf(
 			KnownFileProperties.AUDIO_ANALYSIS_INFO,
 			KnownFileProperties.GET_COVER_ART_INFO,
 			KnownFileProperties.IMAGE_FILE,
@@ -176,7 +173,8 @@ class FileDetailsActivity : AppCompatActivity() {
 			KnownFileProperties.STACK_FILES,
 			KnownFileProperties.STACK_TOP,
 			KnownFileProperties.STACK_VIEW,
-			KnownFileProperties.WAVEFORM)
+			KnownFileProperties.WAVEFORM,
+			KnownFileProperties.LengthInPcmBlocks)
 
 		private val imgFileThumbnailLayoutParams: AbstractSynchronousLazy<RelativeLayout.LayoutParams> = object : AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
 			override fun create(): RelativeLayout.LayoutParams {
