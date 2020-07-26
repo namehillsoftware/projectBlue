@@ -334,10 +334,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setNowPlayingBackgroundBitmap() {
-		val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
-
 		lazyDefaultImage.value
 			.eventually<Unit>(LoopedInPromise.response({ bitmap ->
+				val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
 				nowPlayingImageLoadingView.setImageBitmap(bitmap)
 				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
 			}, messageHandler.value))
