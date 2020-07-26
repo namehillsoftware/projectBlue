@@ -3,10 +3,10 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.propert
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.resources.scheduling.ScheduleParsingWork;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;
 
+import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormatter;
@@ -72,12 +72,13 @@ public class FormattedSessionFilePropertiesProvider extends SessionFilePropertie
 								KnownFileProperties.DATE_FIRST_RATED,
 								KnownFileProperties.DATE_LAST_OPENED))));
 
-	public FormattedSessionFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider, ScheduleParsingWork parsingScheduler) {
+	public FormattedSessionFilePropertiesProvider(IConnectionProvider connectionProvider, IFilePropertiesContainerRepository filePropertiesContainerProvider) {
 		super(connectionProvider, filePropertiesContainerProvider);
 	}
 
+	@NotNull
 	@Override
-	public Promise<Map<String, String>> promiseFileProperties(ServiceFile serviceFile) {
+	public Promise<Map<String, String>> promiseFileProperties(@NotNull ServiceFile serviceFile) {
 		return
 			super
 				.promiseFileProperties(serviceFile)
@@ -99,7 +100,7 @@ public class FormattedSessionFilePropertiesProvider extends SessionFilePropertie
 		if (value == null || value.isEmpty()) return "";
 
 		if (dateTimeProperties.getObject().contains(name)) {
-			final DateTime dateTime = new DateTime((long)(Double.valueOf(value) * 1000));
+			final DateTime dateTime = new DateTime(Double.parseDouble(value) * 1000);
 			return dateTime.toString(dateTimeFormatter.getObject());
 		}
 

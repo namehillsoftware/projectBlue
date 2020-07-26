@@ -29,4 +29,5 @@ object KnownFileProperties {
 	const val DATE_LAST_OPENED = "Date Last Opened"
 	const val FILE_SIZE = "File Size"
 	const val DATE = "Date"
+	const val WAVEFORM = "Waveform"
 }
