@@ -333,14 +333,13 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				messageHandler.value))
 	}
 
-	private fun setNowPlayingBackgroundBitmap() {
+	private fun setNowPlayingBackgroundBitmap() =
 		lazyDefaultImage.value
 			.eventually<Unit>(LoopedInPromise.response({ bitmap ->
 				val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
 				nowPlayingImageLoadingView.setImageBitmap(bitmap)
 				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
 			}, messageHandler.value))
-	}
 
 	private fun initializeView() {
 		playButton.findView().visibility = View.VISIBLE
