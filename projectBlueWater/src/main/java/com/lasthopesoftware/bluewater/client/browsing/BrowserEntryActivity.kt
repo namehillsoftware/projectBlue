@@ -45,7 +45,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.promiseExcuse
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.excuseEventually
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
@@ -230,7 +230,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 						this))
 			}
 			.excuse(HandleViewIoException(this, this))
-			.promiseExcuse()
+			.excuseEventually()
 			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
 				ApplicationSettingsActivity.launch(this)

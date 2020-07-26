@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.promiseExcuse
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.excuseEventually
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
@@ -41,9 +41,7 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 class FileDetailsActivity : AppCompatActivity() {
 
 	private val lvFileDetails = LazyViewFinder<ListView>(this, R.id.lvFileDetails)
-
 	private val pbLoadingFileDetails = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingFileDetails)
-
 	private val pbLoadingFileThumbnail = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingFileThumbnail)
 	private val fileNameTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvFileName)
 	private val artistTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvArtist)
@@ -113,7 +111,7 @@ class FileDetailsActivity : AppCompatActivity() {
 				lvFileDetails.findView().visibility = View.VISIBLE
 			}, this))
 			.excuse(HandleViewIoException(this, Runnable { setView(fileKey) }))
-			.promiseExcuse()
+			.excuseEventually()
 			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 
@@ -134,7 +132,7 @@ class FileDetailsActivity : AppCompatActivity() {
 		val fileNameTextView = fileNameTextViewFinder.findView()
 		fileNameTextView.text = fileName
 		fileNameTextView.postDelayed({ fileNameTextView.isSelected = true }, trackNameMarqueeDelay.toLong())
-		val spannableString = SpannableString(String.format(getString(R.string.lbl_details), fileName))
+		val spannableString = SpannableString(getString(R.string.lbl_details).format(fileName))
 		spannableString.setSpan(StyleSpan(Typeface.BOLD), 0, fileName.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 		title = spannableString
 	}
