@@ -87,7 +87,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private var viewAnimator: ViewAnimator? = null
-	private lateinit var nowPlayingBackgroundBitmap: Bitmap
 	private val messageHandler = lazy { Handler(mainLooper) }
 	private val playButton = LazyViewFinder<ImageButton>(this, R.id.btnPlay)
 	private val pauseButton = LazyViewFinder<ImageButton>(this, R.id.btnPause)
@@ -337,16 +336,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private fun setNowPlayingBackgroundBitmap() {
 		val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
 
-		if (::nowPlayingBackgroundBitmap.isInitialized) {
-			nowPlayingImageLoadingView.setImageBitmap(nowPlayingBackgroundBitmap)
-			nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
-			return
-		}
-
 		lazyDefaultImage.value
 			.eventually<Unit>(LoopedInPromise.response({ bitmap ->
-				nowPlayingBackgroundBitmap = bitmap
-				nowPlayingImageLoadingView.setImageBitmap(nowPlayingBackgroundBitmap)
+				nowPlayingImageLoadingView.setImageBitmap(bitmap)
 				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
 			}, messageHandler.value))
 	}
