@@ -460,21 +460,20 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			viewStructure.promisedNowPlayingImage = lazyImageProvider.value.eventually { provider -> provider.promiseFileBitmap(serviceFile) }
 		}
 		viewStructure.promisedNowPlayingImage
-			?.eventually { bitmap ->
-				if (viewStructure !== Companion.viewStructure) Promise.empty<Void>()
+			?.eventually<Unit> { bitmap ->
+				if (viewStructure !== Companion.viewStructure) Promise.empty()
 				else LoopedInPromise(MessageWriter { setNowPlayingImage(bitmap) }, messageHandler.value)
 			}
-			?.excuse(VoidResponse { e ->
+			?.excuse { e ->
 				if (e is CancellationException)	logger.info("Bitmap retrieval cancelled", e)
 				else logger.error("There was an error retrieving the image for serviceFile $serviceFile", e)
-			})
+			}
 	}
 
-	private fun setNowPlayingImage(bitmap: Bitmap?): Void? {
+	private fun setNowPlayingImage(bitmap: Bitmap?) {
 		nowPlayingImageViewFinder.findView().setImageBitmap(bitmap)
 		loadingProgressBar.findView().visibility = View.INVISIBLE
 		if (bitmap != null) displayImageBitmap()
-		return null
 	}
 
 	private fun setFileProperties(serviceFile: ServiceFile, initialFilePosition: Long, fileProperties: Map<String, String>?): Void? {
