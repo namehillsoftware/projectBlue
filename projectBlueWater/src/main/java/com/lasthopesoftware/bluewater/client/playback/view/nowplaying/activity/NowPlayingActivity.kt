@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
@@ -119,6 +120,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private val lazyNowPlayingListAdapter = lazy {
 		NowPlayingFileListAdapter(
+			this,
 			this,
 			lazyNowPlayingRepository.value)
 	}
@@ -379,8 +381,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		setRepeatingIcon(imageButton, false)
 		lazyNowPlayingRepository.value
 			.nowPlaying
-			.eventually(LoopedInPromise.response({ result: NowPlaying? ->
+			.eventually(LoopedInPromise.response<NowPlaying, Any?>({ result: NowPlaying? ->
 				if (result != null) setRepeatingIcon(imageButton, result.isRepeating)
+				null
 			}, messageHandler.value))
 	}
 
@@ -458,19 +461,20 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		}
 		viewStructure.promisedNowPlayingImage
 			?.eventually { bitmap ->
-				if (viewStructure !== Companion.viewStructure) Promise.empty<Unit>()
+				if (viewStructure !== Companion.viewStructure) Promise.empty<Void>()
 				else LoopedInPromise(MessageWriter { setNowPlayingImage(bitmap) }, messageHandler.value)
 			}
-			?.excuse { e ->
+			?.excuse(VoidResponse { e ->
 				if (e is CancellationException)	logger.info("Bitmap retrieval cancelled", e)
 				else logger.error("There was an error retrieving the image for serviceFile $serviceFile", e)
-			}
+			})
 	}
 
-	private fun setNowPlayingImage(bitmap: Bitmap?) {
+	private fun setNowPlayingImage(bitmap: Bitmap?): Void? {
 		nowPlayingImageViewFinder.findView().setImageBitmap(bitmap)
 		loadingProgressBar.findView().visibility = View.INVISIBLE
 		if (bitmap != null) displayImageBitmap()
+		return null
 	}
 
 	private fun setFileProperties(serviceFile: ServiceFile, initialFilePosition: Long, fileProperties: Map<String, String>?): Void? {
@@ -553,7 +557,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private fun resetViewOnReconnect(serviceFile: ServiceFile, position: Long) {
 		pollSessionConnection(this).then {
 			if (serviceFile == viewStructure?.serviceFile) {
-				viewStructure?.promisedNowPlayingImage?.cancel()
+				viewStructure?.promisedNowPlayingImage!!.cancel()
 				viewStructure?.promisedNowPlayingImage = null
 			}
 			setView(serviceFile, position)
