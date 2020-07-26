@@ -35,10 +35,8 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.promiseExcuse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.namehillsoftware.handoff.promises.Promise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
-import com.namehillsoftware.lazyj.Lazy
-import java.util.concurrent.Callable
 
 class FileDetailsActivity : AppCompatActivity() {
 
@@ -64,7 +62,14 @@ class FileDetailsActivity : AppCompatActivity() {
 		}
 	}
 
-	private val defaultImageProvider = Lazy(Callable { DefaultImageProvider(this) })
+	private val lazyImageProvider = lazy {
+		val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(this)
+		ImageProvider(
+			StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
+			MemoryCachedImageAccess.getInstance(this))
+	}
+
+	private val defaultImageProvider = lazy { DefaultImageProvider(this) }
 	private var fileKey = -1
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,16 +117,10 @@ class FileDetailsActivity : AppCompatActivity() {
 			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 
-		SessionConnection.getInstance(this).promiseSessionConnection()
-			.eventually {
-				val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(this@FileDetailsActivity)
-				ImageProvider(
-					StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
-					MemoryCachedImageAccess.getInstance(this))
-					.promiseFileBitmap(ServiceFile(fileKey))
-			}
+		lazyImageProvider.value
+			.promiseFileBitmap(ServiceFile(fileKey))
 			.eventually { bitmap ->
-				bitmap?.let { Promise(it) } ?: defaultImageProvider.getObject().promiseFileBitmap()
+				bitmap?.toPromise() ?: defaultImageProvider.value.promiseFileBitmap()
 			}
 			.eventually<Unit>(LoopedInPromise.response({ result ->
 				imgFileThumbnailBuilder.getObject().setImageBitmap(result)

@@ -74,30 +74,30 @@ class FormattedSessionFilePropertiesProvider(connectionProvider: IConnectionProv
 		private fun getFormattedValue(name: String, value: String?): String {
 			if (value.isNullOrEmpty()) return ""
 
-			if (dateTimeProperties.getObject().contains(name)) {
+			return if (dateTimeProperties.getObject().contains(name)) {
 				val dateTime = DateTime(value.toDouble() * 1000)
-				return dateTime.toString(dateTimeFormatter.getObject())
+				dateTime.toString(dateTimeFormatter.getObject())
+			} else when (name) {
+				KnownFileProperties.DATE -> {
+					var daysValue: String = value
+					val periodPos = daysValue.indexOf('.')
+
+					if (periodPos > -1) daysValue = daysValue.substring(0, periodPos)
+
+					val returnDate = excelEpoch.getObject().plusDays(daysValue.toInt())
+					returnDate.toString(
+						if (returnDate.monthOfYear == 1 && returnDate.dayOfMonth == 1) yearFormatter.getObject()
+						else dateFormatter.getObject())
+				}
+				KnownFileProperties.FILE_SIZE -> {
+					val fileSizeBytes = ceil(value.toLong().toDouble() / 1024 / 1024 * 100) / 100
+					"$fileSizeBytes MB"
+				}
+				KnownFileProperties.DURATION -> {
+					Duration.standardSeconds(value.toDouble().toLong()).toPeriod().toString(minutesAndSecondsFormatter.getObject())
+				}
+				else -> value
 			}
-
-			if (KnownFileProperties.DATE == name) {
-				var daysValue: String = value
-				val periodPos = daysValue.indexOf('.')
-
-				if (periodPos > -1) daysValue = daysValue.substring(0, periodPos)
-
-				val returnDate = excelEpoch.getObject().plusDays(daysValue.toInt())
-				return returnDate.toString(
-					if (returnDate.monthOfYear == 1 && returnDate.dayOfMonth == 1) yearFormatter.getObject()
-					else dateFormatter.getObject())
-			}
-
-			if (KnownFileProperties.FILE_SIZE == name) {
-				val fileSizeBytes = ceil(value.toLong().toDouble() / 1024 / 1024 * 100) / 100
-				return "$fileSizeBytes MB"
-			}
-
-			return if (KnownFileProperties.DURATION != name) value
-			else Duration.standardSeconds(value.toDouble().toLong()).toPeriod().toString(minutesAndSecondsFormatter.getObject())
 		}
 	}
 
