@@ -79,9 +79,8 @@ class FormattedSessionFilePropertiesProvider(connectionProvider: IConnectionProv
 				dateTime.toString(dateTimeFormatter.getObject())
 			} else when (name) {
 				KnownFileProperties.DATE -> {
-					var daysValue: String = value
+					var daysValue = value
 					val periodPos = daysValue.indexOf('.')
-
 					if (periodPos > -1) daysValue = daysValue.substring(0, periodPos)
 
 					val returnDate = excelEpoch.getObject().plusDays(daysValue.toInt())
