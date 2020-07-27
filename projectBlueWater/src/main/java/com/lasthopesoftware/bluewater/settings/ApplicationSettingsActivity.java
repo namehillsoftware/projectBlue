@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 
@@ -104,8 +105,8 @@ public class ApplicationSettingsActivity extends AppCompatActivity {
 		for(int i = 0; i < playbackEngineOptions.getChildCount(); i++)
 			playbackEngineOptions.getChildAt(i).setEnabled(false);
 
-		playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections()
-			.forEach(playbackEngineOptions::addView);
+		for (final RadioButton rb : playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections())
+			playbackEngineOptions.addView(rb);
 
 		selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType()
 			.eventually(LoopedInPromise.response(t -> {
