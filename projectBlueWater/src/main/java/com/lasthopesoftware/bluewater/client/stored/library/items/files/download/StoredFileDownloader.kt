@@ -55,13 +55,11 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 		@Throws(IOException::class)
 		override fun close() {
 			byteStream.close()
-			responseBody!!.close()
+			responseBody.close()
 		}
 
 		override fun toString(): String {
 			return byteStream.toString()
 		}
-
 	}
-
 }
