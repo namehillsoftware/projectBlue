@@ -28,7 +28,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationCompat.Builder;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
@@ -763,11 +762,7 @@ implements OnAudioFocusChangeListener
 					.getObject()
 					.registerReceiver(
 						remoteControlProxy,
-						Stream.of(remoteControlProxy.registerForIntents())
-							.reduce(new IntentFilter(), (intentFilter, action) -> {
-								intentFilter.addAction(action);
-								return intentFilter;
-							}));
+						buildRemoteControlProxyIntentFilter(remoteControlProxy));
 
 				if (playbackNotificationRouter != null)
 					localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter);
@@ -791,11 +786,7 @@ implements OnAudioFocusChangeListener
 					.getObject()
 					.registerReceiver(
 						playbackNotificationRouter,
-						Stream.of(playbackNotificationRouter.registerForIntents())
-							.reduce(new IntentFilter(), (intentFilter, action) -> {
-								intentFilter.addAction(action);
-								return intentFilter;
-							}));
+						buildNotificationRouterIntentFilter(playbackNotificationRouter));
 
 				if (playlistPlaybackBootstrapper != null)
 					playlistPlaybackBootstrapper.close();
@@ -881,6 +872,24 @@ implements OnAudioFocusChangeListener
 				.setOnPlaylistReset(this::broadcastResetPlaylist);
 			return engine;
 		});
+	}
+
+	private static IntentFilter buildRemoteControlProxyIntentFilter(RemoteControlProxy remoteControlProxy) {
+		final IntentFilter intentFilter = new IntentFilter();
+		for (final String action : remoteControlProxy.registerForIntents()) {
+			intentFilter.addAction(action);
+		}
+
+		return intentFilter;
+	}
+
+	private static IntentFilter buildNotificationRouterIntentFilter(PlaybackNotificationRouter playbackNotificationRouter) {
+		final IntentFilter intentFilter = new IntentFilter();
+		for (final String action : playbackNotificationRouter.registerForIntents()) {
+			intentFilter.addAction(action);
+		}
+
+		return intentFilter;
 	}
 
 	private Promise<IConnectionProvider> getSessionConnection() {

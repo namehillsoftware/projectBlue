@@ -28,8 +28,9 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 
 			promisedResponse
 				.then { r ->
-					if (r.body == null || r.code == 404) ByteArrayInputStream(ByteArray(0))
-					else StreamedResponse(r.body!!)
+					val body = r.body
+					if (body == null || r.code == 404) ByteArrayInputStream(ByteArray(0))
+					else StreamedResponse(body)
 				}
 				.then(ResolutionProxy(m), RejectionProxy(m))
 		}
