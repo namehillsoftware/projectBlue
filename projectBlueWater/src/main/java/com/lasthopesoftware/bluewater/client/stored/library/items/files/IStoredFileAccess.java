@@ -9,6 +9,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 import java.util.List;
 import java.util.Set;
 
+import kotlin.Unit;
+
 public interface IStoredFileAccess {
 	Promise<StoredFile> getStoredFile(int storedFileId);
 
@@ -20,5 +22,5 @@ public interface IStoredFileAccess {
 
 	Promise<Void> addMediaFile(Library library, ServiceFile serviceFile, int mediaFileId, String filePath);
 
-	Promise<Void> pruneStoredFiles(LibraryId libraryId, Set<ServiceFile> serviceFilesToKeep);
+	Promise<Unit> pruneStoredFiles(LibraryId libraryId, Set<ServiceFile> serviceFilesToKeep);
 }

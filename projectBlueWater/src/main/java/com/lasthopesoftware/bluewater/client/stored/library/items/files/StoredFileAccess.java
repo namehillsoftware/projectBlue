@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import kotlin.Unit;
+
 public final class StoredFileAccess implements IStoredFileAccess {
 
 	public static Executor storedFileAccessExecutor() {
@@ -151,7 +153,7 @@ public final class StoredFileAccess implements IStoredFileAccess {
 	}
 
 	@Override
-	public Promise<Void> pruneStoredFiles(LibraryId libraryId, final Set<ServiceFile> serviceFilesToKeep) {
+	public Promise<Unit> pruneStoredFiles(LibraryId libraryId, final Set<ServiceFile> serviceFilesToKeep) {
 		return getAllStoredFilesInLibrary.promiseAllStoredFiles(libraryId)
 			.eventually(new PruneFilesTask(this, serviceFilesToKeep));
 	}
