@@ -45,6 +45,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
 			SelectedBrowserLibraryIdentifierProvider(activity),
 			libraryRepository)
+
 		selectedBrowserLibraryProvider
 			.browserLibrary
 			.then { library ->
@@ -101,7 +102,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val toggleSyncButton = viewFileslayout.findViewById<Button>(R.id.toggleSyncButton)
 		val startSyncLabel = activity.getText(R.string.start_sync_button)
 		val stopSyncLabel = activity.getText(R.string.stop_sync_button)
-		toggleSyncButton.text = if (!StoredSyncService.isSyncRunning()) startSyncLabel else stopSyncLabel
+		toggleSyncButton.text = if (!StoredSyncService.isSyncRunning) startSyncLabel else stopSyncLabel
 
 		onSyncStartedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
 
@@ -122,7 +123,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 			}.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
-		toggleSyncButton.setOnClickListener { v: View -> if (StoredSyncService.isSyncRunning()) StoredSyncService.cancelSync(v.context) else StoredSyncService.doSyncUninterrupted(v.context) }
+		toggleSyncButton.setOnClickListener { v-> if (StoredSyncService.isSyncRunning) StoredSyncService.cancelSync(v.context) else StoredSyncService.doSyncUninterrupted(v.context) }
 		toggleSyncButton.isEnabled = true
 		return viewFileslayout
 	}
