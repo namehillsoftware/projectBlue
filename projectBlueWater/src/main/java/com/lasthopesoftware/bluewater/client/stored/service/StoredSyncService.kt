@@ -56,6 +56,7 @@ import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
@@ -141,7 +142,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 			StoredFileQuery(storedSyncService),
 			lazyLibraryRepository.value,
 			lazyFileProperties.value,
-			SyncDirectoryLookup(lazyLibraryRepository.value, PublicDirectoryLookup(storedSyncService), PrivateDirectoryLookup(storedSyncService)))
+			SyncDirectoryLookup(lazyLibraryRepository.value, PublicDirectoryLookup(storedSyncService), PrivateDirectoryLookup(storedSyncService), FreeSpaceLookup))
 		val syncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
 				storedItemAccess,
