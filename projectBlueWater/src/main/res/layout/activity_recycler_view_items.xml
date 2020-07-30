@@ -2,13 +2,13 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/rlViewItems"
+    android:id="@+id/rlRecyclerViewItems"
     android:orientation="vertical">
-	<ListView
+	<androidx.recyclerview.widget.RecyclerView
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	    android:id="@+id/lvItems">
-	</ListView>
+	    android:id="@+id/itemsRecyclerView">
+	</androidx.recyclerview.widget.RecyclerView>
 	
 	<ProgressBar
 	    android:id="@+id/pbLoadingItems"

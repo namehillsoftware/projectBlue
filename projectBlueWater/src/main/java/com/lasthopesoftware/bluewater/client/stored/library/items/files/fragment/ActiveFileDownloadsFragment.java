@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
@@ -17,11 +16,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider;
@@ -34,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronizati
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
+import java.util.LinkedList;
 import java.util.Map;
 
 public class ActiveFileDownloadsFragment extends Fragment {
@@ -57,7 +57,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 		final RelativeLayout viewFileslayout = (RelativeLayout) inflater.inflate(R.layout.layout_downloads, container, false);
 
 		final ProgressBar progressBar = viewFileslayout.findViewById(R.id.pbLoadingItems);
-		final ListView listView = viewFileslayout.findViewById(R.id.lvItems);
+		final RecyclerView listView = viewFileslayout.findViewById(R.id.itemsRecyclerView);
 
 		listView.setVisibility(View.INVISIBLE);
 		progressBar.setVisibility(View.VISIBLE);
@@ -84,7 +84,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								.filter(f -> f.getLibraryId() == library.getId())
 								.collect(Collectors.toMap(StoredFile::getId));
 
-						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(activity, localStoredFiles.values());
+						final ActiveFileDownloadsAdapter activeFileDownloadsAdapter = new ActiveFileDownloadsAdapter(activity);
 
 						if (onFileDownloadedReceiver != null)
 							localBroadcastManager.unregisterReceiver(onFileDownloadedReceiver);
@@ -97,8 +97,8 @@ public class ActiveFileDownloadsFragment extends Fragment {
 								final StoredFile storedFile = localStoredFiles.get(storedFileId);
 								if (storedFile == null) return;
 
-								activeFileDownloadsAdapter.remove(new ServiceFile(storedFile.getServiceId()));
 								localStoredFiles.remove(storedFileId);
+								activeFileDownloadsAdapter.submitList(new LinkedList<>(localStoredFiles.values()));
 							}
 						};
 
@@ -122,7 +122,7 @@ public class ActiveFileDownloadsFragment extends Fragment {
 											return;
 
 										localStoredFiles.put(storedFileId, storedFile);
-										activeFileDownloadsAdapter.add(new ServiceFile(storedFile.getServiceId()));
+										activeFileDownloadsAdapter.submitList(new LinkedList<>(localStoredFiles.values()));
 									}), activity));
 							}
 						};

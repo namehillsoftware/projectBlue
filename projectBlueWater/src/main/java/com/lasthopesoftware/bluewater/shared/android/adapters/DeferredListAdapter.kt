@@ -30,7 +30,7 @@ abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 		MessengerOperator<Unit> {
 			try {
 				submitList(list) { it.sendResolution(Unit) }
-			} catch(e: Throwable) {
+			} catch (e: Throwable) {
 				it.sendRejection(e)
 			}
 		},
