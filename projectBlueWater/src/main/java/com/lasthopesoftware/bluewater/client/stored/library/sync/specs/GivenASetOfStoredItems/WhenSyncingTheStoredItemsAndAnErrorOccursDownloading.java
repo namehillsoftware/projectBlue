@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -61,7 +61,7 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
-		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
+		final LibrarySyncsHandler librarySyncHandler = new LibrarySyncsHandler(
 			new StoredItemServiceFileCollector(
 				storedItemAccessMock,
 				mockFileProvider,

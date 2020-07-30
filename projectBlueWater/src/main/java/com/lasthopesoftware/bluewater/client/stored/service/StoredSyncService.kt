@@ -44,9 +44,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.M
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
-import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver
@@ -143,7 +142,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 			lazyLibraryRepository.value,
 			lazyFileProperties.value,
 			SyncDirectoryLookup(lazyLibraryRepository.value, PublicDirectoryLookup(storedSyncService), PrivateDirectoryLookup(storedSyncService)))
-		val syncHandler = LibrarySyncHandler(
+		val syncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
 				storedItemAccess,
 				LibraryFileProvider(LibraryFileStringListProvider(lazyLibraryConnections.value)),

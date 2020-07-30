@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -72,7 +72,7 @@ public class WhenSynchronizationIsDisposing extends AndroidContext {
 				new Library().setId(4),
 				new Library().setId(10))));
 
-		final LibrarySyncHandler librarySyncHandler = mock(LibrarySyncHandler.class);
+		final ControlLibrarySyncs librarySyncHandler = mock(ControlLibrarySyncs.class);
 		when(librarySyncHandler.observeLibrarySync(any()))
 			.thenAnswer(a -> Observable
 				.fromArray(storedFiles)

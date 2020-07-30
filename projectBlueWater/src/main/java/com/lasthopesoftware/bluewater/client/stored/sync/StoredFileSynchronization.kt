@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler
+import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class StoredFileSynchronization(
 	private val libraryProvider: ILibraryProvider,
 	private val localBroadcastManager: LocalBroadcastManager,
-	private val syncHandler: LibrarySyncHandler) : SynchronizeStoredFiles {
+	private val syncHandler: ControlLibrarySyncs) : SynchronizeStoredFiles {
 
 	override fun streamFileSynchronization(): Completable {
 		logger.info("Starting sync.")

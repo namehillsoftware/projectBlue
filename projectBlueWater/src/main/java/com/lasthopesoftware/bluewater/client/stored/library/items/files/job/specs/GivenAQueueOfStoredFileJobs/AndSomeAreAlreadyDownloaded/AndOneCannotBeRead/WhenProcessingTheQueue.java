@@ -108,7 +108,7 @@ public class WhenProcessingTheQueue {
 	@Test
 	public void thenTheCorrectFilesAreBroadcastAsDownloaded() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloaded)
-			.map(r -> r.storedFile).toList()).containsOnlyElementsOf(
+			.map(r -> r.storedFile).toList()).isSubsetOf(
 				Stream.of(storedFileJobs)
 					.map(StoredFileJob::getStoredFile)
 					.filter(f -> f.getServiceId() != 114)
