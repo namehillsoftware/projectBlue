@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -57,7 +57,7 @@ public class WhenSyncingTheStoredItems {
 		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
-		final LibrarySyncHandler librarySyncHandler = new LibrarySyncHandler(
+		final LibrarySyncsHandler librarySyncHandler = new LibrarySyncsHandler(
 			new StoredItemServiceFileCollector(
 				storedItemAccessMock,
 				mockFileProvider,

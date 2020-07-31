@@ -28,7 +28,7 @@ class StoredFileDownloadingNotifier(
 	}
 
 	override fun receive(storedFileId: Int): Promise<Void> {
-		return storedFileAccess.getStoredFile(storedFileId).eventually { storedFile -> notifyOfFileDownload(storedFile) }
+		return storedFileAccess.getStoredFile(storedFileId).eventually { storedFile -> storedFile?.run { notifyOfFileDownload(this) } }
 	}
 
 	override fun acceptedEvents(): Collection<String> {

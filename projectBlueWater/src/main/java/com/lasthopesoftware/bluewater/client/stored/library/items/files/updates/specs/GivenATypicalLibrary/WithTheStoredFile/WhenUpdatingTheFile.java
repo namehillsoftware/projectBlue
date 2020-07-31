@@ -66,7 +66,8 @@ public class WhenUpdatingTheFile extends AndroidContext {
 			new SyncDirectoryLookup(
 				fakeLibraryProvider,
 				() -> new Promise<>(Collections.singletonList(new File("/my-public-drive"))),
-				() -> new Promise<>(Collections.emptyList())));
+				() -> new Promise<>(Collections.emptyList()),
+				f -> 0));
 
 		new FuturePromise<>(storedFileUpdater.promiseStoredFileUpdate(
 			new LibraryId(14),

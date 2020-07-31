@@ -37,7 +37,8 @@ public class WhenLookingUpTheSyncDrive {
 			new FakeLibraryProvider(Collections.singleton(
 				new Library().setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL).setId(14))),
 			publicDrives,
-			fakePrivateDirectoryLookup);
+			fakePrivateDirectoryLookup,
+			f -> 0);
 
 		file = new FuturePromise<>(syncDirectoryLookup.promiseSyncDirectory(new LibraryId(14))).get();
 	}

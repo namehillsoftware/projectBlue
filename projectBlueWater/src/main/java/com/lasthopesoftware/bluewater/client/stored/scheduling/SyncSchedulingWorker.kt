@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.AsyncTask
 import android.preference.PreferenceManager
 import androidx.work.*
-import com.annimon.stream.Stream
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider
@@ -66,7 +65,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 		@JvmStatic
 		fun promiseIsScheduled(context: Context): Promise<Boolean> {
 			return promiseWorkInfos(context)
-				.then { workInfos -> Stream.of(workInfos).anyMatch { wi -> wi.state == WorkInfo.State.ENQUEUED } }
+				.then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.ENQUEUED } }
 		}
 
 		private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> {

@@ -62,6 +62,6 @@ public class WhenCollectingTheStoredFiles extends AndroidContext {
 
 	@Test
 	public void thenTheStoredFilesAreCorrect() {
-		assertThat(Stream.of(storedFiles).map(StoredFile::getServiceId).toList()).containsOnlyElementsOf(Stream.range(13, 23).toList());
+		assertThat(Stream.of(storedFiles).map(StoredFile::getServiceId).toList()).isSubsetOf(Stream.range(13, 23).toList());
 	}
 }

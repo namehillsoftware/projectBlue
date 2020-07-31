@@ -41,7 +41,8 @@ public class WhenLookingUpTheSyncDrive {
 		final SyncDirectoryLookup syncDirectoryLookup = new SyncDirectoryLookup(
 			fakeLibraryProvider,
 			publicDrives,
-			fakePrivateDirectoryLookup);
+			fakePrivateDirectoryLookup,
+			f -> 0);
 
 		file = new FuturePromise<>(syncDirectoryLookup.promiseSyncDirectory(new LibraryId(14))).get();
 	}

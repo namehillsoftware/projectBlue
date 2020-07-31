@@ -28,8 +28,9 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 
 			promisedResponse
 				.then { r ->
-					if (r.body == null || r.code == 404) ByteArrayInputStream(ByteArray(0))
-					else StreamedResponse(r.body!!)
+					val body = r.body
+					if (body == null || r.code == 404) ByteArrayInputStream(ByteArray(0))
+					else StreamedResponse(body)
 				}
 				.then(ResolutionProxy(m), RejectionProxy(m))
 		}
@@ -55,13 +56,11 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 		@Throws(IOException::class)
 		override fun close() {
 			byteStream.close()
-			responseBody!!.close()
+			responseBody.close()
 		}
 
 		override fun toString(): String {
 			return byteStream.toString()
 		}
-
 	}
-
 }

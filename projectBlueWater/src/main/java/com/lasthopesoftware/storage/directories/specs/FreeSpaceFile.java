@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 
-class FreeSpaceFile extends File {
+final class FreeSpaceFile extends File {
 
 	private final long freeSpace;
 

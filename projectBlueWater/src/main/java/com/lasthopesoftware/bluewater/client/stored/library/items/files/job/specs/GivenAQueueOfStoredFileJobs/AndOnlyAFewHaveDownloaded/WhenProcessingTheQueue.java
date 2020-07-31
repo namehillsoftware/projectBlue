@@ -93,7 +93,7 @@ public class WhenProcessingTheQueue {
 	@Test
 	public void thenTheFilesAreBroadcastAsQueued() {
 		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Queued)
-			.map(r -> r.storedFile).toList()).containsOnlyElementsOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
+			.map(r -> r.storedFile).toList()).isSubsetOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
 	}
 
 	@Test

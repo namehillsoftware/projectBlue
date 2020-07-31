@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncHandler;
+import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.resources.specs.BroadcastRecorder;
 import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
@@ -73,7 +73,7 @@ public class WhenSynchronizing extends AndroidContext {
 		when(libraryProvider.getAllLibraries())
 			.thenReturn(new Promise<>(Collections.singletonList(new Library().setId(4))));
 
-		final LibrarySyncHandler librarySyncHandler = mock(LibrarySyncHandler.class);
+		final ControlLibrarySyncs librarySyncHandler = mock(ControlLibrarySyncs.class);
 		when(librarySyncHandler.observeLibrarySync(new LibraryId(4)))
 			.thenReturn(Observable.concatArrayDelayError(
 				Observable
@@ -124,7 +124,7 @@ public class WhenSynchronizing extends AndroidContext {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
 			.filter(i -> onFileQueuedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsOnlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
+			.toList()).isSubsetOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
 	}
 
 	@Test
@@ -132,7 +132,7 @@ public class WhenSynchronizing extends AndroidContext {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
 			.filter(i -> onFileDownloadingEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsOnlyElementsOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
+			.toList()).isSubsetOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
 	}
 
 	@Test
@@ -156,7 +156,7 @@ public class WhenSynchronizing extends AndroidContext {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
 			.filter(i -> onFileDownloadedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsOnlyElementsOf(Stream.of(expectedStoredFileJobs).map(StoredFile::getId).toList());
+			.toList()).isSubsetOf(Stream.of(expectedStoredFileJobs).map(StoredFile::getId).toList());
 	}
 
 	@Test

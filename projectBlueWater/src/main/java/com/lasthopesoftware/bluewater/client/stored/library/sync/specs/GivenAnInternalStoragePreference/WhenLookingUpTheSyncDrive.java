@@ -38,6 +38,7 @@ public class WhenLookingUpTheSyncDrive {
 				.setId(1)
 				.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL))),
 			publicDrives,
+			fakePrivateDirectoryLookup,
 			fakePrivateDirectoryLookup);
 
 		file = new FuturePromise<>(syncDirectoryLookup.promiseSyncDirectory(new LibraryId(1))).get();
