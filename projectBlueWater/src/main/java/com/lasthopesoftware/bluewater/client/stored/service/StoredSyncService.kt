@@ -84,7 +84,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 		object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val isSyncOnPowerOnly = lazySharedPreferences.value.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false)
-				if (isSyncOnPowerOnly) cancelSync(this@StoredSyncService)
+				if (isSyncOnPowerOnly) cancelSync(context)
 			}
 		}
 	}
@@ -309,7 +309,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	private val lazyBinder = lazy { GenericBinder(this) }
 
-	override fun notify(notificationText: String) {
+	override fun notify(notificationText: String?) {
 		val notifyBuilder = NotificationCompat.Builder(this, lazyActiveNotificationChannelId.value)
 		notifyBuilder
 			.setSmallIcon(R.drawable.ic_stat_water_drop_white)

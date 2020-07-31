@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="wrap_content" >
 
     <TextView
         android:id="@+id/tvStandard"
@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:padding="@dimen/standard_textview_padding"
         android:text=""
-        android:gravity="left|center_vertical"
+        android:gravity="start|center_vertical"
         android:ellipsize="end"
         android:singleLine="true"
         android:textAppearance="?android:attr/textAppearanceLarge" />

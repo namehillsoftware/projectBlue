@@ -1,16 +1,16 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.viewholder
 
 import android.view.View
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.namehillsoftware.handoff.promises.Promise
 
-class ActiveFileDownloadsViewHolder(layout: View, textView: TextView) : RecyclerView.ViewHolder(layout) {
+class ActiveFileDownloadsViewHolder(layout: View) : RecyclerView.ViewHolder(layout) {
 	var filePropertiesProvider: Promise<*> = Promise.empty<Any?>()
-	private val fileNameTextViewSetter = FileNameTextViewSetter(textView)
+	private val fileNameTextViewSetter = FileNameTextViewSetter(layout.findViewById(R.id.tvStandard))
 
 	fun update(storedFile: StoredFile) {
 		filePropertiesProvider.cancel()
