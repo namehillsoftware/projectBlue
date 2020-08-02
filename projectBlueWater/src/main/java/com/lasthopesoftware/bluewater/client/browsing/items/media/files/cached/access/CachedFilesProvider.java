@@ -14,8 +14,6 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 public class CachedFilesProvider implements ICachedFilesProvider {
 	private final static Logger logger = LoggerFactory.getLogger(DiskFileCache.class);
 
@@ -37,7 +35,7 @@ public class CachedFilesProvider implements ICachedFilesProvider {
 		return new QueuedPromise<>(() -> getCachedFile(uniqueKey), RepositoryAccessHelper.databaseExecutor());
 	}
 
-	private CachedFile getCachedFile(final String uniqueKey) throws IOException {
+	private CachedFile getCachedFile(final String uniqueKey) {
 		try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 			try (final CloseableNonExclusiveTransaction closeableNonExclusiveTransaction = repositoryAccessHelper.beginNonExclusiveTransaction()) {
 				final CachedFile cachedFile = repositoryAccessHelper
@@ -50,11 +48,8 @@ public class CachedFilesProvider implements ICachedFilesProvider {
 				closeableNonExclusiveTransaction.setTransactionSuccessful();
 				return cachedFile;
 			} catch (SQLException sqlException) {
-				logger.error("There was an error getting the serviceFile with unique key " + uniqueKey, sqlException);
+				logger.error("There was an error getting the cached file with unique key " + uniqueKey, sqlException);
 				return null;
-			} catch (IOException e) {
-				logger.error("There was an error opening the non exclusive transaction", e);
-				throw e;
 			}
 		}
 	}

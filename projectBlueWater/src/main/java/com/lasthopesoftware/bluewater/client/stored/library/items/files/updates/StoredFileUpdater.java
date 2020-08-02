@@ -91,7 +91,7 @@ public class StoredFileUpdater implements UpdateStoredFiles {
 				? new Promise<>(storedFile)
 				: new QueuedPromise<>(() -> {
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-						logger.info("Stored serviceFile was not found for " + serviceFile.getKey() + ", creating serviceFile");
+						logger.info("Stored file was not found for " + serviceFile.getKey() + ", creating file");
 						createStoredFile(libraryId, repositoryAccessHelper, serviceFile);
 					}
 

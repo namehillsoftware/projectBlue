@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.repository;
 import android.database.sqlite.SQLiteDatabase;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 public class CloseableNonExclusiveTransaction implements Closeable, ITransactionSuccessSetter {
 
@@ -19,7 +18,7 @@ public class CloseableNonExclusiveTransaction implements Closeable, ITransaction
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         this.sqLiteDatabase.endTransaction();
     }
 }

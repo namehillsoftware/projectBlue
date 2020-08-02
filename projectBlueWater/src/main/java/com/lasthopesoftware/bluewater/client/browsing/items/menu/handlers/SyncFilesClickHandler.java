@@ -30,7 +30,7 @@ public class SyncFilesClickHandler extends  AbstractMenuClickHandler {
 		isSynced = !isSynced;
 		syncListManager.toggleSync(library.getLibraryId(), item, isSynced);
 
-		StoredSyncService.doSyncUninterrupted(v.getContext());
+		StoredSyncService.doSyncUninterruptedFromUiThread(v.getContext());
 
 		super.onClick(v);
 	}

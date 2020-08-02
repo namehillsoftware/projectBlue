@@ -69,6 +69,54 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 class StoredSyncService : Service(), PostSyncNotification {
+
+	companion object {
+		private val logger = LoggerFactory.getLogger(StoredSyncService::class.java)
+		private val doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "doSyncAction")
+		private val isUninterruptedSyncSetting = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "isUninterruptedSyncSetting")
+		private val cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "cancelSyncAction")
+		private val lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "lastSyncTime")
+		private const val notificationId = 23
+
+		@JvmStatic
+		fun doSync(context: Context) {
+			val intent = Intent(context, StoredSyncService::class.java)
+			intent.action = doSyncAction
+			safelyStartService(context, intent)
+		}
+
+		@JvmStatic
+		fun doSyncUninterruptedFromUiThread(context: Context) {
+			val intent = Intent(context, StoredSyncService::class.java)
+			intent.action = doSyncAction
+			intent.putExtra(isUninterruptedSyncSetting, true)
+			context.startService(intent)
+		}
+
+		fun cancelSync(context: Context) {
+			context.startService(getSelfIntent(context, cancelSyncAction))
+		}
+
+		var isSyncRunning: Boolean = false
+			private set
+
+		private fun safelyStartService(context: Context, intent: Intent) {
+			try {
+				ContextCompat.startForegroundService(context, intent)
+			} catch (e: IllegalStateException) {
+				logger.warn("An illegal state exception occurred while trying to start the service", e)
+			} catch (e: SecurityException) {
+				logger.warn("A security exception occurred while trying to start the service", e)
+			}
+		}
+
+		private fun getSelfIntent(context: Context, action: String): Intent {
+			val intent = Intent(context, StoredSyncService::class.java)
+			intent.action = action
+			return intent
+		}
+	}
+
 	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 
 	private val onWifiStateChangedReceiver = lazy {
@@ -214,6 +262,8 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	private val broadcastReceivers: MutableList<BroadcastReceiver> = ArrayList()
 
+	private var synchronizationDisposable: Disposable? = null
+
 	override fun onCreate() {
 		super.onCreate()
 		lazyWakeLock.value.acquire()
@@ -229,7 +279,10 @@ class StoredSyncService : Service(), PostSyncNotification {
 			return START_NOT_STICKY
 		}
 
-		if (doSyncAction != action) return START_NOT_STICKY
+		if (doSyncAction != action) {
+			logger.info("$action was not $doSyncAction, not starting sync")
+			return START_NOT_STICKY
+		}
 
 		val isUninterruptedSync = intent.getBooleanExtra(isUninterruptedSyncSetting, false)
 
@@ -238,6 +291,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 				if (onWifiStateChangedReceiver.isInitialized()) unregisterReceiver(onWifiStateChangedReceiver.value)
 				if (onPowerDisconnectedReceiver.isInitialized()) unregisterReceiver(onPowerDisconnectedReceiver.value)
 			}
+			logger.info("Sync already running, not starting again")
 			return START_NOT_STICKY
 		}
 
@@ -252,7 +306,9 @@ class StoredSyncService : Service(), PostSyncNotification {
 						i
 					}))
 			}
+		}
 
+		if (!lazySyncStartedReceiver.isInitialized()) {
 			lazyBroadcastManager.value.registerReceiver(
 				lazySyncStartedReceiver.value,
 				lazySyncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
@@ -266,6 +322,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 			registerReceiver(onPowerDisconnectedReceiver.value, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
 		}
 
+		isSyncRunning = true
 		synchronizationDisposable = lazyStoredFilesSynchronization.value
 			.streamFileSynchronization()
 			.subscribe(::finish, ::finish)
@@ -288,6 +345,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	override fun onDestroy() {
 		synchronizationDisposable?.dispose()
+		isSyncRunning = false
 
 		if (lazyBroadcastManager.isInitialized()) {
 			while (broadcastReceivers.isNotEmpty()) {
@@ -323,53 +381,5 @@ class StoredSyncService : Service(), PostSyncNotification {
 		notifyBuilder.setContentText(notificationText)
 		val syncNotification = notifyBuilder.build()
 		startForeground(notificationId, syncNotification)
-	}
-
-	companion object {
-		private val logger = LoggerFactory.getLogger(StoredSyncService::class.java)
-		private val doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "doSyncAction")
-		private val isUninterruptedSyncSetting = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "isUninterruptedSyncSetting")
-		private val cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "cancelSyncAction")
-		private val lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "lastSyncTime")
-		private const val notificationId = 23
-		private var synchronizationDisposable: Disposable? = null
-
-		@JvmStatic
-		fun doSync(context: Context) {
-			val intent = Intent(context, StoredSyncService::class.java)
-			intent.action = doSyncAction
-			safelyStartService(context, intent)
-		}
-
-		@JvmStatic
-		fun doSyncUninterrupted(context: Context) {
-			val intent = Intent(context, StoredSyncService::class.java)
-			intent.action = doSyncAction
-			intent.putExtra(isUninterruptedSyncSetting, true)
-			safelyStartService(context, intent)
-		}
-
-		fun cancelSync(context: Context) {
-			context.startService(getSelfIntent(context, cancelSyncAction))
-		}
-
-		val isSyncRunning: Boolean
-			get() = synchronizationDisposable != null
-
-		private fun safelyStartService(context: Context, intent: Intent) {
-			try {
-				ContextCompat.startForegroundService(context, intent)
-			} catch (e: IllegalStateException) {
-				logger.warn("An illegal state exception occurred while trying to start the service", e)
-			} catch (e: SecurityException) {
-				logger.warn("A security exception occurred while trying to start the service", e)
-			}
-		}
-
-		private fun getSelfIntent(context: Context, action: String): Intent {
-			val intent = Intent(context, StoredSyncService::class.java)
-			intent.action = action
-			return intent
-		}
 	}
 }
