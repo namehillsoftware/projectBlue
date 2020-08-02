@@ -7,6 +7,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class CollectedResultsResolver<TResult> implements ImmediateResponse<TResult, TResult> {
 	private final Collection<TResult> results;
@@ -15,7 +16,7 @@ public class CollectedResultsResolver<TResult> implements ImmediateResponse<TRes
 
 	public CollectedResultsResolver(Messenger<Collection<TResult>> collectionMessenger, Collection<Promise<TResult>> promises) {
 		this.collectionMessenger = collectionMessenger;
-		this.results = new ArrayList<>(promises.size());
+		this.results = new ConcurrentLinkedQueue<>();
 		for (Promise<TResult> promise : promises)
 			promise.then(this);
 
@@ -26,7 +27,7 @@ public class CollectedResultsResolver<TResult> implements ImmediateResponse<TRes
 	}
 
 	@Override
-	public TResult respond(TResult result) throws Exception {
+	public TResult respond(TResult result) {
 		results.add(result);
 
 		attemptResolve();

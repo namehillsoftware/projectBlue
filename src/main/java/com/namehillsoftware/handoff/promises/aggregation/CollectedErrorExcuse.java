@@ -17,7 +17,7 @@ public class CollectedErrorExcuse<TResult> implements ImmediateResponse<Throwabl
 	}
 
 	@Override
-	public Throwable respond(Throwable throwable) throws Exception {
+	public Throwable respond(Throwable throwable) {
 		this.error = throwable;
 		attemptRejection();
 		return throwable;
