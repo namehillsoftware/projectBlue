@@ -10,13 +10,14 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class CollectedResultsResolver<TResult> implements ImmediateResponse<TResult, TResult> {
-	private final Collection<TResult> results;
+	private final Collection<TResult> collectedResults = new ConcurrentLinkedQueue<>();
+	private final ArrayList<TResult> finalResults;
 	private final int expectedResultSize;
 	private final Messenger<Collection<TResult>> collectionMessenger;
 
 	public CollectedResultsResolver(Messenger<Collection<TResult>> collectionMessenger, Collection<Promise<TResult>> promises) {
 		this.collectionMessenger = collectionMessenger;
-		this.results = new ConcurrentLinkedQueue<>();
+		this.finalResults = new ArrayList<>(promises.size());
 		for (Promise<TResult> promise : promises)
 			promise.then(this);
 
@@ -28,7 +29,7 @@ public class CollectedResultsResolver<TResult> implements ImmediateResponse<TRes
 
 	@Override
 	public TResult respond(TResult result) {
-		results.add(result);
+		collectedResults.add(result);
 
 		attemptResolve();
 
@@ -38,13 +39,15 @@ public class CollectedResultsResolver<TResult> implements ImmediateResponse<TRes
 	private void attemptResolve() {
 		if (collectionMessenger == null) return;
 
-		final Collection<TResult> results = getResults();
+		final Collection<TResult> results = getCollectedResults();
 		if (results.size() < expectedResultSize) return;
+
+		this.finalResults.addAll(results);
 
 		collectionMessenger.sendResolution(results);
 	}
 
-	public final Collection<TResult> getResults() {
-		return results;
+	public final Collection<TResult> getCollectedResults() {
+		return collectedResults;
 	}
 }
