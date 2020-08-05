@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,12 +16,12 @@ public class WhenResolvingTheCollection {
 
 	@BeforeClass
 	public static void before() {
-		final Promise<Collection<Void>> messenger = new Promise<>(m -> new CollectedResultsResolver<>(m, Arrays.asList(null, null)));
+		final Promise<Collection<Void>> messenger = new Promise<>(m -> new CollectedResultsResolver<>(m, Arrays.asList(Promise.empty(), Promise.empty())));
 		messenger.then(v -> response = v);
 	}
 
 	@Test
-	public void thenTheCollectionResolutionResolvesWithTheNulLResults() {
+	public void thenTheCollectionResolutionResolvesWithTheNullResults() {
 		assertThat(response).containsExactly(null, null);
 	}
 }
