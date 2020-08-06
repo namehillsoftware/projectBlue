@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -51,9 +52,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val layoutManager = LinearLayoutManager(context)
 		listView.layoutManager = layoutManager
 
-		val a = context.obtainStyledAttributes(intArrayOf(android.R.attr.listDivider))
-		val drawable = a.getDrawable(0)
-		a.recycle()
+		val drawable = ContextCompat.getDrawable(context, R.drawable.line_divider)
 
 		if (drawable != null)
 			listView.addItemDecoration(ListedItemsDividerDecoration(drawable))
