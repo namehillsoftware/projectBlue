@@ -5,6 +5,7 @@ import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransaction;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
@@ -80,11 +81,13 @@ public class LibraryRepository implements ILibraryStorage, ILibraryProvider {
 			if (libraryInt < 0) return null;
 
 			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				return
-					repositoryAccessHelper
-						.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
-						.addParameter("id", libraryInt)
-						.fetchFirst(Library.class);
+				try (final CloseableNonExclusiveTransaction transaction = repositoryAccessHelper.beginNonExclusiveTransaction()) {
+					return
+						repositoryAccessHelper
+							.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
+							.addParameter("id", libraryInt)
+							.fetchFirst(Library.class);
+				}
 			}
 		}
 	}

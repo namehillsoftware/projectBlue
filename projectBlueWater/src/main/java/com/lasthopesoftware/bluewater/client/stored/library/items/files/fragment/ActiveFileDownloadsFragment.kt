@@ -11,8 +11,10 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -20,12 +22,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.shared.android.view.ListedItemsDividerDecoration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import java.util.*
+import com.namehillsoftware.handoff.promises.Promise
+import okhttp3.internal.toImmutableList
 
 class ActiveFileDownloadsFragment : Fragment() {
 	private var onSyncStartedReceiver: BroadcastReceiver? = null
@@ -35,40 +38,50 @@ class ActiveFileDownloadsFragment : Fragment() {
 	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(activity!!) }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		val viewFileslayout = inflater.inflate(R.layout.layout_downloads, container, false) as RelativeLayout
-		val progressBar = viewFileslayout.findViewById<ProgressBar>(R.id.pbLoadingItems)
-		val listView: RecyclerView = viewFileslayout.findViewById(R.id.itemsRecyclerView)
+		if (container == null) return null
+
+		val viewFilesLayout = inflater.inflate(R.layout.layout_downloads, container, false) as RelativeLayout
+		val progressBar = viewFilesLayout.findViewById<ProgressBar>(R.id.pbLoadingItems)
+		val listView = viewFilesLayout.findViewById<RecyclerView>(R.id.itemsRecyclerView)
 		listView.visibility = View.INVISIBLE
 		progressBar.visibility = View.VISIBLE
-		val activity = activity ?: return viewFileslayout
-		val libraryRepository = LibraryRepository(activity)
+
+		val context = container.context
+		val activeFileDownloadsAdapter = ActiveFileDownloadsAdapter(context)
+		listView.adapter = activeFileDownloadsAdapter
+		val layoutManager = LinearLayoutManager(context)
+		listView.layoutManager = layoutManager
+
+		val drawable = ContextCompat.getDrawable(context, R.drawable.line_divider)
+
+		if (drawable != null)
+			listView.addItemDecoration(ListedItemsDividerDecoration(drawable))
+
+		val libraryRepository = LibraryRepository(context)
 		val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(activity),
+			SelectedBrowserLibraryIdentifierProvider(context),
 			libraryRepository)
 
 		selectedBrowserLibraryProvider
 			.browserLibrary
 			.then { library ->
 				val storedFileAccess = StoredFileAccess(
-					activity,
-					StoredFilesCollection(activity))
+					context,
+					StoredFilesCollection(context))
 
 				storedFileAccess.downloadingStoredFiles
 					.eventually<Unit>(LoopedInPromise.response({ storedFiles ->
-						val localStoredFiles = storedFiles
-							.filter { f: StoredFile? -> f!!.libraryId == library.id }
-							.associateBy { f -> f.id }
-							.toMutableMap()
+						val localStoredFiles = storedFiles.groupBy { sf -> sf.id }.values.map { sf -> sf.first() }.toMutableList()
 
-						val activeFileDownloadsAdapter = ActiveFileDownloadsAdapter(activity)
+						activeFileDownloadsAdapter.updateListEventually(localStoredFiles)
 
 						onFileDownloadedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this)	}
 						localBroadcastManager.value.registerReceiver(
 							object : BroadcastReceiver() {
 								override fun onReceive(context: Context, intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
-									localStoredFiles.remove(storedFileId)
-									activeFileDownloadsAdapter.submitList(LinkedList(localStoredFiles.values))
+									localStoredFiles.removeAll {  sf -> sf.id == storedFileId }
+									activeFileDownloadsAdapter.updateListEventually(localStoredFiles.toImmutableList())
 								}
 							}.apply { onFileDownloadedReceiver = this },
 							IntentFilter(StoredFileSynchronization.onFileDownloadedEvent))
@@ -79,29 +92,30 @@ class ActiveFileDownloadsFragment : Fragment() {
 								override fun onReceive(context: Context, intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
 									if (storedFileId == -1) return
-									if (localStoredFiles.containsKey(storedFileId)) return
+									if (localStoredFiles.any { sf -> sf.id == storedFileId }) return
 
 									storedFileAccess
 										.getStoredFile(storedFileId)
-										.eventually<Unit>(LoopedInPromise.response({ storedFile ->
+										.eventually { storedFile ->
 											if (storedFile?.libraryId == library.id) {
-												localStoredFiles[storedFileId] = storedFile
-												activeFileDownloadsAdapter.submitList(LinkedList(localStoredFiles.values))
+												localStoredFiles.add(storedFile)
+												activeFileDownloadsAdapter.updateListEventually(localStoredFiles.toImmutableList())
+											} else {
+												Promise.empty()
 											}
-										}, activity))
+										}
 								}
 							}.apply { onFileQueuedReceiver = this },
 							IntentFilter(StoredFileSynchronization.onFileQueuedEvent))
 
-						listView.adapter = activeFileDownloadsAdapter
 						progressBar.visibility = View.INVISIBLE
 						listView.visibility = View.VISIBLE
-					}, activity))
+					}, context))
 			}
 
-		val toggleSyncButton = viewFileslayout.findViewById<Button>(R.id.toggleSyncButton)
-		val startSyncLabel = activity.getText(R.string.start_sync_button)
-		val stopSyncLabel = activity.getText(R.string.stop_sync_button)
+		val toggleSyncButton = viewFilesLayout.findViewById<Button>(R.id.toggleSyncButton)
+		val startSyncLabel = context.getText(R.string.start_sync_button)
+		val stopSyncLabel = context.getText(R.string.stop_sync_button)
 		toggleSyncButton.text = if (!StoredSyncService.isSyncRunning) startSyncLabel else stopSyncLabel
 
 		onSyncStartedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
@@ -123,9 +137,9 @@ class ActiveFileDownloadsFragment : Fragment() {
 			}.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
-		toggleSyncButton.setOnClickListener { v-> if (StoredSyncService.isSyncRunning) StoredSyncService.cancelSync(v.context) else StoredSyncService.doSyncUninterrupted(v.context) }
+		toggleSyncButton.setOnClickListener { v-> if (StoredSyncService.isSyncRunning) StoredSyncService.cancelSync(v.context) else StoredSyncService.doSyncUninterruptedFromUiThread(v.context) }
 		toggleSyncButton.isEnabled = true
-		return viewFileslayout
+		return viewFilesLayout
 	}
 
 	override fun onDestroy() {

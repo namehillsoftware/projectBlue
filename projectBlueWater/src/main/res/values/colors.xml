@@ -5,6 +5,7 @@
     <color name="black">#000000</color>
     <color name="overlay_dark">#66000000</color>
     <color name="ics_gray">#858585</color>
+    <color name="faint_gray">#22000000</color>
     <!--<color name="clearstream_blue">#97acec</color>-->
     <color name="clearstream_blue">#8c9eff</color>
     <color name="clearstream_dark">#303f9f</color>

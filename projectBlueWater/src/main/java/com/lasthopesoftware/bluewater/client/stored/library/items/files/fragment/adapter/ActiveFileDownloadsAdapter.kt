@@ -15,7 +15,7 @@ class ActiveFileDownloadsAdapter(context: Context) : DeferredListAdapter<StoredF
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ActiveFileDownloadsViewHolder {
 		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 		val layout = inflater.inflate(R.layout.layout_standard_text, parent, false)
-		return ActiveFileDownloadsViewHolder(layout, layout.findViewById(R.id.tvStandard))
+		return ActiveFileDownloadsViewHolder(layout)
 	}
 
 	override fun onBindViewHolder(holder: ActiveFileDownloadsViewHolder, position: Int) {
