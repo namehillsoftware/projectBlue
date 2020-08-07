@@ -11,9 +11,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
-import com.lasthopesoftware.bluewater.shared.android.view.ListedItemsDividerDecoration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.toImmutableList
@@ -52,10 +51,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val layoutManager = LinearLayoutManager(context)
 		listView.layoutManager = layoutManager
 
-		val drawable = ContextCompat.getDrawable(context, R.drawable.line_divider)
-
-		if (drawable != null)
-			listView.addItemDecoration(ListedItemsDividerDecoration(drawable))
+		listView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
 
 		val libraryRepository = LibraryRepository(context)
 		val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
