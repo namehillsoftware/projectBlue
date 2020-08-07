@@ -51,12 +51,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val layoutManager = LinearLayoutManager(context)
 		listView.layoutManager = layoutManager
 
-		val decoration = DividerItemDecoration(context, layoutManager.orientation)
-//		val drawable = ContextCompat.getDrawable(context, R.drawable.line_divider)
-//		if (drawable != null)
-//			decoration.setDrawable(drawable)
-
-		listView.addItemDecoration(decoration)
+		listView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
 
 		val libraryRepository = LibraryRepository(context)
 		val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
