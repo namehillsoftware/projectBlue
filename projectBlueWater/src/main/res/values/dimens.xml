@@ -1,7 +1,9 @@
 <resources>
 
     <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="standard_textview_padding">10dp</dimen>
+    <dimen name="standard_text_view_padding">10dp</dimen>
+    <dimen name="standard_text_view_margin_top">1dp</dimen>
+    <dimen name="standard_text_view_margin_bottom">1dp</dimen>
     <dimen name="now_playing_menu_padding">3dp</dimen>
 
 </resources>

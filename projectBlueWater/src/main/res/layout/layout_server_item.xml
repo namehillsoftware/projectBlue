@@ -35,7 +35,7 @@
         android:layout_height="wrap_content"
         android:layout_toLeftOf="@id/serverMenu"
         android:layout_toStartOf="@id/serverMenu"
-        android:padding="@dimen/standard_textview_padding"
+        android:padding="@dimen/standard_text_view_padding"
         android:text=""
         android:ellipsize="end"
         android:singleLine="true"
