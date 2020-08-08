@@ -111,8 +111,7 @@ class FileDetailsActivity : AppCompatActivity() {
 				lvFileDetails.findView().visibility = View.VISIBLE
 			}, this))
 			.excuse(HandleViewIoException(this, Runnable { setView(fileKey) }))
-			.eventualExcuse()
-			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 
 		lazyImageProvider.value

@@ -35,8 +35,6 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
 
-import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
-
 public class SearchFilesActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
 
 	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
@@ -91,8 +89,7 @@ public class SearchFilesActivity extends AppCompatActivity implements IItemListV
 					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, SearchFileParameterProvider.getFileListParameters(query)))
 					.eventually(onSearchFilesComplete)
 					.excuse(new HandleViewIoException(SearchFilesActivity.this, this))
-					.excuse(forward())
-					.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(SearchFilesActivity.this), SearchFilesActivity.this))
+					.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(SearchFilesActivity.this), SearchFilesActivity.this))
 					.then(new VoidResponse<>(v -> finish()));
 			}
 		};

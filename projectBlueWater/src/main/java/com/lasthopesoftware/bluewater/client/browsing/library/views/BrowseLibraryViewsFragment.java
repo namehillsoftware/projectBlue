@@ -37,8 +37,6 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import java.util.List;
 
-import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
-
 public class BrowseLibraryViewsFragment extends Fragment implements IItemListMenuChangeHandler {
 
 	private static final String SAVED_TAB_KEY = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment.class, "SAVED_TAB_KEY");
@@ -114,8 +112,7 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(new HandleViewIoException(context, this))
-							.excuse(forward())
-							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(context), handler));
+							.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(context), handler));
 					}
 				};
 

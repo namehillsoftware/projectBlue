@@ -16,8 +16,5 @@ class ForwardedResponse<Resolution : Response, Response> private constructor() :
 
 		fun <Resolution: Response, Response> Promise<Resolution>.forward(): Promise<Response> =
 			this.then(Companion.forward())
-
-		fun <Resolution> Promise<Resolution>.eventualExcuse(): Promise<Throwable> =
-			this.excuse(Companion.forward())
 	}
 }

@@ -230,8 +230,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 						this))
 			}
 			.excuse(HandleViewIoException(this, this))
-			.eventualExcuse()
-			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
 				ApplicationSettingsActivity.launch(this)
 				finish()

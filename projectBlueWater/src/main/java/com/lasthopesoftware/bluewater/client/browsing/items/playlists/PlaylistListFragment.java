@@ -34,8 +34,6 @@ import com.namehillsoftware.lazyj.CreateAndHold;
 
 import java.util.List;
 
-import static com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.forward;
-
 public class PlaylistListFragment extends Fragment {
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
@@ -116,8 +114,7 @@ public class PlaylistListFragment extends Fragment {
 							.eventually(c -> ItemProvider.provide(c, library.getSelectedView()))
 							.eventually(listResolvedPromise)
 							.excuse(new HandleViewIoException(activity, this))
-							.excuse(forward())
-							.eventually(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
+							.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(activity), activity));
 					}
 				};
 
