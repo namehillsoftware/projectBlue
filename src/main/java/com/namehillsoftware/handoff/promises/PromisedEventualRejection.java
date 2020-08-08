@@ -19,14 +19,10 @@ public class PromisedEventualRejection<Resolution, Response> extends PromiseResp
     protected void respond(Resolution resolution) {}
 
     @Override
-    protected void respond(Throwable reason) throws Throwable {
-        proxy(onRejected.promiseResponse(reason));
-    }
-
-    private void proxy(Promise<Response> promisedResponse) {
+    protected void respond(Throwable reason) {
         try {
+            final Promise<Response> promisedResponse = onRejected.promiseResponse(reason);
             cancellationProxy.doCancel(promisedResponse);
-
             promisedResponse.then(resolutionProxy, rejectionProxy);
         } catch (Throwable throwable) {
             reject(throwable);
