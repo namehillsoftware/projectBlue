@@ -1,4 +1,4 @@
-package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndEventuallyContinuingWithResponseAndRejection;
+package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndEventuallyContinuingWithRejection.AndTheRejectionThrowsAnError;
 
 import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.Before;
@@ -6,6 +6,9 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Created by david on 10/17/16.
+ */
 public class WhenAnotherReturningPromiseIsExpected {
 
 	private Integer nextReturningPromiseResult;
@@ -17,9 +20,9 @@ public class WhenAnotherReturningPromiseIsExpected {
 	@Before
 	public void before() {
 		new Promise<>(thrownException)
-				.eventually(result -> new Promise<>(330 + result.hashCode()), err -> {
+				.<Integer>eventuallyExcuse(err -> {
 					caughtException = err;
-					return new Promise<>(5);
+					throw new Exception();
 				})
 				.then(nextResult -> nextReturningPromiseResult = nextResult)
 				.excuse(err -> isCalled = true);
@@ -31,12 +34,12 @@ public class WhenAnotherReturningPromiseIsExpected {
 	}
 
 	@Test
-	public void thenTheNextActionIsCalled() {
-		assertThat(nextReturningPromiseResult.intValue()).isEqualTo(5);
+	public void thenTheNextActionIsNotCalled() {
+		assertThat(nextReturningPromiseResult).isNull();
 	}
 
 	@Test
-	public void thenTheErrorIsNotCalled() {
-		assertThat(isCalled).isFalse();
+	public void thenTheErrorIsCalled() {
+		assertThat(isCalled).isTrue();
 	}
 }

@@ -1,23 +1,23 @@
-package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndEventuallyContinuingWithResponseAndRejection;
+package com.namehillsoftware.handoff.promises.GivenAPromiseThatIsRejected.AndEventuallyContinuingWithRejection;
 
 import com.namehillsoftware.handoff.promises.Promise;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenAnotherReturningPromiseIsExpected {
 
-	private Integer nextReturningPromiseResult;
-	private boolean isCalled;
+	private static Integer nextReturningPromiseResult;
+	private static boolean isCalled;
 
 	private static final Exception thrownException = new Exception();
 	private static Throwable caughtException;
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void before() {
 		new Promise<>(thrownException)
-				.eventually(result -> new Promise<>(330 + result.hashCode()), err -> {
+				.eventuallyExcuse(err -> {
 					caughtException = err;
 					return new Promise<>(5);
 				})

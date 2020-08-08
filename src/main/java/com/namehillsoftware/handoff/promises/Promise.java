@@ -49,8 +49,12 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 		return then(new PromisedEventualResponse<>(onFulfilled, onRejected));
 	}
 
-	public final <NewRejection> Promise<NewRejection> excuse(ImmediateResponse<Throwable, NewRejection> onRejected) {
+	public final <NewResolution> Promise<NewResolution> excuse(ImmediateResponse<Throwable, NewResolution> onRejected) {
 		return then(new RejectedResponsePromise<>(onRejected));
+	}
+
+	public final <NewResolution> Promise<NewResolution> eventuallyExcuse(PromisedResponse<Throwable, NewResolution> onRejected) {
+		return then(new PromisedEventualRejection<>(onRejected));
 	}
 
 	public final Promise<Resolution> must(ImmediateAction onAny) {
@@ -93,6 +97,7 @@ public class Promise<Resolution> extends SingleMessageBroadcaster<Resolution> {
 	}
 
 	private static class LazyEmptyPromiseHolder {
+		@SuppressWarnings("rawtypes")
 		private static final Promise emptyPromiseInstance = new Promise<>((Object) null);
 	}
 
