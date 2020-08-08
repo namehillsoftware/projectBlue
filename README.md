@@ -111,7 +111,7 @@ playlist.promiseFirstFile()
     });
 ```
 
-If it is needed for a function to execute whether the promise is resolved or rejected, the overloaded method of `then` can be used:
+If it is needed for a function to execute if the promise is resolved or rejected, the overloaded method of `then` can be used:
 
 ```java
 playlist.promiseFirstFile()
@@ -137,7 +137,7 @@ playlist.promiseFirstFile()
     })
 ```
 
-`eventually` also supports the overloaded error method:
+`eventually` supports the overloaded error method:
 
 ```java
 playlist.promiseFirstFile()
@@ -177,6 +177,27 @@ playlist.promiseFirstFile()
 ```
 
 Once trapped in a method chain, that error will go away within that method chain.
+
+Errors can also be handled eventually:
+
+```java
+playlist.promiseFirstFile()
+    .then(f -> { // Perform another action immediately with the result - this continues on the same thread the result was returned on
+        // perform action
+        throw new IOException("Uh oh!"); // return null to represent Void
+    })
+    .then(o -> {
+        // Code here won't be executed
+    })
+    .excuseEventually(error -> {
+        Logger.error("An error occured!", error); // Log some error, continue on as normal
+
+        if (error instanceof IOException)
+        Logger.error("It was an IO Error too!");
+
+        return Promise.empty();
+    });
+```
 
 #### Unhandled rejections
 
