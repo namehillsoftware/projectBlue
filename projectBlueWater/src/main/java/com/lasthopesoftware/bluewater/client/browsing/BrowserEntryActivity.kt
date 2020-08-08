@@ -45,7 +45,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.eventualExcuse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
@@ -55,9 +54,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
-	/**
-	 * The [ViewPager] that will host the section contents.
-	 */
+
 	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
 	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
 	private val specialLibraryItemsListView = LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
@@ -230,8 +227,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 						this))
 			}
 			.excuse(HandleViewIoException(this, this))
-			.eventualExcuse()
-			.eventually(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
 				ApplicationSettingsActivity.launch(this)
 				finish()
