@@ -99,7 +99,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val wasTutorialShown = sharedPreferences.getBoolean(isTutorialShownPreference, false)
 		if (wasTutorialShown) {
-			modifyNotificationSettingsButton.findView().setOnClickListener { v: View? -> launchNotificationSettings() }
+			modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
 			return
 		}
 
@@ -116,7 +116,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			.setOverlay(Overlay())
 			.playOn(modifyNotificationSettingsButton.findView())
 
-		modifyNotificationSettingsButton.findView().setOnClickListener { v: View? ->
+		modifyNotificationSettingsButton.findView().setOnClickListener {
 			tourGuide.cleanUp()
 			launchNotificationSettings()
 		}
