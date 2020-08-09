@@ -80,9 +80,9 @@ class SessionConnection(
 
 	companion object {
 		@JvmField
-		val buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection::class.java, "buildSessionBroadcast")!!
+		val buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection::class.java, "buildSessionBroadcast")
 		@JvmField
-		val buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection::class.java, "buildSessionBroadcastStatus")!!
+		val buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection::class.java, "buildSessionBroadcastStatus")
 		private val logger = LoggerFactory.getLogger(SessionConnection::class.java)
 
 		@Volatile
@@ -91,12 +91,12 @@ class SessionConnection(
 		@JvmStatic
 		@Synchronized
 		fun getInstance(context: Context): SessionConnection {
-			if (sessionConnectionInstance != null) return sessionConnectionInstance!!
-			val applicationContext = context.applicationContext
-			return SessionConnection(
-				LocalBroadcastManager.getInstance(applicationContext),
-				SelectedBrowserLibraryIdentifierProvider(applicationContext),
-				get(applicationContext)).also { sessionConnectionInstance = it }
+			return sessionConnectionInstance ?: context.applicationContext.let { applicationContext ->
+				SessionConnection(
+					LocalBroadcastManager.getInstance(applicationContext),
+					SelectedBrowserLibraryIdentifierProvider(applicationContext),
+					get(applicationContext)).apply { sessionConnectionInstance = this }
+			}
 		}
 	}
 }
