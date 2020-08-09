@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views
 
+import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
@@ -24,13 +25,20 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout), IItemListMenuChangeHandler {
+class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout), IItemListMenuChangeHandler, OnPageChangeListener {
 
 	companion object {
 		private val SAVED_TAB_KEY = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment::class.java, "SAVED_TAB_KEY")
 		private val SAVED_SCROLL_POS = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment::class.java, "SAVED_SCROLL_POS")
 		private val SAVED_SELECTED_VIEW = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment::class.java, "SAVED_SELECTED_VIEW")
+	}
+
+	private val lazyLibraryViewPagerAdapter = lazy {
+		val viewChildPagerAdapter = LibraryViewPagerAdapter(childFragmentManager)
+		viewChildPagerAdapter.setOnItemListMenuChangeHandler(this)
+		viewChildPagerAdapter
 	}
 
 	private var viewAnimator: ViewAnimator? = null
@@ -46,57 +54,11 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 		val tabbedLibraryViewsContainer = view.findViewById<RelativeLayout>(R.id.tabbedLibraryViewsContainer)
 		val libraryViewsTabs = view.findViewById<PagerSlidingTabStrip>(R.id.tabsLibraryViews)
 
-		libraryViewsTabs.setOnPageChangeListener(object : OnPageChangeListener {
-			override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
-			override fun onPageSelected(position: Int) {
-				LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
-			}
-			override fun onPageScrollStateChanged(state: Int) {}
-		})
+		libraryViewsTabs.setOnPageChangeListener(this)
 
 		val loadingView = view.findViewById<ProgressBar>(R.id.pbLoadingTabbedItems)
-		tabbedLibraryViewsContainer.visibility = View.INVISIBLE
-		loadingView.visibility = View.VISIBLE
 
-		val handler = Handler(context.mainLooper)
-
-		val onGetVisibleViewsCompleteListener = LoopedInPromise.response({ result: List<Item> ->
-			val viewChildPagerAdapter = LibraryViewPagerAdapter(childFragmentManager)
-			viewChildPagerAdapter.setOnItemListMenuChangeHandler(this@BrowseLibraryViewsFragment)
-			viewChildPagerAdapter.setLibraryViews(result)
-
-			// Set up the ViewPager with the sections adapter.
-			viewPager?.adapter = viewChildPagerAdapter
-			libraryViewsTabs.setViewPager(viewPager)
-			libraryViewsTabs.visibility = if (result.size <= 1) View.GONE else View.VISIBLE
-			loadingView.visibility = View.INVISIBLE
-			tabbedLibraryViewsContainer.visibility = View.VISIBLE
-		}, handler)
-
-		val fillItemsAction = object : Runnable {
-			override fun run() {
-				selectedBrowserLibrary
-					.then { it?.let { library ->
-						getInstance(context).promiseSessionConnection()
-							.eventually { c -> ItemProvider.provide(c, library.selectedView) }
-							.eventually(onGetVisibleViewsCompleteListener)
-							.eventually<Unit>(LoopedInPromise.response({
-								val savedSelectedView = savedInstanceState?.getInt(SAVED_SELECTED_VIEW, -1) ?: -1
-								if (savedSelectedView < 0 || savedSelectedView != library.selectedView) return@response
-
-								val savedTabKey = savedInstanceState?.getInt(SAVED_TAB_KEY, -1) ?: -1
-								if (savedTabKey > -1) viewPager?.currentItem = savedTabKey
-
-								val savedScrollPosition = savedInstanceState?.getInt(SAVED_SCROLL_POS, -1) ?: -1
-								if (savedScrollPosition > -1) viewPager?.scrollY = savedScrollPosition
-							}, handler))
-							.excuse(HandleViewIoException(context, this))
-							.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), handler))
-					}
-				}
-			}
-		}
-		fillItemsAction.run()
+		CreateVisibleLibraryView(context, savedInstanceState, libraryViewsTabs, loadingView, tabbedLibraryViewsContainer)
 	}
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
@@ -116,6 +78,14 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 		itemListMenuChangeHandler?.onViewChanged(viewAnimator)
 	}
 
+	override fun onPageScrollStateChanged(state: Int) {}
+
+	override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+	}
+
+	override fun onPageSelected(position: Int) {}
+
 	override fun onSaveInstanceState(outState: Bundle) {
 		super.onSaveInstanceState(outState)
 		val viewPager = viewPager ?: return
@@ -132,4 +102,60 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 			val libraryProvider = LibraryRepository(context)
 			return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.selectedLibraryId)
 		}
+
+	private inner class CreateVisibleLibraryView(
+		private val context: Context,
+		private val savedInstanceState: Bundle?,
+		private val libraryViewsTabs: PagerSlidingTabStrip,
+		private val loadingView: ProgressBar,
+		private val tabbedLibraryViewsContainer: RelativeLayout
+	) : Runnable, ImmediateResponse<List<Item>, Unit> {
+
+		private val handler = lazy { Handler(context.mainLooper) }
+		private val onGetVisibleViewsCompleteListener = lazy { LoopedInPromise.response(this, handler.value) }
+
+		init {
+			tabbedLibraryViewsContainer.visibility = View.INVISIBLE
+			loadingView.visibility = View.VISIBLE
+			run()
+		}
+
+		override fun run() {
+			selectedBrowserLibrary
+				.then { it?.let { library ->
+					getInstance(context)
+						.promiseSessionConnection()
+						.eventually { c -> ItemProvider.provide(c, library.selectedView) }
+						.eventually(onGetVisibleViewsCompleteListener.value)
+						.run {
+							if (savedInstanceState == null) this
+							else this.eventually<Unit>(LoopedInPromise.response({
+								val savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1)
+								if (savedSelectedView < 0 || savedSelectedView != library.selectedView) return@response
+
+								val savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1)
+								if (savedTabKey > -1) viewPager?.currentItem = savedTabKey
+
+								val savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1)
+								if (savedScrollPosition > -1) viewPager?.scrollY = savedScrollPosition
+							}, handler.value))
+						}
+						.excuse(HandleViewIoException(context, this))
+						.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), handler.value))
+					}
+				}
+		}
+
+		override fun respond(result: List<Item>) {
+			val viewChildPagerAdapter = lazyLibraryViewPagerAdapter.value
+			viewChildPagerAdapter.setLibraryViews(result)
+
+			// Set up the ViewPager with the sections adapter.
+			viewPager?.adapter = viewChildPagerAdapter
+			libraryViewsTabs.setViewPager(viewPager)
+			libraryViewsTabs.visibility = if (result.size <= 1) View.GONE else View.VISIBLE
+			loadingView.visibility = View.INVISIBLE
+			tabbedLibraryViewsContainer.visibility = View.VISIBLE
+		}
+	}
 }
