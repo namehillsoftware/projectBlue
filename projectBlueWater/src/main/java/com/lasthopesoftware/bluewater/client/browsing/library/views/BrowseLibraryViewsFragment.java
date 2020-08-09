@@ -3,9 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.library.views;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
@@ -47,14 +45,17 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 	private ViewPager viewPager;
 
-	@Nullable
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		final RelativeLayout tabbedItemsLayout = (RelativeLayout) inflater.inflate(R.layout.tabbed_library_items_layout, container, false);
+	public BrowseLibraryViewsFragment() {
+		super(R.layout.tabbed_library_items_layout);
+	}
 
-		viewPager = tabbedItemsLayout.findViewById(R.id.libraryViewPager);
-		final RelativeLayout tabbedLibraryViewsContainer = tabbedItemsLayout.findViewById(R.id.tabbedLibraryViewsContainer);
-		final PagerSlidingTabStrip libraryViewsTabs = tabbedItemsLayout.findViewById(R.id.tabsLibraryViews);
+	@Override
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		viewPager = view.findViewById(R.id.libraryViewPager);
+		final RelativeLayout tabbedLibraryViewsContainer = view.findViewById(R.id.tabbedLibraryViewsContainer);
+		final PagerSlidingTabStrip libraryViewsTabs = view.findViewById(R.id.tabsLibraryViews);
 		libraryViewsTabs.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 			@Override
 			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -72,13 +73,13 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}
 		});
 
-		final ProgressBar loadingView = tabbedItemsLayout.findViewById(R.id.pbLoadingTabbedItems);
+		final ProgressBar loadingView = view.findViewById(R.id.pbLoadingTabbedItems);
 
 		tabbedLibraryViewsContainer.setVisibility(View.INVISIBLE);
 		loadingView.setVisibility(View.VISIBLE);
 
 		final Context context = getContext();
-		if (context == null) return tabbedItemsLayout;
+		if (context == null) return;
 
 		final Handler handler = new Handler(context.getMainLooper());
 
@@ -103,25 +104,35 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 				return null;
 			}, handler);
 
-		getSelectedBrowserLibrary()
-			.then(new VoidResponse<>(activeLibrary -> {
-				final Runnable fillItemsAction = new Runnable() {
-					@Override
-					public void run() {
+		final Runnable fillItemsAction = new Runnable() {
+			@Override
+			public void run() {
+				getSelectedBrowserLibrary()
+					.then(activeLibrary ->
 						SessionConnection.getInstance(context).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
+							.eventually(LoopedInPromise.response(new VoidResponse<>(v -> {
+								if (savedInstanceState == null) return;
+
+								final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
+								if (savedSelectedView < 0 || savedSelectedView != activeLibrary.getSelectedView()) return;
+
+								final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
+								if (savedTabKey > -1)
+									viewPager.setCurrentItem(savedTabKey);
+
+								final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
+								if (savedScrollPosition > -1)
+									viewPager.setScrollY(savedScrollPosition);
+							}), handler))
 							.excuse(new HandleViewIoException(context, this))
-							.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(context), handler));
-					}
-				};
+							.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(context), handler)));
+			}
+		};
 
-				fillItemsAction.run();
-			}));
-
-		return tabbedItemsLayout;
+		fillItemsAction.run();
 	}
-
 
 	public void setOnItemListMenuChangeHandler(IItemListMenuChangeHandler itemListMenuChangeHandler) {
 		this.itemListMenuChangeHandler = itemListMenuChangeHandler;
@@ -163,30 +174,12 @@ public class BrowseLibraryViewsFragment extends Fragment implements IItemListMen
 			}));
 	}
 
-	@Override
-	public void onViewStateRestored(@Nullable final Bundle savedInstanceState) {
-		super.onViewStateRestored(savedInstanceState);
-
-		if (savedInstanceState == null || viewPager == null) return;
-
-		getSelectedBrowserLibrary()
-			.eventually(LoopedInPromise.response(new VoidResponse<>(library -> {
-				final int savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1);
-				if (savedSelectedView < 0 || savedSelectedView != library.getSelectedView()) return;
-
-				final int savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1);
-				if (savedTabKey > -1)
-					viewPager.setCurrentItem(savedTabKey);
-
-				final int savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1);
-				if (savedScrollPosition > -1)
-					viewPager.setScrollY(savedScrollPosition);
-			}), getContext()));
-	}
-
 	private Promise<Library> getSelectedBrowserLibrary() {
-		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(getContext());
-		final ILibraryProvider libraryProvider = new LibraryRepository(getContext());
+		final Context context = getContext();
+		if (context == null) return Promise.empty();
+
+		final ISelectedLibraryIdentifierProvider selectedLibraryIdentifierProvider = new SelectedBrowserLibraryIdentifierProvider(context);
+		final ILibraryProvider libraryProvider = new LibraryRepository(context);
 
 		return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.getSelectedLibraryId());
 	}
