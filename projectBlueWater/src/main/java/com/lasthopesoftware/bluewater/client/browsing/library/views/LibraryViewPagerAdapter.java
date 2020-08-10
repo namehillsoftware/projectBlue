@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item;
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListFragment;
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -21,13 +23,14 @@ public class LibraryViewPagerAdapter extends  FragmentStatePagerAdapter {
     private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
 	public LibraryViewPagerAdapter(FragmentManager fm) {
-		super(fm);
+		super(fm, FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
 	}
-		
+
 	public void setLibraryViews(List<Item> libraryViews) {
 		mLibraryViews = libraryViews;
 	}
 
+	@NotNull
 	@Override
 	public Fragment getItem(int i) {
         // The position correlates to the ID returned by the server at the high-level Library views
