@@ -48,7 +48,12 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 		viewPager = view.findViewById(R.id.libraryViewPager)
+	}
 
+	override fun onActivityCreated(savedInstanceState: Bundle?) {
+		super.onActivityCreated(savedInstanceState)
+
+		val view = view ?: return
 		val context = context ?: return
 
 		val tabbedLibraryViewsContainer = view.findViewById<RelativeLayout>(R.id.tabbedLibraryViewsContainer)
