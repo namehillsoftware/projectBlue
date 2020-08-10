@@ -86,17 +86,18 @@ class SessionConnection(
 		private val logger = LoggerFactory.getLogger(SessionConnection::class.java)
 
 		@Volatile
-		private var sessionConnectionInstance: SessionConnection? = null
+		private lateinit var sessionConnectionInstance: SessionConnection
 
 		@JvmStatic
 		@Synchronized
 		fun getInstance(context: Context): SessionConnection {
-			return sessionConnectionInstance ?: context.applicationContext.let { applicationContext ->
-				SessionConnection(
-					LocalBroadcastManager.getInstance(applicationContext),
-					SelectedBrowserLibraryIdentifierProvider(applicationContext),
-					get(applicationContext)).apply { sessionConnectionInstance = this }
-			}
+			if (::sessionConnectionInstance.isInitialized) return sessionConnectionInstance
+
+			val applicationContext = context.applicationContext
+			return SessionConnection(
+				LocalBroadcastManager.getInstance(applicationContext),
+				SelectedBrowserLibraryIdentifierProvider(applicationContext),
+				get(applicationContext)).apply { sessionConnectionInstance = this }
 		}
 	}
 }
