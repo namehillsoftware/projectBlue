@@ -52,8 +52,8 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 		val context = context ?: return
 
 		val tabbedLibraryViewsContainer = view.findViewById<RelativeLayout>(R.id.tabbedLibraryViewsContainer)
-		val libraryViewsTabs = view.findViewById<PagerSlidingTabStrip>(R.id.tabsLibraryViews)
 
+		val libraryViewsTabs = view.findViewById<PagerSlidingTabStrip>(R.id.tabsLibraryViews)
 		libraryViewsTabs.setOnPageChangeListener(this)
 
 		val loadingView = view.findViewById<ProgressBar>(R.id.pbLoadingTabbedItems)
@@ -95,6 +95,12 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 			.then { library -> if (library != null) outState.putInt(SAVED_SELECTED_VIEW, library.selectedView) }
 	}
 
+	override fun onDestroyView() {
+		viewPager = null
+
+		super.onDestroyView()
+	}
+
 	private val selectedBrowserLibrary: Promise<Library?>
 		get() {
 			val context = context ?: return Promise.empty()
@@ -112,7 +118,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 	) : Runnable, ImmediateResponse<List<Item>, Unit> {
 
 		private val handler = lazy { Handler(context.mainLooper) }
-		private val onGetVisibleViewsCompleteListener = lazy { LoopedInPromise.response(this, handler.value) }
+		private val fillVisibleViews = lazy { LoopedInPromise.response(this, handler.value) }
 
 		init {
 			tabbedLibraryViewsContainer.visibility = View.INVISIBLE
@@ -126,7 +132,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 					getInstance(context)
 						.promiseSessionConnection()
 						.eventually { c -> ItemProvider.provide(c, library.selectedView) }
-						.eventually(onGetVisibleViewsCompleteListener.value)
+						.eventually(fillVisibleViews.value)
 						.run {
 							if (savedInstanceState == null) this
 							else this.eventually<Unit>(LoopedInPromise.response({
