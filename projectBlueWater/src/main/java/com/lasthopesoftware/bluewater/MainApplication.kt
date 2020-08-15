@@ -94,10 +94,12 @@ class MainApplication : MultiDexApplication() {
 				LibraryRepository(context)
 					.getLibrary(LibraryId(libraryId))
 					.then { library ->
-						val storedFileAccess = StoredFileAccess(
-							context,
-							StoredFilesCollection(context))
-						storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
+						if (library != null) {
+							val storedFileAccess = StoredFileAccess(
+								context,
+								StoredFilesCollection(context))
+							storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
+						}
 					}
 			}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))

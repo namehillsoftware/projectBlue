@@ -13,19 +13,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.lazyj.CreateAndHold
-import com.namehillsoftware.lazyj.Lazy
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class SyncSchedulingWorker(private val context: Context, workerParams: WorkerParameters) : ListenableWorker(context, workerParams) {
-	private val lazySyncChecker: CreateAndHold<CheckForSync> = Lazy<CheckForSync> {
+	private val lazySyncChecker = lazy {
 			SyncChecker(
 				LibraryRepository(context),
 				StoredItemServiceFileCollector(
@@ -36,7 +33,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 
 	override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
-		lazySyncChecker.getObject().promiseIsSyncNeeded()
+		lazySyncChecker.value.promiseIsSyncNeeded()
 			.then { isNeeded ->
 				if (isNeeded) StoredSyncService.doSync(context)
 				futureResult.set(Result.success())
@@ -62,7 +59,6 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 			return SyncWorkerConstraints(manager).currentConstraints
 		}
 
-		@JvmStatic
 		fun promiseIsScheduled(context: Context): Promise<Boolean> {
 			return promiseWorkInfos(context)
 				.then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.ENQUEUED } }
