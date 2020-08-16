@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access
 
 import android.content.Context
-import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository.SaveLibraryWriter
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -50,39 +49,34 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	}
 
 	private class SaveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Library?> {
-		override fun prepareMessage(): Library? {
+		override fun prepareMessage(): Library {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				try {
-					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-						val isLibraryExists = library.id > -1
-						val artful = repositoryAccessHelper
-							.mapSql(if (isLibraryExists) libraryUpdateSql.value else libraryInsertSql.value)
-							.addParameter(Library.accessCodeColumn, library.accessCode)
-							.addParameter(Library.userNameColumn, library.userName)
-							.addParameter(Library.passwordColumn, library.password)
-							.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly)
-							.addParameter(Library.libraryNameColumn, library.libraryName)
-							.addParameter(Library.isRepeatingColumn, library.isRepeating)
-							.addParameter(Library.isWakeOnLanEnabledColumn, library.isWakeOnLanEnabled)
-							.addParameter(Library.customSyncedFilesPathColumn, library.customSyncedFilesPath)
-							.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly)
-							.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles)
-							.addParameter(Library.nowPlayingIdColumn, library.nowPlayingId)
-							.addParameter(Library.nowPlayingProgressColumn, library.nowPlayingProgress)
-							.addParameter(Library.savedTracksStringColumn, library.savedTracksString)
-							.addParameter(Library.selectedViewColumn, library.selectedView)
-							.addParameter(Library.selectedViewTypeColumn, library.selectedViewType)
-							.addParameter(Library.syncedFileLocationColumn, library.syncedFileLocation)
-						if (isLibraryExists) artful.addParameter("id", library.id)
-						val result = artful.execute()
-						closeableTransaction.setTransactionSuccessful()
-						if (!isLibraryExists) library.setId(result.toInt())
-						logger.debug("Library saved.")
-						return library
-					}
-				} catch (se: SQLException) {
-					logger.error("There was an error saving the library", se)
-					return null
+				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+					val isLibraryExists = library.id > -1
+					val artful = repositoryAccessHelper
+						.mapSql(if (isLibraryExists) libraryUpdateSql.value else libraryInsertSql.value)
+						.addParameter(Library.accessCodeColumn, library.accessCode)
+						.addParameter(Library.userNameColumn, library.userName)
+						.addParameter(Library.passwordColumn, library.password)
+						.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly)
+						.addParameter(Library.libraryNameColumn, library.libraryName)
+						.addParameter(Library.isRepeatingColumn, library.isRepeating)
+						.addParameter(Library.isWakeOnLanEnabledColumn, library.isWakeOnLanEnabled)
+						.addParameter(Library.customSyncedFilesPathColumn, library.customSyncedFilesPath)
+						.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly)
+						.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles)
+						.addParameter(Library.nowPlayingIdColumn, library.nowPlayingId)
+						.addParameter(Library.nowPlayingProgressColumn, library.nowPlayingProgress)
+						.addParameter(Library.savedTracksStringColumn, library.savedTracksString)
+						.addParameter(Library.selectedViewColumn, library.selectedView)
+						.addParameter(Library.selectedViewTypeColumn, library.selectedViewType)
+						.addParameter(Library.syncedFileLocationColumn, library.syncedFileLocation)
+					if (isLibraryExists) artful.addParameter("id", library.id)
+					val result = artful.execute()
+					closeableTransaction.setTransactionSuccessful()
+					if (!isLibraryExists) library.setId(result.toInt())
+					logger.debug("Library saved.")
+					return library
 				}
 			}
 		}

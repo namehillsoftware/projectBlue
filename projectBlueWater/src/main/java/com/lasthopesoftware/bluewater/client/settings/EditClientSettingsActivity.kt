@@ -36,7 +36,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val rgSyncFileOptions = LazyViewFinder<RadioGroup>(this, R.id.rgSyncFileOptions)
 	private val chkIsUsingExistingFiles = LazyViewFinder<CheckBox>(this, R.id.chkIsUsingExistingFiles)
 	private val chkIsUsingLocalConnectionForSync = LazyViewFinder<CheckBox>(this, R.id.chkIsUsingLocalConnectionForSync)
-	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan);
+	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan)
 	private val applicationWritePermissionsRequirementsProviderLazy = Lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy = Lazy { ApplicationReadPermissionsRequirementsProvider(this) }
 	private val lazyLibraryProvider = Lazy { LibraryRepository(this@EditClientSettingsActivity) }
@@ -148,8 +148,6 @@ class EditClientSettingsActivity : AppCompatActivity() {
 				txtAccessCode.findView().setText(result.accessCode)
 				txtUserName.findView().setText(result.userName)
 				txtPassword.findView().setText(result.password)
-
-				Unit
 			}, this))
 	}
 
@@ -167,6 +165,8 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	}
 
 	private fun saveLibraryAndFinish() {
+		val library = library ?: return
+
 		lazyLibraryProvider.getObject().saveLibrary(library).eventually(LoopedInPromise.response<Library, Unit>({
 			saveButton.findView().text = getText(R.string.btn_saved)
 			finish()
