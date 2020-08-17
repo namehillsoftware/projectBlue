@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface IProvideCaches {
-	fun promiseCache(libraryId: LibraryId): Promise<ICache>
+	fun promiseCache(libraryId: LibraryId): Promise<out ICache?>
 }

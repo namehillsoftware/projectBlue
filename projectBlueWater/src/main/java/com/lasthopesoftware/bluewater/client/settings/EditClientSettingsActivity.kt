@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissi
 import com.lasthopesoftware.bluewater.settings.SettingsMenu
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.namehillsoftware.lazyj.Lazy
 import java.util.*
 
 class EditClientSettingsActivity : AppCompatActivity() {
@@ -36,10 +35,10 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val rgSyncFileOptions = LazyViewFinder<RadioGroup>(this, R.id.rgSyncFileOptions)
 	private val chkIsUsingExistingFiles = LazyViewFinder<CheckBox>(this, R.id.chkIsUsingExistingFiles)
 	private val chkIsUsingLocalConnectionForSync = LazyViewFinder<CheckBox>(this, R.id.chkIsUsingLocalConnectionForSync)
-	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan);
-	private val applicationWritePermissionsRequirementsProviderLazy = Lazy { ApplicationWritePermissionsRequirementsProvider(this) }
-	private val applicationReadPermissionsRequirementsProviderLazy = Lazy { ApplicationReadPermissionsRequirementsProvider(this) }
-	private val lazyLibraryProvider = Lazy { LibraryRepository(this@EditClientSettingsActivity) }
+	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan)
+	private val applicationWritePermissionsRequirementsProviderLazy = lazy { ApplicationWritePermissionsRequirementsProvider(this) }
+	private val applicationReadPermissionsRequirementsProviderLazy = lazy { ApplicationReadPermissionsRequirementsProvider(this) }
+	private val lazyLibraryProvider = lazy { LibraryRepository(this@EditClientSettingsActivity) }
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
 	private var library: Library? = null
 
@@ -65,9 +64,9 @@ class EditClientSettingsActivity : AppCompatActivity() {
 			.setIsWakeOnLanEnabled(chkIsWakeOnLanEnabled.findView().isChecked)
 
 		val permissionsToRequest = ArrayList<String>(2)
-		if (applicationReadPermissionsRequirementsProviderLazy.getObject().isReadPermissionsRequiredForLibrary(localLibrary))
+		if (applicationReadPermissionsRequirementsProviderLazy.value.isReadPermissionsRequiredForLibrary(localLibrary))
 			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-		if (applicationWritePermissionsRequirementsProviderLazy.getObject().isWritePermissionsRequiredForLibrary(localLibrary))
+		if (applicationWritePermissionsRequirementsProviderLazy.value.isWritePermissionsRequiredForLibrary(localLibrary))
 			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 		if (permissionsToRequest.size > 0) {
 			val permissionsToRequestArray = permissionsToRequest.toTypedArray()
@@ -123,7 +122,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
 		if (libraryId < 0) return
 
-		lazyLibraryProvider.getObject()
+		lazyLibraryProvider.value
 			.getLibrary(LibraryId(libraryId))
 			.eventually(LoopedInPromise.response<Library, Unit>({ result ->
 				if (result == null) return@response
@@ -148,8 +147,6 @@ class EditClientSettingsActivity : AppCompatActivity() {
 				txtAccessCode.findView().setText(result.accessCode)
 				txtUserName.findView().setText(result.userName)
 				txtPassword.findView().setText(result.password)
-
-				Unit
 			}, this))
 	}
 
@@ -167,7 +164,9 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	}
 
 	private fun saveLibraryAndFinish() {
-		lazyLibraryProvider.getObject().saveLibrary(library).eventually(LoopedInPromise.response<Library, Unit>({
+		val library = library ?: return
+
+		lazyLibraryProvider.value.saveLibrary(library).eventually(LoopedInPromise.response<Library, Unit>({
 			saveButton.findView().text = getText(R.string.btn_saved)
 			finish()
 		}, this))

@@ -111,7 +111,8 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 			val context = context ?: return Promise.empty()
 			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(context)
 			val libraryProvider = LibraryRepository(context)
-			return libraryProvider.getLibrary(selectedLibraryIdentifierProvider.selectedLibraryId)
+			val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId ?: return Promise.empty()
+			return libraryProvider.getLibrary(selectedLibraryId)
 		}
 
 	private inner class CreateVisibleLibraryView(

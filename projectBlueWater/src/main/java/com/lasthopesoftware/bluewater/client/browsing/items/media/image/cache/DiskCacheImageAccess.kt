@@ -45,7 +45,7 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 
 	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : MessengerOperator<ByteArray> {
 		override fun send(messenger: Messenger<ByteArray>) {
-			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile);
+			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile)
 
 			val cancellationProxy = CancellationProxy()
 			messenger.cancellationRequested(cancellationProxy)
@@ -56,12 +56,12 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 				.eventually { uniqueKey ->
 					caches.promiseCache(libraryId)
 						.eventually { cache ->
-							cache.promiseCachedFile(uniqueKey)
-								.eventually { imageFile ->
+							cache?.promiseCachedFile(uniqueKey)
+								?.eventually { imageFile ->
 									if (imageFile != null) QueuedPromise(ImageDiskCacheWriter(imageFile), ParsingScheduler.instance().scheduler)
 									else Promise.empty<ByteArray?>()
 								}
-								.eventually { bytes ->
+								?.eventually { bytes ->
 									bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
 										.then {
 											cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
@@ -69,6 +69,7 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 											it
 										}
 								}
+								?: Promise.empty()
 						}
 				}
 			promiseProxy.proxy(promisedBytes)

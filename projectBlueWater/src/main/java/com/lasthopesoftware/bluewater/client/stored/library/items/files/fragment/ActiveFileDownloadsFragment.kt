@@ -93,7 +93,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 									storedFileAccess
 										.getStoredFile(storedFileId)
 										.eventually { storedFile ->
-											if (storedFile?.libraryId == library.id) {
+											if (storedFile != null && storedFile.libraryId == library?.id) {
 												localStoredFiles.add(storedFile)
 												activeFileDownloadsAdapter.updateListEventually(localStoredFiles.toImmutableList())
 											} else {

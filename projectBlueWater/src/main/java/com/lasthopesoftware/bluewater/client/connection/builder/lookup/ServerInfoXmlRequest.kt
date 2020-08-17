@@ -13,6 +13,8 @@ class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, privat
 	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<XmlElement?> {
 		return libraryProvider.getLibrary(libraryId)
 			.eventually { library ->
+				if (library == null) return@eventually Promise.empty<XmlElement>()
+
 				val request = Request.Builder()
 					.url("https://webplay.jriver.com/libraryserver/lookup?id=" + library.accessCode)
 					.build()

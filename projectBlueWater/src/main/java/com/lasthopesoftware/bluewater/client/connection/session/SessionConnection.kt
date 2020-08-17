@@ -22,6 +22,8 @@ class SessionConnection(
 
 	fun promiseTestedSessionConnection(): Promise<IConnectionProvider> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
+			?: return Promise.empty()
+
 		return libraryConnections
 			.promiseTestedLibraryConnection(newSelectedLibraryId)
 			.updates(this)

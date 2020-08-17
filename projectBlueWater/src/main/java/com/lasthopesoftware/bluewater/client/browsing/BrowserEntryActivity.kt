@@ -200,7 +200,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 						library.setSelectedView(0)
 						library.setSelectedViewType(ViewType.DownloadView)
 						lazyLibraryRepository.getObject().saveLibrary(library)
-							.eventually(LoopedInPromise.response({ l: Library -> displayLibrary(l) }, this))
+							.eventually(LoopedInPromise.response(this::displayLibrary, this))
 
 						// Clear the action
 						intent.action = null
@@ -212,7 +212,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			}, this))
 	}
 
-	private fun displayLibrary(library: Library) {
+	private fun displayLibrary(library: Library?) {
+		if (library == null) return
 		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(this, specialViews, library.selectedViewType, library.selectedView)
 		run()
 	}
@@ -292,7 +293,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 				library.setSelectedView(selectedViewKey)
 				library.setSelectedViewType(selectedViewType)
 				lazyLibraryRepository.getObject().saveLibrary(library)
-					.eventually(LoopedInPromise.response({ l: Library -> displayLibrary(l) }, this))
+					.eventually(LoopedInPromise.response(this::displayLibrary, this))
 			})
 	}
 
@@ -363,7 +364,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	companion object {
 		@JvmField
-		val showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowserEntryActivity::class.java, "showDownloadsAction")!!
+		val showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowserEntryActivity::class.java, "showDownloadsAction")
 		private val specialViews = listOf("Active Downloads")
 	}
 }

@@ -23,7 +23,7 @@ class SyncDirectoryLookup(
 	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<Collection<File>> {
 		return libraryProvider.getLibrary(libraryId)
 			.eventually<Collection<File>> { library ->
-				when (library.syncedFileLocation) {
+				when (library?.syncedFileLocation) {
 					SyncedFileLocation.EXTERNAL -> publicDrives.promisePublicDrives().promiseDirectoriesWithLibrary(libraryId)
 					SyncedFileLocation.INTERNAL -> privateDrives.promisePrivateDrives().promiseDirectoriesWithLibrary(libraryId)
 					SyncedFileLocation.CUSTOM -> {

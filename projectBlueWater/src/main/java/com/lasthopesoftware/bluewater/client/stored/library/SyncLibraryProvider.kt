@@ -6,17 +6,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 class SyncLibraryProvider(private val libraryProvider: ILibraryProvider) : ILibraryProvider {
-	override fun getAllLibraries(): Promise<Collection<Library>> {
-		return libraryProvider.allLibraries.then { l -> l.map { it.transformConnectionSetting() } }
-	}
+	override val allLibraries: Promise<Collection<Library>>
+		get() = libraryProvider.allLibraries.then { l -> l.map { it.transformConnectionSetting() } }
 
-	override fun getLibrary(libraryId: LibraryId?): Promise<Library> {
-		return libraryProvider.getLibrary(libraryId).then {
-			it.transformConnectionSetting()
+	override fun getLibrary(libraryId: LibraryId): Promise<Library?> =
+		libraryProvider.getLibrary(libraryId).then {
+			it?.transformConnectionSetting()
 		}
-	}
 
-	private fun Library.transformConnectionSetting(): Library {
-		return this.setLocalOnly(this.isSyncLocalConnectionsOnly)
-	}
+	private fun Library.transformConnectionSetting(): Library = this.setLocalOnly(this.isSyncLocalConnectionsOnly)
 }

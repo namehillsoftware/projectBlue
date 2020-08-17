@@ -92,8 +92,7 @@ public class FileListItemMenuBuilder extends AbstractListItemMenuBuilder<Service
 		viewHolder.promisedTextViewUpdate = viewHolder.fileNameTextViewSetter.promiseTextViewUpdate(serviceFile);
 
         textView.setTypeface(null, Typeface.NORMAL);
-        nowPlayingFileProvider
-            .getNowPlayingFile()
+        nowPlayingFileProvider.getNowPlayingFile()
             .eventually(LoopedInPromise.response(f -> {
                 textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile.equals(f)));
                 return null;

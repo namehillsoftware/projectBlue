@@ -31,8 +31,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 			return new Promise<>(nowPlayingCache.get(libraryId));
 
 		return
-			libraryProvider
-				.getLibrary()
+			libraryProvider.getLibrary()
 				.eventually(library -> {
 					libraryId = library.getId();
 
@@ -74,8 +73,7 @@ public class NowPlayingRepository implements INowPlayingRepository {
 
 		nowPlayingCache.put(libraryId, nowPlaying);
 
-		libraryProvider
-			.getLibrary()
+		libraryProvider.getLibrary()
 			.eventually(library -> {
 				library.setNowPlayingId(nowPlaying.playlistPosition);
 				library.setNowPlayingProgress(nowPlaying.filePosition);
