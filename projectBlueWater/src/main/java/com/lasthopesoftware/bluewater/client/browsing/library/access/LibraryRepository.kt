@@ -17,8 +17,8 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	override fun getLibrary(libraryId: LibraryId): Promise<Library?> =
 		QueuedPromise(GetLibraryWriter(context, libraryId), databaseExecutor())
 
-	override fun getAllLibraries(): Promise<Collection<Library>> =
-		QueuedPromise(GetAllLibrariesWriter(context), databaseExecutor())
+	override val allLibraries: Promise<Collection<Library>>
+		get() = QueuedPromise(GetAllLibrariesWriter(context), databaseExecutor())
 
 	override fun saveLibrary(library: Library): Promise<Library?> =
 		QueuedPromise(SaveLibraryWriter(context, library), databaseExecutor())

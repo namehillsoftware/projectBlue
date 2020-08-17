@@ -856,7 +856,7 @@ implements OnAudioFocusChangeListener
 						QueueProviders.providers(),
 						new NowPlayingRepository(
 							new SpecificLibraryProvider(
-								lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
+                                    lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
 								lazyLibraryRepository.getObject()),
 							lazyLibraryRepository.getObject()),
 						playlistPlaybackBootstrapper);
@@ -1119,7 +1119,7 @@ implements OnAudioFocusChangeListener
 		lazyPlaybackBroadcaster.getObject()
 			.sendPlaybackBroadcast(
 				PlaylistEvents.onPlaylistTrackChange,
-				lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
+                    lazyChosenLibraryIdentifierProvider.getObject().getSelectedLibraryId(),
 				positionedFile);
 	}
 

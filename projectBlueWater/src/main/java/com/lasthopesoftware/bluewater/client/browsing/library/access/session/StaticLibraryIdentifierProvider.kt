@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 class StaticLibraryIdentifierProvider constructor(instanceLibraryProvider: ISelectedLibraryIdentifierProvider) : ISelectedLibraryIdentifierProvider {
 	private val libraryId = instanceLibraryProvider.selectedLibraryId
 
-	override fun getSelectedLibraryId(): LibraryId {
-		return libraryId
-	}
+	override val selectedLibraryId: LibraryId?
+		get() = libraryId
 }

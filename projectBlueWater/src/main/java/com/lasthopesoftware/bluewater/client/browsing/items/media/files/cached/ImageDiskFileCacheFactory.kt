@@ -21,19 +21,14 @@ class ImageDiskFileCacheFactory private constructor(private val context: Context
 	private val syncObject = Object()
 	private val sessionCaches = ConcurrentHashMap<LibraryId, ICache>()
 
-	override fun promiseCache(libraryId: LibraryId): Promise<ICache> {
+	override fun promiseCache(libraryId: LibraryId): Promise<out ICache?> {
 		return getCacheFromMemory(libraryId) ?: synchronized(syncObject) {
 			getCacheFromMemory(libraryId) ?: libraryProvider.getLibrary(libraryId)
 				.then { library ->
-					synchronized(syncObject) {
-						when (val cache = sessionCaches[libraryId]) {
-							null -> {
-								val newCache = buildNewCache(library)
-								sessionCaches[libraryId] = newCache
-								newCache
-							}
-							else -> cache
-						}
+					if (library == null) null
+					else synchronized(syncObject) {
+						sessionCaches[libraryId] ?:
+							buildNewCache(library).also { sessionCaches[libraryId] = it }
 					}
 				}
 		}

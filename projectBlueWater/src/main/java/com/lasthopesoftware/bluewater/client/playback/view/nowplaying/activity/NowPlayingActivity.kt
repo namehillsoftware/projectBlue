@@ -112,7 +112,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		val libraryRepository = LibraryRepository(this)
 		NowPlayingRepository(
 			SpecificLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(this).selectedLibraryId,
+				SelectedBrowserLibraryIdentifierProvider(this).selectedLibraryId!!,
 				libraryRepository),
 			libraryRepository)
 	}
