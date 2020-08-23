@@ -9,3 +9,5 @@
 /bin
 .attach_*
 /.idea
+*.apk
+*.aab
