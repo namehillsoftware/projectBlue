@@ -1,95 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/appSettingsContainer">
+
     <LinearLayout
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="20dp"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:weightSum="1.0"
-        android:id="@+id/appSettingsHorizontalLinearLayout"
+        android:paddingStart="30dp"
+        android:paddingEnd="30dp"
+        android:id="@+id/appSettingsVerticalLinearLayout"
         android:baselineAligned="false">
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="10dp"
+            android:text="@string/app_sync_settings"/>
+        <CheckBox
+            android:id="@+id/syncOnWifiCheckbox"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_only_sync_on_wifi" />
+        <CheckBox
+            android:id="@+id/syncOnPowerCheckbox"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_only_sync_ext_power" />
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="10dp"
+            android:text="@string/app_audio_settings"/>
+        <CheckBox
+            android:id="@+id/isVolumeLevelingEnabled"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_use_volume_leveling" />
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:weightSum="1.0"
-            android:layout_weight=".75"
-            android:id="@+id/appSettingsVerticalLinearLayout">
+            android:layout_margin="10dp"
+            android:id="@+id/notificationSettingsContainer">
             <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:layout_marginBottom="10dp"
-                android:text="@string/app_sync_settings"/>
-            <CheckBox
-                android:id="@+id/syncOnWifiCheckbox"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/app_only_sync_on_wifi" />
-            <CheckBox
-                android:id="@+id/syncOnPowerCheckbox"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/app_only_sync_ext_power" />
+                android:text="@string/notification_settings"/>
+
+            <Button
+                android:id="@+id/modifyNotificationSettingsButton"
+                style="?android:attr/buttonBarButtonStyle"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="@string/modify_notification_settings"
+                android:drawableEnd="@drawable/open_external"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_margin="10dp"
+            android:id="@+id/playbackEngineContainer">
             <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:layout_marginBottom="10dp"
-                android:text="@string/app_audio_settings"/>
-            <CheckBox
-                android:id="@+id/isVolumeLevelingEnabled"
+                android:text="@string/playbackEngine"
+                android:layout_marginBottom="10dp"/>
+            <RadioGroup
+                android:id="@+id/playbackEngineOptions"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/app_use_volume_leveling" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_horizontal"
-                android:layout_margin="10dp"
-                android:id="@+id/notificationSettingsContainer">
-                <TextView
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:layout_marginBottom="10dp"
-                    android:text="@string/notification_settings"/>
-
-                <Button
-                    android:id="@+id/modifyNotificationSettingsButton"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="@string/modify_notification_settings"
-                    android:drawableEnd="@drawable/open_external"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_horizontal"
-                android:layout_margin="10dp"
-                android:id="@+id/playbackEngineContainer">
-                <TextView
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="@string/playbackEngine"
-                    android:layout_marginBottom="10dp"/>
-                <RadioGroup
-                    android:id="@+id/playbackEngineOptions"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="start"
+        android:layout_margin="1dp"
+        android:layout_below="@id/appSettingsVerticalLinearLayout"
+        android:id="@+id/addServerContainer">
+
+        <Button
+            android:id="@+id/addServerButton"
+            style="?android:attr/buttonBarButtonStyle"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:gravity="start|center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/btn_add_server"
+            android:drawableEnd="@drawable/ic_add_item_gray_36dp"/>
+    </LinearLayout>
+
+    <include layout="@layout/asynchronous_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/addServerContainer"/>
+
 </RelativeLayout>

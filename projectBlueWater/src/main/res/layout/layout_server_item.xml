@@ -2,7 +2,9 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="wrap_content"
+	android:layout_marginTop="@dimen/standard_text_view_margin_top"
+	android:layout_marginBottom="@dimen/standard_text_view_margin_bottom" >
 
     <LinearLayout
         android:id="@+id/serverMenu"
@@ -33,7 +35,6 @@
         android:id="@+id/tvServerItem"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@id/serverMenu"
         android:layout_toStartOf="@id/serverMenu"
         android:padding="@dimen/standard_text_view_padding"
         android:text=""

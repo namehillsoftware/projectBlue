@@ -3,16 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ListView
-        android:id="@+id/loadedListView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/loadedRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true" />
 
     <ProgressBar
-        android:id="@+id/listLoadingProgress"
+        android:id="@+id/recyclerLoadingProgress"
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -9,17 +9,21 @@ import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.RadioGroup
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
@@ -27,6 +31,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.PlaybackEngineTypeSelectionView
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
+import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -38,18 +43,17 @@ import tourguide.tourguide.TourGuide
 
 class ApplicationSettingsActivity : AppCompatActivity() {
 	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
-	private val progressBar = LazyViewFinder<ProgressBar>(this, R.id.listLoadingProgress)
-	private val serverListView = LazyViewFinder<ListView>(this, R.id.loadedListView)
+	private val progressBar = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
+	private val serverListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 	private val notificationSettingsContainer = LazyViewFinder<LinearLayout>(this, R.id.notificationSettingsContainer)
 	private val modifyNotificationSettingsButton = LazyViewFinder<Button>(this, R.id.modifyNotificationSettingsButton)
+	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		setContentView(R.layout.asynchronous_list_view)
-		val editAppSettingsView = layoutInflater.inflate(R.layout.layout_edit_app_settings, serverListView.findView(), false) as RelativeLayout
-		serverListView.findView().addHeaderView(editAppSettingsView)
+		setContentView(R.layout.layout_edit_app_settings)
 
 		HandleSyncCheckboxPreference.handle(
 			this,
@@ -88,6 +92,9 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		playbackEngineOptions
 			.setOnCheckedChangeListener { _, checkedId -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]) }
+
+		addServerButton.findView().setOnClickListener(EditServerClickListener(this, -1))
+
 		updateServerList()
 
 		notificationSettingsContainer.findView().visibility = View.GONE
@@ -146,18 +153,25 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		progressBar.findView().visibility = View.VISIBLE
 
 		val libraryProvider = LibraryRepository(this)
-		libraryProvider
-			.allLibraries
+		val promisedLibraries = libraryProvider.allLibraries
+
+		val adapter = ServerListAdapter(
+			this,
+			BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider))
+
+		val serverListView = serverListView.findView()
+		serverListView.adapter = adapter
+		serverListView.layoutManager = LinearLayoutManager(this)
+
+		promisedLibraries
 			.eventually<Unit>(LoopedInPromise.response({ libraries ->
 				val chosenLibraryId = SelectedBrowserLibraryIdentifierProvider(this).selectedLibraryId
-				val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId === chosenLibraryId }
-				serverListView.findView().adapter = ServerListAdapter(
-					this,
-					libraries.sortedBy(Library::id),
-					selectedBrowserLibrary,
-					BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider))
+				val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
+
+				adapter.updateLibraries(libraries, selectedBrowserLibrary)
+
 				progressBar.findView().visibility = View.INVISIBLE
-				serverListView.findView().visibility = View.VISIBLE
+				serverListView.visibility = View.VISIBLE
 			}, this))
 	}
 
