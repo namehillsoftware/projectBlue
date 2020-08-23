@@ -153,19 +153,20 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		progressBar.findView().visibility = View.VISIBLE
 
 		val libraryProvider = LibraryRepository(this)
-		libraryProvider
-			.allLibraries
+		val promisedLibraries = libraryProvider.allLibraries
+
+		val adapter = ServerListAdapter(
+			this,
+			BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider))
+
+		val serverListView = serverListView.findView()
+		serverListView.adapter = adapter
+		serverListView.layoutManager = LinearLayoutManager(this)
+
+		promisedLibraries
 			.eventually<Unit>(LoopedInPromise.response({ libraries ->
 				val chosenLibraryId = SelectedBrowserLibraryIdentifierProvider(this).selectedLibraryId
-				val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId === chosenLibraryId }
-
-				val adapter = ServerListAdapter(
-					this,
-					BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider))
-
-				val serverListView = serverListView.findView()
-				serverListView.adapter = adapter
-				serverListView.layoutManager = LinearLayoutManager(this)
+				val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
 
 				adapter.updateLibraries(libraries, selectedBrowserLibrary)
 
