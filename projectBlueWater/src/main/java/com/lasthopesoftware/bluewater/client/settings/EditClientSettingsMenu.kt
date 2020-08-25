@@ -7,10 +7,10 @@ import android.view.MenuItem
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutActivity
 import com.lasthopesoftware.bluewater.about.BuildAboutTitle
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 
-class EditClientSettingsMenu(private val activity: Activity, private val aboutTitleBuilder: BuildAboutTitle, private val libraryStorage: ILibraryStorage) {
+class EditClientSettingsMenu(private val activity: Activity, private val aboutTitleBuilder: BuildAboutTitle, private val libraryRemoval: RemoveLibraries) {
 	fun buildSettingsMenu(menu: Menu): Boolean {
 		activity.menuInflater.inflate(R.menu.menu_client_settings, menu)
 		val menuItem = menu.findItem(R.id.menuAboutApp)
@@ -26,7 +26,7 @@ class EditClientSettingsMenu(private val activity: Activity, private val aboutTi
 			}
 			R.id.menuRemoveServer -> {
 				if (library != null)
-					libraryStorage.removeLibrary(library).then { activity.finish() }
+					libraryRemoval.removeLibrary(library).then { activity.finish() }
 				true
 			}
 			else -> false
