@@ -34,9 +34,7 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
-						.mapSql(
-							" DELETE FROM " + StoredItem.tableName +
-								" WHERE " + StoredItem.idColumnName + " = @" + StoredItem.idColumnName)
+						.mapSql("DELETE FROM ${StoredItem.tableName} WHERE ${StoredItem.idColumnName} = @${StoredItem.idColumnName}")
 						.addParameter(StoredItem.idColumnName, storedItem.id)
 						.execute()
 					closeableTransaction.setTransactionSuccessful()
@@ -66,11 +64,11 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
-						.mapSql(
-							" DELETE FROM " + StoredItem.tableName +
-								" WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
-								" AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
-								" AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
+						.mapSql(""""
+							DELETE FROM ${StoredItem.tableName}
+							WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
+							AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
+							AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}""")
 						.addParameter(StoredItem.serviceIdColumnName, item.key)
 						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 						.addParameter(StoredItem.itemTypeColumnName, itemType)
@@ -85,7 +83,7 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 		return QueuedPromise(MessageWriter<Collection<StoredItem>> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
-					.mapSql("SELECT * FROM " + StoredItem.tableName + " WHERE " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName)
+					.mapSql("SELECT * FROM ${StoredItem.tableName} WHERE ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}")
 					.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 					.fetch(StoredItem::class.java)
 			}
@@ -107,11 +105,11 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 		}
 
 		private fun getStoredItem(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): StoredItem? {
-			return helper.mapSql(
-				" SELECT * FROM " + StoredItem.tableName +
-					" WHERE " + StoredItem.serviceIdColumnName + " = @" + StoredItem.serviceIdColumnName +
-					" AND " + StoredItem.libraryIdColumnName + " = @" + StoredItem.libraryIdColumnName +
-					" AND " + StoredItem.itemTypeColumnName + " = @" + StoredItem.itemTypeColumnName)
+			return helper.mapSql("""
+					SELECT * FROM ${StoredItem.tableName}
+					WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
+					AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
+					AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}""")
 				.addParameter(StoredItem.serviceIdColumnName, item.key)
 				.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 				.addParameter(StoredItem.itemTypeColumnName, itemType)
