@@ -13,11 +13,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -37,8 +39,13 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan)
 	private val applicationWritePermissionsRequirementsProviderLazy = lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy = lazy { ApplicationReadPermissionsRequirementsProvider(this) }
-	private val lazyLibraryProvider = lazy { LibraryRepository(this@EditClientSettingsActivity) }
-	private val settingsMenu = lazy { EditClientSettingsMenu(this, AboutTitleBuilder(this), lazyLibraryProvider.value) }
+	private val lazyLibraryProvider = lazy { LibraryRepository(this) }
+	private val settingsMenu = lazy {
+		EditClientSettingsMenu(
+			this,
+			AboutTitleBuilder(this),
+			LibraryRemoval(StoredItemAccess(this), lazyLibraryProvider.value))
+	}
 	private var library: Library? = null
 
 	private val connectionButtonListener = View.OnClickListener {

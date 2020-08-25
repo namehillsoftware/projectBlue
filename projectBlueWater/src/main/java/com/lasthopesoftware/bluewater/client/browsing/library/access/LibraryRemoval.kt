@@ -8,8 +8,8 @@ class LibraryRemoval(
 	private val storedItems: IStoredItemAccess,
 	private val libraryStorage: ILibraryStorage) : RemoveLibraries {
 
-	override fun removeLibrary(library: Library): Promise<Unit> =
-		storedItems.promiseStoredItems(library.libraryId)
-			.eventually { s -> Promise.whenAll(s.map { i -> storedItems.disableItemSync(i) }) }
-			.eventually { libraryStorage.removeLibrary(library) }
+	override fun removeLibrary(library: Library): Promise<*> =
+		Promise.whenAll(
+			storedItems.disableAllLibraryItems(library.libraryId),
+			libraryStorage.removeLibrary(library))
 }

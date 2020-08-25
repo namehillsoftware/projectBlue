@@ -40,7 +40,6 @@ class StoredItem : IEntityCreator, IEntityUpdater {
 		const val serviceIdColumnName = "serviceId"
 		const val libraryIdColumnName = "libraryId"
 		const val itemTypeColumnName = "itemType"
-		const val idColumnName = "id"
 		private const val createTableSql = "CREATE TABLE `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` INTEGER , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) "
 	}
 }

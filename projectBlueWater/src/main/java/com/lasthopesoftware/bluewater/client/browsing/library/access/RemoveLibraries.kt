@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface RemoveLibraries {
-	fun removeLibrary(library: Library): Promise<Unit>
+	fun removeLibrary(library: Library): Promise<*>
 }

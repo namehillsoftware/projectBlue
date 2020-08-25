@@ -29,13 +29,13 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 		}, databaseExecutor())
 	}
 
-	override fun disableItemSync(storedItem: StoredItem): Promise<Unit> =
+	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> =
 		QueuedPromise(MessageWriter {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
-						.mapSql("DELETE FROM ${StoredItem.tableName} WHERE ${StoredItem.idColumnName} = @${StoredItem.idColumnName}")
-						.addParameter(StoredItem.idColumnName, storedItem.id)
+						.mapSql("DELETE FROM ${StoredItem.tableName} WHERE ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}")
+						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 						.execute()
 					closeableTransaction.setTransactionSuccessful()
 				}
