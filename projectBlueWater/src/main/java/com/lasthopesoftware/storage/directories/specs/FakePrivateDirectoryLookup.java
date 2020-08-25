@@ -1,5 +1,6 @@
 package com.lasthopesoftware.storage.directories.specs;
 
+import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.storage.GetFreeSpace;
 import com.lasthopesoftware.storage.directories.GetPrivateDirectories;
@@ -14,12 +15,12 @@ import java.util.List;
 
 public class FakePrivateDirectoryLookup implements GetPrivateDirectories, GetFreeSpace {
 
-	private final List<File> files = new ArrayList<>();
+	private final List<FreeSpaceFile> files = new ArrayList<>();
 
 	@NotNull
 	@Override
 	public Promise<Collection<File>> promisePrivateDrives() {
-		return new Promise<>(files);
+		return new Promise<>(Stream.of(files).map(f -> (File)f).toList());
 	}
 
 	public void addDirectory(String filePath, long freeSpace) {
@@ -28,6 +29,17 @@ public class FakePrivateDirectoryLookup implements GetPrivateDirectories, GetFre
 
 	@Override
 	public long getFreeSpace(@NotNull File file) {
-		return Stream.of(files).filter(f -> f.getPath().startsWith(file.getPath())).findFirst().mapToLong(File::getFreeSpace).orElse(0);
+		String path = file.getPath();
+
+		List<String> filePaths = Stream.of(files).map(FreeSpaceFile::getPath).toList();
+		while(!filePaths.contains(path)) {
+			int pathSeparatorIndex = path.lastIndexOf('/');
+			if (pathSeparatorIndex < 0) return 0;
+			path = path.substring(0, pathSeparatorIndex);
+		}
+
+		final String matchingPath = path;
+		final Optional<FreeSpaceFile> freeSpaceFile = Stream.of(files).filter(f -> f.getPath().equals(matchingPath)).findFirst();
+		return freeSpaceFile.mapToLong(FreeSpaceFile::getFreeSpace).orElse(0);
 	}
 }

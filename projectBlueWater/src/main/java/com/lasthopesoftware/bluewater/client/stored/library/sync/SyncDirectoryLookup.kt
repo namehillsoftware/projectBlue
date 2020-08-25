@@ -17,7 +17,7 @@ class SyncDirectoryLookup(
 
 	override fun promiseSyncDirectory(libraryId: LibraryId): Promise<File> {
 		return getExternalFilesDirectoriesStream(libraryId)
-			.then { files -> files.maxBy(freeSpace::getFreeSpace) }
+			.then { files -> files.maxBy { f -> freeSpace.getFreeSpace(f) } }
 	}
 
 	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<Collection<File>> {
