@@ -29,9 +29,11 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	private class GetAllLibrariesWriter constructor(private val context: Context) : MessageWriter<Collection<Library>> {
 		override fun prepareMessage(): Collection<Library> =
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				repositoryAccessHelper
-					.mapSql("SELECT * FROM " + Library.tableName)
-					.fetch(Library::class.java)
+				repositoryAccessHelper.beginNonExclusiveTransaction().use {
+					repositoryAccessHelper
+						.mapSql("SELECT * FROM " + Library.tableName)
+						.fetch(Library::class.java)
+				}
 			}
 	}
 
@@ -138,11 +140,12 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 			val libraryInt = library.id
 			if (libraryInt < 0) return
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				repositoryAccessHelper.beginNonExclusiveTransaction().use {
+				repositoryAccessHelper.beginTransaction().use {
 					repositoryAccessHelper
-						.mapSql("DELETE FROM " + Library.tableName)
+						.mapSql("DELETE FROM ${Library.tableName} WHERE id = @id")
 						.addParameter("id", libraryInt)
 						.execute()
+					it.setTransactionSuccessful()
 				}
 			}
 		}
