@@ -11,10 +11,13 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -31,7 +34,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val txtAccessCode = LazyViewFinder<EditText>(this, R.id.txtAccessCode)
 	private val txtUserName = LazyViewFinder<EditText>(this, R.id.txtUserName)
 	private val txtPassword = LazyViewFinder<EditText>(this, R.id.txtPassword)
-	private val txtSyncPath = LazyViewFinder<EditText>(this, R.id.txtSyncPath)
+	private val txtSyncPath = LazyViewFinder<TextView>(this, R.id.txtSyncPath)
 	private val chkLocalOnly = LazyViewFinder<CheckBox>(this, R.id.chkLocalOnly)
 	private val rgSyncFileOptions = LazyViewFinder<RadioGroup>(this, R.id.rgSyncFileOptions)
 	private val chkIsUsingExistingFiles = LazyViewFinder<CheckBox>(this, R.id.chkIsUsingExistingFiles)
@@ -46,7 +49,12 @@ class EditClientSettingsActivity : AppCompatActivity() {
 			AboutTitleBuilder(this),
 			RemoveLibraryConfirmationDialogBuilder(
 				this,
-				LibraryRemoval(StoredItemAccess(this), lazyLibraryProvider.value)))
+				LibraryRemoval(
+					StoredItemAccess(this),
+					lazyLibraryProvider.value,
+					SelectedBrowserLibraryIdentifierProvider(this),
+					lazyLibraryProvider.value,
+					BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), lazyLibraryProvider.value))))
 	}
 	private var library: Library? = null
 
@@ -109,7 +117,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 			return
 		}
 		val uri = data?.dataString
-		if (uri != null) txtSyncPath.findView().setText(uri)
+		if (uri != null) txtSyncPath.findView().text = uri
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean =
@@ -117,7 +125,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 
 	private fun initializeLibrary(intent: Intent) {
 		val externalFilesDir = Environment.getExternalStorageDirectory()
-		val syncPathTextView: TextView = txtSyncPath.findView()
+		val syncPathTextView = txtSyncPath.findView()
 		if (externalFilesDir != null) syncPathTextView.text = externalFilesDir.path
 
 		val syncFilesRadioGroup = rgSyncFileOptions.findView()

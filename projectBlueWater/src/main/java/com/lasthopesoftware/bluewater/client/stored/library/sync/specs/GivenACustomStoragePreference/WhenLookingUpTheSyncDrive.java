@@ -12,7 +12,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -33,10 +32,10 @@ public class WhenLookingUpTheSyncDrive {
 		fakePrivateDirectoryLookup.addDirectory("fake-private-path", 3);
 		fakePrivateDirectoryLookup.addDirectory("/fake-private-path", 5);
 
-		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Collections.singletonList(new Library()
+		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(new Library()
 			.setId(14)
 			.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM)
-			.setCustomSyncedFilesPath("/stoarage2/my-second-card")));
+			.setCustomSyncedFilesPath("/stoarage2/my-second-card"));
 
 		final SyncDirectoryLookup syncDirectoryLookup = new SyncDirectoryLookup(
 			fakeLibraryProvider,

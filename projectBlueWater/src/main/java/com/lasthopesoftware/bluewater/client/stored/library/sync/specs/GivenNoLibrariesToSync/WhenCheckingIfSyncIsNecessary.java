@@ -9,7 +9,6 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
@@ -22,11 +21,11 @@ public class WhenCheckingIfSyncIsNecessary {
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
 		final SyncChecker syncChecker = new SyncChecker(
-			new FakeLibraryProvider(Arrays.asList(
+			new FakeLibraryProvider(
 				new Library().setId(3),
 				new Library().setId(11),
 				new Library().setId(10),
-				new Library().setId(14))),
+				new Library().setId(14)),
 			(l) -> new Promise<>(Collections.emptySet()));
 		isSyncNeeded = new FuturePromise<>(syncChecker.promiseIsSyncNeeded()).get();
 	}

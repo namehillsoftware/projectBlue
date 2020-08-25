@@ -16,7 +16,7 @@ class StoredItem : IEntityCreator, IEntityUpdater {
 
 	constructor()
 
-	constructor(libraryId: Int, serviceId: Int, itemType: ItemType?) {
+	constructor(libraryId: Int, serviceId: Int, itemType: ItemType) {
 		this.libraryId = libraryId
 		this.serviceId = serviceId
 		this.itemType = itemType

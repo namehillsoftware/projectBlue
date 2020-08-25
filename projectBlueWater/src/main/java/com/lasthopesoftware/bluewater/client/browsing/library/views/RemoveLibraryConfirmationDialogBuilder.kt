@@ -10,12 +10,9 @@ class RemoveLibraryConfirmationDialogBuilder(private val activity: EditClientSet
 
 	fun buildRemoveLibraryDialog(library: Library): AlertDialog.Builder {
 		val message = String.format(activity.getString(R.string.confirmServerRemoval), library.accessCode)
-		val builder = AlertDialog.Builder(activity, R.style.DialogTheme)
-		builder.setTitle(activity.getText(R.string.removeServer)).setMessage(message).setCancelable(true)
-
-		builder.setPositiveButton(R.string.yes) { _, _ -> libraryRemoval.removeLibrary(library).then { activity.finish() } }
-		builder.setNegativeButton(R.string.no) { dialog, _ -> dialog.dismiss() }
-
-		return builder
+		return AlertDialog.Builder(activity, R.style.DialogTheme)
+			.setTitle(activity.getText(R.string.removeServer)).setMessage(message).setCancelable(true)
+			.setPositiveButton(R.string.yes) { _, _ -> libraryRemoval.removeLibrary(library).then { activity.finish() } }
+			.setNegativeButton(R.string.no) { dialog, _ -> dialog.dismiss() }
 	}
 }
