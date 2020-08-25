@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
+import com.lasthopesoftware.bluewater.client.browsing.library.views.RemoveLibraryConfirmationDialogBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
@@ -44,7 +44,9 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		EditClientSettingsMenu(
 			this,
 			AboutTitleBuilder(this),
-			LibraryRemoval(StoredItemAccess(this), lazyLibraryProvider.value))
+			RemoveLibraryConfirmationDialogBuilder(
+				this,
+				LibraryRemoval(StoredItemAccess(this), lazyLibraryProvider.value)))
 	}
 	private var library: Library? = null
 

@@ -5,5 +5,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface CollectServiceFilesForSync {
-	fun promiseServiceFilesToSync(libraryId: LibraryId?): Promise<Collection<ServiceFile>>
+	fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Collection<ServiceFile>>
 }

@@ -17,7 +17,8 @@ class StoredPlaylistItemsConverter(private val libraryProvider: ISelectedBrowser
 				storedItemAccess.toggleSync(l.libraryId, playlist, false)
 				playlistItem.promiseItem(playlist)
 					.eventually { item ->
-						storedItemAccess.toggleSync(l.libraryId, item, true)
+						if (item != null)
+							storedItemAccess.toggleSync(l.libraryId, item, true)
 						storedItemAccess.promiseStoredItems(l.libraryId)
 							.then { storedItems ->
 								storedItems

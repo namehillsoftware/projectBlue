@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
-import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.RejectionProxy
@@ -26,8 +25,8 @@ class StoredItemServiceFileCollector(
 	private val fileProvider: ProvideLibraryFiles,
 	private val fileListParameters: IFileListParameterProvider) : CollectServiceFilesForSync {
 
-	override fun promiseServiceFilesToSync(libraryId: LibraryId?): Promise<Collection<ServiceFile>> {
-		return Promise(MessengerOperator { serviceFileMessenger ->
+	override fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Collection<ServiceFile>> {
+		return Promise { serviceFileMessenger ->
 			val cancellationProxy = CancellationProxy()
 			serviceFileMessenger.cancellationRequested(cancellationProxy)
 
@@ -45,10 +44,10 @@ class StoredItemServiceFileCollector(
 			promisedServiceFileLists
 				.then<Collection<ServiceFile>> { serviceFiles -> serviceFiles.flatten() }
 				.then(ResolutionProxy(serviceFileMessenger), RejectionProxy(serviceFileMessenger))
-		})
+		}
 	}
 
-	private fun promiseServiceFiles(libraryId: LibraryId?, storedItem: StoredItem, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
+	private fun promiseServiceFiles(libraryId: LibraryId, storedItem: StoredItem, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
 		return when (storedItem.itemType) {
 			ItemType.ITEM -> promiseServiceFiles(libraryId, Item(storedItem.serviceId), cancellationProxy)
 			ItemType.PLAYLIST -> promiseServiceFiles(libraryId, Playlist(storedItem.serviceId), cancellationProxy)
@@ -56,21 +55,21 @@ class StoredItemServiceFileCollector(
 		}
 	}
 
-	private fun promiseServiceFiles(libraryId: LibraryId?, item: Item, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
+	private fun promiseServiceFiles(libraryId: LibraryId, item: Item, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
 		val parameters = fileListParameters.getFileListParameters(item)
-		val serviceFilesPromise = fileProvider.promiseFiles(libraryId!!, FileListParameters.Options.None, *parameters)
+		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
 		cancellationProxy.doCancel(serviceFilesPromise)
 		return serviceFilesPromise.then<Collection<ServiceFile>>(forward(), ExceptionHandler(libraryId, item, storedItemAccess))
 	}
 
-	private fun promiseServiceFiles(libraryId: LibraryId?, playlist: Playlist, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
+	private fun promiseServiceFiles(libraryId: LibraryId, playlist: Playlist, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
 		val parameters = fileListParameters.getFileListParameters(playlist)
-		val serviceFilesPromise = fileProvider.promiseFiles(libraryId!!, FileListParameters.Options.None, *parameters)
+		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
 		cancellationProxy.doCancel(serviceFilesPromise)
 		return serviceFilesPromise.then<Collection<ServiceFile>>(forward(), ExceptionHandler(libraryId, playlist, storedItemAccess))
 	}
 
-	private class ExceptionHandler internal constructor(private val libraryId: LibraryId?, private val item: IItem, private val storedItemAccess: IStoredItemAccess) : ImmediateResponse<Throwable, Collection<ServiceFile>> {
+	private class ExceptionHandler(private val libraryId: LibraryId, private val item: IItem, private val storedItemAccess: IStoredItemAccess) : ImmediateResponse<Throwable, Collection<ServiceFile>> {
 		@Throws(Throwable::class)
 		override fun respond(e: Throwable): List<ServiceFile> {
 			if (e is FileNotFoundException) {
@@ -80,7 +79,6 @@ class StoredItemServiceFileCollector(
 			}
 			throw e
 		}
-
 	}
 
 	companion object {
