@@ -1,30 +1,17 @@
-package com.lasthopesoftware.bluewater.client.settings;
+package com.lasthopesoftware.bluewater.client.settings
 
-import android.content.Context;
-import android.content.Intent;
-import androidx.annotation.NonNull;
-import com.lasthopesoftware.resources.intents.IIntentFactory;
-import com.lasthopesoftware.resources.intents.IntentFactory;
+import android.content.Context
+import android.content.Intent
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
+import com.lasthopesoftware.resources.intents.IIntentFactory
+import com.lasthopesoftware.resources.intents.IntentFactory
 
-/**
- * Created by david on 7/10/16.
- */
-public class EditClientSettingsActivityIntentBuilder implements IEditClientSettingsActivityIntentBuilder {
-	private IIntentFactory intentFactory;
+class EditClientSettingsActivityIntentBuilder(private val intentFactory: IIntentFactory) : IEditClientSettingsActivityIntentBuilder {
+	constructor(context: Context) : this(IntentFactory(context))
 
-	public EditClientSettingsActivityIntentBuilder(@NonNull Context context) {
-		this(new IntentFactory(context));
-	}
-
-	public EditClientSettingsActivityIntentBuilder(@NonNull IIntentFactory intentFactory) {
-		this.intentFactory = intentFactory;
-	}
-
-	@Override
-	public Intent buildIntent(int libraryId) {
-		final Intent returnIntent = intentFactory.getIntent(EditClientSettingsActivity.class);
-		returnIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId);
-
-		return returnIntent;
+	override fun buildIntent(libraryId: Int): Intent {
+		val returnIntent = intentFactory.getIntent(EditClientSettingsActivity::class.java)
+		returnIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId)
+		return returnIntent
 	}
 }

@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
-import com.lasthopesoftware.bluewater.settings.SettingsMenu
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import java.util.*
@@ -39,7 +38,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val applicationWritePermissionsRequirementsProviderLazy = lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy = lazy { ApplicationReadPermissionsRequirementsProvider(this) }
 	private val lazyLibraryProvider = lazy { LibraryRepository(this@EditClientSettingsActivity) }
-	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
+	private val settingsMenu = lazy { EditClientSettingsMenu(this, AboutTitleBuilder(this), lazyLibraryProvider.value) }
 	private var library: Library? = null
 
 	private val connectionButtonListener = View.OnClickListener {
@@ -83,9 +82,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		saveButton.findView().setOnClickListener(connectionButtonListener)
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean {
-		return settingsMenu.buildSettingsMenu(menu)
-	}
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.value.buildSettingsMenu(menu)
 
 	override fun onStart() {
 		super.onStart()
@@ -106,9 +103,8 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		if (uri != null) txtSyncPath.findView().setText(uri)
 	}
 
-	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		return settingsMenu.handleSettingsMenuClicks(item)
-	}
+	override fun onOptionsItemSelected(item: MenuItem): Boolean =
+		settingsMenu.value.handleSettingsMenuClicks(item, library)
 
 	private fun initializeLibrary(intent: Intent) {
 		val externalFilesDir = Environment.getExternalStorageDirectory()

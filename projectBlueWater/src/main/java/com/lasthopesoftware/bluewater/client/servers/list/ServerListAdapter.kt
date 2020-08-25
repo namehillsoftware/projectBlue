@@ -90,7 +90,7 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 		}
 	}
 
-	object LibraryDiffer : DiffUtil.ItemCallback<Library>() {
+	private object LibraryDiffer : DiffUtil.ItemCallback<Library>() {
 		override fun areItemsTheSame(oldItem: Library, newItem: Library): Boolean = oldItem.id == newItem.id
 
 		override fun areContentsTheSame(oldItem: Library, newItem: Library): Boolean = areItemsTheSame(oldItem, newItem)
