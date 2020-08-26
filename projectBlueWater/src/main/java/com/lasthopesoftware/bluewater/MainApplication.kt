@@ -47,7 +47,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class MainApplication : MultiDexApplication() {
+open class MainApplication : MultiDexApplication() {
 	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilderLazy = lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy = lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
