@@ -27,29 +27,25 @@ class StoredFileAccess(
 		return QueuedPromise(MessageWriter<StoredFile> { RepositoryAccessHelper(context).use { repositoryAccessHelper -> getStoredFile(repositoryAccessHelper, storedFileId) } }, storedFileAccessExecutor())
 	}
 
-	override fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> {
-		return getStoredFileTask(library, serviceFile)
-	}
+	override fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
+		getStoredFileTask(library, serviceFile)
 
-	private fun getStoredFileTask(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> {
-		return QueuedPromise(MessageWriter<StoredFile> { RepositoryAccessHelper(context).use { repositoryAccessHelper -> getStoredFile(library, repositoryAccessHelper, serviceFile) } }, storedFileAccessExecutor())
-	}
+	private fun getStoredFileTask(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
+		QueuedPromise(MessageWriter<StoredFile> { RepositoryAccessHelper(context).use { repositoryAccessHelper -> getStoredFile(library, repositoryAccessHelper, serviceFile) } }, storedFileAccessExecutor())
 
 	override val downloadingStoredFiles: Promise<List<StoredFile>>
-		get() {
-			return QueuedPromise(MessageWriter<List<StoredFile>> {
-				RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-					repositoryAccessHelper
-						.mapSql(
-							selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = @" + StoredFileEntityInformation.isDownloadCompleteColumnName)
-						.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, false)
-						.fetch(StoredFile::class.java)
-				}
-			}, storedFileAccessExecutor())
-		}
+		get() = QueuedPromise(MessageWriter<List<StoredFile>> {
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				repositoryAccessHelper
+					.mapSql(
+						selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = @" + StoredFileEntityInformation.isDownloadCompleteColumnName)
+					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, false)
+					.fetch(StoredFile::class.java)
+			}
+		}, storedFileAccessExecutor())
 
-	override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> {
-		return QueuedPromise(MessageWriter {
+	override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> =
+		QueuedPromise(MessageWriter {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -65,10 +61,9 @@ class StoredFileAccess(
 			storedFile.setIsDownloadComplete(true)
 			storedFile
 		}, storedFileAccessExecutor())
-	}
 
-	override fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> {
-		return QueuedPromise(MessageWriter {
+	override fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> =
+		QueuedPromise(MessageWriter {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				var storedFile: StoredFile? = getStoredFile(library, repositoryAccessHelper, serviceFile)
 				if (storedFile == null) {
@@ -82,15 +77,13 @@ class StoredFileAccess(
 				updateStoredFile(repositoryAccessHelper, storedFile)
 			}
 		}, storedFileAccessExecutor())
-	}
 
-	override fun pruneStoredFiles(libraryId: LibraryId, serviceFilesToKeep: Set<ServiceFile>): Promise<Unit> {
-		return getAllStoredFilesInLibrary.promiseAllStoredFiles(libraryId)
+	override fun pruneStoredFiles(libraryId: LibraryId, serviceFilesToKeep: Set<ServiceFile>): Promise<Unit> =
+		getAllStoredFilesInLibrary.promiseAllStoredFiles(libraryId)
 			.eventually(PruneFilesTask(this, serviceFilesToKeep))
-	}
 
-	private fun getStoredFile(library: Library, helper: RepositoryAccessHelper, serviceFile: ServiceFile): StoredFile? {
-		return helper
+	private fun getStoredFile(library: Library, helper: RepositoryAccessHelper, serviceFile: ServiceFile): StoredFile? =
+		helper
 			.mapSql(
 				" SELECT * " +
 					" FROM " + StoredFileEntityInformation.tableName + " " +
@@ -99,16 +92,14 @@ class StoredFileAccess(
 			.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
 			.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.id)
 			.fetchFirst(StoredFile::class.java)
-	}
 
-	private fun getStoredFile(helper: RepositoryAccessHelper, storedFileId: Int): StoredFile {
-		return helper
+	private fun getStoredFile(helper: RepositoryAccessHelper, storedFileId: Int): StoredFile =
+		helper
 			.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
 			.addParameter("id", storedFileId)
 			.fetchFirst(StoredFile::class.java)
-	}
 
-	private fun createStoredFile(library: Library, repositoryAccessHelper: RepositoryAccessHelper, serviceFile: ServiceFile) {
+	private fun createStoredFile(library: Library, repositoryAccessHelper: RepositoryAccessHelper, serviceFile: ServiceFile) =
 		repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 			repositoryAccessHelper
 				.mapSql(insertSql.value)
@@ -118,9 +109,8 @@ class StoredFileAccess(
 				.execute()
 			closeableTransaction.setTransactionSuccessful()
 		}
-	}
 
-	fun deleteStoredFile(storedFile: StoredFile) {
+	fun deleteStoredFile(storedFile: StoredFile) =
 		storedFileAccessExecutor().execute {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
@@ -136,13 +126,10 @@ class StoredFileAccess(
 				}
 			}
 		}
-	}
 
 	companion object {
 		@JvmStatic
-		fun storedFileAccessExecutor(): Executor {
-			return storedFileAccessExecutor.value
-		}
+		fun storedFileAccessExecutor(): Executor = storedFileAccessExecutor.value
 
 		private val storedFileAccessExecutor = lazy { CachedSingleThreadExecutor() }
 		private val logger = LoggerFactory.getLogger(StoredFileAccess::class.java)
@@ -169,10 +156,12 @@ class StoredFileAccess(
 		}
 
 		private fun updateStoredFile(repositoryAccessHelper: RepositoryAccessHelper, storedFile: StoredFile?) {
+			if (storedFile == null) return
+
 			repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 				repositoryAccessHelper
 					.mapSql(updateSql.value)
-					.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile!!.serviceId)
+					.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.serviceId)
 					.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.storedMediaId)
 					.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
 					.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner)

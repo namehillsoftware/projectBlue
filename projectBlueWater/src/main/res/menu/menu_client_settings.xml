@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item android:id="@+id/menuAboutApp"
+        android:title="@string/title_activity_about"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_help" />
+
+    <item android:id="@+id/menuRemoveServer"
+        android:title="@string/removeServer"
+        android:orderInCategory="200"
+        app:showAsAction="never"
+        android:icon="@drawable/ic_remove_item_white_36dp" />
+
+</menu>

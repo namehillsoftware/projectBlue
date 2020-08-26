@@ -27,12 +27,12 @@ public class WhenGettingAllLibraries {
 	@BeforeClass
 	public static void context() throws ExecutionException, InterruptedException {
 		final SyncLibraryProvider syncLibraryProvider = new SyncLibraryProvider(
-			new FakeLibraryProvider(Arrays.asList(
+			new FakeLibraryProvider(
 				new Library().setId(5).setIsSyncLocalConnectionsOnly(true),
 				new Library().setId(4),
 				new Library().setId(8),
 				new Library().setId(99).setIsSyncLocalConnectionsOnly(true),
-				new Library().setId(13))));
+				new Library().setId(13)));
 
 		libraries = new FuturePromise<>(syncLibraryProvider.getAllLibraries()).get();
 	}

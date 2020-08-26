@@ -6,22 +6,26 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 public class FakeLibraryProvider implements ILibraryProvider {
-	private final Collection<Library> libraries;
+	private final Library[] libraries;
 
-	public FakeLibraryProvider(Collection<Library> libraries) {
+	public FakeLibraryProvider(Library... libraries) {
 		this.libraries = libraries;
 	}
 
+	@NotNull
 	@Override
-	public Promise<Library> getLibrary(LibraryId libraryId) {
+	public Promise<Library> getLibrary(@NotNull LibraryId libraryId) {
 		return new Promise<>(Stream.of(libraries).filter(l -> l.getLibraryId().equals(libraryId)).findFirst().get());
 	}
 
+	@NotNull
 	@Override
 	public Promise<Collection<Library>> getAllLibraries() {
-		return new Promise<>(libraries);
+		return new Promise<>(Stream.of(libraries).toList());
 	}
 }

@@ -11,16 +11,20 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
+import com.lasthopesoftware.bluewater.client.browsing.library.views.RemoveLibraryConfirmationDialogBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
-import com.lasthopesoftware.bluewater.settings.SettingsMenu
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import java.util.*
@@ -30,7 +34,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val txtAccessCode = LazyViewFinder<EditText>(this, R.id.txtAccessCode)
 	private val txtUserName = LazyViewFinder<EditText>(this, R.id.txtUserName)
 	private val txtPassword = LazyViewFinder<EditText>(this, R.id.txtPassword)
-	private val txtSyncPath = LazyViewFinder<EditText>(this, R.id.txtSyncPath)
+	private val txtSyncPath = LazyViewFinder<TextView>(this, R.id.txtSyncPath)
 	private val chkLocalOnly = LazyViewFinder<CheckBox>(this, R.id.chkLocalOnly)
 	private val rgSyncFileOptions = LazyViewFinder<RadioGroup>(this, R.id.rgSyncFileOptions)
 	private val chkIsUsingExistingFiles = LazyViewFinder<CheckBox>(this, R.id.chkIsUsingExistingFiles)
@@ -38,8 +42,20 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan)
 	private val applicationWritePermissionsRequirementsProviderLazy = lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy = lazy { ApplicationReadPermissionsRequirementsProvider(this) }
-	private val lazyLibraryProvider = lazy { LibraryRepository(this@EditClientSettingsActivity) }
-	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
+	private val lazyLibraryProvider = lazy { LibraryRepository(this) }
+	private val settingsMenu = lazy {
+		EditClientSettingsMenu(
+			this,
+			AboutTitleBuilder(this),
+			RemoveLibraryConfirmationDialogBuilder(
+				this,
+				LibraryRemoval(
+					StoredItemAccess(this),
+					lazyLibraryProvider.value,
+					SelectedBrowserLibraryIdentifierProvider(this),
+					lazyLibraryProvider.value,
+					BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), lazyLibraryProvider.value))))
+	}
 	private var library: Library? = null
 
 	private val connectionButtonListener = View.OnClickListener {
@@ -83,9 +99,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		saveButton.findView().setOnClickListener(connectionButtonListener)
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean {
-		return settingsMenu.buildSettingsMenu(menu)
-	}
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.value.buildSettingsMenu(menu)
 
 	override fun onStart() {
 		super.onStart()
@@ -103,16 +117,15 @@ class EditClientSettingsActivity : AppCompatActivity() {
 			return
 		}
 		val uri = data?.dataString
-		if (uri != null) txtSyncPath.findView().setText(uri)
+		if (uri != null) txtSyncPath.findView().text = uri
 	}
 
-	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		return settingsMenu.handleSettingsMenuClicks(item)
-	}
+	override fun onOptionsItemSelected(item: MenuItem): Boolean =
+		settingsMenu.value.handleSettingsMenuClicks(item, library)
 
 	private fun initializeLibrary(intent: Intent) {
 		val externalFilesDir = Environment.getExternalStorageDirectory()
-		val syncPathTextView: TextView = txtSyncPath.findView()
+		val syncPathTextView = txtSyncPath.findView()
 		if (externalFilesDir != null) syncPathTextView.text = externalFilesDir.path
 
 		val syncFilesRadioGroup = rgSyncFileOptions.findView()

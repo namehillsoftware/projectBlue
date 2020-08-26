@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePro
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -55,7 +56,19 @@ public class WhenObservingPlayback {
 		library.setId(1);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
-		final ILibraryStorage libraryStorage = Promise::new;
+		final ILibraryStorage libraryStorage = new ILibraryStorage() {
+			@NotNull
+			@Override
+			public Promise<Library> saveLibrary(@NotNull Library library) {
+				return new Promise<>(library);
+			}
+
+			@NotNull
+			@Override
+			public Promise<Object> removeLibrary(@NotNull Library library) {
+				return Promise.empty();
+			}
+		};
 
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
 		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access.specs.GivenASelectedDownloadView;
 
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.views.DownloadViewItem;
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem;
@@ -9,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.access.Selec
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -33,9 +35,19 @@ public class WhenGettingDefaultOrSelectedViews {
 						new StandardViewItem(3, null),
 						new StandardViewItem(5, null),
 						new PlaylistViewItem(8))),
-				library -> {
-					savedLibrary = library;
-					return new Promise<>(library);
+				new ILibraryStorage() {
+					@NotNull
+					@Override
+					public Promise<Library> saveLibrary(@NotNull Library library) {
+						savedLibrary = library;
+						return new Promise<>(library);
+					}
+
+					@NotNull
+					@Override
+					public Promise<Object> removeLibrary(@NotNull Library library) {
+						return Promise.empty();
+					}
 				});
 		selectedLibraryView = new FuturePromise<>(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get();
 	}

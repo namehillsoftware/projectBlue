@@ -53,8 +53,8 @@ public class WhenUpdatingTheFile extends AndroidContext {
 				put(KnownFileProperties.FILENAME, "my-filename.mp3");
 			}});
 
-		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Collections.singleton(
-			new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)));
+		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(
+			new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL));
 
 		final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
 			ApplicationProvider.getApplicationContext(),

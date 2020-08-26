@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAcc
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,5 +44,12 @@ public class FakeStoredItemAccess implements IStoredItemAccess {
 
 	private List<StoredItem> findMatchingItems(IItem item) {
 		return Stream.of(inMemoryStoredItems).filter(i -> i.getServiceId() == item.getKey() && i.getItemType() == getListType(item)).toList();
+	}
+
+	@NotNull
+	@Override
+	public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
+		inMemoryStoredItems.removeAll(Stream.of(inMemoryStoredItems).filter(s -> s.getLibraryId() == libraryId.getId()).toList());
+		return Promise.empty();
 	}
 }

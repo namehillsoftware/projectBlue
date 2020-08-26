@@ -23,10 +23,10 @@ public class WhenCheckingIfSyncIsNecessary {
 
 	@BeforeClass
 	public static void before() throws ExecutionException, InterruptedException {
-		final ILibraryProvider fakeLibraryProvider = new FakeLibraryProvider(Arrays.asList(
+		final ILibraryProvider fakeLibraryProvider = new FakeLibraryProvider(
 			new Library().setId(3),
 			new Library().setId(11),
-			new Library().setId(10)));
+			new Library().setId(10));
 
 		final SyncChecker syncChecker = new SyncChecker(
 			fakeLibraryProvider,

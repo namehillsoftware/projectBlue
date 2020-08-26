@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServ
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -42,6 +43,12 @@ public class WhenCollectingTheAssociatedServiceFiles {
 
 		final IStoredItemAccess storedItemAccess =
 			new IStoredItemAccess() {
+				@NotNull
+				@Override
+				public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
+					return Promise.empty();
+				}
+
 				@Override
 				public void toggleSync(LibraryId libraryId, IItem item, boolean enable) {
 				}

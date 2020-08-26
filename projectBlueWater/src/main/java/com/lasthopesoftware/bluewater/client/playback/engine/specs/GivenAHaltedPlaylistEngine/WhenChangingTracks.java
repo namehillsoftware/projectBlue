@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -54,7 +55,19 @@ public class WhenChangingTracks {
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 
-		final ILibraryStorage libraryStorage = Promise::new;
+		final ILibraryStorage libraryStorage = new ILibraryStorage() {
+			@NotNull
+			@Override
+			public Promise<Library> saveLibrary(@NotNull Library library) {
+				return new Promise<>(library);
+			}
+
+			@NotNull
+			@Override
+			public Promise<Object> removeLibrary(@NotNull Library library) {
+				return Promise.empty();
+			}
+		};
 
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
 		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(4))))

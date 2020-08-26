@@ -20,15 +20,20 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	override val allLibraries: Promise<Collection<Library>>
 		get() = QueuedPromise(GetAllLibrariesWriter(context), databaseExecutor())
 
-	override fun saveLibrary(library: Library): Promise<Library?> =
+	override fun saveLibrary(library: Library): Promise<Library> =
 		QueuedPromise(SaveLibraryWriter(context, library), databaseExecutor())
+
+	override fun removeLibrary(library: Library): Promise<Any?> =
+		QueuedPromise(RemoveLibraryWriter(context, library), databaseExecutor())
 
 	private class GetAllLibrariesWriter constructor(private val context: Context) : MessageWriter<Collection<Library>> {
 		override fun prepareMessage(): Collection<Library> =
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				repositoryAccessHelper
-					.mapSql("SELECT * FROM " + Library.tableName)
-					.fetch(Library::class.java)
+				repositoryAccessHelper.beginNonExclusiveTransaction().use {
+					repositoryAccessHelper
+						.mapSql("SELECT * FROM " + Library.tableName)
+						.fetch(Library::class.java)
+				}
 			}
 	}
 
@@ -48,7 +53,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 		}
 	}
 
-	private class SaveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Library?> {
+	private class SaveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Library> {
 		override fun prepareMessage(): Library {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -125,6 +130,23 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 					.addSetter(Library.syncedFileLocationColumn)
 					.setFilter("WHERE id = @id")
 					.buildQuery()
+			}
+		}
+	}
+
+	private class RemoveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Any?> {
+
+		override fun prepareMessage() {
+			val libraryInt = library.id
+			if (libraryInt < 0) return
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				repositoryAccessHelper.beginTransaction().use {
+					repositoryAccessHelper
+						.mapSql("DELETE FROM ${Library.tableName} WHERE id = @id")
+						.addParameter("id", libraryInt)
+						.execute()
+					it.setTransactionSuccessful()
+				}
 			}
 		}
 	}
