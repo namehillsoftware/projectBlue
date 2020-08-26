@@ -64,7 +64,7 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
-						.mapSql(""""
+						.mapSql("""
 							DELETE FROM ${StoredItem.tableName}
 							WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
 							AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
