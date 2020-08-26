@@ -48,7 +48,7 @@ public class FakeStoredItemAccess implements IStoredItemAccess {
 
 	@NotNull
 	@Override
-	public Promise<?> disableAllLibraryItems(@NotNull LibraryId libraryId) {
+	public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
 		inMemoryStoredItems.removeAll(Stream.of(inMemoryStoredItems).filter(s -> s.getLibraryId() == libraryId.getId()).toList());
 		return Promise.empty();
 	}

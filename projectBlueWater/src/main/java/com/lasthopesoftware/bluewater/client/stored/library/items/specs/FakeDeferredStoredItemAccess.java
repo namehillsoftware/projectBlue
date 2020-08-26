@@ -25,7 +25,7 @@ public abstract class FakeDeferredStoredItemAccess implements IStoredItemAccess 
 
 	@NotNull
 	@Override
-	public Promise<?> disableAllLibraryItems(@NotNull LibraryId libraryId) {
+	public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
 		return Promise.empty();
 	}
 

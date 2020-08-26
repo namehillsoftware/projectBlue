@@ -25,9 +25,9 @@ class LibraryRemoval(
 			}
 
 		return promisedNewLibrarySelection.eventually {
-			Promise.whenAll<Any>(
-				storedItems.disableAllLibraryItems(library.libraryId) as Promise<Any>,
-				libraryStorage.removeLibrary(library) as Promise<Any>)
+			Promise.whenAll(
+				storedItems.disableAllLibraryItems(library.libraryId),
+				libraryStorage.removeLibrary(library))
 		}
 	}
 }

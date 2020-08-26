@@ -45,7 +45,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			new IStoredItemAccess() {
 				@NotNull
 				@Override
-				public Promise<?> disableAllLibraryItems(@NotNull LibraryId libraryId) {
+				public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
 					return Promise.empty();
 				}
 

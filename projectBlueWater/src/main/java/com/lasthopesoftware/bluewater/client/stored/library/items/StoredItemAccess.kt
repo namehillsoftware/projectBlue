@@ -29,8 +29,8 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 		}, databaseExecutor())
 	}
 
-	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> =
-		QueuedPromise(MessageWriter {
+	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Any?> =
+		QueuedPromise(MessageWriter<Any?> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper

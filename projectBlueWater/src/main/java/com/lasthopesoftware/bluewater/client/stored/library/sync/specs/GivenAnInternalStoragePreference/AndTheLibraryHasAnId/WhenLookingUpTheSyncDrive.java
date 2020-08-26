@@ -40,7 +40,7 @@ public class WhenLookingUpTheSyncDrive {
 			fakeLibraryProvider,
 			publicDrives,
 			fakePrivateDirectoryLookup,
-			publicDrives);
+			fakePrivateDirectoryLookup);
 
 		file = new FuturePromise<>(syncDirectoryLookup.promiseSyncDirectory(new LibraryId(14))).get();
 	}

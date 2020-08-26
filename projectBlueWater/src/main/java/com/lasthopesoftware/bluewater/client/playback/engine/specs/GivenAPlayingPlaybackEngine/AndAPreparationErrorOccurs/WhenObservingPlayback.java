@@ -65,7 +65,7 @@ public class WhenObservingPlayback {
 
 			@NotNull
 			@Override
-			public Promise<?> removeLibrary(@NotNull Library library) {
+			public Promise<Object> removeLibrary(@NotNull Library library) {
 				return Promise.empty();
 			}
 		};

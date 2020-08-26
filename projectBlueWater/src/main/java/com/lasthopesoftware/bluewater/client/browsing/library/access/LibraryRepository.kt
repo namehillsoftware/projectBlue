@@ -23,7 +23,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	override fun saveLibrary(library: Library): Promise<Library> =
 		QueuedPromise(SaveLibraryWriter(context, library), databaseExecutor())
 
-	override fun removeLibrary(library: Library): Promise<Unit> =
+	override fun removeLibrary(library: Library): Promise<Any?> =
 		QueuedPromise(RemoveLibraryWriter(context, library), databaseExecutor())
 
 	private class GetAllLibrariesWriter constructor(private val context: Context) : MessageWriter<Collection<Library>> {
@@ -134,7 +134,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 		}
 	}
 
-	private class RemoveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Unit> {
+	private class RemoveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Any?> {
 
 		override fun prepareMessage() {
 			val libraryInt = library.id
