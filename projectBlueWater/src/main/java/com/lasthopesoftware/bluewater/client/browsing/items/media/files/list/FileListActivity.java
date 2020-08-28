@@ -36,10 +36,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
 import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.List;
 
-public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void> {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void>, Runnable {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(FileListActivity.class);
 	private static final String key = magicPropertyBuilder.buildProperty("key");
@@ -54,8 +55,9 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 	private int itemId;
 
-	private LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
-	private LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
+	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
+	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
+	private final Lazy<PromisedResponse<List<ServiceFile>, Void>> onFileProviderComplete = new Lazy<>(() -> LoopedInPromise.response(this, this));
 
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -72,6 +74,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
         fileListView.findView().setVisibility(View.INVISIBLE);
         pbLoading.findView().setVisibility(View.VISIBLE);
+
         if (savedInstanceState != null) itemId = savedInstanceState.getInt(key);
         if (itemId == 0) itemId = this.getIntent().getIntExtra(key, 1);
 
@@ -79,25 +82,23 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
 
-		final PromisedResponse<List<ServiceFile>, Void> onFileProviderComplete = LoopedInPromise.response(this, this);
+		run();
+	}
 
+	@Override
+	public void run() {
 		final String[] parameters = FileListParameters.getInstance().getFileListParameters(new Item(itemId));
 
-		final Runnable fillFileListAction = new Runnable() {
-			@Override
-			public void run() {
-				SessionConnection.getInstance(FileListActivity.this).promiseSessionConnection()
-					.then(FileStringListProvider::new)
-					.then(FileProvider::new)
-					.eventually(p -> p.promiseFiles(FileListParameters.Options.None, parameters))
-					.eventually(onFileProviderComplete)
-					.excuse(new HandleViewIoException(FileListActivity.this, this))
-					.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(FileListActivity.this), FileListActivity.this))
-					.then(new VoidResponse<>(v -> finish()));
-			}
-		};
-
-		fillFileListAction.run();
+		SessionConnection.getInstance(FileListActivity.this).promiseSessionConnection()
+			.eventually(connection -> {
+				final FileStringListProvider stringListProvider = new FileStringListProvider(connection);
+				final FileProvider fileProvider = new FileProvider(stringListProvider);
+				return fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
+			})
+			.eventually(onFileProviderComplete.getObject())
+			.excuse(new HandleViewIoException(this, this))
+			.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
+			.then(new VoidResponse<>(v -> finish()));
 	}
 
 	@Override
