@@ -1,178 +1,151 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.ViewAnimator;
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.ListView
+import android.widget.ProgressBar
+import android.widget.ViewAnimator
+import androidx.appcompat.app.AppCompatActivity
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity.Companion.restoreSessionConnection
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import com.namehillsoftware.lazyj.Lazy
+import java.util.concurrent.Callable
 
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
+class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<ServiceFile>?, Unit>, Runnable, Callable<PromisedResponse<List<ServiceFile>?, Unit>> {
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider;
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton;
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder;
-import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
-import com.namehillsoftware.handoff.promises.response.PromisedResponse;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import com.namehillsoftware.lazyj.Lazy;
+	private var itemId = 0
+	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingItems)
+	private val fileListView = LazyViewFinder<ListView>(this, R.id.lvItems)
+	private val onFileProviderComplete = Lazy(this)
 
-import java.util.List;
-import java.util.concurrent.Callable;
+	private var viewAnimator: ViewAnimator? = null
+	private var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton? = null
 
-public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void>, Runnable, Callable<PromisedResponse<List<ServiceFile>, Void>> {
+	public override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		val supportActionBar = supportActionBar
+		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		setContentView(R.layout.activity_view_items)
 
-	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(FileListActivity.class);
-	private static final String key = magicPropertyBuilder.buildProperty("key");
-	private static final String value = magicPropertyBuilder.buildProperty("value");
+		fileListView.findView().visibility = View.INVISIBLE
+		pbLoading.findView().visibility = View.VISIBLE
 
-	public static void startFileListActivity(Context context, IItem item) {
-		final Intent fileListIntent = new Intent(context, FileListActivity.class);
-		fileListIntent.putExtra(FileListActivity.key, item.getKey());
-		fileListIntent.putExtra(FileListActivity.value, item.getValue());
-		context.startActivity(fileListIntent);
+		if (savedInstanceState != null) itemId = savedInstanceState.getInt(key)
+		if (itemId == 0) itemId = this.intent.getIntExtra(key, 1)
+
+		title = intent.getStringExtra(value)
+		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems))
+
+		run()
 	}
 
-	private int itemId;
-
-	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
-	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
-	private final Lazy<PromisedResponse<List<ServiceFile>, Void>> onFileProviderComplete = new Lazy<>(this);
-
-    private ViewAnimator viewAnimator;
-	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
-
-	@Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-		final ActionBar supportActionBar = getSupportActionBar();
-		if (supportActionBar != null)
-			supportActionBar.setDisplayHomeAsUpEnabled(true);
-
-        setContentView(R.layout.activity_view_items);
-
-        fileListView.findView().setVisibility(View.INVISIBLE);
-        pbLoading.findView().setVisibility(View.VISIBLE);
-
-        if (savedInstanceState != null) itemId = savedInstanceState.getInt(key);
-        if (itemId == 0) itemId = this.getIntent().getIntExtra(key, 1);
-
-        setTitle(getIntent().getStringExtra(value));
-
-		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems));
-
-		run();
-	}
-
-	@Override
-	public PromisedResponse<List<ServiceFile>, Void> call() {
-		return LoopedInPromise.response(this, this);
-	}
-
-	@Override
-	public void run() {
-		final String[] parameters = FileListParameters.getInstance().getFileListParameters(new Item(itemId));
-
-		SessionConnection.getInstance(this).promiseSessionConnection()
-			.eventually(connection -> {
-				final FileStringListProvider stringListProvider = new FileStringListProvider(connection);
-				final FileProvider fileProvider = new FileProvider(stringListProvider);
-				return fileProvider.promiseFiles(FileListParameters.Options.None, parameters);
-			})
+	override fun run() {
+		getInstance(this).promiseSessionConnection()
+			.eventually { connection ->
+				val parameters = FileListParameters.getInstance().getFileListParameters(Item(itemId))
+				val stringListProvider = FileStringListProvider(connection)
+				val fileProvider = FileProvider(stringListProvider)
+				fileProvider.promiseFiles(FileListParameters.Options.None, *parameters)
+			}
 			.eventually(onFileProviderComplete.getObject())
-			.excuse(new HandleViewIoException(this, this))
-			.eventuallyExcuse(LoopedInPromise.response(new UnexpectedExceptionToasterResponse(this), this))
-			.then(new VoidResponse<>(v -> finish()));
+			.excuse(HandleViewIoException(this, this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.then { finish() }
 	}
 
-	@Override
-	public Void respond(List<ServiceFile> serviceFiles) {
-		if (serviceFiles == null) return null;
+	override fun call(): PromisedResponse<List<ServiceFile>?, Unit> =
+		LoopedInPromise.response<List<ServiceFile>?, Unit>(this, this)
 
-		final LongClickViewAnimatorListener longClickViewAnimatorListener = new LongClickViewAnimatorListener();
+	override fun respond(serviceFiles: List<ServiceFile>?) {
+		if (serviceFiles == null) return
 
-		fileListView.findView().setOnItemLongClickListener(longClickViewAnimatorListener);
-		final FileListAdapter fileListAdapter =
-			new FileListAdapter(
-				this,
-				R.id.tvStandard,
-				serviceFiles,
-				new ItemListMenuChangeHandler(this),
-				NowPlayingFileProvider.fromActiveLibrary(this));
+		val longClickViewAnimatorListener = LongClickViewAnimatorListener()
+		fileListView.findView().onItemLongClickListener = longClickViewAnimatorListener
 
-		fileListView.findView().setAdapter(fileListAdapter);
+		val fileListAdapter = FileListAdapter(
+			this,
+			R.id.tvStandard,
+			serviceFiles,
+			ItemListMenuChangeHandler(this),
+			fromActiveLibrary(this))
 
-		fileListView.findView().setVisibility(View.VISIBLE);
-		pbLoading.findView().setVisibility(View.INVISIBLE);
+		fileListView.findView().adapter = fileListAdapter
 
-		return null;
+		fileListView.findView().visibility = View.VISIBLE
+		pbLoading.findView().visibility = View.INVISIBLE
 	}
 
-	@Override
-	public void onStart() {
-		super.onStart();
-
-		InstantiateSessionConnectionActivity.restoreSessionConnection(this);
+	public override fun onStart() {
+		super.onStart()
+		restoreSessionConnection(this)
 	}
 
-	@Override
-	public void onSaveInstanceState(Bundle savedInstanceState) {
-		super.onSaveInstanceState(savedInstanceState);
-		savedInstanceState.putInt(key, itemId);
+	public override fun onSaveInstanceState(savedInstanceState: Bundle) {
+		super.onSaveInstanceState(savedInstanceState)
+		savedInstanceState.putInt(key, itemId)
 	}
 
-	@Override
-	public void onRestoreInstanceState(Bundle savedInstanceState) {
-		super.onRestoreInstanceState(savedInstanceState);
-		itemId = savedInstanceState.getInt(key);
+	public override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+		super.onRestoreInstanceState(savedInstanceState)
+		itemId = savedInstanceState.getInt(key)
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		return ViewUtils.buildStandardMenu(this, menu);
+	override fun onCreateOptionsMenu(menu: Menu): Boolean {
+		return ViewUtils.buildStandardMenu(this, menu)
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		return ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item);
+	override fun onOptionsItemSelected(item: MenuItem): Boolean {
+		return ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item)
 	}
 
-    @Override
-    public void onBackPressed() {
-        if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return;
-
-        super.onBackPressed();
-    }
-
-	@Override
-	public void updateViewAnimator(ViewAnimator viewAnimator) {
-		this.viewAnimator = viewAnimator;
+	override fun onBackPressed() {
+		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+		super.onBackPressed()
 	}
 
-	@Override
-	public NowPlayingFloatingActionButton getNowPlayingFloatingActionButton() {
-		return nowPlayingFloatingActionButton;
+	override fun updateViewAnimator(viewAnimator: ViewAnimator) {
+		this.viewAnimator = viewAnimator
+	}
+
+	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton {
+		return nowPlayingFloatingActionButton!!
+	}
+
+	companion object {
+		private val magicPropertyBuilder = MagicPropertyBuilder(FileListActivity::class.java)
+		private val key = magicPropertyBuilder.buildProperty("key")
+		private val value = magicPropertyBuilder.buildProperty("value")
+		@JvmStatic
+		fun startFileListActivity(context: Context, item: IItem) {
+			val fileListIntent = Intent(context, FileListActivity::class.java)
+			fileListIntent.putExtra(key, item.key)
+			fileListIntent.putExtra(value, item.value)
+			context.startActivity(fileListIntent)
+		}
 	}
 }
