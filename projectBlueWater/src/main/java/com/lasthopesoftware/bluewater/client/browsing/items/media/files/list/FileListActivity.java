@@ -39,8 +39,9 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 import com.namehillsoftware.lazyj.Lazy;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void>, Runnable {
+public class FileListActivity extends AppCompatActivity implements IItemListViewContainer, ImmediateResponse<List<ServiceFile>, Void>, Runnable, Callable<PromisedResponse<List<ServiceFile>, Void>> {
 
 	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(FileListActivity.class);
 	private static final String key = magicPropertyBuilder.buildProperty("key");
@@ -57,7 +58,7 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 
 	private final LazyViewFinder<ProgressBar> pbLoading = new LazyViewFinder<>(this, R.id.pbLoadingItems);
 	private final LazyViewFinder<ListView> fileListView = new LazyViewFinder<>(this, R.id.lvItems);
-	private final Lazy<PromisedResponse<List<ServiceFile>, Void>> onFileProviderComplete = new Lazy<>(() -> LoopedInPromise.response(this, this));
+	private final Lazy<PromisedResponse<List<ServiceFile>, Void>> onFileProviderComplete = new Lazy<>(this);
 
     private ViewAnimator viewAnimator;
 	private NowPlayingFloatingActionButton nowPlayingFloatingActionButton;
@@ -86,10 +87,15 @@ public class FileListActivity extends AppCompatActivity implements IItemListView
 	}
 
 	@Override
+	public PromisedResponse<List<ServiceFile>, Void> call() {
+		return LoopedInPromise.response(this, this);
+	}
+
+	@Override
 	public void run() {
 		final String[] parameters = FileListParameters.getInstance().getFileListParameters(new Item(itemId));
 
-		SessionConnection.getInstance(FileListActivity.this).promiseSessionConnection()
+		SessionConnection.getInstance(this).promiseSessionConnection()
 			.eventually(connection -> {
 				final FileStringListProvider stringListProvider = new FileStringListProvider(connection);
 				final FileProvider fileProvider = new FileProvider(stringListProvider);
