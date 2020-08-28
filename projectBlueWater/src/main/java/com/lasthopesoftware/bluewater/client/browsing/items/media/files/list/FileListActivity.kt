@@ -48,9 +48,9 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		val supportActionBar = supportActionBar
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
 		setContentView(R.layout.activity_view_items)
+		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 		fileListView.findView().visibility = View.INVISIBLE
 		pbLoading.findView().visibility = View.VISIBLE
