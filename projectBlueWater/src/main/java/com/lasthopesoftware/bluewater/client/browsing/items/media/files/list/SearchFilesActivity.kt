@@ -81,8 +81,8 @@ class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer, Immedia
 					.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this@SearchFilesActivity), this@SearchFilesActivity))
 					.then { finish() }
 			}
-		}).also {
-			it.run()
+		}).apply {
+			run()
 		}
 	}
 
