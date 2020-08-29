@@ -60,7 +60,7 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		if (itemId == 0) itemId = this.intent.getIntExtra(key, 1)
 
 		title = intent.getStringExtra(value)
-		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems))
+		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.asynchronousRecyclerViewContainer))
 
 		run()
 	}

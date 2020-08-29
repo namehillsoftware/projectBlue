@@ -41,9 +41,11 @@ class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer, Immedia
 		super.onCreate(savedInstanceState)
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 		setContentView(R.layout.asynchronous_recycler_view)
+
 		fileListView.findView().visibility = View.INVISIBLE
 		pbLoading.findView().visibility = View.VISIBLE
-		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems))
+		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.asynchronousRecyclerViewContainer))
+
 		handleIntent(intent)
 	}
 
@@ -60,8 +62,8 @@ class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer, Immedia
 		if (Intent.ACTION_SEARCH != intent.action) return
 
 		val query = intent.getStringExtra(SearchManager.QUERY)
-		if (query == null || query.isEmpty()) return
-		title = String.format(getString(R.string.title_activity_search_results), query)
+		if (query.isNullOrEmpty()) return
+		title = getString(R.string.title_activity_search_results).format(query)
 
 		fileListView.findView().visibility = View.VISIBLE
 		pbLoading.findView().visibility = View.INVISIBLE
