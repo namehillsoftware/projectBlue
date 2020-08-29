@@ -6,10 +6,10 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -39,8 +39,8 @@ import java.util.concurrent.Callable
 class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<ServiceFile>?, Unit>, Runnable, Callable<PromisedResponse<List<ServiceFile>?, Unit>> {
 
 	private var itemId = 0
-	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingItems)
-	private val fileListView = LazyViewFinder<ListView>(this, R.id.lvItems)
+	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
+	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 	private val onFileProviderComplete = Lazy(this)
 
 	private var viewAnimator: ViewAnimator? = null
@@ -49,7 +49,7 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		setContentView(R.layout.activity_view_items)
+		setContentView(R.layout.asynchronous_recycler_view)
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 		fileListView.findView().visibility = View.INVISIBLE
@@ -84,15 +84,12 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	override fun respond(serviceFiles: List<ServiceFile>?) {
 		if (serviceFiles == null) return
 
-		val longClickViewAnimatorListener = LongClickViewAnimatorListener()
-		fileListView.findView().onItemLongClickListener = longClickViewAnimatorListener
+		val nowPlayingFileProvider = fromActiveLibrary(this) ?: return
 
 		val fileListAdapter = FileListAdapter(
-			this,
-			R.id.tvStandard,
 			serviceFiles,
 			ItemListMenuChangeHandler(this),
-			fromActiveLibrary(this))
+			nowPlayingFileProvider)
 
 		fileListView.findView().adapter = fileListAdapter
 

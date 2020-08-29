@@ -12,8 +12,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.AbstractFileListItemNowPlayingHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.AbstractListItemViewChangedListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.listeners.FileSeekToClickListener
@@ -24,13 +24,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 
-class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository) {
-
-	private var onViewChangedListener: OnViewChangedListener? = null
-
-	fun setOnViewChangedListener(onViewChangedListener: OnViewChangedListener) {
-		this.onViewChangedListener = onViewChangedListener
-	}
+class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository) : AbstractListItemViewChangedListener() {
 
 	fun newViewHolder(parent: ViewGroup): ViewHolder {
 		val fileItemMenu = FileListItemContainer(parent.context)
@@ -40,7 +34,8 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 		val fileMenu = inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false) as LinearLayout
 
 		viewFlipper.addView(fileMenu)
-		viewFlipper.setViewChangedListener(onViewChangedListener)
+		viewFlipper.setViewChangedListener(getOnViewChangedListener())
+		viewFlipper.setOnLongClickListener(LongClickViewAnimatorListener())
 
 		return ViewHolder(fileItemMenu)
 	}
@@ -82,8 +77,6 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 					viewFlipper.isSelected = position == playlistPosition
 				}
 			}
-
-			viewFlipper.setOnLongClickListener(LongClickViewAnimatorListener())
 
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper)
 			playButtonFinder.findView().setOnClickListener(FileSeekToClickListener(viewFlipper, position))

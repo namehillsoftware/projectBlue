@@ -1,21 +1,13 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers;
+package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers
 
-import android.view.View;
-
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator;
+import android.view.View
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 
 /**
  * Created by david on 3/31/15.
  */
-public abstract class AbstractMenuClickHandler implements View.OnClickListener {
-    private final NotifyOnFlipViewAnimator menuContainer;
-
-    public AbstractMenuClickHandler(NotifyOnFlipViewAnimator menuContainer) {
-        this.menuContainer = menuContainer;
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (menuContainer.getDisplayedChild() > 0) menuContainer.showPrevious();
-    }
+abstract class AbstractMenuClickHandler(private val menuContainer: NotifyOnFlipViewAnimator) : View.OnClickListener {
+	override fun onClick(v: View) {
+		if (menuContainer.displayedChild > 0) menuContainer.showPrevious()
+	}
 }

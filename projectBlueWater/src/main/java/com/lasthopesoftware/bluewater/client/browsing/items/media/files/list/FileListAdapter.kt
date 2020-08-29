@@ -1,38 +1,35 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list
 
-import android.content.Context;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.INowPlayingFileProvider
 
-import androidx.annotation.NonNull;
+internal class FileListAdapter(private val serviceFiles: List<ServiceFile>, itemListMenuChangeHandler: IItemListMenuChangeHandler, nowPlayingFileProvider: INowPlayingFileProvider)
+	: RecyclerView.Adapter<FileListItemMenuBuilder.ViewHolder>() {
 
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder;
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler;
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.INowPlayingFileProvider;
+	private val fileListItemMenuBuilder: FileListItemMenuBuilder
 
-import java.util.List;
+	init {
+		val viewChangedHandler = ViewChangedHandler()
+		viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler)
+		viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler)
+		viewChangedHandler.setOnAllMenusHidden(itemListMenuChangeHandler)
+		fileListItemMenuBuilder = FileListItemMenuBuilder(serviceFiles, nowPlayingFileProvider)
+		fileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler)
+	}
 
-class FileListAdapter extends AbstractFileListAdapter {
+	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileListItemMenuBuilder.ViewHolder {
+		return fileListItemMenuBuilder.buildView(parent)
+	}
 
-    private final FileListItemMenuBuilder fileListItemMenuBuilder;
+	override fun onBindViewHolder(holder: FileListItemMenuBuilder.ViewHolder, position: Int) {
+		holder.update(PositionedFile(position, serviceFiles[position]))
+	}
 
-	FileListAdapter(Context context, int resource, List<ServiceFile> serviceFiles, IItemListMenuChangeHandler itemListMenuChangeHandler, INowPlayingFileProvider nowPlayingFileProvider) {
-		super(context, resource, serviceFiles);
-
-        final ViewChangedHandler viewChangedHandler = new ViewChangedHandler();
-        viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler);
-        viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler);
-        viewChangedHandler.setOnAllMenusHidden(itemListMenuChangeHandler);
-
-        fileListItemMenuBuilder = new FileListItemMenuBuilder(serviceFiles, nowPlayingFileProvider);
-        fileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler);
-    }
-
-    @NonNull
-    @Override
-    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        return fileListItemMenuBuilder.getView(position, getItem(position), convertView, parent);
-    }
+	override fun getItemCount(): Int = serviceFiles.size
 }
