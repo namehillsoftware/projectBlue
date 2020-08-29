@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -91,9 +92,11 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 			ItemListMenuChangeHandler(this),
 			nowPlayingFileProvider)
 
-		fileListView.findView().adapter = fileListAdapter
+		val fileListView = fileListView.findView()
+		fileListView.adapter = fileListAdapter
+		fileListView.layoutManager = LinearLayoutManager(this)
+		fileListView.visibility = View.VISIBLE
 
-		fileListView.findView().visibility = View.VISIBLE
 		pbLoading.findView().visibility = View.INVISIBLE
 	}
 
@@ -129,8 +132,8 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		this.viewAnimator = viewAnimator
 	}
 
-	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton {
-		return nowPlayingFloatingActionButton!!
+	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton? {
+		return nowPlayingFloatingActionButton
 	}
 
 	companion object {
