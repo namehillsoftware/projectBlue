@@ -1,59 +1,45 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers;
+package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers
 
-import android.widget.ViewAnimator;
+import android.widget.ViewAnimator
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.OnAllMenusHidden
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.OnAnyMenuShown
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.OnAllMenusHidden;
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.OnAnyMenuShown;
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener;
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener;
+class ViewChangedHandler : OnViewChangedListener {
+	private var shownMenu: ViewAnimator? = null
+	private var onViewChangedListener: OnViewChangedListener? = null
+	private var onAnyMenuShown: OnAnyMenuShown? = null
+	private var onAllMenusHidden: OnAllMenusHidden? = null
+	private var numberOfMenusShown = 0
 
-/**
- * Created by david on 11/2/15.
- */
-public class ViewChangedHandler implements OnViewChangedListener {
+	override fun onViewChanged(viewAnimator: ViewAnimator) {
+		if (viewAnimator.displayedChild > 0) {
+			if (numberOfMenusShown == 0) onAnyMenuShown?.onAnyMenuShown()
+			++numberOfMenusShown
 
-    private ViewAnimator shownMenu;
+			shownMenu?.also { LongClickViewAnimatorListener.tryFlipToPreviousView(it) }
+			shownMenu = viewAnimator
+		} else {
+			if (shownMenu === viewAnimator) shownMenu = null
+			if (--numberOfMenusShown == 0) onAllMenusHidden?.onAllMenusHidden()
+		}
 
-    private OnViewChangedListener onViewChangedListener;
-    private OnAnyMenuShown onAnyMenuShown;
+		onViewChangedListener?.onViewChanged(viewAnimator)
+	}
 
-    private OnAllMenusHidden onAllMenusHidden;
+	fun setOnViewChangedListener(onViewChangedListener: OnViewChangedListener?): ViewChangedHandler {
+		this.onViewChangedListener = onViewChangedListener
+		return this
+	}
 
-    private int numberOfMenusShown;
+	fun setOnAnyMenuShown(onAnyMenuShown: OnAnyMenuShown?): ViewChangedHandler {
+		this.onAnyMenuShown = onAnyMenuShown
+		return this
+	}
 
-    @Override
-    public void onViewChanged(ViewAnimator viewAnimator) {
-
-        if (viewAnimator.getDisplayedChild() > 0) {
-            if (numberOfMenusShown == 0 && onAnyMenuShown != null) onAnyMenuShown.onAnyMenuShown();
-
-            ++numberOfMenusShown;
-
-            if (shownMenu != null)
-                LongClickViewAnimatorListener.tryFlipToPreviousView(shownMenu);
-
-            shownMenu = viewAnimator;
-        } else {
-
-            if (shownMenu == viewAnimator) shownMenu = null;
-
-            if (--numberOfMenusShown == 0 && onAllMenusHidden != null) onAllMenusHidden.onAllMenusHidden();
-        }
-
-        if (onViewChangedListener != null)
-            onViewChangedListener.onViewChanged(viewAnimator);
-    }
-
-
-    public void setOnViewChangedListener(OnViewChangedListener onViewChangedListener) {
-        this.onViewChangedListener = onViewChangedListener;
-    }
-
-    public void setOnAnyMenuShown(OnAnyMenuShown onAnyMenuShown) {
-        this.onAnyMenuShown = onAnyMenuShown;
-    }
-
-    public void setOnAllMenusHidden(OnAllMenusHidden onAllMenusHidden) {
-        this.onAllMenusHidden = onAllMenusHidden;
-    }
+	fun setOnAllMenusHidden(onAllMenusHidden: OnAllMenusHidden?): ViewChangedHandler {
+		this.onAllMenusHidden = onAllMenusHidden
+		return this
+	}
 }

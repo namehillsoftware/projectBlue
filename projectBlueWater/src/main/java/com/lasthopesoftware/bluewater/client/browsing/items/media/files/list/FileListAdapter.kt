@@ -12,15 +12,14 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.INowPlayin
 internal class FileListAdapter(private val serviceFiles: List<ServiceFile>, itemListMenuChangeHandler: IItemListMenuChangeHandler, nowPlayingFileProvider: INowPlayingFileProvider)
 	: RecyclerView.Adapter<FileListItemMenuBuilder.ViewHolder>() {
 
-	private val fileListItemMenuBuilder: FileListItemMenuBuilder
+	private val fileListItemMenuBuilder = FileListItemMenuBuilder(serviceFiles, nowPlayingFileProvider)
 
 	init {
-		val viewChangedHandler = ViewChangedHandler()
-		viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler)
-		viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler)
-		viewChangedHandler.setOnAllMenusHidden(itemListMenuChangeHandler)
-		fileListItemMenuBuilder = FileListItemMenuBuilder(serviceFiles, nowPlayingFileProvider)
-		fileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler)
+		fileListItemMenuBuilder.setOnViewChangedListener(
+			ViewChangedHandler()
+				.setOnViewChangedListener(itemListMenuChangeHandler)
+				.setOnAnyMenuShown(itemListMenuChangeHandler)
+				.setOnAllMenusHidden(itemListMenuChangeHandler))
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileListItemMenuBuilder.ViewHolder {
