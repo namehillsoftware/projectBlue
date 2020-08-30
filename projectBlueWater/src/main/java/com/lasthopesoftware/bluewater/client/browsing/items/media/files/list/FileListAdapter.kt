@@ -23,7 +23,7 @@ internal class FileListAdapter(private val serviceFiles: List<ServiceFile>, item
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileListItemMenuBuilder.ViewHolder {
-		return fileListItemMenuBuilder.buildView(parent)
+		return fileListItemMenuBuilder.newViewHolder(parent)
 	}
 
 	override fun onBindViewHolder(holder: FileListItemMenuBuilder.ViewHolder, position: Int) {

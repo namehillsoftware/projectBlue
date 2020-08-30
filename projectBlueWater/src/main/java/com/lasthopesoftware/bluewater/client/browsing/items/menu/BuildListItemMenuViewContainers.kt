@@ -4,5 +4,5 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 
 interface BuildListItemMenuViewContainers<TViewContainer : RecyclerView.ViewHolder> {
-	fun buildView(parent: ViewGroup): TViewContainer
+	fun newViewHolder(parent: ViewGroup): TViewContainer
 }
