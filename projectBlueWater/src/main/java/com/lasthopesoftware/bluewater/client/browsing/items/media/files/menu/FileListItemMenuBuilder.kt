@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class FileListItemMenuBuilder(private val serviceFiles: Collection<ServiceFile>, private val nowPlayingFileProvider: INowPlayingFileProvider, private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar)
-	: AbstractFileListItemMenuBuilder<FileListItemMenuBuilder.ViewHolder>() {
+	: AbstractFileListItemMenuBuilder<FileListItemMenuBuilder.ViewHolder>(R.layout.layout_file_item_menu) {
 
 	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
 
