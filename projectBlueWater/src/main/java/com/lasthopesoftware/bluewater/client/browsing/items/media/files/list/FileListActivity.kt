@@ -104,12 +104,8 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 					.setOnAllMenusHidden(this))
 		}
 
-		val fileListAdapter = FileListAdapter(
-			serviceFiles,
-			fileListItemMenuBuilder)
-
 		val fileListView = fileListView.findView()
-		fileListView.adapter = fileListAdapter
+		fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
 		fileListView.layoutManager = LinearLayoutManager(this)
 		fileListView.visibility = View.VISIBLE
 
