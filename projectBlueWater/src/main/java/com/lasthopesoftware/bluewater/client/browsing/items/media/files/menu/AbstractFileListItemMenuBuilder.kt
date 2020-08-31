@@ -10,7 +10,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.BuildListItemMe
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 
-abstract class AbstractFileListItemMenuBuilder<TViewContainer : RecyclerView.ViewHolder>(@param:LayoutRes private val layoutId: Int) : BuildListItemMenuViewContainers<TViewContainer> {
+abstract class AbstractFileListItemMenuBuilder<TViewContainer : RecyclerView.ViewHolder>
+protected constructor(@param:LayoutRes private val layoutId: Int)
+	: BuildListItemMenuViewContainers<TViewContainer>
+{
 	private var onViewChangedListener: OnViewChangedListener? = null
 
 	fun setOnViewChangedListener(onViewChangedListener: OnViewChangedListener?) {
