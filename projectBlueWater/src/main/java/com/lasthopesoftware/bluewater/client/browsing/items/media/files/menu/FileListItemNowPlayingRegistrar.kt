@@ -22,9 +22,7 @@ class FileListItemNowPlayingRegistrar(private val localBroadcastManager: LocalBr
 		private val localBroadcastManager = LocalBroadcastManager.getInstance(fileTextViewContainer.context)
 
 		override fun onReceive(context: Context?, intent: Intent?) {
-			if (context == null || intent == null) return
-
-			receiver.onReceive(context, intent)
+			if (context != null && intent != null) receiver.onReceive(context, intent)
 		}
 
 		override fun close() {

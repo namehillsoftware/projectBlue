@@ -9,17 +9,19 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity.Companion.restoreSessionConnection
@@ -87,10 +89,14 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 		val nowPlayingFileProvider = fromActiveLibrary(this) ?: return
 
+		val fileListItemMenuBuilder = FileListItemMenuBuilder(
+			serviceFiles,
+			nowPlayingFileProvider,
+			FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(this)))
+
 		val fileListAdapter = FileListAdapter(
 			serviceFiles,
-			ItemListMenuChangeHandler(this),
-			nowPlayingFileProvider)
+			fileListItemMenuBuilder)
 
 		val fileListView = fileListView.findView()
 		fileListView.adapter = fileListAdapter

@@ -1,50 +1,42 @@
-package com.lasthopesoftware.bluewater.client.connection.polling;
+package com.lasthopesoftware.bluewater.client.connection.polling
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
+import java.util.concurrent.CancellationException
 
-import java.util.concurrent.CancellationException;
+class WaitForConnectionActivity : Activity() {
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setContentView(R.layout.activity_wait_for_connection)
 
-public class WaitForConnectionActivity extends Activity {
+		val selectServerIntent = Intent(this, ApplicationSettingsActivity::class.java)
+		val pollSessionConnection = pollSessionConnection(this)
 
-	public static void beginWaiting(final Context context, final Runnable onConnectionRegainedListener) {
-		context.startActivity(new Intent(context, WaitForConnectionActivity.class));
-		PollConnectionService.pollSessionConnection(context)
-			.then(c -> {
-				onConnectionRegainedListener.run();
-				return null;
-			});
-	}
-	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_wait_for_connection);
-		
-		final Intent selectServerIntent = new Intent(this, ApplicationSettingsActivity.class);
-
-		final Promise<IConnectionProvider> pollSessionConnection = PollConnectionService.pollSessionConnection(this);
-
-		findViewById(R.id.btnCancel).setOnClickListener(v -> {
-			pollSessionConnection.cancel();
-			startActivity(selectServerIntent);
-			finish();
-		});
+		findViewById<View>(R.id.btnCancel).setOnClickListener {
+			pollSessionConnection.cancel()
+			startActivity(selectServerIntent)
+			finish()
+		}
 
 		pollSessionConnection
 			.then(
-				new VoidResponse<>(c -> finish()),
-				new VoidResponse<>(e -> {
-					if (e instanceof CancellationException) startActivity(selectServerIntent);
+				{ finish() },
+				{ e ->
+					if (e is CancellationException) startActivity(selectServerIntent)
+					finish()
+				})
+	}
 
-					finish();
-				}));
+	companion object {
+		fun beginWaiting(context: Context, onConnectionRegainedListener: Runnable) {
+			context.startActivity(Intent(context, WaitForConnectionActivity::class.java))
+			pollSessionConnection(context).then { onConnectionRegainedListener.run() }
+		}
 	}
 }

@@ -164,7 +164,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		serverListView.layoutManager = LinearLayoutManager(this)
 
 		promisedLibraries
-			.eventually<Unit>(LoopedInPromise.response({ libraries ->
+			.eventually(LoopedInPromise.response({ libraries ->
 				val chosenLibraryId = SelectedBrowserLibraryIdentifierProvider(this).selectedLibraryId
 				val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
 
