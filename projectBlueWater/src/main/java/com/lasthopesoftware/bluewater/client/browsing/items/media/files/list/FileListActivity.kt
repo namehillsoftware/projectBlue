@@ -10,6 +10,7 @@ import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
@@ -108,7 +109,9 @@ class FileListActivity :
 
 		val fileListView = fileListView.findView()
 		fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
-		fileListView.layoutManager = LinearLayoutManager(this)
+		val layoutManager = LinearLayoutManager(this)
+		fileListView.layoutManager = layoutManager
+		fileListView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
 		fileListView.visibility = View.VISIBLE
 
 		pbLoading.findView().visibility = View.INVISIBLE
