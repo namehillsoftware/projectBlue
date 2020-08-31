@@ -20,9 +20,9 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 
 class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPlayingRepository, private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar)
-	: AbstractFileListItemMenuBuilder<NowPlayingFileListItemMenuBuilder.ViewHolder>() {
+	: AbstractFileListItemMenuBuilder<NowPlayingFileListItemMenuBuilder.ViewHolder>(R.layout.layout_now_playing_file_item_menu) {
 
-	override fun newViewHolder(fileItemMenu: FileListItemContainer)= ViewHolder(fileItemMenu)
+	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
 
 	inner class ViewHolder internal constructor(private val fileListItemContainer: FileListItemContainer)
 		: RecyclerView.ViewHolder(fileListItemContainer.viewAnimator) {

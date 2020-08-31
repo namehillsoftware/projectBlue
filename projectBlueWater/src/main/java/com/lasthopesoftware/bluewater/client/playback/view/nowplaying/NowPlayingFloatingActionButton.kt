@@ -17,6 +17,11 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 class NowPlayingFloatingActionButton private constructor(context: Context) : FloatingActionButton(context) {
 	private var isNowPlayingFileSet = false
 
+	init {
+		setImageDrawable(ViewUtils.getDrawable(context, R.drawable.av_play_dark))
+		initializeNowPlayingFloatingActionButton()
+	}
+
 	private fun initializeNowPlayingFloatingActionButton() {
 		setOnClickListener { v -> startNowPlayingActivity(v.context) }
 
@@ -64,10 +69,5 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 			container.addView(nowPlayingFloatingActionButton)
 			return nowPlayingFloatingActionButton
 		}
-	}
-
-	init {
-		setImageDrawable(ViewUtils.getDrawable(context, R.drawable.av_play_dark))
-		initializeNowPlayingFloatingActionButton()
 	}
 }
