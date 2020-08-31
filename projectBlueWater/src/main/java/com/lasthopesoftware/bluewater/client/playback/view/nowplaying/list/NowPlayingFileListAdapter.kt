@@ -12,17 +12,6 @@ class NowPlayingFileListAdapter(
 	private val nowPlayingFileListItemMenuBuilder: NowPlayingFileListItemMenuBuilder)
 	: DeferredListAdapter<PositionedFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(context, PositionedFileDiffer) {
 
-//	private val nowPlayingFileListItemMenuBuilder = NowPlayingFileListItemMenuBuilder(nowPlayingRepository)
-
-	/*init {
-		val viewChangedHandler = ViewChangedHandler()
-		viewChangedHandler.setOnAllMenusHidden(itemListMenuChangeHandler)
-		viewChangedHandler.setOnAnyMenuShown(itemListMenuChangeHandler)
-		viewChangedHandler.setOnViewChangedListener(itemListMenuChangeHandler)
-
-		nowPlayingFileListItemMenuBuilder.setOnViewChangedListener(viewChangedHandler)
-	}*/
-
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = nowPlayingFileListItemMenuBuilder.newViewHolder(parent)
 
 	override fun onBindViewHolder(holder: NowPlayingFileListItemMenuBuilder.ViewHolder, position: Int) =
