@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
@@ -32,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
@@ -51,6 +53,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.GenericBinder
@@ -118,10 +121,19 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private val lazyNowPlayingListAdapter = lazy {
+		val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
+			lazyNowPlayingRepository.value,
+			FileListItemNowPlayingRegistrar(localBroadcastManager.value))
+
+		nowPlayingFileListMenuBuilder.setOnViewChangedListener(
+			ViewChangedHandler()
+				.setOnViewChangedListener(this)
+				.setOnAnyMenuShown(this)
+				.setOnAllMenusHidden(this))
+
 		NowPlayingFileListAdapter(
 			this,
-			this,
-			lazyNowPlayingRepository.value)
+			nowPlayingFileListMenuBuilder)
 	}
 
 	private val nowPlayingDrawerListView = lazy {
@@ -593,7 +605,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		super.onBackPressed()
 	}
 
-	private class ViewStructure internal constructor(val urlKeyHolder: UrlKeyHolder<Int>, val serviceFile: ServiceFile) {
+	private class ViewStructure(val urlKeyHolder: UrlKeyHolder<Int>, val serviceFile: ServiceFile) {
 		var fileProperties: MutableMap<String, String>? = null
 		var promisedNowPlayingImage: Promise<Bitmap?>? = null
 		var filePosition: Long = 0

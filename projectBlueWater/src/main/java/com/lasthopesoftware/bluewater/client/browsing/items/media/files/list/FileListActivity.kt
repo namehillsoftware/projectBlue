@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -23,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity.Companion.restoreSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.Companion.getInstance
@@ -93,6 +95,14 @@ class FileListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 			serviceFiles,
 			nowPlayingFileProvider,
 			FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(this)))
+
+		ItemListMenuChangeHandler(this).apply {
+			fileListItemMenuBuilder.setOnViewChangedListener(
+				ViewChangedHandler()
+					.setOnViewChangedListener(this)
+					.setOnAnyMenuShown(this)
+					.setOnAllMenusHidden(this))
+		}
 
 		val fileListAdapter = FileListAdapter(
 			serviceFiles,
