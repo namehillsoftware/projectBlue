@@ -8,10 +8,7 @@ import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.trackselection.TrackSelector
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.AudioRenderingEventListener
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.EmptyRenderersListener
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.MetadataOutputLogger
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.TextOutputLogger
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.GetAudioRenderers
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
@@ -19,11 +16,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.volume.EmptyVolumeManager
-import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import com.namehillsoftware.lazyj.Lazy
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CancellationException
 
@@ -32,7 +27,7 @@ internal class PreparedExoPlayerPromise(
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val trackSelector: TrackSelector,
 	private val loadControl: LoadControl,
-	private val renderersFactory: RenderersFactory,
+	private val renderersFactory: GetAudioRenderers,
 	private val handler: Handler,
 	private val uri: Uri,
 	private val prepareAt: Long) :
@@ -42,8 +37,6 @@ internal class PreparedExoPlayerPromise(
 	ImmediateResponse<Throwable, Unit> {
 
 	companion object {
-		private val lazyTextOutputLogger = Lazy { TextOutputLogger() }
-		private val lazyMetadataOutputLogger = Lazy { MetadataOutputLogger() }
 		private val logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java)
 	}
 
@@ -66,15 +59,7 @@ internal class PreparedExoPlayerPromise(
 			return
 		}
 
-		audioRenderers = renderersFactory.createRenderers(
-			handler,
-			EmptyRenderersListener,
-			if (DebugFlag.getInstance().isDebugCompilation) AudioRenderingEventListener() else EmptyRenderersListener,
-			lazyTextOutputLogger.getObject(),
-			lazyMetadataOutputLogger.getObject(),
-			null)
-			.mapNotNull { it as? MediaCodecAudioRenderer }
-			.toTypedArray()
+		audioRenderers = renderersFactory.newRenderers()
 
 		val newExoPlayer = ExoPlayerFactory.newInstance(
 			context,
@@ -83,7 +68,7 @@ internal class PreparedExoPlayerPromise(
 			loadControl,
 			handler.looper)
 
-		exoPlayer = newExoPlayer;
+		exoPlayer = newExoPlayer
 
 		if (cancellationToken.isCancelled) return
 
@@ -115,13 +100,15 @@ internal class PreparedExoPlayerPromise(
 
 		if (playbackState != Player.STATE_READY) return
 
-		if (exoPlayer!!.currentPosition < prepareAt) {
-			exoPlayer!!.seekTo(prepareAt)
+		val exoPlayer = exoPlayer ?: return
+
+		if (exoPlayer.currentPosition < prepareAt) {
+			exoPlayer.seekTo(prepareAt)
 			return
 		}
 
 		isResolved = true
-		exoPlayer!!.removeListener(this)
+		exoPlayer.removeListener(this)
 		resolve(
 			PreparedPlayableFile(
 				ExoPlayerPlaybackHandler(exoPlayer),

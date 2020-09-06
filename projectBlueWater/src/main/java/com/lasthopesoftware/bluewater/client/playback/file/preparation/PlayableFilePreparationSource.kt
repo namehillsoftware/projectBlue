@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.namehillsoftware.handoff.promises.Promise
 
-public interface PlayableFilePreparationSource {
-	Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt);
+interface PlayableFilePreparationSource {
+	fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Long): Promise<PreparedPlayableFile>
 }

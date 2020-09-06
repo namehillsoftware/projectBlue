@@ -1,56 +1,37 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 
-import android.content.Context;
-import android.os.Handler;
+import android.content.Context
+import android.os.Handler
+import com.google.android.exoplayer2.LoadControl
+import com.google.android.exoplayer2.trackselection.TrackSelector
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider
+import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.GetAudioRenderers
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
+import com.namehillsoftware.handoff.promises.Promise
 
-import com.google.android.exoplayer2.LoadControl;
-import com.google.android.exoplayer2.RenderersFactory;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.namehillsoftware.handoff.promises.Promise;
+class ExoPlayerPlaybackPreparer(
+	private val context: Context,
+	private val mediaSourceProvider: SpawnMediaSources,
+	private val trackSelector: TrackSelector,
+	private val loadControl: LoadControl,
+	private val renderersFactory: GetAudioRenderers,
+	private val handler: Handler,
+	private val uriProvider: IFileUriProvider) : PlayableFilePreparationSource {
 
-public final class ExoPlayerPlaybackPreparer implements PlayableFilePreparationSource {
-
-	private final SpawnMediaSources mediaSourceProvider;
-	private final Context context;
-	private final TrackSelector trackSelector;
-	private final LoadControl loadControl;
-	private final RenderersFactory renderersFactory;
-	private final Handler handler;
-	private final IFileUriProvider uriProvider;
-
-	public ExoPlayerPlaybackPreparer(
-		Context context,
-		SpawnMediaSources mediaSourceProvider,
-		TrackSelector trackSelector,
-		LoadControl loadControl,
-		RenderersFactory renderersFactory,
-		Handler handler,
-		IFileUriProvider uriProvider) {
-		this.context = context;
-		this.trackSelector = trackSelector;
-		this.loadControl = loadControl;
-		this.renderersFactory = renderersFactory;
-		this.handler = handler;
-		this.uriProvider = uriProvider;
-		this.mediaSourceProvider = mediaSourceProvider;
-	}
-
-	@Override
-	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
-		return uriProvider.promiseFileUri(serviceFile)
-			.eventually(uri -> new PreparedExoPlayerPromise(
-				context,
-				mediaSourceProvider,
-				trackSelector,
-				loadControl,
-				renderersFactory,
-				handler,
-				uri,
-				preparedAt));
-	}
+	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Long): Promise<PreparedPlayableFile> =
+		uriProvider.promiseFileUri(serviceFile)
+			.eventually { uri ->
+				PreparedExoPlayerPromise(
+					context,
+					mediaSourceProvider,
+					trackSelector,
+					loadControl,
+					renderersFactory,
+					handler,
+					uri,
+					preparedAt)
+			}
 }
