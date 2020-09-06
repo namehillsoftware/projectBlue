@@ -15,26 +15,24 @@ class SyncDirectoryLookup(
 	private val privateDrives: GetPrivateDirectories,
 	private val freeSpace: GetFreeSpace) : LookupSyncDirectory {
 
-	override fun promiseSyncDirectory(libraryId: LibraryId): Promise<File> {
-		return getExternalFilesDirectoriesStream(libraryId)
-			.then { files -> files.maxBy { f -> freeSpace.getFreeSpace(f) } }
-	}
+	override fun promiseSyncDirectory(libraryId: LibraryId): Promise<File> =
+		getExternalFilesDirectoriesStream(libraryId)
+			.then { files -> files.maxByOrNull(freeSpace::getFreeSpace)!! }
 
-	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<Collection<File>> {
-		return libraryProvider.getLibrary(libraryId)
-			.eventually<Collection<File>> { library ->
+	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<Collection<File>> =
+		libraryProvider.getLibrary(libraryId)
+			.eventually { library ->
 				when (library?.syncedFileLocation) {
 					SyncedFileLocation.EXTERNAL -> publicDrives.promisePublicDrives().promiseDirectoriesWithLibrary(libraryId)
 					SyncedFileLocation.INTERNAL -> privateDrives.promisePrivateDrives().promiseDirectoriesWithLibrary(libraryId)
 					SyncedFileLocation.CUSTOM -> {
 						val customSyncedFilePath = library.customSyncedFilesPath
-						if (customSyncedFilePath != null) Promise<Collection<File>>(listOf(File(customSyncedFilePath)))
+						if (customSyncedFilePath != null) Promise(listOf(File(customSyncedFilePath)))
 						else Promise(emptyList())
 					}
 					else -> Promise(emptyList())
 				}
 			}
-	}
 
 	private fun Promise<Collection<File>>.promiseDirectoriesWithLibrary(libraryId: LibraryId): Promise<Collection<File>> {
 		if (libraryId.id < 0) return this
