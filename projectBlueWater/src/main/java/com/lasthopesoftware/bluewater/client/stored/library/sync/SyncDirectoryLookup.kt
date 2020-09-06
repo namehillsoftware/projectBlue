@@ -17,12 +17,12 @@ class SyncDirectoryLookup(
 
 	override fun promiseSyncDirectory(libraryId: LibraryId): Promise<File> {
 		return getExternalFilesDirectoriesStream(libraryId)
-			.then { files -> files.maxBy { f -> freeSpace.getFreeSpace(f) } }
+			.then { files -> files.maxByOrNull { f -> freeSpace.getFreeSpace(f) }!! }
 	}
 
 	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<Collection<File>> {
 		return libraryProvider.getLibrary(libraryId)
-			.eventually<Collection<File>> { library ->
+			.eventually { library ->
 				when (library?.syncedFileLocation) {
 					SyncedFileLocation.EXTERNAL -> publicDrives.promisePublicDrives().promiseDirectoriesWithLibrary(libraryId)
 					SyncedFileLocation.INTERNAL -> privateDrives.promisePrivateDrives().promiseDirectoriesWithLibrary(libraryId)
