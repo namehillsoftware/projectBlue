@@ -9,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
  * Created by david on 11/8/15.
  */
 class RemovePlaylistFileClickListener(parent: NotifyOnFlipViewAnimator, private val position: Int) : AbstractMenuClickHandler(parent) {
-	override fun onClick(view: View) {
-		PlaybackService.removeFileAtPositionFromPlaylist(view.context, position)
-		super.onClick(view)
+	override fun onClick(v: View) {
+		PlaybackService.removeFileAtPositionFromPlaylist(v.context, position)
+		super.onClick(v)
 	}
 }

@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.Gi
 
 import android.preference.PreferenceManager;
 
+import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
-import com.lasthopesoftware.bluewater.settings.ApplicationConstants;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 

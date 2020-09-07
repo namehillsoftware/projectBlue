@@ -1,6 +1,6 @@
-package com.lasthopesoftware.bluewater.settings
+package com.lasthopesoftware.bluewater
 
-class ApplicationConstants {
+object ApplicationConstants {
 	object PreferenceConstants {
 		const val isSyncOnWifiOnlyKey = "isSyncOnWifiOnly"
 		const val isSyncOnPowerOnlyKey = "isSyncOnPowerOnly"

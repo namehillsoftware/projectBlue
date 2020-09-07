@@ -1,35 +1,25 @@
-package com.lasthopesoftware.bluewater.settings;
+package com.lasthopesoftware.bluewater.settings
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
+import android.content.SharedPreferences
+import android.widget.CheckBox
+import android.widget.CompoundButton
 
-class HandleCheckboxPreference implements CompoundButton.OnCheckedChangeListener {
-	static void handle(Context context, String settingKey, CheckBox settingCheckbox) {
-		settingCheckbox.setEnabled(false);
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-		final boolean preference = sharedPreferences.getBoolean(settingKey, false);
-		settingCheckbox.setChecked(preference);
-		settingCheckbox.setOnCheckedChangeListener(
-			new HandleCheckboxPreference(sharedPreferences, settingKey));
-		settingCheckbox.setEnabled(true);
-	}
-
-	private final SharedPreferences sharedPreferences;
-	private final String settingKey;
-
-	private HandleCheckboxPreference(SharedPreferences sharedPreferences, String settingKey) {
-		this.settingKey = settingKey;
-		this.sharedPreferences = sharedPreferences;
-	}
-
-	@Override
-	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+internal class HandleCheckboxPreference private constructor(private val sharedPreferences: SharedPreferences, private val settingKey: String) : CompoundButton.OnCheckedChangeListener {
+	override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
 		sharedPreferences
 			.edit()
 			.putBoolean(settingKey, isChecked)
-			.apply();
+			.apply()
+	}
+
+	companion object {
+		fun handle(sharedPreferences: SharedPreferences, settingKey: String, settingCheckbox: CheckBox) {
+			settingCheckbox.isEnabled = false
+			val preference = sharedPreferences.getBoolean(settingKey, false)
+			settingCheckbox.isChecked = preference
+			settingCheckbox.setOnCheckedChangeListener(
+				HandleCheckboxPreference(sharedPreferences, settingKey))
+			settingCheckbox.isEnabled = true
+		}
 	}
 }
