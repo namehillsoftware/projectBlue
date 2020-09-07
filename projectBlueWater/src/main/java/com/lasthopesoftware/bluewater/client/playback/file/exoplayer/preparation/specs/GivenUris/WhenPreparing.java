@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.google.android.exoplayer2.LoadControl;
-import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.SeekParameters;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.BaseMediaSource;
@@ -66,10 +65,10 @@ public class WhenPreparing extends AndroidContext {
 			uri -> new FakeMediaSource(),
 			new DefaultTrackSelector(),
 			loadControl,
-			(e, v, a, t, m, d) -> {
+			() -> {
 				final MediaCodecAudioRenderer audioRenderer = mock(MediaCodecAudioRenderer.class);
 				when(audioRenderer.isReady()).thenReturn(true);
-				return new Renderer[] { audioRenderer };
+				return new MediaCodecAudioRenderer[] { audioRenderer };
 			},
 			new Handler(Looper.getMainLooper()),
 			(sf) -> new Promise<>(Uri.EMPTY));

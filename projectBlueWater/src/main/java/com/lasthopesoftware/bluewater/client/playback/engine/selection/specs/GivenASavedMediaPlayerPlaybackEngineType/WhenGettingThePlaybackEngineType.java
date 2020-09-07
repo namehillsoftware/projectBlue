@@ -1,6 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenASavedMediaPlayerPlaybackEngineType;
 
-import android.preference.PreferenceManager;
+import android.content.SharedPreferences;
+
+import androidx.preference.PreferenceManager;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
@@ -25,14 +28,16 @@ public class WhenGettingThePlaybackEngineType {
 
 	@Before
 	public void before() throws ExecutionException, InterruptedException {
-		PreferenceManager
-			.getDefaultSharedPreferences(RuntimeEnvironment.application).edit()
+		final SharedPreferences sharedPreferences = PreferenceManager
+			.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
+
+		sharedPreferences.edit()
 			.putString(ApplicationConstants.PreferenceConstants.playbackEngine, "MediaPlayer")
 			.apply();
 
 		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
 			new SelectedPlaybackEngineTypeAccess(
-				RuntimeEnvironment.application,
+				sharedPreferences,
 				() -> new Promise<>(PlaybackEngineType.ExoPlayer));
 
 		playbackEngineType = new FuturePromise<>(selectedPlaybackEngineTypeAccess
