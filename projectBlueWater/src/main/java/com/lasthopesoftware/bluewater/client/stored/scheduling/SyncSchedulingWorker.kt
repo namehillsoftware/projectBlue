@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.scheduling
 
 import android.content.Context
 import android.os.AsyncTask
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import androidx.work.*
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture

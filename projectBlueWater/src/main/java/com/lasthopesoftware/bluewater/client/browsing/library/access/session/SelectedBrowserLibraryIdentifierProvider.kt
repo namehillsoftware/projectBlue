@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
 import android.content.Context
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 
 /**
