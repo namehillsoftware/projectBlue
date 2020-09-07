@@ -2,10 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering
 
 import android.content.Context
 import android.os.Handler
-import com.google.android.exoplayer2.audio.AudioCapabilities
-import com.google.android.exoplayer2.audio.DefaultAudioSink
-import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
-import com.google.android.exoplayer2.audio.SilenceSkippingAudioProcessor
+import com.google.android.exoplayer2.audio.*
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector
 import com.lasthopesoftware.bluewater.client.playback.file.rendering.LookupSilenceSkippingSettings
 import com.lasthopesoftware.compilation.DebugFlag
@@ -14,9 +11,7 @@ import com.namehillsoftware.handoff.promises.Promise
 class AudioRenderersFactory(private val context: Context, private val handler: Handler, private val lookupSilenceSkippingSettings: LookupSilenceSkippingSettings) : GetAudioRenderers {
 
 	override fun newRenderers(): Promise<Array<MediaCodecAudioRenderer>> =
-		lookupSilenceSkippingSettings.promiseSkipSilenceIsEnabled().then { isEnabled ->
-			val processors = if (isEnabled) arrayOf(newSilenceSkippingAudioProcessor()) else emptyArray()
-
+		newProcessors().then { processors ->
 			arrayOf(
 				MediaCodecAudioRenderer(
 					context,
@@ -27,9 +22,22 @@ class AudioRenderersFactory(private val context: Context, private val handler: H
 					DefaultAudioSink(AudioCapabilities.getCapabilities(context), processors)))
 		}
 
-	private fun newSilenceSkippingAudioProcessor(): SilenceSkippingAudioProcessor {
-		val silenceSkippingAudioProcessor = SilenceSkippingAudioProcessor()
-		silenceSkippingAudioProcessor.setEnabled(true)
-		return silenceSkippingAudioProcessor
-	}
+	private fun newProcessors(): Promise<Array<AudioProcessor>> =
+		lookupSilenceSkippingSettings.promiseSkipSilenceIsEnabled().eventually { isEnabled ->
+			if (!isEnabled) null
+			else newSilenceSkippingAudioProcessor()
+		}.then {
+			if (it != null) arrayOf(it)
+			else emptyArray()
+		}
+
+	private fun newSilenceSkippingAudioProcessor(): Promise<SilenceSkippingAudioProcessor> =
+		lookupSilenceSkippingSettings.promiseMinimumSilenceDuration().then { minimumSilenceDuration ->
+			val silenceSkippingAudioProcessor = SilenceSkippingAudioProcessor(
+				minimumSilenceDuration.millis * 1000,
+				SilenceSkippingAudioProcessor.DEFAULT_PADDING_SILENCE_US,
+				SilenceSkippingAudioProcessor.DEFAULT_SILENCE_THRESHOLD_LEVEL)
+			silenceSkippingAudioProcessor.setEnabled(true)
+			silenceSkippingAudioProcessor
+		}
 }
