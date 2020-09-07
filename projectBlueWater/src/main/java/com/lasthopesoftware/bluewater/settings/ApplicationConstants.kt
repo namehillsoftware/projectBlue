@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater;
+package com.lasthopesoftware.bluewater.settings
 
-public class ApplicationConstants {
-    public static class PreferenceConstants {
-        public static final String isSyncOnWifiOnlyKey = "isSyncOnWifiOnly";
-        public static final String isSyncOnPowerOnlyKey = "isSyncOnPowerOnly";
-        public static final String isVolumeLevelingEnabled = "isVolumeLevelingEnabled";
-        public static final String playbackEngine = "playbackEngine";
-    }
+class ApplicationConstants {
+	object PreferenceConstants {
+		const val isSyncOnWifiOnlyKey = "isSyncOnWifiOnly"
+		const val isSyncOnPowerOnlyKey = "isSyncOnPowerOnly"
+		const val isVolumeLevelingEnabled = "isVolumeLevelingEnabled"
+		const val playbackEngine = "playbackEngine"
+		const val skipSilence = "skipSilence"
+	}
 }

@@ -2,12 +2,15 @@ package com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.spec
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+
 import androidx.test.core.app.ApplicationProvider;
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
-import com.lasthopesoftware.bluewater.ApplicationConstants;
+
 import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints;
+import com.lasthopesoftware.bluewater.settings.ApplicationConstants;
 import com.lasthopesoftware.specs.AndroidContext;
+
 import org.junit.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

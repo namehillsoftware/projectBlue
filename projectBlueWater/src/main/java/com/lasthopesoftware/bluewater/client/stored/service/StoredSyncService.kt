@@ -15,7 +15,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
-import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
@@ -51,6 +50,7 @@ import com.lasthopesoftware.bluewater.client.stored.service.notifications.SyncCh
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.settings.ApplicationConstants
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder

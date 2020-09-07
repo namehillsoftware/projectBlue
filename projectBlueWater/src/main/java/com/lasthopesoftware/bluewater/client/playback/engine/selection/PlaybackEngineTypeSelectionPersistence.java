@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
-import com.lasthopesoftware.bluewater.ApplicationConstants;
+
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.settings.ApplicationConstants;
 
 public class PlaybackEngineTypeSelectionPersistence implements SelectPlaybackEngineType {
 
