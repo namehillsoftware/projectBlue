@@ -24,11 +24,8 @@ class AudioRenderersFactory(private val context: Context, private val handler: H
 
 	private fun newProcessors(): Promise<Array<AudioProcessor>> =
 		lookupSilenceSkippingSettings.promiseSkipSilenceIsEnabled().eventually { isEnabled ->
-			if (!isEnabled) null
-			else newSilenceSkippingAudioProcessor()
-		}.then {
-			if (it != null) arrayOf(it)
-			else emptyArray()
+			if (!isEnabled) Promise(emptyArray())
+			else newSilenceSkippingAudioProcessor().then { arrayOf(it) }
 		}
 
 	private fun newSilenceSkippingAudioProcessor(): Promise<SilenceSkippingAudioProcessor> =
