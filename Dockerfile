@@ -34,7 +34,6 @@ RUN curl -sS https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk
         "platforms;android-$ANDROID_BUILD_VERSION" \
         "build-tools;$ANDROID_TOOLS_VERSION" \
         "add-ons;addon-google_apis-google-23" \
-        "system-images;android-19;google_apis;armeabi-v7a" \
         "extras;android;m2repository"
 
 WORKDIR /src
