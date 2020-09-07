@@ -1,39 +1,24 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
-import android.content.Context;
-import android.os.Handler;
+import android.content.Context
+import android.os.Handler
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.rendering.LookupSilenceSkippingSettings
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
-
-public class PreparedPlaybackQueueFeederBuilder implements BuildPreparedPlaybackQueueFeeder {
-
-	private final Context context;
-	private final Handler handler;
-	private final MediaSourceProvider mediaSourceProvider;
-	private final BestMatchUriProvider bestMatchUriProvider;
-
-	public PreparedPlaybackQueueFeederBuilder(
-		Context context,
-		Handler handler,
-		MediaSourceProvider mediaSourceProvider,
-		BestMatchUriProvider bestMatchUriProvider) {
-
-		this.context = context;
-		this.handler = handler;
-		this.mediaSourceProvider = mediaSourceProvider;
-		this.bestMatchUriProvider = bestMatchUriProvider;
-	}
-
-	@Override
-	public IPlayableFilePreparationSourceProvider build(Library library) {
-		return new ExoPlayerPlayableFilePreparationSourceProvider(
+class PreparedPlaybackQueueFeederBuilder(
+	private val context: Context,
+	private val handler: Handler,
+	private val mediaSourceProvider: MediaSourceProvider,
+	private val bestMatchUriProvider: BestMatchUriProvider,
+	private val lookupSilenceSkippingSettings: LookupSilenceSkippingSettings) : BuildPreparedPlaybackQueueFeeder {
+	override fun build(library: Library): IPlayableFilePreparationSourceProvider =
+		ExoPlayerPlayableFilePreparationSourceProvider(
 			context,
 			handler,
 			mediaSourceProvider,
-			bestMatchUriProvider
-		);
-	}
+			bestMatchUriProvider,
+			lookupSilenceSkippingSettings)
 }

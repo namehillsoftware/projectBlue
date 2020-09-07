@@ -15,7 +15,6 @@ import com.google.android.exoplayer2.source.BaseMediaSource;
 import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.Allocator;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
@@ -63,12 +62,11 @@ public class WhenPreparing extends AndroidContext {
 		final ExoPlayerPlaybackPreparer preparer = new ExoPlayerPlaybackPreparer(
 			ApplicationProvider.getApplicationContext(),
 			uri -> new FakeMediaSource(),
-			new DefaultTrackSelector(),
 			loadControl,
 			() -> {
 				final MediaCodecAudioRenderer audioRenderer = mock(MediaCodecAudioRenderer.class);
 				when(audioRenderer.isReady()).thenReturn(true);
-				return new MediaCodecAudioRenderer[] { audioRenderer };
+				return new Promise<>(new MediaCodecAudioRenderer[] { audioRenderer });
 			},
 			new Handler(Looper.getMainLooper()),
 			(sf) -> new Promise<>(Uri.EMPTY));

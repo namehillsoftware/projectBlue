@@ -10,6 +10,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
@@ -27,6 +28,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationCompat.Builder;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
@@ -81,6 +83,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackExcepti
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders;
+import com.lasthopesoftware.bluewater.client.playback.file.rendering.SilenceSkippingSettings;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.IPlaybackBroadcaster;
@@ -428,7 +431,9 @@ implements OnAudioFocusChangeListener
 
 	private final CreateAndHold<ControlNotifications> lazyNotificationController = new Lazy<>(() -> new NotificationsController(this, notificationManagerLazy.getObject()));
 
-	private final CreateAndHold<BreakConnection> lazyDisconnectionTracker = new Lazy<>(() -> new ConnectionCircuitTracker());
+	private final CreateAndHold<BreakConnection> lazyDisconnectionTracker = new Lazy<>(ConnectionCircuitTracker::new);
+
+	private final CreateAndHold<SharedPreferences> lazyPreferences = new Lazy<>(() -> PreferenceManager.getDefaultSharedPreferences(this));
 
 	private boolean areListenersRegistered = false;
 
@@ -837,7 +842,8 @@ implements OnAudioFocusChangeListener
 							library,
 							new HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
 							cache),
-						bestMatchUriProvider);
+						bestMatchUriProvider,
+						new SilenceSkippingSettings(lazyPreferences.getObject()));
 
 				final IPlayableFilePreparationSourceProvider preparationSourceProvider =
 					new MaxFileVolumePreparationProvider(

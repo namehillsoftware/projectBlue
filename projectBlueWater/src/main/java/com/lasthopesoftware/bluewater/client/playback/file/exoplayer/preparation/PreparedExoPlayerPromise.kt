@@ -7,12 +7,11 @@ import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
-import com.google.android.exoplayer2.trackselection.TrackSelector
-import com.lasthopesoftware.bluewater.client.playback.engine.exoplayer.GetAudioRenderers
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.GetAudioRenderers
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.volume.EmptyVolumeManager
@@ -25,7 +24,6 @@ import java.util.concurrent.CancellationException
 internal class PreparedExoPlayerPromise(
 	private val context: Context,
 	private val mediaSourceProvider: SpawnMediaSources,
-	private val trackSelector: TrackSelector,
 	private val loadControl: LoadControl,
 	private val renderersFactory: GetAudioRenderers,
 	private val handler: Handler,
@@ -33,8 +31,8 @@ internal class PreparedExoPlayerPromise(
 	private val prepareAt: Long) :
 	Promise<PreparedPlayableFile>(),
 	Player.EventListener,
-	Runnable,
-	ImmediateResponse<Throwable, Unit> {
+	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
+	Runnable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java)
@@ -59,15 +57,16 @@ internal class PreparedExoPlayerPromise(
 			return
 		}
 
-		audioRenderers = renderersFactory.newRenderers()
+		renderersFactory.newRenderers().then(this)
+	}
 
-		val newExoPlayer = ExoPlayerFactory.newInstance(
-			context,
-			audioRenderers,
-			trackSelector,
-			loadControl,
-			handler.looper)
+	override fun respond(resolution: Array<MediaCodecAudioRenderer>) {
+		audioRenderers = resolution
+		val exoPlayerBuilder = ExoPlayer.Builder(context, *resolution)
+			.setLoadControl(loadControl)
+			.setLooper(handler.looper)
 
+		val newExoPlayer = exoPlayerBuilder.build()
 		exoPlayer = newExoPlayer
 
 		if (cancellationToken.isCancelled) return
@@ -86,7 +85,7 @@ internal class PreparedExoPlayerPromise(
 			reject(e)
 		}
 
-		newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(this)
+		newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError)
 	}
 
 	override fun run() {
@@ -138,10 +137,6 @@ internal class PreparedExoPlayerPromise(
 			}
 			else -> reject(error)
 		}
-	}
-
-	override fun respond(throwable: Throwable) {
-		handleError(throwable)
 	}
 
 	override fun onTimelineChanged(timeline: Timeline, manifest: Any?, reason: Int) {}
