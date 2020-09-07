@@ -97,5 +97,5 @@
     <string name="sending_wake_signal">Sending wake signal to server</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-    <string name="skipSilenceSetting">Skip Silence in Tracks</string>
+    <string name="skipSilenceSetting">Skip Silence in Tracks (in Beta)</string>
 </resources>
