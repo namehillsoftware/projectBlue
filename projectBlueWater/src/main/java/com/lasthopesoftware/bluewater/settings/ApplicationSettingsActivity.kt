@@ -72,11 +72,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled,
 			findViewById(R.id.isVolumeLevelingEnabled))
 
-		HandleCheckboxPreference.handle(
-			sharedPreferences,
-			ApplicationConstants.PreferenceConstants.skipSilence,
-			findViewById(R.id.skipSilence))
-
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			sharedPreferences,
 			PlaybackEngineTypeChangedBroadcaster(this))

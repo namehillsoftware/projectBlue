@@ -7,10 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.Best
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.AudioRenderersFactory
-import com.lasthopesoftware.bluewater.client.playback.file.rendering.LookupSilenceSkippingSettings
 import org.joda.time.Minutes
 
-class ExoPlayerPlayableFilePreparationSourceProvider(private val context: Context, private val handler: Handler, private val mediaSourceProvider: SpawnMediaSources, private val bestMatchUriProvider: BestMatchUriProvider, lookupSilenceSkippingSettings: LookupSilenceSkippingSettings) : IPlayableFilePreparationSourceProvider {
+class ExoPlayerPlayableFilePreparationSourceProvider(private val context: Context, private val handler: Handler, private val mediaSourceProvider: SpawnMediaSources, private val bestMatchUriProvider: BestMatchUriProvider) : IPlayableFilePreparationSourceProvider {
 
 	companion object {
 		private val maxBufferMs = lazy { Minutes.minutes(5).toStandardDuration().millis.toInt() }
@@ -25,7 +24,7 @@ class ExoPlayerPlayableFilePreparationSourceProvider(private val context: Contex
 		}
 	}
 
-	private val renderersFactory = AudioRenderersFactory(context, handler, lookupSilenceSkippingSettings)
+	private val renderersFactory = AudioRenderersFactory(context, handler)
 
 	override fun getMaxQueueSize() = 1
 

@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSel
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.rendering.LookupSilenceSkippingSettings;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -36,8 +35,7 @@ public class WhenBuildingTheEngine {
 				mock(Context.class),
 				mock(Handler.class),
 				mock(MediaSourceProvider.class),
-				mock(BestMatchUriProvider.class),
-				mock(LookupSilenceSkippingSettings.class));
+				mock(BestMatchUriProvider.class));
 
 		engine = playbackEngineBuilder.build(new Library());
 	}

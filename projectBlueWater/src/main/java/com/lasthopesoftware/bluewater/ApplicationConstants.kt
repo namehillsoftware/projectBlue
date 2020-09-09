@@ -6,6 +6,5 @@ object ApplicationConstants {
 		const val isSyncOnPowerOnlyKey = "isSyncOnPowerOnly"
 		const val isVolumeLevelingEnabled = "isVolumeLevelingEnabled"
 		const val playbackEngine = "playbackEngine"
-		const val skipSilence = "skipSilence"
 	}
 }
