@@ -49,45 +49,50 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val modifyNotificationSettingsButton = LazyViewFinder<Button>(this, R.id.modifyNotificationSettingsButton)
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
+	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		setContentView(R.layout.layout_edit_app_settings)
 
+		val sharedPreferences = lazySharedPreferences.value
 		HandleSyncCheckboxPreference.handle(
-			this,
+			sharedPreferences,
 			ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey,
 			findViewById(R.id.syncOnPowerCheckbox))
 
 		HandleSyncCheckboxPreference.handle(
-			this,
+			sharedPreferences,
 			ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey,
 			findViewById(R.id.syncOnWifiCheckbox))
 
 		HandleCheckboxPreference.handle(
-			this,
+			sharedPreferences,
 			ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled,
 			findViewById(R.id.isVolumeLevelingEnabled))
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
-			this,
+			sharedPreferences,
 			PlaybackEngineTypeChangedBroadcaster(this))
 
-		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(this, DefaultPlaybackEngineLookup())
+		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(sharedPreferences, DefaultPlaybackEngineLookup())
 
 		val playbackEngineTypeSelectionView = PlaybackEngineTypeSelectionView(this)
 
 		val playbackEngineOptions = findViewById<RadioGroup>(R.id.playbackEngineOptions)
 
-		for (i in 0 until playbackEngineOptions.childCount) playbackEngineOptions.getChildAt(i).isEnabled = false
-		for (rb in playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections()) playbackEngineOptions.addView(rb)
+		for (i in 0 until playbackEngineOptions.childCount)
+			playbackEngineOptions.getChildAt(i).isEnabled = false
+
+		for (rb in playbackEngineTypeSelectionView.buildPlaybackEngineTypeSelections())
+			playbackEngineOptions.addView(rb)
 
 		selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType()
-			.eventually(LoopedInPromise.response<PlaybackEngineType, Any?>({ t: PlaybackEngineType ->
+			.eventually(LoopedInPromise.response({ t ->
 				playbackEngineOptions.check(t.ordinal)
-				for (i in 0 until playbackEngineOptions.childCount) playbackEngineOptions.getChildAt(i).isEnabled = true
-				null
+				for (i in 0 until playbackEngineOptions.childCount)
+					playbackEngineOptions.getChildAt(i).isEnabled = true
 			}, this))
 
 		playbackEngineOptions
@@ -101,8 +106,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
 		notificationSettingsContainer.findView().visibility = View.VISIBLE
-
-		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
 		val wasTutorialShown = sharedPreferences.getBoolean(isTutorialShownPreference, false)
 		if (wasTutorialShown) {

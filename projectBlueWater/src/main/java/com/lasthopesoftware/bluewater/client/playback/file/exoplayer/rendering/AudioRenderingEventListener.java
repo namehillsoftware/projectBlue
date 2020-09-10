@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.exoplayer;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering;
 
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;

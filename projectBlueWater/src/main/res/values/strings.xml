@@ -80,7 +80,7 @@
     <string name="unknown_file">unknown file</string>
     <string name="lbl_connect">Connect</string>
     <string name="app_audio_settings">Audio Settings:</string>
-    <string name="app_use_volume_leveling">Use Volume Leveling (R128)</string>
+    <string name="useVolumeLevelingSetting">Use Volume Leveling (R128)</string>
     <string name="permissions_must_be_granted_for_settings">In order for the library settings to be changed, the requested permissions must be granted!</string>
     <string name="permissions_needed">Permissions needed</string>
     <string name="permissions_needed_launch_settings">Permissions are needed to read or write from the disk. Please set these permissions from the settings page.</string>

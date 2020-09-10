@@ -428,7 +428,7 @@ implements OnAudioFocusChangeListener
 
 	private final CreateAndHold<ControlNotifications> lazyNotificationController = new Lazy<>(() -> new NotificationsController(this, notificationManagerLazy.getObject()));
 
-	private final CreateAndHold<BreakConnection> lazyDisconnectionTracker = new Lazy<>(() -> new ConnectionCircuitTracker());
+	private final CreateAndHold<BreakConnection> lazyDisconnectionTracker = new Lazy<>(ConnectionCircuitTracker::new);
 
 	private boolean areListenersRegistered = false;
 

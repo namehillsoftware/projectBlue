@@ -4,11 +4,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.preference.PreferenceManager;
+import android.content.SharedPreferences;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
+import androidx.test.core.app.ApplicationProvider;
+
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,14 +43,16 @@ public class WhenPersistingTheSelectedPlaybackEngine {
 				}
 			}, new IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged));
 
-		PreferenceManager.getDefaultSharedPreferences(RuntimeEnvironment.application)
-			.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
-				persistedEngineType = sharedPreferences.getString(key, null);
+		final SharedPreferences sharedPreferences = PreferenceManager
+			.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
+		sharedPreferences
+			.registerOnSharedPreferenceChangeListener((sp, key) -> {
+				persistedEngineType = sp.getString(key, null);
 				countDownLatch.countDown();
 			});
 
 		new PlaybackEngineTypeSelectionPersistence(
-			RuntimeEnvironment.application,
+			sharedPreferences,
 			new PlaybackEngineTypeChangedBroadcaster(RuntimeEnvironment.application))
 				.selectPlaybackEngine(PlaybackEngineType.ExoPlayer);
 

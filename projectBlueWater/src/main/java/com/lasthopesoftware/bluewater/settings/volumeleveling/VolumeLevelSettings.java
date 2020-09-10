@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.settings.volumeleveling;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
+
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 
 public class VolumeLevelSettings implements IVolumeLevelSettings {

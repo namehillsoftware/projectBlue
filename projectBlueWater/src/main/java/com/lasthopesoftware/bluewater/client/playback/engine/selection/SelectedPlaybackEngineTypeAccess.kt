@@ -1,32 +1,29 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection
 
-import android.content.Context
-import androidx.preference.PreferenceManager
+import android.content.SharedPreferences
 import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.LookupDefaultPlaybackEngine
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class SelectedPlaybackEngineTypeAccess(private val context: Context, private val defaultPlaybackEngineLookup: LookupDefaultPlaybackEngine) : LookupSelectedPlaybackEngineType {
+class SelectedPlaybackEngineTypeAccess(private val sharedPreferences: SharedPreferences, private val defaultPlaybackEngineLookup: LookupDefaultPlaybackEngine) : LookupSelectedPlaybackEngineType {
 	override fun promiseSelectedPlaybackEngineType(): Promise<PlaybackEngineType> {
-		val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-
-		val playbackEngineTypeString = preferences
+		val playbackEngineTypeString = sharedPreferences
 			.getString(
 				ApplicationConstants.PreferenceConstants.playbackEngine,
-				PlaybackEngineType.ExoPlayer.name)
+				null)
 
-		return if (PlaybackEngineType.values().any { e -> playbackEngineTypeString == e.name }) PlaybackEngineType.valueOf(playbackEngineTypeString!!).toPromise()
+		return if (playbackEngineTypeString != null && PlaybackEngineType.values().any { e -> playbackEngineTypeString == e.name }) PlaybackEngineType.valueOf(playbackEngineTypeString).toPromise()
 		else defaultPlaybackEngineLookup.promiseDefaultEngineType()
 			.then { t ->
-				preferences
+				sharedPreferences
 					.edit()
 					.putString(
 						ApplicationConstants.PreferenceConstants.playbackEngine,
 						t.name)
 					.apply()
 
-				PlaybackEngineType.valueOf(preferences
+				PlaybackEngineType.valueOf(sharedPreferences
 					.getString(
 						ApplicationConstants.PreferenceConstants.playbackEngine,
 						PlaybackEngineType.ExoPlayer.name)!!)
