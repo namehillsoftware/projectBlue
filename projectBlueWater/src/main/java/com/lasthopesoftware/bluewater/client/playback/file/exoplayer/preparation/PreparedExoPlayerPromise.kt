@@ -57,7 +57,7 @@ internal class PreparedExoPlayerPromise(
 			return
 		}
 
-		renderersFactory.newRenderers().then(this)
+		renderersFactory.newRenderers().then(this, ::handleError)
 	}
 
 	override fun respond(resolution: Array<MediaCodecAudioRenderer>) {
