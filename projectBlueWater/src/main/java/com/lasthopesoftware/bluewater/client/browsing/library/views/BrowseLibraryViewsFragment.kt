@@ -9,8 +9,7 @@ import android.widget.RelativeLayout
 import android.widget.ViewAnimator
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
-import androidx.viewpager.widget.ViewPager.OnPageChangeListener
-import com.astuetz.PagerSlidingTabStrip
+import com.google.android.material.tabs.TabLayout
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
@@ -27,7 +26,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout), IItemListMenuChangeHandler, OnPageChangeListener {
+class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout), IItemListMenuChangeHandler, TabLayout.OnTabSelectedListener {
 
 	companion object {
 		private val SAVED_TAB_KEY = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment::class.java, "SAVED_TAB_KEY")
@@ -43,7 +42,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 
 	private var viewAnimator: ViewAnimator? = null
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
-	private var viewPager: ViewPager? = null
+	private lateinit var viewPager: ViewPager
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
@@ -58,8 +57,8 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 
 		val tabbedLibraryViewsContainer = view.findViewById<RelativeLayout>(R.id.tabbedLibraryViewsContainer)
 
-		val libraryViewsTabs = view.findViewById<PagerSlidingTabStrip>(R.id.tabsLibraryViews)
-		libraryViewsTabs.setOnPageChangeListener(this)
+		val libraryViewsTabs = view.findViewById<TabLayout>(R.id.tabsLibraryViews)
+		libraryViewsTabs.addOnTabSelectedListener(this)
 
 		val loadingView = view.findViewById<ProgressBar>(R.id.pbLoadingTabbedItems)
 
@@ -83,27 +82,21 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 		itemListMenuChangeHandler?.onViewChanged(viewAnimator)
 	}
 
-	override fun onPageScrollStateChanged(state: Int) {}
+	override fun onTabSelected(tab: TabLayout.Tab?) {}
 
-	override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+	override fun onTabUnselected(tab: TabLayout.Tab?) {
 		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 	}
 
-	override fun onPageSelected(position: Int) {}
+	override fun onTabReselected(tab: TabLayout.Tab?) {}
 
 	override fun onSaveInstanceState(outState: Bundle) {
 		super.onSaveInstanceState(outState)
-		val viewPager = viewPager ?: return
+		val viewPager = viewPager
 		outState.putInt(SAVED_TAB_KEY, viewPager.currentItem)
 		outState.putInt(SAVED_SCROLL_POS, viewPager.scrollY)
 		selectedBrowserLibrary
 			.then { library -> if (library != null) outState.putInt(SAVED_SELECTED_VIEW, library.selectedView) }
-	}
-
-	override fun onDestroyView() {
-		viewPager = null
-
-		super.onDestroyView()
 	}
 
 	private val selectedBrowserLibrary: Promise<Library?>
@@ -118,7 +111,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 	private inner class CreateVisibleLibraryView(
 		private val context: Context,
 		private val savedInstanceState: Bundle?,
-		private val libraryViewsTabs: PagerSlidingTabStrip,
+		private val libraryViewsTabs: TabLayout,
 		private val loadingView: ProgressBar,
 		private val tabbedLibraryViewsContainer: RelativeLayout
 	) : Runnable, ImmediateResponse<List<Item>, Unit> {
@@ -146,10 +139,10 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 								if (savedSelectedView < 0 || savedSelectedView != library.selectedView) return@response
 
 								val savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1)
-								if (savedTabKey > -1) viewPager?.currentItem = savedTabKey
+								if (savedTabKey > -1) viewPager.currentItem = savedTabKey
 
 								val savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1)
-								if (savedScrollPosition > -1) viewPager?.scrollY = savedScrollPosition
+								if (savedScrollPosition > -1) viewPager.scrollY = savedScrollPosition
 							}, handler.value))
 						}
 						.excuse(HandleViewIoException(context, this))
@@ -163,8 +156,8 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 			viewChildPagerAdapter.setLibraryViews(result)
 
 			// Set up the ViewPager with the sections adapter.
-			viewPager?.adapter = viewChildPagerAdapter
-			libraryViewsTabs.setViewPager(viewPager)
+			viewPager.adapter = viewChildPagerAdapter
+			libraryViewsTabs.setupWithViewPager(viewPager)
 			libraryViewsTabs.visibility = if (result.size <= 1) View.GONE else View.VISIBLE
 			loadingView.visibility = View.INVISIBLE
 			tabbedLibraryViewsContainer.visibility = View.VISIBLE
