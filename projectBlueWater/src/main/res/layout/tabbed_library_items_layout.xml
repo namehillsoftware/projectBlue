@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <ProgressBar
         android:id="@+id/pbLoadingTabbedItems"
         style="?android:attr/progressBarStyleLarge"
@@ -21,7 +22,8 @@
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabsLibraryViews"
             android:layout_width="match_parent"
-            android:layout_height="48dip" />
+            android:layout_height="48dip"
+            app:tabMode="scrollable" />
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/libraryViewPager"
             android:layout_width="match_parent"
