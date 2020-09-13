@@ -48,8 +48,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
-import com.namehillsoftware.lazyj.CreateAndHold
-import com.namehillsoftware.lazyj.Lazy
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -61,13 +59,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val drawerLayout = LazyViewFinder<DrawerLayout>(this, R.id.drawer_layout)
 	private val loadingViewsProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingViews)
 
-	private val lazyLibraryRepository: CreateAndHold<LibraryRepository> = object : AbstractSynchronousLazy<LibraryRepository>() {
-		override fun create(): LibraryRepository {
-			return LibraryRepository(this@BrowserEntryActivity)
-		}
+	private val lazyLibraryRepository = object : AbstractSynchronousLazy<LibraryRepository>() {
+		override fun create(): LibraryRepository = LibraryRepository(this@BrowserEntryActivity)
 	}
 
-	private val drawerToggle: CreateAndHold<ActionBarDrawerToggle> = object : AbstractSynchronousLazy<ActionBarDrawerToggle>() {
+	private val drawerToggle = object : AbstractSynchronousLazy<ActionBarDrawerToggle>() {
 		override fun create(): ActionBarDrawerToggle {
 			val selectViewTitle = getText(R.string.select_view_title)
 			return object : ActionBarDrawerToggle(
@@ -94,40 +90,38 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 	}
 
-	private val lazySelectedBrowserLibraryProvider: CreateAndHold<ISelectedBrowserLibraryProvider> = object : AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
-		override fun create(): ISelectedBrowserLibraryProvider {
-			return SelectedBrowserLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(this@BrowserEntryActivity),
-				lazyLibraryRepository.getObject())
-		}
+	private val lazySelectedBrowserLibraryProvider = object : AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
+		override fun create(): ISelectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
+			SelectedBrowserLibraryIdentifierProvider(this@BrowserEntryActivity),
+			lazyLibraryRepository.getObject())
 	}
 
-	private val libraryChosenEventReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+	private val libraryChosenEventReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			val chosenLibrary = intent.getIntExtra(LibrarySelectionKey.chosenLibraryKey, -1)
 			if (chosenLibrary >= 0) finishAffinity()
 		}
 	}
 
-	private val lazyLocalBroadcastManager = Lazy { LocalBroadcastManager.getInstance(this) }
+	private val lazyLocalBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
 
-	private val lazySessionConnectionProvider = Lazy { SessionConnectionProvider(this) }
+	private val lazySessionConnectionProvider = lazy { SessionConnectionProvider(this) }
 
-	private val lazyLibraryViewsProvider = Lazy {
+	private val lazyLibraryViewsProvider = lazy {
 		LibraryViewsProvider(
-			lazySessionConnectionProvider.getObject(),
+			lazySessionConnectionProvider.value,
 			LibraryViewsByConnectionProvider())
 	}
 
-	private val lazySelectedLibraryViews = Lazy {
+	private val lazySelectedLibraryViews = lazy {
 		SelectedLibraryViewProvider(
 			lazySelectedBrowserLibraryProvider.getObject(),
-			lazyLibraryViewsProvider.getObject(),
+			lazyLibraryViewsProvider.value,
 			lazyLibraryRepository.getObject())
 	}
 
+	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
-	private var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton? = null
 	private var activeFragment: Fragment? = null
 	private var oldTitle = title
 	private var isStopped = false
@@ -149,15 +143,15 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		setContentView(R.layout.activity_browse_library)
 
-		lazyLocalBroadcastManager.getObject().registerReceiver(
+		lazyLocalBroadcastManager.value.registerReceiver(
 			libraryChosenEventReceiver,
 			IntentFilter(BrowserLibrarySelection.libraryChosenEvent))
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout))
 
 		setTitle(R.string.title_activity_library)
-		supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-		supportActionBar!!.setHomeButtonEnabled(true)
+		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		supportActionBar?.setHomeButtonEnabled(true)
 
 		val drawerLayout = drawerLayout.findView()
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
@@ -219,10 +213,10 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	override fun run() {
-		lazySelectedLibraryViews.getObject()
+		lazySelectedLibraryViews.value
 			.promiseSelectedOrDefaultView()
 			.eventually { selectedView ->
-				lazyLibraryViewsProvider.getObject().promiseLibraryViews()
+				lazyLibraryViewsProvider.value.promiseLibraryViews()
 					.eventually(LoopedInPromise.response(
 						{ items: Collection<ViewItem> -> updateLibraryView(selectedView!!, items) },
 						this))
@@ -246,7 +240,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		if (selectedView is DownloadViewItem) {
 			oldTitle = specialViews[0]
-			supportActionBar!!.title = oldTitle
+			supportActionBar?.title = oldTitle
 			val activeFileDownloadsFragment = ActiveFileDownloadsFragment()
 			swapFragments(activeFileDownloadsFragment)
 			return
@@ -255,7 +249,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		for (item in items) {
 			if (item.key != selectedView.key) continue
 			oldTitle = item.value
-			supportActionBar!!.title = oldTitle
+			supportActionBar?.title = oldTitle
 			break
 		}
 
@@ -286,7 +280,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.browserLibrary
-			.then(ImmediateResponse { library: Library ->
+			.then(ImmediateResponse { library ->
 				if (selectedViewType === library.selectedViewType && library.selectedView == selectedViewKey)
 					return@ImmediateResponse
 
@@ -336,7 +330,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private fun swapFragments(newFragment: Fragment) {
 		val ft = supportFragmentManager.beginTransaction()
 		try {
-			if (activeFragment != null) ft.remove(activeFragment!!)
+			activeFragment?.also { ft.remove(it) }
 			ft.add(R.id.browseLibraryContainer, newFragment)
 		} finally {
 			ft.commit()
@@ -358,9 +352,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		this.viewAnimator = viewAnimator
 	}
 
-	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton {
-		return nowPlayingFloatingActionButton!!
-	}
+	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
 
 	companion object {
 		@JvmField

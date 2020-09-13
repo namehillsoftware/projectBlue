@@ -29,7 +29,7 @@ class SelectViewAdapterBuilder {
 		tvViewName.setText(viewText);
 
 		final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(tvViewName.getLayoutParams());
-		layoutParams.setMargins(0, 0, isSelected ? ViewUtils.dpToPx(parent.getContext(), 10) : 0, 0);
+		layoutParams.setMargins(0, 0, isSelected ? ViewUtils.dpToPx(parent.getContext(), 4) : 0, 0);
 		tvViewName.setLayoutParams(layoutParams);
 
 		return convertView;
