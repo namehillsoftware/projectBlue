@@ -93,7 +93,6 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-    implementation project(':pagerslidingtabstrip')
     implementation project(':futures')
     implementation 'androidx.annotation:annotation:1.1.0'
 	implementation 'androidx.multidex:multidex:2.0.1'

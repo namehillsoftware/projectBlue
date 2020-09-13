@@ -1,2 +1,2 @@
-include ':pagerslidingtabstrip', ':futures'
+include ':futures'
 include ':projectBlueWater'
