@@ -5,6 +5,7 @@
         <item type="attr" name="elevation">0dp</item>
         <item name="colorControlNormal">@color/white</item>
         <item name="titleTextStyle">@style/AppTheme.ActionBarStyle.Text</item>
+        <item name="android:homeAsUpIndicator">@color/white</item>
     </style>
 
     <style name="AppTheme.ActionBarStyle.Text" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
