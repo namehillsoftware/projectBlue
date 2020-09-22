@@ -5,11 +5,25 @@
         <item type="attr" name="elevation">0dp</item>
         <item name="colorControlNormal">@color/white</item>
         <item name="titleTextStyle">@style/AppTheme.ActionBarStyle.Text</item>
-        <item name="android:homeAsUpIndicator">@color/white</item>
+        <item name="android:color">@color/white</item>
+        <item name="android:icon">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:actionMenuTextColor">@color/white</item>
     </style>
 
     <style name="AppTheme.ActionBarStyle.Text" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColor">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+    </style>
+
+    <style name="AppTheme.WidgetStyle" parent="Widget.AppCompat.ActionBar.Solid">
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="colorControlNormal">@color/white</item>
     </style>
 
     <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">

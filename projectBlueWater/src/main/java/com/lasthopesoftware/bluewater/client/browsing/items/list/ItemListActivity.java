@@ -69,6 +69,7 @@ public class ItemListActivity extends AppCompatActivity implements IItemListView
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_items);
+        setSupportActionBar(findViewById(R.id.viewItemsToolbar));
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
