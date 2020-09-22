@@ -47,13 +47,14 @@ class FileListActivity :
 	Runnable,
 	() -> PromisedResponse<List<ServiceFile>?, Unit> {
 
+	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
+
 	private var itemId = 0
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
-	private val onFileProviderComplete = lazy(this)
 
+	private val onFileProviderComplete = lazy(this)
 	private var viewAnimator: ViewAnimator? = null
-	private var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton? = null
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
