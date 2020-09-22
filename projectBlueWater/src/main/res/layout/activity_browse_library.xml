@@ -4,10 +4,19 @@
 	android:layout_height="match_parent"
 	android:id="@+id/browseLibraryRelativeLayout">
 
+	<androidx.appcompat.widget.Toolbar
+		android:id="@+id/browseLibraryToolbar"
+		android:layout_width="match_parent"
+		android:layout_height="?attr/actionBarSize"
+		android:background="?attr/colorPrimary"
+		android:elevation="0dp"
+		android:theme="@style/AppTheme.ActionBarStyle" />
+
 	<androidx.drawerlayout.widget.DrawerLayout
 			android:id="@+id/drawer_layout"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent">
+			android:layout_height="match_parent"
+			android:layout_below="@id/browseLibraryToolbar">
 
 		<RelativeLayout
 			android:layout_width="match_parent"

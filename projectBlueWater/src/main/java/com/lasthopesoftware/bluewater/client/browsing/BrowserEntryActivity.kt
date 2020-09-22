@@ -142,6 +142,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 
 		setContentView(R.layout.activity_browse_library)
+		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 
 		lazyLocalBroadcastManager.value.registerReceiver(
 			libraryChosenEventReceiver,
@@ -150,6 +151,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout))
 
 		setTitle(R.string.title_activity_library)
+
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 		supportActionBar?.setHomeButtonEnabled(true)
 
@@ -184,7 +186,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		lazySelectedBrowserLibraryProvider.getObject()
 			.browserLibrary
-			.eventually(LoopedInPromise.response({ library: Library? ->
+			.eventually(LoopedInPromise.response({ library ->
 				when {
 					library == null -> {
 						// No library, must bail out

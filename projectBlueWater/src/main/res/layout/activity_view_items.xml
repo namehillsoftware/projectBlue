@@ -13,21 +13,27 @@
 		android:elevation="0dp"
 		android:theme="@style/AppTheme.ActionBarStyle" />
 
-	<ListView
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:id="@+id/lvItems">
-	</ListView>
-	
-	<ProgressBar
-	    android:id="@+id/pbLoadingItems"
-	    style="?android:attr/progressBarStyleLarge"
-	    android:layout_width="wrap_content"
-	    android:layout_height="wrap_content"
-	    android:layout_alignParentLeft="false"
-		android:layout_alignParentStart="false"
-	    android:layout_alignParentTop="false"
-	    android:layout_centerInParent="true"
-	    android:visibility="invisible" />
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:layout_below="@id/viewItemsToolbar">
+
+		<ListView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:id="@+id/lvItems" />
+
+		<ProgressBar
+			android:id="@+id/pbLoadingItems"
+			style="?android:attr/progressBarStyleLarge"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentLeft="false"
+			android:layout_alignParentStart="false"
+			android:layout_alignParentTop="false"
+			android:layout_centerInParent="true"
+			android:visibility="invisible" />
+	</RelativeLayout>
 
 </RelativeLayout>
