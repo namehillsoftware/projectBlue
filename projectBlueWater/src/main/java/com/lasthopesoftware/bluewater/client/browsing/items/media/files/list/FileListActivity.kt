@@ -58,7 +58,8 @@ class FileListActivity :
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		setContentView(R.layout.asynchronous_recycler_view)
+		setContentView(R.layout.layout_list_view)
+		setSupportActionBar(findViewById(R.id.listViewToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 		fileListView.findView().visibility = View.INVISIBLE
