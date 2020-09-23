@@ -71,9 +71,9 @@ class FileDetailsActivity : AppCompatActivity() {
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		setContentView(R.layout.activity_view_file_details)
 		setSupportActionBar(findViewById(R.id.fileDetailsToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
-		setContentView(R.layout.activity_view_file_details)
 		fileKey = intent.getIntExtra(FILE_KEY, -1)
 		setView(fileKey)
 		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.viewFileDetailsRelativeLayout))
@@ -95,7 +95,7 @@ class FileDetailsActivity : AppCompatActivity() {
 		SessionConnection.getInstance(this).promiseSessionConnection()
 			.then { c -> FormattedSessionFilePropertiesProvider(c, FilePropertyCache.getInstance()) }
 			.eventually { f -> f.promiseFileProperties(ServiceFile(fileKey)) }
-			.eventually<Unit>(LoopedInPromise.response({ fileProperties ->
+			.eventually(LoopedInPromise.response({ fileProperties ->
 				setFileNameFromProperties(fileProperties)
 
 				val artist = fileProperties[KnownFileProperties.ARTIST]
