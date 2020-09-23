@@ -16,7 +16,6 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
         <item name="searchViewStyle">@style/SearchViewStyle</item>
-        <item name="actionBarWidgetTheme">@style/AppTheme.WidgetStyle</item>
     </style>
     <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <!-- Main theme colors -->
