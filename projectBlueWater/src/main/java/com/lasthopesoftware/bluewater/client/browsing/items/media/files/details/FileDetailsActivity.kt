@@ -71,8 +71,8 @@ class FileDetailsActivity : AppCompatActivity() {
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		val actionBar = supportActionBar
-		actionBar?.setDisplayHomeAsUpEnabled(true)
+		setSupportActionBar(findViewById(R.id.fileDetailsToolbar))
+		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 		setContentView(R.layout.activity_view_file_details)
 		fileKey = intent.getIntExtra(FILE_KEY, -1)
 		setView(fileKey)
@@ -109,7 +109,7 @@ class FileDetailsActivity : AppCompatActivity() {
 				pbLoadingFileDetails.findView().visibility = View.INVISIBLE
 				lvFileDetails.findView().visibility = View.VISIBLE
 			}, this))
-			.excuse(HandleViewIoException(this, Runnable { setView(fileKey) }))
+			.excuse(HandleViewIoException(this) { setView(fileKey) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 
@@ -118,7 +118,7 @@ class FileDetailsActivity : AppCompatActivity() {
 			.eventually { bitmap ->
 				bitmap?.toPromise() ?: defaultImageProvider.value.promiseFileBitmap()
 			}
-			.eventually<Unit>(LoopedInPromise.response({ result ->
+			.eventually(LoopedInPromise.response({ result ->
 				imgFileThumbnailBuilder.getObject().setImageBitmap(result)
 				pbLoadingFileThumbnail.findView().visibility = View.INVISIBLE
 				imgFileThumbnailBuilder.getObject().visibility = View.VISIBLE

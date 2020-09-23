@@ -1,24 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/rlViewItems"
-    android:orientation="vertical">
-	<ListView
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:id="@+id/lvItems">
-	</ListView>
-	
-	<ProgressBar
-	    android:id="@+id/pbLoadingItems"
-	    style="?android:attr/progressBarStyleLarge"
-	    android:layout_width="wrap_content"
-	    android:layout_height="wrap_content"
-	    android:layout_alignParentLeft="false"
-		android:layout_alignParentStart="false"
-	    android:layout_alignParentTop="false"
-	    android:layout_centerInParent="true"
-	    android:visibility="invisible" />
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:id="@+id/rlViewItems"
+	android:orientation="vertical">
+
+	<androidx.appcompat.widget.Toolbar
+		android:id="@+id/viewItemsToolbar"
+		android:layout_width="match_parent"
+		android:layout_height="?attr/actionBarSize"
+		android:background="?attr/colorPrimary"
+		android:elevation="0dp"
+		android:theme="@style/AppTheme.ActionBarStyle" />
+
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:layout_below="@id/viewItemsToolbar">
+
+		<ListView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:id="@+id/lvItems" />
+
+		<ProgressBar
+			android:id="@+id/pbLoadingItems"
+			style="?android:attr/progressBarStyleLarge"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentLeft="false"
+			android:layout_alignParentStart="false"
+			android:layout_alignParentTop="false"
+			android:layout_centerInParent="true"
+			android:visibility="invisible" />
+	</RelativeLayout>
 
 </RelativeLayout>

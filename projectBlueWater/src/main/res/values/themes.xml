@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="Theme.AppCompat.Light">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
         <!-- Main theme colors -->
         <!--   your app branding color for the app bar -->
@@ -16,7 +16,6 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
         <item name="searchViewStyle">@style/SearchViewStyle</item>
-<!--        <item name="tabStyle">@style/TabStyle</item>-->
     </style>
     <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <!-- Main theme colors -->
