@@ -1,44 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:id="@+id/linFileDetailsRow"
+    style="?android:attr/buttonBarStyle"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    android:measureWithLargestChild="true"
+    android:orientation="horizontal"
+    android:layout_below="@id/fileDetailsToolbar">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/fileDetailsToolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:elevation="0dp"
-        android:theme="@style/AppTheme.ActionBarStyle" />
+    <TextView
+        android:id="@+id/tvFileDetailName"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text=""
+        android:textAppearance="?android:attr/textAppearanceMedium"  />
 
-    <LinearLayout
-        android:id="@+id/linFileDetailsRow"
-        style="?android:attr/buttonBarStyle"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:measureWithLargestChild="true"
-        android:orientation="horizontal"
-        android:layout_below="@id/fileDetailsToolbar">
+    <TextView
+        android:id="@+id/tvFileDetailValue"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:text=""
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
-        <TextView
-            android:id="@+id/tvFileDetailName"
-            android:layout_width="0dip"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text=""
-            android:textAppearance="?android:attr/textAppearanceMedium"  />
-
-        <TextView
-            android:id="@+id/tvFileDetailValue"
-            android:layout_width="0dip"
-            android:layout_height="match_parent"
-            android:layout_weight="2"
-            android:text=""
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    </LinearLayout>
-
-</RelativeLayout>
+</LinearLayout>
