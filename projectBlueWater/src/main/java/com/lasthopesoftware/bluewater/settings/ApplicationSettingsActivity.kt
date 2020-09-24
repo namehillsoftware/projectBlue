@@ -54,7 +54,8 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		setContentView(R.layout.layout_edit_app_settings)
+		setContentView(R.layout.activity_application_settings)
+		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
 
 		val sharedPreferences = lazySharedPreferences.value
 		HandleSyncCheckboxPreference.handle(

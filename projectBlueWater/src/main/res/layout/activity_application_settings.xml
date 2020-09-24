@@ -4,6 +4,14 @@
     android:layout_height="match_parent"
     android:id="@+id/appSettingsContainer">
 
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/applicationSettingsToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="0dp"
+        android:theme="@style/AppTheme.ActionBarStyle" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,7 +22,8 @@
         android:paddingStart="30dp"
         android:paddingEnd="30dp"
         android:id="@+id/appSettingsVerticalLinearLayout"
-        android:baselineAligned="false">
+        android:baselineAligned="false"
+        android:layout_below="@id/applicationSettingsToolbar">
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
