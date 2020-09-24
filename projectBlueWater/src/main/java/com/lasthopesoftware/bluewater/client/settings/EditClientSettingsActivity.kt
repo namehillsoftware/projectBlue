@@ -95,6 +95,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_edit_server_settings)
+		setSupportActionBar(findViewById(R.id.serverSettingsToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 		saveButton.findView().setOnClickListener(connectionButtonListener)
 	}
