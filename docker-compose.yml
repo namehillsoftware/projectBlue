@@ -3,5 +3,3 @@ version: "3.7"
 services:
   gradle:
     build: .
-    volumes:
-      - ./:/src

@@ -1,0 +1,7 @@
+.idea
+build
+screenshots
+design
+docker-compose.yml
+Dockerfile
+build.sh
