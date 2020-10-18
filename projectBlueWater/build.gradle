@@ -10,10 +10,21 @@ if (androidKeyStorePassword == null || androidKeyStorePassword.isEmpty()) {
 	androidKeyStorePassword = System.getenv('ANDROID_KEY_STORE_PASSWORD')
 }
 
-def androidStorePassword = hasProperty('androidStorePassword') ? androidStorePassword : null
+def androidStorePassword = hasProperty('androidStorePassword') ? androidStorePassword : ""
 if (androidStorePassword == null || androidStorePassword.isEmpty()) {
 	androidStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
 }
+
+def signingConfig = (androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() && androidStorePassword != null && !androidStorePassword.isEmpty()) ? {
+	release {
+		// You need to specify either an absolute path or include the
+		// keystore file in the same directory as the build.gradle file.
+		storeFile file("androidstore")
+		storePassword androidStorePassword
+		keyAlias "store"
+		keyPassword androidKeyStorePassword
+	}
+} : {}
 
 android {
     compileSdkVersion 29
@@ -27,17 +38,6 @@ android {
         versionName project.version
 		multiDexEnabled true
 	}
-
-	signingConfigs {
-        release {
-            // You need to specify either an absolute path or include the
-            // keystore file in the same directory as the build.gradle file.
-            storeFile file("androidstore")
-            storePassword androidStorePassword
-            keyAlias "store"
-            keyPassword androidKeyStorePassword
-        }
-    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -53,7 +53,7 @@ android {
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-			signingConfig signingConfigs.release
+			signingConfig signingConfig
         }
     }
 
