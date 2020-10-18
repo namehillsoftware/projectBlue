@@ -4,3 +4,6 @@ services:
   gradle:
     build:
       context: .
+    environment:
+      - ANDROID_STORE_PASSWORD=${ANDROID_STORE_PASSWORD}
+      - ANDROID_KEY_STORE_PASSWORD=${ANDROID_KEY_STORE_PASSWORD}

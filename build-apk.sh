@@ -6,14 +6,14 @@ BUILD_ID="$(od  -vN "8" -An -tx1  /dev/urandom | tr -d " \n")"
 
 echo "Build ID: ${BUILD_ID}"
 
-docker-compose build && docker-compose run --name ${BUILD_ID} gradle \
+docker-compose build && docker-compose run --name "${BUILD_ID}" gradle \
   :projectBlueWater:testReleaseUnitTest \
-  :projectBlueWater:bundleRelease
+  :projectBlueWater:assembleRelease
 EXIT_CODE=${PIPESTATUS[0]}
 
 BUILD_CONTAINER=${BUILD_ID}
 
-docker container cp "${BUILD_CONTAINER}":/src/projectBlueWater/release ./release
+docker container cp "${BUILD_CONTAINER}":/src/projectBlueWater/build ./_artifacts
 docker container rm "${BUILD_CONTAINER}"
 
 exit "${EXIT_CODE}"

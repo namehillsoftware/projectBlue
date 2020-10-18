@@ -7,3 +7,6 @@ Dockerfile
 build.sh
 *.aab
 *.apk
+_artifacts
+keystore.properties
+.env
