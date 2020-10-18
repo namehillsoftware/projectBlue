@@ -6,18 +6,18 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 
 def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
-def hasKeyStorePassword = androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty()
-if (!hasKeyStorePassword) {
+def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
+if (!hasKeyStorePassword()) {
 	androidKeyStorePassword = System.getenv('ANDROID_KEY_STORE_PASSWORD')
 }
 
 def androidStorePassword = hasProperty('androidStorePassword') ? androidStorePassword : ""
-def hasAndroidStorePassword = androidStorePassword != null && !androidStorePassword.isEmpty()
-if (!hasAndroidStorePassword) {
+def hasAndroidStorePassword = { androidStorePassword != null && !androidStorePassword.isEmpty() }
+if (!hasAndroidStorePassword()) {
 	androidStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
 }
 
-def isSignedExternally = hasKeyStorePassword && hasAndroidStorePassword
+def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 android {
     compileSdkVersion 29
@@ -57,7 +57,7 @@ android {
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-			signingConfig (isSignedExternally ? signingConfigs.release : null)
+			signingConfig (isSignedExternally() ? signingConfigs.release : null)
         }
     }
 
