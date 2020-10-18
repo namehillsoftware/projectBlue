@@ -16,14 +16,12 @@ if (androidStorePassword == null || androidStorePassword.isEmpty()) {
 }
 
 def signingConfig = (androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() && androidStorePassword != null && !androidStorePassword.isEmpty()) ? {
-	release {
-		// You need to specify either an absolute path or include the
-		// keystore file in the same directory as the build.gradle file.
-		storeFile file("androidstore")
-		storePassword androidStorePassword
-		keyAlias "store"
-		keyPassword androidKeyStorePassword
-	}
+	// You need to specify either an absolute path or include the
+	// keystore file in the same directory as the build.gradle file.
+	storeFile file("androidstore")
+	storePassword androidStorePassword
+	keyAlias "store"
+	keyPassword androidKeyStorePassword
 } : {}
 
 android {
@@ -53,7 +51,7 @@ android {
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-			signingConfig signingConfig
+			signingConfig signingConfig.release
         }
     }
 
