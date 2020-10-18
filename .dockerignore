@@ -5,3 +5,5 @@ design
 docker-compose.yml
 Dockerfile
 build.sh
+*.aab
+*.apk
