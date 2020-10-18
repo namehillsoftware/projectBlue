@@ -13,5 +13,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Build the Docker image
-      run: sh build-bundle.sh
+    - name: Build and test project blue
+      run: sh build-github-pr.sh
