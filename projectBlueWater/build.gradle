@@ -5,18 +5,12 @@ apply plugin: 'com.cinnober.gradle.semver-git'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 
-//if (!hasProperty('androidKeyStorePassword')) {
-	def androidKeyStorePassword
-//}
-
+def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
 if (androidKeyStorePassword == null || androidKeyStorePassword.isEmpty()) {
 	androidKeyStorePassword = System.getenv('ANDROID_KEY_STORE_PASSWORD')
 }
 
-//if (!hasProperty('androidKeyStorePassword')) {
-	def androidStorePassword
-//}
-
+def androidStorePassword = hasProperty('androidStorePassword') ? androidStorePassword : null
 if (androidStorePassword == null || androidStorePassword.isEmpty()) {
 	androidStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
 }
