@@ -1,0 +1,12 @@
+.idea
+build
+screenshots
+design
+docker-compose.yml
+Dockerfile
+build.sh
+*.aab
+*.apk
+_artifacts
+keystore.properties
+.env

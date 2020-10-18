@@ -5,6 +5,20 @@ apply plugin: 'com.cinnober.gradle.semver-git'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 
+def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
+def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
+if (!hasKeyStorePassword()) {
+	androidKeyStorePassword = System.getenv('ANDROID_KEY_STORE_PASSWORD')
+}
+
+def androidStorePassword = hasProperty('androidStorePassword') ? androidStorePassword : ""
+def hasAndroidStorePassword = { androidStorePassword != null && !androidStorePassword.isEmpty() }
+if (!hasAndroidStorePassword()) {
+	androidStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
+}
+
+def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
+
 android {
     compileSdkVersion 29
     buildToolsVersion '29.0.2'
@@ -16,6 +30,17 @@ android {
         versionCode getGeneratedVersionCode()
         versionName project.version
 		multiDexEnabled true
+	}
+
+	signingConfigs {
+		release {
+			// You need to specify either an absolute path or include the
+			// keystore file in the same directory as the build.gradle file.
+			storeFile file("androidstore")
+			storePassword androidStorePassword
+			keyAlias "store"
+			keyPassword androidKeyStorePassword
+		}
 	}
 
     compileOptions {
@@ -32,6 +57,7 @@ android {
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+			signingConfig (isSignedExternally() ? signingConfigs.release : null)
         }
     }
 
