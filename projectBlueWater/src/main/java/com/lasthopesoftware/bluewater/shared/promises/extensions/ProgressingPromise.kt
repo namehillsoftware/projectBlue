@@ -24,10 +24,10 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		for (action in updateListeners) action.runWith(progress)
 	}
 
-	fun updates(action: OneParameterAction<Progress>): ProgressingPromise<Progress, Resolution> {
+	fun updates(action: (Progress) -> Unit): ProgressingPromise<Progress, Resolution> {
 		val currentProgress = atomicProgress.get()
 		if (currentProgress != null)
-			action.runWith(currentProgress)
+			action.invoke(currentProgress)
 
 		if (!isResolved) {
 			updateListeners.add(action)
@@ -42,7 +42,7 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 
 	protected fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromise<Progress, Resolution> {
 		source
-			.updates(OneParameterAction { reportProgress(it) })
+			.updates { reportProgress(it) }
 			.then({resolve(it)}, {reject(it)})
 
 		return this

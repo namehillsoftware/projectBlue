@@ -26,7 +26,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.namehillsoftware.handoff.promises.Promise
-import com.vedsoft.futures.runnables.OneParameterAction
 import okhttp3.OkHttpClient
 import org.joda.time.Duration
 import java.util.*
@@ -108,7 +107,7 @@ class LibraryConnectionProvider(
 		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 			init {
 				promiseBuiltConnection(libraryId)
-					.updates(OneParameterAction { reportProgress(it) })
+					.updates { reportProgress(it) }
 					.then({ c ->
 						if (c != null) cachedConnectionProviders[libraryId] = c
 						resolve(c)
