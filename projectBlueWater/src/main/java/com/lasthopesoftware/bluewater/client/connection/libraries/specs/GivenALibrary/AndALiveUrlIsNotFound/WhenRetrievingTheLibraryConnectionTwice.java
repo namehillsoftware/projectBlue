@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import kotlin.Unit;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -63,10 +65,19 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 
 		final FuturePromise<IConnectionProvider> futureConnectionProvider =  new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(libraryId)
-			.updates(statuses::add)
+			.updates(s -> {
+				statuses.add(s);
+				return Unit.INSTANCE;
+			})
 			.eventually(
-				c -> libraryConnectionProvider.promiseLibraryConnection(libraryId).updates(statuses::add),
-				c -> libraryConnectionProvider.promiseLibraryConnection(libraryId).updates(statuses::add)));
+				c -> libraryConnectionProvider.promiseLibraryConnection(libraryId).updates(s -> {
+					statuses.add(s);
+					return Unit.INSTANCE;
+				}),
+				c -> libraryConnectionProvider.promiseLibraryConnection(libraryId).updates(s -> {
+					statuses.add(s);
+					return Unit.INSTANCE;
+				})));
 
 		libraryDeferredPromise.resolve();
 		secondLibraryDeferredPromise.resolve();

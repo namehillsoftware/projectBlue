@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import kotlin.Unit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -54,7 +56,10 @@ public class WhenRetrievingTheLibraryConnection {
 
 		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(new LibraryId(3))
-			.updates(statuses::add));
+			.updates(s -> {
+				statuses.add(s);
+				return Unit.INSTANCE;
+			}));
 
 		libraryDeferredPromise.resolve();
 

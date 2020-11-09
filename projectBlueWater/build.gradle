@@ -82,11 +82,11 @@ android {
         }
 
         test {
-            java {
-                setRoot 'src/main'
-                include '**/specs/**'
-            }
-        }
+			java {
+				setRoot 'src/main'
+				include '**/specs/**'
+			}
+		}
     }
 
     dexOptions {
