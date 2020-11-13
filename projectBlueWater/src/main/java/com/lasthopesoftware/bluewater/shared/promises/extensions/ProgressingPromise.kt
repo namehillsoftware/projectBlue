@@ -1,12 +1,11 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
-import com.vedsoft.futures.runnables.OneParameterAction
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
 open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress, Resolution> {
-	private val updateListeners = ConcurrentLinkedQueue<OneParameterAction<Progress>>()
+	private val updateListeners = ConcurrentLinkedQueue<(Progress) -> Unit>()
 	private val atomicProgress: AtomicReference<Progress?> = AtomicReference()
 	private var isResolved = false
 
@@ -21,13 +20,13 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 
 	protected fun reportProgress(progress: Progress) {
 		atomicProgress.lazySet(progress)
-		for (action in updateListeners) action.runWith(progress)
+		for (action in updateListeners) action(progress)
 	}
 
 	fun updates(action: (Progress) -> Unit): ProgressingPromise<Progress, Resolution> {
 		val currentProgress = atomicProgress.get()
 		if (currentProgress != null)
-			action.invoke(currentProgress)
+			action(currentProgress)
 
 		if (!isResolved) {
 			updateListeners.add(action)
