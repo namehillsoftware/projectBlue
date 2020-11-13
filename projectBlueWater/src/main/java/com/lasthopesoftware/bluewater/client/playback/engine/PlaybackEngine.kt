@@ -2,10 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback
-import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted
-import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted
-import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
-import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset
+import com.lasthopesoftware.bluewater.client.playback.engine.events.*
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ManagePlaybackQueues
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
@@ -16,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.IN
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.vedsoft.futures.runnables.OneParameterAction
 import io.reactivex.disposables.Disposable
 import io.reactivex.observables.ConnectableObservable
 import org.jetbrains.annotations.Contract
@@ -46,7 +42,7 @@ class PlaybackEngine(
 	private var playbackSubscription: Disposable? = null
 	private var activePlayer: IActivePlayer? = null
 	private var onPlayingFileChanged: OnPlayingFileChanged? = null
-	private var onPlaylistError: OneParameterAction<Throwable>? = null
+	private var onPlaylistError: OnPlaylistError? = null
 	private var onPlaybackStarted: OnPlaybackStarted? = null
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
@@ -135,7 +131,7 @@ class PlaybackEngine(
 		return this
 	}
 
-	override fun setOnPlaylistError(onPlaylistError: OneParameterAction<Throwable>): PlaybackEngine {
+	override fun setOnPlaylistError(onPlaylistError: OnPlaylistError): PlaybackEngine {
 		this.onPlaylistError = onPlaylistError
 		return this
 	}
@@ -211,7 +207,7 @@ class PlaybackEngine(
 					fileProgress = StaticProgressedFile(0)
 					saveState()
 				}
-				onPlaylistError?.runWith(e)
+				onPlaylistError?.onError(e)
 			},
 			{
 				isPlaying = false
