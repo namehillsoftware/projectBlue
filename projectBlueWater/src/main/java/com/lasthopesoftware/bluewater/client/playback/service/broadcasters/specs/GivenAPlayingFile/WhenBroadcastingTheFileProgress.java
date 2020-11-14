@@ -24,6 +24,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -76,7 +77,7 @@ public class WhenBroadcastingTheFileProgress {
 				.standardSeconds(2)
 				.plus(Duration.standardSeconds(30)));
 
-		countDownLatch.await();
+		countDownLatch.await(1, TimeUnit.SECONDS);
 
 		return null;
 	});
