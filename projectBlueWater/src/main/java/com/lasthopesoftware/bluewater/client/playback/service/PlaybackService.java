@@ -29,6 +29,7 @@ import androidx.core.app.NotificationCompat.Builder;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.lasthopesoftware.bluewater.R;
@@ -996,6 +997,12 @@ implements OnAudioFocusChangeListener
 
 	private void handlePlaybackException(PlaybackException exception) {
 		final Throwable cause = exception.getCause();
+
+		if (cause instanceof HttpDataSource.InvalidResponseCodeException) {
+			final HttpDataSource.InvalidResponseCodeException i = (HttpDataSource.InvalidResponseCodeException)cause;
+			logger.error("The server returned an unexpected response code: " + i.responseCode, exception);
+			closeAndRestartPlaylistManager();
+		}
 
 		if (cause instanceof ExoPlaybackException) {
 			handleExoPlaybackException((ExoPlaybackException)cause);
