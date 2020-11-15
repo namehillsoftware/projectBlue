@@ -30,6 +30,7 @@ android {
         versionCode getGeneratedVersionCode()
         versionName project.version
 		multiDexEnabled true
+		archivesBaseName = "project-blue-" + project.version
 	}
 
 	signingConfigs {
@@ -103,8 +104,6 @@ android {
 		}
 	}
 }
-
-project.ext.set("archivesBaseName", "project-blue-" + project.version)
 
 def getGeneratedVersionCode() {
     // current dir is <your proj>/app, so it's likely that all your git repo files are in the dir
