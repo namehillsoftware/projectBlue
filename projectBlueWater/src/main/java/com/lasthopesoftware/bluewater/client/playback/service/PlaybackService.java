@@ -998,12 +998,6 @@ implements OnAudioFocusChangeListener
 	private void handlePlaybackException(PlaybackException exception) {
 		final Throwable cause = exception.getCause();
 
-		if (cause instanceof HttpDataSource.InvalidResponseCodeException) {
-			final HttpDataSource.InvalidResponseCodeException i = (HttpDataSource.InvalidResponseCodeException)cause;
-			logger.error("The server returned an unexpected response code: " + i.responseCode, exception);
-			closeAndRestartPlaylistManager();
-		}
-
 		if (cause instanceof ExoPlaybackException) {
 			handleExoPlaybackException((ExoPlaybackException)cause);
 		}
@@ -1031,6 +1025,15 @@ implements OnAudioFocusChangeListener
 	}
 
 	private void handleIoException(IOException exception) {
+		if (exception instanceof HttpDataSource.InvalidResponseCodeException) {
+			final HttpDataSource.InvalidResponseCodeException i = (HttpDataSource.InvalidResponseCodeException)exception;
+			if (i.responseCode == 416) {
+				logger.warn("Received an error code of " + i.responseCode + ", will attempt restarting the player", i);
+				closeAndRestartPlaylistManager();
+				return;
+			}
+		}
+
 		logger.error("An IO exception occurred during playback", exception);
 		handleDisconnection();
 	}
