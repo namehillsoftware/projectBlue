@@ -1014,13 +1014,25 @@ implements OnAudioFocusChangeListener
 			return;
 		}
 
+		if (cause != null) {
+			uncaughtExceptionHandler(cause);
+			return;
+		}
+
 		logger.error("An unexpected playback exception occurred", exception);
 	}
 
 	private void handleExoPlaybackException(ExoPlaybackException exception) {
 		logger.error("An ExoPlaybackException occurred");
 
-		if (exception.getCause() != null)
+		final Throwable cause = exception.getCause();
+		if (cause instanceof IllegalStateException) {
+			logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause);
+			closeAndRestartPlaylistManager();
+			return;
+		}
+
+		if (cause != null)
 			uncaughtExceptionHandler(exception.getCause());
 	}
 
