@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
