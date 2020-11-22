@@ -4,9 +4,9 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.resources.notifications.control.NotificationsController;
-import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 

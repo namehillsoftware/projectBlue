@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizingLibraries.AndAStoredFileWriteErrorOccurs;
+package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.AndMultipleErrorsOccur;
 
 import android.content.Context;
 import android.content.IntentFilter;
@@ -7,22 +7,25 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.resources.specs.BroadcastRecorder;
-import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
-import com.lasthopesoftware.specs.AndroidContext;
+import com.lasthopesoftware.resources.BroadcastRecorder;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -32,10 +35,11 @@ import io.reactivex.Observable;
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileDownloadedEvent;
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileDownloadingEvent;
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileQueuedEvent;
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileReadErrorEvent;
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileWriteErrorEvent;
+import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onSyncStopEvent;
 import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.storedFileEventKey;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +57,9 @@ public class WhenSynchronizing extends AndroidContext {
 		new StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4)
 	};
 
-	private static final List<StoredFile> expectedStoredFileJobs = Stream.of(storedFiles).filter(f -> f.getServiceId() != 7).toList();
+	private static final List<Integer> faultingStoredFileServiceIds = Arrays.asList(7, 92);
+
+	private static final List<StoredFile> expectedStoredFileJobs = Stream.of(storedFiles).filter(f -> !faultingStoredFileServiceIds.contains(f.getServiceId())).toList();
 
 	private static final BroadcastRecorder broadcastRecorder = new BroadcastRecorder();
 
@@ -68,11 +74,19 @@ public class WhenSynchronizing extends AndroidContext {
 			.thenReturn(new Promise<>(Collections.singletonList(new Library().setId(4))));
 
 		final ControlLibrarySyncs librarySyncHandler = mock(ControlLibrarySyncs.class);
-		when(librarySyncHandler.observeLibrarySync(any()))
-			.thenReturn(Observable.concat(
+		when(librarySyncHandler.observeLibrarySync(new LibraryId(4)))
+			.thenReturn(Observable.concatArrayDelayError(
 				Observable
 					.fromArray(storedFiles)
-					.filter(f -> f.getServiceId() != 7)
+					.filter(f -> f.getServiceId() == 92)
+					.flatMap(f ->
+						Observable.concat(Observable.just(
+							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
+							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading)),
+							Observable.error(new StoredFileReadException(mock(File.class), f))), true),
+				Observable
+					.fromArray(storedFiles)
+					.filter(f -> !faultingStoredFileServiceIds.contains(f.getServiceId()))
 					.flatMap(f -> Observable.just(
 						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
 						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading),
@@ -95,6 +109,8 @@ public class WhenSynchronizing extends AndroidContext {
 		intentFilter.addAction(onFileDownloadingEvent);
 		intentFilter.addAction(onFileQueuedEvent);
 		intentFilter.addAction(onFileWriteErrorEvent);
+		intentFilter.addAction(onFileReadErrorEvent);
+		intentFilter.addAction(onSyncStopEvent);
 
 		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
@@ -128,10 +144,25 @@ public class WhenSynchronizing extends AndroidContext {
 	}
 
 	@Test
+	public void thenTheReadErrorsIsBroadcast() {
+		assertThat(Stream.of(broadcastRecorder.recordedIntents)
+			.filter(i -> onFileWriteErrorEvent.equals(i.getAction()))
+			.map(i -> i.getIntExtra(storedFileEventKey, -1))
+			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).filter(f -> f.getServiceId() == 7).map(StoredFile::getId).toList());
+	}
+
+	@Test
 	public void thenTheStoredFilesAreBroadcastAsDownloaded() {
 		assertThat(Stream.of(broadcastRecorder.recordedIntents)
 			.filter(i -> onFileDownloadedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
 			.toList()).isSubsetOf(Stream.of(expectedStoredFileJobs).map(StoredFile::getId).toList());
+	}
+
+	@Test
+	public void thenASyncStoppedEventOccurs() {
+		assertThat(Stream.of(broadcastRecorder.recordedIntents)
+			.filter(i -> onSyncStopEvent.equals(i.getAction()))
+			.single()).isNotNull();
 	}
 }

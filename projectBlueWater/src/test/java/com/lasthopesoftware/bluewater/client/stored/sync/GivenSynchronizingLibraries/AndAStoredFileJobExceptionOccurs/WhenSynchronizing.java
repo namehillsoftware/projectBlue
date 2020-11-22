@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.sync.specs.GivenSynchronizingLibraries.AndAStoredFileJobExceptionOccurs;
+package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.AndAStoredFileJobExceptionOccurs;
 
 import android.content.Context;
 import android.content.IntentFilter;
@@ -7,6 +7,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
@@ -15,9 +16,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.resources.specs.BroadcastRecorder;
-import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
-import com.lasthopesoftware.specs.AndroidContext;
+import com.lasthopesoftware.resources.BroadcastRecorder;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
