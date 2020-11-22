@@ -3,7 +3,7 @@ package com.lasthopesoftware.resources.loopers.GivenMyThreadName;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 
 import org.junit.Before;

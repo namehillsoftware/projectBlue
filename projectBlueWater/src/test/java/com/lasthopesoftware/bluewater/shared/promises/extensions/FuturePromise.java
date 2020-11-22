@@ -1,10 +1,15 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions.specs;
+package com.lasthopesoftware.bluewater.shared.promises.extensions;
 
 import androidx.annotation.NonNull;
+
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class FuturePromise<Resolution> implements Future<Resolution> {
 

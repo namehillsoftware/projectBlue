@@ -1,7 +1,6 @@
-package com.lasthopesoftware.bluewater.permissions.read.specs;
+package com.lasthopesoftware.bluewater.permissions.read;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider;
 
 import junit.framework.TestCase;
 

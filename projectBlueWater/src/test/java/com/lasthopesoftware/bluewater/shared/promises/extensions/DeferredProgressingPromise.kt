@@ -1,6 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions.specs
-
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Progress, Resolution>() {
 	fun sendProgressUpdate(progress: Progress) {

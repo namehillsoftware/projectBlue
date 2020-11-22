@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions.specs;
+package com.lasthopesoftware.bluewater.shared.promises.extensions;
 
 import com.namehillsoftware.handoff.promises.Promise;
 

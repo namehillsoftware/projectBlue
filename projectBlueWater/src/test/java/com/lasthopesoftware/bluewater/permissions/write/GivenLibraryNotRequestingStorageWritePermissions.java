@@ -1,7 +1,6 @@
-package com.lasthopesoftware.bluewater.permissions.write.specs;
+package com.lasthopesoftware.bluewater.permissions.write;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider;
 
 import junit.framework.TestCase;
 
