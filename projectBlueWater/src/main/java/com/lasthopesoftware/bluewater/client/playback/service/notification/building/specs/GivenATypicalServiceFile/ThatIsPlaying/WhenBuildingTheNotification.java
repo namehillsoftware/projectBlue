@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImagePro
 import com.lasthopesoftware.bluewater.client.connection.specs.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.Lazy;

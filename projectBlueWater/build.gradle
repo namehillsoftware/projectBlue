@@ -81,13 +81,6 @@ android {
                 exclude '**/specs/**'
             }
         }
-
-        test {
-            java {
-                setRoot 'src/main'
-                include '**/specs/**'
-            }
-        }
     }
 
     dexOptions {
