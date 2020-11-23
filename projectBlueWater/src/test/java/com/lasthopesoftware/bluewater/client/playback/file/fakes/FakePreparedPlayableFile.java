@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.specs.fakes;
+package com.lasthopesoftware.bluewater.client.playback.file.fakes;
 
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;

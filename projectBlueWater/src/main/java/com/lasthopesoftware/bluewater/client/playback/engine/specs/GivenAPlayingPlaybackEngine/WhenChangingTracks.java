@@ -9,9 +9,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.specs.fakes.ResolvablePlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
@@ -37,7 +37,7 @@ public class WhenChangingTracks {
 	private static PositionedFile nextSwitchedFile;
 	private static PositionedPlayingFile latestFile;
 
-	private static List<PositionedPlayingFile> startedFiles = new ArrayList<>();
+	private static final List<PositionedPlayingFile> startedFiles = new ArrayList<>();
 
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException {

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.broadcasters.specs.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.service.broadcasters.GivenAPlayingFile;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
