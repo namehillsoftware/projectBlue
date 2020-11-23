@@ -1,16 +1,19 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AfterPlaybackHasStopped;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 
+import androidx.core.app.NotificationCompat;
+
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.PromiseMessenger;
 import com.lasthopesoftware.resources.notifications.control.NotificationsController;
-import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -18,11 +21,13 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.junit.Test;
 import org.robolectric.Robolectric;
 
-import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
+import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -43,8 +48,9 @@ public class WhenTheFileChanges extends AndroidContext {
 		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
 			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
 
-		when(notificationContentBuilder.promiseNowPlayingNotification(new ServiceFile(2), false))
-			.thenReturn(new Promise<>(newFakeBuilder(secondNotification)));
+		final PromiseMessenger<NotificationCompat.Builder> secondNotificationPromise = new PromiseMessenger<>();
+		when(notificationContentBuilder.promiseNowPlayingNotification(argThat(a -> a.equals(new ServiceFile(2))), anyBoolean()))
+			.thenReturn(secondNotificationPromise);
 
 		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
 			new PlaybackNotificationBroadcaster(
@@ -57,8 +63,9 @@ public class WhenTheFileChanges extends AndroidContext {
 
 		playbackNotificationBroadcaster.notifyPlaying();
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
-		playbackNotificationBroadcaster.notifyPaused();
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(2));
+		playbackNotificationBroadcaster.notifyStopped();
+		secondNotificationPromise.sendResolution(newFakeBuilder(secondNotification));
 	}
 
 	@Test
@@ -68,12 +75,12 @@ public class WhenTheFileChanges extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheServiceContinuesInTheBackground() {
-		verify(service.getObject()).stopForeground(false);
+	public void thenTheServiceDoesNotContinueInTheBackground() {
+		verify(service.getObject()).stopForeground(true);
 	}
 
 	@Test
-	public void thenTheNotificationIsSetToThePausedNotification() {
-		verify(notificationManager).notify(43, secondNotification);
+	public void thenTheNotificationIsNotSetToTheSecondNotification() {
+		verify(notificationManager, never()).notify(43, secondNotification);
 	}
 }
