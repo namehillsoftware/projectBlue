@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationManager;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -8,6 +8,7 @@ import android.content.Intent;
 import androidx.core.app.NotificationCompat;
 import androidx.test.core.app.ApplicationProvider;
 
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
@@ -15,7 +16,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.lasthopesoftware.resources.notifications.control.NotificationsController;
-import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -23,7 +23,7 @@ import com.namehillsoftware.lazyj.Lazy;
 import org.junit.Test;
 import org.robolectric.Robolectric;
 
-import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
+import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;

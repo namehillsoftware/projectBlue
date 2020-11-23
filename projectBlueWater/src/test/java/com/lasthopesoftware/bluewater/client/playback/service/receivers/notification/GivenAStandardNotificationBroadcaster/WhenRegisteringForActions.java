@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationBroadcaster;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationBroadcaster;
 
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents;

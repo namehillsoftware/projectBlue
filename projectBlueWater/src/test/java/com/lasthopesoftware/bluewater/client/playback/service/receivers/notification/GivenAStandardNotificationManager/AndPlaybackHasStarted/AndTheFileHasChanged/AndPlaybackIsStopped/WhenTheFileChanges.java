@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.specs.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsStopped;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsStopped;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.annimon.stream.Stream;
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
@@ -19,9 +20,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Notif
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
 import com.lasthopesoftware.resources.notifications.control.NotificationsController;
-import com.lasthopesoftware.resources.specs.ScopedLocalBroadcastManagerBuilder;
-import com.lasthopesoftware.specs.AndroidContext;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -32,7 +32,7 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.InvocationTargetException;
 
-import static com.lasthopesoftware.resources.notifications.specs.FakeNotificationCompatBuilder.newFakeBuilder;
+import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
