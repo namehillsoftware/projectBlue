@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;

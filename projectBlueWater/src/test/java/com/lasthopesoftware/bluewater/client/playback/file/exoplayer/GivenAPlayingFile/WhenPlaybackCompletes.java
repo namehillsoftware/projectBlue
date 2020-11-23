@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile;
 
 import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -6,6 +6,7 @@ import com.google.android.exoplayer2.Player;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.mock;
 
 public class WhenPlaybackCompletes {
 
-	private static List<Player.EventListener> eventListeners = new ArrayList<>();
+	private static final List<Player.EventListener> eventListeners = new ArrayList<>();
 
 	private static PlayedFile playedFile;
 

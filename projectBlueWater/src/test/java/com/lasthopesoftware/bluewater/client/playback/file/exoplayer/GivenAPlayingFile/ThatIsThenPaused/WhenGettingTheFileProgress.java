@@ -1,7 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile.ThatIsThenPaused;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile.ThatIsThenPaused;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;

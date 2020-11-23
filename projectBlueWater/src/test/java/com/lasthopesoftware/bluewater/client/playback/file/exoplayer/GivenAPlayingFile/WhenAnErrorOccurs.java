@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.specs.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile;
 
 import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -7,11 +7,12 @@ import com.google.android.exoplayer2.Player;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
 
-import java.net.ProtocolException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -19,12 +20,13 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-public class WhenANormalProtocolExceptionOccurs {
-
+public class WhenAnErrorOccurs {
 	private static ExoPlayerException exoPlayerException;
-	private static List<Player.EventListener> eventListener = new ArrayList<>();
+	private static final List<Player.EventListener> eventListener = new ArrayList<>();
 
 	@BeforeClass
 	public static void context() throws InterruptedException {
@@ -55,7 +57,7 @@ public class WhenANormalProtocolExceptionOccurs {
 				return null;
 			});
 
-		Stream.of(eventListener).forEach(e -> e.onPlayerError(ExoPlaybackException.createForSource(new ProtocolException())));
+		Stream.of(eventListener).forEach(e -> e.onPlayerError(ExoPlaybackException.createForSource(new IOException())));
 
 		countDownLatch.await(1, TimeUnit.SECONDS);
 	}

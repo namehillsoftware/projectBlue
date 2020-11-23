@@ -1,7 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.specs.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.GivenAPlayingFile;
 
 import com.google.android.exoplayer2.Player;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackCompletedNotifier;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -1,10 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation;
 
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
