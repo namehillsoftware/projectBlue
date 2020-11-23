@@ -1,11 +1,11 @@
-package com.lasthopesoftware.bluewater.client.servers.version.specs.GivenAStandardConnectionProvider;
+package com.lasthopesoftware.bluewater.client.servers.version.GivenAStandardConnectionProvider;
 
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.specs.FakeConnectionResponseTuple;
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider;
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
