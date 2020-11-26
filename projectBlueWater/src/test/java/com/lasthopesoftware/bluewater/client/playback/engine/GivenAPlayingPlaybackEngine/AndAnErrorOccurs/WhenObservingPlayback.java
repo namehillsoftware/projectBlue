@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAHaltedPlaylistEngine.AndAPlaylistIsPreparing;
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine.AndAnErrorOccurs;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
@@ -6,13 +6,15 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLi
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
+import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -23,17 +25,29 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenATrackIsSwitchedTwice {
+public class WhenObservingPlayback {
 
-	private static PositionedFile nextSwitchedFile;
+	private static Throwable error;
 
 	@BeforeClass
-	public static void before() throws ExecutionException, InterruptedException {
-		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
+	public static void context() throws ExecutionException, InterruptedException {
+		final DeferredErrorPlaybackPreparer deferredErrorPlaybackPreparer = new DeferredErrorPlaybackPreparer();
+
+		final IPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new IPlayableFilePreparationSourceProvider() {
+			@Override
+			public PlayableFilePreparationSource providePlayableFilePreparationSource() {
+				return deferredErrorPlaybackPreparer;
+			}
+
+			@Override
+			public int getMaxQueueSize() {
+				return 1;
+			}
+		};
 
 		final Library library = new Library();
 		library.setId(1);
@@ -47,12 +61,13 @@ public class WhenATrackIsSwitchedTwice {
 		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
 			new PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
-				() -> 1),
+				fakePlaybackPreparerProvider),
 			Collections.singletonList(new CompletingFileQueueProvider()),
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
+			.setOnPlaylistError(e -> error = e)
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -61,16 +76,26 @@ public class WhenATrackIsSwitchedTwice {
 					new ServiceFile(4),
 					new ServiceFile(5)), 0, 0);
 
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
-
-		playbackEngine.changePosition(3, 0).then(p -> nextSwitchedFile = p);
-		playbackEngine.changePosition(4, 0).then(p -> nextSwitchedFile = p);
-
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
+		deferredErrorPlaybackPreparer.resolve();
 	}
 
 	@Test
-	public void thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
-		assertThat(nextSwitchedFile.getPlaylistPosition()).isEqualTo(4);
+	public void thenTheErrorIsBroadcast() {
+		assertThat(error).isNotNull();
+	}
+
+	private static class DeferredErrorPlaybackPreparer implements PlayableFilePreparationSource {
+
+		private Messenger<PreparedPlayableFile> reject;
+
+		void resolve() {
+			if (reject != null)
+				reject.sendRejection(new Exception());
+		}
+
+		@Override
+		public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
+			return new Promise<>(messenger -> reject = messenger);
+		}
 	}
 }

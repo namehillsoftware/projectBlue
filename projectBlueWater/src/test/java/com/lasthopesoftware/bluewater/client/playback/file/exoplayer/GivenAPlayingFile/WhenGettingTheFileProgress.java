@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 import com.google.android.exoplayer2.ExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
 
 import org.joda.time.Duration;
 import org.junit.BeforeClass;

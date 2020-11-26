@@ -4,7 +4,7 @@ import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

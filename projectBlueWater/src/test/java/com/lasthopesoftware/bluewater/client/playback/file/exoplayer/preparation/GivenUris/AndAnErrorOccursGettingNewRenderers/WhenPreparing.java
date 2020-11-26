@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.specs.GivenUris.AndAnErrorOccursGettingNewRenderers;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.GivenUris.AndAnErrorOccursGettingNewRenderers;
 
 import android.content.Context;
 import android.net.Uri;
@@ -10,7 +10,7 @@ import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;

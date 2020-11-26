@@ -1,7 +1,5 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.specs.GivenAPlayingPlaybackEngine;
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
@@ -9,17 +7,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.specs.fakes.FakeDeferredPlayableFilePreparationSourceProvider;
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying;
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,11 +30,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
+public class WhenPlaybackIsPausedAndRestarted {
 
+	private static final List<ServiceFile> changedFiles = new ArrayList<>();
 	private static PlaybackEngine playbackEngine;
 	private static NowPlaying nowPlaying;
-	private static final List<PositionedPlayingFile> positionedFiles = new ArrayList<>();
+	private static ResolvablePlaybackHandler resolveablePlaybackHandler;
+	private static int playbackStartedCount;
 
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException {
@@ -65,7 +62,10 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
 		playbackEngine
-			.setOnPlayingFileChanged(f -> positionedFiles.add(f))
+			.setOnPlaybackStarted(() -> ++playbackStartedCount)
+			.setOnPlayingFileChanged(f -> changedFiles.add(f.getServiceFile()));
+
+		playbackEngine
 			.startPlaylist(
 				Arrays.asList(
 					new ServiceFile(1),
@@ -75,27 +75,51 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 					new ServiceFile(5)), 0, 0);
 
 		final ResolvablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-		fakePlaybackPreparerProvider.deferredResolution.resolve();
+		resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		playingPlaybackHandler.resolve();
 
-		playbackEngine.pause();
+		resolveablePlaybackHandler.setCurrentPosition(30);
 
-		nowPlaying = new FuturePromise<>(playbackEngine
-			.skipToNext()
-			.eventually(p -> playbackEngine.skipToNext())
-			.then(new VoidResponse<>(p -> playbackEngine.resume()))
-			.then(obs -> fakePlaybackPreparerProvider.deferredResolution.resolve())
-			.eventually(res -> nowPlayingRepository.getNowPlaying())).get();
+		new FuturePromise<>(playbackEngine.pause()).get();
+
+		nowPlaying = new FuturePromise<>(nowPlayingRepository.getNowPlaying()).get();
+
+		new FuturePromise<>(playbackEngine.resume()).get();
+
+		nowPlaying = new FuturePromise<>(nowPlayingRepository.getNowPlaying()).get();
 	}
 
 	@Test
-	public void thenThePlaybackStateIsPlaying() {
+	public void thenThePlayerIsNotPlaying() {
+		assertThat(resolveablePlaybackHandler.isPlaying()).isTrue();
+	}
+
+	@Test
+	public void thenThePlaybackStateIsNotPlaying() {
 		assertThat(playbackEngine.isPlaying()).isTrue();
 	}
 
 	@Test
+	public void thenTheSavedFilePositionIsCorrect() {
+		assertThat(nowPlaying.filePosition).isEqualTo(30);
+	}
+
+	@Test
 	public void thenTheSavedPlaylistPositionIsCorrect() {
-		assertThat(nowPlaying.playlistPosition).isEqualTo(3);
+		assertThat(nowPlaying.playlistPosition).isEqualTo(1);
+	}
+
+	@Test
+	public void thenTheChangedFilesAreCorrect() {
+		assertThat(changedFiles).containsExactly(
+			new ServiceFile(1),
+			new ServiceFile(2),
+			new ServiceFile(2));
+	}
+
+	@Test
+	public void thenPlaybackHasBeenStartedTwice() {
+		assertThat(playbackStartedCount).isEqualTo(2);
 	}
 
 	@Test
@@ -106,28 +130,5 @@ public class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 				new ServiceFile(3),
 				new ServiceFile(4),
 				new ServiceFile(5));
-	}
-
-	@Test
-	public void thenTheObservedFileIsCorrect() {
-		assertThat(positionedFiles.get(positionedFiles.size() - 1).getPlaylistPosition()).isEqualTo(3);
-	}
-
-	@Test
-	public void thenTheFirstSkippedFileIsOnlyObservedOnce() {
-		assertThat(
-			Stream.of(positionedFiles)
-				.map(PositionedPlayingFile::asPositionedFile)
-				.collect(Collectors.toList()))
-			.containsOnlyOnce(new PositionedFile(1, new ServiceFile(2)));
-	}
-
-	@Test
-	public void thenTheSecondSkippedFileIsNotObserved() {
-		assertThat(
-			Stream.of(positionedFiles)
-				.map(PositionedPlayingFile::asPositionedFile)
-				.collect(Collectors.toList()))
-			.doesNotContain(new PositionedFile(2, new ServiceFile(3)));
 	}
 }
