@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
@@ -107,16 +108,26 @@ implements
 	public void onPlayerError(ExoPlaybackException error) {
 		removeListener();
 
-		if (error.getCause() instanceof EOFException) {
+		final Throwable cause = error.getCause();
+		if (cause instanceof EOFException) {
 			logger.warn("The file ended unexpectedly. Completing playback", error);
 			resolve(this);
 			return;
 		}
 
-		if (error.getCause() instanceof ProtocolException) {
-			final ProtocolException protocolException = (ProtocolException) error.getCause();
+		if (cause instanceof ProtocolException) {
+			final ProtocolException protocolException = (ProtocolException) cause;
 			if (protocolException.getMessage() != null && protocolException.getMessage().contains("unexpected end of stream")) {
 				logger.warn("The stream ended unexpectedly, completing playback", error);
+				resolve(this);
+				return;
+			}
+		}
+
+		if (cause instanceof HttpDataSource.InvalidResponseCodeException) {
+			final HttpDataSource.InvalidResponseCodeException i = (HttpDataSource.InvalidResponseCodeException) cause;
+			if (i.responseCode == 416) {
+				logger.warn("Received an error code of " + i.responseCode + ", completing playback", i);
 				resolve(this);
 				return;
 			}
