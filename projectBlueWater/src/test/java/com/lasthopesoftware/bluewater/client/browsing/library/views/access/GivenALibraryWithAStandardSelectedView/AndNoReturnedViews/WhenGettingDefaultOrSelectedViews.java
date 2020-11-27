@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.views.access.specs.GivenALibraryWithAStandardSelectedView.AndNoReturnedViews;
+package com.lasthopesoftware.bluewater.client.browsing.library.views.access.GivenALibraryWithAStandardSelectedView.AndNoReturnedViews;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.jetbrains.annotations.NotNull;

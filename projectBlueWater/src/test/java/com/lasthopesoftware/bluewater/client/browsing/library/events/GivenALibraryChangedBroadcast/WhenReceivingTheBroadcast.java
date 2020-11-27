@@ -1,13 +1,13 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.events.specs.GivenALibraryChangedBroadcast;
+package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenALibraryChangedBroadcast;
 
 import android.content.Intent;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibrarySelectionKey;
-import com.lasthopesoftware.specs.AndroidContext;
 
 import org.junit.Test;
 import org.robolectric.Robolectric;

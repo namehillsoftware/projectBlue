@@ -1,7 +1,6 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.write.specs;
+package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.write;
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.write.LibraryStorageWritePermissionsRequirementsProvider;
 
 import junit.framework.Assert;
 
