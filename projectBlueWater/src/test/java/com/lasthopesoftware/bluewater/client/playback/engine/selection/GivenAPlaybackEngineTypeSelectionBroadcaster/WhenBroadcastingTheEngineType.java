@@ -1,17 +1,20 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenAPlaybackEngineTypeSelectionBroadcaster;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenAPlaybackEngineTypeSelectionBroadcaster;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.test.core.app.ApplicationProvider;
+
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +25,7 @@ public class WhenBroadcastingTheEngineType {
 
 	@Before
 	public void before() {
-		LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
+		LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
 			.registerReceiver(new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
@@ -31,7 +34,7 @@ public class WhenBroadcastingTheEngineType {
 				}
 			}, new IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged));
 
-		new PlaybackEngineTypeChangedBroadcaster(RuntimeEnvironment.application)
+		new PlaybackEngineTypeChangedBroadcaster(ApplicationProvider.getApplicationContext())
 			.broadcastPlaybackEngineTypeChanged(PlaybackEngineType.ExoPlayer);
 	}
 

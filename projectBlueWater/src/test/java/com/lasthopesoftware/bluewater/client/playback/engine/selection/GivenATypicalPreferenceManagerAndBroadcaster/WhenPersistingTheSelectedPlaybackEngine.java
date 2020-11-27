@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenATypicalPreferenceManagerAndBroadcaster;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenATypicalPreferenceManagerAndBroadcaster;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

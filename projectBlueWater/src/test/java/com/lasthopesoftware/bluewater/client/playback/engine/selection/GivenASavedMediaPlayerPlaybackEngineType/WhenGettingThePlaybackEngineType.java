@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenASavedMediaPlayerPlaybackEngineType;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenASavedMediaPlayerPlaybackEngineType;
 
 import android.content.SharedPreferences;
 
@@ -8,7 +8,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.lasthopesoftware.bluewater.ApplicationConstants;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;

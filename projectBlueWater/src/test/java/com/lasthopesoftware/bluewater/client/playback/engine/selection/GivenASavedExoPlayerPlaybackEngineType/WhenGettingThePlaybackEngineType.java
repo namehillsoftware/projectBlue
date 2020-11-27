@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.specs.GivenASavedExoPlayerPlaybackEngineType;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenASavedExoPlayerPlaybackEngineType;
 
 import android.content.SharedPreferences;
 
@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.specs.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Before;
