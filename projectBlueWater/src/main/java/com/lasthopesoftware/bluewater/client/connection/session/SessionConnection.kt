@@ -12,13 +12,12 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.namehillsoftware.handoff.promises.Promise
-import com.vedsoft.futures.runnables.OneParameterAction
 import org.slf4j.LoggerFactory
 
 class SessionConnection(
 	private val localBroadcastManager: LocalBroadcastManager,
 	private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider,
-	private val libraryConnections: ProvideLibraryConnections) : OneParameterAction<BuildingConnectionStatus> {
+	private val libraryConnections: ProvideLibraryConnections) : (BuildingConnectionStatus) -> Unit {
 
 	fun promiseTestedSessionConnection(): Promise<IConnectionProvider> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
@@ -44,7 +43,7 @@ class SessionConnection(
 			.updates(this)
 	}
 
-	override fun runWith(connectionStatus: BuildingConnectionStatus) {
+	override fun invoke(connectionStatus: BuildingConnectionStatus) {
 		doStateChange(connectionStatus)
 	}
 

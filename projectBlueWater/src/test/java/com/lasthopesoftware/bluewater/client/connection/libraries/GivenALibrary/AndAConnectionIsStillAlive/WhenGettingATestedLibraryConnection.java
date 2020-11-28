@@ -25,6 +25,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import kotlin.Unit;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -65,14 +67,20 @@ public class WhenGettingATestedLibraryConnection {
 		final LibraryId libraryId = new LibraryId(2);
 		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(libraryId)
-			.updates(statuses::add));
+			.updates(s -> {
+				statuses.add(s);
+				return Unit.INSTANCE;
+			}));
 
 		libraryDeferredPromise.resolve();
 		connectionProvider = futureConnectionProvider.get(30, TimeUnit.SECONDS);
 
 		secondConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseTestedLibraryConnection(libraryId)
-			.updates(statuses::add)).get();
+			.updates(s -> {
+				statuses.add(s);
+				return Unit.INSTANCE;
+			})).get();
 	}
 
 	@Test

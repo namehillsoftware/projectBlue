@@ -60,7 +60,10 @@ public class WhenRetrievingTheLibraryConnection {
 
 		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
 			.promiseLibraryConnection(new LibraryId(3))
-			.updates(statuses::add));
+			.updates(s -> {
+				statuses.add(s);
+				return Unit.INSTANCE;
+			}));
 
 		libraryDeferredPromise.resolve();
 
