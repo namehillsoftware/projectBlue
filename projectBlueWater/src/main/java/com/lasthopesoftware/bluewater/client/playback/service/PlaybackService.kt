@@ -120,7 +120,196 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 
-class PlaybackService : Service(), OnAudioFocusChangeListener {
+open class PlaybackService : Service(), OnAudioFocusChangeListener {
+
+	companion object {
+		private val logger = LoggerFactory.getLogger(PlaybackService::class.java)
+		private val mediaSessionTag = buildMagicPropertyName(PlaybackService::class.java, "mediaSessionTag")
+		private const val playingNotificationId = 42
+		private const val startingNotificationId = 53
+		private const val connectingNotificationId = 70
+
+		private val lazyObservationScheduler: CreateAndHold<Scheduler> = object : AbstractSynchronousLazy<Scheduler>() {
+			override fun create(): Scheduler {
+				return SingleScheduler(
+					RxThreadFactory(
+						"Playback Observation",
+						Thread.MIN_PRIORITY,
+						false
+					))
+			}
+		}
+
+		private fun getNewSelfIntent(context: Context, action: String): Intent {
+			val newIntent = Intent(context, PlaybackService::class.java)
+			newIntent.action = action
+			return newIntent
+		}
+
+		@JvmStatic
+		fun launchMusicService(context: Context, serializedFileList: String?) {
+			launchMusicService(context, 0, serializedFileList)
+		}
+
+		@JvmStatic
+		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String?) {
+			val svcIntent = getNewSelfIntent(context, Action.launchMusicService)
+			svcIntent.putExtra(Bag.playlistPosition, filePos)
+			svcIntent.putExtra(Bag.filePlaylist, serializedFileList)
+			safelyStartService(context, svcIntent)
+		}
+
+		@JvmOverloads
+		@JvmStatic
+		fun seekTo(context: Context, filePos: Int, fileProgress: Int = 0) {
+			val svcIntent = getNewSelfIntent(context, Action.seekTo)
+			svcIntent.putExtra(Bag.playlistPosition, filePos)
+			svcIntent.putExtra(Bag.startPos, fileProgress)
+			safelyStartService(context, svcIntent)
+		}
+
+		@JvmStatic
+		fun play(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.play))
+		}
+
+		@JvmStatic
+		fun pendingPlayingIntent(context: Context): PendingIntent {
+			return PendingIntent.getService(
+				context,
+				0,
+				getNewSelfIntent(
+					context,
+					Action.play),
+				PendingIntent.FLAG_UPDATE_CURRENT)
+		}
+
+		@JvmStatic
+		fun pause(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.pause))
+		}
+
+		@JvmStatic
+		fun pendingPauseIntent(context: Context): PendingIntent {
+			return PendingIntent.getService(
+				context,
+				0,
+				getNewSelfIntent(
+					context,
+					Action.pause),
+				PendingIntent.FLAG_UPDATE_CURRENT)
+		}
+
+		@JvmStatic
+		fun togglePlayPause(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause))
+		}
+
+		@JvmStatic
+		fun next(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.next))
+		}
+
+		@JvmStatic
+		fun pendingNextIntent(context: Context): PendingIntent {
+			return PendingIntent.getService(
+				context,
+				0,
+				getNewSelfIntent(
+					context,
+					Action.next),
+				PendingIntent.FLAG_UPDATE_CURRENT)
+		}
+
+		@JvmStatic
+		fun previous(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.previous))
+		}
+
+		@JvmStatic
+		fun pendingPreviousIntent(context: Context): PendingIntent {
+			return PendingIntent.getService(
+				context,
+				0,
+				getNewSelfIntent(
+					context,
+					Action.previous),
+				PendingIntent.FLAG_UPDATE_CURRENT)
+		}
+
+		@JvmStatic
+		fun setRepeating(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.repeating))
+		}
+
+		@JvmStatic
+		fun setCompleting(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.completing))
+		}
+
+		@JvmStatic
+		fun addFileToPlaylist(context: Context, fileKey: Int) {
+			val intent = getNewSelfIntent(context, Action.addFileToPlaylist)
+			intent.putExtra(Bag.playlistPosition, fileKey)
+			safelyStartService(context, intent)
+		}
+
+		@JvmStatic
+		fun removeFileAtPositionFromPlaylist(context: Context, filePosition: Int) {
+			val intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist)
+			intent.putExtra(Bag.filePosition, filePosition)
+			safelyStartService(context, intent)
+		}
+
+		@JvmStatic
+		fun killService(context: Context) {
+			safelyStartService(context, getNewSelfIntent(context, Action.killMusicService))
+		}
+
+		@JvmStatic
+		fun pendingKillService(context: Context): PendingIntent {
+			return PendingIntent.getService(
+				context,
+				0,
+				getNewSelfIntent(
+					context,
+					Action.killMusicService),
+				PendingIntent.FLAG_UPDATE_CURRENT)
+		}
+
+		private fun safelyStartService(context: Context, intent: Intent) {
+			try {
+				context.startService(intent)
+			} catch (e: IllegalStateException) {
+				logger.warn("An illegal state exception occurred while trying to start the service", e)
+			} catch (e: SecurityException) {
+				logger.warn("A security exception occurred while trying to start the service", e)
+			}
+		}
+
+		private fun buildFullNotification(notificationBuilder: NotificationCompat.Builder): Notification {
+			return notificationBuilder
+				.setSmallIcon(R.drawable.clearstream_logo_dark)
+				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+				.build()
+		}
+
+		private fun buildRemoteControlProxyIntentFilter(remoteControlProxy: RemoteControlProxy): IntentFilter {
+			val intentFilter = IntentFilter()
+			for (action in remoteControlProxy.registerForIntents()) {
+				intentFilter.addAction(action)
+			}
+			return intentFilter
+		}
+
+		private fun buildNotificationRouterIntentFilter(playbackNotificationRouter: PlaybackNotificationRouter): IntentFilter {
+			val intentFilter = IntentFilter()
+			for (action in playbackNotificationRouter.registerForIntents()) {
+				intentFilter.addAction(action)
+			}
+			return intentFilter
+		}
+	}
 
 	/* End streamer intent helpers */
 	private val notificationManagerLazy: CreateAndHold<NotificationManager?> = Lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
@@ -882,185 +1071,6 @@ class PlaybackService : Service(), OnAudioFocusChangeListener {
 			val filePlaylist = magicPropertyBuilder.buildProperty("filePlaylist")
 			val startPos = magicPropertyBuilder.buildProperty("startPos")
 			val filePosition = magicPropertyBuilder.buildProperty("filePosition")
-		}
-	}
-
-	companion object {
-		private val logger = LoggerFactory.getLogger(PlaybackService::class.java)
-		private val mediaSessionTag = buildMagicPropertyName(PlaybackService::class.java, "mediaSessionTag")
-		private const val playingNotificationId = 42
-		private const val startingNotificationId = 53
-		private const val connectingNotificationId = 70
-		private val lazyObservationScheduler: CreateAndHold<Scheduler> = object : AbstractSynchronousLazy<Scheduler>() {
-			override fun create(): Scheduler {
-				return SingleScheduler(
-					RxThreadFactory(
-						"Playback Observation",
-						Thread.MIN_PRIORITY,
-						false
-					))
-			}
-		}
-
-		private fun getNewSelfIntent(context: Context, action: String): Intent {
-			val newIntent = Intent(context, PlaybackService::class.java)
-			newIntent.action = action
-			return newIntent
-		}
-
-		fun launchMusicService(context: Context, serializedFileList: String?) {
-			launchMusicService(context, 0, serializedFileList)
-		}
-
-		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String?) {
-			val svcIntent = getNewSelfIntent(context, Action.launchMusicService)
-			svcIntent.putExtra(Bag.playlistPosition, filePos)
-			svcIntent.putExtra(Bag.filePlaylist, serializedFileList)
-			safelyStartService(context, svcIntent)
-		}
-
-		@JvmOverloads
-		fun seekTo(context: Context, filePos: Int, fileProgress: Int = 0) {
-			val svcIntent = getNewSelfIntent(context, Action.seekTo)
-			svcIntent.putExtra(Bag.playlistPosition, filePos)
-			svcIntent.putExtra(Bag.startPos, fileProgress)
-			safelyStartService(context, svcIntent)
-		}
-
-		@JvmStatic
-		fun play(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.play))
-		}
-
-		@JvmStatic
-		fun pendingPlayingIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
-				context,
-				0,
-				getNewSelfIntent(
-					context,
-					Action.play),
-				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
-
-		@JvmStatic
-		fun pause(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.pause))
-		}
-
-		@JvmStatic
-		fun pendingPauseIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
-				context,
-				0,
-				getNewSelfIntent(
-					context,
-					Action.pause),
-				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
-
-		fun togglePlayPause(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause))
-		}
-
-		@JvmStatic
-		fun next(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.next))
-		}
-
-		@JvmStatic
-		fun pendingNextIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
-				context,
-				0,
-				getNewSelfIntent(
-					context,
-					Action.next),
-				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
-
-		@JvmStatic
-		fun previous(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.previous))
-		}
-
-		@JvmStatic
-		fun pendingPreviousIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
-				context,
-				0,
-				getNewSelfIntent(
-					context,
-					Action.previous),
-				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
-
-		fun setRepeating(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.repeating))
-		}
-
-		fun setCompleting(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.completing))
-		}
-
-		fun addFileToPlaylist(context: Context, fileKey: Int) {
-			val intent = getNewSelfIntent(context, Action.addFileToPlaylist)
-			intent.putExtra(Bag.playlistPosition, fileKey)
-			safelyStartService(context, intent)
-		}
-
-		fun removeFileAtPositionFromPlaylist(context: Context, filePosition: Int) {
-			val intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist)
-			intent.putExtra(Bag.filePosition, filePosition)
-			safelyStartService(context, intent)
-		}
-
-		fun killService(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.killMusicService))
-		}
-
-		@JvmStatic
-		fun pendingKillService(context: Context): PendingIntent {
-			return PendingIntent.getService(
-				context,
-				0,
-				getNewSelfIntent(
-					context,
-					Action.killMusicService),
-				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
-
-		private fun safelyStartService(context: Context, intent: Intent) {
-			try {
-				context.startService(intent)
-			} catch (e: IllegalStateException) {
-				logger.warn("An illegal state exception occurred while trying to start the service", e)
-			} catch (e: SecurityException) {
-				logger.warn("A security exception occurred while trying to start the service", e)
-			}
-		}
-
-		private fun buildFullNotification(notificationBuilder: NotificationCompat.Builder): Notification {
-			return notificationBuilder
-				.setSmallIcon(R.drawable.clearstream_logo_dark)
-				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-				.build()
-		}
-
-		private fun buildRemoteControlProxyIntentFilter(remoteControlProxy: RemoteControlProxy): IntentFilter {
-			val intentFilter = IntentFilter()
-			for (action in remoteControlProxy.registerForIntents()) {
-				intentFilter.addAction(action)
-			}
-			return intentFilter
-		}
-
-		private fun buildNotificationRouterIntentFilter(playbackNotificationRouter: PlaybackNotificationRouter): IntentFilter {
-			val intentFilter = IntentFilter()
-			for (action in playbackNotificationRouter.registerForIntents()) {
-				intentFilter.addAction(action)
-			}
-			return intentFilter
 		}
 	}
 }
