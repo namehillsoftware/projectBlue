@@ -25,8 +25,6 @@ import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import com.namehillsoftware.lazyj.CreateAndHold
-import com.namehillsoftware.lazyj.Lazy
 import java.util.*
 import java.util.concurrent.CancellationException
 
@@ -55,9 +53,9 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 			return promiseConnectedService
 				.eventually { s ->
-					val connectionService = s.pollConnectionService;
+					val connectionService = s.pollConnectionService
 					connectionService.withNotification = connectionService.withNotification || withNotification
-					connectionService.lazyConnectionPoller.getObject()
+					connectionService.lazyConnectionPoller.value
 						.must { context.unbindService(s.serviceConnection) }
 				}
 		}
@@ -84,33 +82,31 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	private var withNotification = false
 
 	private val notificationId = 99
-	private val lazyBinder = Lazy { GenericBinder(this) }
-	private val lazyHandler = Lazy { Handler(mainLooper) }
+	private val lazyBinder = lazy { GenericBinder(this) }
+	private val lazyHandler = lazy { Handler(mainLooper) }
 
-	private val lazyConnectionPoller: CreateAndHold<Promise<IConnectionProvider>> = Lazy {
+	private val lazyConnectionPoller = lazy {
 		for (connectionLostListener in uniqueOnConnectionLostListeners) connectionLostListener.run()
 		Promise(this)
 	}
 
-	private val lazyChannelConfiguration = Lazy { SharedChannelProperties(this) }
-	private val notificationManagerLazy = Lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
-	private val lazyNotificationController = Lazy { NotificationsController(this, notificationManagerLazy.getObject()) }
-	private val lazyNotificationsConfiguration = Lazy {
+	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
+	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
+	private val lazyNotificationsConfiguration = lazy {
 		val notificationChannelActivator =
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.getObject())
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.value)
 			else NoOpChannelActivator()
 
-		val channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject())
+		val channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.value)
 		NotificationsConfiguration(channelName, notificationId)
 	}
 
-	override fun onBind(intent: Intent): IBinder? {
-		return lazyBinder.getObject()
-	}
+	override fun onBind(intent: Intent) = lazyBinder.value
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-		if (intent?.action == stopWaitingForConnectionAction && lazyConnectionPoller.isCreated)
-			lazyConnectionPoller.`object`.cancel()
+		if (intent?.action == stopWaitingForConnectionAction && lazyConnectionPoller.isInitialized())
+			lazyConnectionPoller.value.cancel()
 
 		return START_NOT_STICKY
 	}
@@ -134,13 +130,13 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			.promiseTestedSessionConnection()
 			.then({
 				when (it) {
-					null -> lazyHandler.getObject().postDelayed(
+					null -> lazyHandler.value.postDelayed(
 						{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
 						connectionTime.toLong())
 					else -> messenger.sendResolution(it)
 				}
 			}, {
-				lazyHandler.getObject()
+				lazyHandler.value
 					.postDelayed(
 						{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
 						connectionTime.toLong())
@@ -154,7 +150,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 		val pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
-		val notificationsConfiguration = lazyNotificationsConfiguration.getObject()
+		val notificationsConfiguration = lazyNotificationsConfiguration.value
 
 		val builder = NotificationCompat.Builder(this, notificationsConfiguration.notificationChannel)
 			.setOngoing(true)
@@ -164,12 +160,12 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			.setSmallIcon(R.drawable.clearstream_logo_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-		lazyNotificationController.`object`.notifyBackground(builder.build(), notificationsConfiguration.notificationId)
+		lazyNotificationController.value.notifyBackground(builder.build(), notificationsConfiguration.notificationId)
 	}
 
 	override fun onDestroy() {
-		if (lazyNotificationController.isCreated)
-			lazyNotificationController.`object`.removeAllNotifications()
+		if (lazyNotificationController.isInitialized())
+			lazyNotificationController.value.removeAllNotifications()
 		super.onDestroy()
 	}
 
