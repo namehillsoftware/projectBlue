@@ -613,88 +613,89 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
-			extractorHandler.value.eventually { handler ->
-				cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
-					connectionProvider,
-					FilePropertyCache.getInstance(),
-					SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()))
 
-				val imageProvider = ImageProvider(
-					StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.value),
-					MemoryCachedImageAccess.getInstance(this))
+			cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
+				connectionProvider,
+				FilePropertyCache.getInstance(),
+				SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()))
 
-				remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-				val broadcaster = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) MediaSessionBroadcaster(
-					this,
-					cachedSessionFilePropertiesProvider,
-					imageProvider,
-					lazyMediaSession.getObject())
-				else RemoteControlClientBroadcaster(
-					this,
-					cachedSessionFilePropertiesProvider,
-					imageProvider,
-					remoteControlClient.value)
-				RemoteControlProxy(broadcaster)
-					.also { rcp ->
-						remoteControlProxy = rcp
-						localBroadcastManagerLazy
-							.value
-							.registerReceiver(
-								rcp,
-								buildRemoteControlProxyIntentFilter(rcp))
-					}
+			val imageProvider = ImageProvider(
+				StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.value),
+				MemoryCachedImageAccess.getInstance(this))
 
-				nowPlayingNotificationBuilder?.close()
-				NowPlayingNotificationBuilder(
-					this,
-					lazyMediaStyleNotificationSetup.value,
-					connectionProvider,
-					cachedSessionFilePropertiesProvider,
-					imageProvider)
-					.also { nowPlayingNotificationBuilder = it }
-					.let { builder ->
-						playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-						PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-							lazyNotificationController.value,
-							lazyPlaybackNotificationsConfiguration.value,
-							builder,
-							lazyPlaybackStartingNotificationBuilder.value))
-					}
-					.also { router ->
-						playbackNotificationRouter = router
+			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+			val broadcaster = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) MediaSessionBroadcaster(
+				this,
+				cachedSessionFilePropertiesProvider,
+				imageProvider,
+				lazyMediaSession.getObject())
+			else RemoteControlClientBroadcaster(
+				this,
+				cachedSessionFilePropertiesProvider,
+				imageProvider,
+				remoteControlClient.value)
+			RemoteControlProxy(broadcaster)
+				.also { rcp ->
+					remoteControlProxy = rcp
+					localBroadcastManagerLazy
+						.value
+						.registerReceiver(
+							rcp,
+							buildRemoteControlProxyIntentFilter(rcp))
+				}
 
-						localBroadcastManagerLazy
-							.value
-							.registerReceiver(router, buildNotificationRouterIntentFilter(router))
-					}
+			nowPlayingNotificationBuilder?.close()
+			NowPlayingNotificationBuilder(
+				this,
+				lazyMediaStyleNotificationSetup.value,
+				connectionProvider,
+				cachedSessionFilePropertiesProvider,
+				imageProvider)
+				.also { nowPlayingNotificationBuilder = it }
+				.let { builder ->
+					playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+					PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
+						lazyNotificationController.value,
+						lazyPlaybackNotificationsConfiguration.value,
+						builder,
+						lazyPlaybackStartingNotificationBuilder.value))
+				}
+				.also { router ->
+					playbackNotificationRouter = router
 
-				val cacheConfiguration = AudioCacheConfiguration(library)
+					localBroadcastManagerLazy
+						.value
+						.registerReceiver(router, buildNotificationRouterIntentFilter(router))
+				}
 
-				cache?.release()
-				val cacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration)
-				val cacheEvictor = LeastRecentlyUsedCacheEvictor(cacheConfiguration.maxSize)
-				SimpleCache(cacheDirectoryProvider,	cacheEvictor)
-					.also { cache = it }
-					.let { simpleCache ->
-						val arbitratorForOs = ExternalStorageReadPermissionsArbitratorForOs(this)
-						val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
-						val bestMatchUriProvider = BestMatchUriProvider(
-							library,
-							StoredFileUriProvider(
-								lazySelectedLibraryProvider.value,
-								StoredFileAccess(this, lazyAllStoredFilesInLibrary.value),
-								arbitratorForOs),
-							CachedAudioFileUriProvider(
-								remoteFileUriProvider,
-								CachedFilesProvider(this, cacheConfiguration)),
-							MediaFileUriProvider(
-								this,
-								MediaQueryCursorProvider(this, lazyCachedFileProperties.value),
-								arbitratorForOs,
-								lazyChosenLibraryIdentifierProvider.value,
-								false),
-							remoteFileUriProvider)
+			val cacheConfiguration = AudioCacheConfiguration(library)
 
+			cache?.release()
+			val cacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration)
+			val cacheEvictor = LeastRecentlyUsedCacheEvictor(cacheConfiguration.maxSize)
+			SimpleCache(cacheDirectoryProvider, cacheEvictor)
+				.also { cache = it }
+				.let { simpleCache ->
+					val arbitratorForOs = ExternalStorageReadPermissionsArbitratorForOs(this)
+					val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
+					val bestMatchUriProvider = BestMatchUriProvider(
+						library,
+						StoredFileUriProvider(
+							lazySelectedLibraryProvider.value,
+							StoredFileAccess(this, lazyAllStoredFilesInLibrary.value),
+							arbitratorForOs),
+						CachedAudioFileUriProvider(
+							remoteFileUriProvider,
+							CachedFilesProvider(this, cacheConfiguration)),
+						MediaFileUriProvider(
+							this,
+							MediaQueryCursorProvider(this, lazyCachedFileProperties.value),
+							arbitratorForOs,
+							lazyChosenLibraryIdentifierProvider.value,
+							false),
+						remoteFileUriProvider)
+
+					extractorHandler.value.then { handler ->
 						val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
 							this,
 							handler,
@@ -703,15 +704,18 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
 								simpleCache),
 							bestMatchUriProvider)
-						val preparationSourceProvider = MaxFileVolumePreparationProvider(
+
+						MaxFileVolumePreparationProvider(
 							playbackEngineBuilder.build(library),
 							MaxFileVolumeProvider(
 								lazyVolumeLevelSettings.value,
 								cachedSessionFilePropertiesProvider))
-
-						playbackQueues?.close()
-						PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
 					}
+				}
+			}
+			.eventually { preparationSourceProvider ->
+				playbackQueues?.close()
+				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
 					.also { playbackQueues = it }
 					.let { queues ->
 						playlistPlaybackBootstrapper?.close()
@@ -732,16 +736,15 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 							}
 					}
 			}
-		}
-		.then { engine ->
-			playbackEngine = engine
-			engine
-				.setOnPlaybackStarted(::handlePlaybackStarted)
-				.setOnPlayingFileChanged(::changePositionedPlaybackFile)
-				.setOnPlaylistError(::uncaughtExceptionHandler)
-				.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
-				.setOnPlaylistReset(::broadcastResetPlaylist)
-		}
+			.then { engine ->
+				playbackEngine = engine
+				engine
+					.setOnPlaybackStarted(::handlePlaybackStarted)
+					.setOnPlayingFileChanged(::changePositionedPlaybackFile)
+					.setOnPlaylistError(::uncaughtExceptionHandler)
+					.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
+					.setOnPlaylistReset(::broadcastResetPlaylist)
+			}
 	}
 
 	private val sessionConnection: Promise<IConnectionProvider>
