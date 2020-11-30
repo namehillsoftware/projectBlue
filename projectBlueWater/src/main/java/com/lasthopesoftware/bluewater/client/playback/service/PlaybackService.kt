@@ -619,46 +619,47 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 					FilePropertyCache.getInstance(),
 					SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()))
 
-
 				val imageProvider = ImageProvider(
 					StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.value),
 					MemoryCachedImageAccess.getInstance(this))
 
 				remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-				RemoteControlProxy(
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) MediaSessionBroadcaster(
-						this,
-						cachedSessionFilePropertiesProvider,
-						imageProvider,
-						lazyMediaSession.getObject())
-					else RemoteControlClientBroadcaster(
-						this,
-						cachedSessionFilePropertiesProvider,
-						imageProvider,
-						remoteControlClient.value))
+				val broadcaster = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) MediaSessionBroadcaster(
+					this,
+					cachedSessionFilePropertiesProvider,
+					imageProvider,
+					lazyMediaSession.getObject())
+				else RemoteControlClientBroadcaster(
+					this,
+					cachedSessionFilePropertiesProvider,
+					imageProvider,
+					remoteControlClient.value)
+				RemoteControlProxy(broadcaster)
 					.also { rcp ->
+						remoteControlProxy = rcp
 						localBroadcastManagerLazy
 							.value
 							.registerReceiver(
 								rcp,
 								buildRemoteControlProxyIntentFilter(rcp))
-
-						remoteControlProxy = rcp
 					}
 
-				playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-
 				nowPlayingNotificationBuilder?.close()
-				PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-					lazyNotificationController.value,
-					lazyPlaybackNotificationsConfiguration.value,
-					NowPlayingNotificationBuilder(
-						this,
-						lazyMediaStyleNotificationSetup.value,
-						connectionProvider,
-						cachedSessionFilePropertiesProvider,
-						imageProvider).also { nowPlayingNotificationBuilder = it },
-					lazyPlaybackStartingNotificationBuilder.value))
+				NowPlayingNotificationBuilder(
+					this,
+					lazyMediaStyleNotificationSetup.value,
+					connectionProvider,
+					cachedSessionFilePropertiesProvider,
+					imageProvider)
+					.also { nowPlayingNotificationBuilder = it }
+					.let { builder ->
+						playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+						PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
+							lazyNotificationController.value,
+							lazyPlaybackNotificationsConfiguration.value,
+							builder,
+							lazyPlaybackStartingNotificationBuilder.value))
+					}
 					.also { router ->
 						playbackNotificationRouter = router
 
@@ -667,31 +668,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 							.registerReceiver(router, buildNotificationRouterIntentFilter(router))
 					}
 
-				val storedFileAccess = StoredFileAccess(
-					this,
-					lazyAllStoredFilesInLibrary.value)
-				val arbitratorForOs = ExternalStorageReadPermissionsArbitratorForOs(this)
 				val cacheConfiguration = AudioCacheConfiguration(library)
-
-				val remoteFileUriProvider = RemoteFileUriProvider(
-					connectionProvider,
-					ServiceFileUriQueryParamsProvider())
-				val bestMatchUriProvider = BestMatchUriProvider(
-					library,
-					StoredFileUriProvider(
-						lazySelectedLibraryProvider.value,
-						storedFileAccess,
-						arbitratorForOs),
-					CachedAudioFileUriProvider(
-						remoteFileUriProvider,
-						CachedFilesProvider(this, AudioCacheConfiguration(library))),
-					MediaFileUriProvider(
-						this,
-						MediaQueryCursorProvider(this, lazyCachedFileProperties.value),
-						arbitratorForOs,
-						lazyChosenLibraryIdentifierProvider.value,
-						false),
-					remoteFileUriProvider)
 
 				cache?.release()
 				val cacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration)
@@ -699,6 +676,25 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 				SimpleCache(cacheDirectoryProvider,	cacheEvictor)
 					.also { cache = it }
 					.let { simpleCache ->
+						val arbitratorForOs = ExternalStorageReadPermissionsArbitratorForOs(this)
+						val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
+						val bestMatchUriProvider = BestMatchUriProvider(
+							library,
+							StoredFileUriProvider(
+								lazySelectedLibraryProvider.value,
+								StoredFileAccess(this, lazyAllStoredFilesInLibrary.value),
+								arbitratorForOs),
+							CachedAudioFileUriProvider(
+								remoteFileUriProvider,
+								CachedFilesProvider(this, cacheConfiguration)),
+							MediaFileUriProvider(
+								this,
+								MediaQueryCursorProvider(this, lazyCachedFileProperties.value),
+								arbitratorForOs,
+								lazyChosenLibraryIdentifierProvider.value,
+								false),
+							remoteFileUriProvider)
+
 						val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
 							this,
 							handler,
@@ -713,6 +709,11 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 								lazyVolumeLevelSettings.value,
 								cachedSessionFilePropertiesProvider))
 
+						playbackQueues?.close()
+						PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
+					}
+					.also { playbackQueues = it }
+					.let { queues ->
 						playlistPlaybackBootstrapper?.close()
 						PlaylistPlaybackBootstrapper(lazyPlaylistVolumeManager.value)
 							.also { playlistPlaybackBootstrapper = it }
@@ -723,16 +724,11 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 										lazyLibraryRepository.value),
 									lazyLibraryRepository.value)
 
-								playbackQueues?.close()
-								PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
-									.also { playbackQueues = it }
-									.let { queues ->
-										createEngine(
-											queues,
-											QueueProviders.providers(),
-											nowPlayingRepository,
-											bootstrapper)
-									}
+								createEngine(
+									queues,
+									QueueProviders.providers(),
+									nowPlayingRepository,
+									bootstrapper)
 							}
 					}
 			}
