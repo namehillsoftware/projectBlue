@@ -47,7 +47,7 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<*> {
+	fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> {
 		logger.info("Starting playback")
 		this.playlist = playlist
 		this.playlistPosition = playlistPosition
