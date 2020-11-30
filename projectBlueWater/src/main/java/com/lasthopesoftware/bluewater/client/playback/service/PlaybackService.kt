@@ -655,9 +655,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 						lazyMediaStyleNotificationSetup.value,
 						connectionProvider,
 						cachedSessionFilePropertiesProvider,
-						imageProvider).also {
-						nowPlayingNotificationBuilder = it
-					},
+						imageProvider).also { nowPlayingNotificationBuilder = it },
 					lazyPlaybackStartingNotificationBuilder.value))
 
 				localBroadcastManagerLazy
@@ -728,11 +726,11 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		.then { engine ->
 			playbackEngine = engine
 			engine
-				.setOnPlaybackStarted { handlePlaybackStarted() }
-				.setOnPlayingFileChanged { positionedPlayingFile: PositionedPlayingFile -> changePositionedPlaybackFile(positionedPlayingFile) }
-				.setOnPlaylistError { exception: Throwable? -> uncaughtExceptionHandler(exception) }
-				.setOnPlaybackCompleted { onPlaylistPlaybackComplete() }
-				.setOnPlaylistReset { positionedFile: PositionedFile -> broadcastResetPlaylist(positionedFile) }
+				.setOnPlaybackStarted(::handlePlaybackStarted)
+				.setOnPlayingFileChanged(::changePositionedPlaybackFile)
+				.setOnPlaylistError(::uncaughtExceptionHandler)
+				.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
+				.setOnPlaylistReset(::broadcastResetPlaylist)
 		}
 	}
 
