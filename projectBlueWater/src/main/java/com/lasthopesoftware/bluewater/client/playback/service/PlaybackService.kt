@@ -63,7 +63,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeP
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.*
-import com.lasthopesoftware.bluewater.client.playback.service.exceptions.BreakConnection
 import com.lasthopesoftware.bluewater.client.playback.service.exceptions.ConnectionCircuitTracker
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
@@ -81,12 +80,10 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.N
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
-import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -97,9 +94,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
 import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer
-import com.lasthopesoftware.resources.notifications.control.ControlNotifications
 import com.lasthopesoftware.resources.notifications.control.NotificationsController
-import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration
 import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
@@ -107,8 +102,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.VoidResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
-import com.namehillsoftware.lazyj.CreateAndHold
-import com.namehillsoftware.lazyj.Lazy
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.internal.schedulers.RxThreadFactory
@@ -309,21 +302,24 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	}
 
 	/* End streamer intent helpers */
-	private val notificationManagerLazy: CreateAndHold<NotificationManager?> = Lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
-	private val audioManagerLazy: CreateAndHold<AudioManager> = Lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-	private val localBroadcastManagerLazy: CreateAndHold<LocalBroadcastManager> = Lazy { LocalBroadcastManager.getInstance(this) }
-	private val remoteControlReceiver: CreateAndHold<ComponentName> = Lazy { ComponentName(packageName, RemoteControlReceiver::class.java.name) }
-	private val remoteControlClient: CreateAndHold<RemoteControlClient> = object : AbstractSynchronousLazy<RemoteControlClient>() {
-		override fun create(): RemoteControlClient {
+
+	var isPlaying = false
+		private set
+
+	private val lazyBinder = lazy { GenericBinder(this) }
+	private val notificationManagerLazy = lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
+	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
+	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
+	private val remoteControlReceiver = lazy { ComponentName(packageName, RemoteControlReceiver::class.java.name) }
+	private val remoteControlClient = lazy {
 			// build the PendingIntent for the remote control client
 			val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
-			mediaButtonIntent.component = remoteControlReceiver.getObject()
+			mediaButtonIntent.component = remoteControlReceiver.value
 			val mediaPendingIntent = PendingIntent.getBroadcast(this@PlaybackService, 0, mediaButtonIntent, 0)
 			// create and register the remote control client
-			return RemoteControlClient(mediaPendingIntent)
+			RemoteControlClient(mediaPendingIntent)
 		}
-	}
-	private val lazyMediaSession: CreateAndHold<MediaSessionCompat> = object : AbstractSynchronousLazy<MediaSessionCompat>() {
+	private val lazyMediaSession = object : AbstractSynchronousLazy<MediaSessionCompat>() {
 		@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 		override fun create(): MediaSessionCompat {
 			val newMediaSession = MediaSessionCompat(
@@ -331,86 +327,70 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 				mediaSessionTag)
 			newMediaSession.setCallback(MediaSessionCallbackReceiver(this@PlaybackService))
 			val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
-			mediaButtonIntent.component = remoteControlReceiver.getObject()
+			mediaButtonIntent.component = remoteControlReceiver.value
 			val mediaPendingIntent = PendingIntent.getBroadcast(this@PlaybackService, 0, mediaButtonIntent, 0)
 			newMediaSession.setMediaButtonReceiver(mediaPendingIntent)
 			return newMediaSession
 		}
 	}
-	private val lazyPlaybackBroadcaster: CreateAndHold<IPlaybackBroadcaster> = Lazy { LocalPlaybackBroadcaster(localBroadcastManagerLazy.getObject()) }
-	private val lazyChosenLibraryIdentifierProvider: CreateAndHold<ISelectedLibraryIdentifierProvider> = Lazy { SelectedBrowserLibraryIdentifierProvider(this) }
-	private val lazyPlaybackStartedBroadcaster: CreateAndHold<PlaybackStartedBroadcaster> = Lazy { PlaybackStartedBroadcaster(localBroadcastManagerLazy.getObject()) }
-	private val lazyLibraryRepository: CreateAndHold<LibraryRepository> = Lazy { LibraryRepository(this) }
-	private val lazyPlaylistVolumeManager: CreateAndHold<PlaylistVolumeManager> = Lazy { PlaylistVolumeManager(1.0f) }
-	private val lazyVolumeLevelSettings: CreateAndHold<IVolumeLevelSettings> = Lazy { VolumeLevelSettings(this) }
-	private val lazyChannelConfiguration: CreateAndHold<ChannelConfiguration> = Lazy { SharedChannelProperties(this) }
-	private val lazyPlaybackNotificationsConfiguration: CreateAndHold<NotificationsConfiguration> = object : AbstractSynchronousLazy<NotificationsConfiguration>() {
-		override fun create(): NotificationsConfiguration {
-			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.getObject()) else NoOpChannelActivator()
-			val channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.getObject())
-			return NotificationsConfiguration(channelName, playingNotificationId)
+	private val lazyPlaybackBroadcaster = lazy { LocalPlaybackBroadcaster(localBroadcastManagerLazy.value) }
+	private val lazyChosenLibraryIdentifierProvider = lazy { SelectedBrowserLibraryIdentifierProvider(this) }
+	private val lazyPlaybackStartedBroadcaster = lazy { PlaybackStartedBroadcaster(localBroadcastManagerLazy.value) }
+	private val lazyLibraryRepository = lazy { LibraryRepository(this) }
+	private val lazyPlaylistVolumeManager = lazy { PlaylistVolumeManager(1.0f) }
+	private val lazyVolumeLevelSettings = lazy { VolumeLevelSettings(this) }
+	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
+	private val lazyPlaybackNotificationsConfiguration = lazy {
+			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.value) else NoOpChannelActivator()
+			val channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.value)
+			NotificationsConfiguration(channelName, playingNotificationId)
 		}
-	}
-	private val lazyMediaStyleNotificationSetup: CreateAndHold<MediaStyleNotificationSetup> = object : AbstractSynchronousLazy<MediaStyleNotificationSetup>() {
-		override fun create(): MediaStyleNotificationSetup {
-			return MediaStyleNotificationSetup(
+	private val lazyMediaStyleNotificationSetup = lazy {
+			MediaStyleNotificationSetup(
 				this@PlaybackService,
 				NotificationBuilderProducer(this@PlaybackService),
-				lazyPlaybackNotificationsConfiguration.getObject(),
+				lazyPlaybackNotificationsConfiguration.value,
 				lazyMediaSession.getObject())
 		}
-	}
-	private val lazyAllStoredFilesInLibrary: CreateAndHold<GetAllStoredFilesInLibrary> = Lazy { StoredFilesCollection(this) }
-	private val extractorThread: CreateAndHold<Promise<HandlerThread>> = object : AbstractSynchronousLazy<Promise<HandlerThread>>() {
-		override fun create(): Promise<HandlerThread> {
-			return HandlerThreadCreator.promiseNewHandlerThread(
+	private val lazyAllStoredFilesInLibrary = lazy { StoredFilesCollection(this) }
+	private val extractorThread = lazy {
+			HandlerThreadCreator.promiseNewHandlerThread(
 				"Media Extracting thread",
 				Process.THREAD_PRIORITY_AUDIO)
 		}
-	}
-	private val extractorHandler: CreateAndHold<Promise<Handler>> = object : AbstractSynchronousLazy<Promise<Handler>>() {
-		override fun create(): Promise<Handler> {
-			return extractorThread.getObject().then { h: HandlerThread -> Handler(h.looper) }
-		}
-	}
-	private val lazyPlaybackStartingNotificationBuilder: CreateAndHold<PlaybackStartingNotificationBuilder> = object : AbstractSynchronousLazy<PlaybackStartingNotificationBuilder>() {
-		override fun create(): PlaybackStartingNotificationBuilder {
-			return PlaybackStartingNotificationBuilder(
+	private val extractorHandler = lazy { extractorThread.value.then { h -> Handler(h.looper) } }
+	private val lazyPlaybackStartingNotificationBuilder = lazy {
+			PlaybackStartingNotificationBuilder(
 				this@PlaybackService,
 				NotificationBuilderProducer(this@PlaybackService),
-				lazyPlaybackNotificationsConfiguration.getObject(),
+				lazyPlaybackNotificationsConfiguration.value,
 				lazyMediaSession.getObject())
 		}
-	}
-	private val lazySelectedLibraryProvider: CreateAndHold<ISelectedBrowserLibraryProvider> = object : AbstractSynchronousLazy<ISelectedBrowserLibraryProvider>() {
-		override fun create(): ISelectedBrowserLibraryProvider {
-			return SelectedBrowserLibraryProvider(
+	private val lazySelectedLibraryProvider = lazy {
+			SelectedBrowserLibraryProvider(
 				SelectedBrowserLibraryIdentifierProvider(this@PlaybackService),
 				LibraryRepository(this@PlaybackService))
-		}
 	}
-	private val lazyFileProperties: CreateAndHold<ProvideLibraryFileProperties> = Lazy {
+	private val lazyFileProperties = lazy {
 		FilePropertiesProvider(
 			get(this),
 			FilePropertyCache.getInstance())
 	}
-	private val lazyCachedFileProperties: CreateAndHold<CachedFilePropertiesProvider> = Lazy {
+	private val lazyCachedFileProperties = lazy {
 		CachedFilePropertiesProvider(
 			get(this),
 			FilePropertyCache.getInstance(),
-			lazyFileProperties.getObject())
+			lazyFileProperties.value)
 	}
-	private val lazyAudioBecomingNoisyReceiver: CreateAndHold<AudioBecomingNoisyReceiver> = Lazy { AudioBecomingNoisyReceiver() }
-	private val lazyNotificationController: CreateAndHold<ControlNotifications> = Lazy { NotificationsController(this, notificationManagerLazy.getObject()!!) }
-	private val lazyDisconnectionTracker: CreateAndHold<BreakConnection> = Lazy { ConnectionCircuitTracker() }
+	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
+	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
+	private val lazyDisconnectionTracker = lazy { ConnectionCircuitTracker() }
 	private var areListenersRegistered = false
 	private var playbackEnginePromise: Promise<PlaybackEngine>? = null
 	private var playbackEngine: PlaybackEngine? = null
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
 	private var cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider? = null
 	private var positionedPlayingFile: PositionedPlayingFile? = null
-	var isPlaying = false
-		private set
 	private var filePositionSubscription: Disposable? = null
 	private var playlistPlaybackBootstrapper: PlaylistPlaybackBootstrapper? = null
 	private var remoteControlProxy: RemoteControlProxy? = null
@@ -420,18 +400,12 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	private var cache: SimpleCache? = null
 	private var startId = 0
 
-	private val connectionRegainedListener: CreateAndHold<ImmediateResponse<IConnectionProvider, Void>> = object : AbstractSynchronousLazy<ImmediateResponse<IConnectionProvider, Void>>() {
-		override fun create(): ImmediateResponse<IConnectionProvider, Void> {
-			return VoidResponse { playbackEngine?.resume() ?: stopSelf(startId) }
-		}
-	}
-	private val onPollingCancelledListener: CreateAndHold<ImmediateResponse<Throwable, Void>> = object : AbstractSynchronousLazy<ImmediateResponse<Throwable, Void>>() {
-		override fun create(): ImmediateResponse<Throwable, Void> {
-			return VoidResponse { e: Throwable? ->
-				if (e is CancellationException) {
-					unregisterListeners()
-					stopSelf(startId)
-				}
+	private val connectionRegainedListener = lazy { VoidResponse<IConnectionProvider> { playbackEngine?.resume() ?: stopSelf(startId) } }
+	private val onPollingCancelledListener = lazy {
+		VoidResponse<Throwable?> { e ->
+			if (e is CancellationException) {
+				unregisterListeners()
+				stopSelf(startId)
 			}
 		}
 	}
@@ -455,31 +429,29 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			handleBuildConnectionStatusChange(buildStatus)
 		}
 	}
-	private val UnhandledRejectionHandler = ImmediateResponse<Throwable, Void?> { e: Throwable? ->
+	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit> { e: Throwable? ->
 		uncaughtExceptionHandler(e)
-		null
 	}
 
 	private fun stopNotificationIfNotPlaying() {
-		if (!isPlaying) lazyNotificationController.getObject().removeNotification(playingNotificationId)
+		if (!isPlaying) lazyNotificationController.value.removeNotification(playingNotificationId)
 	}
 
 	private fun notifyStartingService(): Promise<Unit> {
-		return lazyPlaybackStartingNotificationBuilder.getObject()
+		return lazyPlaybackStartingNotificationBuilder.value
 			.promisePreparedPlaybackStartingNotification()
 			.then { b ->
-				lazyNotificationController.getObject().notifyForeground(
-					b.build(), startingNotificationId)
+				lazyNotificationController.value.notifyForeground(b.build(), startingNotificationId)
 			}
 	}
 
 	private fun registerListeners() {
-		audioManagerLazy.getObject().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+		audioManagerLazy.value.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
 		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
 		wakeLock?.acquire()
 		registerRemoteClientControl()
 		registerReceiver(
-			lazyAudioBecomingNoisyReceiver.getObject(),
+			lazyAudioBecomingNoisyReceiver.value,
 			IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
 		areListenersRegistered = true
 	}
@@ -489,28 +461,28 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			lazyMediaSession.getObject().isActive = true
 			return
 		}
-		audioManagerLazy.getObject().registerMediaButtonEventReceiver(remoteControlReceiver.getObject())
-		audioManagerLazy.getObject().registerRemoteControlClient(remoteControlClient.getObject())
+		audioManagerLazy.value.registerMediaButtonEventReceiver(remoteControlReceiver.value)
+		audioManagerLazy.value.registerRemoteControlClient(remoteControlClient.value)
 	}
 
 	private fun unregisterListeners() {
-		audioManagerLazy.getObject().abandonAudioFocus(this)
-		if (wakeLock != null) {
-			if (wakeLock!!.isHeld) wakeLock!!.release()
-			wakeLock = null
-		}
-		if (lazyAudioBecomingNoisyReceiver.isCreated) unregisterReceiver(lazyAudioBecomingNoisyReceiver.getObject())
+		audioManagerLazy.value.abandonAudioFocus(this)
+
+		wakeLock?.apply { if (isHeld) release() }
+		wakeLock = null
+
+		if (lazyAudioBecomingNoisyReceiver.isInitialized()) unregisterReceiver(lazyAudioBecomingNoisyReceiver.value)
 		areListenersRegistered = false
 	}
 
 	/* Begin Event Handlers */
 	override fun onCreate() {
 		registerRemoteClientControl()
-		localBroadcastManagerLazy.getObject()
+		localBroadcastManagerLazy.value
 			.registerReceiver(
 				onPlaybackEngineChanged,
 				IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged))
-		localBroadcastManagerLazy.getObject()
+		localBroadcastManagerLazy.value
 			.registerReceiver(
 				onLibraryChanged,
 				IntentFilter(BrowserLibrarySelection.libraryChosenEvent))
@@ -531,16 +503,21 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		}
 
 		if (playbackEngine != null) {
-			actOnIntent(intent).excuse(UnhandledRejectionHandler)
+			actOnIntent(intent).excuse(unhandledRejectionHandler)
 			return START_NOT_STICKY
 		}
 
 		notifyStartingService()
-			.eventually { lazySelectedLibraryProvider.getObject().browserLibrary }
-			.eventually { initializePlaybackPlaylistStateManagerSerially(it) }
+			.eventually { lazySelectedLibraryProvider.value.browserLibrary }
+			.eventually {
+				if (it != null)
+					initializePlaybackPlaylistStateManagerSerially(it)
+				else
+					Promise.empty()
+			}
 			.eventually { actOnIntent(intent) }
-			.must { lazyNotificationController.getObject().removeNotification(startingNotificationId) }
-			.excuse(UnhandledRejectionHandler)
+			.must { lazyNotificationController.value.removeNotification(startingNotificationId) }
+			.excuse(unhandledRejectionHandler)
 		return START_NOT_STICKY
 	}
 
@@ -567,7 +544,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 						startNowPlayingActivity(this)
 						promiseStartedPlaylist
 					}
-					.then { localBroadcastManagerLazy.getObject().sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
+					.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 			}
 			Action.play -> {
 				isPlaying = true
@@ -606,7 +583,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 				val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
 				return if (fileKey < 0) Unit.toPromise() else playbackEngine
 					.addFile(ServiceFile(fileKey))
-					.then { localBroadcastManagerLazy.getObject().sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
+					.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 					.eventually(LoopedInPromise.response({
 						Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 					}, this))
@@ -616,7 +593,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 				return if (filePosition < -1) Unit.toPromise() else playbackEngine
 					.removeFileAtPosition(filePosition)
 					.then {
-						localBroadcastManagerLazy.getObject().sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
+						localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
 					}
 					.unitResponse()
 			}
@@ -637,16 +614,16 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
-			extractorHandler.getObject().eventually { handler ->
+			extractorHandler.value.eventually { handler ->
 				cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
 					connectionProvider,
 					FilePropertyCache.getInstance(),
 					SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()))
 
-				remoteControlProxy?.apply { localBroadcastManagerLazy.getObject().unregisterReceiver(this) }
+				remoteControlProxy?.apply { localBroadcastManagerLazy.value.unregisterReceiver(this) }
 
 				val imageProvider = ImageProvider(
-					StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.getObject()),
+					StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.value),
 					MemoryCachedImageAccess.getInstance(this))
 
 				remoteControlProxy = RemoteControlProxy(
@@ -659,45 +636,46 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 						this,
 						cachedSessionFilePropertiesProvider,
 						imageProvider,
-						remoteControlClient.getObject()))
+						remoteControlClient.value))
 
 				localBroadcastManagerLazy
-					.getObject()
+					.value
 					.registerReceiver(
 						remoteControlProxy!!,
 						buildRemoteControlProxyIntentFilter(remoteControlProxy!!))
 
-				playbackNotificationRouter?.apply { localBroadcastManagerLazy.getObject().unregisterReceiver(this) }
+				playbackNotificationRouter?.apply { localBroadcastManagerLazy.value.unregisterReceiver(this) }
 
 				nowPlayingNotificationBuilder?.close()
 				playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-					lazyNotificationController.getObject(),
-					lazyPlaybackNotificationsConfiguration.getObject(),
+					lazyNotificationController.value,
+					lazyPlaybackNotificationsConfiguration.value,
 					NowPlayingNotificationBuilder(
 						this,
-						lazyMediaStyleNotificationSetup.getObject(),
+						lazyMediaStyleNotificationSetup.value,
 						connectionProvider,
 						cachedSessionFilePropertiesProvider,
 						imageProvider).also {
 						nowPlayingNotificationBuilder = it
 					},
-					lazyPlaybackStartingNotificationBuilder.getObject()))
+					lazyPlaybackStartingNotificationBuilder.value))
 
 				localBroadcastManagerLazy
-					.getObject()
+					.value
 					.registerReceiver(
 						playbackNotificationRouter!!,
 						buildNotificationRouterIntentFilter(playbackNotificationRouter!!))
 
 				playlistPlaybackBootstrapper?.close()
 				playlistPlaybackBootstrapper = PlaylistPlaybackBootstrapper(
-					lazyPlaylistVolumeManager.getObject())
+					lazyPlaylistVolumeManager.value)
 				val storedFileAccess = StoredFileAccess(
 					this,
-					lazyAllStoredFilesInLibrary.getObject())
+					lazyAllStoredFilesInLibrary.value)
 				val arbitratorForOs = ExternalStorageReadPermissionsArbitratorForOs(this)
 				val cacheConfiguration = AudioCacheConfiguration(library)
-				if (cache != null) cache!!.release()
+
+				cache?.release()
 				cache = SimpleCache(
 					AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration),
 					LeastRecentlyUsedCacheEvictor(cacheConfiguration.maxSize))
@@ -707,7 +685,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 				val bestMatchUriProvider = BestMatchUriProvider(
 					library,
 					StoredFileUriProvider(
-						lazySelectedLibraryProvider.getObject(),
+						lazySelectedLibraryProvider.value,
 						storedFileAccess,
 						arbitratorForOs),
 					CachedAudioFileUriProvider(
@@ -715,14 +693,14 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 						CachedFilesProvider(this, AudioCacheConfiguration(library))),
 					MediaFileUriProvider(
 						this,
-						MediaQueryCursorProvider(this, lazyCachedFileProperties.getObject()),
+						MediaQueryCursorProvider(this, lazyCachedFileProperties.value),
 						arbitratorForOs,
-						lazyChosenLibraryIdentifierProvider.getObject(),
+						lazyChosenLibraryIdentifierProvider.value,
 						false),
 					remoteFileUriProvider)
 				val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
 					this,
-					handler!!,
+					handler,
 					MediaSourceProvider(
 						library,
 						HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
@@ -731,7 +709,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 				val preparationSourceProvider: IPlayableFilePreparationSourceProvider = MaxFileVolumePreparationProvider(
 					playbackEngineBuilder.build(library),
 					MaxFileVolumeProvider(
-						lazyVolumeLevelSettings.getObject(),
+						lazyVolumeLevelSettings.value,
 						cachedSessionFilePropertiesProvider))
 
 				playbackQueues?.close()
@@ -741,9 +719,9 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 					QueueProviders.providers(),
 					NowPlayingRepository(
 						SpecificLibraryProvider(
-							lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId!!,
-							lazyLibraryRepository.getObject()),
-						lazyLibraryRepository.getObject()),
+							lazyChosenLibraryIdentifierProvider.value.selectedLibraryId!!,
+							lazyLibraryRepository.value),
+						lazyLibraryRepository.value),
 					playlistPlaybackBootstrapper!!)
 			}
 		}
@@ -760,18 +738,18 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 
 	private val sessionConnection: Promise<IConnectionProvider>
 		get() {
-			localBroadcastManagerLazy.getObject()
+			localBroadcastManagerLazy.value
 				.registerReceiver(
 					buildSessionReceiver,
 					IntentFilter(SessionConnection.buildSessionBroadcast))
 			return SessionConnection.getInstance(this).promiseSessionConnection().must {
-				localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver)
-				lazyNotificationController.getObject().removeNotification(connectingNotificationId)
+				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
+				lazyNotificationController.value.removeNotification(connectingNotificationId)
 			}
 		}
 
 	private fun handleBuildConnectionStatusChange(status: Int) {
-		val notifyBuilder = NotificationCompat.Builder(this, lazyPlaybackNotificationsConfiguration.getObject().notificationChannel)
+		val notifyBuilder = NotificationCompat.Builder(this, lazyPlaybackNotificationsConfiguration.value.notificationChannel)
 		notifyBuilder
 			.setOngoing(false)
 			.setContentTitle(getText(R.string.title_svc_connecting_to_server))
@@ -789,14 +767,14 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			}
 			else -> return
 		}
-		lazyNotificationController.getObject().notifyForeground(
+		lazyNotificationController.value.notifyForeground(
 			buildFullNotification(notifyBuilder),
 			connectingNotificationId)
 	}
 
 	private fun handlePlaybackStarted() {
 		isPlaying = true
-		lazyPlaybackStartedBroadcaster.getObject().broadcastPlaybackStarted()
+		lazyPlaybackStartedBroadcaster.value.broadcastPlaybackStarted()
 	}
 
 	private fun pausePlayback(isUserInterrupted: Boolean): Promise<Unit> {
@@ -804,12 +782,12 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners()
 		return playbackEngine?.pause()
 			?.then {
-				positionedPlayingFile?.run {
-					lazyPlaybackBroadcaster.getObject()
+				positionedPlayingFile?.apply {
+					lazyPlaybackBroadcaster.value
 						.sendPlaybackBroadcast(
 							PlaylistEvents.onPlaylistPause,
-							lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId,
-							this.asPositionedFile())
+							lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
+							asPositionedFile())
 				}
 
 				filePositionSubscription?.dispose()
@@ -818,32 +796,22 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	}
 
 	private fun uncaughtExceptionHandler(exception: Throwable?) {
-		if (exception is PlaybackEngineInitializationException) {
-			handlePlaybackEngineInitializationException(exception)
-			return
+		when (exception) {
+			is PlaybackEngineInitializationException -> handlePlaybackEngineInitializationException(exception)
+			is PreparationException -> handlePreparationException(exception)
+			is IOException -> handleIoException(exception)
+			is ExoPlaybackException -> handleExoPlaybackException(exception)
+			is PlaybackException -> handlePlaybackException(exception)
+			else -> {
+				logger.error("An unexpected error has occurred!", exception)
+				lazyNotificationController.value.removeAllNotifications()
+			}
 		}
-		if (exception is PreparationException) {
-			handlePreparationException(exception)
-			return
-		}
-		if (exception is IOException) {
-			handleIoException(exception as IOException?)
-			return
-		}
-		if (exception is ExoPlaybackException) {
-			handleExoPlaybackException(exception)
-		}
-		if (exception is PlaybackException) {
-			handlePlaybackException(exception)
-			return
-		}
-		logger.error("An unexpected error has occurred!", exception)
-		lazyNotificationController.getObject().removeAllNotifications()
 	}
 
 	private fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {
 		logger.error("There was an error initializing the playback engine", exception)
-		lazyNotificationController.getObject().removeAllNotifications()
+		lazyNotificationController.value.removeAllNotifications()
 	}
 
 	private fun handlePreparationException(preparationException: PreparationException) {
@@ -852,24 +820,16 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	}
 
 	private fun handlePlaybackException(exception: PlaybackException) {
-		val cause = exception.cause
-		if (cause is ExoPlaybackException) {
-			handleExoPlaybackException(cause)
+		when (val cause = exception.cause) {
+			is ExoPlaybackException -> handleExoPlaybackException(cause)
+			is IllegalStateException -> {
+				logger.error("The player ended up in an illegal state - closing and restarting the player", exception)
+				closeAndRestartPlaylistManager()
+			}
+			is IOException -> handleIoException(cause)
+			null -> logger.error("An unexpected playback exception occurred", exception)
+			else -> uncaughtExceptionHandler(cause)
 		}
-		if (cause is IllegalStateException) {
-			logger.error("The player ended up in an illegal state - closing and restarting the player", exception)
-			closeAndRestartPlaylistManager()
-			return
-		}
-		if (cause is IOException) {
-			handleIoException(exception.cause as IOException?)
-			return
-		}
-		if (cause != null) {
-			uncaughtExceptionHandler(cause)
-			return
-		}
-		logger.error("An unexpected playback exception occurred", exception)
 	}
 
 	private fun handleExoPlaybackException(exception: ExoPlaybackException) {
@@ -884,22 +844,20 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	}
 
 	private fun handleIoException(exception: IOException?) {
-		if (exception is InvalidResponseCodeException) {
-			val i = exception
-			if (i.responseCode == 416) {
-				logger.warn("Received an error code of " + i.responseCode + ", will attempt restarting the player", i)
-				closeAndRestartPlaylistManager()
-				return
-			}
+		if (exception is InvalidResponseCodeException && exception.responseCode == 416) {
+			logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
+			closeAndRestartPlaylistManager()
+			return
 		}
+
 		logger.error("An IO exception occurred during playback", exception)
 		handleDisconnection()
 	}
 
 	private fun handleDisconnection() {
-		if (!lazyDisconnectionTracker.getObject().isConnectionPastThreshold()) return
+		if (!lazyDisconnectionTracker.value.isConnectionPastThreshold()) return
 		pollSessionConnection(this, true)
-			.then(connectionRegainedListener.getObject(), onPollingCancelledListener.getObject())
+			.then(connectionRegainedListener.value, onPollingCancelledListener.value)
 	}
 
 	private fun closeAndRestartPlaylistManager() {
@@ -910,8 +868,8 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			return
 		}
 
-		lazyLibraryRepository.getObject()
-			.getLibrary(lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId!!)
+		lazyLibraryRepository.value
+			.getLibrary(lazyChosenLibraryIdentifierProvider.value.selectedLibraryId!!)
 			.eventually { library ->
 				if (library != null)
 					initializePlaybackPlaylistStateManagerSerially(library)
@@ -919,13 +877,13 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 					Promise.empty()
 			}
 			.then { if (isPlaying) playbackEngine?.resume() }
-			.excuse(UnhandledRejectionHandler)
+			.excuse(unhandledRejectionHandler)
 	}
 
 	override fun onAudioFocusChange(focusChange: Int) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
-			if (lazyPlaylistVolumeManager.isCreated) lazyPlaylistVolumeManager.getObject().setVolume(1.0f)
+			if (lazyPlaylistVolumeManager.isInitialized()) lazyPlaylistVolumeManager.value.setVolume(1.0f)
 			playbackEngine?.run { if (isPlaying) resume() }
 			return
 		}
@@ -940,7 +898,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			}
 			AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK ->                // Lost focus for a short time, but it's ok to keep playing
 				// at an attenuated level
-				if (lazyPlaylistVolumeManager.isCreated) lazyPlaylistVolumeManager.getObject().setVolume(0.2f)
+				if (lazyPlaylistVolumeManager.isInitialized()) lazyPlaylistVolumeManager.value.setVolume(0.2f)
 		}
 	}
 
@@ -953,17 +911,17 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		if (playingFile is EmptyPlaybackHandler) return
 
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile())
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackStart, lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId, positionedPlayingFile.asPositionedFile())
+		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackStart, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile.asPositionedFile())
 		val promisedPlayedFile = playingFile.promisePlayedFile()
 		val localSubscription = Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
 			.map { promisedPlayedFile.progress }
 			.distinctUntilChanged()
 			.subscribe(TrackPositionBroadcaster(
-				localBroadcastManagerLazy.getObject(),
+				localBroadcastManagerLazy.value,
 				playingFile))
 
 		promisedPlayedFile.then {
-			lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackComplete, lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId, positionedPlayingFile.asPositionedFile())
+			lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackComplete, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile.asPositionedFile())
 			localSubscription?.dispose()
 		}
 
@@ -974,70 +932,71 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	}
 
 	private fun broadcastResetPlaylist(positionedFile: PositionedFile) {
-		lazyPlaybackBroadcaster.getObject()
+		lazyPlaybackBroadcaster.value
 			.sendPlaybackBroadcast(
 				PlaylistEvents.onPlaylistTrackChange,
-				lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId,
+				lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
 				positionedFile)
 	}
 
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackChange, lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId, positionedFile)
+		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackChange, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedFile)
 	}
 
 	private fun onPlaylistPlaybackComplete() {
-		lazyPlaybackBroadcaster.getObject().sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.getObject().selectedLibraryId, positionedPlayingFile!!.asPositionedFile())
+		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile!!.asPositionedFile())
 		killService(this)
 	}
 
 	override fun onDestroy() {
-		if (lazyNotificationController.isCreated) lazyNotificationController.getObject().removeAllNotifications()
-		if (playlistPlaybackBootstrapper != null) {
-			try {
-				playlistPlaybackBootstrapper!!.close()
-			} catch (e: IOException) {
-				logger.warn("There was an error closing the prepared playback bootstrapper", e)
-			}
+		if (lazyNotificationController.isInitialized()) lazyNotificationController.value.removeAllNotifications()
+
+		try {
+			playlistPlaybackBootstrapper?.close()
+		} catch (e: IOException) {
+			logger.warn("There was an error closing the prepared playback bootstrapper", e)
 		}
-		if (playbackEngine != null) {
-			try {
-				playbackEngine!!.close()
-			} catch (e: Exception) {
-				logger.warn("There was an error closing the playback engine", e)
-			}
+
+		try {
+			playbackEngine?.close()
+		} catch (e: Exception) {
+			logger.warn("There was an error closing the playback engine", e)
 		}
-		if (playbackQueues != null) {
-			try {
-				playbackQueues!!.close()
-			} catch (e: Exception) {
-				logger.warn("There was an error closing the prepared playback queue", e)
-			}
+
+		try {
+			playbackQueues?.close()
+		} catch (e: Exception) {
+			logger.warn("There was an error closing the prepared playback queue", e)
 		}
+
 		if (areListenersRegistered) unregisterListeners()
-		if (remoteControlReceiver.isCreated) audioManagerLazy.getObject().unregisterMediaButtonEventReceiver(remoteControlReceiver.getObject())
-		if (remoteControlClient.isCreated) audioManagerLazy.getObject().unregisterRemoteControlClient(remoteControlClient.getObject())
-		if (extractorThread.isCreated) extractorThread.getObject().then { obj: HandlerThread -> obj.quitSafely() }
+		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
+		if (remoteControlClient.isInitialized()) audioManagerLazy.value.unregisterRemoteControlClient(remoteControlClient.value)
+		if (extractorThread.isInitialized()) extractorThread.value.then { it.quitSafely() }
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated) {
 			lazyMediaSession.getObject().isActive = false
 			lazyMediaSession.getObject().release()
 		}
-		if (filePositionSubscription != null) filePositionSubscription!!.dispose()
-		if (cache != null) cache!!.release()
-		if (nowPlayingNotificationBuilder != null) nowPlayingNotificationBuilder!!.close()
-		if (!localBroadcastManagerLazy.isCreated) return
-		localBroadcastManagerLazy.getObject().unregisterReceiver(buildSessionReceiver)
-		localBroadcastManagerLazy.getObject().unregisterReceiver(onLibraryChanged)
-		localBroadcastManagerLazy.getObject().unregisterReceiver(onPlaybackEngineChanged)
-		if (remoteControlProxy != null) localBroadcastManagerLazy.getObject().unregisterReceiver(remoteControlProxy!!)
-		if (playbackNotificationRouter != null) localBroadcastManagerLazy.getObject().unregisterReceiver(playbackNotificationRouter!!)
+
+		filePositionSubscription?.dispose()
+		cache?.release()
+		nowPlayingNotificationBuilder?.close()
+
+		if (!localBroadcastManagerLazy.isInitialized()) return
+
+		localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
+		localBroadcastManagerLazy.value.unregisterReceiver(onLibraryChanged)
+		localBroadcastManagerLazy.value.unregisterReceiver(onPlaybackEngineChanged)
+
+		remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+		playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 	}
 
 	/* End Event Handlers */ /* Begin Binder Code */
 	override fun onBind(intent: Intent): IBinder? {
-		return lazyBinder.getObject()
+		return lazyBinder.value
 	}
-
-	private val lazyBinder = Lazy<IBinder> { GenericBinder(this) }
 
 	/* End Binder Code */
 	private object Action {
