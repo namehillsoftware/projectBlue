@@ -895,11 +895,11 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
 			if (lazyPlaylistVolumeManager.isInitialized()) lazyPlaylistVolumeManager.value.setVolume(1.0f)
-			playbackEngine?.run { if (isPlaying) resume() }
+			playbackEngine?.run { if (!isPlaying) resume() }
 			return
 		}
 
-		if (playbackEngine?.isPlaying != true) return
+		playbackEngine?.run { if (!isPlaying) return } ?: return
 
 		when (focusChange) {
 			AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
