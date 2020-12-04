@@ -899,7 +899,8 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			return
 		}
 
-		playbackEngine?.run { if (!isPlaying) return } ?: return
+		val isPlaying = playbackEngine?.isPlaying ?: false
+		if (!isPlaying) return
 
 		when (focusChange) {
 			AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
