@@ -7,6 +7,7 @@ import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.promiseAudioFocus
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePlaybackState, private val audioManager: AudioManager, private val volumeManager: IVolumeManagement)
@@ -23,35 +24,32 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 			.build()
 	}
 
+	private var audioFocusSync = Any()
+	private var audioFocusPromise: Promise<AudioFocusRequestCompat> = Promise.empty()
 	private var isPlaying = false
 
 	override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> {
 		isPlaying = true
-		return audioManager
-			.promiseAudioFocus(lazyAudioRequest.value)
+		return getNewAudioFocusRequest()
 			.eventually { innerPlaybackState.startPlaylist(playlist, playlistPosition, filePosition) }
 	}
 
 	override fun resume(): Promise<Unit> {
 		isPlaying = true
-		return audioManager
-			.promiseAudioFocus(lazyAudioRequest.value)
+		return getNewAudioFocusRequest()
 			.eventually { innerPlaybackState.resume() }
 	}
 
 	override fun pause(): Promise<Unit> {
 		isPlaying = false
 		return innerPlaybackState
-			.pause()
-			.then {
-				if (lazyAudioRequest.isInitialized())
-					AudioManagerCompat.abandonAudioFocusRequest(audioManager, lazyAudioRequest.value)
-			}
+				.pause()
+				.eventually { abandonAudioFocus() }
+				.unitResponse()
 	}
 
 	override fun close() {
-		if (lazyAudioRequest.isInitialized())
-			AudioManagerCompat.abandonAudioFocusRequest(audioManager, lazyAudioRequest.value)
+		abandonAudioFocus()
 	}
 
 	override fun onAudioFocusChange(focusChange: Int) {
@@ -75,4 +73,21 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 				volumeManager.setVolume(0.2f)
 		}
 	}
+
+	private fun getNewAudioFocusRequest(): Promise<AudioFocusRequestCompat> =
+		synchronized(audioFocusSync) {
+			abandonAudioFocus()
+				.eventually(
+					{ audioManager.promiseAudioFocus(lazyAudioRequest.value) },
+					{ audioManager.promiseAudioFocus(lazyAudioRequest.value) })
+				.also { audioFocusPromise = it }
+		}
+
+	private fun abandonAudioFocus() =
+		synchronized(audioFocusSync) {
+			audioFocusPromise.cancel()
+			audioFocusPromise.then {
+				it?.apply { AudioManagerCompat.abandonAudioFocusRequest(audioManager, this) }
+			}
+		}
 }
