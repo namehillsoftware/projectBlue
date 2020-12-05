@@ -317,7 +317,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			// build the PendingIntent for the remote control client
 			val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
 			mediaButtonIntent.component = remoteControlReceiver.value
-			val mediaPendingIntent = PendingIntent.getBroadcast(this@PlaybackService, 0, mediaButtonIntent, 0)
+			val mediaPendingIntent = PendingIntent.getBroadcast(this, 0, mediaButtonIntent, 0)
 			// create and register the remote control client
 			RemoteControlClient(mediaPendingIntent)
 		}
@@ -349,8 +349,8 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		}
 	private val lazyMediaStyleNotificationSetup = lazy {
 			MediaStyleNotificationSetup(
-				this@PlaybackService,
-				NotificationBuilderProducer(this@PlaybackService),
+				this,
+				NotificationBuilderProducer(this),
 				lazyPlaybackNotificationsConfiguration.value,
 				lazyMediaSession.getObject())
 		}
@@ -363,15 +363,15 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	private val extractorHandler = lazy { extractorThread.value.then { h -> Handler(h.looper) } }
 	private val lazyPlaybackStartingNotificationBuilder = lazy {
 			PlaybackStartingNotificationBuilder(
-				this@PlaybackService,
-				NotificationBuilderProducer(this@PlaybackService),
+				this,
+				NotificationBuilderProducer(this),
 				lazyPlaybackNotificationsConfiguration.value,
 				lazyMediaSession.getObject())
 		}
 	private val lazySelectedLibraryProvider = lazy {
 			SelectedBrowserLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(this@PlaybackService),
-				LibraryRepository(this@PlaybackService))
+				SelectedBrowserLibraryIdentifierProvider(this),
+				LibraryRepository(this))
 	}
 	private val lazyFileProperties = lazy {
 		FilePropertiesProvider(
@@ -447,13 +447,12 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		if (!isPlaying) lazyNotificationController.value.removeNotification(playingNotificationId)
 	}
 
-	private fun notifyStartingService(): Promise<Unit> {
-		return lazyPlaybackStartingNotificationBuilder.value
+	private fun notifyStartingService(): Promise<Unit> =
+		lazyPlaybackStartingNotificationBuilder.value
 			.promisePreparedPlaybackStartingNotification()
 			.then { b ->
 				lazyNotificationController.value.notifyForeground(b.build(), startingNotificationId)
 			}
-	}
 
 	private fun registerListeners() {
 		AudioManagerCompat.requestAudioFocus(audioManagerLazy.value, lazyAudioRequest.value)
