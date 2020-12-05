@@ -16,6 +16,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.media.AudioAttributesCompat
+import androidx.media.AudioFocusRequestCompat
+import androidx.media.AudioManagerCompat
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor
@@ -381,6 +384,16 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			FilePropertyCache.getInstance(),
 			lazyFileProperties.value)
 	}
+	private val lazyAudioRequest = lazy {
+		AudioFocusRequestCompat
+			.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
+			.setAudioAttributes(AudioAttributesCompat.Builder()
+				.setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
+				.setUsage(AudioAttributesCompat.USAGE_MEDIA)
+				.build())
+			.setOnAudioFocusChangeListener(this)
+			.build()
+	}
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
 	private val lazyDisconnectionTracker = lazy { ConnectionCircuitTracker() }
@@ -399,7 +412,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	private var cache: SimpleCache? = null
 	private var startId = 0
 
-	private val connectionRegainedListener = lazy { VoidResponse<IConnectionProvider> { playbackEngine?.resume() ?: stopSelf(startId) } }
+	private val connectionRegainedListener = lazy { VoidResponse<IConnectionProvider> { resumePlayback() } }
 	private val onPollingCancelledListener = lazy {
 		VoidResponse<Throwable?> { e ->
 			if (e is CancellationException) {
@@ -428,9 +441,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			handleBuildConnectionStatusChange(buildStatus)
 		}
 	}
-	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit> { e: Throwable? ->
-		uncaughtExceptionHandler(e)
-	}
+	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
 	private fun stopNotificationIfNotPlaying() {
 		if (!isPlaying) lazyNotificationController.value.removeNotification(playingNotificationId)
@@ -445,7 +456,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	}
 
 	private fun registerListeners() {
-		audioManagerLazy.value.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+		AudioManagerCompat.requestAudioFocus(audioManagerLazy.value, lazyAudioRequest.value)
 		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
 		wakeLock?.acquire()
 		registerRemoteClientControl()
@@ -465,7 +476,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 	}
 
 	private fun unregisterListeners() {
-		audioManagerLazy.value.abandonAudioFocus(this)
+		AudioManagerCompat.abandonAudioFocusRequest(audioManagerLazy.value, lazyAudioRequest.value)
 
 		wakeLock?.apply { if (isHeld) release() }
 		wakeLock = null
@@ -546,8 +557,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 					.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 			}
 			Action.play -> {
-				isPlaying = true
-				return playbackEngine.resume().unitResponse()
+				return resumePlayback()
 			}
 			Action.pause -> return pausePlayback(true)
 			Action.repeating -> {
@@ -788,6 +798,11 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		lazyPlaybackStartedBroadcaster.value.broadcastPlaybackStarted()
 	}
 
+	private fun resumePlayback(): Promise<Unit> = playbackEngine?.resume()?.then {
+		isPlaying = true
+		if (!areListenersRegistered) registerListeners()
+	} ?: Unit.toPromise()
+
 	private fun pausePlayback(isUserInterrupted: Boolean): Promise<Unit> {
 		isPlaying = false
 		if (isUserInterrupted && areListenersRegistered) unregisterListeners()
@@ -887,7 +902,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 				else
 					Promise.empty()
 			}
-			.then { if (isPlaying) playbackEngine?.resume() }
+			.then { if (isPlaying) resumePlayback() }
 			.excuse(unhandledRejectionHandler)
 	}
 
@@ -895,7 +910,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
 			if (lazyPlaylistVolumeManager.isInitialized()) lazyPlaylistVolumeManager.value.setVolume(1.0f)
-			playbackEngine?.run { if (!isPlaying) resume() }
+			playbackEngine?.apply { if (!isPlaying) resumePlayback() }
 			return
 		}
 
@@ -1027,7 +1042,7 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 		val addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist")
 		val removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist")
 		val killMusicService = magicPropertyBuilder.buildProperty("killMusicService")
-		val validActions: Set<String?> = HashSet(Arrays.asList(launchMusicService,
+		val validActions = setOf(launchMusicService,
 			play,
 			pause,
 			togglePlayPause,
@@ -1037,11 +1052,8 @@ open class PlaybackService : Service(), OnAudioFocusChangeListener {
 			repeating,
 			completing,
 			addFileToPlaylist,
-			removeFileAtPositionFromPlaylist))
-		val playbackStartingActions: Set<String?> = HashSet(Arrays.asList(
-			launchMusicService,
-			play,
-			togglePlayPause))
+			removeFileAtPositionFromPlaylist)
+		val playbackStartingActions = setOf(launchMusicService, play, togglePlayPause)
 
 		object Bag {
 			private val magicPropertyBuilder = MagicPropertyBuilder(Bag::class.java)
