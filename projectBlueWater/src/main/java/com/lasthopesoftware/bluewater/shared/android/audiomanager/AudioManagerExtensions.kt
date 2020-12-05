@@ -5,26 +5,25 @@ import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.namehillsoftware.handoff.promises.Promise
 
-fun AudioManager.promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<Boolean> = AudioFocusPromise(audioFocusRequest, this)
+fun AudioManager.promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> = AudioFocusPromise(audioFocusRequest, this)
 
-private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, audioManager: AudioManager) : Promise<Boolean>(), AudioManager.OnAudioFocusChangeListener {
+private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, audioManager: AudioManager) : Promise<AudioFocusRequestCompat>(), AudioManager.OnAudioFocusChangeListener {
 	private val innerAudioFocusChangeListener = audioFocusRequest.onAudioFocusChangeListener
+	private val delegatingAudioFocusRequest = AudioFocusRequestCompat.Builder(audioFocusRequest)
+		.setOnAudioFocusChangeListener(this)
+		.build()
 
 	init {
-		val delegatingAudioFocusRequest = AudioFocusRequestCompat.Builder(audioFocusRequest)
-			.setOnAudioFocusChangeListener(this)
-			.build()
-
 		when (AudioManagerCompat.requestAudioFocus(audioManager, delegatingAudioFocusRequest)) {
-			AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(true)
-			AudioManager.AUDIOFOCUS_REQUEST_FAILED -> resolve(true)
+			AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(delegatingAudioFocusRequest)
+			AudioManager.AUDIOFOCUS_REQUEST_FAILED -> reject(UnableToGrantAudioFocusException())
 		}
 	}
 
 	override fun onAudioFocusChange(focusChange: Int) {
 		when (focusChange) {
-			AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(true)
-			AudioManager.AUDIOFOCUS_REQUEST_FAILED -> reject(UnableToGetAudioFocusException())
+			AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(delegatingAudioFocusRequest)
+			AudioManager.AUDIOFOCUS_REQUEST_FAILED -> reject(UnableToGrantAudioFocusException())
 			else -> innerAudioFocusChangeListener.onAudioFocusChange(focusChange)
 		}
 	}
@@ -32,4 +31,4 @@ private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, audi
 	override fun toString(): String = innerAudioFocusChangeListener.toString()
 }
 
-class UnableToGetAudioFocusException : Throwable()
+class UnableToGrantAudioFocusException : Throwable()
