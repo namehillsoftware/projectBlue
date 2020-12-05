@@ -1,11 +1,11 @@
-package com.lasthopesoftware.bluewater.shared.android.audiomanager.GivenAnAudioFocusRequest.AndItIsEventuallyRejected
+package com.lasthopesoftware.bluewater.client.playback.service.audiomanager.GivenAnAudioFocusRequest.AndItIsEventuallyRejected
 
 import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.shared.android.audiomanager.UnableToGrantAudioFocusException
-import com.lasthopesoftware.bluewater.shared.android.audiomanager.promiseAudioFocus
+import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.UnableToGrantAudioFocusException
+import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.promiseAudioFocus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test

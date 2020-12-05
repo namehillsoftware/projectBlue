@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.audiomanager
+package com.lasthopesoftware.bluewater.client.playback.service.audiomanager
 
 import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
