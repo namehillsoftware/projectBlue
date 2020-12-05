@@ -29,8 +29,9 @@ private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, priv
 		when (focusChange) {
 			AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(delegatingAudioFocusRequest)
 			AudioManager.AUDIOFOCUS_REQUEST_FAILED -> reject(UnableToGrantAudioFocusException())
-			else -> innerAudioFocusChangeListener.onAudioFocusChange(focusChange)
 		}
+
+		innerAudioFocusChangeListener.onAudioFocusChange(focusChange)
 	}
 
 	override fun run() {

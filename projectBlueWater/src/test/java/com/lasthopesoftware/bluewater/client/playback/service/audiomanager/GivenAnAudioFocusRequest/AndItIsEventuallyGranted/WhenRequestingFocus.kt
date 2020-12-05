@@ -4,6 +4,8 @@ import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.promiseAudioFocus
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.Mockito.*
@@ -39,6 +41,10 @@ class WhenRequestingFocus : AndroidContext() {
 
 	@Test
 	fun thenOtherEventsAreForwardedCorrectly() {
-		assertThat(audioFocusEvents).containsOnly(AudioManager.AUDIOFOCUS_REQUEST_DELAYED, AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+		assertThat(audioFocusEvents).containsOnly(
+			AudioManager.AUDIOFOCUS_REQUEST_DELAYED,
+			AudioManager.AUDIOFOCUS_REQUEST_GRANTED,
+			AudioManager.AUDIOFOCUS_LOSS,
+			AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
 	}
 }
