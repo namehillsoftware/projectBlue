@@ -14,9 +14,13 @@ private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, audi
 		.build()
 
 	init {
-		when (AudioManagerCompat.requestAudioFocus(audioManager, delegatingAudioFocusRequest)) {
-			AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(delegatingAudioFocusRequest)
-			AudioManager.AUDIOFOCUS_REQUEST_FAILED -> reject(UnableToGrantAudioFocusException())
+		try {
+			when (AudioManagerCompat.requestAudioFocus(audioManager, delegatingAudioFocusRequest)) {
+				AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(delegatingAudioFocusRequest)
+				AudioManager.AUDIOFOCUS_REQUEST_FAILED -> reject(UnableToGrantAudioFocusException())
+			}
+		} catch (t: Throwable) {
+			reject(t)
 		}
 	}
 
