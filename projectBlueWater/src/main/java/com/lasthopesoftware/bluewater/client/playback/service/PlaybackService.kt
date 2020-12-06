@@ -382,6 +382,7 @@ open class PlaybackService : Service() {
 			FilePropertyCache.getInstance(),
 			lazyFileProperties.value)
 	}
+	private val playbackEngineCloseables = LinkedList<AutoCloseable>()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
 	private val lazyDisconnectionTracker = lazy { ConnectionCircuitTracker() }
@@ -590,7 +591,9 @@ open class PlaybackService : Service() {
 	}
 
 	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine> {
-		playbackEngine?.close()
+		while (playbackEngineCloseables.isNotEmpty()) {
+			playbackEngineCloseables.pop().close()
+		}
 
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
@@ -625,14 +628,16 @@ open class PlaybackService : Service() {
 							buildRemoteControlProxyIntentFilter(rcp))
 				}
 
-			nowPlayingNotificationBuilder?.close()
 			NowPlayingNotificationBuilder(
 				this,
 				lazyMediaStyleNotificationSetup.value,
 				connectionProvider,
 				cachedSessionFilePropertiesProvider,
 				imageProvider)
-				.also { nowPlayingNotificationBuilder = it }
+				.also {
+					playbackEngineCloseables.offer(it)
+					nowPlayingNotificationBuilder = it
+				}
 				.let { builder ->
 					playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 					PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
@@ -695,13 +700,17 @@ open class PlaybackService : Service() {
 				}
 			}
 			.eventually { preparationSourceProvider ->
-				playbackQueues?.close()
 				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
-					.also { playbackQueues = it }
+					.also {
+						playbackEngineCloseables.offer(it)
+						playbackQueues = it
+					}
 					.let { queues ->
-						playlistPlaybackBootstrapper?.close()
 						PlaylistPlaybackBootstrapper(lazyPlaylistVolumeManager.value)
-							.also { playlistPlaybackBootstrapper = it }
+							.also {
+								playbackEngineCloseables.offer(it)
+								playlistPlaybackBootstrapper = it
+							}
 							.let { bootstrapper ->
 								val nowPlayingRepository = NowPlayingRepository(
 									SpecificLibraryProvider(
@@ -718,10 +727,11 @@ open class PlaybackService : Service() {
 					}
 			}
 			.then { engine ->
+				playbackEngineCloseables.offer(engine)
 				playbackState = AudioManagingPlaybackStateChanger(
 					engine,
 					audioManagerLazy.value,
-					lazyPlaylistVolumeManager.value)
+					lazyPlaylistVolumeManager.value).apply(playbackEngineCloseables::offer)
 				playbackEngine = engine
 					.setOnPlaybackStarted(::handlePlaybackStarted)
 					.setOnPlaybackPaused(::handlePlaybackPaused)
@@ -932,26 +942,15 @@ open class PlaybackService : Service() {
 	override fun onDestroy() {
 		if (lazyNotificationController.isInitialized()) lazyNotificationController.value.removeAllNotifications()
 
-		try {
-			playlistPlaybackBootstrapper?.close()
-		} catch (e: IOException) {
-			logger.warn("There was an error closing the prepared playback bootstrapper", e)
-		}
-
-		try {
-			playbackEngine?.close()
-		} catch (e: Exception) {
-			logger.warn("There was an error closing the playback engine", e)
-		}
-
-		try {
-			playbackQueues?.close()
-		} catch (e: Exception) {
-			logger.warn("There was an error closing the prepared playback queue", e)
+		while (playbackEngineCloseables.isNotEmpty()) {
+			try {
+				playbackEngineCloseables.pop().close()
+			} catch (e: Exception) {
+				logger.warn("There was an error closing a resource", e)
+			}
 		}
 
 		if (areListenersRegistered) unregisterListeners()
-		(playbackState as? AutoCloseable)?.close()
 
 		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
 		if (remoteControlClient.isInitialized()) audioManagerLazy.value.unregisterRemoteControlClient(remoteControlClient.value)
@@ -964,7 +963,6 @@ open class PlaybackService : Service() {
 
 		filePositionSubscription?.dispose()
 		cache?.release()
-		nowPlayingNotificationBuilder?.close()
 
 		if (!localBroadcastManagerLazy.isInitialized()) return
 
