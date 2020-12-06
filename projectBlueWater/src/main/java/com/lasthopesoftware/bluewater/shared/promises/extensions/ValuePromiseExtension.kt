@@ -9,8 +9,6 @@ fun <T> T.toPromise(): Promise<T> = when (this) {
 	else -> Promise(this)
 }
 
-fun Unit.toPromise(): Promise<Unit> = UnitPromise
-
 private object UnitPromise : Promise<Unit>(Unit)
 
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
