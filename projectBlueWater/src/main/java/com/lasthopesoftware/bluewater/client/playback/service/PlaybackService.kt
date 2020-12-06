@@ -431,7 +431,20 @@ open class PlaybackService : Service() {
 			handleBuildConnectionStatusChange(buildStatus)
 		}
 	}
+
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
+
+	private val sessionConnection: Promise<IConnectionProvider>
+		get() {
+			localBroadcastManagerLazy.value
+				.registerReceiver(
+					buildSessionReceiver,
+					IntentFilter(SessionConnection.buildSessionBroadcast))
+			return SessionConnection.getInstance(this).promiseSessionConnection().must {
+				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
+				lazyNotificationController.value.removeNotification(connectingNotificationId)
+			}
+		}
 
 	private fun stopNotificationIfNotPlaying() {
 		if (!isPlaying) lazyNotificationController.value.removeNotification(playingNotificationId)
@@ -444,16 +457,6 @@ open class PlaybackService : Service() {
 				lazyNotificationController.value.notifyForeground(b.build(), startingNotificationId)
 			}
 
-	private fun registerListeners() {
-		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
-		wakeLock?.acquire()
-		registerRemoteClientControl()
-		registerReceiver(
-			lazyAudioBecomingNoisyReceiver.value,
-			IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
-		areListenersRegistered = true
-	}
-
 	private fun registerRemoteClientControl() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			lazyMediaSession.getObject().isActive = true
@@ -461,6 +464,15 @@ open class PlaybackService : Service() {
 		}
 		audioManagerLazy.value.registerMediaButtonEventReceiver(remoteControlReceiver.value)
 		audioManagerLazy.value.registerRemoteControlClient(remoteControlClient.value)
+	}
+
+	private fun registerListeners() {
+		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
+		wakeLock?.acquire()
+		registerReceiver(
+			lazyAudioBecomingNoisyReceiver.value,
+			IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+		areListenersRegistered = true
 	}
 
 	private fun unregisterListeners() {
@@ -731,29 +743,18 @@ open class PlaybackService : Service() {
 				playbackState = AudioManagingPlaybackStateChanger(
 					engine,
 					audioManagerLazy.value,
-					lazyPlaylistVolumeManager.value).apply(playbackEngineCloseables::offer)
-				playbackEngine = engine
+					lazyPlaylistVolumeManager.value)
+					.also(playbackEngineCloseables::offer)
+				engine
 					.setOnPlaybackStarted(::handlePlaybackStarted)
 					.setOnPlaybackPaused(::handlePlaybackPaused)
 					.setOnPlayingFileChanged(::changePositionedPlaybackFile)
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
 					.setOnPlaylistReset(::broadcastResetPlaylist)
-				engine
+					.also { playbackEngine = it }
 			}
 	}
-
-	private val sessionConnection: Promise<IConnectionProvider>
-		get() {
-			localBroadcastManagerLazy.value
-				.registerReceiver(
-					buildSessionReceiver,
-					IntentFilter(SessionConnection.buildSessionBroadcast))
-			return SessionConnection.getInstance(this).promiseSessionConnection().must {
-				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
-				lazyNotificationController.value.removeNotification(connectingNotificationId)
-			}
-		}
 
 	private fun handleBuildConnectionStatusChange(status: Int) {
 		val notifyBuilder = NotificationCompat.Builder(this, lazyPlaybackNotificationsConfiguration.value.notificationChannel)
