@@ -586,8 +586,7 @@ open class PlaybackService : Service() {
 	private fun initializePlaybackPlaylistStateManagerSerially(library: Library): Promise<PlaybackEngine> {
 		return playbackEnginePromise.eventually(
 			{ initializePlaybackEngine(library) },
-			{ initializePlaybackEngine(library) })
-			?: initializePlaybackEngine(library).also { playbackEnginePromise = it }
+			{ initializePlaybackEngine(library) }).also { playbackEnginePromise = it }
 	}
 
 	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine> {
