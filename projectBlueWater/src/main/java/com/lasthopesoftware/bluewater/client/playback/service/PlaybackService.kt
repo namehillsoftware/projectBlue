@@ -723,13 +723,13 @@ open class PlaybackService : Service() {
 					audioManagerLazy.value,
 					lazyPlaylistVolumeManager.value)
 				playbackEngine = engine
-				engine
 					.setOnPlaybackStarted(::handlePlaybackStarted)
 					.setOnPlaybackPaused(::handlePlaybackPaused)
 					.setOnPlayingFileChanged(::changePositionedPlaybackFile)
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
 					.setOnPlaylistReset(::broadcastResetPlaylist)
+				engine
 			}
 	}
 
