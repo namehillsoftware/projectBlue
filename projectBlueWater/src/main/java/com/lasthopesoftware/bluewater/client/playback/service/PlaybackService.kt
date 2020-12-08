@@ -43,9 +43,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
-import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
-import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
@@ -91,6 +89,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buil
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.closables.CloseableManager
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
 import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer
@@ -117,6 +116,7 @@ open class PlaybackService : Service() {
 	companion object {
 		private val logger = LoggerFactory.getLogger(PlaybackService::class.java)
 		private val mediaSessionTag = buildMagicPropertyName(PlaybackService::class.java, "mediaSessionTag")
+
 		private const val playingNotificationId = 42
 		private const val startingNotificationId = 53
 		private const val connectingNotificationId = 70
@@ -137,9 +137,8 @@ open class PlaybackService : Service() {
 		}
 
 		@JvmStatic
-		fun launchMusicService(context: Context, serializedFileList: String?) {
+		fun launchMusicService(context: Context, serializedFileList: String?) =
 			launchMusicService(context, 0, serializedFileList)
-		}
 
 		@JvmStatic
 		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String?) {
@@ -159,57 +158,46 @@ open class PlaybackService : Service() {
 		}
 
 		@JvmStatic
-		fun play(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.play))
-		}
+		fun play(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.play))
 
 		@JvmStatic
-		fun pendingPlayingIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
+		fun pendingPlayingIntent(context: Context): PendingIntent =
+			PendingIntent.getService(
 				context,
 				0,
 				getNewSelfIntent(
 					context,
 					Action.play),
 				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
 
 		@JvmStatic
-		fun pause(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.pause))
-		}
+		fun pause(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.pause))
 
 		@JvmStatic
-		fun pendingPauseIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
+		fun pendingPauseIntent(context: Context): PendingIntent =
+			PendingIntent.getService(
 				context,
 				0,
 				getNewSelfIntent(
 					context,
 					Action.pause),
 				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
 
 		@JvmStatic
-		fun togglePlayPause(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause))
-		}
+		fun togglePlayPause(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause))
 
 		@JvmStatic
-		fun next(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.next))
-		}
+		fun next(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.next))
 
 		@JvmStatic
-		fun pendingNextIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
+		fun pendingNextIntent(context: Context): PendingIntent =
+			PendingIntent.getService(
 				context,
 				0,
 				getNewSelfIntent(
 					context,
 					Action.next),
 				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
 
 		@JvmStatic
 		fun previous(context: Context) {
@@ -382,13 +370,16 @@ open class PlaybackService : Service() {
 			FilePropertyCache.getInstance(),
 			lazyFileProperties.value)
 	}
+	private val playbackEngineCloseables = CloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
 	private val lazyDisconnectionTracker = lazy { ConnectionCircuitTracker() }
 	private var areListenersRegistered = false
 	private var playbackEnginePromise: Promise<PlaybackEngine> = Promise.empty()
+	private var playbackContinuity: ChangePlaybackContinuity? = null
+	private var playlistFiles: ChangePlaylistFiles? = null
 	private var playbackState: ChangePlaybackState? = null
-	private var playbackEngine: PlaybackEngine? = null
+	private var playlistPosition: ChangePlaylistPosition? = null
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
 	private var cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider? = null
 	private var positionedPlayingFile: PositionedPlayingFile? = null
@@ -430,7 +421,20 @@ open class PlaybackService : Service() {
 			handleBuildConnectionStatusChange(buildStatus)
 		}
 	}
+
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
+
+	private val sessionConnection: Promise<IConnectionProvider>
+		get() {
+			localBroadcastManagerLazy.value
+				.registerReceiver(
+					buildSessionReceiver,
+					IntentFilter(SessionConnection.buildSessionBroadcast))
+			return SessionConnection.getInstance(this).promiseSessionConnection().must {
+				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
+				lazyNotificationController.value.removeNotification(connectingNotificationId)
+			}
+		}
 
 	private fun stopNotificationIfNotPlaying() {
 		if (!isPlaying) lazyNotificationController.value.removeNotification(playingNotificationId)
@@ -443,16 +447,6 @@ open class PlaybackService : Service() {
 				lazyNotificationController.value.notifyForeground(b.build(), startingNotificationId)
 			}
 
-	private fun registerListeners() {
-		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
-		wakeLock?.acquire()
-		registerRemoteClientControl()
-		registerReceiver(
-			lazyAudioBecomingNoisyReceiver.value,
-			IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
-		areListenersRegistered = true
-	}
-
 	private fun registerRemoteClientControl() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			lazyMediaSession.getObject().isActive = true
@@ -460,6 +454,15 @@ open class PlaybackService : Service() {
 		}
 		audioManagerLazy.value.registerMediaButtonEventReceiver(remoteControlReceiver.value)
 		audioManagerLazy.value.registerRemoteControlClient(remoteControlClient.value)
+	}
+
+	private fun registerListeners() {
+		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
+		wakeLock?.acquire()
+		registerReceiver(
+			lazyAudioBecomingNoisyReceiver.value,
+			IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+		areListenersRegistered = true
 	}
 
 	private fun unregisterListeners() {
@@ -497,7 +500,7 @@ open class PlaybackService : Service() {
 			return START_NOT_STICKY
 		}
 
-		if (playbackEngine != null) {
+		if (playlistPosition != null) {
 			actOnIntent(intent).excuse(unhandledRejectionHandler)
 			return START_NOT_STICKY
 		}
@@ -519,17 +522,17 @@ open class PlaybackService : Service() {
 	private fun actOnIntent(intent: Intent?): Promise<Unit> {
 		if (intent == null) return Unit.toPromise()
 		var action = intent.action ?: return Unit.toPromise()
-		val playbackEngine = playbackEngine ?: return Unit.toPromise()
+		val playbackPosition = playlistPosition ?: return Unit.toPromise()
 
 		if (action == Action.togglePlayPause) action = if (isPlaying) Action.pause else Action.play
 		if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
 		when (action) {
 			Action.play -> return resumePlayback()
 			Action.pause -> return pausePlayback()
-			Action.repeating -> return playbackEngine.playRepeatedly().toPromise()
-			Action.completing -> return playbackEngine.playToCompletion().toPromise()
-			Action.previous -> return playbackEngine.skipToPrevious().then(::broadcastChangedFile)
-			Action.next -> return playbackEngine.skipToNext().then(::broadcastChangedFile)
+			Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
+			Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
+			Action.previous -> return playbackPosition.skipToPrevious().then(::broadcastChangedFile)
+			Action.next -> return playbackPosition.skipToNext().then(::broadcastChangedFile)
 			Action.launchMusicService -> {
 				val playbackState = playbackState ?: return Unit.toPromise()
 
@@ -556,13 +559,15 @@ open class PlaybackService : Service() {
 
 				val filePosition = intent.getIntExtra(Bag.startPos, -1)
 				if (filePosition < 0) return Unit.toPromise()
-				return playbackEngine
+				return playbackPosition
 					.changePosition(playlistPosition, filePosition)
 					.then(::broadcastChangedFile)
 			}
 			Action.addFileToPlaylist -> {
+				val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
 				val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
-				return if (fileKey < 0) Unit.toPromise() else playbackEngine
+				return if (fileKey < 0) Unit.toPromise() else playlistFiles
 					.addFile(ServiceFile(fileKey))
 					.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 					.eventually(LoopedInPromise.response({
@@ -570,8 +575,10 @@ open class PlaybackService : Service() {
 					}, this))
 			}
 			Action.removeFileAtPositionFromPlaylist -> {
+				val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
 				val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-				return if (filePosition < -1) Unit.toPromise() else playbackEngine
+				return if (filePosition < -1) Unit.toPromise() else playlistFiles
 					.removeFileAtPosition(filePosition)
 					.then {
 						localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
@@ -590,7 +597,7 @@ open class PlaybackService : Service() {
 	}
 
 	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine> {
-		playbackEngine?.close()
+		playbackEngineCloseables.close()
 
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
@@ -625,14 +632,16 @@ open class PlaybackService : Service() {
 							buildRemoteControlProxyIntentFilter(rcp))
 				}
 
-			nowPlayingNotificationBuilder?.close()
 			NowPlayingNotificationBuilder(
 				this,
 				lazyMediaStyleNotificationSetup.value,
 				connectionProvider,
 				cachedSessionFilePropertiesProvider,
 				imageProvider)
-				.also { nowPlayingNotificationBuilder = it }
+				.also {
+					playbackEngineCloseables.manage(it)
+					nowPlayingNotificationBuilder = it
+				}
 				.let { builder ->
 					playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 					PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
@@ -695,13 +704,17 @@ open class PlaybackService : Service() {
 				}
 			}
 			.eventually { preparationSourceProvider ->
-				playbackQueues?.close()
 				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
-					.also { playbackQueues = it }
+					.also {
+						playbackEngineCloseables.manage(it)
+						playbackQueues = it
+					}
 					.let { queues ->
-						playlistPlaybackBootstrapper?.close()
 						PlaylistPlaybackBootstrapper(lazyPlaylistVolumeManager.value)
-							.also { playlistPlaybackBootstrapper = it }
+							.also {
+								playbackEngineCloseables.manage(it)
+								playlistPlaybackBootstrapper = it
+							}
 							.let { bootstrapper ->
 								val nowPlayingRepository = NowPlayingRepository(
 									SpecificLibraryProvider(
@@ -718,32 +731,26 @@ open class PlaybackService : Service() {
 					}
 			}
 			.then { engine ->
+				playbackEngineCloseables.manage(engine)
 				playbackState = AudioManagingPlaybackStateChanger(
 					engine,
 					audioManagerLazy.value,
 					lazyPlaylistVolumeManager.value)
-				playbackEngine = engine
+					.also(playbackEngineCloseables::manage)
+				engine
 					.setOnPlaybackStarted(::handlePlaybackStarted)
 					.setOnPlaybackPaused(::handlePlaybackPaused)
 					.setOnPlayingFileChanged(::changePositionedPlaybackFile)
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
 					.setOnPlaylistReset(::broadcastResetPlaylist)
-				engine
+					.also {
+						playlistPosition = it
+						playlistFiles = it
+						playbackContinuity = it
+					}
 			}
 	}
-
-	private val sessionConnection: Promise<IConnectionProvider>
-		get() {
-			localBroadcastManagerLazy.value
-				.registerReceiver(
-					buildSessionReceiver,
-					IntentFilter(SessionConnection.buildSessionBroadcast))
-			return SessionConnection.getInstance(this).promiseSessionConnection().must {
-				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
-				lazyNotificationController.value.removeNotification(connectingNotificationId)
-			}
-		}
 
 	private fun handleBuildConnectionStatusChange(status: Int) {
 		val notifyBuilder = NotificationCompat.Builder(this, lazyPlaybackNotificationsConfiguration.value.notificationChannel)
@@ -837,12 +844,14 @@ open class PlaybackService : Service() {
 
 	private fun handleExoPlaybackException(exception: ExoPlaybackException) {
 		logger.error("An ExoPlaybackException occurred")
+
 		val cause = exception.cause
 		if (cause is IllegalStateException) {
 			logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
 			closeAndRestartPlaylistManager()
 			return
 		}
+
 		if (cause != null) uncaughtExceptionHandler(exception.cause)
 	}
 
@@ -865,7 +874,7 @@ open class PlaybackService : Service() {
 
 	private fun closeAndRestartPlaylistManager() {
 		try {
-			playbackEngine?.close()
+			playbackEngineCloseables.close()
 		} catch (e: Exception) {
 			uncaughtExceptionHandler(e)
 			return
@@ -912,17 +921,17 @@ open class PlaybackService : Service() {
 		registerRemoteClientControl()
 	}
 
-	private fun broadcastResetPlaylist(positionedFile: PositionedFile) {
-		lazyPlaybackBroadcaster.value
-			.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistTrackChange,
-				lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
-				positionedFile)
-	}
+	private fun broadcastResetPlaylist(positionedFile: PositionedFile) =
+		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+			PlaylistEvents.onPlaylistTrackChange,
+			lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
+			positionedFile)
 
-	private fun broadcastChangedFile(positionedFile: PositionedFile) {
-		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackChange, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedFile)
-	}
+	private fun broadcastChangedFile(positionedFile: PositionedFile) =
+		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+			PlaylistEvents.onPlaylistTrackChange,
+			lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
+			positionedFile)
 
 	private fun onPlaylistPlaybackComplete() {
 		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile!!.asPositionedFile())
@@ -932,26 +941,9 @@ open class PlaybackService : Service() {
 	override fun onDestroy() {
 		if (lazyNotificationController.isInitialized()) lazyNotificationController.value.removeAllNotifications()
 
-		try {
-			playlistPlaybackBootstrapper?.close()
-		} catch (e: IOException) {
-			logger.warn("There was an error closing the prepared playback bootstrapper", e)
-		}
-
-		try {
-			playbackEngine?.close()
-		} catch (e: Exception) {
-			logger.warn("There was an error closing the playback engine", e)
-		}
-
-		try {
-			playbackQueues?.close()
-		} catch (e: Exception) {
-			logger.warn("There was an error closing the prepared playback queue", e)
-		}
+		playbackEngineCloseables.close()
 
 		if (areListenersRegistered) unregisterListeners()
-		(playbackState as? AutoCloseable)?.close()
 
 		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
 		if (remoteControlClient.isInitialized()) audioManagerLazy.value.unregisterRemoteControlClient(remoteControlClient.value)
@@ -964,7 +956,6 @@ open class PlaybackService : Service() {
 
 		filePositionSubscription?.dispose()
 		cache?.release()
-		nowPlayingNotificationBuilder?.close()
 
 		if (!localBroadcastManagerLazy.isInitialized()) return
 
@@ -977,9 +968,7 @@ open class PlaybackService : Service() {
 	}
 
 	/* End Event Handlers */ /* Begin Binder Code */
-	override fun onBind(intent: Intent): IBinder? {
-		return lazyBinder.value
-	}
+	override fun onBind(intent: Intent) = lazyBinder.value
 
 	/* End Binder Code */
 	private object Action {
