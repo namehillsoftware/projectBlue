@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.disposables.Disposable
 import io.reactivex.observables.ConnectableObservable
@@ -25,10 +26,12 @@ class PlaybackEngine(
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val playbackBootstrapper: IStartPlayback,
 	nowPlaying: NowPlaying) :
-		ChangePlaybackState,
-		ChangePlaylistPosition,
+	ChangePlaybackState,
+	ChangePlaylistPosition,
+	ChangePlaybackContinuity,
+	ChangePlaylistFiles,
 	RegisterPlaybackEngineEvents,
-		AutoCloseable {
+	AutoCloseable {
 
 	private val preparedPlaybackQueueResourceManagement = managePlaybackQueues
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
@@ -99,16 +102,18 @@ class PlaybackEngine(
 		}
 	}
 
-	fun playRepeatedly() {
+	override fun playRepeatedly(): Promise<Unit> {
 		isRepeating = true
-		saveState()
+		val promisedSave = saveState()
 		updatePreparedFileQueueUsingState()
+		return promisedSave.unitResponse()
 	}
 
-	fun playToCompletion() {
+	override fun playToCompletion(): Promise<Unit> {
 		isRepeating = false
-		saveState()
+		val promisedSave = saveState()
 		updatePreparedFileQueueUsingState()
+		return promisedSave.unitResponse()
 	}
 
 	override fun resume(): Promise<Unit> {
@@ -162,13 +167,13 @@ class PlaybackEngine(
 		return this
 	}
 
-	fun addFile(serviceFile: ServiceFile): Promise<NowPlaying> {
+	override fun addFile(serviceFile: ServiceFile): Promise<NowPlaying> {
 		playlist.add(serviceFile)
 		updatePreparedFileQueueUsingState()
 		return saveState()
 	}
 
-	fun removeFileAtPosition(position: Int): Promise<NowPlaying> {
+	override fun removeFileAtPosition(position: Int): Promise<NowPlaying> {
 		val promisedSkip = if (playlistPosition == position) {
 			skipToNext()
 		} else {

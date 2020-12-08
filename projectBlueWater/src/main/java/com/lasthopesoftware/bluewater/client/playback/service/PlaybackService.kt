@@ -43,10 +43,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
-import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
-import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
-import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistPosition
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
@@ -91,6 +88,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.CloseableManager
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
@@ -378,6 +376,8 @@ open class PlaybackService : Service() {
 	private val lazyDisconnectionTracker = lazy { ConnectionCircuitTracker() }
 	private var areListenersRegistered = false
 	private var playbackEnginePromise: Promise<PlaybackEngine> = Promise.empty()
+	private var playbackContinuity: ChangePlaybackContinuity? = null
+	private var playlistFiles: ChangePlaylistFiles? = null
 	private var playbackState: ChangePlaybackState? = null
 	private var playlistPosition: ChangePlaylistPosition? = null
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
@@ -529,8 +529,8 @@ open class PlaybackService : Service() {
 		when (action) {
 			Action.play -> return resumePlayback()
 			Action.pause -> return pausePlayback()
-			Action.repeating -> return playbackPosition.playRepeatedly().toPromise()
-			Action.completing -> return playbackPosition.playToCompletion().toPromise()
+			Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
+			Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
 			Action.previous -> return playbackPosition.skipToPrevious().then(::broadcastChangedFile)
 			Action.next -> return playbackPosition.skipToNext().then(::broadcastChangedFile)
 			Action.launchMusicService -> {
@@ -564,8 +564,10 @@ open class PlaybackService : Service() {
 					.then(::broadcastChangedFile)
 			}
 			Action.addFileToPlaylist -> {
+				val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
 				val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
-				return if (fileKey < 0) Unit.toPromise() else playbackPosition
+				return if (fileKey < 0) Unit.toPromise() else playlistFiles
 					.addFile(ServiceFile(fileKey))
 					.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 					.eventually(LoopedInPromise.response({
@@ -573,8 +575,10 @@ open class PlaybackService : Service() {
 					}, this))
 			}
 			Action.removeFileAtPositionFromPlaylist -> {
+				val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
 				val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-				return if (filePosition < -1) Unit.toPromise() else playbackPosition
+				return if (filePosition < -1) Unit.toPromise() else playlistFiles
 					.removeFileAtPosition(filePosition)
 					.then {
 						localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
@@ -740,7 +744,11 @@ open class PlaybackService : Service() {
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
 					.setOnPlaylistReset(::broadcastResetPlaylist)
-					.also { playlistPosition = it }
+					.also {
+						playlistPosition = it
+						playlistFiles = it
+						playbackContinuity = it
+					}
 			}
 	}
 
