@@ -45,6 +45,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
+import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistPosition
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -90,7 +91,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.CloseableManager
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
@@ -379,7 +379,7 @@ open class PlaybackService : Service() {
 	private var areListenersRegistered = false
 	private var playbackEnginePromise: Promise<PlaybackEngine> = Promise.empty()
 	private var playbackState: ChangePlaybackState? = null
-	private var playbackEngine: PlaybackEngine? = null
+	private var playlistPosition: ChangePlaylistPosition? = null
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
 	private var cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider? = null
 	private var positionedPlayingFile: PositionedPlayingFile? = null
@@ -500,7 +500,7 @@ open class PlaybackService : Service() {
 			return START_NOT_STICKY
 		}
 
-		if (playbackEngine != null) {
+		if (playlistPosition != null) {
 			actOnIntent(intent).excuse(unhandledRejectionHandler)
 			return START_NOT_STICKY
 		}
@@ -522,17 +522,17 @@ open class PlaybackService : Service() {
 	private fun actOnIntent(intent: Intent?): Promise<Unit> {
 		if (intent == null) return Unit.toPromise()
 		var action = intent.action ?: return Unit.toPromise()
-		val playbackEngine = playbackEngine ?: return Unit.toPromise()
+		val playbackPosition = playlistPosition ?: return Unit.toPromise()
 
 		if (action == Action.togglePlayPause) action = if (isPlaying) Action.pause else Action.play
 		if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
 		when (action) {
 			Action.play -> return resumePlayback()
 			Action.pause -> return pausePlayback()
-			Action.repeating -> return playbackEngine.playRepeatedly().toPromise()
-			Action.completing -> return playbackEngine.playToCompletion().toPromise()
-			Action.previous -> return playbackEngine.skipToPrevious().then(::broadcastChangedFile)
-			Action.next -> return playbackEngine.skipToNext().then(::broadcastChangedFile)
+			Action.repeating -> return playbackPosition.playRepeatedly().toPromise()
+			Action.completing -> return playbackPosition.playToCompletion().toPromise()
+			Action.previous -> return playbackPosition.skipToPrevious().then(::broadcastChangedFile)
+			Action.next -> return playbackPosition.skipToNext().then(::broadcastChangedFile)
 			Action.launchMusicService -> {
 				val playbackState = playbackState ?: return Unit.toPromise()
 
@@ -559,13 +559,13 @@ open class PlaybackService : Service() {
 
 				val filePosition = intent.getIntExtra(Bag.startPos, -1)
 				if (filePosition < 0) return Unit.toPromise()
-				return playbackEngine
+				return playbackPosition
 					.changePosition(playlistPosition, filePosition)
 					.then(::broadcastChangedFile)
 			}
 			Action.addFileToPlaylist -> {
 				val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
-				return if (fileKey < 0) Unit.toPromise() else playbackEngine
+				return if (fileKey < 0) Unit.toPromise() else playbackPosition
 					.addFile(ServiceFile(fileKey))
 					.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 					.eventually(LoopedInPromise.response({
@@ -574,7 +574,7 @@ open class PlaybackService : Service() {
 			}
 			Action.removeFileAtPositionFromPlaylist -> {
 				val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-				return if (filePosition < -1) Unit.toPromise() else playbackEngine
+				return if (filePosition < -1) Unit.toPromise() else playbackPosition
 					.removeFileAtPosition(filePosition)
 					.then {
 						localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
@@ -740,7 +740,7 @@ open class PlaybackService : Service() {
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
 					.setOnPlaylistReset(::broadcastResetPlaylist)
-					.also { playbackEngine = it }
+					.also { playlistPosition = it }
 			}
 	}
 
