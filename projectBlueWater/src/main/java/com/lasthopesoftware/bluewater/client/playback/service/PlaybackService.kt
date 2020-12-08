@@ -118,6 +118,7 @@ open class PlaybackService : Service() {
 	companion object {
 		private val logger = LoggerFactory.getLogger(PlaybackService::class.java)
 		private val mediaSessionTag = buildMagicPropertyName(PlaybackService::class.java, "mediaSessionTag")
+
 		private const val playingNotificationId = 42
 		private const val startingNotificationId = 53
 		private const val connectingNotificationId = 70
@@ -138,9 +139,8 @@ open class PlaybackService : Service() {
 		}
 
 		@JvmStatic
-		fun launchMusicService(context: Context, serializedFileList: String?) {
+		fun launchMusicService(context: Context, serializedFileList: String?) =
 			launchMusicService(context, 0, serializedFileList)
-		}
 
 		@JvmStatic
 		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String?) {
@@ -160,57 +160,46 @@ open class PlaybackService : Service() {
 		}
 
 		@JvmStatic
-		fun play(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.play))
-		}
+		fun play(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.play))
 
 		@JvmStatic
-		fun pendingPlayingIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
+		fun pendingPlayingIntent(context: Context): PendingIntent =
+			PendingIntent.getService(
 				context,
 				0,
 				getNewSelfIntent(
 					context,
 					Action.play),
 				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
 
 		@JvmStatic
-		fun pause(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.pause))
-		}
+		fun pause(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.pause))
 
 		@JvmStatic
-		fun pendingPauseIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
+		fun pendingPauseIntent(context: Context): PendingIntent =
+			PendingIntent.getService(
 				context,
 				0,
 				getNewSelfIntent(
 					context,
 					Action.pause),
 				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
 
 		@JvmStatic
-		fun togglePlayPause(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause))
-		}
+		fun togglePlayPause(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause))
 
 		@JvmStatic
-		fun next(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.next))
-		}
+		fun next(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.next))
 
 		@JvmStatic
-		fun pendingNextIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
+		fun pendingNextIntent(context: Context): PendingIntent =
+			PendingIntent.getService(
 				context,
 				0,
 				getNewSelfIntent(
 					context,
 					Action.next),
 				PendingIntent.FLAG_UPDATE_CURRENT)
-		}
 
 		@JvmStatic
 		fun previous(context: Context) {
@@ -847,12 +836,14 @@ open class PlaybackService : Service() {
 
 	private fun handleExoPlaybackException(exception: ExoPlaybackException) {
 		logger.error("An ExoPlaybackException occurred")
+
 		val cause = exception.cause
 		if (cause is IllegalStateException) {
 			logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
 			closeAndRestartPlaylistManager()
 			return
 		}
+
 		if (cause != null) uncaughtExceptionHandler(exception.cause)
 	}
 
@@ -922,17 +913,17 @@ open class PlaybackService : Service() {
 		registerRemoteClientControl()
 	}
 
-	private fun broadcastResetPlaylist(positionedFile: PositionedFile) {
-		lazyPlaybackBroadcaster.value
-			.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistTrackChange,
-				lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
-				positionedFile)
-	}
+	private fun broadcastResetPlaylist(positionedFile: PositionedFile) =
+		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+			PlaylistEvents.onPlaylistTrackChange,
+			lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
+			positionedFile)
 
-	private fun broadcastChangedFile(positionedFile: PositionedFile) {
-		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackChange, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedFile)
-	}
+	private fun broadcastChangedFile(positionedFile: PositionedFile) =
+		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+			PlaylistEvents.onPlaylistTrackChange,
+			lazyChosenLibraryIdentifierProvider.value.selectedLibraryId,
+			positionedFile)
 
 	private fun onPlaylistPlaybackComplete() {
 		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile!!.asPositionedFile())
@@ -969,9 +960,7 @@ open class PlaybackService : Service() {
 	}
 
 	/* End Event Handlers */ /* Begin Binder Code */
-	override fun onBind(intent: Intent): IBinder? {
-		return lazyBinder.value
-	}
+	override fun onBind(intent: Intent) = lazyBinder.value
 
 	/* End Binder Code */
 	private object Action {
