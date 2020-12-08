@@ -91,6 +91,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buil
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.closables.CloseableManager
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
 import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer
@@ -382,7 +383,7 @@ open class PlaybackService : Service() {
 			FilePropertyCache.getInstance(),
 			lazyFileProperties.value)
 	}
-	private val playbackEngineCloseables = LinkedList<AutoCloseable>()
+	private val playbackEngineCloseables = CloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
 	private val lazyDisconnectionTracker = lazy { ConnectionCircuitTracker() }
@@ -603,9 +604,7 @@ open class PlaybackService : Service() {
 	}
 
 	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine> {
-		while (playbackEngineCloseables.isNotEmpty()) {
-			playbackEngineCloseables.pop().close()
-		}
+		playbackEngineCloseables.close()
 
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
@@ -647,7 +646,7 @@ open class PlaybackService : Service() {
 				cachedSessionFilePropertiesProvider,
 				imageProvider)
 				.also {
-					playbackEngineCloseables.offer(it)
+					playbackEngineCloseables.manage(it)
 					nowPlayingNotificationBuilder = it
 				}
 				.let { builder ->
@@ -714,13 +713,13 @@ open class PlaybackService : Service() {
 			.eventually { preparationSourceProvider ->
 				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
 					.also {
-						playbackEngineCloseables.offer(it)
+						playbackEngineCloseables.manage(it)
 						playbackQueues = it
 					}
 					.let { queues ->
 						PlaylistPlaybackBootstrapper(lazyPlaylistVolumeManager.value)
 							.also {
-								playbackEngineCloseables.offer(it)
+								playbackEngineCloseables.manage(it)
 								playlistPlaybackBootstrapper = it
 							}
 							.let { bootstrapper ->
@@ -739,12 +738,12 @@ open class PlaybackService : Service() {
 					}
 			}
 			.then { engine ->
-				playbackEngineCloseables.offer(engine)
+				playbackEngineCloseables.manage(engine)
 				playbackState = AudioManagingPlaybackStateChanger(
 					engine,
 					audioManagerLazy.value,
 					lazyPlaylistVolumeManager.value)
-					.also(playbackEngineCloseables::offer)
+					.also(playbackEngineCloseables::manage)
 				engine
 					.setOnPlaybackStarted(::handlePlaybackStarted)
 					.setOnPlaybackPaused(::handlePlaybackPaused)
@@ -876,7 +875,7 @@ open class PlaybackService : Service() {
 
 	private fun closeAndRestartPlaylistManager() {
 		try {
-			playbackEngine?.close()
+			playbackEngineCloseables.close()
 		} catch (e: Exception) {
 			uncaughtExceptionHandler(e)
 			return
@@ -943,13 +942,7 @@ open class PlaybackService : Service() {
 	override fun onDestroy() {
 		if (lazyNotificationController.isInitialized()) lazyNotificationController.value.removeAllNotifications()
 
-		while (playbackEngineCloseables.isNotEmpty()) {
-			try {
-				playbackEngineCloseables.pop().close()
-			} catch (e: Exception) {
-				logger.warn("There was an error closing a resource", e)
-			}
-		}
+		playbackEngineCloseables.close()
 
 		if (areListenersRegistered) unregisterListeners()
 
