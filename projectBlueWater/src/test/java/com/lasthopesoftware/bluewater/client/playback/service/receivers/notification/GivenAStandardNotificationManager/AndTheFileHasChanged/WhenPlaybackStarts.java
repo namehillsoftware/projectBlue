@@ -71,6 +71,5 @@ public class WhenPlaybackStarts extends AndroidContext {
 	@Test
 	public void thenTheServiceIsStartedInTheForeground() {
 		verify(service.getObject()).startForeground(43, loadingNotification);
-		verify(notificationManager).notify(43, startedNotification);
 	}
 }

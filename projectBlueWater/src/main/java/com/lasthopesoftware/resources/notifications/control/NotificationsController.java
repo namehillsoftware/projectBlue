@@ -32,10 +32,7 @@ public class NotificationsController implements ControlNotifications {
 	@Override
 	public void notifyForeground(Notification notification, int notificationId) {
 		synchronized (syncObject) {
-			if (notificationForegroundStatuses.get(notificationId, false))
-				notificationManager.notify(notificationId, notification);
-			else
-				service.startForeground(notificationId, notification);
+			service.startForeground(notificationId, notification);
 
 			markNotificationForeground(notificationId);
 		}
