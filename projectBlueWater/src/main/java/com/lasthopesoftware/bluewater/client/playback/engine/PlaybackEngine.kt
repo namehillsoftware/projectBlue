@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IP
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.disposables.Disposable
 import io.reactivex.observables.ConnectableObservable
@@ -25,9 +26,13 @@ class PlaybackEngine(
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val playbackBootstrapper: IStartPlayback,
 	nowPlaying: NowPlaying) :
-		IChangePlaylistPosition,
-		IPlaybackEngineBroadcaster,
-		AutoCloseable {
+	ChangePlaybackState,
+	ChangePlaylistPosition,
+	ChangePlaybackContinuity,
+	ChangePlaylistFiles,
+	RegisterPlaybackEngineEvents,
+	AutoCloseable {
+
 	private val preparedPlaybackQueueResourceManagement = managePlaybackQueues
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
@@ -44,10 +49,11 @@ class PlaybackEngine(
 	private var onPlayingFileChanged: OnPlayingFileChanged? = null
 	private var onPlaylistError: OnPlaylistError? = null
 	private var onPlaybackStarted: OnPlaybackStarted? = null
+	private var onPlaybackPaused: OnPlaybackPaused? = null
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<*> {
+	override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> {
 		logger.info("Starting playback")
 		this.playlist = playlist
 		this.playlistPosition = playlistPosition
@@ -55,13 +61,13 @@ class PlaybackEngine(
 		return saveState().then { resumePlayback() }
 	}
 
-	fun skipToNext(): Promise<PositionedFile> {
+	override fun skipToNext(): Promise<PositionedFile> {
 		return changePosition(
 			getNextPosition(playlistPosition, playlist),
 			0)
 	}
 
-	fun skipToPrevious(): Promise<PositionedFile> {
+	override fun skipToPrevious(): Promise<PositionedFile> {
 		return changePosition(getPreviousPosition(playlistPosition), 0)
 	}
 
@@ -96,68 +102,78 @@ class PlaybackEngine(
 		}
 	}
 
-	fun playRepeatedly() {
+	override fun playRepeatedly(): Promise<Unit> {
 		isRepeating = true
-		saveState()
+		val promisedSave = saveState()
 		updatePreparedFileQueueUsingState()
+		return promisedSave.unitResponse()
 	}
 
-	fun playToCompletion() {
+	override fun playToCompletion(): Promise<Unit> {
 		isRepeating = false
-		saveState()
+		val promisedSave = saveState()
 		updatePreparedFileQueueUsingState()
+		return promisedSave.unitResponse()
 	}
 
-	fun resume(): Promise<*> {
+	override fun resume(): Promise<Unit> {
 		return activePlayer
 			?.also {
 				isPlaying = true
 				onPlaybackStarted?.onPlaybackStarted()
 			}
-			?.resume()?.then { onPlayingFileChanged?.onPlayingFileChanged(it) }
-			?: return resumePlayback().toPromise()
+			?.resume()
+			?.then { onPlayingFileChanged?.onPlayingFileChanged(it) }
+			?: resumePlayback().toPromise()
 	}
 
-	fun pause(): Promise<*> {
-		val promisedPause = activePlayer?.pause() ?: Promise.empty<Any?>()
+	override fun pause(): Promise<Unit> {
+		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
 
 		isPlaying = false
 
-		return promisedPause.eventually { saveState() }
+		return promisedPause
+			.eventually { saveState() }
+			.then { onPlaybackPaused?.onPlaybackPaused() }
 	}
 
-	override fun setOnPlayingFileChanged(onPlayingFileChanged: OnPlayingFileChanged): PlaybackEngine {
+	override fun setOnPlayingFileChanged(onPlayingFileChanged: OnPlayingFileChanged?): PlaybackEngine {
 		this.onPlayingFileChanged = onPlayingFileChanged
 		return this
 	}
 
-	override fun setOnPlaylistError(onPlaylistError: OnPlaylistError): PlaybackEngine {
+	override fun setOnPlaylistError(onPlaylistError: OnPlaylistError?): PlaybackEngine {
 		this.onPlaylistError = onPlaylistError
 		return this
 	}
 
-	override fun setOnPlaybackStarted(onPlaybackStarted: OnPlaybackStarted): PlaybackEngine {
+	override fun setOnPlaybackStarted(onPlaybackStarted: OnPlaybackStarted?): PlaybackEngine {
 		this.onPlaybackStarted = onPlaybackStarted
 		return this
 	}
 
-	override fun setOnPlaybackCompleted(onPlaybackCompleted: OnPlaybackCompleted): PlaybackEngine {
+	override fun setOnPlaybackPaused(onPlaybackPaused: OnPlaybackPaused?): PlaybackEngine {
+		this.onPlaybackPaused = onPlaybackPaused
+		return this
+	}
+
+	override fun setOnPlaybackCompleted(onPlaybackCompleted: OnPlaybackCompleted?): PlaybackEngine {
 		this.onPlaybackCompleted = onPlaybackCompleted
 		return this
 	}
 
-	override fun setOnPlaylistReset(onPlaylistReset: OnPlaylistReset): PlaybackEngine {
+	override fun setOnPlaylistReset(onPlaylistReset: OnPlaylistReset?): PlaybackEngine {
 		this.onPlaylistReset = onPlaylistReset
 		return this
 	}
 
-	fun addFile(serviceFile: ServiceFile): Promise<NowPlaying> {
+	override fun addFile(serviceFile: ServiceFile): Promise<NowPlaying> {
 		playlist.add(serviceFile)
 		updatePreparedFileQueueUsingState()
 		return saveState()
 	}
 
-	fun removeFileAtPosition(position: Int): Promise<NowPlaying> {
+	override fun removeFileAtPosition(position: Int): Promise<NowPlaying> {
 		val promisedSkip = if (playlistPosition == position) {
 			skipToNext()
 		} else {
