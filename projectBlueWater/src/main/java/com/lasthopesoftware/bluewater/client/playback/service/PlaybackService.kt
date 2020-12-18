@@ -14,6 +14,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
@@ -130,12 +131,6 @@ open class PlaybackService : Service() {
 					))
 		}
 
-		private fun getNewSelfIntent(context: Context, action: String): Intent {
-			val newIntent = Intent(context, PlaybackService::class.java)
-			newIntent.action = action
-			return newIntent
-		}
-
 		@JvmStatic
 		fun launchMusicService(context: Context, serializedFileList: String?) =
 			launchMusicService(context, 0, serializedFileList)
@@ -145,7 +140,7 @@ open class PlaybackService : Service() {
 			val svcIntent = getNewSelfIntent(context, Action.launchMusicService)
 			svcIntent.putExtra(Bag.playlistPosition, filePos)
 			svcIntent.putExtra(Bag.filePlaylist, serializedFileList)
-			safelyStartService(context, svcIntent)
+			context.safelyStartServiceInForeground(svcIntent)
 		}
 
 		@JvmOverloads
@@ -154,11 +149,11 @@ open class PlaybackService : Service() {
 			val svcIntent = getNewSelfIntent(context, Action.seekTo)
 			svcIntent.putExtra(Bag.playlistPosition, filePos)
 			svcIntent.putExtra(Bag.startPos, fileProgress)
-			safelyStartService(context, svcIntent)
+			context.safelyStartService(svcIntent)
 		}
 
 		@JvmStatic
-		fun play(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.play))
+		fun play(context: Context) = context.safelyStartServiceInForeground(getNewSelfIntent(context, Action.play))
 
 		@JvmStatic
 		fun pendingPlayingIntent(context: Context): PendingIntent =
@@ -171,7 +166,7 @@ open class PlaybackService : Service() {
 				PendingIntent.FLAG_UPDATE_CURRENT)
 
 		@JvmStatic
-		fun pause(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.pause))
+		fun pause(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.pause))
 
 		@JvmStatic
 		fun pendingPauseIntent(context: Context): PendingIntent =
@@ -184,10 +179,10 @@ open class PlaybackService : Service() {
 				PendingIntent.FLAG_UPDATE_CURRENT)
 
 		@JvmStatic
-		fun togglePlayPause(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.togglePlayPause))
+		fun togglePlayPause(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.togglePlayPause))
 
 		@JvmStatic
-		fun next(context: Context) = safelyStartService(context, getNewSelfIntent(context, Action.next))
+		fun next(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.next))
 
 		@JvmStatic
 		fun pendingNextIntent(context: Context): PendingIntent =
@@ -201,7 +196,7 @@ open class PlaybackService : Service() {
 
 		@JvmStatic
 		fun previous(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.previous))
+			context.safelyStartService(getNewSelfIntent(context, Action.previous))
 		}
 
 		@JvmStatic
@@ -217,31 +212,31 @@ open class PlaybackService : Service() {
 
 		@JvmStatic
 		fun setRepeating(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.repeating))
+			context.safelyStartService(getNewSelfIntent(context, Action.repeating))
 		}
 
 		@JvmStatic
 		fun setCompleting(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.completing))
+			context.safelyStartService(getNewSelfIntent(context, Action.completing))
 		}
 
 		@JvmStatic
 		fun addFileToPlaylist(context: Context, fileKey: Int) {
 			val intent = getNewSelfIntent(context, Action.addFileToPlaylist)
 			intent.putExtra(Bag.playlistPosition, fileKey)
-			safelyStartService(context, intent)
+			context.safelyStartService(intent)
 		}
 
 		@JvmStatic
 		fun removeFileAtPositionFromPlaylist(context: Context, filePosition: Int) {
 			val intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist)
 			intent.putExtra(Bag.filePosition, filePosition)
-			safelyStartService(context, intent)
+			context.safelyStartService(intent)
 		}
 
 		@JvmStatic
 		fun killService(context: Context) {
-			safelyStartService(context, getNewSelfIntent(context, Action.killMusicService))
+			context.safelyStartService(getNewSelfIntent(context, Action.killMusicService))
 		}
 
 		@JvmStatic
@@ -255,9 +250,25 @@ open class PlaybackService : Service() {
 				PendingIntent.FLAG_UPDATE_CURRENT)
 		}
 
-		private fun safelyStartService(context: Context, intent: Intent) {
+		private fun getNewSelfIntent(context: Context, action: String): Intent {
+			val newIntent = Intent(context, PlaybackService::class.java)
+			newIntent.action = action
+			return newIntent
+		}
+
+		private fun Context.safelyStartService(intent: Intent) {
 			try {
-				context.startService(intent)
+				startService(intent)
+			} catch (e: IllegalStateException) {
+				logger.warn("An illegal state exception occurred while trying to start the service", e)
+			} catch (e: SecurityException) {
+				logger.warn("A security exception occurred while trying to start the service", e)
+			}
+		}
+
+		private fun Context.safelyStartServiceInForeground(intent: Intent) {
+			try {
+				ContextCompat.startForegroundService(this, intent)
 			} catch (e: IllegalStateException) {
 				logger.warn("An illegal state exception occurred while trying to start the service", e)
 			} catch (e: SecurityException) {

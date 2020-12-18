@@ -26,6 +26,7 @@ import org.robolectric.Robolectric;
 import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -77,6 +78,6 @@ public class WhenTheFileChanges extends AndroidContext {
 
 	@Test
 	public void thenTheServiceIsStartedInTheForeground() {
-		verify(service.getObject()).startForeground(43, startedNotification);
+		verify(service.getObject(), atLeastOnce()).startForeground(43, startedNotification);
 	}
 }

@@ -22,9 +22,9 @@ import static com.lasthopesoftware.resources.notifications.FakeNotificationCompa
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,8 +62,8 @@ public class WhenTheFileChanges extends AndroidContext {
 	}
 
 	@Test
-	public void thenTheServiceIsStartedInTheForegroundOnce() {
-		verify(service.getObject(), times(1))
+	public void thenTheServiceIsStartedInTheForeground() {
+		verify(service.getObject(), atLeastOnce())
 			.startForeground(eq(43), any());
 	}
 
