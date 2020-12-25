@@ -2,13 +2,12 @@ package com.lasthopesoftware.storage.write;
 
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator;
 
-import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +29,7 @@ public class GivenAFileThatCanBeWritten {
 
 		@Test
 		public void thenFileWriteIsPossible() {
-			Assert.assertTrue(this.fileWriteIsPossible);
+			assertThat(this.fileWriteIsPossible).isTrue();
 		}
 	}
 }
