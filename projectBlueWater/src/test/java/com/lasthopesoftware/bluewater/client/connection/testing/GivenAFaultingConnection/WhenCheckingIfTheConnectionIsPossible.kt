@@ -1,31 +1,30 @@
-package com.lasthopesoftware.bluewater.client.connection.testing.GivenAFaultingConnection;
+package com.lasthopesoftware.bluewater.client.connection.testing.GivenAFaultingConnection
 
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import org.assertj.core.api.AssertionsForClassTypes
+import org.junit.BeforeClass
+import org.junit.Test
+import java.io.IOException
+import java.util.concurrent.ExecutionException
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-public class WhenCheckingIfTheConnectionIsPossible {
-
-	private static boolean result;
-
-	@BeforeClass
-	public static void before() throws ExecutionException, InterruptedException {
-		final ConnectionTester connectionTester = new ConnectionTester();
-		final FakeConnectionProvider connectionProvider = new FakeConnectionProvider();
-		connectionProvider.mapResponse(p -> { throw new IOException(); }, "Alive");
-		result = new FuturePromise<>(connectionTester.promiseIsConnectionPossible(connectionProvider)).get();
+class WhenCheckingIfTheConnectionIsPossible {
+	@Test
+	fun thenTheResultIsCorrect() {
+		AssertionsForClassTypes.assertThat(result).isFalse
 	}
 
-	@Test
-	public void thenTheResultIsCorrect() {
-		assertThat(result).isFalse();
+	companion object {
+		private var result = false
+
+		@BeforeClass
+		@Throws(ExecutionException::class, InterruptedException::class)
+		fun before() {
+			val connectionTester = ConnectionTester()
+			val connectionProvider = FakeConnectionProvider()
+			connectionProvider.mapResponse({ throw IOException() }, "Alive")
+			result = FuturePromise(connectionTester.promiseIsConnectionPossible(connectionProvider)).get()!!
+		}
 	}
 }

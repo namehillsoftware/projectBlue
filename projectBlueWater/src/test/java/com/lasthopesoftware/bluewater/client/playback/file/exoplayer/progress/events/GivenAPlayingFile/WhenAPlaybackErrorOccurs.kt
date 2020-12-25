@@ -1,34 +1,31 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.GivenAPlayingFile
 
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier;
+import com.google.android.exoplayer2.ExoPlaybackException
+import com.google.android.exoplayer2.ExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier
+import org.assertj.core.api.AssertionsForClassTypes
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
+import java.io.IOException
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenAPlaybackErrorOccurs {
 
-import java.io.IOException;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-
-public class WhenAPlaybackErrorOccurs {
-
-	private static ExoPlayerException exception;
-
-	@BeforeClass
-	public static void before() {
-		final ExoPlayerPlaybackErrorNotifier exoPlayerPlaybackCompletedNotifier = new ExoPlayerPlaybackErrorNotifier(
-			new ExoPlayerPlaybackHandler(mock(ExoPlayer.class)));
-		exoPlayerPlaybackCompletedNotifier.playbackError((e) -> exception = e);
-
-		exoPlayerPlaybackCompletedNotifier.onPlayerError(ExoPlaybackException.createForSource(new IOException()));
+	companion object {
+		private var exception: ExoPlayerException? = null
+		@BeforeClass
+		fun before() {
+			val exoPlayerPlaybackCompletedNotifier = ExoPlayerPlaybackErrorNotifier(
+				ExoPlayerPlaybackHandler(Mockito.mock(ExoPlayer::class.java)))
+			exoPlayerPlaybackCompletedNotifier.playbackError { exception = it }
+			exoPlayerPlaybackCompletedNotifier.onPlayerError(ExoPlaybackException.createForSource(IOException()))
+		}
 	}
 
 	@Test
-	public void thenThePlaybackErrorIsCorrect() {
-		assertThat(exception.getCause()).isInstanceOf(ExoPlaybackException.class);
+	fun thenThePlaybackErrorIsCorrect() {
+		AssertionsForClassTypes.assertThat(exception!!.cause).isInstanceOf(ExoPlaybackException::class.java)
 	}
 }
