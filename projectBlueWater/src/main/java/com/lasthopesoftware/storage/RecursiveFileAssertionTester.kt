@@ -1,22 +1,12 @@
-package com.lasthopesoftware.storage;
+package com.lasthopesoftware.storage
 
-import androidx.annotation.NonNull;
-import com.vedsoft.futures.callables.OneParameterFunction;
+import java.io.File
 
-import java.io.File;
+fun File.recursivelyTestIfFileExists(assertion: (File) -> Boolean): Boolean {
+	var testFile = this
+	do {
+		if (testFile.exists()) return assertion(testFile)
+	} while (testFile.parentFile?.also { testFile = it } != null)
 
-/**
- * Created by david on 7/17/16.
- */
-public final class RecursiveFileAssertionTester {
-
-	public static boolean recursivelyTestAssertion(@NonNull File file, OneParameterFunction<File, Boolean> assertion) {
-		File testFile = file;
-		do {
-			if (testFile.exists())
-				return assertion.resultFrom(testFile);
-		} while ((testFile = testFile.getParentFile()) != null);
-
-		return false;
-	}
+	return false
 }

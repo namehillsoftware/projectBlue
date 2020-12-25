@@ -1,98 +1,70 @@
-package com.lasthopesoftware.bluewater.client.connection;
+package com.lasthopesoftware.bluewater.client.connection
 
-import com.annimon.stream.Optional;
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.vedsoft.futures.callables.CarelessOneParameterFunction;
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
+import com.namehillsoftware.handoff.promises.Promise
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.http.RealResponseBody
+import okio.Buffer
+import java.io.IOException
+import java.util.*
 
-import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
-import kotlin.Unit;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.http.RealResponseBody;
-import okio.Buffer;
-
-
-public class FakeConnectionProvider implements IConnectionProvider {
-	private final HashMap<Set<String>, CarelessOneParameterFunction<String[], FakeConnectionResponseTuple>> mappedResponses = new HashMap<>();
-
-	public final void mapResponse(CarelessOneParameterFunction<String[], FakeConnectionResponseTuple> response, String... params) {
-		final HashSet<String> paramsSet = new HashSet<>(Arrays.asList(params));
-		mappedResponses.put(paramsSet, response);
+open class FakeConnectionProvider : IConnectionProvider {
+	private val mappedResponses = HashMap<Set<String>, (Array<out String>) -> FakeConnectionResponseTuple>()
+	fun mapResponse(response: (Array<out String>) -> FakeConnectionResponseTuple, vararg params: String) {
+		val paramsSet = setOf(*params)
+		mappedResponses[paramsSet] = response
 	}
 
-	@Override
-	public Promise<Response> promiseResponse(String... params) {
-		try {
-			return new Promise<>(getResponse(params));
-		} catch (IOException e) {
-			return new Promise<>(e);
-		} catch (RuntimeException e) {
-			return new Promise<>(e.getCause());
+	override fun promiseResponse(vararg params: String): Promise<Response> {
+		return try {
+			Promise(getResponse(*params))
+		} catch (e: IOException) {
+			Promise(e)
+		} catch (e: RuntimeException) {
+			Promise(e.cause)
 		}
 	}
 
-	private Response getResponse(String... params) throws IOException {
-		final Request.Builder builder = new Request.Builder();
-		builder.url(getUrlProvider().getUrl(params));
-
-		final Buffer buffer = new Buffer();
-
-		final Response.Builder responseBuilder = new Response.Builder();
+	@Throws(IOException::class)
+	private fun getResponse(vararg params: String): Response {
+		val builder = Request.Builder()
+		builder.url(urlProvider.getUrl(*params)!!)
+		val buffer = Buffer()
+		val responseBuilder = Response.Builder()
 		responseBuilder
 			.request(builder.build())
 			.protocol(Protocol.HTTP_1_1)
 			.message("Not Found")
-			.body(new RealResponseBody(null, 0, buffer.write("Not found".getBytes())))
-			.code(404);
-
-		CarelessOneParameterFunction<String[], FakeConnectionResponseTuple> mappedResponse = mappedResponses.get(new HashSet<>(Arrays.asList(params)));
-
+			.body(RealResponseBody(null, 0, buffer.write("Not found".toByteArray())))
+			.code(404)
+		var mappedResponse = mappedResponses[setOf(*params)]
 		if (mappedResponse == null) {
-			final Optional<Set<String>> optionalResponse = Stream.of(mappedResponses.keySet())
-				.filter(set -> Stream.of(set).allMatch(sp -> Stream.of(params).anyMatch(p -> p.matches(sp))))
-				.findFirst();
-
-			if (optionalResponse.isPresent())
-				mappedResponse = mappedResponses.get(optionalResponse.get());
+			val optionalResponse = mappedResponses.keys
+				.find { set -> set.all { sp -> params.any { p -> p.matches(Regex(sp)) } } }
+			if (optionalResponse != null) mappedResponse = mappedResponses[optionalResponse]
 		}
-
-		if (mappedResponse == null) return responseBuilder.build();
-
+		if (mappedResponse == null) return responseBuilder.build()
 		try {
-			buffer.clear();
-
-			final FakeConnectionResponseTuple result = mappedResponse.resultFrom(params);
-			buffer.write(result.response);
-			responseBuilder.code(result.code);
-			responseBuilder.body(new RealResponseBody(null, result.response.length, buffer));
-		} catch (IOException io) {
-			throw io;
-		} catch (Throwable error) {
-			throw new RuntimeException(error);
+			buffer.clear()
+			val result = mappedResponse(params)
+			buffer.write(result.response)
+			responseBuilder.code(result.code)
+			responseBuilder.body(RealResponseBody(null, result.response.size.toLong(), buffer))
+		} catch (io: IOException) {
+			throw io
+		} catch (error: Throwable) {
+			throw RuntimeException(error)
 		}
-
-		return responseBuilder.build();
+		return responseBuilder.build()
 	}
 
-	@Override
-	public IUrlProvider getUrlProvider() {
-		return new MediaServerUrlProvider(null, "test", 80);
-	}
+	override val urlProvider: IUrlProvider
+		get() = MediaServerUrlProvider(null, "test", 80)
 
-	@NotNull
-	@Override
-	public Promise<Unit> promiseSentPacket(@NotNull byte[] packet) {
-		return new Promise<>(Unit.INSTANCE);
+	override fun promiseSentPacket(packet: ByteArray): Promise<Unit> {
+		return Promise(Unit)
 	}
 }

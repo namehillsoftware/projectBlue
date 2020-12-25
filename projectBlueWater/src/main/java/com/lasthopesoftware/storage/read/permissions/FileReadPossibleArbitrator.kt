@@ -1,13 +1,8 @@
-package com.lasthopesoftware.storage.read.permissions;
+package com.lasthopesoftware.storage.read.permissions
 
-import com.lasthopesoftware.storage.RecursiveFileAssertionTester;
+import com.lasthopesoftware.storage.recursivelyTestIfFileExists
+import java.io.File
 
-import java.io.File;
-
-public final class FileReadPossibleArbitrator implements IFileReadPossibleArbitrator {
-
-	@Override
-	public boolean isFileReadPossible(File file) {
-		return RecursiveFileAssertionTester.recursivelyTestAssertion(file, File::canRead);
-	}
+class FileReadPossibleArbitrator : IFileReadPossibleArbitrator {
+	override fun isFileReadPossible(file: File): Boolean = file.recursivelyTestIfFileExists { f -> f.canRead() }
 }
