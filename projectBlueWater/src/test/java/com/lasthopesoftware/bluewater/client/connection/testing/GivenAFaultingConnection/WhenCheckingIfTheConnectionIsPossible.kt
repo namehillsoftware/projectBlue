@@ -19,6 +19,7 @@ class WhenCheckingIfTheConnectionIsPossible {
 		private var result = false
 
 		@BeforeClass
+		@JvmStatic
 		@Throws(ExecutionException::class, InterruptedException::class)
 		fun before() {
 			val connectionTester = ConnectionTester()

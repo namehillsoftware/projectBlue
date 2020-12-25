@@ -5,7 +5,7 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.events.ExoPlayerPlaybackErrorNotifier
-import org.assertj.core.api.AssertionsForClassTypes
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import org.mockito.Mockito
@@ -15,7 +15,9 @@ class WhenAPlaybackErrorOccurs {
 
 	companion object {
 		private var exception: ExoPlayerException? = null
+
 		@BeforeClass
+		@JvmStatic
 		fun before() {
 			val exoPlayerPlaybackCompletedNotifier = ExoPlayerPlaybackErrorNotifier(
 				ExoPlayerPlaybackHandler(Mockito.mock(ExoPlayer::class.java)))
@@ -26,6 +28,6 @@ class WhenAPlaybackErrorOccurs {
 
 	@Test
 	fun thenThePlaybackErrorIsCorrect() {
-		AssertionsForClassTypes.assertThat(exception!!.cause).isInstanceOf(ExoPlaybackException::class.java)
+		assertThat(exception?.cause).isInstanceOf(ExoPlaybackException::class.java)
 	}
 }
