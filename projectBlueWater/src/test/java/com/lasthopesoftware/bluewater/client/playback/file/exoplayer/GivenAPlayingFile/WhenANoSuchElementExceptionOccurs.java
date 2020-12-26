@@ -5,13 +5,14 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
 
-import java.net.ProtocolException;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -22,14 +23,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenAProtocolEosExceptionOccurs {
+public class WhenANoSuchElementExceptionOccurs {
 
-	private static ProtocolException exoPlayerException;
+	private static ExoPlayerException exoPlayerException;
 	private static Player.EventListener eventListener;
 	private static Boolean isComplete;
 
 	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException, TimeoutException {
+	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 		final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
 		when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
 		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
@@ -44,13 +45,13 @@ public class WhenAProtocolEosExceptionOccurs {
 			.eventually(PlayingFile::promisePlayedFile)
 			.then(p -> true, e -> false));
 
-		eventListener.onPlayerError(ExoPlaybackException.createForSource(new ProtocolException("unexpected end of stream")));
+		eventListener.onPlayerError(ExoPlaybackException.createForUnexpected(new NoSuchElementException()));
 
 		try {
 			isComplete = promisedFuture.get(1, TimeUnit.SECONDS);
 		} catch (ExecutionException e) {
-			if (e.getCause() instanceof ProtocolException) {
-				exoPlayerException = (ProtocolException) e.getCause();
+			if (e.getCause() instanceof ExoPlayerException) {
+				exoPlayerException = (ExoPlayerException) e.getCause();
 				return;
 			}
 
