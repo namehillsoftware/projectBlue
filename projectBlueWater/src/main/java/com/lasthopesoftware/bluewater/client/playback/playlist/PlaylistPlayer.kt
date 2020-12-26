@@ -67,7 +67,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 		return positionedPlayingFile
 			?.let {
 				it.playingFile
-					?.promisePause()
+					.promisePause()
 					?.then { p ->
 						PositionedPlayableFile(p, it.playableFileVolumeManager,	it.asPositionedFile()).apply {
 							positionedPlayableFile = this

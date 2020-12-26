@@ -20,7 +20,7 @@ class ExoPlayerPlayableFilePreparationSourceProvider(private val context: Contex
 				maxBufferMs.value,
 				DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
 				DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
-			builder.createDefaultLoadControl()
+			builder.build()
 		}
 	}
 

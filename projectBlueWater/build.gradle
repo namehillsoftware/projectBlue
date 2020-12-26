@@ -2,7 +2,6 @@ import org.ajoberstar.grgit.Grgit
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.cinnober.gradle.semver-git'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 
 def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
@@ -130,8 +129,8 @@ dependencies {
 	implementation 'io.reactivex.rxjava2:rxjava:2.2.20'
 	implementation 'com.namehillsoftware:lazy-j:0.11.0'
 	implementation 'com.github.danrien:xmlwise:master-SNAPSHOT'
-	implementation 'com.google.android.exoplayer:exoplayer-core:2.11.8'
-	implementation 'com.google.android.exoplayer:extension-okhttp:2.11.8'
+	implementation 'com.google.android.exoplayer:exoplayer-core:2.12.2'
+	implementation 'com.google.android.exoplayer:extension-okhttp:2.12.2'
 	implementation 'com.squareup.okio:okio:2.9.0'
 	implementation 'com.squareup.okhttp3:okhttp:4.9.0'
 	implementation 'com.github.namehillsoftware:artful:0.3.0'

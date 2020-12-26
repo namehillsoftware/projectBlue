@@ -80,7 +80,8 @@ internal class PreparedExoPlayerPromise(
 		bufferingExoPlayer = newBufferingExoPlayer
 
 		try {
-			newExoPlayer.prepare(mediaSource)
+			newExoPlayer.setMediaSource(mediaSource)
+			newExoPlayer.prepare()
 		} catch (e: IllegalStateException) {
 			reject(e)
 		}
