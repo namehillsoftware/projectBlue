@@ -27,7 +27,7 @@ class PlaybackNotificationRouter(private val playbackNotificationBroadcaster: No
 
 	init {
 		mappedEvents = HashMap(4)
-		mappedEvents[PlaylistEvents.onPlaylistTrackChange] = { intent -> onPlaylistChange(intent) }
+		mappedEvents[PlaylistEvents.onPlaylistTrackChange] = ::onPlaylistChange
 		mappedEvents[PlaylistEvents.onPlaylistPause] = { playbackNotificationBroadcaster.notifyPaused() }
 		mappedEvents[PlaylistEvents.onPlaylistStart] = { playbackNotificationBroadcaster.notifyPlaying() }
 		mappedEvents[PlaylistEvents.onPlaylistStop] = { playbackNotificationBroadcaster.notifyStopped() }

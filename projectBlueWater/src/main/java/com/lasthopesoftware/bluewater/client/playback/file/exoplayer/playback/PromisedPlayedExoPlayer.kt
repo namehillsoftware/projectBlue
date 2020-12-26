@@ -1,153 +1,109 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback
 
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.upstream.HttpDataSource;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise;
-import com.namehillsoftware.lazyj.Lazy;
+import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.source.TrackGroupArray
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray
+import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
+import com.namehillsoftware.lazyj.Lazy
+import org.joda.time.Duration
+import org.joda.time.format.PeriodFormatterBuilder
+import org.slf4j.LoggerFactory
+import java.io.EOFException
+import java.net.ProtocolException
 
-import org.joda.time.Duration;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+class PromisedPlayedExoPlayer(private val exoPlayer: ExoPlayer, private val progressReader: ExoPlayerFileProgressReader, private val handler: ExoPlayerPlaybackHandler) : ProgressedPromise<Duration?, PlayedFile?>(), PlayedFile, Player.EventListener {
 
-import java.io.EOFException;
-import java.net.ProtocolException;
-
-public class PromisedPlayedExoPlayer
-extends
-	ProgressedPromise<Duration, PlayedFile>
-implements
-	PlayedFile,
-	Player.EventListener {
-
-
-	private static final Lazy<PeriodFormatter> minutesAndSecondsFormatter =
-		new Lazy<>(() ->
-			new PeriodFormatterBuilder()
+	companion object {
+		private val minutesAndSecondsFormatter = Lazy {
+			PeriodFormatterBuilder()
 				.appendMinutes()
 				.appendSeparator(":")
 				.minimumPrintedDigits(2)
 				.maximumParsedDigits(2)
 				.appendSeconds()
-				.toFormatter());
+				.toFormatter()
+		}
 
-	private static final Logger logger = LoggerFactory.getLogger(PromisedPlayedExoPlayer.class);
-
-	private final ExoPlayer exoPlayer;
-	private final ExoPlayerFileProgressReader progressReader;
-	private final ExoPlayerPlaybackHandler handler;
-
-	public PromisedPlayedExoPlayer(ExoPlayer exoPlayer, ExoPlayerFileProgressReader progressReader, ExoPlayerPlaybackHandler handler) {
-		this.exoPlayer = exoPlayer;
-		this.progressReader = progressReader;
-		this.handler = handler;
-		this.exoPlayer.addListener(this);
+		private val logger = LoggerFactory.getLogger(PromisedPlayedExoPlayer::class.java)
 	}
 
-	@Override
-	public Duration getProgress() {
-		return progressReader.getProgress();
+	init {
+		exoPlayer.addListener(this)
 	}
 
-	@Override
-	public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {}
+	override val progress: Duration
+		get() = progressReader.progress
 
-	@Override
-	public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
-
-	@Override
-	public void onLoadingChanged(boolean isLoading) {}
-
-	@Override
-	public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-		if (playbackState == Player.STATE_IDLE && handler.isPlaying()) {
-			final PeriodFormatter formatter = minutesAndSecondsFormatter.getObject();
-
-			final Duration progress = getProgress();
-
+	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+		if (playbackState == Player.STATE_IDLE && handler.isPlaying) {
+			val formatter = minutesAndSecondsFormatter.getObject()
+			val progress = progress
 			logger.warn(
-					"The player was playing, but it transitioned to idle! " +
-							"Playback progress: " + progress.toPeriod().toString(formatter) + " / " + handler.getDuration().toPeriod().toString(formatter) + ". ");
-
-
+				"The player was playing, but it transitioned to idle! " +
+					"Playback progress: " + progress.toPeriod().toString(formatter) + " / " + handler.duration.toPeriod().toString(formatter) + ". ")
 			if (playWhenReady) {
-				logger.warn("The file is set to playWhenReady, waiting for playback to resume.");
-				return;
+				logger.warn("The file is set to playWhenReady, waiting for playback to resume.")
+				return
 			}
-
-			logger.warn("The file is not set to playWhenReady, triggering playback completed");
-			removeListener();
-			resolve(this);
-			return;
+			logger.warn("The file is not set to playWhenReady, triggering playback completed")
+			removeListener()
+			resolve(this)
+			return
 		}
 
-		if (playbackState != Player.STATE_ENDED) return;
+		if (playbackState != Player.STATE_ENDED) return
 
-		removeListener();
-		resolve(this);
+		removeListener()
+		resolve(this)
 	}
 
-	@Override
-	public void onRepeatModeChanged(int repeatMode) {}
-
-	@Override
-	public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
-
-	@Override
-	public void onPlayerError(ExoPlaybackException error) {
-		removeListener();
-
-		final Throwable cause = error.getCause();
-		if (cause instanceof EOFException) {
-			logger.warn("The file ended unexpectedly. Completing playback", error);
-			resolve(this);
-			return;
-		}
-
-		if (cause instanceof ProtocolException) {
-			final ProtocolException protocolException = (ProtocolException) cause;
-			if (protocolException.getMessage() != null && protocolException.getMessage().contains("unexpected end of stream")) {
-				logger.warn("The stream ended unexpectedly, completing playback", error);
-				resolve(this);
-				return;
+	override fun onPlayerError(error: ExoPlaybackException) {
+		removeListener()
+		when (val cause = error.cause) {
+			is EOFException -> {
+				logger.warn("The file ended unexpectedly. Completing playback", error)
+				resolve(this)
+				return
 			}
-		}
-
-		if (cause instanceof HttpDataSource.InvalidResponseCodeException) {
-			final HttpDataSource.InvalidResponseCodeException i = (HttpDataSource.InvalidResponseCodeException) cause;
-			if (i.responseCode == 416) {
-				logger.warn("Received an error code of " + i.responseCode + ", completing playback", i);
-				resolve(this);
-				return;
+			is NoSuchElementException -> {
+				logger.warn("The player was unexpectedly unable to dequeue messages, completing playback", error)
+				resolve(this)
+				return
+			}
+			is ProtocolException -> {
+				val message = cause.message
+				if (message != null && message.contains("unexpected end of stream")) {
+					logger.warn("The stream ended unexpectedly, completing playback", error)
+					resolve(this)
+					return
+				}
+			}
+			is InvalidResponseCodeException -> {
+				if (cause.responseCode == 416) {
+					logger.warn("Received an error code of " + cause.responseCode + ", completing playback", cause)
+					resolve(this)
+					return
+				}
 			}
 		}
 
-		logger.error("A player error has occurred", error);
-
-		reject(new ExoPlayerException(handler, error));
+		logger.error("A player error has occurred", error)
+		reject(ExoPlayerException(handler, error))
 	}
 
-	@Override
-	public void onPositionDiscontinuity(int reason) {}
+	private fun removeListener() = exoPlayer.removeListener(this)
 
-	@Override
-	public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
-
-	@Override
-	public void onSeekProcessed() {}
-
-	private void removeListener() {
-		exoPlayer.removeListener(this);
-	}
+	override fun onTimelineChanged(timeline: Timeline, manifest: Any?, reason: Int) {}
+	override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {}
+	override fun onLoadingChanged(isLoading: Boolean) {}
+	override fun onRepeatModeChanged(repeatMode: Int) {}
+	override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {}
+	override fun onPositionDiscontinuity(reason: Int) {}
+	override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {}
+	override fun onSeekProcessed() {}
 }
