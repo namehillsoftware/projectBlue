@@ -65,6 +65,7 @@ internal class PreparedExoPlayerPromise(
 		val exoPlayerBuilder = ExoPlayer.Builder(context, *resolution)
 			.setLoadControl(loadControl)
 			.setLooper(handler.looper)
+			.experimentalSetThrowWhenStuckBuffering(false)
 
 		val newExoPlayer = exoPlayerBuilder.build()
 		exoPlayer = newExoPlayer
