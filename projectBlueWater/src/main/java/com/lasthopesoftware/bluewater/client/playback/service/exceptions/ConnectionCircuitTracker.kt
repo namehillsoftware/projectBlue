@@ -24,7 +24,7 @@ class ConnectionCircuitTracker : BreakConnection {
 			}
 
 			// reset the error count if enough time has elapsed to reset the error count
-			numberOfErrors = 1
+			numberOfErrors = 0
 		}
 		lastErrorTime = currentErrorTime
 		return true
