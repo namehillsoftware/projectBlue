@@ -62,7 +62,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeP
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.*
-import com.lasthopesoftware.bluewater.client.playback.service.exceptions.ConnectionCircuitTracker
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup
@@ -90,6 +89,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buil
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.CloseableManager
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
@@ -100,12 +100,12 @@ import com.lasthopesoftware.resources.notifications.notificationchannel.SharedCh
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import com.namehillsoftware.handoff.promises.response.VoidResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.internal.schedulers.RxThreadFactory
 import io.reactivex.internal.schedulers.SingleScheduler
+import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.*
@@ -121,6 +121,12 @@ open class PlaybackService : Service() {
 		private const val playingNotificationId = 42
 		private const val startingNotificationId = 53
 		private const val connectingNotificationId = 70
+
+		private const val numberOfDisconnects = 3
+		private val disconnectResetDuration = Duration.standardSeconds(1)
+
+		private const val numberOfErrors = 5
+		private val errorLatchResetDuration = Duration.standardSeconds(3)
 
 		private val lazyObservationScheduler = lazy {
 			SingleScheduler(
@@ -384,7 +390,8 @@ open class PlaybackService : Service() {
 	private val playbackEngineCloseables = CloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
-	private val lazyDisconnectionTracker = lazy { ConnectionCircuitTracker() }
+	private val lazyDisconnectionLatch = lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
+	private val lazyErrorLatch = lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 	private var areListenersRegistered = false
 	private var playbackEnginePromise: Promise<PlaybackEngine> = Promise.empty()
 	private var playbackContinuity: ChangePlaybackContinuity? = null
@@ -403,16 +410,15 @@ open class PlaybackService : Service() {
 	private var cache: SimpleCache? = null
 	private var startId = 0
 
-	private val connectionRegainedListener = lazy { VoidResponse<IConnectionProvider> { resumePlayback() } }
-	private val onPollingCancelledListener = lazy {
-		VoidResponse<Throwable?> { e ->
+	private val connectionRegainedListener = lazy { ImmediateResponse<IConnectionProvider, Unit> { resumePlayback() } }
+	private val onPollingCancelledListener = lazy { ImmediateResponse<Throwable?, Unit> { e ->
 			if (e is CancellationException) {
 				unregisterListeners()
 				stopSelf(startId)
 			}
 		}
 	}
-	private val onLibraryChanged: BroadcastReceiver = object : BroadcastReceiver() {
+	private val onLibraryChanged = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			val chosenLibrary = intent.getIntExtra(LibrarySelectionKey.chosenLibraryKey, -1)
 			if (chosenLibrary < 0) return
@@ -420,13 +426,13 @@ open class PlaybackService : Service() {
 			stopSelf(startId)
 		}
 	}
-	private val onPlaybackEngineChanged: BroadcastReceiver = object : BroadcastReceiver() {
+	private val onPlaybackEngineChanged = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			pausePlayback()
 			stopSelf(startId)
 		}
 	}
-	private val buildSessionReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+	private val buildSessionReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			val buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1)
 			handleBuildConnectionStatusChange(buildStatus)
@@ -825,14 +831,14 @@ open class PlaybackService : Service() {
 			is PlaybackException -> handlePlaybackException(exception)
 			else -> {
 				logger.error("An unexpected error has occurred!", exception)
-				lazyNotificationController.value.removeAllNotifications()
+				stopSelf(startId)
 			}
 		}
 	}
 
 	private fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {
 		logger.error("There was an error initializing the playback engine", exception)
-		lazyNotificationController.value.removeAllNotifications()
+		stopSelf(startId)
 	}
 
 	private fun handlePreparationException(preparationException: PreparationException) {
@@ -845,7 +851,7 @@ open class PlaybackService : Service() {
 			is ExoPlaybackException -> handleExoPlaybackException(cause)
 			is IllegalStateException -> {
 				logger.error("The player ended up in an illegal state - closing and restarting the player", exception)
-				closeAndRestartPlaylistManager()
+				closeAndRestartPlaylistManager(exception)
 			}
 			is IOException -> handleIoException(cause)
 			null -> logger.error("An unexpected playback exception occurred", exception)
@@ -856,20 +862,26 @@ open class PlaybackService : Service() {
 	private fun handleExoPlaybackException(exception: ExoPlaybackException) {
 		logger.error("An ExoPlaybackException occurred")
 
-		val cause = exception.cause
-		if (cause is IllegalStateException) {
-			logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
-			closeAndRestartPlaylistManager()
-			return
+		when (val cause = exception.cause) {
+			is IllegalStateException -> {
+				logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
+				closeAndRestartPlaylistManager(exception)
+				return
+			}
+			is NoSuchElementException -> {
+				logger.error("The ExoPlayer player was unable to deque data, closing and restarting the player", cause)
+				closeAndRestartPlaylistManager(exception)
+				return
+			}
+			null -> stopSelf(startId)
+			else -> uncaughtExceptionHandler(exception.cause)
 		}
-
-		if (cause != null) uncaughtExceptionHandler(exception.cause)
 	}
 
 	private fun handleIoException(exception: IOException?) {
 		if (exception is InvalidResponseCodeException && exception.responseCode == 416) {
 			logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
-			closeAndRestartPlaylistManager()
+			closeAndRestartPlaylistManager(exception)
 			return
 		}
 
@@ -878,12 +890,24 @@ open class PlaybackService : Service() {
 	}
 
 	private fun handleDisconnection() {
-		if (!lazyDisconnectionTracker.value.isConnectionPastThreshold()) return
+		if (lazyDisconnectionLatch.value.trigger()) {
+			logger.error("Unable to re-connect after $numberOfDisconnects in less than $disconnectResetDuration, stopping the playback service.")
+			stopSelf(startId)
+			return
+		}
+
+		logger.warn("Number of disconnections has not surpassed $numberOfDisconnects in less than $disconnectResetDuration. Checking for disconnections.")
 		pollSessionConnection(this, true)
 			.then(connectionRegainedListener.value, onPollingCancelledListener.value)
 	}
 
-	private fun closeAndRestartPlaylistManager() {
+	private fun closeAndRestartPlaylistManager(error: Throwable) {
+		if (lazyErrorLatch.value.trigger()) {
+			logger.error("$numberOfErrors occurred within $errorLatchResetDuration, stopping the playback service. Last error: ${error.message}", error)
+			stopSelf(startId)
+			return
+		}
+
 		try {
 			playbackEngineCloseables.close()
 		} catch (e: Exception) {
