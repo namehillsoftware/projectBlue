@@ -5,7 +5,11 @@ import org.joda.time.Duration
 class TimedCountdownLatch(private val maxTriggers: Int, disarmDuration: Duration) {
 
 	private val disarmDuration = disarmDuration.millis
+
+	@Volatile
 	private var lastTriggered = System.currentTimeMillis()
+
+	@Volatile
 	private var triggers = 0
 
 	@Synchronized
