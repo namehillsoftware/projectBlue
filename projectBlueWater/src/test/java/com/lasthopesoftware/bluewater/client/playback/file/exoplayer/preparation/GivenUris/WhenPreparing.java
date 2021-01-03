@@ -9,7 +9,9 @@ import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.SeekParameters;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
 import com.google.android.exoplayer2.source.BaseMediaSource;
 import com.google.android.exoplayer2.source.MediaPeriod;
@@ -112,6 +114,28 @@ public class WhenPreparing extends AndroidContext {
 		@Override
 		protected void releaseSourceInternal() {
 
+		}
+
+		@Nullable
+		@Override
+		public Timeline getInitialTimeline() {
+			return null;
+		}
+
+		@Override
+		public boolean isSingleWindow() {
+			return false;
+		}
+
+		@Nullable
+		@Override
+		public Object getTag() {
+			return null;
+		}
+
+		@Override
+		public MediaItem getMediaItem() {
+			return null;
 		}
 
 		@Override

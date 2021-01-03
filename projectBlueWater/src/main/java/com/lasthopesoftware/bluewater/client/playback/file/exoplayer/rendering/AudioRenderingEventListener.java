@@ -46,17 +46,6 @@ implements
 	}
 
 	@Override
-	public void onAudioSinkUnderrun(int bufferSize, long bufferSizeMs,
-									long elapsedSinceLastFeedMs) {
-		if (!logger.isDebugEnabled()) return;
-
-		logger.debug("Audio sink underrun occurred. " +
-			"bufferSize=" + bufferSize + "," +
-			"bufferSizeMs" + bufferSizeMs + "," +
-			"elapsedSinceLastFeedMs" + elapsedSinceLastFeedMs);
-	}
-
-	@Override
 	public void onAudioDisabled(DecoderCounters counters) {
 		if (!logger.isDebugEnabled()) return;
 

@@ -65,6 +65,7 @@ internal class PreparedExoPlayerPromise(
 		val exoPlayerBuilder = ExoPlayer.Builder(context, *resolution)
 			.setLoadControl(loadControl)
 			.setLooper(handler.looper)
+			.experimentalSetThrowWhenStuckBuffering(false)
 
 		val newExoPlayer = exoPlayerBuilder.build()
 		exoPlayer = newExoPlayer
@@ -80,7 +81,8 @@ internal class PreparedExoPlayerPromise(
 		bufferingExoPlayer = newBufferingExoPlayer
 
 		try {
-			newExoPlayer.prepare(mediaSource)
+			newExoPlayer.setMediaSource(mediaSource)
+			newExoPlayer.prepare()
 		} catch (e: IllegalStateException) {
 			reject(e)
 		}
