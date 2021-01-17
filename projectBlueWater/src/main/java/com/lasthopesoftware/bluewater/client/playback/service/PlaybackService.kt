@@ -410,7 +410,7 @@ open class PlaybackService : Service() {
 	private var cache: SimpleCache? = null
 	private var startId = 0
 
-	private val connectionRegainedListener = lazy { ImmediateResponse<IConnectionProvider, Unit> { resumePlayback() } }
+	private val connectionRegainedListener = lazy { ImmediateResponse<IConnectionProvider, Unit> { closeAndRestartPlaylistManager() } }
 	private val onPollingCancelledListener = lazy { ImmediateResponse<Throwable?, Unit> { e ->
 			if (e is CancellationException) {
 				unregisterListeners()
@@ -908,6 +908,10 @@ open class PlaybackService : Service() {
 			return
 		}
 
+		closeAndRestartPlaylistManager()
+	}
+
+	private fun closeAndRestartPlaylistManager() {
 		try {
 			playbackEngineCloseables.close()
 		} catch (e: Exception) {

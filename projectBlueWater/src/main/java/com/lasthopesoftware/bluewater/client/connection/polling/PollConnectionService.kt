@@ -38,17 +38,22 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 		@JvmStatic
 		fun pollSessionConnection(context: Context, withNotification: Boolean): Promise<IConnectionProvider> {
-			val promiseConnectedService = Promise { m: Messenger<PollConnectionServiceConnectionHolder> ->
-				context.bindService(Intent(context, PollConnectionService::class.java), object : ServiceConnection {
-					override fun onServiceConnected(name: ComponentName, service: IBinder) {
-						m.sendResolution(
-							PollConnectionServiceConnectionHolder(
-								(service as GenericBinder<*>).service as PollConnectionService,
-								this))
-					}
+			val promiseConnectedService = object : Promise<PollConnectionServiceConnectionHolder>() {
+				init {
+					try {
+						context.bindService(Intent(context, PollConnectionService::class.java), object : ServiceConnection {
+							override fun onServiceConnected(name: ComponentName, service: IBinder) {
+								resolve(PollConnectionServiceConnectionHolder(
+									(service as GenericBinder<*>).service as PollConnectionService,
+									this))
+							}
 
-					override fun onServiceDisconnected(name: ComponentName) {}
-				}, Context.BIND_AUTO_CREATE)
+							override fun onServiceDisconnected(name: ComponentName) {}
+						}, Context.BIND_AUTO_CREATE)
+					} catch (err: Throwable) {
+						reject(err)
+					}
+				}
 			}
 
 			return promiseConnectedService
@@ -102,9 +107,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		NotificationsConfiguration(channelName, notificationId)
 	}
 
-	override fun onBind(intent: Intent): IBinder? {
-		return lazyBinder.value
-	}
+	override fun onBind(intent: Intent): IBinder = lazyBinder.value
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		if (intent?.action == stopWaitingForConnectionAction && lazyConnectionPoller.isInitialized())
