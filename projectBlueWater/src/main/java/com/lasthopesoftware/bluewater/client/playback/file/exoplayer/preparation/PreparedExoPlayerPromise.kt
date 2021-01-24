@@ -5,7 +5,7 @@ import android.net.Uri
 import android.os.Handler
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
-import com.google.android.exoplayer2.source.*
+import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
@@ -32,8 +32,7 @@ internal class PreparedExoPlayerPromise(
 	Promise<PreparedPlayableFile>(),
 	Player.EventListener,
 	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
-	Runnable,
-	MediaSourceEventListener {
+	Runnable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java)
@@ -77,8 +76,7 @@ internal class PreparedExoPlayerPromise(
 
 		if (cancellationToken.isCancelled) return
 
-		val mediaSource = mediaSourceProvider.getNewMediaSource(uri, prepareAt)
-		mediaSource.addEventListener(handler, this)
+		val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
 		val newBufferingExoPlayer = BufferingExoPlayer(handler, mediaSource)
 		bufferingExoPlayer = newBufferingExoPlayer
 
@@ -109,20 +107,6 @@ internal class PreparedExoPlayerPromise(
 			exoPlayer.seekTo(prepareAt)
 			return
 		}
-
-		isResolved = true
-		exoPlayer.removeListener(this)
-		resolve(
-			PreparedPlayableFile(
-				ExoPlayerPlaybackHandler(exoPlayer),
-				AudioTrackVolumeManager(exoPlayer, audioRenderers),
-				bufferingExoPlayer))
-	}
-
-	override fun onLoadCompleted(windowIndex: Int, mediaPeriodId: MediaSource.MediaPeriodId?, loadEventInfo: LoadEventInfo, mediaLoadData: MediaLoadData) {
-		if (isResolved || cancellationToken.isCancelled) return
-
-		val exoPlayer = exoPlayer ?: return
 
 		isResolved = true
 		exoPlayer.removeListener(this)

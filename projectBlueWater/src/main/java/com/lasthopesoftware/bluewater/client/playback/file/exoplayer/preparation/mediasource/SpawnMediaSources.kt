@@ -4,5 +4,5 @@ import android.net.Uri
 import com.google.android.exoplayer2.source.MediaSource
 
 interface SpawnMediaSources {
-	fun getNewMediaSource(uri: Uri, startAt: Long): MediaSource
+	fun getNewMediaSource(uri: Uri): MediaSource
 }

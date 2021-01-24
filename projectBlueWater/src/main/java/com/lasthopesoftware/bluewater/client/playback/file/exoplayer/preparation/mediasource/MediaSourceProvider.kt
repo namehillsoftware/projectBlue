@@ -32,9 +32,8 @@ class MediaSourceProvider(library: Library, dataSourceFactoryProvider: ProvideHt
 		factory.setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy.DEFAULT_MIN_LOADABLE_RETRY_COUNT_PROGRESSIVE_LIVE))
 	}
 
-	override fun getNewMediaSource(uri: Uri, startAt: Long): MediaSource =
-		getFactory(uri)
-			.createMediaSource(MediaItem.Builder().setUri(uri).setClipStartPositionMs(startAt).build())
+	override fun getNewMediaSource(uri: Uri): MediaSource =
+		getFactory(uri).createMediaSource(MediaItem.Builder().setUri(uri).build())
 
 	private fun getFactory(uri: Uri): ProgressiveMediaSource.Factory =
 		if (IoCommon.FileUriScheme.equals(uri.scheme, ignoreCase = true)) lazyFileExtractorFactory.value

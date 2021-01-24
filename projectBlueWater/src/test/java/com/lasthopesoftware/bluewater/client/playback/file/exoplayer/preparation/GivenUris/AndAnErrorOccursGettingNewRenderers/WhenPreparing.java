@@ -35,7 +35,7 @@ public class WhenPreparing {
 
 		final ExoPlayerPlaybackPreparer preparer = new ExoPlayerPlaybackPreparer(
 			mock(Context.class),
-			uri -> mock(BaseMediaSource.class),
+			(uri) -> mock(BaseMediaSource.class),
 			loadControl,
 			() -> new Promise<>(new Exception("Oops")),
 			mock(Handler.class),
