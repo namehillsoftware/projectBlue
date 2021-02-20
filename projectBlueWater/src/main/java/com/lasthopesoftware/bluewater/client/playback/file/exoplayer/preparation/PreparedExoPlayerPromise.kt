@@ -7,6 +7,8 @@ import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.SingleThreadedExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
@@ -15,9 +17,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.G
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.volume.EmptyVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CancellationException
 
@@ -31,7 +35,7 @@ internal class PreparedExoPlayerPromise(
 	private val prepareAt: Long) :
 	Promise<PreparedPlayableFile>(),
 	Player.EventListener,
-	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
+	PromisedResponse<Array<MediaCodecAudioRenderer>, Unit>,
 	Runnable {
 
 	companion object {
@@ -40,7 +44,7 @@ internal class PreparedExoPlayerPromise(
 
 	private val cancellationToken = CancellationToken()
 
-	private var exoPlayer: ExoPlayer? = null
+	private var exoPlayer: PromisingExoPlayer? = null
 	private var audioRenderers: Array<MediaCodecAudioRenderer> = emptyArray()
 	private var bufferingExoPlayer: BufferingExoPlayer? = null
 	private var isResolved = false
@@ -57,37 +61,36 @@ internal class PreparedExoPlayerPromise(
 			return
 		}
 
-		renderersFactory.newRenderers().then(this, ::handleError)
+		renderersFactory.newRenderers().eventually(this, ::handleError)
 	}
 
-	override fun respond(resolution: Array<MediaCodecAudioRenderer>) {
+	override fun promiseResponse(resolution: Array<MediaCodecAudioRenderer>): Promise<Unit> {
 		audioRenderers = resolution
 		val exoPlayerBuilder = ExoPlayer.Builder(context, *resolution)
 			.setLoadControl(loadControl)
 			.setLooper(handler.looper)
 			.experimentalSetThrowWhenStuckBuffering(false)
 
-		val newExoPlayer = exoPlayerBuilder.build()
+		val newExoPlayer = SingleThreadedExoPlayer(exoPlayerBuilder.build())
 		exoPlayer = newExoPlayer
 
-		if (cancellationToken.isCancelled) return
+		if (cancellationToken.isCancelled) return Unit.toPromise()
 
-		newExoPlayer.addListener(this)
-
-		if (cancellationToken.isCancelled) return
-
-		val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
-		val newBufferingExoPlayer = BufferingExoPlayer(handler, mediaSource)
-		bufferingExoPlayer = newBufferingExoPlayer
-
-		try {
-			newExoPlayer.setMediaSource(mediaSource)
-			newExoPlayer.prepare()
-		} catch (e: IllegalStateException) {
-			reject(e)
-		}
-
-		newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError)
+		return newExoPlayer
+			.addListener(this)
+			.eventually {
+				if (cancellationToken.isCancelled) Unit.toPromise()
+				else {
+					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
+					val newBufferingExoPlayer = BufferingExoPlayer(handler, mediaSource)
+					bufferingExoPlayer = newBufferingExoPlayer
+					newExoPlayer
+						.setMediaSource(mediaSource)
+						.eventually { newExoPlayer.prepare() }
+						.then { newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError) }
+						.unitResponse()
+				}
+			}
 	}
 
 	override fun run() {
@@ -103,18 +106,19 @@ internal class PreparedExoPlayerPromise(
 
 		val exoPlayer = exoPlayer ?: return
 
-		if (exoPlayer.currentPosition < prepareAt) {
-			exoPlayer.seekTo(prepareAt)
-			return
+		exoPlayer.getCurrentPosition().then { currentPosition ->
+			if (currentPosition < prepareAt) {
+				exoPlayer.seekTo(prepareAt)
+			} else {
+				isResolved = true
+				exoPlayer.removeListener(this)
+				resolve(
+					PreparedPlayableFile(
+						ExoPlayerPlaybackHandler(exoPlayer),
+						AudioTrackVolumeManager(exoPlayer, audioRenderers),
+						bufferingExoPlayer))
+			}
 		}
-
-		isResolved = true
-		exoPlayer.removeListener(this)
-		resolve(
-			PreparedPlayableFile(
-				ExoPlayerPlaybackHandler(exoPlayer),
-				AudioTrackVolumeManager(exoPlayer, audioRenderers),
-				bufferingExoPlayer))
 	}
 
 	override fun onPlayerError(error: ExoPlaybackException) {
