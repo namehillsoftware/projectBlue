@@ -1,7 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.progress;
+package com.lasthopesoftware.bluewater.client.playback.file.progress
 
-import org.joda.time.Duration;
+import com.namehillsoftware.handoff.promises.Promise
+import org.joda.time.Duration
 
-public interface ReadFileProgress {
-	Duration getProgress();
+interface ReadFileProgress {
+	val progress: Promise<Duration>
 }

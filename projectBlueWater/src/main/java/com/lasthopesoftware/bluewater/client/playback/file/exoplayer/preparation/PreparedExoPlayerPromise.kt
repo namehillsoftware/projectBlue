@@ -17,11 +17,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.G
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.volume.EmptyVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CancellationException
 
@@ -35,7 +33,7 @@ internal class PreparedExoPlayerPromise(
 	private val prepareAt: Long) :
 	Promise<PreparedPlayableFile>(),
 	Player.EventListener,
-	PromisedResponse<Array<MediaCodecAudioRenderer>, Unit>,
+	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
 	Runnable {
 
 	companion object {
@@ -61,10 +59,10 @@ internal class PreparedExoPlayerPromise(
 			return
 		}
 
-		renderersFactory.newRenderers().eventually(this, ::handleError)
+		renderersFactory.newRenderers().then(this, ::handleError)
 	}
 
-	override fun promiseResponse(resolution: Array<MediaCodecAudioRenderer>): Promise<Unit> {
+	override fun respond(resolution: Array<MediaCodecAudioRenderer>) {
 		audioRenderers = resolution
 		val exoPlayerBuilder = ExoPlayer.Builder(context, *resolution)
 			.setLoadControl(loadControl)
@@ -74,13 +72,12 @@ internal class PreparedExoPlayerPromise(
 		val newExoPlayer = SingleThreadedExoPlayer(exoPlayerBuilder.build())
 		exoPlayer = newExoPlayer
 
-		if (cancellationToken.isCancelled) return Unit.toPromise()
+		if (cancellationToken.isCancelled) return
 
-		return newExoPlayer
+		newExoPlayer
 			.addListener(this)
-			.eventually {
-				if (cancellationToken.isCancelled) Unit.toPromise()
-				else {
+			.then {
+				if (!cancellationToken.isCancelled) {
 					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
 					val newBufferingExoPlayer = BufferingExoPlayer(handler, mediaSource)
 					bufferingExoPlayer = newBufferingExoPlayer
@@ -88,7 +85,6 @@ internal class PreparedExoPlayerPromise(
 						.setMediaSource(mediaSource)
 						.eventually { newExoPlayer.prepare() }
 						.then { newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError) }
-						.unitResponse()
 				}
 			}
 	}

@@ -41,9 +41,6 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 		}
 	}
 
-	var isPlaying = false
-		private set
-
 	private var backingDuration = Duration.ZERO
 
 	init {
@@ -54,6 +51,9 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 		isPlaying = false
 		return exoPlayer.setPlayWhenReady(false)
 	}
+
+	var isPlaying = false
+		private set
 
 	override fun promisePause(): Promise<PlayableFile> {
 		return pause().then { this }
