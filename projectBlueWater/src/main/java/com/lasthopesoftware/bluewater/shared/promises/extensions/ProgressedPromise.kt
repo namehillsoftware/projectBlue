@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
+import org.joda.time.Duration
 
 abstract class ProgressedPromise<Progress, Resolution> : Promise<Resolution> {
 
@@ -9,5 +10,5 @@ abstract class ProgressedPromise<Progress, Resolution> : Promise<Resolution> {
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 
-	abstract val progress: Progress?
+	abstract val progress: Promise<Duration>
 }

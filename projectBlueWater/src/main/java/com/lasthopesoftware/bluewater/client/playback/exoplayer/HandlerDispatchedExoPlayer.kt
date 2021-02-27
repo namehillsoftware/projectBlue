@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.exoplayer
 
+import android.os.Handler
 import android.os.Looper
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.MediaSource
@@ -7,682 +8,677 @@ import com.google.android.exoplayer2.source.ShuffleOrder
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.trackselection.TrackSelector
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import java.util.concurrent.Executors
 
-class SingleThreadedExoPlayer(private val innerPlayer: ExoPlayer) : PromisingExoPlayer {
-
-	companion object {
-		private val executor = Executors.newSingleThreadExecutor()
-	}
+class HandlerDispatchedExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) : PromisingExoPlayer {
 
 	override fun getAudioComponent(): Promise<Player.AudioComponent?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.audioComponent },
-			executor)
+			handler)
 
 	override fun getVideoComponent(): Promise<Player.VideoComponent?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.videoComponent },
-			executor)
+			handler)
 
 	override fun getTextComponent(): Promise<Player.TextComponent?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.textComponent },
-			executor)
+			handler)
 
 	override fun getMetadataComponent(): Promise<Player.MetadataComponent?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.metadataComponent },
-			executor)
+			handler)
 
 	override fun getDeviceComponent(): Promise<Player.DeviceComponent?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.deviceComponent },
-			executor)
+			handler)
 
 	override fun getApplicationLooper(): Promise<Looper> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.applicationLooper },
-			executor)
+			handler)
 
 	override fun addListener(listener: Player.EventListener): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addListener(listener)
 				this
 			},
-			executor)
+			handler)
 
 	override fun removeListener(listener: Player.EventListener): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.removeListener(listener)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaItems(mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaItems(mediaItems)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaItems(mediaItems: MutableList<MediaItem>, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaItems(mediaItems, resetPosition)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaItems(mediaItems: MutableList<MediaItem>, startWindowIndex: Int, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaItems(mediaItems, startWindowIndex, startPositionMs)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaItem(mediaItem: MediaItem): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaItem(mediaItem)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaItem(mediaItem: MediaItem, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaItem(mediaItem, startPositionMs)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaItem(mediaItem: MediaItem, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaItem(mediaItem, resetPosition)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaItem(mediaItem: MediaItem): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaItem(mediaItem)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaItem(index: Int, mediaItem: MediaItem): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaItem(index, mediaItem)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaItems(mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaItems(mediaItems)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaItems(index: Int, mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaItems(index, mediaItems)
 				this
 			},
-			executor)
+			handler)
 
 	override fun moveMediaItem(currentIndex: Int, newIndex: Int): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.moveMediaItem(currentIndex, newIndex)
 				this
 			},
-			executor)
+			handler)
 
 	override fun moveMediaItems(fromIndex: Int, toIndex: Int, newIndex: Int): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.moveMediaItems(fromIndex, toIndex, newIndex)
 				this
 			},
-			executor)
+			handler)
 
 	override fun removeMediaItem(index: Int): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.removeMediaItem(index)
 				this
 			},
-			executor)
+			handler)
 
 	override fun removeMediaItems(fromIndex: Int, toIndex: Int): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.removeMediaItems(fromIndex, toIndex)
 				this
 			},
-			executor)
+			handler)
 
 	override fun clearMediaItems(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.clearMediaItems()
 				this
 			},
-			executor)
+			handler)
 
 	override fun prepare(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.prepare()
 				this
 			},
-			executor)
+			handler)
 
 	override fun prepare(mediaSource: MediaSource, resetPosition: Boolean, resetState: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.prepare(mediaSource, resetPosition, resetState)
 				this
 			},
-			executor)
+			handler)
 
 	override fun prepare(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.prepare()
 				this
 			},
-			executor)
+			handler)
 
 	override fun getPlaybackState(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.playbackState },
-			executor)
+			handler)
 
 	override fun getPlaybackSuppressionReason(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.playbackSuppressionReason },
-			executor)
+			handler)
 
 	override fun isPlaying(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.isPlaying },
-			executor)
+			handler)
 
 	override fun getPlayerError(): Promise<ExoPlaybackException?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.playerError },
-			executor)
+			handler)
 
 	override fun getPlaybackError(): Promise<ExoPlaybackException?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.playbackError },
-			executor)
+			handler)
 
 	override fun play(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.play()
 				this
 			},
-			executor)
+			handler)
 
 	override fun pause(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.pause()
 				this
 			},
-			executor)
+			handler)
 
 	override fun setPlayWhenReady(playWhenReady: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.playWhenReady = playWhenReady
 				this
 			},
-			executor)
+			handler)
 
 	override fun getPlayWhenReady(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.playWhenReady },
-			executor)
+			handler)
 
 	override fun setRepeatMode(repeatMode: Int): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.repeatMode = repeatMode
 				this
 			},
-			executor)
+			handler)
 
 	override fun getRepeatMode(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.repeatMode },
-			executor)
+			handler)
 
 	override fun setShuffleModeEnabled(shuffleModeEnabled: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.shuffleModeEnabled = shuffleModeEnabled
 				this
 			},
-			executor)
+			handler)
 
 	override fun getShuffleModeEnabled(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.shuffleModeEnabled },
-			executor)
+			handler)
 
 	override fun isLoading(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.isLoading },
-			executor)
+			handler)
 
 	override fun seekToDefaultPosition(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.seekToDefaultPosition()
 				this
 			},
-			executor)
+			handler)
 
 	override fun seekToDefaultPosition(windowIndex: Int): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.seekToDefaultPosition(windowIndex)
 				this
 			},
-			executor)
+			handler)
 
 	override fun seekTo(positionMs: Long): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.seekTo(positionMs)
 				this
 			},
-			executor)
+			handler)
 
 	override fun seekTo(windowIndex: Int, positionMs: Long): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.seekTo(windowIndex, positionMs)
 				this
 			},
-			executor)
+			handler)
 
 	override fun hasPrevious(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.hasPrevious() },
-			executor)
+			handler)
 
 	override fun previous(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.previous()
 				this
 			},
-			executor)
+			handler)
 
 	override fun hasNext(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.hasNext() },
-			executor)
+			handler)
 
 	override fun next(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.next()
 				this
 			},
-			executor)
+			handler)
 
 	override fun setPlaybackParameters(playbackParameters: PlaybackParameters?): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setPlaybackParameters(playbackParameters)
 				this
 			},
-			executor)
+			handler)
 
 	override fun getPlaybackParameters(): Promise<PlaybackParameters> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.playbackParameters },
-			executor)
+			handler)
 
 	override fun stop(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.stop()
 				this
 			},
-			executor)
+			handler)
 
 	override fun stop(reset: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.stop(reset)
 				this
 			},
-			executor)
+			handler)
 
 	override fun release(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.release()
 				this
 			},
-			executor)
+			handler)
 
 	override fun getRendererCount(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.rendererCount },
-			executor)
+			handler)
 
 	override fun getRendererType(index: Int): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.getRendererType(index) },
-			executor)
+			handler)
 
 	override fun getTrackSelector(): Promise<TrackSelector?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.trackSelector },
-			executor)
+			handler)
 
 	override fun getCurrentTrackGroups(): Promise<TrackGroupArray> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentTrackGroups },
-			executor)
+			handler)
 
 	override fun getCurrentTrackSelections(): Promise<TrackSelectionArray> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentTrackSelections },
-			executor)
+			handler)
 
 	override fun getCurrentManifest(): Promise<Any?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentManifest },
-			executor)
+			handler)
 
 	override fun getCurrentTimeline(): Promise<Timeline> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentTimeline },
-			executor)
+			handler)
 
 	override fun getCurrentPeriodIndex(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentPeriodIndex },
-			executor)
+			handler)
 
 	override fun getCurrentWindowIndex(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentWindowIndex },
-			executor)
+			handler)
 
 	override fun getNextWindowIndex(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.nextWindowIndex },
-			executor)
+			handler)
 
 	override fun getPreviousWindowIndex(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.previousWindowIndex },
-			executor)
+			handler)
 
 	override fun getCurrentTag(): Promise<Any?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentTag },
-			executor)
+			handler)
 
 	override fun getCurrentMediaItem(): Promise<MediaItem?> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentMediaItem },
-			executor)
+			handler)
 
 	override fun getMediaItemCount(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.mediaItemCount },
-			executor)
+			handler)
 
 	override fun getMediaItemAt(index: Int): Promise<MediaItem> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.getMediaItemAt(index) },
-			executor)
+			handler)
 
 	override fun getDuration(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.duration },
-			executor)
+			handler)
 
 	override fun getCurrentPosition(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentPosition },
-			executor)
+			handler)
 
 	override fun getBufferedPosition(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.bufferedPosition },
-			executor)
+			handler)
 
 	override fun getBufferedPercentage(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.bufferedPercentage },
-			executor)
+			handler)
 
 	override fun getTotalBufferedDuration(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.totalBufferedDuration },
-			executor)
+			handler)
 
 	override fun isCurrentWindowDynamic(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.isCurrentWindowDynamic },
-			executor)
+			handler)
 
 	override fun isCurrentWindowLive(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.isCurrentWindowLive },
-			executor)
+			handler)
 
 	override fun getCurrentLiveOffset(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentLiveOffset },
-			executor)
+			handler)
 
 	override fun isCurrentWindowSeekable(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.isCurrentWindowSeekable },
-			executor)
+			handler)
 
 	override fun isPlayingAd(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.isPlayingAd },
-			executor)
+			handler)
 
 	override fun getCurrentAdGroupIndex(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentAdGroupIndex },
-			executor)
+			handler)
 
 	override fun getCurrentAdIndexInAdGroup(): Promise<Int> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.currentAdIndexInAdGroup },
-			executor)
+			handler)
 
 	override fun getContentDuration(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.contentDuration },
-			executor)
+			handler)
 
 	override fun getContentPosition(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.contentPosition },
-			executor)
+			handler)
 
 	override fun getContentBufferedPosition(): Promise<Long> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.contentBufferedPosition },
-			executor)
+			handler)
 
 	override fun getPlaybackLooper(): Promise<Looper> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.playbackLooper },
-			executor)
+			handler)
 
 	override fun retry(): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.retry()
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaSources(mediaSources)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaSources(mediaSources, resetPosition)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>, startWindowIndex: Int, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaSources(mediaSources, startWindowIndex, startPositionMs)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaSource(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaSource(mediaSource)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaSource(mediaSource: MediaSource, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaSource(mediaSource, startPositionMs)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setMediaSource(mediaSource: MediaSource, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setMediaSource(mediaSource, resetPosition)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaSource(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaSource(mediaSource)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaSource(index: Int, mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaSource(index, mediaSource)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaSources(mediaSources)
 				this
 			},
-			executor)
+			handler)
 
 	override fun addMediaSources(index: Int, mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addMediaSources(index, mediaSources)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setShuffleOrder(shuffleOrder: ShuffleOrder): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setShuffleOrder(shuffleOrder)
 				this
 			},
-			executor)
+			handler)
 
 	override fun createMessage(target: PlayerMessage.Target): Promise<PlayerMessage> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.createMessage(target) },
-			executor)
+			handler)
 
 	override fun setSeekParameters(seekParameters: SeekParameters?): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setSeekParameters(seekParameters)
 				this
 			},
-			executor)
+			handler)
 
 	override fun getSeekParameters(): Promise<SeekParameters> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.seekParameters },
-			executor)
+			handler)
 
 	override fun setForegroundMode(foregroundMode: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.setForegroundMode(foregroundMode)
 				this
 			},
-			executor)
+			handler)
 
 	override fun setPauseAtEndOfMediaItems(pauseAtEndOfMediaItems: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.pauseAtEndOfMediaItems = pauseAtEndOfMediaItems
 				this
 			},
-			executor)
+			handler)
 
 	override fun getPauseAtEndOfMediaItems(): Promise<Boolean> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter { innerPlayer.pauseAtEndOfMediaItems },
-			executor)
+			handler)
 
 	override fun experimentalSetOffloadSchedulingEnabled(offloadSchedulingEnabled: Boolean): Promise<PromisingExoPlayer> =
-		QueuedPromise(
+		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.experimentalSetOffloadSchedulingEnabled(offloadSchedulingEnabled)
 				this
 			},
-			executor)
+			handler)
 }

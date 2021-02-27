@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPl
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
+import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.lazyj.Lazy
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
@@ -36,7 +37,7 @@ class PromisedPlayedExoPlayer(private val exoPlayer: ExoPlayer, private val prog
 		exoPlayer.addListener(this)
 	}
 
-	override val progress: Duration
+	override val progress: Promise<Duration>
 		get() = progressReader.progress
 
 	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {

@@ -7,8 +7,8 @@ import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.LoopedExecutorExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
-import com.lasthopesoftware.bluewater.client.playback.exoplayer.SingleThreadedExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
@@ -69,7 +69,7 @@ internal class PreparedExoPlayerPromise(
 			.setLooper(handler.looper)
 			.experimentalSetThrowWhenStuckBuffering(false)
 
-		val newExoPlayer = SingleThreadedExoPlayer(exoPlayerBuilder.build())
+		val newExoPlayer = LoopedExecutorExoPlayer(exoPlayerBuilder.build())
 		exoPlayer = newExoPlayer
 
 		if (cancellationToken.isCancelled) return
