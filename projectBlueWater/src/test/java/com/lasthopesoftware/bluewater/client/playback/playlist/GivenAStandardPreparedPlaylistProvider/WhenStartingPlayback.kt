@@ -1,71 +1,53 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider;
+package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import com.lasthopesoftware.bluewater.client.playback.file.*
+import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import io.reactivex.Observable
+import org.assertj.core.api.Assertions
+import org.joda.time.Duration
+import org.junit.Before
+import org.junit.Test
+import org.mockito.Mockito
 
-import org.joda.time.Duration;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.List;
-
-import io.reactivex.Observable;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenStartingPlayback {
-
-	private List<PositionedPlayingFile> positionedPlayingFiles;
-
+class WhenStartingPlayback {
+	private var positionedPlayingFiles: List<PositionedPlayingFile>? = null
 	@Before
-	public void before() {
-		PlayingFile mockPlayingFile = mock(PlayingFile.class);
-		when(mockPlayingFile.promisePlayedFile()).thenReturn(new ProgressingPromise<Duration, PlayedFile>() {
-			{
-				resolve(mock(PlayedFile.class));
+	fun before() {
+		val mockPlayingFile = Mockito.mock(PlayingFile::class.java)
+		Mockito.`when`(mockPlayingFile.promisePlayedFile()).thenReturn(object : ProgressingPromise<Duration, PlayedFile>() {
+			override val progress: Promise<Duration>
+				get() = Duration.ZERO.toPromise()
+
+			init {
+				resolve(Mockito.mock(PlayedFile::class.java))
 			}
-			@Override
-			public Duration getProgress() {
-				return Duration.ZERO;
-			}
-		});
-		PlayableFile playbackHandler = mock(PlayableFile.class);
-		when(playbackHandler.promisePlayback()).thenReturn(new Promise<>(mockPlayingFile));
-
-		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
-			new Promise<>(new PositionedPlayableFile(
-				0,
-				playbackHandler,
-				new NoTransformVolumeManager(),
-				new ServiceFile(1)));
-
-		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
-
-		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
+		})
+		val playbackHandler = Mockito.mock(PlayableFile::class.java)
+		Mockito.`when`(playbackHandler.promisePlayback()).thenReturn(Promise(mockPlayingFile))
+		val positionedPlaybackHandlerContainer = Promise(PositionedPlayableFile(
+			0,
+			playbackHandler,
+			NoTransformVolumeManager(),
+			ServiceFile(1)))
+		val preparedPlaybackFileQueue = Mockito.mock(PreparedPlayableFileQueue::class.java)
+		Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
-			.thenReturn(null);
-
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, 0))
-			.toList().subscribe(positionedPlayingFiles -> this.positionedPlayingFiles = positionedPlayingFiles);
+			.thenReturn(null)
+		Observable.create(PlaylistPlayer(preparedPlaybackFileQueue, 0))
+			.toList().subscribe { positionedPlayingFiles -> this.positionedPlayingFiles = positionedPlayingFiles }
 	}
 
 	@Test
-	public void thenThePlaybackCountIsCorrect() {
-		assertThat(this.positionedPlayingFiles.size()).isEqualTo(5);
+	fun thenThePlaybackCountIsCorrect() {
+		Assertions.assertThat(positionedPlayingFiles!!.size).isEqualTo(5)
 	}
 }

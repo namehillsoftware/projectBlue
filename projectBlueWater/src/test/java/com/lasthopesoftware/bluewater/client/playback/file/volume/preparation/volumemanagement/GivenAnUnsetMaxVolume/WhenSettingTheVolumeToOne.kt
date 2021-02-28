@@ -1,34 +1,32 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.volumemanagement.GivenAnUnsetMaxVolume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.volumemanagement.GivenAnUnsetMaxVolume
 
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
 
-import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager;
+class WhenSettingTheVolumeToOne {
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class WhenSettingTheVolumeToOne {
-
-	private static NoTransformVolumeManager volumeManager;
-	private static float returnedVolume;
-
-	@BeforeClass
-	public static void before() {
-		volumeManager = new NoTransformVolumeManager();
-
-		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager);
-		returnedVolume = maxFileVolumeManager.setVolume(1f);
+	companion object {
+		private var volumeManager: NoTransformVolumeManager? = null
+		private var returnedVolume = 0f
+		@BeforeClass
+		fun before() {
+			volumeManager = NoTransformVolumeManager()
+			val maxFileVolumeManager = MaxFileVolumeManager(volumeManager!!)
+			returnedVolume = maxFileVolumeManager.setVolume(1f).toFuture().get()!!
+		}
 	}
 
 	@Test
-	public void thenThePlaybackHandlerVolumeIsSetToTheMaxVolume() {
-		assertThat(volumeManager.getVolume()).isEqualTo(1);
+	fun thenThePlaybackHandlerVolumeIsSetToTheMaxVolume() {
+		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isEqualTo(1)
 	}
 
 	@Test
-	public void thenTheReturnedVolumeIsSetToTheMaxVolume() {
-		assertThat(returnedVolume).isEqualTo(1);
+	fun thenTheReturnedVolumeIsSetToTheMaxVolume() {
+		Assertions.assertThat(returnedVolume).isEqualTo(1f)
 	}
 }

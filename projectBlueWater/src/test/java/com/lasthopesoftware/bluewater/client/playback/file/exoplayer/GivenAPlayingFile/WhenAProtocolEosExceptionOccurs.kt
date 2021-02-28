@@ -1,70 +1,65 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile
 
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.Player;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
+import com.google.android.exoplayer2.ExoPlaybackException
+import com.google.android.exoplayer2.Player
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import org.assertj.core.api.AssertionsForClassTypes
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito
+import org.mockito.invocation.InvocationOnMock
+import java.net.ProtocolException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.stubbing.Answer;
+class WhenAProtocolEosExceptionOccurs {
 
-import java.net.ProtocolException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenAProtocolEosExceptionOccurs {
-
-	private static ProtocolException exoPlayerException;
-	private static Player.EventListener eventListener;
-	private static Boolean isComplete;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException, TimeoutException {
-		final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
-		when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
-		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
-		when(mockExoPlayer.getDuration()).thenReturn(100L);
-		doAnswer((Answer<Void>) invocation -> {
-			eventListener = invocation.getArgument(0);
-			return null;
-		}).when(mockExoPlayer).addListener(any());
-
-		final ExoPlayerPlaybackHandler exoPlayerPlaybackHandlerPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
-		final FuturePromise<Boolean> promisedFuture = new FuturePromise<>(exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
-			.eventually(PlayingFile::promisePlayedFile)
-			.then(p -> true, e -> false));
-
-		eventListener.onPlayerError(ExoPlaybackException.createForSource(new ProtocolException("unexpected end of stream")));
-
-		try {
-			isComplete = promisedFuture.get(1, TimeUnit.SECONDS);
-		} catch (ExecutionException e) {
-			if (e.getCause() instanceof ProtocolException) {
-				exoPlayerException = (ProtocolException) e.getCause();
-				return;
+	companion object {
+		private var exoPlayerException: ProtocolException? = null
+		private var eventListener: Player.EventListener? = null
+		private var isComplete: Boolean? = null
+		@BeforeClass
+		@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+		fun before() {
+			val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
+			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
+			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
+			Mockito.doAnswer { invocation: InvocationOnMock ->
+				eventListener = invocation.getArgument(0)
+				null
+			}.`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
+			val promisedFuture = FuturePromise(exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
+				.eventually { obj: PlayingFile -> obj.promisePlayedFile() }
+				.then({ p: PlayedFile? -> true }) { e: Throwable? -> false })
+			eventListener!!.onPlayerError(ExoPlaybackException.createForSource(ProtocolException("unexpected end of stream")))
+			try {
+				isComplete = promisedFuture[1, TimeUnit.SECONDS]
+			} catch (e: ExecutionException) {
+				if (e.cause is ProtocolException) {
+					exoPlayerException = e.cause as ProtocolException?
+					return
+				}
+				throw e
 			}
-
-			throw e;
 		}
 	}
 
 	@Test
-	public void thenPlaybackCompletes() {
-		assertThat(isComplete).isTrue();
+	fun thenPlaybackCompletes() {
+		AssertionsForClassTypes.assertThat(isComplete).isTrue
 	}
 
 	@Test
-	public void thenNoPlaybackErrorOccurs() {
-		assertThat(exoPlayerException).isNull();
+	fun thenNoPlaybackErrorOccurs() {
+		AssertionsForClassTypes.assertThat(exoPlayerException).isNull()
 	}
 }

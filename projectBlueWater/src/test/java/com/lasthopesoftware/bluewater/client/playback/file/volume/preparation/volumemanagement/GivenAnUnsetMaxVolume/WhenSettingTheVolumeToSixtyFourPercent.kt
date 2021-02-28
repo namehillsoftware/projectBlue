@@ -1,33 +1,31 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.volumemanagement.GivenAnUnsetMaxVolume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.volumemanagement.GivenAnUnsetMaxVolume
 
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
 
-import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager;
+class WhenSettingTheVolumeToSixtyFourPercent {
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
-
-public class WhenSettingTheVolumeToSixtyFourPercent {
-
-	private static final NoTransformVolumeManager volumeManager = new NoTransformVolumeManager();
-	private static float returnedVolume;
-
-	@BeforeClass
-	public static void before() {
-		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager);
-		returnedVolume = maxFileVolumeManager.setVolume(.64f);
+	companion object {
+		private val volumeManager = NoTransformVolumeManager()
+		private var returnedVolume = 0f
+		@BeforeClass
+		fun before() {
+			val maxFileVolumeManager = MaxFileVolumeManager(volumeManager)
+			returnedVolume = maxFileVolumeManager.setVolume(.64f).toFuture().get()!!
+		}
 	}
 
 	@Test
-	public void thenThePlaybackHandlerVolumeIsSetToTheCorrectVolume() {
-		assertThat(volumeManager.getVolume()).isCloseTo(.64f, offset(.00001f));
+	fun thenThePlaybackHandlerVolumeIsSetToTheCorrectVolume() {
+		Assertions.assertThat(volumeManager.volume.toFuture().get()).isCloseTo(.64f, Assertions.offset(.00001f))
 	}
 
 	@Test
-	public void thenTheReturnedVolumeIsSetToTheCorrectVolume() {
-		assertThat(returnedVolume).isCloseTo(.64f, offset(.00001f));
+	fun thenTheReturnedVolumeIsSetToTheCorrectVolume() {
+		Assertions.assertThat(returnedVolume).isCloseTo(.64f, Assertions.offset(.00001f))
 	}
 }

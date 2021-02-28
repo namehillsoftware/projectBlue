@@ -7,7 +7,8 @@ import org.assertj.core.api.Assertions
 import org.junit.BeforeClass
 import org.junit.Test
 
-class WhenSettingTheVolumeToOne {
+class WhenSettingTheVolumeToSeventyPercent {
+
 
 	companion object {
 		private var volumeManager: NoTransformVolumeManager? = null
@@ -16,18 +17,18 @@ class WhenSettingTheVolumeToOne {
 		fun before() {
 			volumeManager = NoTransformVolumeManager()
 			val maxFileVolumeManager = MaxFileVolumeManager(volumeManager!!)
-			maxFileVolumeManager.setMaxFileVolume(.8f)
-			returnedVolume = maxFileVolumeManager.setVolume(1f).toFuture().get()!!
+			maxFileVolumeManager.setMaxFileVolume(.9f)
+			returnedVolume = maxFileVolumeManager.setVolume(.7f).toFuture().get()!!
 		}
 	}
 
 	@Test
-	fun thenThePlaybackHandlerVolumeIsSetToTheMaxVolume() {
-		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isEqualTo(.8f)
+	fun thenThePlaybackHandlerVolumeIsSetToTheCorrectVolume() {
+		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isCloseTo(.63f, Assertions.offset(.00001f))
 	}
 
 	@Test
-	fun thenTheReturnedVolumeIsSetToTheMaxVolume() {
-		Assertions.assertThat(returnedVolume).isEqualTo(.8f)
+	fun thenTheReturnedVolumeIsSetToTheCorrectVolume() {
+		Assertions.assertThat(returnedVolume).isCloseTo(.63f, Assertions.offset(.00001f))
 	}
 }

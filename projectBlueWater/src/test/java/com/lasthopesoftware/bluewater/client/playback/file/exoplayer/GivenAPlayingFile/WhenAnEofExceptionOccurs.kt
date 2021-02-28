@@ -1,73 +1,66 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile
 
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.Player;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException;
+import com.google.android.exoplayer2.ExoPlaybackException
+import com.google.android.exoplayer2.Player
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import org.assertj.core.api.AssertionsForClassTypes
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito
+import org.mockito.invocation.InvocationOnMock
+import java.io.EOFException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.stubbing.Answer;
+class WhenAnEofExceptionOccurs {
 
-import java.io.EOFException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenAnEofExceptionOccurs {
-
-	private static ExoPlayerException exoPlayerException;
-	private static Player.EventListener eventListener;
-	private static boolean isComplete;
-
-	@BeforeClass
-	public static void before() throws InterruptedException {
-		final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
-		when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
-		when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
-		when(mockExoPlayer.getDuration()).thenReturn(100L);
-		doAnswer((Answer<Void>) invocation -> {
-			eventListener = invocation.getArgument(0);
-			return null;
-		}).when(mockExoPlayer).addListener(any());
-
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		final ExoPlayerPlaybackHandler exoPlayerPlaybackHandlerPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
-		exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
-			.eventually(PlayingFile::promisePlayedFile)
-			.then(
-				p -> isComplete = true,
-				e -> {
-					if (e instanceof ExoPlayerException) {
-						exoPlayerException = (ExoPlayerException)e;
-					}
-
-					return isComplete = false;
-				})
-			.then(v -> {
-				countDownLatch.countDown();
-				return null;
-			});
-
-		eventListener.onPlayerError(ExoPlaybackException.createForSource(new EOFException()));
-
-		countDownLatch.await(1, TimeUnit.SECONDS);
+	companion object {
+		private var exoPlayerException: ExoPlayerException? = null
+		private var eventListener: Player.EventListener? = null
+		private var isComplete = false
+		@BeforeClass
+		@Throws(InterruptedException::class)
+		fun before() {
+			val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
+			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
+			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
+			Mockito.doAnswer { invocation: InvocationOnMock ->
+				eventListener = invocation.getArgument(0)
+				null
+			}.`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+			val countDownLatch = CountDownLatch(1)
+			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
+			exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
+				.eventually { obj -> obj.promisePlayedFile() }
+				.then(
+					{ isComplete = true },
+					{ e ->
+						if (e is ExoPlayerException) {
+							exoPlayerException = e
+						}
+						isComplete = false
+					})
+				.then {
+					countDownLatch.countDown()
+					null
+				}
+			eventListener!!.onPlayerError(ExoPlaybackException.createForSource(EOFException()))
+			countDownLatch.await(1, TimeUnit.SECONDS)
+		}
 	}
 
 	@Test
-	public void thenPlaybackCompletes() {
-		assertThat(isComplete).isTrue();
+	fun thenPlaybackCompletes() {
+		AssertionsForClassTypes.assertThat(isComplete).isTrue
 	}
 
 	@Test
-	public void thenNoPlaybackErrorOccurs() {
-		assertThat(exoPlayerException).isNull();
+	fun thenNoPlaybackErrorOccurs() {
+		AssertionsForClassTypes.assertThat(exoPlayerException).isNull()
 	}
 }

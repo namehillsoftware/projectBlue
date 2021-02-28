@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile;
 
 import com.annimon.stream.Stream;
-import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile;
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
@@ -29,7 +29,7 @@ public class WhenPlaybackCompletes {
 
 	@BeforeClass
 	public static void context() throws InterruptedException {
-		final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
+		final PromisingExoPlayer mockExoPlayer = mock(PromisingExoPlayer.class);
 		doAnswer((Answer<Void>) invocation -> {
 			eventListeners.add(invocation.getArgument(0));
 			return null;
