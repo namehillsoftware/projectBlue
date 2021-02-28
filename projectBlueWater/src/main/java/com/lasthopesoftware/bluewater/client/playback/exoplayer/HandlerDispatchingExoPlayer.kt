@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
-class HandlerDispatchedExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) : PromisingExoPlayer {
+class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) : PromisingExoPlayer {
 
 	override fun getAudioComponent(): Promise<Player.AudioComponent?> =
 		LoopedInPromise(
