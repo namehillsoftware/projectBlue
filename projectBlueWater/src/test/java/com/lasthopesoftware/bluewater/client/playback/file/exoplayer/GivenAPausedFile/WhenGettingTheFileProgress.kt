@@ -1,39 +1,38 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPausedFile;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPausedFile
 
-import com.google.android.exoplayer2.ExoPlayer;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import org.assertj.core.api.AssertionsForClassTypes
+import org.joda.time.Duration
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
 
-import org.joda.time.Duration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenGettingTheFileProgress {
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenGettingTheFileProgress {
-
-	private static Duration progress;
-	private static Duration duration;
-
-	@BeforeClass
-	public static void before() {
-		final ExoPlayer mockMediaPlayer = mock(ExoPlayer.class);
-		when(mockMediaPlayer.getPlayWhenReady()).thenReturn(false);
-		when(mockMediaPlayer.getDuration()).thenReturn(203L);
-
-		final ExoPlayerPlaybackHandler exoPlayerFileProgressReader = new ExoPlayerPlaybackHandler(mockMediaPlayer);
-		progress = exoPlayerFileProgressReader.getProgress();
-		duration = exoPlayerFileProgressReader.getDuration();
+	companion object {
+		private var progress: Duration? = null
+		private var duration: Duration? = null
+		@BeforeClass
+		fun before() {
+			val mockMediaPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+			Mockito.`when`(mockMediaPlayer.getPlayWhenReady()).thenReturn(false.toPromise())
+			Mockito.`when`(mockMediaPlayer.getDuration()).thenReturn(203L.toPromise())
+			val exoPlayerFileProgressReader = ExoPlayerPlaybackHandler(mockMediaPlayer)
+			progress = exoPlayerFileProgressReader.progress.toFuture().get()
+			duration = exoPlayerFileProgressReader.duration.toFuture().get()
+		}
 	}
 
 	@Test
-	public void thenTheFileProgressIsCorrect() {
-		assertThat(progress).isEqualTo(Duration.ZERO);
+	fun thenTheFileProgressIsCorrect() {
+		AssertionsForClassTypes.assertThat(progress).isEqualTo(Duration.ZERO)
 	}
 
 	@Test
-	public void thenTheFileDurationIsCorrect() {
-		assertThat(duration).isEqualTo(Duration.millis(203));
+	fun thenTheFileDurationIsCorrect() {
+		AssertionsForClassTypes.assertThat(duration).isEqualTo(Duration.millis(203))
 	}
 }

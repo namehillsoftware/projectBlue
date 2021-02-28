@@ -1,55 +1,49 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile.AndThePlayerIdles.AndTheFilePositionIsAtTheEnd;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile.AndThePlayerIdles.AndTheFilePositionIsAtTheEnd
 
-import com.annimon.stream.Stream;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.Player;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.annimon.stream.Stream
+import com.google.android.exoplayer2.Player
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import org.assertj.core.api.AssertionsForClassTypes
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito
+import java.util.*
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.stubbing.Answer;
+class WhenThePlayerWillNotPlayWhenReady {
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+	companion object {
+		private val eventListeners: MutableCollection<Player.EventListener> = ArrayList()
+		private var isComplete = false
+		@BeforeClass
+		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
+		fun before() {
+			val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
+			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(100L.toPromise())
+			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
+			Mockito.doAnswer { invocation ->
+				eventListeners.add(invocation.getArgument(0))
+				null
+			}.`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
+			val playbackPromise = exoPlayerPlaybackHandler.promisePlayback().eventually { obj: PlayingFile -> obj.promisePlayedFile() }
+				.then { isComplete = true }
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenThePlayerWillNotPlayWhenReady {
-	private static final Collection<Player.EventListener> eventListeners = new ArrayList<>();
-	private static boolean isComplete;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
-		final ExoPlayer mockExoPlayer = mock(ExoPlayer.class);
-		when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
-		when(mockExoPlayer.getCurrentPosition()).thenReturn(100L);
-		when(mockExoPlayer.getDuration()).thenReturn(100L);
-		doAnswer((Answer<Void>) invocation -> {
-			eventListeners.add(invocation.getArgument(0));
-			return null;
-		}).when(mockExoPlayer).addListener(any());
-
-		ExoPlayerPlaybackHandler exoPlayerPlaybackHandler = new ExoPlayerPlaybackHandler(mockExoPlayer);
-		final Promise<Boolean> playbackPromise = exoPlayerPlaybackHandler.promisePlayback().eventually(PlayingFile::promisePlayedFile)
-				.then(p -> isComplete = true);
-
-		Stream.of(eventListeners).forEach(e -> e.onPlayerStateChanged(false, Player.STATE_IDLE));
-
-		new FuturePromise<>(playbackPromise).get(1, TimeUnit.SECONDS);
+			Stream.of(eventListeners).forEach { e: Player.EventListener -> e.onPlayerStateChanged(false, Player.STATE_IDLE) }
+			FuturePromise(playbackPromise)[1, TimeUnit.SECONDS]
+		}
 	}
 
 	@Test
-	public void thenPlaybackCompletes() {
-		assertThat(isComplete).isTrue();
+	fun thenPlaybackCompletes() {
+		AssertionsForClassTypes.assertThat(isComplete).isTrue
 	}
 }
