@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.GetAudioRenderers
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
-import com.lasthopesoftware.bluewater.client.playback.volume.EmptyVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.volume.PassthroughVolumeManager
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -135,7 +135,7 @@ internal class PreparedExoPlayerPromise(
 			is ParserException -> {
 				logger.warn("A parser exception occurred while preparing the file, skipping playback", error)
 				val emptyPlaybackHandler = EmptyPlaybackHandler(0)
-				resolve(PreparedPlayableFile(emptyPlaybackHandler, EmptyVolumeManager(), emptyPlaybackHandler))
+				resolve(PreparedPlayableFile(emptyPlaybackHandler, PassthroughVolumeManager(), emptyPlaybackHandler))
 			}
 			else -> reject(error)
 		}

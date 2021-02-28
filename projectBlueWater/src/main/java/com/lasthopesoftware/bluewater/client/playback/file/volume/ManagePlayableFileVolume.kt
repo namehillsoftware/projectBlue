@@ -1,6 +1,8 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume
 
-public interface ManagePlayableFileVolume {
-	float setVolume(float volume);
-	float getVolume();
+import com.namehillsoftware.handoff.promises.Promise
+
+interface ManagePlayableFileVolume {
+	fun setVolume(volume: Float): Promise<Float>
+	val volume: Promise<Float>
 }

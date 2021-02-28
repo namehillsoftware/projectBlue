@@ -10,6 +10,6 @@ import io.reactivex.ObservableOnSubscribe
 interface IPlaylistPlayer : ObservableOnSubscribe<PositionedPlayingFile> {
 	fun pause(): Promise<*>
 	fun resume(): Promise<PositionedPlayingFile?>
-	fun setVolume(volume: Float)
+	fun setVolume(volume: Float): Promise<Unit>
 	val isPlaying: Boolean
 }

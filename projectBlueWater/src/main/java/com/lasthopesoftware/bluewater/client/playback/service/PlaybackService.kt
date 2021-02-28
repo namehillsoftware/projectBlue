@@ -86,6 +86,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.observe
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -943,7 +944,7 @@ open class PlaybackService : Service() {
 		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistTrackStart, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile.asPositionedFile())
 		val promisedPlayedFile = playingFile.promisePlayedFile()
 		val localSubscription = Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
-			.map { promisedPlayedFile.progress }
+			.flatMap { observe(promisedPlayedFile.progress) }
 			.distinctUntilChanged()
 			.subscribe(TrackPositionBroadcaster(
 				localBroadcastManagerLazy.value,

@@ -1,28 +1,20 @@
-package com.lasthopesoftware.bluewater.client.playback.volume;
+package com.lasthopesoftware.bluewater.client.playback.volume
 
-import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
+import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 
+class PlaylistVolumeManager(private var volume: Float) : IVolumeManagement {
+	private var playlistPlayer: IPlaylistPlayer? = null
 
-public class PlaylistVolumeManager implements IVolumeManagement {
-	private IPlaylistPlayer playlistPlayer;
-	private float volume;
-
-	public PlaylistVolumeManager(float initialVolume) {
-		volume = initialVolume;
+	fun managePlayer(playlistPlayer: IPlaylistPlayer?) {
+		this.playlistPlayer = playlistPlayer
+		playlistPlayer?.setVolume(volume)
 	}
 
-	public void managePlayer(IPlaylistPlayer playlistPlayer) {
-		this.playlistPlayer = playlistPlayer;
-		this.playlistPlayer.setVolume(volume);
-	}
+	override fun setVolume(volume: Float): Promise<Float> {
+		this.volume = volume
 
-	@Override
-	public float setVolume(float volume) {
-		this.volume = volume;
-
-		if (playlistPlayer != null)
-			playlistPlayer.setVolume(this.volume);
-
-		return this.volume;
+		return playlistPlayer?.setVolume(this.volume)?.then { this.volume } ?: this.volume.toPromise()
 	}
 }

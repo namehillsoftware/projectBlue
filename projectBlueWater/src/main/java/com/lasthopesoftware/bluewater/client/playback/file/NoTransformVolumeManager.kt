@@ -1,18 +1,16 @@
-package com.lasthopesoftware.bluewater.client.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file
 
-import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 
+class NoTransformVolumeManager : ManagePlayableFileVolume {
+	private var backingVolume = 0f
 
-public class NoTransformVolumeManager implements ManagePlayableFileVolume {
-	private float volume;
+	override val volume: Promise<Float>
+		get() = backingVolume.toPromise()
 
-	@Override
-	public float setVolume(float volume) {
-		return this.volume = volume;
-	}
-
-	@Override
-	public float getVolume() {
-		return this.volume;
+	override fun setVolume(volume: Float): Promise<Float> {
+		return volume.also { this.backingVolume = it }.toPromise()
 	}
 }
