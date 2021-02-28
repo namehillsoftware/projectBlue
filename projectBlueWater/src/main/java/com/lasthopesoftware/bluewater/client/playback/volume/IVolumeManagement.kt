@@ -1,6 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.volume;
+package com.lasthopesoftware.bluewater.client.playback.volume
 
+import com.namehillsoftware.handoff.promises.Promise
 
-public interface IVolumeManagement {
-	float setVolume(float volume);
+interface IVolumeManagement {
+	fun setVolume(volume: Float): Promise<Float>
 }

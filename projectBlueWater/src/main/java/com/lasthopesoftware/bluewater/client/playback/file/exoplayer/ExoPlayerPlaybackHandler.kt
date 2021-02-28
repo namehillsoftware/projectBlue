@@ -15,8 +15,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback.Pr
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy
-import com.namehillsoftware.lazyj.CreateAndHold
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
@@ -26,20 +24,14 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 		private val logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java)
 	}
 
-	private val lazyFileProgressReader: CreateAndHold<ExoPlayerFileProgressReader> = object : AbstractSynchronousLazy<ExoPlayerFileProgressReader>() {
-		override fun create(): ExoPlayerFileProgressReader {
-			return ExoPlayerFileProgressReader(exoPlayer)
-		}
-	}
+	private val lazyFileProgressReader = lazy { ExoPlayerFileProgressReader(exoPlayer) }
 
-	private val exoPlayerPositionSource: CreateAndHold<ProgressedPromise<Duration, PlayedFile>> = object : AbstractSynchronousLazy<ProgressedPromise<Duration, PlayedFile>>() {
-		override fun create(): ProgressedPromise<Duration, PlayedFile> {
-			return PromisedPlayedExoPlayer(
+	private val exoPlayerPositionSource = lazy {
+			PromisedPlayedExoPlayer(
 				exoPlayer,
-				lazyFileProgressReader.getObject(),
+				lazyFileProgressReader.value,
 				this@ExoPlayerPlaybackHandler)
 		}
-	}
 
 	private var backingDuration = Duration.ZERO
 
@@ -59,20 +51,15 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 		return pause().then { this }
 	}
 
-	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> {
-		return exoPlayerPositionSource.getObject()
-	}
+	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> = exoPlayerPositionSource.value
 
-	override fun getProgress(): Duration {
-		return lazyFileProgressReader.getObject().progress
-	}
+	override val progress: Promise<Duration>
+		get() = lazyFileProgressReader.value.progress
 
 	override val duration: Promise<Duration>
-		get() {
-			return exoPlayer.getDuration().then { newDuration ->
-				if (newDuration == backingDuration.millis) backingDuration
-				else Duration.millis(newDuration).also { backingDuration = it }
-			}
+		get() = exoPlayer.getDuration().then { newDuration ->
+			if (newDuration == backingDuration.millis) backingDuration
+			else Duration.millis(newDuration).also { backingDuration = it }
 		}
 
 	override fun promisePlayback(): Promise<PlayingFile> {

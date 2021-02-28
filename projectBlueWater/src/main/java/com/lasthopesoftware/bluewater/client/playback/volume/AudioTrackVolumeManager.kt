@@ -1,40 +1,22 @@
-package com.lasthopesoftware.bluewater.client.playback.volume;
+package com.lasthopesoftware.bluewater.client.playback.volume
 
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
+import com.google.android.exoplayer2.Renderer
+import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume
+import com.namehillsoftware.handoff.promises.Promise
 
-public class AudioTrackVolumeManager
-implements
-	IVolumeManagement,
-	ManagePlayableFileVolume {
+class AudioTrackVolumeManager(private val exoPlayer: PromisingExoPlayer, private val audioRenderers: Array<MediaCodecAudioRenderer>) : IVolumeManagement, ManagePlayableFileVolume {
+	private var volume = 0f
 
-	private final ExoPlayer exoPlayer;
-	private final MediaCodecAudioRenderer[] audioRenderers;
-	private float volume;
-
-	public AudioTrackVolumeManager(ExoPlayer exoPlayer, MediaCodecAudioRenderer[] audioRenderers) {
-		this.exoPlayer = exoPlayer;
-		this.audioRenderers = audioRenderers;
+	override fun setVolume(volume: Float): Promise<Float> {
+		this.volume = volume
+		return Promise.whenAll(audioRenderers.map { renderer ->
+			exoPlayer
+				.createMessage(renderer)
+				.then { m -> m.setType(Renderer.MSG_SET_VOLUME).setPayload(this.volume).send() }
+		}).then { this.volume }
 	}
 
-	@Override
-	public float setVolume(float volume) {
-		this.volume = volume;
-
-		for (MediaCodecAudioRenderer renderer : audioRenderers) {
-			exoPlayer.createMessage(renderer)
-				.setType(C.MSG_SET_VOLUME)
-				.setPayload(this.volume)
-				.send();
-		}
-
-		return this.volume;
-	}
-
-	@Override
-	public float getVolume() {
-		return volume;
-	}
+	override fun getVolume(): Float = volume
 }
