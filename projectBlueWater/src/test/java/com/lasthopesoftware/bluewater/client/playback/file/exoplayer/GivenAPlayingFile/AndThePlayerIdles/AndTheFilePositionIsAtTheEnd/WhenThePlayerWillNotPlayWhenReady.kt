@@ -32,6 +32,7 @@ class WhenThePlayerWillNotPlayWhenReady {
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
 			Mockito.doAnswer { invocation ->
 				eventListeners.add(invocation.getArgument(0))
+				mockExoPlayer.toPromise()
 			}.`when`(mockExoPlayer).addListener(any())
 
 			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)

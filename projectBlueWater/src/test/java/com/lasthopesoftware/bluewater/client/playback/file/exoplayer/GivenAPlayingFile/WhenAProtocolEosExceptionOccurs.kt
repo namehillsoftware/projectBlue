@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.Player
+import com.lasthopesoftware.any
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
-import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import java.net.ProtocolException
@@ -25,6 +24,8 @@ class WhenAProtocolEosExceptionOccurs {
 		private var exoPlayerException: ProtocolException? = null
 		private var eventListener: Player.EventListener? = null
 		private var isComplete: Boolean? = null
+
+		@JvmStatic
 		@BeforeClass
 		@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
 		fun before() {
@@ -34,12 +35,12 @@ class WhenAProtocolEosExceptionOccurs {
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
 			Mockito.doAnswer { invocation: InvocationOnMock ->
 				eventListener = invocation.getArgument(0)
-				null
-			}.`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+				mockExoPlayer.toPromise()
+			}.`when`(mockExoPlayer).addListener(any())
 			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val promisedFuture = FuturePromise(exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
 				.eventually { obj: PlayingFile -> obj.promisePlayedFile() }
-				.then({ p: PlayedFile? -> true }) { e: Throwable? -> false })
+				.then({ true }) { false })
 			eventListener!!.onPlayerError(ExoPlaybackException.createForSource(ProtocolException("unexpected end of stream")))
 			try {
 				isComplete = promisedFuture[1, TimeUnit.SECONDS]

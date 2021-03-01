@@ -5,6 +5,7 @@ import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
+import com.lasthopesoftware.any
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
@@ -14,9 +15,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
-import org.mockito.invocation.InvocationOnMock
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -28,6 +27,8 @@ class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 		private var exoPlayerException: ExoPlayerException? = null
 		private var eventListener: Player.EventListener? = null
 		private var isComplete = false
+
+		@JvmStatic
 		@BeforeClass
 		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
@@ -35,10 +36,10 @@ class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
 			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
-			Mockito.doAnswer { invocation: InvocationOnMock ->
+			Mockito.doAnswer { invocation ->
 				eventListener = invocation.getArgument(0)
-				null
-			}.`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+				mockExoPlayer.toPromise()
+			}.`when`(mockExoPlayer).addListener(any())
 			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val promisedFuture = FuturePromise(exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
 				.eventually { obj: PlayingFile -> obj.promisePlayedFile() }

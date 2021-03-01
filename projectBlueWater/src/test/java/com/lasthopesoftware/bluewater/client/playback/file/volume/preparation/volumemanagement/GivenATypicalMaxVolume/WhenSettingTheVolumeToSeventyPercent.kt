@@ -13,6 +13,8 @@ class WhenSettingTheVolumeToSeventyPercent {
 	companion object {
 		private var volumeManager: NoTransformVolumeManager? = null
 		private var returnedVolume = 0f
+
+		@JvmStatic
 		@BeforeClass
 		fun before() {
 			volumeManager = NoTransformVolumeManager()

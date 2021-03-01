@@ -1,32 +1,29 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.volumemanagement.GivenATypicalMaxVolume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.volumemanagement.GivenATypicalMaxVolume
 
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
 
-import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager;
+class WhenChangingTheMaxVolume {
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import kotlin.jvm.JvmStatic;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class WhenChangingTheMaxVolume {
-	private static NoTransformVolumeManager volumeManager;
-
-	@JvmStatic
-	@BeforeClass
-	public static void before() {
-		volumeManager = new NoTransformVolumeManager();
-
-		final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(volumeManager);
-		maxFileVolumeManager.setVolume(.58f);
-		maxFileVolumeManager.setMaxFileVolume(.8f);
-		maxFileVolumeManager.setMaxFileVolume(.47f);
+	companion object {
+		private var volumeManager: NoTransformVolumeManager? = null
+		@JvmStatic
+		@BeforeClass
+		fun before() {
+			volumeManager = NoTransformVolumeManager()
+			val maxFileVolumeManager = MaxFileVolumeManager(volumeManager!!)
+			maxFileVolumeManager.setVolume(.58f)
+			maxFileVolumeManager.setMaxFileVolume(.8f)
+			maxFileVolumeManager.setMaxFileVolume(.47f)
+		}
 	}
 
 	@Test
-	public void thenThePlaybackHandlerVolumeIsCorrectlySet() {
-		assertThat(volumeManager.getVolume()).isEqualTo(.2726f);
+	fun thenThePlaybackHandlerVolumeIsCorrectlySet() {
+		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isEqualTo(.2726f)
 	}
 }

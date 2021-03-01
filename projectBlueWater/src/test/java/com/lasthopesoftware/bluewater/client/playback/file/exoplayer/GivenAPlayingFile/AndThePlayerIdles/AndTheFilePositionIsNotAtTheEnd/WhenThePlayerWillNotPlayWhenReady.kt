@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile.AndThePlayerIdles.AndTheFilePositionIsNotAtTheEnd
 
 import com.google.android.exoplayer2.Player
+import com.lasthopesoftware.any
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
@@ -9,7 +10,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import java.util.concurrent.ExecutionException
@@ -32,8 +32,8 @@ class WhenThePlayerWillNotPlayWhenReady {
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
 			Mockito.doAnswer { invocation: InvocationOnMock ->
 				eventListener = invocation.getArgument(0)
-				null
-			}.`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+				mockExoPlayer.toPromise()
+			}.`when`(mockExoPlayer).addListener(any())
 
 			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val playbackPromise = exoPlayerPlaybackHandler.promisePlayback().eventually { obj: PlayingFile -> obj.promisePlayedFile() }

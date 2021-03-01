@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 import com.annimon.stream.Stream
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.Player
+import com.lasthopesoftware.any
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
@@ -11,7 +12,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import java.net.ProtocolException
@@ -24,6 +24,8 @@ class WhenANormalProtocolExceptionOccurs {
 	companion object {
 		private var exoPlayerException: ExoPlayerException? = null
 		private val eventListener: MutableList<Player.EventListener> = ArrayList()
+
+		@JvmStatic
 		@BeforeClass
 		@Throws(InterruptedException::class)
 		fun context() {
@@ -33,8 +35,8 @@ class WhenANormalProtocolExceptionOccurs {
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
 			Mockito.doAnswer { invocation: InvocationOnMock ->
 				eventListener.add(invocation.getArgument(0))
-				null
-			}.`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+				mockExoPlayer.toPromise()
+			}.`when`(mockExoPlayer).addListener(any())
 			val countDownLatch = CountDownLatch(1)
 			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()

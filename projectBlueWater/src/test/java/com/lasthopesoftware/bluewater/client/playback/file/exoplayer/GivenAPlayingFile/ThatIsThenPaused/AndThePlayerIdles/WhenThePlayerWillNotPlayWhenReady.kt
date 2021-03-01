@@ -2,16 +2,14 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 
 import com.annimon.stream.Stream
 import com.google.android.exoplayer2.Player
+import com.lasthopesoftware.any
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -29,10 +27,10 @@ class WhenThePlayerWillNotPlayWhenReady {
 			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
 			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
-			Mockito.doAnswer(Answer<Void?> { invocation: InvocationOnMock ->
+			Mockito.doAnswer { invocation ->
 				eventListeners.add(invocation.getArgument(0))
-				null
-			}).`when`(mockExoPlayer).addListener(ArgumentMatchers.any())
+				mockExoPlayer.toPromise()
+			}.`when`(mockExoPlayer).addListener(any())
 			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val playbackPromise = exoPlayerPlaybackHandler.promisePlayback()
 			playbackPromise

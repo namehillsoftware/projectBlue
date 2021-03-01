@@ -18,6 +18,8 @@ class WhenGettingTheFileProgress {
 	companion object {
 		private var progress: Duration? = null
 		private var duration: Duration? = null
+
+		@JvmStatic
 		@BeforeClass
 		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {

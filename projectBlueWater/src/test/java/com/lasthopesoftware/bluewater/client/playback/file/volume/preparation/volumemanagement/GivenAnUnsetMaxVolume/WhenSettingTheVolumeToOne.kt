@@ -24,7 +24,7 @@ class WhenSettingTheVolumeToOne {
 
 	@Test
 	fun thenThePlaybackHandlerVolumeIsSetToTheMaxVolume() {
-		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isEqualTo(1)
+		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isEqualTo(1F)
 	}
 
 	@Test

@@ -12,6 +12,8 @@ class WhenSettingTheVolumeToSixtyFourPercent {
 	companion object {
 		private val volumeManager = NoTransformVolumeManager()
 		private var returnedVolume = 0f
+
+		@JvmStatic
 		@BeforeClass
 		fun before() {
 			val maxFileVolumeManager = MaxFileVolumeManager(volumeManager)
