@@ -7,11 +7,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.Ma
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import kotlin.jvm.JvmStatic;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenChangingTheMaxVolume {
 	private static NoTransformVolumeManager volumeManager;
 
+	@JvmStatic
 	@BeforeClass
 	public static void before() {
 		volumeManager = new NoTransformVolumeManager();

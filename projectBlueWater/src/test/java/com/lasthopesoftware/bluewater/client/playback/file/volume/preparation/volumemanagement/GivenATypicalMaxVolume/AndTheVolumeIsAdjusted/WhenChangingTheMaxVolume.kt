@@ -11,6 +11,8 @@ class WhenChangingTheMaxVolume {
 
 	companion object {
 		private val playbackHandler = NoTransformVolumeManager()
+
+		@JvmStatic
 		@BeforeClass
 		fun before() {
 			val maxFileVolumeManager = MaxFileVolumeManager(playbackHandler)

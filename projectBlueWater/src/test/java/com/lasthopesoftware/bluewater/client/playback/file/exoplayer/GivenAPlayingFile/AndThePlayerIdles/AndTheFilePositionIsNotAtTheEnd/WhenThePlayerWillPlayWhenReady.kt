@@ -19,14 +19,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 class WhenThePlayerWillPlayWhenReady {
-	@Test
-	fun thenPlaybackIsNotRestarted() {
-		Mockito.verify(mockExoPlayer, Mockito.times(1)).setPlayWhenReady(true)
-	}
-
 	companion object {
 		private val eventListeners: MutableCollection<Player.EventListener> = ArrayList()
 		private val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+
+		@JvmStatic
 		@BeforeClass
 		@Throws(InterruptedException::class, ExecutionException::class)
 		fun before() {
@@ -45,5 +42,10 @@ class WhenThePlayerWillPlayWhenReady {
 			} catch (ignored: TimeoutException) {
 			}
 		}
+	}
+
+	@Test
+	fun thenPlaybackIsNotRestarted() {
+		Mockito.verify(mockExoPlayer, Mockito.times(1)).setPlayWhenReady(true)
 	}
 }

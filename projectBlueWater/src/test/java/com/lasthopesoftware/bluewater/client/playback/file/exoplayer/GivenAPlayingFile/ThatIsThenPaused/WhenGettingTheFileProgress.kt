@@ -12,13 +12,10 @@ import org.mockito.Mockito
 import java.util.*
 
 class WhenGettingTheFileProgress {
-	@Test
-	fun thenTheFileProgressIsLastValidFileProgress() {
-		AssertionsForClassTypes.assertThat(progress).isEqualTo(Duration.millis(78))
-	}
-
-	companion object {
+	companion object Setup {
 		private var progress: Duration? = null
+
+		@JvmStatic
 		@BeforeClass
 		fun before() {
 			val mockMediaPlayer = Mockito.mock(PromisingExoPlayer::class.java)
@@ -33,5 +30,10 @@ class WhenGettingTheFileProgress {
 			exoPlayerFileProgressReader.progress
 			progress = exoPlayerFileProgressReader.progress.toFuture().get()
 		}
+	}
+
+	@Test
+	fun thenTheFileProgressIsLastValidFileProgress() {
+		AssertionsForClassTypes.assertThat(progress).isEqualTo(Duration.millis(78))
 	}
 }

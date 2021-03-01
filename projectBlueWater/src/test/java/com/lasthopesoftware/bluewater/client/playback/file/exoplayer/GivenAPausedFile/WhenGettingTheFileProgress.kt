@@ -15,7 +15,9 @@ class WhenGettingTheFileProgress {
 	companion object {
 		private var progress: Duration? = null
 		private var duration: Duration? = null
+
 		@BeforeClass
+		@JvmStatic
 		fun before() {
 			val mockMediaPlayer = Mockito.mock(PromisingExoPlayer::class.java)
 			Mockito.`when`(mockMediaPlayer.getPlayWhenReady()).thenReturn(false.toPromise())

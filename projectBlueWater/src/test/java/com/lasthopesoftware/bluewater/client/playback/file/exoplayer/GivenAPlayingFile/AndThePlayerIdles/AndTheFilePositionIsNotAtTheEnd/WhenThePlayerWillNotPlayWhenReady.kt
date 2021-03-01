@@ -22,6 +22,7 @@ class WhenThePlayerWillNotPlayWhenReady {
 		private var eventListener: Player.EventListener? = null
 		private var isComplete = false
 
+		@JvmStatic
 		@BeforeClass
 		@Throws(InterruptedException::class, ExecutionException::class)
 		fun before() {
