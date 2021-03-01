@@ -21,6 +21,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import kotlin.jvm.JvmStatic;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -30,6 +32,7 @@ public class WhenTestingIfTheConnectionIsActive {
 	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static Boolean isActive;
 
+	@JvmStatic
 	@BeforeClass
 	public static void before() throws InterruptedException, ExecutionException, TimeoutException {
 

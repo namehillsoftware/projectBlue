@@ -7,6 +7,8 @@ import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.HandlerDispatchingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
@@ -14,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.GetAudioRenderers
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
-import com.lasthopesoftware.bluewater.client.playback.volume.EmptyVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.volume.PassthroughVolumeManager
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -40,7 +42,7 @@ internal class PreparedExoPlayerPromise(
 
 	private val cancellationToken = CancellationToken()
 
-	private var exoPlayer: ExoPlayer? = null
+	private var exoPlayer: PromisingExoPlayer? = null
 	private var audioRenderers: Array<MediaCodecAudioRenderer> = emptyArray()
 	private var bufferingExoPlayer: BufferingExoPlayer? = null
 	private var isResolved = false
@@ -67,27 +69,24 @@ internal class PreparedExoPlayerPromise(
 			.setLooper(handler.looper)
 			.experimentalSetThrowWhenStuckBuffering(false)
 
-		val newExoPlayer = exoPlayerBuilder.build()
+		val newExoPlayer = HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), handler)
 		exoPlayer = newExoPlayer
 
 		if (cancellationToken.isCancelled) return
 
-		newExoPlayer.addListener(this)
-
-		if (cancellationToken.isCancelled) return
-
-		val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
-		val newBufferingExoPlayer = BufferingExoPlayer(handler, mediaSource)
-		bufferingExoPlayer = newBufferingExoPlayer
-
-		try {
-			newExoPlayer.setMediaSource(mediaSource)
-			newExoPlayer.prepare()
-		} catch (e: IllegalStateException) {
-			reject(e)
-		}
-
-		newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError)
+		newExoPlayer
+			.addListener(this)
+			.then {
+				if (!cancellationToken.isCancelled) {
+					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
+					val newBufferingExoPlayer = BufferingExoPlayer(handler, mediaSource)
+					bufferingExoPlayer = newBufferingExoPlayer
+					newExoPlayer
+						.setMediaSource(mediaSource)
+						.eventually { newExoPlayer.prepare() }
+						.then { newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError) }
+				}
+			}
 	}
 
 	override fun run() {
@@ -103,18 +102,19 @@ internal class PreparedExoPlayerPromise(
 
 		val exoPlayer = exoPlayer ?: return
 
-		if (exoPlayer.currentPosition < prepareAt) {
-			exoPlayer.seekTo(prepareAt)
-			return
+		exoPlayer.getCurrentPosition().then { currentPosition ->
+			if (currentPosition < prepareAt) {
+				exoPlayer.seekTo(prepareAt)
+			} else {
+				isResolved = true
+				exoPlayer.removeListener(this)
+				resolve(
+					PreparedPlayableFile(
+						ExoPlayerPlaybackHandler(exoPlayer),
+						AudioTrackVolumeManager(exoPlayer, audioRenderers),
+						bufferingExoPlayer))
+			}
 		}
-
-		isResolved = true
-		exoPlayer.removeListener(this)
-		resolve(
-			PreparedPlayableFile(
-				ExoPlayerPlaybackHandler(exoPlayer),
-				AudioTrackVolumeManager(exoPlayer, audioRenderers),
-				bufferingExoPlayer))
 	}
 
 	override fun onPlayerError(error: ExoPlaybackException) {
@@ -135,7 +135,7 @@ internal class PreparedExoPlayerPromise(
 			is ParserException -> {
 				logger.warn("A parser exception occurred while preparing the file, skipping playback", error)
 				val emptyPlaybackHandler = EmptyPlaybackHandler(0)
-				resolve(PreparedPlayableFile(emptyPlaybackHandler, EmptyVolumeManager(), emptyPlaybackHandler))
+				resolve(PreparedPlayableFile(emptyPlaybackHandler, PassthroughVolumeManager(), emptyPlaybackHandler))
 			}
 			else -> reject(error)
 		}

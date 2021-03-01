@@ -9,5 +9,5 @@ abstract class ProgressedPromise<Progress, Resolution> : Promise<Resolution> {
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 
-	abstract val progress: Progress?
+	abstract val progress: Promise<Progress>
 }
