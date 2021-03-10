@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.junit.BeforeClass
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import java.util.*
@@ -25,6 +26,7 @@ class WhenThePlayerWillPlayWhenReady {
 		@BeforeClass
 		@Throws(InterruptedException::class, ExecutionException::class)
 		fun before() {
+			Mockito.`when`(mockExoPlayer.setPlayWhenReady(anyBoolean())).thenReturn(mockExoPlayer.toPromise())
 			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
 			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())

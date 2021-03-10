@@ -55,9 +55,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	}
 
 	override val isPlaying: Boolean
-		get() {
-			return positionedPlayingFile != null
-		}
+		get() = positionedPlayingFile != null
 
 	override fun setVolume(volume: Float): Promise<Unit> {
 		this.volume = volume
@@ -76,7 +74,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 						}
 					}
 			}
-			?: Promise(IllegalStateException("There must be a playing file in order to pause"))
+			?: Promise.empty()
 	}
 
 	private fun promiseResumption(): Promise<PositionedPlayingFile?> {
@@ -92,7 +90,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 						positionedPlayingFile
 					}
 			}
-			?: Promise(IllegalStateException("There must be a playable file in order to resume"))
+			?: Promise.empty()
 	}
 
 	private fun setupNextPreparedFile(preparedPosition: Long = 0) {
