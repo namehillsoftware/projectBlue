@@ -9,14 +9,18 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 
 class PreparedPlaybackQueueFeederBuilder(
 	private val context: Context,
-	private val handler: Handler,
+	private val playbackHandler: Handler,
+	private val playbackControlHandler: Handler,
+	private val eventHandler: Handler,
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val bestMatchUriProvider: BestMatchUriProvider) : BuildPreparedPlaybackQueueFeeder {
 
 	override fun build(library: Library): IPlayableFilePreparationSourceProvider =
 		ExoPlayerPlayableFilePreparationSourceProvider(
 			context,
-			handler,
+			playbackHandler,
+			playbackControlHandler,
+			eventHandler,
 			mediaSourceProvider,
 			bestMatchUriProvider)
 }

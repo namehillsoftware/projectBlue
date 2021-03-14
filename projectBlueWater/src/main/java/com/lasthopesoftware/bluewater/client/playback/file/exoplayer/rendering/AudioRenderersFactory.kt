@@ -17,7 +17,7 @@ class AudioRenderersFactory(private val context: Context, private val handler: H
 				context,
 				MediaCodecSelector.DEFAULT,
 				false,
-				handler,
-				if (DebugFlag.getInstance().isDebugCompilation) AudioRenderingEventListener() else EmptyRenderersListener,
+				if (DebugFlag.getInstance().isDebugCompilation) handler else null,
+				if (DebugFlag.getInstance().isDebugCompilation) AudioRenderingEventListener() else null,
 				DefaultAudioSink(AudioCapabilities.getCapabilities(context), emptyArray()))))
 }

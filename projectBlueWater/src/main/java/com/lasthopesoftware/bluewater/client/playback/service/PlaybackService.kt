@@ -394,12 +394,18 @@ open class PlaybackService : Service() {
 				lazyMediaSession.getObject())
 		}
 	private val lazyAllStoredFilesInLibrary = lazy { StoredFilesCollection(this) }
-	private val extractorThread = lazy {
+	private val playbackThread = lazy {
 			HandlerThreadCreator.promiseNewHandlerThread(
-				"Media Extracting thread",
+				"Playback thread",
 				Process.THREAD_PRIORITY_AUDIO)
 		}
-	private val extractorHandler = lazy { extractorThread.value.then { h -> Handler(h.looper) } }
+	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
+	private val playbackControlThread = lazy {
+		HandlerThreadCreator.promiseNewHandlerThread(
+			"Playback thread",
+			Process.THREAD_PRIORITY_AUDIO)
+	}
+	private val playbackControlHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 	private val lazyPlaybackStartingNotificationBuilder = lazy {
 			PlaybackStartingNotificationBuilder(
 				this,
@@ -758,21 +764,25 @@ open class PlaybackService : Service() {
 							false),
 						remoteFileUriProvider)
 
-					extractorHandler.value.then { handler ->
-						val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
-							this,
-							handler,
-							MediaSourceProvider(
-								library,
-								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
-								simpleCache),
-							bestMatchUriProvider)
+					playbackHandler.value.eventually { ph ->
+						playbackControlHandler.value.then { pc ->
+							val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
+								this,
+								ph,
+								pc,
+								Handler(mainLooper),
+								MediaSourceProvider(
+									library,
+									HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
+									simpleCache),
+								bestMatchUriProvider)
 
-						MaxFileVolumePreparationProvider(
-							playbackEngineBuilder.build(library),
-							MaxFileVolumeProvider(
-								lazyVolumeLevelSettings.value,
-								cachedSessionFilePropertiesProvider))
+							MaxFileVolumePreparationProvider(
+								playbackEngineBuilder.build(library),
+								MaxFileVolumeProvider(
+									lazyVolumeLevelSettings.value,
+									cachedSessionFilePropertiesProvider))
+						}
 					}
 				}
 			}
@@ -1033,7 +1043,7 @@ open class PlaybackService : Service() {
 
 		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
 		if (remoteControlClient.isInitialized()) audioManagerLazy.value.unregisterRemoteControlClient(remoteControlClient.value)
-		if (extractorThread.isInitialized()) extractorThread.value.then { it.quitSafely() }
+		if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated) {
 			lazyMediaSession.getObject().isActive = false
