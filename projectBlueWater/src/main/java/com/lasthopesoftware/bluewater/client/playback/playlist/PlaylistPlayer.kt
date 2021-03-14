@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.ObservableEmitter
 import org.slf4j.LoggerFactory
@@ -54,13 +55,11 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	}
 
 	override val isPlaying: Boolean
-		get() {
-			return positionedPlayingFile != null
-		}
+		get() = positionedPlayingFile != null
 
-	override fun setVolume(volume: Float) {
+	override fun setVolume(volume: Float): Promise<Unit> {
 		this.volume = volume
-		positionedPlayableFile?.playableFileVolumeManager?.volume = volume
+		return positionedPlayableFile?.playableFileVolumeManager?.setVolume(volume)?.unitResponse() ?: Unit.toPromise()
 	}
 
 	private fun promisePause(): Promise<PositionedPlayableFile?> {
@@ -75,7 +74,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 						}
 					}
 			}
-			?: Promise(IllegalStateException("There must be a playing file in order to pause"))
+			?: positionedPlayableFile.toPromise()
 	}
 
 	private fun promiseResumption(): Promise<PositionedPlayingFile?> {
@@ -88,10 +87,9 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 							positionedPlayingFile = this
 							positionedPlayableFile = null
 						}
-						positionedPlayingFile
 					}
 			}
-			?: Promise(IllegalStateException("There must be a playable file in order to resume"))
+			?: Promise(IllegalStateException("A file must not be playing in order to resume"))
 	}
 
 	private fun setupNextPreparedFile(preparedPosition: Long = 0) {
@@ -109,7 +107,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 	}
 
 	private fun startFilePlayback(positionedPlayableFile: PositionedPlayableFile): Promise<PlayingFile?> {
-		positionedPlayableFile.playableFileVolumeManager.volume = volume
+		positionedPlayableFile.playableFileVolumeManager.setVolume(volume)
 		val playbackHandler = positionedPlayableFile.playableFile
 
 		synchronized(stateChangeSync) {

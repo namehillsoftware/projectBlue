@@ -6,7 +6,6 @@ import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import android.os.IBinder
 import android.view.Surface
 import android.view.View
 import android.view.WindowManager
@@ -56,7 +55,6 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPl
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -359,24 +357,17 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		lazyNowPlayingRepository.value
 			.nowPlaying
 			.eventually { np ->
-				SessionConnection.getInstance(this@NowPlayingActivity)
+				SessionConnection.getInstance(this)
 					.promiseSessionConnection()
 					.eventually(LoopedInPromise.response<IConnectionProvider, Any?>({ connectionProvider: IConnectionProvider? ->
 						val serviceFile = np.playlist[np.playlistPosition]
 						val filePosition = if (connectionProvider != null && viewStructure != null && viewStructure!!.urlKeyHolder == UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile.key)) viewStructure!!.filePosition else np.filePosition
 						setView(serviceFile, filePosition)
-						null
 					}, messageHandler.value))
 			}
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
-		bindService(Intent(this, PlaybackService::class.java), object : ServiceConnection {
-			override fun onServiceConnected(name: ComponentName, service: IBinder) {
-				togglePlayingButtons(((service as GenericBinder<*>).service as PlaybackService).isPlaying)
-				unbindService(this)
-			}
 
-			override fun onServiceDisconnected(name: ComponentName) {}
-		}, Context.BIND_AUTO_CREATE)
+		PlaybackService.promiseIsMarkedForPlay(this).then(::togglePlayingButtons)
 	}
 
 	private fun setRepeatingIcon(imageButton: ImageButton?) {

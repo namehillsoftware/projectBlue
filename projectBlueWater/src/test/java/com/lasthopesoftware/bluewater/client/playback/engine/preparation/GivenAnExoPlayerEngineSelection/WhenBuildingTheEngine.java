@@ -34,6 +34,8 @@ public class WhenBuildingTheEngine {
 			new PreparedPlaybackQueueFeederBuilder(
 				mock(Context.class),
 				mock(Handler.class),
+				mock(Handler.class),
+				mock(Handler.class),
 				mock(SpawnMediaSources.class),
 				mock(BestMatchUriProvider.class));
 

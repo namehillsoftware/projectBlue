@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
+import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
@@ -13,10 +14,8 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 
-	override val progress: Progress?
-		get() {
-			return atomicProgress.get()
-		}
+	override val progress: Promise<Progress>
+		get() = Promise(atomicProgress.get())
 
 	protected fun reportProgress(progress: Progress) {
 		atomicProgress.lazySet(progress)
