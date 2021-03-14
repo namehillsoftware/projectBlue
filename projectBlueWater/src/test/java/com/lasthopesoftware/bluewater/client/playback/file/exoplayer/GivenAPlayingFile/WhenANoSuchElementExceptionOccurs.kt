@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import java.util.*
@@ -30,6 +31,7 @@ class WhenANoSuchElementExceptionOccurs {
 		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
 			val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+			Mockito.`when`(mockExoPlayer.setPlayWhenReady(anyBoolean())).thenReturn(mockExoPlayer.toPromise())
 			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
 			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())

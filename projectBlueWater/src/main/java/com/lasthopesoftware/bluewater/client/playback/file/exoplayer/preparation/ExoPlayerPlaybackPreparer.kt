@@ -16,7 +16,9 @@ class ExoPlayerPlaybackPreparer(
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val loadControl: LoadControl,
 	private val renderersFactory: GetAudioRenderers,
-	private val handler: Handler,
+	private val playbackHandler: Handler,
+	private val playbackControlHandler: Handler,
+	private val eventHandler: Handler,
 	private val uriProvider: IFileUriProvider) : PlayableFilePreparationSource {
 
 	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Long): Promise<PreparedPlayableFile> =
@@ -27,7 +29,9 @@ class ExoPlayerPlaybackPreparer(
 					mediaSourceProvider,
 					loadControl,
 					renderersFactory,
-					handler,
+					playbackHandler,
+					playbackControlHandler,
+					eventHandler,
 					uri,
 					preparedAt)
 			}

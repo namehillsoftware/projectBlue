@@ -28,6 +28,7 @@ class WhenThePlayerWillNotPlayWhenReady {
 		fun before() {
 			val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
 			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
+			Mockito.`when`(mockExoPlayer.setPlayWhenReady(true)).thenReturn(mockExoPlayer.toPromise())
 			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(100L.toPromise())
 			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
 			Mockito.doAnswer { invocation ->

@@ -64,8 +64,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 
 	override fun promisePlayback(): Promise<PlayingFile> {
 		isPlaying = true
-		exoPlayer.setPlayWhenReady(true)
-		return Promise(this)
+		return exoPlayer.setPlayWhenReady(true).then { this }
 	}
 
 	override fun close() {

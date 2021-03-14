@@ -8,6 +8,7 @@ import org.assertj.core.api.AssertionsForClassTypes
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.Mockito
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -24,6 +25,7 @@ class WhenGettingTheFileProgress {
 		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
 			val mockMediaPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+			Mockito.`when`(mockMediaPlayer.setPlayWhenReady(anyBoolean())).thenReturn(mockMediaPlayer.toPromise())
 			Mockito.`when`(mockMediaPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
 			Mockito.`when`(mockMediaPlayer.getCurrentPosition()).thenReturn(75L.toPromise())
 			Mockito.`when`(mockMediaPlayer.getDuration()).thenReturn(101L.toPromise())

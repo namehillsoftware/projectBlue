@@ -28,7 +28,9 @@ internal class PreparedExoPlayerPromise(
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val loadControl: LoadControl,
 	private val renderersFactory: GetAudioRenderers,
-	private val handler: Handler,
+	private val playbackHandler: Handler,
+	private val playbackControlHandler: Handler,
+	private val eventHandler: Handler,
 	private val uri: Uri,
 	private val prepareAt: Long) :
 	Promise<PreparedPlayableFile>(),
@@ -37,7 +39,7 @@ internal class PreparedExoPlayerPromise(
 	Runnable {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java)
+		private val logger = LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java)
 	}
 
 	private val cancellationToken = CancellationToken()
@@ -66,10 +68,10 @@ internal class PreparedExoPlayerPromise(
 		audioRenderers = resolution
 		val exoPlayerBuilder = ExoPlayer.Builder(context, *resolution)
 			.setLoadControl(loadControl)
-			.setLooper(handler.looper)
+			.setLooper(playbackHandler.looper)
 			.experimentalSetThrowWhenStuckBuffering(false)
 
-		val newExoPlayer = HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), handler)
+		val newExoPlayer = HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playbackControlHandler)
 		exoPlayer = newExoPlayer
 
 		if (cancellationToken.isCancelled) return
@@ -79,7 +81,7 @@ internal class PreparedExoPlayerPromise(
 			.then {
 				if (!cancellationToken.isCancelled) {
 					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
-					val newBufferingExoPlayer = BufferingExoPlayer(handler, mediaSource)
+					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource)
 					bufferingExoPlayer = newBufferingExoPlayer
 					newExoPlayer
 						.setMediaSource(mediaSource)
