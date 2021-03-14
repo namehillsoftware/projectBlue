@@ -402,10 +402,10 @@ open class PlaybackService : Service() {
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 	private val playbackControlThread = lazy {
 		HandlerThreadCreator.promiseNewHandlerThread(
-			"Playback thread",
+			"Playback control thread",
 			Process.THREAD_PRIORITY_AUDIO)
 	}
-	private val playbackControlHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
+	private val playbackControlHandler = lazy { playbackControlThread.value.then { h -> Handler(h.looper) } }
 	private val lazyPlaybackStartingNotificationBuilder = lazy {
 			PlaybackStartingNotificationBuilder(
 				this,
