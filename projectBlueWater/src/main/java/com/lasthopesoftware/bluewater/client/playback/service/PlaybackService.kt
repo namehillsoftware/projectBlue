@@ -764,8 +764,9 @@ open class PlaybackService : Service() {
 							false),
 						remoteFileUriProvider)
 
+					val initializedControlHandler = playbackControlHandler.value
 					playbackHandler.value.eventually { ph ->
-						playbackControlHandler.value.then { pc ->
+						initializedControlHandler.then { pc ->
 							val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
 								this,
 								ph,
