@@ -37,7 +37,7 @@ internal class PreparedExoPlayerPromise(
 	Runnable {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java)
+		private val logger = LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java)
 	}
 
 	private val cancellationToken = CancellationToken()

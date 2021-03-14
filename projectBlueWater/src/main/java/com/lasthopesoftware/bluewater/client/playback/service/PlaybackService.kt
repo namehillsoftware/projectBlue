@@ -129,15 +129,6 @@ open class PlaybackService : Service() {
 		private const val numberOfErrors = 5
 		private val errorLatchResetDuration = Duration.standardSeconds(3)
 
-		private val lazyObservationScheduler = lazy {
-			SingleScheduler(
-					RxThreadFactory(
-						"Playback Observation",
-						Thread.MIN_PRIORITY,
-						false
-					))
-		}
-
 		@JvmStatic
 		fun launchMusicService(context: Context, serializedFileList: String?) =
 			launchMusicService(context, 0, serializedFileList)
@@ -349,6 +340,13 @@ open class PlaybackService : Service() {
 
 	/* End streamer intent helpers */
 
+	private val lazyObservationScheduler = lazy {
+		SingleScheduler(
+			RxThreadFactory(
+				"Playback Observation",
+				Thread.MIN_PRIORITY,
+				false))
+	}
 	private val lazyBinder = lazy { GenericBinder(this) }
 	private val notificationManagerLazy = lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
@@ -1044,6 +1042,8 @@ open class PlaybackService : Service() {
 
 		filePositionSubscription?.dispose()
 		cache?.release()
+
+		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 
 		if (!localBroadcastManagerLazy.isInitialized()) return
 
