@@ -74,7 +74,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 						}
 					}
 			}
-			?: Promise.empty()
+			?: positionedPlayableFile.toPromise()
 	}
 
 	private fun promiseResumption(): Promise<PositionedPlayingFile?> {
@@ -87,10 +87,9 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 							positionedPlayingFile = this
 							positionedPlayableFile = null
 						}
-						positionedPlayingFile
 					}
 			}
-			?: Promise.empty()
+			?: Promise(IllegalStateException("A file must not be playing in order to resume"))
 	}
 
 	private fun setupNextPreparedFile(preparedPosition: Long = 0) {
