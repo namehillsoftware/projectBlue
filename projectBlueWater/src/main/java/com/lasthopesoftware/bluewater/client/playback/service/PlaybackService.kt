@@ -1044,6 +1044,7 @@ open class PlaybackService : Service() {
 		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
 		if (remoteControlClient.isInitialized()) audioManagerLazy.value.unregisterRemoteControlClient(remoteControlClient.value)
 		if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
+		if (playbackControlThread.isInitialized()) playbackControlThread.value.then { it.quitSafely() }
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated) {
 			lazyMediaSession.getObject().isActive = false
