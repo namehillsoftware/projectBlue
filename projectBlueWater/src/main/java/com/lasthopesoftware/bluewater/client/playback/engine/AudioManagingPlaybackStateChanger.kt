@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
+import java.util.concurrent.TimeoutException
 
 class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePlaybackState, private val audioManager: AudioManager, private val volumeManager: IVolumeManagement)
 	: ChangePlaybackState, AutoCloseable, AudioManager.OnAudioFocusChangeListener {
@@ -89,9 +90,9 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 		val promisedAudioFocus = audioManager.promiseAudioFocus(lazyAudioRequest.value)
 		return Promise.whenAny(
 			promisedAudioFocus,
-			PromiseDelay.delay<Any?>(Duration.standardSeconds(10)).eventually {
+			PromiseDelay.delay<Any?>(Duration.standardSeconds(10)).then {
 				promisedAudioFocus.cancel()
-				promisedAudioFocus
+				throw TimeoutException("Unable to gain audio focus in 10s")
 			})
 	}
 
