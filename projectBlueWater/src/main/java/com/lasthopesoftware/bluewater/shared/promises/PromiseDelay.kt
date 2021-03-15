@@ -1,46 +1,33 @@
-package com.lasthopesoftware.bluewater.shared.promises;
+package com.lasthopesoftware.bluewater.shared.promises
 
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
+import com.namehillsoftware.handoff.promises.Promise
+import org.joda.time.Duration
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
-import org.joda.time.Duration;
+class PromiseDelay<Response> private constructor(delay: Duration) : Promise<Response>(), Runnable {
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-public final class PromiseDelay<Response> extends Promise<Response> implements Runnable {
-	private static final CreateAndHold<ScheduledExecutorService> delayScheduler =
-		new Lazy<>(() -> Executors.newScheduledThreadPool(0));
-
-	public static <Response> Promise<Response> delay(Duration delay) {
-		return new PromiseDelay<>(delay);
-	}
-
-	private PromiseDelay(Duration delay) {
-		final ScheduledFuture<?> future = delayScheduler.getObject()
-			.schedule(this, delay.getMillis(), TimeUnit.MILLISECONDS);
-
-		respondToCancellation(new FutureCancellation(future));
-	}
-
-	@Override
-	public void run() {
-		resolve(null);
-	}
-
-	private static class FutureCancellation implements Runnable {
-		private final ScheduledFuture<?> future;
-
-		FutureCancellation(ScheduledFuture<?> future) {
-			this.future = future;
+	companion object {
+		private val delayScheduler = lazy { Executors.newScheduledThreadPool(0) }
+		@JvmStatic
+		fun <Response> delay(delay: Duration): Promise<Response> {
+			return PromiseDelay(delay)
 		}
+	}
 
-		@Override
-		public void run() {
-			future.cancel(false);
+	init {
+		val future = delayScheduler.value.schedule(this, delay.millis, TimeUnit.MILLISECONDS)
+		respondToCancellation(FutureCancellation(future))
+	}
+
+	override fun run() {
+		resolve(null)
+	}
+
+	private class FutureCancellation(private val future: ScheduledFuture<*>) : Runnable {
+		override fun run() {
+			future.cancel(false)
 		}
 	}
 }

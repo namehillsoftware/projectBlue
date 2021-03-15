@@ -7,8 +7,10 @@ import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.promiseAudioFocus
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
+import org.joda.time.Duration
 
 class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePlaybackState, private val audioManager: AudioManager, private val volumeManager: IVolumeManagement)
 	: ChangePlaybackState, AutoCloseable, AudioManager.OnAudioFocusChangeListener {
@@ -56,7 +58,7 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
 			volumeManager.setVolume(1.0f)
-			if (!isPlaying) resume()
+			if (!isPlaying) innerPlaybackState.resume()
 			return
 		}
 
@@ -78,10 +80,20 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 		synchronized(audioFocusSync) {
 			abandonAudioFocus()
 				.eventually(
-					{ audioManager.promiseAudioFocus(lazyAudioRequest.value) },
-					{ audioManager.promiseAudioFocus(lazyAudioRequest.value) })
+					{ getAudioFocusWithTimeout() },
+					{ getAudioFocusWithTimeout() })
 				.also { audioFocusPromise = it }
 		}
+
+	private fun getAudioFocusWithTimeout(): Promise<AudioFocusRequestCompat> {
+		val promisedAudioFocus = audioManager.promiseAudioFocus(lazyAudioRequest.value)
+		return Promise.whenAny(
+			promisedAudioFocus,
+			PromiseDelay.delay<Any?>(Duration.standardSeconds(10)).eventually {
+				promisedAudioFocus.cancel()
+				promisedAudioFocus
+			})
+	}
 
 	private fun abandonAudioFocus() =
 		synchronized(audioFocusSync) {

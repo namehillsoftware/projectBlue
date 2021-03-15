@@ -35,8 +35,8 @@ private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, priv
 	}
 
 	override fun run() {
-		resolve(delegatingAudioFocusRequest)
 		AudioManagerCompat.abandonAudioFocusRequest(audioManager, delegatingAudioFocusRequest)
+		resolve(delegatingAudioFocusRequest)
 	}
 
 	override fun toString(): String = innerAudioFocusChangeListener.toString()
