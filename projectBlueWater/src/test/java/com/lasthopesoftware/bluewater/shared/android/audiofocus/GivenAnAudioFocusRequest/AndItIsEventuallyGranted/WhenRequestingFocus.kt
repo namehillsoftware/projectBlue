@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.playback.service.audiomanager.GivenAnAudioFocusRequest.AndItIsEventuallyGranted
+package com.lasthopesoftware.bluewater.shared.android.audiofocus.GivenAnAudioFocusRequest.AndItIsEventuallyGranted
 
 import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.promiseAudioFocus
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -25,7 +25,8 @@ class WhenRequestingFocus : AndroidContext() {
 		`when`(audioManager.requestAudioFocus(any()))
 			.thenReturn(AudioManager.AUDIOFOCUS_REQUEST_DELAYED)
 
-		val promisedAudioFocus = audioManager.promiseAudioFocus(request)
+		val audioFocusManagement = AudioFocusManagement(audioManager)
+		val promisedAudioFocus = audioFocusManagement.promiseAudioFocus(request)
 		val internalListener = promisedAudioFocus as AudioManager.OnAudioFocusChangeListener
 		internalListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_REQUEST_DELAYED)
 		internalListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_REQUEST_GRANTED)

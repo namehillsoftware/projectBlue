@@ -86,6 +86,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -818,7 +819,7 @@ open class PlaybackService : Service() {
 				playbackEngineCloseables.manage(engine)
 				playbackState = AudioManagingPlaybackStateChanger(
 					engine,
-					audioManagerLazy.value,
+					AudioFocusManagement(audioManagerLazy.value),
 					lazyPlaylistVolumeManager.value)
 					.also(playbackEngineCloseables::manage)
 				engine

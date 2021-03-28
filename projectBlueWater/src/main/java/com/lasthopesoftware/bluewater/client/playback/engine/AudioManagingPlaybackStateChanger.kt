@@ -5,15 +5,15 @@ import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.promiseAudioFocus
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import java.util.concurrent.TimeoutException
 
-class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePlaybackState, private val audioManager: AudioManager, private val volumeManager: IVolumeManagement)
+class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePlaybackState, private val audioFocus: ControlAudioFocus, private val volumeManager: IVolumeManagement)
 	: ChangePlaybackState, AutoCloseable, AudioManager.OnAudioFocusChangeListener {
 
 	private val lazyAudioRequest = lazy {
@@ -27,7 +27,7 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 			.build()
 	}
 
-	private var audioFocusSync = Any()
+	private val audioFocusSync = Any()
 	private var audioFocusPromise: Promise<AudioFocusRequestCompat> = Promise.empty()
 	private var isPlaying = false
 
@@ -87,10 +87,10 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 		}
 
 	private fun getAudioFocusWithTimeout(): Promise<AudioFocusRequestCompat> {
-		val promisedAudioFocus = audioManager.promiseAudioFocus(lazyAudioRequest.value)
+		val promisedAudioFocus = audioFocus.promiseAudioFocus(lazyAudioRequest.value)
 		return Promise.whenAny(
 			promisedAudioFocus,
-			PromiseDelay.delay<Any?>(Duration.standardSeconds(10)).then {
+			delay<Any?>(Duration.standardSeconds(10)).then {
 				promisedAudioFocus.cancel()
 				throw TimeoutException("Unable to gain audio focus in 10s")
 			})
@@ -100,7 +100,7 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 		synchronized(audioFocusSync) {
 			audioFocusPromise.cancel()
 			audioFocusPromise.then {
-				it?.apply { AudioManagerCompat.abandonAudioFocusRequest(audioManager, this) }
+				it?.also(audioFocus::abandonAudioFocus)
 			}
 		}
 }

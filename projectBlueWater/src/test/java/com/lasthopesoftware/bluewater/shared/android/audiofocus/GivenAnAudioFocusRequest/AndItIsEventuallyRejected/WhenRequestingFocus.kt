@@ -1,11 +1,11 @@
-package com.lasthopesoftware.bluewater.client.playback.service.audiomanager.GivenAnAudioFocusRequest.AndItIsEventuallyRejected
+package com.lasthopesoftware.bluewater.shared.android.audiofocus.GivenAnAudioFocusRequest.AndItIsEventuallyRejected
 
 import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.UnableToGrantAudioFocusException
-import com.lasthopesoftware.bluewater.client.playback.service.audiomanager.promiseAudioFocus
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.UnableToGrantAudioFocusException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -27,7 +27,8 @@ class WhenRequestingFocus : AndroidContext() {
 			.setOnAudioFocusChangeListener {  }
 			.build()
 
-		val promisedAudioFocus = audioManager.promiseAudioFocus(request)
+		val audioFocusManagement = AudioFocusManagement(audioManager)
+		val promisedAudioFocus = audioFocusManagement.promiseAudioFocus(request)
 
 		try {
 			val internalListener = promisedAudioFocus as AudioManager.OnAudioFocusChangeListener
