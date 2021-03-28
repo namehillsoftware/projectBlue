@@ -1,8 +1,9 @@
-package com.lasthopesoftware.resources.notifications.notificationchannel;
+package com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel;
 
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
+
 import com.lasthopesoftware.bluewater.R;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;

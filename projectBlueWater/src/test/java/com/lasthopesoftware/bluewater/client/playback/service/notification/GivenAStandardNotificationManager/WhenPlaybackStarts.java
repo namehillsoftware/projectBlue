@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Notif
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
-import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;

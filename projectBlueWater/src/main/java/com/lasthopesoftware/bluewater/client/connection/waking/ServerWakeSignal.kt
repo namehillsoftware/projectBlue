@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.lasthopesoftware.bluewater.client.connection.SendPackets
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.delay
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.PromisePolicies
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
@@ -15,7 +15,7 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 		}
 
 		for (i in 6 until bytes.size step macBytes.size) {
-			System.arraycopy(macBytes, 0, bytes, i, macBytes.size);
+			System.arraycopy(macBytes, 0, bytes, i, macBytes.size)
 		}
 
 		return PromisePolicies.repeat({

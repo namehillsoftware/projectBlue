@@ -1,4 +1,4 @@
-package com.lasthopesoftware.resources.notifications.notificationchannel
+package com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel
 
 interface ChannelConfiguration {
 	val channelId: String

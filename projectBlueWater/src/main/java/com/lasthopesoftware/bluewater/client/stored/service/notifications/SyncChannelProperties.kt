@@ -4,7 +4,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration
+import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.ChannelConfiguration
 import com.namehillsoftware.lazyj.Lazy
 
 class SyncChannelProperties(private val context: Context) : ChannelConfiguration {

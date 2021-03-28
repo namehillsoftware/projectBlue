@@ -1,4 +1,4 @@
-package com.lasthopesoftware.resources.notifications.control;
+package com.lasthopesoftware.bluewater.shared.android.notifications.control;
 
 import android.app.Notification;
 import android.app.NotificationManager;
