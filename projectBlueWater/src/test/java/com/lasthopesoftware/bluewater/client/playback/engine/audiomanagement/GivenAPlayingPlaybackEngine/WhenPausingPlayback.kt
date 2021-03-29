@@ -1,11 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAPlayingPlaybackEngine
 
+import androidx.media.AudioFocusRequestCompat
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
-import io.mockk.verify
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 
@@ -13,9 +17,35 @@ class WhenPausingPlayback {
 
 	companion object Setup {
 
-		private val innerPlaybackState = mockk<ChangePlaybackState>(relaxed = true)
-		private val audioFocus = mockk<ControlAudioFocus>(relaxed = true)
+		private var isPaused = false
+		private var isAbandoned = false
 
+		private val innerPlaybackState = object : ChangePlaybackState {
+			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> {
+				return Unit.toPromise()
+			}
+
+			override fun resume(): Promise<Unit> {
+				return Unit.toPromise()
+			}
+
+			override fun pause(): Promise<Unit> {
+				isPaused = true
+				return Unit.toPromise()
+			}
+		}
+
+		private val audioFocus = object : ControlAudioFocus {
+			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> {
+				return audioFocusRequest.toPromise()
+			}
+
+			override fun abandonAudioFocus(audioFocusRequest: AudioFocusRequestCompat) {
+				isAbandoned = true
+			}
+		}
+
+		@JvmStatic
 		@BeforeClass
 		fun context() {
 			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
@@ -29,11 +59,11 @@ class WhenPausingPlayback {
 
 	@Test
 	fun thenAudioFocusIsReleased() {
-		verify { audioFocus.abandonAudioFocus(any()) }
+		assertThat(isAbandoned).isTrue
 	}
 
 	@Test
 	fun thenPlaybackIsPaused() {
-		verify { innerPlaybackState.pause() }
+		assertThat(isPaused).isTrue
 	}
 }
