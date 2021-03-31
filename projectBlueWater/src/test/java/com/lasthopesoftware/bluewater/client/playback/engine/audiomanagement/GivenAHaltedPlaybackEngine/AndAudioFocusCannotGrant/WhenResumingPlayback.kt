@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.ExecutionException
@@ -21,13 +21,17 @@ class WhenResumingPlayback {
 	companion object Setup {
 
 		private var isCancelled = false
+		private var isResumed = false
 		private var timeoutException: TimeoutException? = null
 
 		private val innerPlaybackState = object : ChangePlaybackState {
 			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> =
 				Unit.toPromise()
 
-			override fun resume(): Promise<Unit> = Unit.toPromise()
+			override fun resume(): Promise<Unit> {
+				isResumed = true
+				return Unit.toPromise()
+			}
 
 			override fun pause(): Promise<Unit> = Unit.toPromise()
 		}
@@ -57,11 +61,16 @@ class WhenResumingPlayback {
 
 	@Test
 	fun thenATimeoutOccursInternalToTheMethod() {
-		Assertions.assertThat(timeoutException?.message).isEqualTo("Unable to gain audio focus in 10s")
+		assertThat(timeoutException?.message).isEqualTo("Unable to gain audio focus in 10s")
 	}
 
 	@Test
-	fun thenPlaybackResumptionIsCancelled() {
-		Assertions.assertThat(isCancelled).isTrue
+	fun thenTheAudioFocusRequestIsCancelled() {
+		assertThat(isCancelled).isTrue
+	}
+
+	@Test
+	fun thenPlaybackIsNotResumed() {
+		assertThat(isResumed).isFalse
 	}
 }
