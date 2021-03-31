@@ -51,10 +51,6 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 				.unitResponse()
 	}
 
-	override fun close() {
-		abandonAudioFocus()
-	}
-
 	override fun onAudioFocusChange(focusChange: Int) {
 		if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 			// resume playback
@@ -75,6 +71,10 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 				// Lost focus for a short time, but it's ok to keep playing at an attenuated level
 				volumeManager.setVolume(0.2f)
 		}
+	}
+
+	override fun close() {
+		abandonAudioFocus()
 	}
 
 	private fun getNewAudioFocusRequest(): Promise<AudioFocusRequestCompat> =
