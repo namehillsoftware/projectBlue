@@ -54,8 +54,8 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronizati
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
-import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
+import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup

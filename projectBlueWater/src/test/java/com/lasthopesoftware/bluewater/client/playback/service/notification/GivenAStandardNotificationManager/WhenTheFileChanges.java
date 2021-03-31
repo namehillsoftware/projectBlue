@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.resources.notifications.control.ControlNotifications;
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
