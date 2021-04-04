@@ -13,11 +13,12 @@ import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.SeekParameters;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
+import com.google.android.exoplayer2.offline.StreamKey;
 import com.google.android.exoplayer2.source.BaseMediaSource;
 import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
+import com.google.android.exoplayer2.trackselection.ExoTrackSelection;
 import com.google.android.exoplayer2.upstream.Allocator;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.TransferListener;
@@ -37,7 +38,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.annotation.LooperMode;
 import org.robolectric.shadows.ShadowLooper;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -141,7 +142,7 @@ public class WhenPreparing extends AndroidContext {
 		}
 
 		@Override
-		public void maybeThrowSourceInfoRefreshError() throws IOException {
+		public void maybeThrowSourceInfoRefreshError() {
 
 		}
 
@@ -154,7 +155,7 @@ public class WhenPreparing extends AndroidContext {
 				}
 
 				@Override
-				public void maybeThrowPrepareError() throws IOException {
+				public void maybeThrowPrepareError() {
 
 				}
 
@@ -164,7 +165,12 @@ public class WhenPreparing extends AndroidContext {
 				}
 
 				@Override
-				public long selectTracks(TrackSelection[] selections, boolean[] mayRetainStreamFlags, SampleStream[] streams, boolean[] streamResetFlags, long positionUs) {
+				public List<StreamKey> getStreamKeys(List<ExoTrackSelection> trackSelections) {
+					return null;
+				}
+
+				@Override
+				public long selectTracks(ExoTrackSelection[] selections, boolean[] mayRetainStreamFlags, SampleStream[] streams, boolean[] streamResetFlags, long positionUs) {
 					return 0;
 				}
 
