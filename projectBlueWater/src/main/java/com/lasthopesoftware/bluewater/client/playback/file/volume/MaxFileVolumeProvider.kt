@@ -13,9 +13,6 @@ class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSetting
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(MaxFileVolumeProvider::class.java)
-		private const val MaxRelativeVolumeInDecibels = 23.0
-		private const val MaxAbsoluteVolumeInDecibels = 89.0
-		private const val MinComputedVolumeInDecibels = (MaxRelativeVolumeInDecibels - MaxAbsoluteVolumeInDecibels) / 10f
 		private const val UnityVolume = 1.0f
 		private val promisedUnityVolume = UnityVolume.toPromise()
 	}
