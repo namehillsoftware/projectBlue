@@ -1031,7 +1031,8 @@ open class PlaybackService : Service() {
 
 	private fun onPlaylistPlaybackComplete() {
 		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile!!.asPositionedFile())
-		killService(this)
+		isMarkedForPlay = false
+		stopSelf(startId)
 	}
 
 	override fun onDestroy() {

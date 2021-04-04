@@ -83,7 +83,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		private var isScreenKeptOn = false
 		private var viewStructure: ViewStructure? = null
 		private fun setRepeatingIcon(imageButton: ImageButton?, isRepeating: Boolean) {
-			imageButton?.setImageDrawable(ViewUtils.getDrawable(imageButton.context, if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
+			imageButton?.setImageDrawable(
+				ViewUtils.getDrawable(imageButton.context, if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
 		}
 	}
 
@@ -374,9 +375,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		setRepeatingIcon(imageButton, false)
 		lazyNowPlayingRepository.value
 			.nowPlaying
-			.eventually(LoopedInPromise.response<NowPlaying, Any?>({ result: NowPlaying? ->
+			.eventually(LoopedInPromise.response({ result ->
 				if (result != null) setRepeatingIcon(imageButton, result.isRepeating)
-				null
 			}, messageHandler.value))
 	}
 

@@ -1,60 +1,45 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import org.slf4j.LoggerFactory
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSettings, private val cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider) : ProvideMaxFileVolume {
 
-public class MaxFileVolumeProvider implements ProvideMaxFileVolume {
-
-	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumeProvider.class);
-
-	private static final float MaxRelativeVolumeInDecibels = 23;
-
-	private static final float MaxAbsoluteVolumeInDecibels = 89;
-
-	private static final float MaxComputedVolumeInDecibels = MaxAbsoluteVolumeInDecibels + MaxRelativeVolumeInDecibels;
-
-	private static final float UnityVolume = 1.0f;
-
-	private static final Promise<Float> promisedUnityVolume = new Promise<>(UnityVolume);
-
-	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
-	private final IVolumeLevelSettings volumeLevelSettings;
-
-	public MaxFileVolumeProvider(IVolumeLevelSettings volumeLevelSettings, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider) {
-		this.volumeLevelSettings = volumeLevelSettings;
-		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
+	companion object {
+		private val logger = LoggerFactory.getLogger(MaxFileVolumeProvider::class.java)
+		private const val MaxRelativeVolumeInDecibels = 23f
+		private const val MaxAbsoluteVolumeInDecibels = 89f
+		private const val MaxComputedVolumeInDecibels = MaxAbsoluteVolumeInDecibels + MaxRelativeVolumeInDecibels
+		private const val MinComputedVolumeInDecibels = (2 * (MaxRelativeVolumeInDecibels - MaxAbsoluteVolumeInDecibels)) / 10f
+		private const val UnityVolume = 1.0f
+		private val promisedUnityVolume = UnityVolume.toPromise()
 	}
 
-	@Override
-	public Promise<Float> promiseMaxFileVolume(ServiceFile serviceFile) {
-		if (!volumeLevelSettings.isVolumeLevellingEnabled())
-			return promisedUnityVolume;
+	override fun promiseMaxFileVolume(serviceFile: ServiceFile): Promise<Float> {
+		return if (!volumeLevelSettings.isVolumeLevellingEnabled) promisedUnityVolume else cachedSessionFilePropertiesProvider
+			.promiseFileProperties(serviceFile)
+			.then { fileProperties ->
+				if (!fileProperties.containsKey(KnownFileProperties.VolumeLevelR128)) return@then UnityVolume
 
-		return
-			cachedSessionFilePropertiesProvider
-				.promiseFileProperties(serviceFile)
-				.then(fileProperties -> {
-					if (!fileProperties.containsKey(KnownFileProperties.VolumeLevelR128))
-						return UnityVolume;
+				val r128VolumeLevelString = fileProperties[KnownFileProperties.VolumeLevelR128] ?: return@then UnityVolume
 
-					final String r128VolumeLevelString = fileProperties.get(KnownFileProperties.VolumeLevelR128);
-					try {
-						final float r128VolumeLevel = Float.parseFloat(r128VolumeLevelString);
-
-						final float normalizedVolumeLevel = MaxRelativeVolumeInDecibels - r128VolumeLevel;
-
-						return Math.min(1 - (normalizedVolumeLevel / MaxComputedVolumeInDecibels), UnityVolume);
-					} catch (NumberFormatException e) {
-						logger.info("There was an error attempting to parse the given R128 level of " + r128VolumeLevelString + ".", e);
-					}
-
-					return UnityVolume;
-				});
+				// Base formula on Vanilla Player formula - https://github.com/vanilla-music/vanilla/blob/5eb97409ec4db866d5008ee92d9765bf7cf4ec8c/app/src/main/java/ch/blinkenlights/android/vanilla/PlaybackService.java#L758
+				try {
+					val r128VolumeLevel = r128VolumeLevelString.toFloat()
+					val normalizedVolumeLevel = r128VolumeLevel + MinComputedVolumeInDecibels
+					return@then max(min(10f.pow(normalizedVolumeLevel / 20), UnityVolume), 0f)
+				} catch (e: NumberFormatException) {
+					logger.info("There was an error attempting to parse the given R128 level of $r128VolumeLevelString.", e)
+					UnityVolume
+				}
+			}
 	}
 }
