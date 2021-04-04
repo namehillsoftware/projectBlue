@@ -1,75 +1,61 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAStandardR128Volume;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAStandardR128Volume
 
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
+import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
+import java.util.*
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider;
-import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings;
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
+class WhenGettingTheMaxVolume {
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+	companion object {
+		private var returnedVolume = 0f
 
-import java.util.HashMap;
-import java.util.concurrent.CountDownLatch;
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val urlProvider = mockk<IUrlProvider>()
+			every { urlProvider.baseUrl } returns ""
+			val connectionProvider = mockk<IConnectionProvider>()
+			every { connectionProvider.urlProvider } returns urlProvider
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenGettingTheMaxVolume {
-
-	private static float returnedVolume;
-
-	@BeforeClass
-	public static void before() throws InterruptedException {
-		final IUrlProvider urlProvider = mock(IUrlProvider.class);
-		when(urlProvider.getBaseUrl()).thenReturn("");
-
-		final IConnectionProvider connectionProvider = mock(IConnectionProvider.class);
-		when(connectionProvider.getUrlProvider()).thenReturn(urlProvider);
-
-		final IFilePropertiesContainerRepository repository = mock(IFilePropertiesContainerRepository.class);
-		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(1))))
-			.thenReturn(new FilePropertiesContainer(0, new HashMap<String, String>() {{
-				put(KnownFileProperties.VolumeLevelR128, "-13.5");
-			}}));
-
-		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, repository);
-
-		final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
-			new CachedSessionFilePropertiesProvider(
+			val repository = Mockito.mock(IFilePropertiesContainerRepository::class.java)
+			Mockito.`when`(repository.getFilePropertiesContainer(UrlKeyHolder("", ServiceFile(1))))
+				.thenReturn(FilePropertiesContainer(0, object : HashMap<String?, String?>() {
+					init {
+						put(KnownFileProperties.VolumeLevelR128, "-13.5")
+					}
+				}))
+			val sessionFilePropertiesProvider = SessionFilePropertiesProvider(connectionProvider, repository)
+			val cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				repository,
-				sessionFilePropertiesProvider);
+				sessionFilePropertiesProvider)
 
-		final IVolumeLevelSettings volumeLevelSettings = mock(IVolumeLevelSettings.class);
-		when(volumeLevelSettings.isVolumeLevellingEnabled()).thenReturn(true);
+			val volumeLevelSettings = mockk<IVolumeLevelSettings>()
+			every { volumeLevelSettings.isVolumeLevellingEnabled } returns true
 
-		final MaxFileVolumeProvider maxFileVolumeProvider =
-			new MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider);
-
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		maxFileVolumeProvider
-			.promiseMaxFileVolume(new ServiceFile(1))
-			.then(volume -> {
-				returnedVolume = volume;
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+			val maxFileVolumeProvider = MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider)
+			returnedVolume = maxFileVolumeProvider.promiseMaxFileVolume(ServiceFile(1)).toFuture().get()!!
+		}
 	}
 
 	@Test
-	public void thenTheReturnedVolumeIsCorrect() {
-		assertThat(returnedVolume).isCloseTo(.674107143f, offset(.00001f));
+	fun thenTheReturnedVolumeIsCorrect() {
+		Assertions.assertThat(returnedVolume).isCloseTo(.0462381f, Assertions.offset(.00001f))
 	}
 }
