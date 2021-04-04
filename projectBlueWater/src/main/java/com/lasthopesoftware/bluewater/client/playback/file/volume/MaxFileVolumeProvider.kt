@@ -34,8 +34,8 @@ class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSetting
 				// Base formula on Vanilla Player formula - https://github.com/vanilla-music/vanilla/blob/5eb97409ec4db866d5008ee92d9765bf7cf4ec8c/app/src/main/java/ch/blinkenlights/android/vanilla/PlaybackService.java#L758
 				try {
 					val r128VolumeLevel = r128VolumeLevelString.toFloat()
-					val normalizedVolumeLevel = r128VolumeLevel + MinComputedVolumeInDecibels
-					return@then max(min(10f.pow(normalizedVolumeLevel / 20), UnityVolume), 0f)
+					val gain = r128VolumeLevel + MinComputedVolumeInDecibels
+					return@then max(min(10f.pow(gain / 20), UnityVolume), 0f)
 				} catch (e: NumberFormatException) {
 					logger.info("There was an error attempting to parse the given R128 level of $r128VolumeLevelString.", e)
 					UnityVolume

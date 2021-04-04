@@ -444,7 +444,6 @@ open class PlaybackService : Service() {
 	private var playbackState: ChangePlaybackState? = null
 	private var playlistPosition: ChangePlaylistPosition? = null
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
-	private var cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider? = null
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 	private var filePositionSubscription: Disposable? = null
 	private var playlistPlaybackBootstrapper: PlaylistPlaybackBootstrapper? = null
@@ -682,7 +681,7 @@ open class PlaybackService : Service() {
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
 
-			cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
+			val cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				FilePropertyCache.getInstance(),
 				SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()))
