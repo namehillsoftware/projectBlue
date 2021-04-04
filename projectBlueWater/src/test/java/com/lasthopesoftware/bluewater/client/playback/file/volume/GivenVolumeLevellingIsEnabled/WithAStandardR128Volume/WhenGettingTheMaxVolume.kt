@@ -56,6 +56,6 @@ class WhenGettingTheMaxVolume {
 
 	@Test
 	fun thenTheReturnedVolumeIsCorrect() {
-		Assertions.assertThat(returnedVolume).isCloseTo(.0462381f, Assertions.offset(.00001f))
+		Assertions.assertThat(returnedVolume).isCloseTo(.09885531f, Assertions.offset(.00001f))
 	}
 }
