@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAStandardR128Volume
+package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAStandardAdjustment
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider
@@ -37,7 +37,7 @@ class WhenGettingTheMaxVolume {
 			Mockito.`when`(repository.getFilePropertiesContainer(UrlKeyHolder("", ServiceFile(1))))
 				.thenReturn(FilePropertiesContainer(0, object : HashMap<String?, String?>() {
 					init {
-						put(KnownFileProperties.VolumeLevelR128, "-13.5")
+						put(KnownFileProperties.VolumeLevelReplayGain, "-13.5")
 					}
 				}))
 			val sessionFilePropertiesProvider = SessionFilePropertiesProvider(connectionProvider, repository)
@@ -56,6 +56,6 @@ class WhenGettingTheMaxVolume {
 
 	@Test
 	fun thenTheReturnedVolumeIsCorrect() {
-		Assertions.assertThat(returnedVolume).isCloseTo(.09885531f, Assertions.offset(.00001f))
+		Assertions.assertThat(returnedVolume).isCloseTo(.2113489f, Assertions.offset(.00001f))
 	}
 }
