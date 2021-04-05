@@ -30,7 +30,7 @@ class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSetting
 					val peakGainVolumeLevel = peakGainString.toDouble()
 					return@then 10.0.pow(peakGainVolumeLevel / 20.0).toFloat().coerceIn(0f, UnityVolume)
 				} catch (e: NumberFormatException) {
-					logger.info("There was an error attempting to parse the given R128 level of $peakGainString.", e)
+					logger.info("There was an error attempting to parse the given '${KnownFileProperties.VolumeLevelReplayGain}' level of $peakGainString.", e)
 					UnityVolume
 				}
 			}
