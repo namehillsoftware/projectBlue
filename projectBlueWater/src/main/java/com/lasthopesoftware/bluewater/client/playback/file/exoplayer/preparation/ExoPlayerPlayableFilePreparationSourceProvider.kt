@@ -21,11 +21,13 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 		private val maxBufferMs = lazy { Minutes.minutes(5).toStandardDuration().millis.toInt() }
 		private val loadControl = lazy {
 			val builder = DefaultLoadControl.Builder()
-			builder.setBufferDurationsMs(
-				DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-				maxBufferMs.value,
-				DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-				DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+			builder
+				.setBufferDurationsMs(
+					DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
+					maxBufferMs.value,
+					DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+					DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+				.setPrioritizeTimeOverSizeThresholds(true)
 			builder.build()
 		}
 	}

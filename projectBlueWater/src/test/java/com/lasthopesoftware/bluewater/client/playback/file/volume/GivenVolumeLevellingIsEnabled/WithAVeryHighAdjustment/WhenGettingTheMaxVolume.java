@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAVeryHighR128Level;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAVeryHighAdjustment;
 
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
@@ -38,7 +38,7 @@ public class WhenGettingTheMaxVolume {
 		final IFilePropertiesContainerRepository repository = mock(IFilePropertiesContainerRepository.class);
 		when(repository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(1))))
 			.thenReturn(new FilePropertiesContainer(0, new HashMap<String, String>() {{
-				put(KnownFileProperties.VolumeLevelR128, "25");
+				put(KnownFileProperties.VolumeLevelReplayGain, "25");
 			}}));
 
 		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, repository);
