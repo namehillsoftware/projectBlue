@@ -37,7 +37,7 @@ class WhenGettingTheMaxVolume {
 			Mockito.`when`(repository.getFilePropertiesContainer(UrlKeyHolder("", ServiceFile(1))))
 				.thenReturn(FilePropertiesContainer(0, object : HashMap<String?, String?>() {
 					init {
-						put(KnownFileProperties.VolumeLevelR128, "-13.5")
+						put(KnownFileProperties.VolumeLevelReplayGain, "-13.5")
 					}
 				}))
 			val sessionFilePropertiesProvider = SessionFilePropertiesProvider(connectionProvider, repository)

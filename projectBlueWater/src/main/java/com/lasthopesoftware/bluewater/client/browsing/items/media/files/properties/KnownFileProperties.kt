@@ -30,6 +30,7 @@ object KnownFileProperties {
 	const val FILE_SIZE = "File Size"
 	const val DATE = "Date"
 	const val VolumeLevelR128 = "Volume Level (R128)"
+	const val VolumeLevelReplayGain = "Volume Level (ReplayGain)"
 	const val PeakGain = "replaygain_track_peak"
 	const val WAVEFORM = "Waveform"
 }

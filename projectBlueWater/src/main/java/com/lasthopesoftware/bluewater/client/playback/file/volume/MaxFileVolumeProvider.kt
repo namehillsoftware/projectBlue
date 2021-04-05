@@ -21,16 +21,16 @@ class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSetting
 		return if (!volumeLevelSettings.isVolumeLevellingEnabled) promisedUnityVolume else cachedSessionFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.then { fileProperties ->
-				if (!fileProperties.containsKey(KnownFileProperties.VolumeLevelR128)) return@then UnityVolume
+				if (!fileProperties.containsKey(KnownFileProperties.VolumeLevelReplayGain)) return@then UnityVolume
 
-				val r128VolumeLevelString = fileProperties[KnownFileProperties.VolumeLevelR128] ?: return@then UnityVolume
+				val peakGainString = fileProperties[KnownFileProperties.VolumeLevelReplayGain] ?: return@then UnityVolume
 
 				// Base formula on Vanilla Player formula - https://github.com/vanilla-music/vanilla/blob/5eb97409ec4db866d5008ee92d9765bf7cf4ec8c/app/src/main/java/ch/blinkenlights/android/vanilla/PlaybackService.java#L758
 				try {
-					val r128VolumeLevel = r128VolumeLevelString.toDouble()
-					return@then 10.0.pow(r128VolumeLevel / 20.0).toFloat().coerceIn(0f, UnityVolume)
+					val peakGainVolumeLevel = peakGainString.toDouble()
+					return@then 10.0.pow(peakGainVolumeLevel / 20.0).toFloat().coerceIn(0f, UnityVolume)
 				} catch (e: NumberFormatException) {
-					logger.info("There was an error attempting to parse the given R128 level of $r128VolumeLevelString.", e)
+					logger.info("There was an error attempting to parse the given R128 level of $peakGainString.", e)
 					UnityVolume
 				}
 			}
