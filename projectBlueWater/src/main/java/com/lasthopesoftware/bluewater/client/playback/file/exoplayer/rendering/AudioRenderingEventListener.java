@@ -21,13 +21,6 @@ implements
 	}
 
 	@Override
-	public void onAudioSessionId(int sessionId) {
-		if (!logger.isDebugEnabled()) return;
-
-		logger.debug("Audio session ID changed to " + sessionId);
-	}
-
-	@Override
 	public void onAudioDecoderInitialized(String decoderName, long initializedTimestampMs,
 										  long initializationDurationMs) {
 		if (!logger.isDebugEnabled()) return;
