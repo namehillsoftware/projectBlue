@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity;
-import com.lasthopesoftware.resources.notifications.ProduceNotificationBuilders;
+import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 

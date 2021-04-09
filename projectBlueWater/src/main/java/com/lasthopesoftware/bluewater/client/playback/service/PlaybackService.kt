@@ -86,6 +86,12 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSetting
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
+import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
+import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
+import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.observe
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -93,11 +99,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.CloseableManager
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
-import com.lasthopesoftware.resources.notifications.NoOpChannelActivator
-import com.lasthopesoftware.resources.notifications.NotificationBuilderProducer
-import com.lasthopesoftware.resources.notifications.control.NotificationsController
-import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator
-import com.lasthopesoftware.resources.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -443,7 +444,6 @@ open class PlaybackService : Service() {
 	private var playbackState: ChangePlaybackState? = null
 	private var playlistPosition: ChangePlaylistPosition? = null
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
-	private var cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider? = null
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 	private var filePositionSubscription: Disposable? = null
 	private var playlistPlaybackBootstrapper: PlaylistPlaybackBootstrapper? = null
@@ -681,7 +681,7 @@ open class PlaybackService : Service() {
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
 
-			cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
+			val cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				FilePropertyCache.getInstance(),
 				SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()))
@@ -817,7 +817,7 @@ open class PlaybackService : Service() {
 				playbackEngineCloseables.manage(engine)
 				playbackState = AudioManagingPlaybackStateChanger(
 					engine,
-					audioManagerLazy.value,
+					AudioFocusManagement(audioManagerLazy.value),
 					lazyPlaylistVolumeManager.value)
 					.also(playbackEngineCloseables::manage)
 				engine
@@ -1029,7 +1029,8 @@ open class PlaybackService : Service() {
 
 	private fun onPlaylistPlaybackComplete() {
 		lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop, lazyChosenLibraryIdentifierProvider.value.selectedLibraryId, positionedPlayingFile!!.asPositionedFile())
-		killService(this)
+		isMarkedForPlay = false
+		stopSelf(startId)
 	}
 
 	override fun onDestroy() {

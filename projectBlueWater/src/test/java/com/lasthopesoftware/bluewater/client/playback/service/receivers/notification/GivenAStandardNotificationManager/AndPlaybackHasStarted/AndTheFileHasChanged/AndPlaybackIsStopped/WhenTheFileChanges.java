@@ -20,8 +20,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Notif
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController;
 import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
-import com.lasthopesoftware.resources.notifications.control.NotificationsController;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;

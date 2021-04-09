@@ -7,8 +7,8 @@ import android.os.Build;
 import androidx.annotation.RequiresApi;
 import androidx.test.core.app.ApplicationProvider;
 
-import com.lasthopesoftware.resources.notifications.notificationchannel.ChannelConfiguration;
-import com.lasthopesoftware.resources.notifications.notificationchannel.NotificationChannelActivator;
+import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.ChannelConfiguration;
+import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator;
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
