@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -21,7 +22,7 @@ class WhenStartingANewPlaylist {
 		private var request: AudioFocusRequestCompat? = null
 
 		private val innerPlaybackState = object : ChangePlaybackState {
-			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> {
+			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 				isStarted = true
 				return Unit.toPromise()
 			}
@@ -49,7 +50,7 @@ class WhenStartingANewPlaylist {
 				mockk(relaxed = true))
 
 			audioManagingPlaybackStateChanger
-				.startPlaylist(ArrayList(), 0, 0)
+				.startPlaylist(ArrayList(), 0, Duration.ZERO)
 				.toFuture()
 				.get(20, TimeUnit.SECONDS)
 		}

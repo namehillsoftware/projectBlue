@@ -13,6 +13,7 @@ import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
 import junit.framework.Assert;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -60,7 +61,7 @@ public class WhenTheQueueIsStarted {
 	@Test
 	public void thenTheQueueStartsAtTheCorrectPosition() {
 		queue
-			.promiseNextPreparedPlaybackFile(0)
+			.promiseNextPreparedPlaybackFile(Duration.ZERO)
 			.then(new VoidResponse<>(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
 	}
 

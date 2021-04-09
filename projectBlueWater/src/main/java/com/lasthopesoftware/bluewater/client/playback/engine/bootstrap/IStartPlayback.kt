@@ -1,10 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.bootstrap;
+package com.lasthopesoftware.bluewater.client.playback.engine.bootstrap
 
-import com.lasthopesoftware.bluewater.client.playback.engine.IActivePlayer;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.IActivePlayer
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import org.joda.time.Duration
 
-import java.io.IOException;
-
-public interface IStartPlayback {
-	IActivePlayer startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException;
+interface IStartPlayback {
+	fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): IActivePlayer
 }

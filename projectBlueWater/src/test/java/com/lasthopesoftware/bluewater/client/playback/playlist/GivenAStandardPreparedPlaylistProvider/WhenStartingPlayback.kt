@@ -35,14 +35,14 @@ class WhenStartingPlayback {
 			NoTransformVolumeManager(),
 			ServiceFile(1)))
 		val preparedPlaybackFileQueue = Mockito.mock(PreparedPlayableFileQueue::class.java)
-		Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
+		Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(null)
-		Observable.create(PlaylistPlayer(preparedPlaybackFileQueue, 0))
+		Observable.create(PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO))
 			.toList().subscribe { positionedPlayingFiles -> this.positionedPlayingFiles = positionedPlayingFiles }
 	}
 

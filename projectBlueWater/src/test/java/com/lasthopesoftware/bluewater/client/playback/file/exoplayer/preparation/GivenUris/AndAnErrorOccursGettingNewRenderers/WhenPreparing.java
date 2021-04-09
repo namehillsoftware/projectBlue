@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class WhenPreparing {
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
 				new ServiceFile(1),
-				0);
+				Duration.ZERO);
 
 		try {
 			new FuturePromise<>(promisedPreparedFile).get(1, TimeUnit.SECONDS);

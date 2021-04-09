@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -72,7 +73,7 @@ public class WhenPlaybackIsPausedAndRestarted {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)), 0, Duration.ZERO);
 
 		final ResolvablePlaybackHandler playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
 		resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();

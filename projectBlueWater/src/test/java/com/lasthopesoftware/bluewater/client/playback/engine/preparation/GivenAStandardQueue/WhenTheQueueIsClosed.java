@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -30,7 +31,7 @@ public class WhenTheQueueIsClosed {
 				(file, preparedAt) -> cancelRecordingPromise,
 				bufferingPlaybackQueuesProvider.provideQueue(Collections.singletonList(new ServiceFile(1)), 0));
 
-		queue.promiseNextPreparedPlaybackFile(0);
+		queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
 
 		queue.close();
 	}

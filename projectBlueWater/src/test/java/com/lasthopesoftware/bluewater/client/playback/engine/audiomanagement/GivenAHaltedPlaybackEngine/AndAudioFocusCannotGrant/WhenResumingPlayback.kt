@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.ExecutionException
@@ -25,7 +26,7 @@ class WhenResumingPlayback {
 		private var timeoutException: TimeoutException? = null
 
 		private val innerPlaybackState = object : ChangePlaybackState {
-			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> =
+			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
 				Unit.toPromise()
 
 			override fun resume(): Promise<Unit> {

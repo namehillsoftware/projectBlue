@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
+import org.joda.time.Duration;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.robolectric.annotation.Config;
@@ -79,7 +80,7 @@ public class WhenPreparing extends AndroidContext {
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
 				new ServiceFile(1),
-				0);
+				Duration.ZERO);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 

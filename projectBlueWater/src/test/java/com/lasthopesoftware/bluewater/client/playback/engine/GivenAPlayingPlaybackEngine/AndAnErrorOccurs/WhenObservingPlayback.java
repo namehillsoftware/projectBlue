@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -74,7 +75,7 @@ public class WhenObservingPlayback {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)), 0, Duration.ZERO);
 
 		deferredErrorPlaybackPreparer.resolve();
 	}
@@ -94,7 +95,7 @@ public class WhenObservingPlayback {
 		}
 
 		@Override
-		public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
+		public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, Duration preparedAt) {
 			return new Promise<>(messenger -> reject = messenger);
 		}
 	}

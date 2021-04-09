@@ -6,8 +6,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
 
+import org.joda.time.Duration;
+
 import java.io.Closeable;
-import java.io.IOException;
 
 public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Closeable {
 
@@ -21,7 +22,7 @@ public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Close
 	}
 
 	@Override
-	public IActivePlayer startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final long filePosition) throws IOException {
+	public IActivePlayer startPlayback(PreparedPlayableFileQueue preparedPlaybackQueue, final Duration filePosition) {
 		close();
 
 		playlistPlayer = new PlaylistPlayer(preparedPlaybackQueue, filePosition);
@@ -31,7 +32,7 @@ public final class PlaylistPlaybackBootstrapper implements IStartPlayback, Close
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		if (activePlayer != null) activePlayer.close();
 		if (playlistPlayer != null)	playlistPlayer.close();
 	}

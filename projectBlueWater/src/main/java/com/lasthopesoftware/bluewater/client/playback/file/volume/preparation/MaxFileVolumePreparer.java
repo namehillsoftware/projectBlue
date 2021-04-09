@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFile
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ public class MaxFileVolumePreparer implements PlayableFilePreparationSource {
 	}
 
 	@Override
-	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
+	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, Duration preparedAt) {
 		final Promise<Float> promisedMaxFileVolume = provideMaxFileVolume.promiseMaxFileVolume(serviceFile);
 
 		return playableFilePreparationSource

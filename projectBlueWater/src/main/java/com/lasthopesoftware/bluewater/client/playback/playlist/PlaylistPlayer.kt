@@ -9,11 +9,12 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.ObservableEmitter
+import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.IOException
 
-class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableFileQueue, private val preparedPosition: Long) : IPlaylistPlayer, Closeable {
+class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableFileQueue, private val preparedPosition: Duration) : IPlaylistPlayer, Closeable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PlaylistPlayer::class.java)
@@ -92,7 +93,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableF
 			?: Promise(IllegalStateException("A file must not be playing in order to resume"))
 	}
 
-	private fun setupNextPreparedFile(preparedPosition: Long = 0) {
+	private fun setupNextPreparedFile(preparedPosition: Duration = Duration.ZERO) {
 		val preparingPlaybackFile = preparedPlaybackFileProvider
 			.promiseNextPreparedPlaybackFile(preparedPosition)
 
