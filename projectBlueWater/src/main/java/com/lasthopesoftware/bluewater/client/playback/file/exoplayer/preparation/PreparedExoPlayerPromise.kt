@@ -82,6 +82,7 @@ internal class PreparedExoPlayerPromise(
 			.then {
 				if (!cancellationToken.isCancelled) {
 					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
+					mediaSource.addEventListener(eventHandler, this)
 					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource)
 					bufferingExoPlayer = newBufferingExoPlayer
 					newExoPlayer
