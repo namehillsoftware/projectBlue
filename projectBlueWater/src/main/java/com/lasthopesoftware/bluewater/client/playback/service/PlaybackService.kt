@@ -92,7 +92,9 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationB
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.observe
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -129,6 +131,8 @@ open class PlaybackService : Service() {
 
 		private const val numberOfErrors = 5
 		private val errorLatchResetDuration = Duration.standardSeconds(3)
+
+		private val playbackStartTimeout = Duration.standardMinutes(2)
 
 		@JvmStatic
 		fun launchMusicService(context: Context, serializedFileList: String?) =
@@ -559,10 +563,15 @@ open class PlaybackService : Service() {
 			return START_NOT_STICKY
 		}
 
-		lazySelectedLibraryProvider.value.browserLibrary
-			.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
-			.eventually { it?.let { actOnIntent(intent) } ?: Promise.empty() }
+		val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
+		val promisedIntentHandling = lazySelectedLibraryProvider.value.browserLibrary
+			.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
+			.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
+			.must { promisedTimeout.cancel() }
+
+		val timeoutResponse = promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
+		Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		return START_NOT_STICKY
 	}
 
@@ -874,6 +883,7 @@ open class PlaybackService : Service() {
 			is TimeoutException -> handleTimeoutException(exception)
 			else -> {
 				logger.error("An unexpected error has occurred!", exception)
+				UnexpectedExceptionToaster.announce(this, exception)
 				stopSelf(startId)
 			}
 		}
@@ -1103,4 +1113,6 @@ open class PlaybackService : Service() {
 			val filePosition = magicPropertyBuilder.buildProperty("filePosition")
 		}
 	}
+
+	private class UninitializedPlaybackEngineException : PlaybackEngineInitializationException("The playback engine did not properly initialize")
 }
