@@ -42,7 +42,8 @@ public class WhenPreparing {
 			mock(Handler.class),
 			mock(Handler.class),
 			mock(Handler.class),
-			(sf) -> new Promise<>(mock(Uri.class)));
+			(sf) -> new Promise<>(mock(Uri.class)),
+			() -> Duration.standardSeconds(1));
 
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
