@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 import org.joda.time.Duration
 
 object DefaultExoPlayerPreparationConfiguration : ConfigureExoPlayerPreparation {
-	private val staticTimeout = Duration.standardMinutes(1)
+	private val staticTimeout = Duration.standardSeconds(45)
 
 	override val preparationTimeout: Duration
 		get() = staticTimeout
