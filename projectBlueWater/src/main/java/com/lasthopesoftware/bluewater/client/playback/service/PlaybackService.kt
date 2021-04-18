@@ -93,6 +93,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.control.Notif
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.observe
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -113,6 +114,7 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 open class PlaybackService : Service() {
 
@@ -128,6 +130,8 @@ open class PlaybackService : Service() {
 
 		private const val numberOfErrors = 5
 		private val errorLatchResetDuration = Duration.standardSeconds(3)
+
+		private val playbackStartTimeout = Duration.standardMinutes(1)
 
 		@JvmStatic
 		fun launchMusicService(context: Context, serializedFileList: String?) =
@@ -558,12 +562,15 @@ open class PlaybackService : Service() {
 			return START_NOT_STICKY
 		}
 
-		lazySelectedLibraryProvider.value.browserLibrary
-			.eventually {
-				it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty()
-			}
+		val promisedTimeout = delay<Any?>(playbackStartTimeout)
+
+		val promisedIntentHandling = lazySelectedLibraryProvider.value.browserLibrary
+			.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
 			.eventually { it?.let { actOnIntent(intent) } ?: Promise.empty() }
-			.excuse(unhandledRejectionHandler)
+			.must { promisedTimeout.cancel() }
+
+		val timeoutResponse = promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
+		Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		return START_NOT_STICKY
 	}
 
@@ -872,6 +879,7 @@ open class PlaybackService : Service() {
 			is IOException -> handleIoException(exception)
 			is ExoPlaybackException -> handleExoPlaybackException(exception)
 			is PlaybackException -> handlePlaybackException(exception)
+			is TimeoutException -> handleTimeoutException(exception)
 			else -> {
 				logger.error("An unexpected error has occurred!", exception)
 				stopSelf(startId)
@@ -930,6 +938,11 @@ open class PlaybackService : Service() {
 
 		logger.error("An IO exception occurred during playback", exception)
 		handleDisconnection()
+	}
+
+	private fun handleTimeoutException(exception: TimeoutException) {
+		logger.warn("A timeout occurred during playback, will attempt restarting the player", exception)
+		closeAndRestartPlaylistManager(exception)
 	}
 
 	private fun handleDisconnection() {
