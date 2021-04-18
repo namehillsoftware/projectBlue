@@ -5,7 +5,7 @@ import android.net.Uri
 import android.os.Handler
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
-import com.google.android.exoplayer2.source.*
+import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HandlerDispatchingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
@@ -37,8 +37,7 @@ internal class PreparedExoPlayerPromise(
 	Promise<PreparedPlayableFile>(),
 	Player.EventListener,
 	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
-	Runnable,
-	MediaSourceEventListener {
+	Runnable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java)
@@ -82,11 +81,11 @@ internal class PreparedExoPlayerPromise(
 			.then {
 				if (!cancellationToken.isCancelled) {
 					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
-					mediaSource.addEventListener(eventHandler, this)
 					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource)
 					bufferingExoPlayer = newBufferingExoPlayer
 					newExoPlayer
 						.setMediaSource(mediaSource, prepareAt.millis)
+						.eventually { newExoPlayer.seekTo(prepareAt.millis) }
 						.eventually { newExoPlayer.prepare() }
 						.then { newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError) }
 				}
@@ -99,10 +98,10 @@ internal class PreparedExoPlayerPromise(
 		reject(CancellationException())
 	}
 
-	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {}
-
-	override fun onLoadCompleted(windowIndex: Int, mediaPeriodId: MediaSource.MediaPeriodId?, loadEventInfo: LoadEventInfo, mediaLoadData: MediaLoadData) {
+	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
 		if (isResolved || cancellationToken.isCancelled) return
+
+		if (playbackState != Player.STATE_READY) return
 
 		val exoPlayer = exoPlayer ?: return
 
