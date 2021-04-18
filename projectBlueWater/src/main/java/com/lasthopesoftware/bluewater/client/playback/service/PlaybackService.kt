@@ -93,7 +93,6 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.control.Notif
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.observe
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -130,8 +129,6 @@ open class PlaybackService : Service() {
 
 		private const val numberOfErrors = 5
 		private val errorLatchResetDuration = Duration.standardSeconds(3)
-
-		private val playbackStartTimeout = Duration.standardMinutes(1)
 
 		@JvmStatic
 		fun launchMusicService(context: Context, serializedFileList: String?) =
@@ -562,15 +559,10 @@ open class PlaybackService : Service() {
 			return START_NOT_STICKY
 		}
 
-		val promisedTimeout = delay<Any?>(playbackStartTimeout)
-
-		val promisedIntentHandling = lazySelectedLibraryProvider.value.browserLibrary
+		lazySelectedLibraryProvider.value.browserLibrary
 			.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
 			.eventually { it?.let { actOnIntent(intent) } ?: Promise.empty() }
-			.must { promisedTimeout.cancel() }
 
-		val timeoutResponse = promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
-		Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		return START_NOT_STICKY
 	}
 

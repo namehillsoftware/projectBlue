@@ -44,5 +44,6 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 		playbackHandler,
 		playbackControlHandler,
 		eventHandler,
-		bestMatchUriProvider)
+		bestMatchUriProvider,
+		DefaultExoPlayerPreparationConfiguration)
 }

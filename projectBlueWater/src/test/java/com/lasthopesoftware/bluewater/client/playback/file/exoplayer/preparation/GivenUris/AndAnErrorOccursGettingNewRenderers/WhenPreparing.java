@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -41,7 +42,8 @@ public class WhenPreparing {
 			mock(Handler.class),
 			mock(Handler.class),
 			mock(Handler.class),
-			(sf) -> new Promise<>(mock(Uri.class)));
+			(sf) -> new Promise<>(mock(Uri.class)),
+			() -> Duration.standardSeconds(1));
 
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
