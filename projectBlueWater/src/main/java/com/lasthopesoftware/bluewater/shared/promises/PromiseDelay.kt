@@ -11,9 +11,7 @@ class PromiseDelay<Response> private constructor(delay: Duration) : Promise<Resp
 	companion object {
 		private val delayScheduler = lazy { Executors.newScheduledThreadPool(0) }
 		@JvmStatic
-		fun <Response> delay(delay: Duration): Promise<Response> {
-			return PromiseDelay(delay)
-		}
+		fun <Response> delay(delay: Duration): Promise<Response> = PromiseDelay(delay)
 	}
 
 	init {

@@ -13,7 +13,6 @@ import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.SeekParameters;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
-import com.google.android.exoplayer2.offline.StreamKey;
 import com.google.android.exoplayer2.source.BaseMediaSource;
 import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.SampleStream;
@@ -32,13 +31,13 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
+import org.joda.time.Duration;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.LooperMode;
 import org.robolectric.shadows.ShadowLooper;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +73,8 @@ public class WhenPreparing extends AndroidContext {
 			new Handler(Looper.getMainLooper()),
 			new Handler(Looper.getMainLooper()),
 			new Handler(Looper.getMainLooper()),
-			(sf) -> new Promise<>(Uri.EMPTY));
+			(sf) -> new Promise<>(Uri.EMPTY),
+			() -> Duration.ZERO);
 
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
@@ -162,11 +162,6 @@ public class WhenPreparing extends AndroidContext {
 				@Override
 				public TrackGroupArray getTrackGroups() {
 					return new TrackGroupArray();
-				}
-
-				@Override
-				public List<StreamKey> getStreamKeys(List<ExoTrackSelection> trackSelections) {
-					return null;
 				}
 
 				@Override
