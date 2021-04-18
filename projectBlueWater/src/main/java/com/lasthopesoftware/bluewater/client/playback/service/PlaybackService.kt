@@ -121,7 +121,6 @@ open class PlaybackService : Service() {
 		private val mediaSessionTag = buildMagicPropertyName(PlaybackService::class.java, "mediaSessionTag")
 
 		private const val playingNotificationId = 42
-		private const val startingNotificationId = 53
 		private const val connectingNotificationId = 70
 
 		private const val numberOfDisconnects = 3
@@ -501,13 +500,6 @@ open class PlaybackService : Service() {
 		if (!isMarkedForPlay) lazyNotificationController.value.removeNotification(playingNotificationId)
 	}
 
-	private fun notifyStartingService(): Promise<Unit> =
-		lazyPlaybackStartingNotificationBuilder.value
-			.promisePreparedPlaybackStartingNotification()
-			.then { b ->
-				lazyNotificationController.value.notifyForeground(b.build(), startingNotificationId)
-			}
-
 	private fun registerRemoteClientControl() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			lazyMediaSession.getObject().isActive = true
@@ -566,16 +558,11 @@ open class PlaybackService : Service() {
 			return START_NOT_STICKY
 		}
 
-		notifyStartingService()
-			.eventually { lazySelectedLibraryProvider.value.browserLibrary }
+		lazySelectedLibraryProvider.value.browserLibrary
 			.eventually {
-				if (it != null)
-					initializePlaybackPlaylistStateManagerSerially(it)
-				else
-					Promise.empty()
+				it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty()
 			}
-			.eventually { actOnIntent(intent) }
-			.must { lazyNotificationController.value.removeNotification(startingNotificationId) }
+			.eventually { it?.let { actOnIntent(intent) } ?: Promise.empty() }
 			.excuse(unhandledRejectionHandler)
 		return START_NOT_STICKY
 	}
