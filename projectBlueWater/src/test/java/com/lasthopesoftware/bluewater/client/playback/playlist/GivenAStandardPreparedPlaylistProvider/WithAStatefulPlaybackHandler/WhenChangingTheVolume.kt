@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions
+import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 import org.mockito.Mockito
@@ -31,9 +32,9 @@ class WhenChangingTheVolume {
 				volumeManager,
 				ServiceFile(1)))
 			val preparedPlaybackFileQueue = Mockito.mock(PreparedPlayableFileQueue::class.java)
-			Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
+			Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
 				.thenReturn(positionedPlaybackHandlerContainer)
-			val playlistPlayback: IPlaylistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, 0)
+			val playlistPlayback: IPlaylistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 			Observable.create(playlistPlayback).subscribe()
 			playlistPlayback.setVolume(0.8f)
 		}

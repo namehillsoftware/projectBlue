@@ -11,6 +11,7 @@ import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.MessengerOperator;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -59,7 +60,7 @@ public class WhenTheQueueIsConsumed {
 
 		for (int i = 0; i < expectedNumberAbsolutePromises; i++) {
 			final Promise<PositionedPlayableFile> positionedPlaybackFilePromise =
-				queue.promiseNextPreparedPlaybackFile(0);
+				queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
 
 			if (positionedPlaybackFilePromise != null)
 				++returnedPromiseCount;

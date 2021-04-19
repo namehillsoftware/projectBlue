@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPla
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -49,8 +50,8 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 				(file, preparedAt) -> new Promise<>(new FakePreparedPlayableFile<>(new FakeBufferingPlaybackHandler())),
 				positionedFileQueue);
 
-		queue.promiseNextPreparedPlaybackFile(0);
-		queue.promiseNextPreparedPlaybackFile(0);
+		queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
+		queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
 
 		final IPositionedFileQueue newPositionedFileQueue = mock(IPositionedFileQueue.class);
 		when(newPositionedFileQueue.poll())
@@ -64,18 +65,18 @@ public class WhenSwitchingQueuesAndGettingTheNextFile {
 		queue.updateQueue(newPositionedFileQueue);
 
 		queue
-			.promiseNextPreparedPlaybackFile(0)
+			.promiseNextPreparedPlaybackFile(Duration.ZERO)
 			.eventually(file -> {
 				playedFiles.add(file);
-				return queue.promiseNextPreparedPlaybackFile(0);
+				return queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
 			})
 			.eventually(file -> {
 				playedFiles.add(file);
-				return queue.promiseNextPreparedPlaybackFile(0);
+				return queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
 			})
 			.eventually(file -> {
 				playedFiles.add(file);
-				return queue.promiseNextPreparedPlaybackFile(0);
+				return queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
 			})
 			.eventually(file -> {
 				playedFiles.add(file);

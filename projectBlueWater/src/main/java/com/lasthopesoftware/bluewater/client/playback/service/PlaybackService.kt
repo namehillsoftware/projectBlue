@@ -604,7 +604,7 @@ open class PlaybackService : Service() {
 				val filePosition = intent.getIntExtra(Bag.startPos, -1)
 				if (filePosition < 0) return Unit.toPromise()
 				return playbackPosition
-					.changePosition(playlistPosition, filePosition)
+					.changePosition(playlistPosition, Duration.millis(filePosition.toLong()))
 					.then(::broadcastChangedFile)
 			}
 			Action.addFileToPlaylist -> {
@@ -643,7 +643,7 @@ open class PlaybackService : Service() {
 				val promiseStartedPlaylist = playbackState.startPlaylist(
 					playlist.toMutableList(),
 					playlistPosition,
-					0)
+					Duration.ZERO)
 				startNowPlayingActivity(this)
 				promiseStartedPlaylist
 			}
@@ -696,9 +696,8 @@ open class PlaybackService : Service() {
 				cachedSessionFilePropertiesProvider,
 				imageProvider,
 				remoteControlClient.value)
-			RemoteControlProxy(broadcaster)
+			remoteControlProxy = RemoteControlProxy(broadcaster)
 				.also { rcp ->
-					remoteControlProxy = rcp
 					localBroadcastManagerLazy
 						.value
 						.registerReceiver(

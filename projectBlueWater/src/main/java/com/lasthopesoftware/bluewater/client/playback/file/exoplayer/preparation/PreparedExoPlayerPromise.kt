@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PassthroughVolumeMa
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CancellationException
 
@@ -32,7 +33,7 @@ internal class PreparedExoPlayerPromise(
 	private val playbackControlHandler: Handler,
 	private val eventHandler: Handler,
 	private val uri: Uri,
-	private val prepareAt: Long) :
+	private val prepareAt: Duration) :
 	Promise<PreparedPlayableFile>(),
 	Player.EventListener,
 	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
@@ -64,9 +65,9 @@ internal class PreparedExoPlayerPromise(
 		renderersFactory.newRenderers().then(this, ::handleError)
 	}
 
-	override fun respond(resolution: Array<MediaCodecAudioRenderer>) {
-		audioRenderers = resolution
-		val exoPlayerBuilder = ExoPlayer.Builder(context, *resolution)
+	override fun respond(renderers: Array<MediaCodecAudioRenderer>) {
+		audioRenderers = renderers
+		val exoPlayerBuilder = ExoPlayer.Builder(context, *renderers)
 			.setLoadControl(loadControl)
 			.setLooper(playbackHandler.looper)
 
@@ -83,7 +84,8 @@ internal class PreparedExoPlayerPromise(
 					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource)
 					bufferingExoPlayer = newBufferingExoPlayer
 					newExoPlayer
-						.setMediaSource(mediaSource)
+						.setMediaSource(mediaSource, prepareAt.millis)
+						.eventually { newExoPlayer.seekTo(prepareAt.millis) }
 						.eventually { newExoPlayer.prepare() }
 						.then { newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError) }
 				}
@@ -103,19 +105,13 @@ internal class PreparedExoPlayerPromise(
 
 		val exoPlayer = exoPlayer ?: return
 
-		exoPlayer.getCurrentPosition().then { currentPosition ->
-			if (currentPosition < prepareAt) {
-				exoPlayer.seekTo(prepareAt)
-			} else {
-				isResolved = true
-				exoPlayer.removeListener(this)
-				resolve(
-					PreparedPlayableFile(
-						ExoPlayerPlaybackHandler(exoPlayer),
-						AudioTrackVolumeManager(exoPlayer, audioRenderers),
-						bufferingExoPlayer))
-			}
-		}
+		isResolved = true
+		exoPlayer.removeListener(this)
+		resolve(
+			PreparedPlayableFile(
+				ExoPlayerPlaybackHandler(exoPlayer),
+				AudioTrackVolumeManager(exoPlayer, audioRenderers),
+				bufferingExoPlayer))
 	}
 
 	override fun onPlayerError(error: ExoPlaybackException) {

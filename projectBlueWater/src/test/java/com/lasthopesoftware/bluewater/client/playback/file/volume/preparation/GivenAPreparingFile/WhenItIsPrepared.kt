@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.AssertionsForClassTypes
+import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.ExecutionException
@@ -27,7 +28,7 @@ class WhenItIsPrepared {
 			val maxFileVolumePreparer = MaxFileVolumePreparer(fakeFilePreparer) { sf: ServiceFile? -> Promise(.89f) }
 			returnedFile = FuturePromise(maxFileVolumePreparer.promisePreparedPlaybackFile(
 				ServiceFile(5),
-				0)).get()
+				Duration.ZERO)).get()
 		}
 	}
 

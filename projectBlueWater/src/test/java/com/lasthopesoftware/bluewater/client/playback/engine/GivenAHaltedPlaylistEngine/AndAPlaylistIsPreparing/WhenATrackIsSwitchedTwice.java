@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -59,12 +60,12 @@ public class WhenATrackIsSwitchedTwice {
 					new ServiceFile(2),
 					new ServiceFile(3),
 					new ServiceFile(4),
-					new ServiceFile(5)), 0, 0);
+					new ServiceFile(5)), 0, Duration.ZERO);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 
-		playbackEngine.changePosition(3, 0).then(p -> nextSwitchedFile = p);
-		playbackEngine.changePosition(4, 0).then(p -> nextSwitchedFile = p);
+		playbackEngine.changePosition(3, Duration.ZERO).then(p -> nextSwitchedFile = p);
+		playbackEngine.changePosition(4, Duration.ZERO).then(p -> nextSwitchedFile = p);
 
 		fakePlaybackPreparerProvider.deferredResolution.resolve();
 	}

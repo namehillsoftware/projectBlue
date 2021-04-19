@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer;
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -32,10 +33,10 @@ public class WhenPausingPlayback {
 				new ServiceFile(1)));
 
 		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
-		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
+		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
 			.thenReturn(positionedPlaybackHandlerContainer);
 
-		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, 0);
+		final IPlaylistPlayer playlistPlayback = new PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO);
 
 		playlistPlayback.pause();
 	}

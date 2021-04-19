@@ -63,7 +63,7 @@ public class WhenPreparing extends AndroidContext {
 
 		final ExoPlayerPlaybackPreparer preparer = new ExoPlayerPlaybackPreparer(
 			ApplicationProvider.getApplicationContext(),
-			uri -> new FakeMediaSource(),
+			(uri) -> new FakeMediaSource(),
 			loadControl,
 			() -> {
 				final MediaCodecAudioRenderer audioRenderer = mock(MediaCodecAudioRenderer.class);
@@ -79,7 +79,7 @@ public class WhenPreparing extends AndroidContext {
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
 				new ServiceFile(1),
-				0);
+				Duration.ZERO);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 

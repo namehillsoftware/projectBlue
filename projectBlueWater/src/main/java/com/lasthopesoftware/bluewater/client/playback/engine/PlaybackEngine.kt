@@ -17,6 +17,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.disposables.Disposable
 import io.reactivex.observables.ConnectableObservable
 import org.jetbrains.annotations.Contract
+import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import kotlin.math.max
 
@@ -42,7 +43,7 @@ class PlaybackEngine(
 	private var playlist: MutableList<ServiceFile> = nowPlaying.playlist
 	private var isRepeating: Boolean = nowPlaying.isRepeating
 	private var playlistPosition: Int = nowPlaying.playlistPosition
-	private var fileProgress: FileProgress = StaticProgressedFile(nowPlaying.filePosition.toPromise())
+	private var fileProgress: FileProgress = StaticProgressedFile(Duration.millis(nowPlaying.filePosition).toPromise())
 
 	private var playbackSubscription: Disposable? = null
 	private var activePlayer: IActivePlayer? = null
@@ -53,31 +54,31 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> {
+	override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
 		this.playlist = playlist
 		this.playlistPosition = playlistPosition
-		this.fileProgress = StaticProgressedFile(filePosition.toLong().toPromise())
+		this.fileProgress = StaticProgressedFile(filePosition.toPromise())
 		return saveState().then { resumePlayback() }
 	}
 
 	override fun skipToNext(): Promise<PositionedFile> {
 		return changePosition(
 			getNextPosition(playlistPosition, playlist),
-			0)
+			Duration.ZERO)
 	}
 
 	override fun skipToPrevious(): Promise<PositionedFile> {
-		return changePosition(getPreviousPosition(playlistPosition), 0)
+		return changePosition(getPreviousPosition(playlistPosition), Duration.ZERO)
 	}
 
 	@Synchronized
-	override fun changePosition(playlistPosition: Int, filePosition: Int): Promise<PositionedFile> {
+	override fun changePosition(playlistPosition: Int, filePosition: Duration): Promise<PositionedFile> {
 		playbackSubscription?.dispose()
 		activePlayer = null
 
 		this.playlistPosition = playlistPosition
-		fileProgress = StaticProgressedFile(filePosition.toLong().toPromise())
+		fileProgress = StaticProgressedFile(filePosition.toPromise())
 
 		return with(saveState()) {
 			if (!isPlaying) then {
@@ -90,7 +91,7 @@ class PlaybackEngine(
 						try {
 							val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement
 								.initializePreparedPlaybackQueue(queueProvider.provideQueue(playlist, playlistPosition))
-							startPlayback(preparedPlaybackQueue, filePosition.toLong())
+							startPlayback(preparedPlaybackQueue, filePosition)
 								.firstElement()
 								.subscribe({ resolve(it.asPositionedFile()) }, { reject(it) })
 						} catch (e: Exception) {
@@ -199,7 +200,7 @@ class PlaybackEngine(
 		return fileProgress.fileProgress.then {	startPlayback(preparedPlaybackQueue, it) }
 	}
 
-	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Long): ConnectableObservable<PositionedPlayingFile> {
+	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): ConnectableObservable<PositionedPlayingFile> {
 		playbackSubscription?.dispose()
 
 		val newPlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition)
@@ -220,7 +221,7 @@ class PlaybackEngine(
 			{ e ->
 				if (e is PreparationException) {
 					playlistPosition = e.positionedFile.playlistPosition
-					fileProgress = StaticProgressedFile(0L.toPromise())
+					fileProgress = StaticProgressedFile(Duration.ZERO.toPromise())
 					saveState()
 				}
 				onPlaylistError?.onError(e)
@@ -228,7 +229,7 @@ class PlaybackEngine(
 			{
 				isPlaying = false
 				activePlayer = null
-				changePosition(0, 0)
+				changePosition(0, Duration.ZERO)
 					.then { positionedFile ->
 						onPlaylistReset?.onPlaylistReset(positionedFile)
 						onPlaybackCompleted?.onPlaybackCompleted()
@@ -252,7 +253,7 @@ class PlaybackEngine(
 				np.playlistPosition = playlistPosition
 				np.isRepeating = isRepeating
 				fileProgress.fileProgress.eventually {
-					np.filePosition = it
+					np.filePosition = it.millis
 					nowPlayingRepository.updateNowPlaying(np)
 				}
 			}
@@ -296,15 +297,15 @@ class PlaybackEngine(
 	}
 
 	private interface FileProgress {
-		val fileProgress: Promise<Long>
+		val fileProgress: Promise<Duration>
 	}
 
-	private class StaticProgressedFile(override val fileProgress: Promise<Long>) : FileProgress
+	private class StaticProgressedFile(override val fileProgress: Promise<Duration>) : FileProgress
 
 	private class ProgressingFile(val positionedPlayingFile: PositionedPlayingFile)
 		: FileProgress {
 
-		override val fileProgress: Promise<Long>
-			get() = positionedPlayingFile.playingFile.promisePlayedFile().progress.then { it?.millis ?: 0 }
+		override val fileProgress: Promise<Duration>
+			get() = positionedPlayingFile.playingFile.promisePlayedFile().progress.then { it ?: Duration.ZERO }
 	}
 }

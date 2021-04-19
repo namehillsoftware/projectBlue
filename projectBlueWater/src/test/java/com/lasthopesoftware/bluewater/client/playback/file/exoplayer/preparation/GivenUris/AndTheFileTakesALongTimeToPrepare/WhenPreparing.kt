@@ -47,7 +47,7 @@ class WhenPreparing {
 			 	{ Promise(Mockito.mock(Uri::class.java)) },
 				preparationConfiguration)
 
-				val promisedPreparedFile = preparer.promisePreparedPlaybackFile(ServiceFile(1),0)
+				val promisedPreparedFile = preparer.promisePreparedPlaybackFile(ServiceFile(1),Duration.ZERO)
 			try {
 				FuturePromise(promisedPreparedFile)[5, TimeUnit.SECONDS]
 			} catch (ex: ExecutionException) {

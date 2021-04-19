@@ -11,13 +11,18 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class AudioRenderersFactory(private val context: Context, private val handler: Handler) : GetAudioRenderers {
 
-	override fun newRenderers(): Promise<Array<MediaCodecAudioRenderer>> =
-		Promise(arrayOf(
-			MediaCodecAudioRenderer(
-				context,
-				MediaCodecSelector.DEFAULT,
-				false,
-				if (DebugFlag.getInstance().isDebugCompilation) handler else null,
-				if (DebugFlag.getInstance().isDebugCompilation) AudioRenderingEventListener() else null,
-				DefaultAudioSink(AudioCapabilities.getCapabilities(context), emptyArray()))))
+	override fun newRenderers(): Promise<Array<MediaCodecAudioRenderer>> {
+		return try {
+			Promise(arrayOf(
+				MediaCodecAudioRenderer(
+					context,
+					MediaCodecSelector.DEFAULT,
+					false,
+					if (DebugFlag.getInstance().isDebugCompilation) handler else null,
+					if (DebugFlag.getInstance().isDebugCompilation) AudioRenderingEventListener() else null,
+					DefaultAudioSink(AudioCapabilities.getCapabilities(context), emptyArray()))))
+		} catch (err: Throwable) {
+			Promise(err)
+		}
+	}
 }

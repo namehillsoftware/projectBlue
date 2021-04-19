@@ -31,7 +31,7 @@ class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePl
 	private var audioFocusPromise: Promise<AudioFocusRequestCompat> = Promise.empty()
 	private var isPlaying = false
 
-	override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Int): Promise<Unit> {
+	override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		isPlaying = true
 		return getNewAudioFocusRequest()
 			.eventually { innerPlaybackState.startPlaylist(playlist, playlistPosition, filePosition) }

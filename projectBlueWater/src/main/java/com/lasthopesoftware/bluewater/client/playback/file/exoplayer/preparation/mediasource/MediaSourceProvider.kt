@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource
 
 import android.net.Uri
+import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.extractor.mp3.Mp3Extractor
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
@@ -31,7 +32,8 @@ class MediaSourceProvider(library: Library, dataSourceFactoryProvider: ProvideHt
 		factory.setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy.DEFAULT_MIN_LOADABLE_RETRY_COUNT_PROGRESSIVE_LIVE))
 	}
 
-	override fun getNewMediaSource(uri: Uri): MediaSource = getFactory(uri).createMediaSource(uri)
+	override fun getNewMediaSource(uri: Uri): MediaSource =
+		getFactory(uri).createMediaSource(MediaItem.Builder().setUri(uri).build())
 
 	private fun getFactory(uri: Uri): ProgressiveMediaSource.Factory =
 		if (IoCommon.FileUriScheme.equals(uri.scheme, ignoreCase = true)) lazyFileExtractorFactory.value

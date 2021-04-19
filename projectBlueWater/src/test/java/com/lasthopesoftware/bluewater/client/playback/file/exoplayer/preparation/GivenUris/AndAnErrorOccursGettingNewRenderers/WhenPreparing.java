@@ -36,7 +36,7 @@ public class WhenPreparing {
 
 		final ExoPlayerPlaybackPreparer preparer = new ExoPlayerPlaybackPreparer(
 			mock(Context.class),
-			uri -> mock(BaseMediaSource.class),
+			(uri) -> mock(BaseMediaSource.class),
 			loadControl,
 			() -> new Promise<>(new Exception("Oops")),
 			mock(Handler.class),
@@ -48,7 +48,7 @@ public class WhenPreparing {
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
 				new ServiceFile(1),
-				0);
+				Duration.ZERO);
 
 		try {
 			new FuturePromise<>(promisedPreparedFile).get(1, TimeUnit.SECONDS);

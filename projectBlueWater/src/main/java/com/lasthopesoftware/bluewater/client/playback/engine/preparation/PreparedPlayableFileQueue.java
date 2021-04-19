@@ -12,6 +12,7 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse;
 import com.namehillsoftware.handoff.promises.response.ResponseAction;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
 
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,7 @@ implements
 		}
 	}
 
-	public Promise<PositionedPlayableFile> promiseNextPreparedPlaybackFile(long preparedAt) {
+	public Promise<PositionedPlayableFile> promiseNextPreparedPlaybackFile(Duration preparedAt) {
 		currentPreparingPlaybackHandlerPromise = bufferingMediaPlayerPromises.poll();
 		if (currentPreparingPlaybackHandlerPromise == null) {
 			currentPreparingPlaybackHandlerPromise = getNextPreparingMediaPlayerPromise(preparedAt);
@@ -94,7 +95,7 @@ implements
 			.then(this);
 	}
 
-	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(long preparedAt) {
+	private PositionedPreparingFile getNextPreparingMediaPlayerPromise(Duration preparedAt) {
 		final Lock writeLock = queueUpdateLock.writeLock();
 		writeLock.lock();
 
@@ -119,7 +120,7 @@ implements
 		try {
 			if (bufferingMediaPlayerPromises.size() >= configuration.getMaxQueueSize()) return;
 
-			final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(0);
+			final PositionedPreparingFile nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(Duration.ZERO);
 			if (nextPreparingMediaPlayerPromise == null) return;
 
 			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise);
@@ -176,7 +177,7 @@ implements
 		currentPreparingPlaybackHandlerPromise.preparedPlaybackFilePromise.cancel();
 		currentPreparingPlaybackHandlerPromise = new PositionedPreparingFile(
 			positionedFile,
-			playbackPreparer.promisePreparedPlaybackFile(positionedFile.getServiceFile(), 0));
+			playbackPreparer.promisePreparedPlaybackFile(positionedFile.getServiceFile(), Duration.ZERO));
 
 		return currentPreparingPlaybackHandlerPromise.promisePositionedPreparedPlaybackFile();
 	}

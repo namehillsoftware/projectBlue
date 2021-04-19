@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlayb
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,11 +45,11 @@ public class WhenChangingTracks {
 				new ServiceFile(1))));
 
 		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
-		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(0))
+		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
 			.thenReturn(positionedPlaybackHandlerContainer)
 			.thenReturn(secondPositionedPlaybackHandlerContainer);
 
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, 0)).subscribe(positionedPlayingFile -> this.positionedPlayingFile = positionedPlayingFile);
+		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)).subscribe(positionedPlayingFile -> this.positionedPlayingFile = positionedPlayingFile);
 
 		playbackHandler.resolve();
 	}

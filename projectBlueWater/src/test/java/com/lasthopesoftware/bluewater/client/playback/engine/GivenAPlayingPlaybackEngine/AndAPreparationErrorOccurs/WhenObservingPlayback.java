@@ -22,6 +22,7 @@ import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -92,7 +93,7 @@ public class WhenObservingPlayback {
 					new ServiceFile(4),
 					new ServiceFile(5)),
 				0,
-				0))
+				Duration.ZERO))
 			.get();
 
 		deferredErrorPlaybackPreparer.resolve().resolve();
@@ -129,7 +130,7 @@ public class WhenObservingPlayback {
 		}
 
 		@Override
-		public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, long preparedAt) {
+		public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, Duration preparedAt) {
 			return new Promise<>(messenger -> this.messenger = messenger);
 		}
 	}

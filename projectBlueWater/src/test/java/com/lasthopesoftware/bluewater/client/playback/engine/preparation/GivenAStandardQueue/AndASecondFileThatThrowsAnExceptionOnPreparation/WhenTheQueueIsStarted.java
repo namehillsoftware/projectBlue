@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -36,10 +37,10 @@ public class WhenTheQueueIsStarted {
 				.collect(Collectors.toList());
 
 		final PlayableFilePreparationSource playbackPreparer = mock(PlayableFilePreparationSource.class);
-		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(0), 0))
+		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(0), Duration.ZERO))
 			.thenReturn(new Promise<>(new FakePreparedPlayableFile<>(new FakeBufferingPlaybackHandler())));
 
-		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(1), 0))
+		when(playbackPreparer.promisePreparedPlaybackFile(new ServiceFile(1), Duration.ZERO))
 			.thenReturn(new Promise<>(new Exception()))
 			.thenReturn(new Promise<>(new FakePreparedPlayableFile<>(expectedPlaybackHandler)));
 
@@ -53,8 +54,8 @@ public class WhenTheQueueIsStarted {
 			playbackPreparer,
 			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition));
 
-		queue.promiseNextPreparedPlaybackFile(0)
-			.eventually(p -> queue.promiseNextPreparedPlaybackFile(0))
+		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+			.eventually(p -> queue.promiseNextPreparedPlaybackFile(Duration.ZERO))
 			.then(pf -> returnedPlaybackHandler = pf.getPlayableFile())
 			.excuse(e -> error = e);
 	}

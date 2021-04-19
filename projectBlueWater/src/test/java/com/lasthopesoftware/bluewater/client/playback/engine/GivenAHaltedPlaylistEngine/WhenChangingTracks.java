@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -83,7 +84,7 @@ public class WhenChangingTracks {
 			new NowPlayingRepository(libraryProvider, libraryStorage),
 			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
 
-		nextSwitchedFile = new FuturePromise<>(playbackEngine.changePosition(3, 0)).get(1, TimeUnit.SECONDS);
+		nextSwitchedFile = new FuturePromise<>(playbackEngine.changePosition(3, Duration.ZERO)).get(1, TimeUnit.SECONDS);
 	}
 
 	@Test
