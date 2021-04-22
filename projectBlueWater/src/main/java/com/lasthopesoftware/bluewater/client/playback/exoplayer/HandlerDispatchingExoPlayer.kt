@@ -180,22 +180,6 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
-	override fun prepare(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.prepare()
-				this
-			},
-			handler)
-
-	override fun prepare(mediaSource: MediaSource, resetPosition: Boolean, resetState: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.prepare(mediaSource, resetPosition, resetState)
-				this
-			},
-			handler)
-
 	override fun prepare(): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -222,11 +206,6 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 	override fun getPlayerError(): Promise<ExoPlaybackException?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.playerError },
-			handler)
-
-	override fun getPlaybackError(): Promise<ExoPlaybackException?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.playbackError },
 			handler)
 
 	override fun play(): Promise<PromisingExoPlayer> =
@@ -368,14 +347,6 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
-	override fun stop(reset: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.stop(reset)
-				this
-			},
-			handler)
-
 	override fun release(): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -437,11 +408,6 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 	override fun getPreviousWindowIndex(): Promise<Int> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.previousWindowIndex },
-			handler)
-
-	override fun getCurrentTag(): Promise<Any?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentTag },
 			handler)
 
 	override fun getCurrentMediaItem(): Promise<MediaItem?> =
@@ -537,14 +503,6 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 	override fun getPlaybackLooper(): Promise<Looper> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.playbackLooper },
-			handler)
-
-	override fun retry(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.retry()
-				this
-			},
 			handler)
 
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =

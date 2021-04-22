@@ -56,10 +56,6 @@ interface PromisingExoPlayer {
 
 	fun clearMediaItems(): Promise<PromisingExoPlayer>
 
-	fun prepare(mediaSource: MediaSource): Promise<PromisingExoPlayer>
-
-	fun prepare(mediaSource: MediaSource, resetPosition: Boolean, resetState: Boolean): Promise<PromisingExoPlayer>
-
 	fun prepare(): Promise<PromisingExoPlayer>
 
 	fun getPlaybackState(): Promise<Int>
@@ -69,8 +65,6 @@ interface PromisingExoPlayer {
 	fun isPlaying(): Promise<Boolean>
 
 	fun getPlayerError(): Promise<ExoPlaybackException?>
-
-	fun getPlaybackError(): Promise<ExoPlaybackException?>
 
 	fun play(): Promise<PromisingExoPlayer>
 
@@ -112,8 +106,6 @@ interface PromisingExoPlayer {
 
 	fun stop(): Promise<PromisingExoPlayer>
 
-	fun stop(reset: Boolean): Promise<PromisingExoPlayer>
-
 	fun release(): Promise<PromisingExoPlayer>
 
 	fun getRendererCount(): Promise<Int>
@@ -137,8 +129,6 @@ interface PromisingExoPlayer {
 	fun getNextWindowIndex(): Promise<Int>
 
 	fun getPreviousWindowIndex(): Promise<Int>
-
-	fun getCurrentTag(): Promise<Any?>
 
 	fun getCurrentMediaItem(): Promise<MediaItem?>
 
@@ -177,8 +167,6 @@ interface PromisingExoPlayer {
 	fun getContentBufferedPosition(): Promise<Long>
 
 	fun getPlaybackLooper(): Promise<Looper>
-
-	fun retry(): Promise<PromisingExoPlayer>
 
 	fun setMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer>
 
