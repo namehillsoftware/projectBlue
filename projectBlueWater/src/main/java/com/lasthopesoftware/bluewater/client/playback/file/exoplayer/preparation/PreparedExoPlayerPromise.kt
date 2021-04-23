@@ -78,18 +78,30 @@ internal class PreparedExoPlayerPromise(
 
 		newExoPlayer
 			.addListener(this)
-			.then {
-				if (!cancellationToken.isCancelled) {
+			.eventually {
+				if (cancellationToken.isCancelled) {
+					empty()
+				} else {
 					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
+
 					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource)
 					bufferingExoPlayer = newBufferingExoPlayer
-					newExoPlayer
-						.setMediaSource(mediaSource, prepareAt.millis)
-						.eventually { newExoPlayer.seekTo(prepareAt.millis) }
-						.eventually { newExoPlayer.prepare() }
-						.then { newBufferingExoPlayer.promiseBufferedPlaybackFile().excuse(::handleError) }
+
+					val prepareAtMillis = prepareAt.millis
+					if (prepareAtMillis == 0L) {
+						newExoPlayer.setMediaSource(mediaSource)
+					} else {
+						newExoPlayer
+							.setMediaSource(mediaSource, prepareAtMillis)
+							.eventually { newExoPlayer.seekTo(prepareAtMillis) }
+					}.eventually {
+						newExoPlayer.prepare()
+					}.eventually {
+						newBufferingExoPlayer.promiseBufferedPlaybackFile()
+					}
 				}
 			}
+			.excuse(::handleError)
 	}
 
 	override fun run() {
