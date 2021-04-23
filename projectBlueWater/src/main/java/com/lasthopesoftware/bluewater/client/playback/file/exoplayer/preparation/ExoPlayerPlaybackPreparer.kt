@@ -9,9 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.GetAudioRenderers
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.TimeoutException
 import org.joda.time.Duration
 
 class ExoPlayerPlaybackPreparer(
@@ -22,16 +20,12 @@ class ExoPlayerPlaybackPreparer(
 	private val playbackHandler: Handler,
 	private val playbackControlHandler: Handler,
 	private val eventHandler: Handler,
-	private val uriProvider: IFileUriProvider,
-	private val configureExoPlayerPreparation: ConfigureExoPlayerPreparation) : PlayableFilePreparationSource {
+	private val uriProvider: IFileUriProvider) : PlayableFilePreparationSource {
 
 	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile> =
 		uriProvider.promiseFileUri(serviceFile)
 			.eventually { uri ->
-				val preparationTimeout = configureExoPlayerPreparation.preparationTimeout
-				val promisedDelay = PromiseDelay.delay<PreparedPlayableFile>(preparationTimeout)
-				val promisedTimeout = promisedDelay.then<PreparedPlayableFile> { throw TimeoutException("Timed out after $preparationTimeout") }
-				val preparedExoPlayerPromise = PreparedExoPlayerPromise(
+				PreparedExoPlayerPromise(
 					context,
 					mediaSourceProvider,
 					loadControl,
@@ -41,10 +35,5 @@ class ExoPlayerPlaybackPreparer(
 					eventHandler,
 					uri,
 					preparedAt)
-
-				Promise.whenAny(preparedExoPlayerPromise, promisedTimeout).must {
-					promisedDelay.cancel()
-					preparedExoPlayerPromise.cancel()
 				}
-			}
 }

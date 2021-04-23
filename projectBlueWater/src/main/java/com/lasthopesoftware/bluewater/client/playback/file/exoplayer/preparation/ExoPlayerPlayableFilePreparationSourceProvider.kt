@@ -37,13 +37,12 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 	override fun getMaxQueueSize() = 1
 
 	override fun providePlayableFilePreparationSource() = ExoPlayerPlaybackPreparer(
-		context,
-		mediaSourceProvider,
-		loadControl.value,
-		renderersFactory,
-		playbackHandler,
-		playbackControlHandler,
-		eventHandler,
-		bestMatchUriProvider,
-		DefaultExoPlayerPreparationConfiguration)
+            context,
+            mediaSourceProvider,
+            loadControl.value,
+            renderersFactory,
+            playbackHandler,
+            playbackControlHandler,
+            eventHandler,
+            bestMatchUriProvider)
 }

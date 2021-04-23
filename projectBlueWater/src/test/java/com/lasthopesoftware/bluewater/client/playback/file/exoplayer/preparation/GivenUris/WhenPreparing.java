@@ -73,8 +73,8 @@ public class WhenPreparing extends AndroidContext {
 			new Handler(Looper.getMainLooper()),
 			new Handler(Looper.getMainLooper()),
 			new Handler(Looper.getMainLooper()),
-			(sf) -> new Promise<>(Uri.EMPTY),
-			() -> Duration.ZERO);
+			(sf) -> new Promise<>(Uri.EMPTY)
+        );
 
 		final Promise<PreparedPlayableFile> promisedPreparedFile =
 			preparer.promisePreparedPlaybackFile(
