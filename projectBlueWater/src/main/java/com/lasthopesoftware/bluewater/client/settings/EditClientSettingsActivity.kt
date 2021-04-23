@@ -138,7 +138,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 
 		lazyLibraryProvider.value
 			.getLibrary(LibraryId(libraryId))
-			.eventually(LoopedInPromise.response<Library, Unit>({ result ->
+			.eventually(LoopedInPromise.response({ result ->
 				if (result == null) return@response
 
 				library = result
