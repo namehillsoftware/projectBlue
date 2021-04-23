@@ -73,7 +73,11 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 
 			@Override
 			public void run() {
-				task.send(resultMessenger);
+				try {
+					task.send(resultMessenger);
+				} catch (Throwable err) {
+					resultMessenger.sendRejection(err);
+				}
 			}
 		}
 
@@ -97,7 +101,11 @@ public class LoopedInPromise<Result> extends Promise<Result> {
 
 			@Override
 			public void run() {
-				task.send(resultMessenger);
+				try {
+					task.send(resultMessenger);
+				} catch (Throwable err) {
+					resultMessenger.sendRejection(err);
+				}
 			}
 		}
 	}
