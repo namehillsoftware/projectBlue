@@ -83,19 +83,22 @@ internal class PreparedExoPlayerPromise(
 					empty()
 				} else {
 					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
-					val prepareAtMillis = prepareAt.millis
-
-					var setMediaSourcePromise = newExoPlayer.setMediaSource(mediaSource, prepareAtMillis)
-					if (prepareAtMillis > 0) {
-						setMediaSourcePromise = setMediaSourcePromise.eventually { newExoPlayer.seekTo(prepareAtMillis) }
-					}
 
 					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource)
 					bufferingExoPlayer = newBufferingExoPlayer
 
-					setMediaSourcePromise
-						.eventually { newExoPlayer.prepare() }
-						.eventually { newBufferingExoPlayer.promiseBufferedPlaybackFile() }
+					val prepareAtMillis = prepareAt.millis
+					if (prepareAtMillis == 0L) {
+						newExoPlayer.setMediaSource(mediaSource)
+					} else {
+						newExoPlayer
+							.setMediaSource(mediaSource, prepareAtMillis)
+							.eventually { newExoPlayer.seekTo(prepareAtMillis) }
+					}.eventually {
+						newExoPlayer.prepare()
+					}.eventually {
+						newBufferingExoPlayer.promiseBufferedPlaybackFile()
+					}
 				}
 			}
 			.excuse(::handleError)
