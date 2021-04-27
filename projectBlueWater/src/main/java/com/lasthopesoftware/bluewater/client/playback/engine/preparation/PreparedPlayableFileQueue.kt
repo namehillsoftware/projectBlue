@@ -73,7 +73,7 @@ class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueu
 				Promise(PositionedPreparedPlayableFile.emptyHandler(it.positionedFile)))
 				.eventually(::preparePlayableFileAgainIfNecessary)
 				.then(::toPositionedPlayableFile)
-		} ?: getNextPreparingMediaPlayerPromise(preparedAt).let {
+		} ?: getNextFaultingPreparingMediaPlayerPromise(preparedAt).let {
 			currentPreparingPlaybackHandlerPromise = it
 			it?.promisePositionedPreparedPlaybackFile()?.then(::toPositionedPlayableFile)
 		}
@@ -92,7 +92,7 @@ class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueu
 		}
 	}
 
-	private fun getNextPreparingMediaPlayerPromise(preparedAt: Duration): PositionedUnerringPreparingFile? {
+	private fun getNextUnfaultingPreparingMediaPlayerPromise(): PositionedUnfaultingPreparingFile? {
 		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		return try {
@@ -100,19 +100,32 @@ class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueu
 		} finally {
 			writeLock.unlock()
 		}?.let {
-			PositionedUnerringPreparingFile(
+			PositionedUnfaultingPreparingFile(
+				it,
+				playbackPreparer.promisePreparedPlaybackFile(it.serviceFile, Duration.ZERO))
+		}
+	}
+
+	private fun getNextFaultingPreparingMediaPlayerPromise(preparedAt: Duration): PositionedPreparingFile? {
+		val writeLock = queueUpdateLock.writeLock()
+		writeLock.lock()
+		return try {
+			positionedFileQueue.poll()
+		} finally {
+			writeLock.unlock()
+		}?.let {
+			PositionedPreparingFile(
 				it,
 				playbackPreparer.promisePreparedPlaybackFile(it.serviceFile, preparedAt))
 		}
 	}
 
 	private fun beginQueueingPreparingPlayers() {
-		val writeLock: Lock = queueUpdateLock.writeLock()
+		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		try {
 			if (bufferingMediaPlayerPromises.size >= configuration.maxQueueSize) return
-			val nextPreparingMediaPlayerPromise = getNextPreparingMediaPlayerPromise(Duration.ZERO)
-				?: return
+			val nextPreparingMediaPlayerPromise = getNextUnfaultingPreparingMediaPlayerPromise() ?: return
 			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise)
 			nextPreparingMediaPlayerPromise.promisePositionedPreparedPlaybackFile().then(::toPositionedPlayableFile)
 		} finally {
@@ -156,7 +169,7 @@ class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueu
 				{ error -> throw PreparationException(positionedFile, error) })
 	}
 
-	private class PositionedUnerringPreparingFile(
+	private class PositionedUnfaultingPreparingFile(
 		override val positionedFile: PositionedFile,
 		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile>) : ProvidePreparedPlaybackFile {
 
