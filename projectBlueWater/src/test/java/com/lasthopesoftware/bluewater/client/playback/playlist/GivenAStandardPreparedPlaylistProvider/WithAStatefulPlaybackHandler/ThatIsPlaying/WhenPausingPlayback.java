@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles;
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler;
@@ -32,7 +32,7 @@ public class WhenPausingPlayback {
 				new NoTransformVolumeManager(),
 				new ServiceFile(1)));
 
-		final PreparedPlayableFileQueue preparedPlaybackFileQueue = mock(PreparedPlayableFileQueue.class);
+		final SupplyQueuedPreparedFiles preparedPlaybackFileQueue = mock(SupplyQueuedPreparedFiles.class);
 		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
 			.thenReturn(positionedPlaybackHandlerContainer);
 

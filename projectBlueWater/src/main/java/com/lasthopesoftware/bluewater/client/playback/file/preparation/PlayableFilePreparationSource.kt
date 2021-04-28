@@ -4,6 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
-interface PlayableFilePreparationSource {
+fun interface PlayableFilePreparationSource {
 	fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile>
 }

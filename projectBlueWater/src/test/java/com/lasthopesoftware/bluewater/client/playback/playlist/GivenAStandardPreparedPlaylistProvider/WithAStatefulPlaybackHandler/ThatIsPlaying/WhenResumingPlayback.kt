@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
@@ -33,7 +33,7 @@ class WhenResumingPlayback {
 				playbackHandler,
 				NoTransformVolumeManager(),
 				ServiceFile(1)))
-			val preparedPlaybackFileQueue = Mockito.mock(PreparedPlayableFileQueue::class.java)
+			val preparedPlaybackFileQueue = Mockito.mock(SupplyQueuedPreparedFiles::class.java)
 			Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
 				.thenReturn(positionedPlaybackHandlerContainer)
 			val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
