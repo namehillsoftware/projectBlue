@@ -18,7 +18,7 @@ open class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybac
 	companion object {
 		private val logger = LoggerFactory.getLogger(PreparedPlayableFileQueue::class.java)
 
-		private fun <T> Queue<T>.pollUntilEmpty(): Iterable<T> {
+		private fun <T> Queue<T>.drainQueue(): Iterable<T> {
 			val queue = this
 			return Iterable {
 				iterator {
@@ -42,19 +42,19 @@ open class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybac
 		return try {
 			val newPositionedPreparingMediaPlayerPromises = LinkedList<ProvidePreparedPlaybackFile>()
 
-			for (positionedPreparingFile in bufferingMediaPlayerPromises.pollUntilEmpty()) {
+			for (positionedPreparingFile in bufferingMediaPlayerPromises.drainQueue()) {
 				if (positionedPreparingFile.positionedFile == newPositionedFileQueue.peek()) {
 					newPositionedPreparingMediaPlayerPromises.offer(positionedPreparingFile)
 					newPositionedFileQueue.poll()
 					continue
 				}
 
-				for (file in bufferingMediaPlayerPromises.pollUntilEmpty()) {
+				for (file in bufferingMediaPlayerPromises.drainQueue()) {
 					file.preparedPlaybackFilePromise.cancel()
 				}
 			}
 
-			for (positionedPreparingFile in newPositionedPreparingMediaPlayerPromises.pollUntilEmpty()) {
+			for (positionedPreparingFile in newPositionedPreparingMediaPlayerPromises.drainQueue()) {
 				bufferingMediaPlayerPromises.offer(positionedPreparingFile)
 			}
 
@@ -86,7 +86,7 @@ open class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybac
 		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		try {
-			for (positionedPreparingFile in bufferingMediaPlayerPromises.pollUntilEmpty())
+			for (positionedPreparingFile in bufferingMediaPlayerPromises.drainQueue())
 				positionedPreparingFile.preparedPlaybackFilePromise.cancel()
 		} finally {
 			writeLock.unlock()
