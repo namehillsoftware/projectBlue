@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue.AndASecondFileThatThrowsAnExceptionOnPreparation
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue.AndTheSecondFileThrowsAnExceptionOnPreparation
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
@@ -33,7 +33,6 @@ class WhenTheQueueIsStarted {
 				.thenReturn(Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())))
 			Mockito.`when`(playbackPreparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO))
 				.thenReturn(Promise(Exception()))
-				.thenReturn(Promise(FakePreparedPlayableFile(expectedPlaybackHandler)))
 
 			val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 			val startPosition = 0
