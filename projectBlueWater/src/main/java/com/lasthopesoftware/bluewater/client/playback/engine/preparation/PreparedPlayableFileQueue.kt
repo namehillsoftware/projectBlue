@@ -13,7 +13,10 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-open class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueueConfiguration, private val playbackPreparer: PlayableFilePreparationSource, private var positionedFileQueue: IPositionedFileQueue) : Closeable {
+class PreparedPlayableFileQueue(
+	private val configuration: IPreparedPlaybackQueueConfiguration,
+	private val playbackPreparer: PlayableFilePreparationSource,
+	private var positionedFileQueue: IPositionedFileQueue) : SupplyQueuedPreparedFiles, Closeable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PreparedPlayableFileQueue::class.java)
@@ -66,7 +69,7 @@ open class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybac
 		}
 	}
 
-	open fun promiseNextPreparedPlaybackFile(preparedAt: Duration): Promise<PositionedPlayableFile>? {
+	override fun promiseNextPreparedPlaybackFile(preparedAt: Duration): Promise<PositionedPlayableFile>? {
 		return bufferingMediaPlayerPromises.poll()?.let {
 			currentPreparingPlaybackHandlerPromise = it
 			Promise.whenAny(

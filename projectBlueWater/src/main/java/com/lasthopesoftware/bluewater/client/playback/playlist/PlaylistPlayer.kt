@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.IOException
 
-class PlaylistPlayer(private val preparedPlaybackFileProvider: PreparedPlayableFileQueue, private val preparedPosition: Duration) : IPlaylistPlayer, Closeable {
+class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) : IPlaylistPlayer, Closeable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PlaylistPlayer::class.java)
