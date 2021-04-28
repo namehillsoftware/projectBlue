@@ -1,91 +1,82 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenTwoQueuesThatEventuallyDiverge;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenTwoQueuesThatEventuallyDiverge
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue
+import com.namehillsoftware.handoff.promises.Promise
+import org.assertj.core.api.Assertions
+import org.joda.time.Duration
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
+import java.util.*
 
-import org.joda.time.Duration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenSwitchingQueuesAndGettingTheNextFile {
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+	companion object {
+		private val playedFiles: MutableList<PositionedPlayableFile> = ArrayList()
+		private val expectedPositionedPlayableFile = listOf(
+			PositionedPlayableFile(3, Mockito.mock(PlayableFile::class.java), NoTransformVolumeManager(), ServiceFile(3)),
+			PositionedPlayableFile(4, Mockito.mock(PlayableFile::class.java), NoTransformVolumeManager(), ServiceFile(4)),
+			PositionedPlayableFile(5, Mockito.mock(PlayableFile::class.java), NoTransformVolumeManager(), ServiceFile(6)),
+			PositionedPlayableFile(6, Mockito.mock(PlayableFile::class.java), NoTransformVolumeManager(), ServiceFile(7)))
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenSwitchingQueuesAndGettingTheNextFile {
-
-	private static final List<PositionedPlayableFile> playedFiles = new ArrayList<>();
-	private static final List<PositionedPlayableFile> expectedPositionedPlayableFile = Arrays.asList(
-		new PositionedPlayableFile(3, mock(PlayableFile.class), new NoTransformVolumeManager(), new ServiceFile(3)),
-		new PositionedPlayableFile(4, mock(PlayableFile.class), new NoTransformVolumeManager(),new ServiceFile(4)),
-		new PositionedPlayableFile(5, mock(PlayableFile.class), new NoTransformVolumeManager(),new ServiceFile(6)),
-		new PositionedPlayableFile(6, mock(PlayableFile.class), new NoTransformVolumeManager(),new ServiceFile(7)));
-
-	@BeforeClass
-	public static void before() {
-		final IPositionedFileQueue positionedFileQueue = mock(IPositionedFileQueue.class);
-		when(positionedFileQueue.poll())
-			.thenReturn(
-				new PositionedFile(1, new ServiceFile(1)),
-				new PositionedFile(2, new ServiceFile(2)),
-				new PositionedFile(3, new ServiceFile(3)),
-				new PositionedFile(4, new ServiceFile(4)),
-				new PositionedFile(5, new ServiceFile(5)),
-				null);
-
-		final PreparedPlayableFileQueue queue =
-			new PreparedPlayableFileQueue(
-				() -> 3,
-				(file, preparedAt) -> new Promise<>(new FakePreparedPlayableFile<>(new FakeBufferingPlaybackHandler())),
-				positionedFileQueue);
-
-		queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
-		queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
-
-		final IPositionedFileQueue newPositionedFileQueue = mock(IPositionedFileQueue.class);
-		when(newPositionedFileQueue.poll())
-			.thenReturn(
-				new PositionedFile(3, new ServiceFile(3)),
-				new PositionedFile(4, new ServiceFile(4)),
-				new PositionedFile(5, new ServiceFile(6)),
-				new PositionedFile(6, new ServiceFile(7)),
-				null);
-
-		queue.updateQueue(newPositionedFileQueue);
-
-		queue
-			.promiseNextPreparedPlaybackFile(Duration.ZERO)
-			.eventually(file -> {
-				playedFiles.add(file);
-				return queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
-			})
-			.eventually(file -> {
-				playedFiles.add(file);
-				return queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
-			})
-			.eventually(file -> {
-				playedFiles.add(file);
-				return queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
-			})
-			.eventually(file -> {
-				playedFiles.add(file);
-				return Promise.empty();
-			});
+		@JvmStatic
+		@BeforeClass
+		fun before() {
+			val positionedFileQueue = Mockito.mock(IPositionedFileQueue::class.java)
+			Mockito.`when`(positionedFileQueue.poll())
+				.thenReturn(
+					PositionedFile(1, ServiceFile(1)),
+					PositionedFile(2, ServiceFile(2)),
+					PositionedFile(3, ServiceFile(3)),
+					PositionedFile(4, ServiceFile(4)),
+					PositionedFile(5, ServiceFile(5)),
+					null)
+			val queue = PreparedPlayableFileQueue(
+				{ 3 },
+				{ _, _ -> Promise<PreparedPlayableFile>(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())) },
+				positionedFileQueue)
+			queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+			queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+			val newPositionedFileQueue = Mockito.mock(IPositionedFileQueue::class.java)
+			Mockito.`when`(newPositionedFileQueue.poll())
+				.thenReturn(
+					PositionedFile(3, ServiceFile(3)),
+					PositionedFile(4, ServiceFile(4)),
+					PositionedFile(5, ServiceFile(6)),
+					PositionedFile(6, ServiceFile(7)),
+					null)
+			queue.updateQueue(newPositionedFileQueue)
+			queue
+				.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				?.eventually { file ->
+					playedFiles.add(file)
+					queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				}
+				?.eventually { file ->
+					playedFiles.add(file)
+					queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				}
+				?.eventually { file ->
+					playedFiles.add(file)
+					queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				}
+				?.then { file ->
+					playedFiles.add(file)
+				}
+		}
 	}
 
 	@Test
-	public void thenTheQueueContinuesToCompletion() {
-		assertThat(playedFiles).asList().containsExactlyElementsOf(expectedPositionedPlayableFile);
+	fun thenTheQueueContinuesToCompletion() {
+		Assertions.assertThat(playedFiles).asList().containsExactlyElementsOf(expectedPositionedPlayableFile)
 	}
 }

@@ -11,10 +11,9 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueueConfiguration, private val playbackPreparer: PlayableFilePreparationSource, private var positionedFileQueue: IPositionedFileQueue) : Closeable {
+open class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueueConfiguration, private val playbackPreparer: PlayableFilePreparationSource, private var positionedFileQueue: IPositionedFileQueue) : Closeable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PreparedPlayableFileQueue::class.java)
@@ -23,9 +22,11 @@ class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueu
 			val queue = this
 			return Iterable {
 				iterator {
-					val value = queue.poll()
-					if (value != null)
-						yield(value)
+					do {
+						val next = queue.poll()
+						if (next != null)
+							yield(next)
+					} while (next != null)
 				}
 			}
 		}
@@ -36,7 +37,7 @@ class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueu
 	private var currentPreparingPlaybackHandlerPromise: ProvidePreparedPlaybackFile? = null
 
 	fun updateQueue(newPositionedFileQueue: IPositionedFileQueue): PreparedPlayableFileQueue {
-		val writeLock: Lock = queueUpdateLock.writeLock()
+		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		return try {
 			val newPositionedPreparingMediaPlayerPromises = LinkedList<ProvidePreparedPlaybackFile>()
@@ -65,7 +66,7 @@ class PreparedPlayableFileQueue(private val configuration: IPreparedPlaybackQueu
 		}
 	}
 
-	fun promiseNextPreparedPlaybackFile(preparedAt: Duration): Promise<PositionedPlayableFile>? {
+	open fun promiseNextPreparedPlaybackFile(preparedAt: Duration): Promise<PositionedPlayableFile>? {
 		return bufferingMediaPlayerPromises.poll()?.let {
 			currentPreparingPlaybackHandlerPromise = it
 			Promise.whenAny(

@@ -7,4 +7,6 @@ data class PositionedFile(val playlistPosition: Int, val serviceFile: ServiceFil
 		val playlistComparison = playlistPosition - other.playlistPosition
 		return if (playlistComparison != 0) playlistComparison else serviceFile.compareTo(other.serviceFile)
 	}
+
+	override fun toString(): String = "PositionedFile(playlistPosition=$playlistPosition, serviceFile=$serviceFile)"
 }
