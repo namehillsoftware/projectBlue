@@ -84,14 +84,14 @@ internal class PreparedExoPlayerPromise(
 				} else {
 					val mediaSource = mediaSourceProvider.getNewMediaSource(uri)
 
-					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource)
+					val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource, it)
 					bufferingExoPlayer = newBufferingExoPlayer
 
 					val prepareAtMillis = prepareAt.millis
 					if (prepareAtMillis == 0L) {
-						newExoPlayer.setMediaSource(mediaSource)
+						it.setMediaSource(mediaSource)
 					} else {
-						newExoPlayer
+						it
 							.setMediaSource(mediaSource, prepareAtMillis)
 							.eventually { newExoPlayer.seekTo(prepareAtMillis) }
 					}.eventually {
