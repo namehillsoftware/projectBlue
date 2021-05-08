@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMismatchedS
 
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
 
-import org.apache.tools.ant.filters.StringInputStream;
+import org.apache.commons.io.IOUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,7 +52,7 @@ public class WhenValidatingTheClient {
 	@BeforeClass
 	public static void before() throws CertificateException, IOException {
 		CertificateFactory cf = CertificateFactory.getInstance("X.509");
-		try (final InputStream caInput = new StringInputStream(certificate)) {
+		try (final InputStream caInput = IOUtils.toInputStream(certificate, "UTF-8")) {
 			final X509Certificate cert = (X509Certificate) cf.generateCertificate(caInput);
 			certChain = new X509Certificate[] { cert };
 		}
