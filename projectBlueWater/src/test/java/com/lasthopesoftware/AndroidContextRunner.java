@@ -7,6 +7,9 @@ import org.robolectric.internal.SandboxTestRunner;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
+import static android.os.Looper.getMainLooper;
+import static org.robolectric.Shadows.shadowOf;
+
 public class AndroidContextRunner extends RobolectricTestRunner {
 	private final HashMap<Class, HelperTestRunner> testRunners = new HashMap<>();
 
@@ -43,6 +46,7 @@ public class AndroidContextRunner extends RobolectricTestRunner {
 				final Method beforeMethod = test.getClass().getMethod("before");
 				beforeMethod.invoke(test);
 				isCheckedForBeforeMethod = true;
+				shadowOf(getMainLooper()).idle();
 			}
 			return test;
 		}
