@@ -1,29 +1,24 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast
 
-import android.content.Context;
-import android.content.Intent;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import android.content.Intent
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 
-public class PlaybackEngineTypeChangedBroadcaster {
-
-	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackEngineTypeChangedBroadcaster.class);
-
-	public static final String playbackEngineTypeChanged = magicPropertyBuilder.buildProperty("playbackEngineTypeChanged");
-	public static final String playbackEngineTypeKey = magicPropertyBuilder.buildProperty("playbackEngineTypeKey");
-
-	private final Context context;
-
-	public PlaybackEngineTypeChangedBroadcaster(Context context) {
-		this.context = context;
+class PlaybackEngineTypeChangedBroadcaster(private val sendMessages: SendMessages) {
+	fun broadcastPlaybackEngineTypeChanged(playbackEngineType: PlaybackEngineType) {
+		val intent = Intent(playbackEngineTypeChanged)
+		intent.putExtra(playbackEngineTypeKey, playbackEngineType.name)
+		sendMessages.sendBroadcast(intent)
 	}
 
-	public void broadcastPlaybackEngineTypeChanged(PlaybackEngineType playbackEngineType) {
-		final Intent intent = new Intent(playbackEngineTypeChanged);
-		intent.putExtra(playbackEngineTypeKey, playbackEngineType.name());
-
-		LocalBroadcastManager.getInstance(context)
-			.sendBroadcast(intent);
+	companion object {
+		private val magicPropertyBuilder = MagicPropertyBuilder(
+			PlaybackEngineTypeChangedBroadcaster::class.java
+		)
+		@kotlin.jvm.JvmField
+		val playbackEngineTypeChanged = magicPropertyBuilder.buildProperty("playbackEngineTypeChanged")
+		@kotlin.jvm.JvmField
+		val playbackEngineTypeKey = magicPropertyBuilder.buildProperty("playbackEngineTypeKey")
 	}
 }
