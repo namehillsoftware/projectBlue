@@ -1,45 +1,27 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenAPlaybackEngineTypeSelectionBroadcaster;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.test.core.app.ApplicationProvider;
-
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
+import com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.FakeMessageSender;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(RobolectricTestRunner.class)
-public class WhenBroadcastingTheEngineType {
+public class WhenBroadcastingTheEngineType extends AndroidContext {
 
-	private String broadcastEngineType;
+	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender();
 
 	@Before
 	public void before() {
-		LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
-			.registerReceiver(new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					broadcastEngineType =
-						intent.getStringExtra(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeKey);
-				}
-			}, new IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged));
-
-		new PlaybackEngineTypeChangedBroadcaster(ApplicationProvider.getApplicationContext())
+		new PlaybackEngineTypeChangedBroadcaster(fakeMessageSender)
 			.broadcastPlaybackEngineTypeChanged(PlaybackEngineType.ExoPlayer);
 	}
 
 	@Test
 	public void thenTheExoPlayerSelectionIsBroadcast() {
-		assertThat(broadcastEngineType).isEqualTo(PlaybackEngineType.ExoPlayer.name());
+		assertThat(fakeMessageSender.getRecordedIntents().stream().findFirst().get().getStringExtra(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeKey)).isEqualTo(PlaybackEngineType.ExoPlayer.name());
 	}
 }

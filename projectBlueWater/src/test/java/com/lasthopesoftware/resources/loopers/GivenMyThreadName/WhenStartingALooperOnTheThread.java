@@ -3,26 +3,24 @@ package com.lasthopesoftware.resources.loopers.GivenMyThreadName;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.robolectric.Shadows.shadowOf;
 
-@RunWith(RobolectricTestRunner.class)
-public class WhenStartingALooperOnTheThread {
+public class WhenStartingALooperOnTheThread extends AndroidContext {
 
 	private Looper looper;
 
-	@Before
-	public void context() throws Throwable {
+	@Override
+	public void before() throws InterruptedException, ExecutionException {
 		looper = new FuturePromise<>(HandlerThreadCreator.promiseNewHandlerThread("MyThreadName", 3)).get().getLooper();
 
 		final Handler handler = new Handler(looper);
