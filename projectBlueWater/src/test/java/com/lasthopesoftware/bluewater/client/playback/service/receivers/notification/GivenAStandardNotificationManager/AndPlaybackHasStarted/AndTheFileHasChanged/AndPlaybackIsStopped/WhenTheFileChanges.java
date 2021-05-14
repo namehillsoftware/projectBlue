@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerContainer;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
@@ -76,7 +76,7 @@ public class WhenTheFileChanges extends AndroidContext {
 				notificationContentBuilder,
 				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerContainer.newScopedBroadcastManager(RuntimeEnvironment.application);
 
 		final LocalPlaybackBroadcaster localPlaybackBroadcaster =
 			new LocalPlaybackBroadcaster(localBroadcastManager);

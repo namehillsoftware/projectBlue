@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.lasthopesoftware.resources.BroadcastRecorder;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerContainer;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class WhenRetrievingTheSessionConnection extends AndroidContext {
 	@Override
 	public void before() throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException, InvocationTargetException {
 
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(ApplicationProvider.getApplicationContext());
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerContainer.newScopedBroadcastManager(ApplicationProvider.getApplicationContext());
 		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
 			new IntentFilter(SessionConnection.buildSessionBroadcast));

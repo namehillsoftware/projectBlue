@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.lasthopesoftware.resources.BroadcastRecorder;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerContainer;
 
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
@@ -43,7 +43,7 @@ public class WhenRetrievingTheTestedSessionConnection extends AndroidContext {
 	@Override
 	public void before() throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException, InvocationTargetException {
 
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(RuntimeEnvironment.application);
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerContainer.newScopedBroadcastManager(RuntimeEnvironment.application);
 		localBroadcastManager.registerReceiver(
 			broadcastRecorder,
 			new IntentFilter(SessionConnection.buildSessionBroadcast));

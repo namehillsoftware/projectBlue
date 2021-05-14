@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibr
 import android.content.Context;
 import android.content.IntentFilter;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
@@ -19,10 +18,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.resources.BroadcastRecorder;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerContainer;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
+import org.robolectric.annotation.LooperMode;
 
 import java.io.File;
 import java.util.Arrays;
@@ -43,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@LooperMode(LooperMode.Mode.PAUSED)
 public class WhenSynchronizing extends AndroidContext {
 
 	private static final Random random = new Random();
@@ -66,7 +67,7 @@ public class WhenSynchronizing extends AndroidContext {
 	@Override
 	public void before() throws Exception {
 		final Context context = ApplicationProvider.getApplicationContext();
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(
+		final ScopedLocalBroadcastManagerContainer localBroadcastManager = ScopedLocalBroadcastManagerContainer.newScopedBroadcastManager(
 			context);
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
@@ -102,7 +103,7 @@ public class WhenSynchronizing extends AndroidContext {
 
 		final StoredFileSynchronization synchronization = new StoredFileSynchronization(
 			libraryProvider,
-			localBroadcastManager,
+			localBroadcastManager.getLocalBroadcastManager(),
 			librarySyncHandler);
 
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);
@@ -112,11 +113,16 @@ public class WhenSynchronizing extends AndroidContext {
 		intentFilter.addAction(onFileReadErrorEvent);
 		intentFilter.addAction(onSyncStopEvent);
 
-		localBroadcastManager.registerReceiver(
+		localBroadcastManager.getLocalBroadcastManager().registerReceiver(
 			broadcastRecorder,
 			intentFilter);
 
+		localBroadcastManager.getLocalBroadcastManager().registerReceiver(
+			broadcastRecorder,
+			new IntentFilter("test"));
+
 		synchronization.streamFileSynchronization().blockingAwait();
+		localBroadcastManager.processMessages();
 	}
 
 	@Test

@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
 import com.lasthopesoftware.resources.BroadcastRecorder;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerBuilder;
+import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerContainer;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class WhenSynchronizing extends AndroidContext {
 	@Override
 	public void before() throws Exception {
 		final Context context = ApplicationProvider.getApplicationContext();
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerBuilder.newScopedBroadcastManager(
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerContainer.newScopedBroadcastManager(
 			context);
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
