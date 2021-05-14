@@ -19,13 +19,13 @@ if (!hasAndroidStorePassword()) {
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion '29.0.2'
+    compileSdkVersion 30
+    buildToolsVersion '30.0.2'
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode getGeneratedVersionCode()
         versionName project.version
 		multiDexEnabled true

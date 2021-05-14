@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
@@ -19,7 +20,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -30,7 +30,7 @@ class WhenBroadcastingTheFileProgress {
 		private var progress: Long = 0
 		private var duration: Long = 0
 		private val setupTest = lazy {
-			val localBroadcastManager = LocalBroadcastManager.getInstance(RuntimeEnvironment.application)
+			val localBroadcastManager = LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
 			val countDownLatch = CountDownLatch(1)
 			localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
 				override fun onReceive(context: Context, intent: Intent) {
