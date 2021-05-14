@@ -7,7 +7,7 @@ import android.content.IntentFilter
 import android.view.View
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 
 class FileListItemNowPlayingRegistrar(private val localBroadcastManager: LocalBroadcastManager) {
 	fun registerNewHandler(fileListItem: FileListItemContainer, receiver: ReceiveBroadcastEvents): AutoCloseable {

@@ -1,5 +1,7 @@
 package com.lasthopesoftware;
 
+import android.os.Looper;
+
 import org.junit.runners.model.InitializationError;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.internal.SandboxTestRunner;
@@ -46,7 +48,10 @@ public class AndroidContextRunner extends RobolectricTestRunner {
 				final Method beforeMethod = test.getClass().getMethod("before");
 				beforeMethod.invoke(test);
 				isCheckedForBeforeMethod = true;
-				shadowOf(getMainLooper()).idle();
+				final Looper looper = getMainLooper();
+				if (looper != null) {
+					shadowOf(looper).idle();
+				}
 			}
 			return test;
 		}

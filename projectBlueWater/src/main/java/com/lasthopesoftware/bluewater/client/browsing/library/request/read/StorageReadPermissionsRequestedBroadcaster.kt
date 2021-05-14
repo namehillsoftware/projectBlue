@@ -1,28 +1,26 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.request.read;
+package com.lasthopesoftware.bluewater.client.browsing.library.request.read
 
-import android.content.Intent;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import android.content.Intent
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 
 /**
  * Created by david on 7/3/16.
  */
-public class StorageReadPermissionsRequestedBroadcaster implements IStorageReadPermissionsRequestedBroadcast {
-	public final static String ReadPermissionsNeeded = MagicPropertyBuilder.buildMagicPropertyName(StorageReadPermissionsRequestedBroadcaster.class, "ReadPermissionsNeeded");
-	public final static String ReadPermissionsLibraryId = MagicPropertyBuilder.buildMagicPropertyName(StorageReadPermissionsRequestedBroadcaster.class, "ReadPermissionsLibraryId");
+class StorageReadPermissionsRequestedBroadcaster(private val sendMessages: SendMessages) : IStorageReadPermissionsRequestedBroadcast {
 
-	private final LocalBroadcastManager localBroadcastManager;
-
-	public StorageReadPermissionsRequestedBroadcaster(LocalBroadcastManager localBroadcastManager) {
-		this.localBroadcastManager = localBroadcastManager;
+	companion object {
+		val ReadPermissionsNeeded = buildMagicPropertyName(
+			StorageReadPermissionsRequestedBroadcaster::class.java, "ReadPermissionsNeeded"
+		)
+		val ReadPermissionsLibraryId = buildMagicPropertyName(
+			StorageReadPermissionsRequestedBroadcaster::class.java, "ReadPermissionsLibraryId"
+		)
 	}
 
-	@Override
-	public void sendReadPermissionsRequestedBroadcast(int libraryId) {
-		final Intent readPermissionsNeededIntent = new Intent(ReadPermissionsNeeded);
-		readPermissionsNeededIntent.putExtra(ReadPermissionsLibraryId, libraryId);
-		localBroadcastManager.sendBroadcast(readPermissionsNeededIntent);
+	override fun sendReadPermissionsRequestedBroadcast(libraryId: Int) {
+		val readPermissionsNeededIntent = Intent(ReadPermissionsNeeded)
+		readPermissionsNeededIntent.putExtra(ReadPermissionsLibraryId, libraryId)
+		sendMessages.sendBroadcast(readPermissionsNeededIntent)
 	}
 }

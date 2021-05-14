@@ -1,28 +1,25 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.request.write;
+package com.lasthopesoftware.bluewater.client.browsing.library.request.write
 
-import android.content.Intent;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import android.content.Intent
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 
 /**
  * Created by david on 7/3/16.
  */
-public class StorageWritePermissionsRequestedBroadcaster implements IStorageWritePermissionsRequestedBroadcaster {
-	public final static String WritePermissionsNeeded = MagicPropertyBuilder.buildMagicPropertyName(StorageWritePermissionsRequestedBroadcaster.class, "WritePermissionsNeeded");
-	public final static String WritePermissionsLibraryId = MagicPropertyBuilder.buildMagicPropertyName(StorageWritePermissionsRequestedBroadcaster.class, "WritePermissionsLibraryId");
-
-	private final LocalBroadcastManager localBroadcastManager;
-
-	public StorageWritePermissionsRequestedBroadcaster(LocalBroadcastManager localBroadcastManager) {
-		this.localBroadcastManager = localBroadcastManager;
+class StorageWritePermissionsRequestedBroadcaster(private val sendMessages: SendMessages) :	IStorageWritePermissionsRequestedBroadcaster {
+	override fun sendWritePermissionsNeededBroadcast(libraryId: Int) {
+		val writePermissionsNeededIntent = Intent(WritePermissionsNeeded)
+		writePermissionsNeededIntent.putExtra(WritePermissionsLibraryId, libraryId)
+		sendMessages.sendBroadcast(writePermissionsNeededIntent)
 	}
 
-	@Override
-	public void sendWritePermissionsNeededBroadcast(int libraryId) {
-		final Intent writePermissionsNeededIntent = new Intent(WritePermissionsNeeded);
-		writePermissionsNeededIntent.putExtra(WritePermissionsLibraryId, libraryId);
-		localBroadcastManager.sendBroadcast(writePermissionsNeededIntent);
+	companion object {
+		val WritePermissionsNeeded = buildMagicPropertyName(
+			StorageWritePermissionsRequestedBroadcaster::class.java, "WritePermissionsNeeded"
+		)
+		val WritePermissionsLibraryId = buildMagicPropertyName(
+			StorageWritePermissionsRequestedBroadcaster::class.java, "WritePermissionsLibraryId"
+		)
 	}
 }

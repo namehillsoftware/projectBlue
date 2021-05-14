@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android
+package com.lasthopesoftware.bluewater.shared.android.messages
 
 import android.content.Context
 import android.content.Intent

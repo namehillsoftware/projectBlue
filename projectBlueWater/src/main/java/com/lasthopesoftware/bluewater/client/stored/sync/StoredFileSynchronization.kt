@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.sync
 
 import android.content.Intent
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
@@ -11,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import io.reactivex.Completable
@@ -19,12 +19,12 @@ import org.slf4j.LoggerFactory
 
 class StoredFileSynchronization(
 	private val libraryProvider: ILibraryProvider,
-	private val localBroadcastManager: LocalBroadcastManager,
+	private val messenger: SendMessages,
 	private val syncHandler: ControlLibrarySyncs) : SynchronizeStoredFiles {
 
 	override fun streamFileSynchronization(): Completable {
 		logger.info("Starting sync.")
-		localBroadcastManager.sendBroadcast(Intent(onSyncStartEvent))
+		messenger.sendBroadcast(Intent(onSyncStartEvent))
 		return StreamedPromise.stream(libraryProvider.allLibraries)
 			.flatMap({ library -> syncHandler.observeLibrarySync(library.libraryId) }, true)
 			.flatMapCompletable({ storedFileJobStatus: StoredFileJobStatus ->
@@ -67,13 +67,13 @@ class StoredFileSynchronization(
 	}
 
 	private fun sendStoppedSync() {
-		localBroadcastManager.sendBroadcast(Intent(onSyncStopEvent))
+		messenger.sendBroadcast(Intent(onSyncStopEvent))
 	}
 
 	private fun sendStoredFileBroadcast(action: String, storedFile: StoredFile) {
 		val storedFileBroadcastIntent = Intent(action)
 		storedFileBroadcastIntent.putExtra(storedFileEventKey, storedFile.id)
-		localBroadcastManager.sendBroadcast(storedFileBroadcastIntent)
+		messenger.sendBroadcast(storedFileBroadcastIntent)
 	}
 
 	companion object {

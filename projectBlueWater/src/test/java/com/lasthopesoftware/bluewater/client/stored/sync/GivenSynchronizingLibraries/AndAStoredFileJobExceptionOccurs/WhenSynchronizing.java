@@ -1,10 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.AndAStoredFileJobExceptionOccurs;
 
-import android.content.Context;
 import android.content.IntentFilter;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.test.core.app.ApplicationProvider;
 
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.AndroidContext;
@@ -15,9 +11,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
+import com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.FakeMessageSender;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.resources.BroadcastRecorder;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManagerContainer;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
@@ -54,13 +49,10 @@ public class WhenSynchronizing extends AndroidContext {
 
 	private static final List<StoredFile> expectedStoredFileJobs = Stream.of(storedFiles).filter(f -> f.getServiceId() != 114).toList();
 
-	private static final BroadcastRecorder broadcastRecorder = new BroadcastRecorder();
+	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender();
 
 	@Override
 	public void before() throws Exception {
-		final Context context = ApplicationProvider.getApplicationContext();
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManagerContainer.newScopedBroadcastManager(
-			context);
 
 		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
 		when(libraryProvider.getAllLibraries())
@@ -87,23 +79,19 @@ public class WhenSynchronizing extends AndroidContext {
 
 		final StoredFileSynchronization synchronization = new StoredFileSynchronization(
 			libraryProvider,
-			localBroadcastManager,
+			fakeMessageSender,
 			librarySyncHandler);
 
 		final IntentFilter intentFilter = new IntentFilter(onFileDownloadedEvent);
 		intentFilter.addAction(onFileDownloadingEvent);
 		intentFilter.addAction(onFileQueuedEvent);
 
-		localBroadcastManager.registerReceiver(
-			broadcastRecorder,
-			intentFilter);
-
 		synchronization.streamFileSynchronization().blockingAwait();
 	}
 
 	@Test
 	public void thenTheStoredFilesAreBroadcastAsQueued() {
-		assertThat(Stream.of(broadcastRecorder.recordedIntents)
+		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
 			.filter(i -> onFileQueuedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
 			.toList()).isSubsetOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
@@ -111,7 +99,7 @@ public class WhenSynchronizing extends AndroidContext {
 
 	@Test
 	public void thenTheStoredFilesAreBroadcastAsDownloading() {
-		assertThat(Stream.of(broadcastRecorder.recordedIntents)
+		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
 			.filter(i -> onFileDownloadingEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
 			.toList()).isSubsetOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
@@ -119,7 +107,7 @@ public class WhenSynchronizing extends AndroidContext {
 
 	@Test
 	public void thenTheStoredFilesAreBroadcastAsDownloaded() {
-		assertThat(Stream.of(broadcastRecorder.recordedIntents)
+		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
 			.filter(i -> onFileDownloadedEvent.equals(i.getAction()))
 			.map(i -> i.getIntExtra(storedFileEventKey, -1))
 			.toList()).isSubsetOf(Stream.of(expectedStoredFileJobs).map(StoredFile::getId).toList());
