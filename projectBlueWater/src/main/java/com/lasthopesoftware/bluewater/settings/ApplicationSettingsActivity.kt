@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.PlaybackEngineTypeSelectionView
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -48,6 +49,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val notificationSettingsContainer = LazyViewFinder<LinearLayout>(this, R.id.notificationSettingsContainer)
 	private val modifyNotificationSettingsButton = LazyViewFinder<Button>(this, R.id.modifyNotificationSettingsButton)
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
+	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
 	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 
@@ -98,6 +100,8 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		playbackEngineOptions
 			.setOnCheckedChangeListener { _, checkedId -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]) }
+
+		killPlaybackEngineButton.findView().setOnClickListener { PlaybackService.killService(this) }
 
 		addServerButton.findView().setOnClickListener(EditServerClickListener(this, -1))
 
