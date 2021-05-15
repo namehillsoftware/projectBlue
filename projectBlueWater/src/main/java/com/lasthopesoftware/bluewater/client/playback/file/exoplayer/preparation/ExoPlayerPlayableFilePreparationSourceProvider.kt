@@ -12,10 +12,10 @@ import org.joda.time.Minutes
 class ExoPlayerPlayableFilePreparationSourceProvider(
 	private val context: Context,
 	private val playbackHandler: Handler,
-	private val playbackControlHandler: Handler,
 	private val eventHandler: Handler,
 	private val mediaSourceProvider: SpawnMediaSources,
-	private val bestMatchUriProvider: BestMatchUriProvider) : IPlayableFilePreparationSourceProvider {
+	private val bestMatchUriProvider: BestMatchUriProvider
+) : IPlayableFilePreparationSourceProvider {
 
 	companion object {
 		private val maxBufferMs = lazy { Minutes.minutes(5).toStandardDuration().millis.toInt() }
@@ -37,12 +37,12 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 	override fun getMaxQueueSize() = 1
 
 	override fun providePlayableFilePreparationSource() = ExoPlayerPlaybackPreparer(
-            context,
-            mediaSourceProvider,
-            loadControl.value,
-            renderersFactory,
-            playbackHandler,
-            playbackControlHandler,
-            eventHandler,
-            bestMatchUriProvider)
+		context,
+		mediaSourceProvider,
+		loadControl.value,
+		renderersFactory,
+		playbackHandler,
+		eventHandler,
+		bestMatchUriProvider
+	)
 }
