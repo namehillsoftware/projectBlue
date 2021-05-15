@@ -30,10 +30,10 @@ internal class PreparedExoPlayerPromise(
 	private val loadControl: LoadControl,
 	private val renderersFactory: GetAudioRenderers,
 	private val playbackHandler: Handler,
-	private val playbackControlHandler: Handler,
 	private val eventHandler: Handler,
 	private val uri: Uri,
-	private val prepareAt: Duration) :
+	private val prepareAt: Duration
+) :
 	Promise<PreparedPlayableFile>(),
 	Player.EventListener,
 	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
@@ -71,7 +71,7 @@ internal class PreparedExoPlayerPromise(
 			.setLoadControl(loadControl)
 			.setLooper(playbackHandler.looper)
 
-		val newExoPlayer = HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playbackControlHandler)
+		val newExoPlayer = HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playbackHandler)
 		exoPlayer = newExoPlayer
 
 		if (cancellationToken.isCancelled) return

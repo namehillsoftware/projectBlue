@@ -71,8 +71,7 @@ public class WhenPreparing extends AndroidContext {
 				return new Promise<>(new MediaCodecAudioRenderer[] { audioRenderer });
 			},
 			new Handler(Looper.getMainLooper()),
-			new Handler(Looper.getMainLooper()),
-			new Handler(Looper.getMainLooper()),
+                new Handler(Looper.getMainLooper()),
 			(sf) -> new Promise<>(Uri.EMPTY)
         );
 

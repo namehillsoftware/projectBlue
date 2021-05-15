@@ -405,12 +405,6 @@ open class PlaybackService : Service() {
 				Process.THREAD_PRIORITY_AUDIO)
 		}
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
-	private val playbackControlThread = lazy {
-		HandlerThreadCreator.promiseNewHandlerThread(
-			"Playback control thread",
-			Process.THREAD_PRIORITY_AUDIO)
-	}
-	private val playbackControlHandler = lazy { playbackControlThread.value.then { h -> Handler(h.looper) } }
 	private val lazyPlaybackStartingNotificationBuilder = lazy {
 			PlaybackStartingNotificationBuilder(
 				this,
@@ -758,26 +752,23 @@ open class PlaybackService : Service() {
 							false),
 						remoteFileUriProvider)
 
-					val initializedControlHandler = playbackControlHandler.value
-					playbackHandler.value.eventually { ph ->
-						initializedControlHandler.then { pc ->
-							val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
-								this,
-								ph,
-								pc,
-								Handler(mainLooper),
-								MediaSourceProvider(
-									library,
-									HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
-									simpleCache),
-								bestMatchUriProvider)
+					playbackHandler.value.then { ph ->
+						val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
+							this,
+							ph,
+							Handler(mainLooper),
+							MediaSourceProvider(
+								library,
+								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
+								simpleCache),
+							bestMatchUriProvider
+						)
 
-							MaxFileVolumePreparationProvider(
-								playbackEngineBuilder.build(library),
-								MaxFileVolumeProvider(
-									lazyVolumeLevelSettings.value,
-									cachedSessionFilePropertiesProvider))
-						}
+						MaxFileVolumePreparationProvider(
+							playbackEngineBuilder.build(library),
+							MaxFileVolumeProvider(
+								lazyVolumeLevelSettings.value,
+								cachedSessionFilePropertiesProvider))
 					}
 				}
 			}
@@ -1047,7 +1038,6 @@ open class PlaybackService : Service() {
 		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
 		if (remoteControlClient.isInitialized()) audioManagerLazy.value.unregisterRemoteControlClient(remoteControlClient.value)
 		if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
-		if (playbackControlThread.isInitialized()) playbackControlThread.value.then { it.quitSafely() }
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated) {
 			lazyMediaSession.getObject().isActive = false
