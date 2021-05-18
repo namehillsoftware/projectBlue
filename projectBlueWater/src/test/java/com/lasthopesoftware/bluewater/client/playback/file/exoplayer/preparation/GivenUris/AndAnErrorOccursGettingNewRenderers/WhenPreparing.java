@@ -40,8 +40,7 @@ public class WhenPreparing {
 			loadControl,
 			() -> new Promise<>(new Exception("Oops")),
 			mock(Handler.class),
-			mock(Handler.class),
-			mock(Handler.class),
+                mock(Handler.class),
 			(sf) -> new Promise<>(mock(Uri.class))
         );
 
