@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.session
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.IntDef
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -11,15 +10,17 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 
 class SessionConnection(
-	private val localBroadcastManager: LocalBroadcastManager,
+	private val localBroadcastManager: SendMessages,
 	private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider,
 	private val libraryConnections: ProvideLibraryConnections) : (BuildingConnectionStatus) -> Unit {
 
-	fun promiseTestedSessionConnection(): Promise<IConnectionProvider> {
+	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()
 
@@ -35,7 +36,7 @@ class SessionConnection(
 		return libraryConnections.isConnectionActive(selectedLibraryId)
 	}
 
-	fun promiseSessionConnection(): Promise<IConnectionProvider> {
+	fun promiseSessionConnection(): Promise<IConnectionProvider?> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()
 		return libraryConnections
@@ -96,7 +97,7 @@ class SessionConnection(
 
 			val applicationContext = context.applicationContext
 			return SessionConnection(
-				LocalBroadcastManager.getInstance(applicationContext),
+				MessageBus(applicationContext),
 				SelectedBrowserLibraryIdentifierProvider(applicationContext),
 				get(applicationContext)).apply { sessionConnectionInstance = this }
 		}

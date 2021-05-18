@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries
+package com.lasthopesoftware.resources
 
 import android.content.Intent
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages

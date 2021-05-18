@@ -1,92 +1,75 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenASelectedLibrary.AndGettingTheLibraryFaults;
+package com.lasthopesoftware.bluewater.client.connection.session.GivenASelectedLibrary.AndGettingTheLibraryFaults
 
-import android.content.IntentFilter;
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibraryFailed
+import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionReservation
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.resources.FakeMessageSender
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.AssertionsForClassTypes
+import org.junit.Test
+import java.io.IOException
+import java.util.concurrent.ExecutionException
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.test.core.app.ApplicationProvider;
+class WhenRetrievingTheSessionConnection : AndroidContext() {
 
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionReservation;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.lasthopesoftware.resources.BroadcastRecorder;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManager;
+	companion object {
+		private val fakeMessageSender = FakeMessageSender()
+		private var connectionProvider: IConnectionProvider? = null
+		private var exception: IOException? = null
+	}
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+	override fun before() {
+		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.ExecutionException;
+		val libraryConnections = mockk<ProvideLibraryConnections>()
+		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibraryFailed;
-import static com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.buildSessionBroadcastStatus;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()
+		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
 
-public class WhenRetrievingTheSessionConnection extends AndroidContext {
-
-	private static final BroadcastRecorder broadcastRecorder = new BroadcastRecorder();
-	private static IConnectionProvider connectionProvider;
-	private static IOException exception;
-
-	@Override
-	public void before() throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException, InvocationTargetException {
-
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManager.newScopedBroadcastManager(ApplicationProvider.getApplicationContext());
-		localBroadcastManager.registerReceiver(
-			broadcastRecorder,
-			new IntentFilter(SessionConnection.buildSessionBroadcast));
-
-		final ProvideLibraryConnections libraryConnections = mock(ProvideLibraryConnections.class);
-		final DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider> deferredConnectionProvider = new DeferredProgressingPromise<>();
-		when(libraryConnections.promiseLibraryConnection(new LibraryId(2)))
-			.thenReturn(deferredConnectionProvider);
-
-		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
-			final SessionConnection sessionConnection = new SessionConnection(
-				localBroadcastManager,
-				() -> new LibraryId(2),
-				libraryConnections);
-
-			final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection());
-
-			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary);
-			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibraryFailed);
-			deferredConnectionProvider.sendRejection(new IOException("OMG"));
-
+		SessionConnectionReservation().use {
+			val sessionConnection = SessionConnection(
+				fakeMessageSender,
+				libraryIdentifierProvider,
+				libraryConnections)
+			val futureConnectionProvider = FuturePromise(sessionConnection.promiseSessionConnection())
+			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
+			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibraryFailed)
+			deferredConnectionProvider.sendRejection(IOException("OMG"))
 			try {
-				connectionProvider = futureConnectionProvider.get();
-			} catch (ExecutionException e) {
-				if (e.getCause() instanceof IOException)
-					exception = (IOException) e.getCause();
+				connectionProvider = futureConnectionProvider.get()
+			} catch (e: ExecutionException) {
+				if (e.cause is IOException) exception = e.cause as IOException?
 			}
 		}
 	}
 
 	@Test
-	public void thenAConnectionProviderIsNotReturned() {
-		assertThat(connectionProvider).isNull();
+	fun thenAConnectionProviderIsNotReturned() {
+		AssertionsForClassTypes.assertThat(connectionProvider).isNull()
 	}
 
 	@Test
-	public void thenAnIOExceptionIsReturned() {
-		assertThat(exception).isNotNull();
+	fun thenAnIOExceptionIsReturned() {
+		AssertionsForClassTypes.assertThat(exception).isNotNull
 	}
 
 	@Test
-	public void thenGettingLibraryIsBroadcast() {
-		Assertions.assertThat(Stream.of(broadcastRecorder.recordedIntents).map(i -> i.getIntExtra(buildSessionBroadcastStatus, -1)).toList())
-			.containsExactly(
-				GettingLibrary,
-				GettingLibraryFailed);
+	fun thenGettingLibraryIsBroadcast() {
+		assertThat(fakeMessageSender.recordedIntents
+			.map { i -> i.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1) }
+			.toList())
+			.containsExactly(GettingLibrary, GettingLibraryFailed)
 	}
 }

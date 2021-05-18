@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenAPl
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
-import com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.FakeMessageSender;
+import com.lasthopesoftware.resources.FakeMessageSender;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -14,8 +14,10 @@ class CachedFilePropertiesProvider(private val libraryConnections: ProvideLibrar
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
 		return libraryConnections.promiseLibraryConnection(libraryId)
 			.eventually { connectionProvider ->
+				connectionProvider ?: return@eventually Promise.empty()
+
 				val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
-				when(val filePropertiesContainer = filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)) {
+				when (val filePropertiesContainer = filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)) {
 					null -> filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 					else -> Promise(filePropertiesContainer.properties)
 				}

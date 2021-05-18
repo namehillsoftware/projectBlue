@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
-import com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.FakeMessageSender;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
+import com.lasthopesoftware.resources.FakeMessageSender;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;

@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
+import com.lasthopesoftware.resources.FakeMessageSender;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
