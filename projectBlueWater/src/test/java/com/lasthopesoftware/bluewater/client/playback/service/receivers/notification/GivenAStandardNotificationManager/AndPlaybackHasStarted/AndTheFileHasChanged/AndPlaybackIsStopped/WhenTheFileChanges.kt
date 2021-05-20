@@ -1,129 +1,105 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsStopped;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsStopped
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.Service;
-import android.content.IntentFilter;
+import android.app.Notification
+import android.app.NotificationManager
+import android.content.IntentFilter
+import androidx.core.app.NotificationCompat
+import com.annimon.stream.Stream
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
+import com.lasthopesoftware.resources.FakeMessageSender
+import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
+import com.namehillsoftware.handoff.promises.Promise
+import org.junit.Test
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito
+import org.robolectric.Robolectric
 
-import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+class WhenTheFileChanges : AndroidContext() {
 
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
-import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController;
-import com.lasthopesoftware.resources.ScopedLocalBroadcastManager;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
+	companion object {
+		private val secondNotification = Notification()
+		private val service = lazy {
+			Mockito.spy(Robolectric.buildService(PlaybackService::class.java).get())
+		}
+		private val notificationManager = Mockito.mock(NotificationManager::class.java)
+		private val notificationContentBuilder = Mockito.mock(BuildNowPlayingNotificationContent::class.java)
+		private val fakeMessageSender = FakeMessageSender()
+	}
 
-import org.junit.Test;
-import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
+	override fun before() {
+		val builder = Mockito.mock(NotificationCompat.Builder::class.java)
+		Mockito.`when`(builder.build())
+			.thenReturn(Notification())
+			.thenReturn(secondNotification)
+		Mockito.`when`(notificationContentBuilder.getLoadingNotification(anyBoolean()))
+			.thenReturn(FakeNotificationCompatBuilder.newFakeBuilder(Notification()))
+		Mockito.`when`(notificationContentBuilder.promiseNowPlayingNotification(any(),	anyBoolean()))
+			.thenReturn(Promise(builder))
+		Mockito.`when`(notificationContentBuilder.promiseNowPlayingNotification(argThat { a -> ServiceFile(2) == a }, anyBoolean()))
+			.thenReturn(Promise(builder))
+		val playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
+			NotificationsController(
+				service.value,
+				notificationManager),
+			NotificationsConfiguration("", 43),
+			notificationContentBuilder
+		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) })
 
-import java.lang.reflect.InvocationTargetException;
-
-import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-public class WhenTheFileChanges extends AndroidContext {
-
-	private static final Notification secondNotification = new Notification();
-	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
-	private static final NotificationManager notificationManager = mock(NotificationManager.class);
-	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
-
-	@Override
-	public void before() throws InvocationTargetException, InstantiationException, IllegalAccessException {
-		final NotificationCompat.Builder builder = mock(NotificationCompat.Builder.class);
-		when(builder.build())
-			.thenReturn(new Notification())
-			.thenReturn(secondNotification);
-
-		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
-			.thenReturn(newFakeBuilder(new Notification()));
-
-		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
-			.thenReturn(new Promise<>(builder));
-
-		when(notificationContentBuilder.promiseNowPlayingNotification(argThat(a -> new ServiceFile(2).equals(a)), anyBoolean()))
-			.thenReturn(new Promise<>(builder));
-
-		final PlaybackNotificationRouter playbackNotificationRouter =
-			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
-				new NotificationsController(
-					service.getObject(),
-					notificationManager),
-				new NotificationsConfiguration("",43),
-				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification()))));
-
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManager.newScopedBroadcastManager(RuntimeEnvironment.application);
-
-		final LocalPlaybackBroadcaster localPlaybackBroadcaster =
-			new LocalPlaybackBroadcaster(localBroadcastManager);
-
-		localBroadcastManager
+		val localPlaybackBroadcaster = LocalPlaybackBroadcaster(fakeMessageSender)
+		fakeMessageSender
 			.registerReceiver(
 				playbackNotificationRouter,
 				Stream.of(playbackNotificationRouter.registerForIntents())
-					.reduce(new IntentFilter(), (intentFilter, action) -> {
-						intentFilter.addAction(action);
-						return intentFilter;
-					}));
-
+					.reduce(IntentFilter(), { intentFilter: IntentFilter, action: String? ->
+						intentFilter.addAction(action)
+						intentFilter
+					})
+			)
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistStart,
-			new LibraryId(1),
-			new PositionedFile(1, new ServiceFile(1)));
-
+			LibraryId(1),
+			PositionedFile(1, ServiceFile(1))
+		)
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistTrackChange,
-			new LibraryId(1),
-			new PositionedFile(1, new ServiceFile(1)));
-
+			LibraryId(1),
+			PositionedFile(1, ServiceFile(1))
+		)
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistStop,
-			new LibraryId(1),
-			new PositionedFile(1, new ServiceFile(1)));
-
+			LibraryId(1),
+			PositionedFile(1, ServiceFile(1))
+		)
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistTrackChange,
-			new LibraryId(1),
-			new PositionedFile(1, new ServiceFile(2)));
+			LibraryId(1),
+			PositionedFile(1, ServiceFile(2))
+		)
 	}
 
 	@Test
-	public void thenTheServiceIsStartedInTheForeground() {
-		verify(service.getObject(), atLeastOnce())
-			.startForeground(eq(43), any());
+	fun thenTheServiceIsStartedInTheForeground() {
+		Mockito.verify(service.value, Mockito.atLeastOnce()).startForeground(eq(43), any())
 	}
 
 	@Test
-	public void thenTheServiceDoesNotContinueInTheBackground() {
-		verify(service.getObject()).stopForeground(true);
+	fun thenTheServiceDoesNotContinueInTheBackground() {
+		Mockito.verify(service.value).stopForeground(true)
 	}
 
 	@Test
-	public void thenTheNotificationIsNotSetToTheSecondNotification() {
-		verify(notificationManager, never()).notify(43, secondNotification);
+	fun thenTheNotificationIsNotSetToTheSecondNotification() {
+		Mockito.verify(notificationManager, Mockito.never()).notify(43, secondNotification)
 	}
 }
