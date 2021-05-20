@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
 
 import android.content.*
 import android.graphics.Bitmap
-import android.graphics.PorterDuff
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.view.Surface
@@ -38,7 +36,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
@@ -61,6 +58,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -208,7 +206,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				.eventually { np ->
 					lazyNowPlayingListAdapter.value
 						.updateListEventually(np.playlist.mapIndexed { i, s -> PositionedFile(i, s) })
-						.eventually<Unit>(LoopedInPromise.response(
+						.eventually(LoopedInPromise.response(
 							{
 								if (!isDrawerOpened) updateNowPlayingListViewPosition()
 								setView()
@@ -292,16 +290,13 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			updateKeepScreenOnStatus()
 		}
 
-		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
-			songProgressBar.findView().progressDrawable.setColorFilter(resources.getColor(R.color.custom_transparent_white), PorterDuff.Mode.SRC_IN)
-
 		setupNowPlayingListDrawer()
 
 		lazyNowPlayingRepository.value.nowPlaying
 			.eventually { nowPlaying ->
 				lazyNowPlayingListAdapter.value
 					.updateListEventually(nowPlaying.playlist.mapIndexed { i, sf -> PositionedFile(i, sf) })
-					.eventually<Unit>(LoopedInPromise.response({ updateNowPlayingListViewPosition() },	messageHandler.value))
+					.eventually(LoopedInPromise.response({ updateNowPlayingListViewPosition() },	messageHandler.value))
 			}
 	}
 
@@ -336,7 +331,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private fun updateNowPlayingListViewPosition() {
 		lazyNowPlayingRepository.value.nowPlaying
-			.eventually<Unit>(LoopedInPromise.response(
+			.eventually(LoopedInPromise.response(
 				{ nowPlaying ->
 					val newPosition = nowPlaying.playlistPosition
 					if (newPosition > -1 && newPosition < nowPlaying.playlist.size) nowPlayingDrawerListView.value.scrollToPosition(newPosition)
@@ -346,7 +341,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private fun setNowPlayingBackgroundBitmap() =
 		lazyDefaultImage.value
-			.eventually<Unit>(LoopedInPromise.response({ bitmap ->
+			.eventually(LoopedInPromise.response({ bitmap ->
 				val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
 				nowPlayingImageLoadingView.setImageBitmap(bitmap)
 				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
@@ -360,9 +355,14 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			.eventually { np ->
 				SessionConnection.getInstance(this)
 					.promiseSessionConnection()
-					.eventually(LoopedInPromise.response<IConnectionProvider, Any?>({ connectionProvider: IConnectionProvider? ->
+					.eventually(LoopedInPromise.response({ connectionProvider ->
 						val serviceFile = np.playlist[np.playlistPosition]
-						val filePosition = if (connectionProvider != null && viewStructure != null && viewStructure!!.urlKeyHolder == UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile.key)) viewStructure!!.filePosition else np.filePosition
+						val filePosition = connectionProvider?.let { c ->
+							viewStructure?.let { s ->
+								if (s.urlKeyHolder == UrlKeyHolder(c.urlProvider.baseUrl, serviceFile.key)) s.fileDuration
+								else null
+							}
+						} ?: np.filePosition
 						setView(serviceFile, filePosition)
 					}, messageHandler.value))
 			}
@@ -400,8 +400,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			.eventually { np ->
 				SessionConnection.getInstance(this)
 					.promiseSessionConnection()
-					.eventually(LoopedInPromise.response({ connectionProvider: IConnectionProvider ->
-						if (np.playlistPosition >= np.playlist.size) return@response
+					.eventually(LoopedInPromise.response({ connectionProvider ->
+						if (connectionProvider == null || np.playlistPosition >= np.playlist.size) return@response
 						val serviceFile = np.playlist[np.playlistPosition]
 						val filePosition = if (viewStructure?.urlKeyHolder == UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile.key)) viewStructure?.filePosition ?: 0 else 0
 						setView(serviceFile, filePosition)
@@ -413,7 +413,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
 		SessionConnection.getInstance(this)
 			.promiseSessionConnection()
-			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider: IConnectionProvider ->
+			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider ->
+				connectionProvider ?: return@ImmediateResponse
+
 				val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile.key)
 				if (viewStructure?.urlKeyHolder != urlKeyHolder) {
 					viewStructure?.release()
@@ -435,7 +437,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				sessionFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually { fileProperties ->
-						if (localViewStructure !== viewStructure) Promise.empty<Unit>()
+						if (localViewStructure !== viewStructure) Unit.toPromise()
 						else LoopedInPromise(MessageWriter<Unit> {
 							localViewStructure.fileProperties = fileProperties.toMutableMap()
 							setFileProperties(serviceFile, initialFilePosition, fileProperties)
@@ -453,8 +455,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			viewStructure.promisedNowPlayingImage = lazyImageProvider.value.eventually { provider -> provider.promiseFileBitmap(serviceFile) }
 		}
 		viewStructure.promisedNowPlayingImage
-			?.eventually<Unit> { bitmap ->
-				if (viewStructure !== Companion.viewStructure) Promise.empty()
+			?.eventually { bitmap ->
+				if (viewStructure !== Companion.viewStructure) Unit.toPromise()
 				else LoopedInPromise(MessageWriter { setNowPlayingImage(bitmap) }, messageHandler.value)
 			}
 			?.excuse { e ->

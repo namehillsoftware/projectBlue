@@ -30,7 +30,7 @@ class WhenRetrievingTheSessionConnection : AndroidContext() {
 	}
 
 	override fun before() {
-		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider>()
+		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
 		val libraryConnections = mockk<ProvideLibraryConnections>()
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider

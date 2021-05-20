@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
+import com.lasthopesoftware.resources.FakeMessageSender;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
@@ -18,7 +19,6 @@ import org.junit.Test;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class WhenGettingThePlaybackEngineType extends AndroidContext {
 
@@ -32,7 +32,7 @@ public class WhenGettingThePlaybackEngineType extends AndroidContext {
 		final PlaybackEngineTypeSelectionPersistence playbackEngineTypeSelectionPersistence =
 			new PlaybackEngineTypeSelectionPersistence(
 				sharedPreferences,
-				mock(PlaybackEngineTypeChangedBroadcaster.class));
+				new PlaybackEngineTypeChangedBroadcaster(new FakeMessageSender()));
 
 		playbackEngineTypeSelectionPersistence.selectPlaybackEngine(PlaybackEngineType.ExoPlayer);
 

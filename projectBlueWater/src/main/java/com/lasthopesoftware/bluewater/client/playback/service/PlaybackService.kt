@@ -469,7 +469,7 @@ open class PlaybackService : Service() {
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
-	private val sessionConnection: Promise<IConnectionProvider>
+	private val sessionConnection: Promise<IConnectionProvider?>
 		get() {
 			localBroadcastManagerLazy.value
 				.registerReceiver(

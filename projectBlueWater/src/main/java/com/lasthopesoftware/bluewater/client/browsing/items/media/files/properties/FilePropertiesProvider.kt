@@ -6,21 +6,23 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.RevisionChe
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.*
 
 class FilePropertiesProvider(private val libraryConnections: ProvideLibraryConnections, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideLibraryFileProperties {
-	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
-		return libraryConnections.promiseLibraryConnection(libraryId).eventually { connectionProvider ->
-			RevisionChecker.promiseRevision(connectionProvider).eventually { revision ->
-				val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
-				val filePropertiesContainer = filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder)
+	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
+		libraryConnections.promiseLibraryConnection(libraryId).eventually { connectionProvider ->
+			connectionProvider?.let {
+				RevisionChecker.promiseRevision(connectionProvider).eventually { revision ->
+					val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
+					val filePropertiesContainer =
+						filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder)
 
-				if (filePropertiesContainer != null && filePropertiesContainer.properties.isNotEmpty() && revision == filePropertiesContainer.revision)
-					Promise<Map<String, String>>(HashMap(filePropertiesContainer.properties))
-				else
-					FilePropertiesPromise(connectionProvider, filePropertiesContainerProvider, serviceFile, revision)
-			}
+					if (filePropertiesContainer != null && filePropertiesContainer.properties.isNotEmpty() && revision == filePropertiesContainer.revision)
+						filePropertiesContainer.properties.toPromise()
+					else
+						FilePropertiesPromise(connectionProvider, filePropertiesContainerProvider, serviceFile,	revision)
+				}
+			} ?: emptyMap<String, String>().toPromise()
 		}
-	}
 }
