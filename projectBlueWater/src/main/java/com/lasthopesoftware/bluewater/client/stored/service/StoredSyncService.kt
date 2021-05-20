@@ -13,6 +13,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.R
@@ -153,7 +154,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val lazyChannelConfiguration = lazy { SyncChannelProperties(this) }
-	private val lazyMessageBus = lazy { MessageBus(this) }
+	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val lazyStoredFileAccess = lazy { StoredFileAccess(this, StoredFilesCollection(this)) }
 	private val lazyReadPermissionArbitratorForOs = lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
 	private val lazyLibraryRepository = lazy { LibraryRepository(this) }

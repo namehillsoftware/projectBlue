@@ -4,7 +4,7 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.IntentFilter
 import androidx.core.app.NotificationCompat
-import com.annimon.stream.Stream
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -34,7 +34,7 @@ class WhenTheFileChanges : AndroidContext() {
 		}
 		private val notificationManager = Mockito.mock(NotificationManager::class.java)
 		private val notificationContentBuilder = Mockito.mock(BuildNowPlayingNotificationContent::class.java)
-		private val fakeMessageSender = FakeMessageSender()
+		private val fakeMessageSender = lazy { FakeMessageSender(ApplicationProvider.getApplicationContext()) }
 	}
 
 	override fun before() {
@@ -56,12 +56,13 @@ class WhenTheFileChanges : AndroidContext() {
 			notificationContentBuilder
 		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) })
 
-		val localPlaybackBroadcaster = LocalPlaybackBroadcaster(fakeMessageSender)
+		val localPlaybackBroadcaster = LocalPlaybackBroadcaster(fakeMessageSender.value)
 		fakeMessageSender
+			.value
 			.registerReceiver(
 				playbackNotificationRouter,
-				Stream.of(playbackNotificationRouter.registerForIntents())
-					.reduce(IntentFilter(), { intentFilter: IntentFilter, action: String? ->
+				playbackNotificationRouter.registerForIntents()
+					.fold(IntentFilter(), { intentFilter: IntentFilter, action: String? ->
 						intentFilter.addAction(action)
 						intentFilter
 					})

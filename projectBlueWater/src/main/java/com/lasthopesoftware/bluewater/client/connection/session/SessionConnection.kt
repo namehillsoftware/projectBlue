@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.IntDef
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -97,7 +98,7 @@ class SessionConnection(
 
 			val applicationContext = context.applicationContext
 			return SessionConnection(
-				MessageBus(applicationContext),
+				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
 				SelectedBrowserLibraryIdentifierProvider(applicationContext),
 				get(applicationContext)).apply { sessionConnectionInstance = this }
 		}

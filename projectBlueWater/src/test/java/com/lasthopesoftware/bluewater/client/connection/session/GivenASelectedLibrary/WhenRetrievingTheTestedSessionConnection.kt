@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenASelectedLibrary
 
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -26,7 +27,7 @@ import org.mockito.Mockito
 class WhenRetrievingTheTestedSessionConnection : AndroidContext() {
 
 	companion object {
-		private val fakeMessageSender = FakeMessageSender()
+		private val fakeMessageSender = lazy { FakeMessageSender(ApplicationProvider.getApplicationContext()) }
 		private val urlProvider = Mockito.mock(IUrlProvider::class.java)
 		private var connectionProvider: IConnectionProvider? = null
 	}
@@ -40,7 +41,7 @@ class WhenRetrievingTheTestedSessionConnection : AndroidContext() {
 		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(51)
 
 		SessionConnectionReservation().use {
-			val sessionConnection = SessionConnection(fakeMessageSender, libraryIdentifierProvider,	libraryConnections)
+			val sessionConnection = SessionConnection(fakeMessageSender.value, libraryIdentifierProvider,	libraryConnections)
 			val futureConnectionProvider = FuturePromise(sessionConnection.promiseTestedSessionConnection())
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
@@ -57,7 +58,7 @@ class WhenRetrievingTheTestedSessionConnection : AndroidContext() {
 
 	@Test
 	fun thenGettingLibraryIsBroadcast() {
-		Assertions.assertThat(fakeMessageSender.recordedIntents
+		Assertions.assertThat(fakeMessageSender.value.recordedIntents
 			.map { i -> i.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1) }
 			.toList())
 			.containsExactly(GettingLibrary, BuildingConnection, BuildingSessionComplete)

@@ -1,20 +1,27 @@
 package com.lasthopesoftware.resources
 
 import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 
-class FakeMessageSender : SendMessages, RegisterForMessages {
+class FakeMessageSender(private val context: Context) : SendMessages, RegisterForMessages {
 
 	private val _recordedIntents: MutableList<Intent> = ArrayList()
 	private val receivers: MutableList<Pair<BroadcastReceiver, IntentFilter>> = ArrayList()
 
 	override fun sendBroadcast(intent: Intent) {
 		_recordedIntents.add(intent)
-		for (receiver in receivers.map { r -> intent. r.second. }) {
 
+		val action = intent.action
+		val type = intent.resolveTypeIfNeeded(context.contentResolver)
+		val data = intent.data
+		val scheme = intent.scheme
+		val categories = intent.categories
+		for (receiver in receivers.filter { p -> p.second.match(action, type, scheme, data, categories, "FakeMessageSender") >= 0 }) {
+			receiver.first.onReceive(context, intent)
 		}
 	}
 

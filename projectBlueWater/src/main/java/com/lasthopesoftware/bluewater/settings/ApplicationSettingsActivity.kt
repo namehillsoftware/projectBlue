@@ -78,7 +78,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			sharedPreferences,
-			PlaybackEngineTypeChangedBroadcaster(MessageBus(this)))
+			PlaybackEngineTypeChangedBroadcaster(MessageBus(LocalBroadcastManager.getInstance(this))))
 
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(sharedPreferences, DefaultPlaybackEngineLookup())
 

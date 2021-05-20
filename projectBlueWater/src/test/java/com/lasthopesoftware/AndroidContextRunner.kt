@@ -1,59 +1,41 @@
-package com.lasthopesoftware;
+package com.lasthopesoftware
 
-import android.os.Looper;
+import android.os.Looper
+import org.junit.runners.model.InitializationError
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.internal.SandboxTestRunner
+import java.util.*
 
-import org.junit.runners.model.InitializationError;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.internal.SandboxTestRunner;
+open class AndroidContextRunner(testClass: Class<*>) : RobolectricTestRunner(testClass) {
+	private val testRunners = HashMap<Class<*>, HelperTestRunner>()
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-
-import static android.os.Looper.getMainLooper;
-import static org.robolectric.Shadows.shadowOf;
-
-public class AndroidContextRunner extends RobolectricTestRunner {
-	private final HashMap<Class, HelperTestRunner> testRunners = new HashMap<>();
-
-	public AndroidContextRunner(Class<?> testClass) throws InitializationError {
-		super(testClass);
-	}
-
-	@Override
-	protected synchronized SandboxTestRunner.HelperTestRunner getHelperTestRunner(Class bootstrappedTestClass) {
-		try {
-			if (!testRunners.containsKey(bootstrappedTestClass))
-				testRunners.put(bootstrappedTestClass, new HelperTestRunner(bootstrappedTestClass));
-
-			return testRunners.get(bootstrappedTestClass);
-		} catch (InitializationError initializationError) {
-			throw new RuntimeException(initializationError);
+	@Synchronized
+	override fun getHelperTestRunner(bootstrappedTestClass: Class<*>): SandboxTestRunner.HelperTestRunner {
+		return try {
+			if (!testRunners.containsKey(bootstrappedTestClass)) testRunners[bootstrappedTestClass] =
+				HelperTestRunner(bootstrappedTestClass)
+			testRunners[bootstrappedTestClass]!!
+		} catch (initializationError: InitializationError) {
+			throw RuntimeException(initializationError)
 		}
 	}
 
-	protected static class HelperTestRunner extends RobolectricTestRunner.HelperTestRunner {
-
-		private boolean isCheckedForBeforeMethod;
-
-		public HelperTestRunner(Class bootstrappedTestClass) throws InitializationError {
-			super(bootstrappedTestClass);
-		}
-
-		@Override
-		public Object createTest() throws Exception {
-			final Object test = super.createTest();
+	protected class HelperTestRunner(bootstrappedTestClass: Class<*>?) :
+		RobolectricTestRunner.HelperTestRunner(bootstrappedTestClass) {
+		private var isCheckedForBeforeMethod = false
+		@Throws(Exception::class)
+		public override fun createTest(): Any {
+			val test = super.createTest()
 			// Note that JUnit4 will call this createTest() multiple times for each
 			// test method, so we need to ensure to call "beforeClassSetup" only once.
 			if (!isCheckedForBeforeMethod) {
-				final Method beforeMethod = test.getClass().getMethod("before");
-				beforeMethod.invoke(test);
-				isCheckedForBeforeMethod = true;
-				final Looper looper = getMainLooper();
-				if (looper != null) {
-					shadowOf(looper).idle();
-				}
+				val beforeMethod = test.javaClass.getMethod("before")
+				beforeMethod.invoke(test)
+				isCheckedForBeforeMethod = true
+				Looper.getMainLooper()?.let { shadowOf(it).idle() }
 			}
-			return test;
+			return test
 		}
 	}
 }
