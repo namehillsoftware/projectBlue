@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibr
 
 import android.content.IntentFilter;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
@@ -52,7 +54,7 @@ public class WhenSynchronizationIsDisposing extends AndroidContext {
 		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
 	};
 
-	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender();
+	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender(ApplicationProvider.getApplicationContext());
 
 	@Override
 	public void before() throws Exception {

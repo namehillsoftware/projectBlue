@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenPersistingTheSelectedPlaybackEngine extends AndroidContext {
-	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender();
+	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender(ApplicationProvider.getApplicationContext());
 
 	private String persistedEngineType;
 

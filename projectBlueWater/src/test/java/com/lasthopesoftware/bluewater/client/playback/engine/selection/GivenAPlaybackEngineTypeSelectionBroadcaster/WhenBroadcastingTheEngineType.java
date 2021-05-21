@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenAPlaybackEngineTypeSelectionBroadcaster;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
@@ -12,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenBroadcastingTheEngineType extends AndroidContext {
 
-	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender();
+	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender(ApplicationProvider.getApplicationContext());
 
 	@Before
 	public void before() {

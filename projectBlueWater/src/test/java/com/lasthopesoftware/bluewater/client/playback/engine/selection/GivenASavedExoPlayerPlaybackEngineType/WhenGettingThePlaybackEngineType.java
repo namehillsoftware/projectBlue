@@ -32,7 +32,7 @@ public class WhenGettingThePlaybackEngineType extends AndroidContext {
 		final PlaybackEngineTypeSelectionPersistence playbackEngineTypeSelectionPersistence =
 			new PlaybackEngineTypeSelectionPersistence(
 				sharedPreferences,
-				new PlaybackEngineTypeChangedBroadcaster(new FakeMessageSender()));
+				new PlaybackEngineTypeChangedBroadcaster(new FakeMessageSender(ApplicationProvider.getApplicationContext())));
 
 		playbackEngineTypeSelectionPersistence.selectPlaybackEngine(PlaybackEngineType.ExoPlayer);
 
