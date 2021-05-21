@@ -1,32 +1,30 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenARandomBroadcast;
+package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenARandomBroadcast
 
-import android.content.Intent;
+import android.content.Intent
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.Test
+import org.robolectric.Robolectric
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+class WhenReceivingTheBroadcast : AndroidContext() {
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
+	companion object {
+		private val activityController = lazy {
+			Robolectric.buildActivity(BrowserEntryActivity::class.java).create().start().resume()
+		}
+	}
 
-import org.junit.Test;
-import org.robolectric.Robolectric;
-import org.robolectric.android.controller.ActivityController;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-public class WhenReceivingTheBroadcast extends AndroidContext {
-
-	private static final ActivityController<BrowserEntryActivity> activityController = Robolectric.buildActivity(BrowserEntryActivity.class).create().start().resume();
-
-	@Override
-	public void before() {
-		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(activityController.get());
-
-		final Intent broadcastIntent = new Intent("absr4");
-		localBroadcastManager.sendBroadcast(broadcastIntent);
+	override fun before() {
+		System.setProperty("javax.net.ssl.trustStoreType", "JKS")
+		val localBroadcastManager = LocalBroadcastManager.getInstance(activityController.value.get())
+		val broadcastIntent = Intent("absr4")
+		localBroadcastManager.sendBroadcast(broadcastIntent)
 	}
 
 	@Test
-	public void thenTheActivityIsNotFinished() {
-		assertThat(activityController.get().isFinishing()).isFalse();
+	fun thenTheActivityIsNotFinished() {
+		assertThat(activityController.value.get().isFinishing).isFalse
 	}
 }

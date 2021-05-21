@@ -17,7 +17,7 @@ import static org.robolectric.Shadows.shadowOf;
 
 public class WhenStartingALooperOnTheThread extends AndroidContext {
 
-	private Looper looper;
+	private static Looper looper;
 
 	@Override
 	public void before() throws InterruptedException, ExecutionException {
