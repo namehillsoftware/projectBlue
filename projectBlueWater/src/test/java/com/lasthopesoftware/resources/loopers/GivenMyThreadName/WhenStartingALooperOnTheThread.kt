@@ -1,43 +1,39 @@
-package com.lasthopesoftware.resources.loopers.GivenMyThreadName;
+package com.lasthopesoftware.resources.loopers.GivenMyThreadName
 
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Handler
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.resources.loopers.HandlerThreadCreator.promiseNewHandlerThread
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
+import java.util.concurrent.CountDownLatch
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.lasthopesoftware.resources.loopers.HandlerThreadCreator;
+@RunWith(AndroidJUnit4::class)
+class WhenStartingALooperOnTheThread {
 
-import org.junit.Test;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.robolectric.Shadows.shadowOf;
-
-public class WhenStartingALooperOnTheThread extends AndroidContext {
-
-	private static Looper looper;
-
-	@Override
-	public void before() throws InterruptedException, ExecutionException {
-		looper = new FuturePromise<>(HandlerThreadCreator.promiseNewHandlerThread("MyThreadName", 3)).get().getLooper();
-
-		final Handler handler = new Handler(looper);
-		final CountDownLatch countDownLatch1 = new CountDownLatch(1);
-		handler.post(countDownLatch1::countDown);
-
-		shadowOf(looper).getScheduler().advanceToLastPostedRunnable();
-		countDownLatch1.await();
+	companion object {
+		val looper = lazy {
+			val looper = promiseNewHandlerThread("MyThreadName", 3).toFuture().get()!!.looper
+			val handler = Handler(looper)
+			val countDownLatch = CountDownLatch(1)
+			handler.post { countDownLatch.countDown() }
+			val shadowLooper = shadowOf(looper)
+			shadowLooper.isPaused = true
+			shadowLooper.idle()
+			countDownLatch.await()
+			looper
+		}
 	}
 
 	@Test
-	public void thenTheLooperThreadNameIsCorrect() {
-		assertThat(looper.getThread().getName()).isEqualTo("MyThreadName");
+	fun thenTheLooperThreadNameIsCorrect() {
+		assertThat(looper.value.thread.name).isEqualTo("MyThreadName")
 	}
 
 	@Test
-	public void thenTheLooperThreadIsStarted() {
-		assertThat(looper.getThread().isAlive()).isTrue();
+	fun thenTheLooperThreadIsStarted() {
+		assertThat(looper.value.thread.isAlive).isTrue
 	}
 }
