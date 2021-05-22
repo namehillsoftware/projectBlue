@@ -1008,9 +1008,7 @@ open class PlaybackService : Service() {
 		val localSubscription = Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
 			.flatMap { observe(promisedPlayedFile.progress) }
 			.distinctUntilChanged()
-			.subscribe(TrackPositionBroadcaster(
-				localBroadcastManagerLazy.value,
-				playingFile))
+			.subscribe(TrackPositionBroadcaster(lazyMessageBus.value, playingFile))
 
 		promisedPlayedFile.then {
 			lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also {

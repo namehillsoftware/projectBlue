@@ -1,10 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters.GivenAPlayingFile
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
@@ -13,34 +8,22 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.FakeMessageSender
 import com.namehillsoftware.handoff.promises.Promise
-import org.assertj.core.api.AssertionsForClassTypes
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
 class WhenBroadcastingTheFileProgress {
 
 	companion object {
-		private var progress: Long = 0
-		private var duration: Long = 0
-		private val setupTest = lazy {
-			val localBroadcastManager = LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
-			val countDownLatch = CountDownLatch(1)
-			localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
-				override fun onReceive(context: Context, intent: Intent) {
-					duration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
-					progress = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
-					countDownLatch.countDown()
-				}
-			}, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
+		private val receivedIntent = lazy {
+			val messageBus = FakeMessageSender(ApplicationProvider.getApplicationContext())
 			val trackPositionBroadcaster = TrackPositionBroadcaster(
-				localBroadcastManager,
+				messageBus,
 				object : PlayingFile {
 					override fun promisePause(): Promise<PlayableFile> {
 						return Promise.empty()
@@ -60,24 +43,27 @@ class WhenBroadcastingTheFileProgress {
 				Duration
 					.standardSeconds(2)
 					.plus(Duration.standardSeconds(30)))
-			countDownLatch.await(1, TimeUnit.SECONDS)
+			messageBus.recordedIntents.first()
 		}
-	}
 
-	@Before
-	fun before() {
-		setupTest.value
+		private val duration: Lazy<Long> = lazy {
+			receivedIntent.value.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
+		}
+
+		private val progress: Lazy<Long> = lazy {
+			receivedIntent.value.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
+		}
 	}
 
 	@Test
 	fun thenTheProgressIsCorrect() {
-		AssertionsForClassTypes.assertThat(progress).isEqualTo(Duration
+		assertThat(progress.value).isEqualTo(Duration
 			.standardSeconds(2)
 			.plus(Duration.standardSeconds(30)).millis)
 	}
 
 	@Test
 	fun thenTheDurationIsCorrect() {
-		AssertionsForClassTypes.assertThat(duration).isEqualTo(Duration.standardMinutes(3).millis)
+		assertThat(duration.value).isEqualTo(Duration.standardMinutes(3).millis)
 	}
 }

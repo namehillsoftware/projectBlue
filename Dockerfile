@@ -2,8 +2,6 @@ FROM gradle:7.0.2-jdk8
 
 # set default build arguments
 ARG SDK_VERSION=sdk-tools-linux-4333796.zip
-ARG ANDROID_BUILD_VERSION=29
-ARG ANDROID_TOOLS_VERSION=29.0.2
 
 # set default environment variables
 ENV ADB_INSTALL_TIMEOUT=10
@@ -21,6 +19,9 @@ RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
         git \
         gnupg2 \
     && rm -rf /var/lib/apt/lists/*;
+
+ARG ANDROID_BUILD_VERSION=30
+ARG ANDROID_TOOLS_VERSION=30.0.2
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # download and unpack android
