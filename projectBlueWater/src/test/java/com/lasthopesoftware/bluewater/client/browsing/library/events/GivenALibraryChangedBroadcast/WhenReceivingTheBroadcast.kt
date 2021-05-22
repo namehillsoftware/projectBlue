@@ -1,35 +1,35 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenALibraryChangedBroadcast;
+package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenALibraryChangedBroadcast
 
-import android.content.Intent;
+import android.content.Intent
+import android.os.Looper.getMainLooper
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibrarySelectionKey
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.Shadows.shadowOf
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+@RunWith(AndroidJUnit4::class)
+class WhenReceivingTheBroadcast {
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibrarySelectionKey;
-
-import org.junit.Test;
-import org.robolectric.Robolectric;
-import org.robolectric.android.controller.ActivityController;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-public class WhenReceivingTheBroadcast extends AndroidContext {
-
-	private static final ActivityController<BrowserEntryActivity> activityController = Robolectric.buildActivity(BrowserEntryActivity.class).create();
-
-	@Override
-	public void before() {
-		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(activityController.get());
-
-		final Intent broadcastIntent = new Intent(BrowserLibrarySelection.libraryChosenEvent);
-		broadcastIntent.putExtra(LibrarySelectionKey.chosenLibraryKey, 4);
-		localBroadcastManager.sendBroadcast(broadcastIntent);
+	companion object {
+		private val activityController = lazy {
+			val activity = Robolectric.buildActivity(BrowserEntryActivity::class.java).create()
+			val localBroadcastManager = LocalBroadcastManager.getInstance(activity.get())
+			val broadcastIntent = Intent(BrowserLibrarySelection.libraryChosenEvent)
+			broadcastIntent.putExtra(LibrarySelectionKey.chosenLibraryKey, 4)
+			localBroadcastManager.sendBroadcast(broadcastIntent)
+			shadowOf(getMainLooper()).idle()
+			activity
+		}
 	}
 
 	@Test
-	public void thenTheActivityIsFinished() {
-		assertThat(activityController.get().isFinishing()).isTrue();
+	fun thenTheActivityIsFinished() {
+		assertThat(activityController.value.get().isFinishing).isTrue
 	}
 }
