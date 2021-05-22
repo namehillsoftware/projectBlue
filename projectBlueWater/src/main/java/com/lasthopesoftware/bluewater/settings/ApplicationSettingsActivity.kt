@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -77,7 +78,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			sharedPreferences,
-			PlaybackEngineTypeChangedBroadcaster(this))
+			PlaybackEngineTypeChangedBroadcaster(MessageBus(LocalBroadcastManager.getInstance(this))))
 
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(sharedPreferences, DefaultPlaybackEngineLookup())
 

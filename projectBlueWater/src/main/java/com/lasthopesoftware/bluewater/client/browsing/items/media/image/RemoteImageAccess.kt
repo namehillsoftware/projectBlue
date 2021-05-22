@@ -20,7 +20,7 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {
 		val fileKey = serviceFile.key
 		return connectionProvider.promiseLibraryConnection(libraryId)
-			.eventually { c -> c.promiseResponse("File/GetImage", "File=$fileKey", "Type=Full", "Pad=1", "Format=$IMAGE_FORMAT", "FillTransparency=ffffff") }
+			.eventually { c -> c?.promiseResponse("File/GetImage", "File=$fileKey", "Type=Full", "Pad=1", "Format=$IMAGE_FORMAT", "FillTransparency=ffffff") ?: Promise.empty() }
 			.then(
 				{ response ->
 					when (response.code) {

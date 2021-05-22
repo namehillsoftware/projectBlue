@@ -54,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronizati
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.storage.FreeSpaceLookup
@@ -153,7 +154,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val lazyChannelConfiguration = lazy { SyncChannelProperties(this) }
-	private val lazyBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
+	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val lazyStoredFileAccess = lazy { StoredFileAccess(this, StoredFilesCollection(this)) }
 	private val lazyReadPermissionArbitratorForOs = lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
 	private val lazyLibraryRepository = lazy { LibraryRepository(this) }
@@ -207,7 +208,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 				FileStreamWriter()))
 		StoredFileSynchronization(
 			lazyLibraryRepository.value,
-			lazyBroadcastManager.value,
+			lazyMessageBus.value,
 			syncHandler)
 	}
 
@@ -223,11 +224,11 @@ class StoredSyncService : Service(), PostSyncNotification {
 			ScanMediaFileBroadcaster(this))
 		val storedFileReadPermissionsReceiver = StoredFileReadPermissionsReceiver(
 			lazyReadPermissionArbitratorForOs.value,
-			StorageReadPermissionsRequestedBroadcaster(lazyBroadcastManager.value),
+			StorageReadPermissionsRequestedBroadcaster(lazyMessageBus.value),
 			lazyStoredFileAccess.value)
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
 			ExternalStorageWritePermissionsArbitratorForOs(this),
-			StorageWritePermissionsRequestedBroadcaster(lazyBroadcastManager.value),
+			StorageWritePermissionsRequestedBroadcaster(lazyMessageBus.value),
 			lazyStoredFileAccess.value)
 
 		arrayOf(
@@ -299,7 +300,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 			for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value) {
 				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
 				if (!broadcastReceivers.add(broadcastReceiver)) continue
-				lazyBroadcastManager.value.registerReceiver(
+				lazyMessageBus.value.registerReceiver(
 					broadcastReceiver,
 					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
 						i.addAction(e)
@@ -309,7 +310,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 		}
 
 		if (!lazySyncStartedReceiver.isInitialized()) {
-			lazyBroadcastManager.value.registerReceiver(
+			lazyMessageBus.value.registerReceiver(
 				lazySyncStartedReceiver.value,
 				lazySyncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
 					i.addAction(e)
@@ -347,10 +348,10 @@ class StoredSyncService : Service(), PostSyncNotification {
 		synchronizationDisposable?.dispose()
 		isSyncRunning = false
 
-		if (lazyBroadcastManager.isInitialized()) {
+		if (lazyMessageBus.isInitialized()) {
 			while (broadcastReceivers.isNotEmpty()) {
 				val receiver = broadcastReceivers.removeAt(0)
-				lazyBroadcastManager.value.unregisterReceiver(receiver)
+				lazyMessageBus.value.unregisterReceiver(receiver)
 			}
 		}
 

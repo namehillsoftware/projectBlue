@@ -41,12 +41,12 @@ class LibraryConnectionProvider(
 	private val okHttpFactory: OkHttpFactory) : ProvideLibraryConnections {
 
 	private val cachedConnectionProviders = ConcurrentHashMap<LibraryId, IConnectionProvider>()
-	private val promisedConnectionProvidersCache = HashMap<LibraryId, ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>>()
+	private val promisedConnectionProvidersCache = HashMap<LibraryId, ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>>()
 	private val buildingConnectionPromiseSync = Any()
 
-	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
+	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
 		synchronized(buildingConnectionPromiseSync) {
-			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
 					promisedConnectionProvidersCache[libraryId]
 						?.then({ c ->
@@ -75,7 +75,7 @@ class LibraryConnectionProvider(
 		}
 	}
 
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
 		val cachedConnectionProvider = cachedConnectionProviders[libraryId]
 		if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
 
@@ -83,7 +83,7 @@ class LibraryConnectionProvider(
 			val cachedConnectionProvider = cachedConnectionProviders[libraryId]
 			if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
 
-			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
 					promisedConnectionProvidersCache[libraryId]?.then({
 						if (it != null) resolve(it)
@@ -103,8 +103,8 @@ class LibraryConnectionProvider(
 		return cachedConnectionProviders[libraryId] != null
 	}
 
-	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> {
-		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
+	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
+		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
 			init {
 				promiseBuiltConnection(libraryId)
 					.updates { reportProgress(it) }

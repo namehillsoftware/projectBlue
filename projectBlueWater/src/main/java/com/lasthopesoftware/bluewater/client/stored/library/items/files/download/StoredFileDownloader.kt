@@ -22,13 +22,13 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 
 			val promisedResponse = libraryConnections
 				.promiseLibraryConnection(libraryId)
-				.eventually { c -> c.promiseResponse(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(ServiceFile(storedFile.serviceId))) }
+				.eventually { c -> c?.promiseResponse(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(ServiceFile(storedFile.serviceId))) ?: Promise.empty() }
 
 			cancellationProxy.doCancel(promisedResponse)
 
 			promisedResponse
 				.then { r ->
-					val body = r.body
+					val body = r?.body
 					if (body == null || r.code == 404) ByteArrayInputStream(ByteArray(0))
 					else StreamedResponse(body)
 				}
@@ -36,7 +36,7 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 		}
 	}
 
-	private class StreamedResponse internal constructor(private val responseBody: ResponseBody) : InputStream() {
+	private class StreamedResponse(private val responseBody: ResponseBody) : InputStream() {
 		private val byteStream: InputStream = responseBody.byteStream()
 		@Throws(IOException::class)
 		override fun read(): Int {
