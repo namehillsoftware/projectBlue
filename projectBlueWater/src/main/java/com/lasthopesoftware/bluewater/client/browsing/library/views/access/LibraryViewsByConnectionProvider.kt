@@ -18,10 +18,7 @@ class LibraryViewsByConnectionProvider : ProvideLibraryViewsUsingConnection {
 		return RevisionChecker.promiseRevision(connectionProvider)
 			.eventually { serverRevision ->
 				synchronized(browseLibraryParameter) {
-					cachedFileSystemItems?.let {
-						if (revision == serverRevision) it.toPromise()
-						else null
-					}
+					cachedFileSystemItems?.takeIf { revision == serverRevision }?.let { it.toPromise() }
 				} ?: connectionProvider.promiseResponse(browseLibraryParameter)
 				.then { response ->
 					response.body?.use { b ->
