@@ -220,7 +220,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			.eventually { selectedView ->
 				lazyLibraryViewsProvider.value.promiseLibraryViews()
 					.eventually(LoopedInPromise.response(
-						{ items: Collection<ViewItem> -> updateLibraryView(selectedView!!, items) },
+						{ items -> updateLibraryView(selectedView!!, items) },
 						this))
 			}
 			.excuse(HandleViewIoException(this, this))

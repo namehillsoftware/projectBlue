@@ -359,7 +359,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 						val serviceFile = np.playlist[np.playlistPosition]
 						val filePosition = connectionProvider?.let { c ->
 							viewStructure?.let { s ->
-								if (s.urlKeyHolder == UrlKeyHolder(c.urlProvider.baseUrl, serviceFile.key)) s.fileDuration
+								if (s.urlKeyHolder == UrlKeyHolder(c.urlProvider.baseUrl, serviceFile.key)) s.filePosition
 								else null
 							}
 						} ?: np.filePosition
