@@ -13,7 +13,7 @@ public class FakeNotificationCompatBuilder extends NotificationCompat.Builder {
 
 	@SuppressWarnings("ConstantConditions")
 	public FakeNotificationCompatBuilder(Notification returnNotification) {
-		super(null, null);
+		super(null, returnNotification);
 
 		this.returnNotification = returnNotification;
 	}
