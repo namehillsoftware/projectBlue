@@ -1,53 +1,45 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items;
+package com.lasthopesoftware.bluewater.client.stored.library.items
 
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import java.util.*
 
-import org.jetbrains.annotations.NotNull;
+open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : IStoredItemAccess {
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+	private val inMemoryStoredItems: MutableList<StoredItem> = ArrayList()
 
-import static com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelpers.getListType;
-
-public class FakeStoredItemAccess implements IStoredItemAccess {
-
-	private final List<StoredItem> inMemoryStoredItems = new ArrayList<>();
-
-	public FakeStoredItemAccess(StoredItem... initialStoredItems) {
-		inMemoryStoredItems.addAll(Arrays.asList(initialStoredItems));
+	init {
+		inMemoryStoredItems.addAll(listOf(*initialStoredItems))
 	}
 
-	@Override
-	public void toggleSync(LibraryId libraryId, IItem item, boolean enable) {
-		if (enable)
-			inMemoryStoredItems.add(new StoredItem(1, item.getKey(), getListType(item)));
-		else
-			inMemoryStoredItems.removeAll(findMatchingItems(item));
+	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
+		if (enable) inMemoryStoredItems.add(
+			StoredItem(
+				1,
+				item.key,
+				StoredItemHelpers.getListType(item)
+			)
+		) else inMemoryStoredItems.removeAll(findMatchingItems(item))
 	}
 
-	@Override
-	public Promise<Boolean> isItemMarkedForSync(LibraryId libraryId, IItem item) {
-		return new Promise<>(!findMatchingItems(item).isEmpty());
+	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> {
+		return Promise(findMatchingItems(item).isNotEmpty())
 	}
 
-	@Override
-	public Promise<Collection<StoredItem>> promiseStoredItems(LibraryId libraryId) {
-		return new Promise<>(inMemoryStoredItems);
+	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {
+		return Promise(inMemoryStoredItems)
 	}
 
-	private List<StoredItem> findMatchingItems(IItem item) {
-		return Stream.of(inMemoryStoredItems).filter(i -> i.getServiceId() == item.getKey() && i.getItemType() == getListType(item)).toList();
+	private fun findMatchingItems(item: IItem): List<StoredItem> {
+		return inMemoryStoredItems
+			.filter { i -> i.serviceId == item.key && i.itemType === StoredItemHelpers.getListType(item) }
+			.toList()
 	}
 
-	@NotNull
-	@Override
-	public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
-		inMemoryStoredItems.removeAll(Stream.of(inMemoryStoredItems).filter(s -> s.getLibraryId() == libraryId.getId()).toList());
-		return Promise.empty();
+	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> {
+		inMemoryStoredItems.removeAll(inMemoryStoredItems.filter { s -> s.libraryId == libraryId.id })
+		return Unit.toPromise()
 	}
 }

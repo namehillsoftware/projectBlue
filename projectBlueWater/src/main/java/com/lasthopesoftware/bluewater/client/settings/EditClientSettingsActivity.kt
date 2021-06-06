@@ -139,9 +139,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		lazyLibraryProvider.value
 			.getLibrary(LibraryId(libraryId))
 			.eventually(LoopedInPromise.response({ result ->
-				if (result == null) return@response
-
-				library = result
+				library = result ?: return@response
 
 				chkLocalOnly.findView().isChecked = result.isLocalOnly
 				chkIsUsingExistingFiles.findView().isChecked = result.isUsingExistingFiles

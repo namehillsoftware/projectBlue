@@ -33,7 +33,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -124,8 +123,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			.setPointer(Pointer().setColor(displayColor))
 			.setToolTip(ToolTip()
 				.setTitle(getString(R.string.notification_settings_tutorial_title))
-				.setDescription(String.format(
-					getString(R.string.notification_settings_tutorial),
+				.setDescription(getString(R.string.notification_settings_tutorial).format(
 					getString(R.string.modify_notification_settings),
 					getString(R.string.app_name)))
 				.setBackgroundColor(displayColor))
@@ -188,6 +186,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		fun launch(context: Context) =
 			context.startActivity(Intent(context, ApplicationSettingsActivity::class.java))
 
-		private val isTutorialShownPreference = MagicPropertyBuilder.buildMagicPropertyName(ApplicationSettingsActivity::class.java, "isTutorialShownPreference")
+		private const val isTutorialShownPreference = "isApplicationSettingsTutorialShownPreference"
 	}
 }

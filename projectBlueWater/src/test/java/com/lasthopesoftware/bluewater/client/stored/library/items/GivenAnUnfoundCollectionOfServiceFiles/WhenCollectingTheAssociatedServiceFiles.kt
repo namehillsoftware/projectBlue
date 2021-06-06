@@ -1,122 +1,107 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnUnfoundCollectionOfServiceFiles;
+package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnUnfoundCollectionOfServiceFiles
 
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Condition
+import org.junit.BeforeClass
+import org.junit.Test
+import java.io.FileNotFoundException
+import java.util.*
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
-import org.assertj.core.api.Condition;
-import org.jetbrains.annotations.NotNull;
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenCollectingTheAssociatedServiceFiles {
 
-import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+	companion object {
+		private lateinit var collectedFiles: Collection<ServiceFile>
+		private val firstItemExpectedFiles = givenARandomCollectionOfFiles()
+		private val thirdItemExpectedFiles = givenARandomCollectionOfFiles()
+		private val syncToggledItems = HashMap<IItem, Boolean>()
 
-import static com.annimon.stream.Stream.concat;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenCollectingTheAssociatedServiceFiles {
-
-	private static Collection<ServiceFile> collectedFiles;
-	private static final List<ServiceFile> firstItemExpectedFiles = givenARandomCollectionOfFiles();
-	private static final List<ServiceFile> thirdItemExpectedFiles = givenARandomCollectionOfFiles();
-	private static final HashMap<IItem, Boolean> syncToggledItems = new HashMap<>();
-
-	@BeforeClass
-	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
-
-		final IStoredItemAccess storedItemAccess =
-			new IStoredItemAccess() {
-				@NotNull
-				@Override
-				public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
-					return Promise.empty();
+		@JvmStatic
+		@BeforeClass
+		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
+		fun before() {
+			val storedItemAccess: IStoredItemAccess = object : FakeStoredItemAccess(
+				StoredItem(1, 1, StoredItem.ItemType.ITEM),
+				StoredItem(1, 2, StoredItem.ItemType.ITEM),
+				StoredItem(1, 3, StoredItem.ItemType.ITEM)
+			) {
+				override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
+					syncToggledItems[item] = enable
+					super.toggleSync(libraryId, item, enable)
 				}
+			}
+			val fileListParameters = FileListParameters.getInstance()
+			val fileProvider = mockk<ProvideLibraryFiles>()
+			every {
+				fileProvider.promiseFiles(
+					LibraryId(4),
+					FileListParameters.Options.None,
+					*fileListParameters.getFileListParameters(Item(1)))
+			} returns firstItemExpectedFiles.toPromise()
 
-				@Override
-				public void toggleSync(LibraryId libraryId, IItem item, boolean enable) {
-					syncToggledItems.put(item, enable);
-				}
+			every {
+				fileProvider.promiseFiles(
+					LibraryId(4),
+					FileListParameters.Options.None,
+					*fileListParameters.getFileListParameters(Item(2))
+				)
+			} returns Promise(FileNotFoundException())
 
-				@Override
-				public Promise<Boolean> isItemMarkedForSync(LibraryId libraryId, IItem item) {
-					return null;
-				}
+			every {
+				fileProvider.promiseFiles(
+					LibraryId(4),
+					FileListParameters.Options.None,
+					*fileListParameters.getFileListParameters(Item(3))
+				)
+			} returns thirdItemExpectedFiles.toPromise()
 
-				@Override
-				public Promise<Collection<StoredItem>> promiseStoredItems(LibraryId libraryId) {
-					return new Promise<>(Arrays.asList(
-						new StoredItem(1, 1, StoredItem.ItemType.ITEM),
-						new StoredItem(1, 2, StoredItem.ItemType.ITEM),
-						new StoredItem(1, 3, StoredItem.ItemType.ITEM)));
-				}
-			};
+			val serviceFileCollector = StoredItemServiceFileCollector(
+				storedItemAccess,
+				fileProvider,
+				fileListParameters
+			)
 
-		final FileListParameters fileListParameters = FileListParameters.getInstance();
+			collectedFiles = serviceFileCollector
+				.promiseServiceFilesToSync(LibraryId(4))
+				.toFuture()[1000, TimeUnit.SECONDS]!!
+		}
 
-		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
-		when(fileProvider.promiseFiles(new LibraryId(4), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
-			.thenAnswer(e -> new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(new LibraryId(4), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
-			.thenAnswer(e -> new Promise<>(new FileNotFoundException()));
-		when(fileProvider.promiseFiles(new LibraryId(4), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
-			.thenAnswer(e -> new Promise<>(thirdItemExpectedFiles));
-
-		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(
-			storedItemAccess,
-			fileProvider,
-			fileListParameters);
-
-		collectedFiles =
-			new FuturePromise<>(
-				serviceFileCollector.promiseServiceFilesToSync(new LibraryId(4)))
-			.get(1000, TimeUnit.SECONDS);
+		private fun givenARandomCollectionOfFiles(): List<ServiceFile> {
+			val random = Random()
+			val floor = random.nextInt(10000)
+			val ceiling = random.nextInt(10000 - floor) + floor
+			return IntRange(floor, ceiling).map { ServiceFile(it) }.toList()
+		}
 	}
 
 	@Test
-	public void thenOnlyTheFoundServiceFilesAreReturned() {
-		assertThat(collectedFiles).hasSameElementsAs(new HashSet<>(concat(Stream.of(firstItemExpectedFiles), Stream.of(thirdItemExpectedFiles)).toList()));
+	fun thenOnlyTheFoundServiceFilesAreReturned() {
+		assertThat(collectedFiles).hasSameElementsAs(firstItemExpectedFiles.plus(thirdItemExpectedFiles).toHashSet())
 	}
 
 	@Test
-	public void thenTheFileThatWasNotFoundHadSyncToggledOff() {
-		assertThat(syncToggledItems).hasEntrySatisfying(new Condition<IItem>() {
-
-			@Override
-			public boolean matches(IItem value) {
-				return value.getKey() == 2;
-			}
-		}, new Condition<Boolean>() {
-			@Override
-			public boolean matches(Boolean value) {
-				return !value;
-			}
-		});
-	}
-
-	private static List<ServiceFile> givenARandomCollectionOfFiles() {
-		final Random random = new Random();
-		final int floor = random.nextInt(10000);
-		final int ceiling = random.nextInt(10000 - floor) + floor;
-		return Stream.range(floor, ceiling).map(ServiceFile::new).toList();
+	fun thenTheFileThatWasNotFoundHadSyncToggledOff() {
+		assertThat(syncToggledItems).hasEntrySatisfying(object : Condition<IItem>() {
+			override fun matches(value: IItem): Boolean = value.key == 2
+		}, object : Condition<Boolean>() {
+			override fun matches(value: Boolean): Boolean = !value
+		})
 	}
 }

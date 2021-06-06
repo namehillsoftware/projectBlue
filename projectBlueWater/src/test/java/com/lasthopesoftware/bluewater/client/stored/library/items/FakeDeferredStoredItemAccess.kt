@@ -1,44 +1,31 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items;
+package com.lasthopesoftware.bluewater.client.stored.library.items
 
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.namehillsoftware.handoff.Messenger;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.Messenger
+import com.namehillsoftware.handoff.promises.Promise
 
-import org.jetbrains.annotations.NotNull;
+abstract class FakeDeferredStoredItemAccess : IStoredItemAccess {
 
-import java.util.Collection;
+	private var messenger: Messenger<Collection<StoredItem>>? = null
 
-public abstract class FakeDeferredStoredItemAccess implements IStoredItemAccess {
-
-	private Messenger<Collection<StoredItem>> messenger;
-
-	public void resolveStoredItems() {
-		if (messenger != null) {
-			messenger.sendResolution(getStoredItems());
-		}
+	fun resolveStoredItems() {
+		messenger?.sendResolution(storedItems)
 	}
 
-	protected abstract Collection<StoredItem> getStoredItems();
+	protected abstract val storedItems: Collection<StoredItem>
 
-	@NotNull
-	@Override
-	public Promise<Object> disableAllLibraryItems(@NotNull LibraryId libraryId) {
-		return Promise.empty();
+	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> {
+		return Unit.toPromise()
 	}
 
-	@Override
-	public void toggleSync(@NotNull LibraryId libraryId, @NotNull IItem item, boolean enable) {
-
+	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {}
+	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> {
+		return Promise(false)
 	}
 
-	@Override
-	public Promise<Boolean> isItemMarkedForSync(@NotNull LibraryId libraryId, @NotNull IItem item) {
-		return new Promise<>(false);
-	}
-
-	@Override
-	public Promise<Collection<StoredItem>> promiseStoredItems(@NotNull LibraryId libraryId) {
-		return new Promise<>((m -> messenger = m));
+	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {
+		return Promise { m -> messenger = m }
 	}
 }

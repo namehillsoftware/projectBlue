@@ -31,6 +31,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import kotlin.Unit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,8 +66,8 @@ public class WhenChangingToThePreviousTrack {
 
 			@NotNull
 			@Override
-			public Promise<Object> removeLibrary(@NotNull Library library) {
-				return Promise.empty();
+			public Promise<Unit> removeLibrary(@NotNull Library library) {
+				return new Promise<>(Unit.INSTANCE);
 			}
 		};
 
