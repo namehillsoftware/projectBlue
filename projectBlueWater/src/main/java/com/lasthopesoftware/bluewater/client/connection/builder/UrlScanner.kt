@@ -1,159 +1,128 @@
-package com.lasthopesoftware.bluewater.client.connection.builder;
+package com.lasthopesoftware.bluewater.client.connection.builder
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider;
-import com.lasthopesoftware.resources.strings.EncodeToBase64;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
+import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
+import com.lasthopesoftware.resources.strings.EncodeToBase64
+import com.namehillsoftware.handoff.promises.Promise
+import java.net.MalformedURLException
+import java.net.URL
+import java.util.*
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.LinkedList;
-import java.util.Queue;
+class UrlScanner(
+	private val base64: EncodeToBase64,
+	private val connectionTester: TestConnections,
+	private val serverLookup: LookupServers,
+	private val okHttpClients: ProvideOkHttpClients
+) : BuildUrlProviders {
 
-public class UrlScanner implements BuildUrlProviders {
+	override fun promiseBuiltUrlProvider(library: Library): Promise<IUrlProvider?> {
+		val accessCode = library.accessCode ?: return Promise(IllegalArgumentException("The access code cannot be null"))
 
-	private final EncodeToBase64 base64;
-	private final TestConnections connectionTester;
-	private final LookupServers serverLookup;
-	private final ProvideOkHttpClients okHttpClients;
+		val authKey =
+			if (isUserCredentialsValid(library)) base64.encodeString(library.userName + ":" + library.password) else null
 
-	public UrlScanner(EncodeToBase64 base64, TestConnections connectionTester, LookupServers serverLookup, ProvideOkHttpClients okHttpClients) {
-		this.base64 = base64;
-		this.connectionTester = connectionTester;
-		this.serverLookup = serverLookup;
-		this.okHttpClients = okHttpClients;
-	}
-
-	@Override
-	public Promise<IUrlProvider> promiseBuiltUrlProvider(Library library) {
-		if (library == null)
-			return new Promise<>(new IllegalArgumentException("The library cannot be null"));
-
-		if (library.getAccessCode() == null)
-			return new Promise<>(new IllegalArgumentException("The access code cannot be null"));
-
-		final String authKey = isUserCredentialsValid(library)
-			? base64.encodeString(library.getUserName() + ":" + library.getPassword())
-			: null;
-
-		final MediaServerUrlProvider mediaServerUrlProvider;
-		try {
-			mediaServerUrlProvider = new MediaServerUrlProvider(
+		val mediaServerUrlProvider = try {
+			MediaServerUrlProvider(
 				authKey,
-				parseAccessCode(library.getAccessCode()));
-		} catch (MalformedURLException e) {
-			return new Promise<>(e);
+				parseAccessCode(accessCode))
+		} catch (e: MalformedURLException) {
+			return Promise(e)
 		}
-
-		return connectionTester.promiseIsConnectionPossible(new ConnectionProvider(mediaServerUrlProvider, okHttpClients))
-			.eventually(isValid -> isValid
-				? new Promise<>(mediaServerUrlProvider)
-				: serverLookup.promiseServerInformation(library.getLibraryId())
-				.eventually(info -> {
-					final int httpPort = info.getHttpPort();
-					final String remoteIp = info.getRemoteIp();
-
-					final Queue<IUrlProvider> mediaServerUrlProvidersQueue = new LinkedList<>();
-
-					if (!library.isLocalOnly()) {
-						final Integer httpsPort = info.getHttpsPort();
-						if (httpsPort != null) {
-							final String certificateFingerprint = info.getCertificateFingerprint();
-							mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-								authKey,
-								remoteIp,
-								httpsPort,
-								certificateFingerprint != null
-									? decodeHex(certificateFingerprint.toCharArray())
-									: new byte[0]));
-						}
-
-						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-							authKey,
-							remoteIp,
-							httpPort));
-					}
-
-					for (String ip : info.getLocalIps()) {
-						mediaServerUrlProvidersQueue.offer(new MediaServerUrlProvider(
-							authKey,
-							ip,
-							httpPort));
-					}
-
-					return testUrls(mediaServerUrlProvidersQueue);
-				}));
-	}
-
-	private static boolean isUserCredentialsValid(Library library) {
-		return library.getUserName() != null
-			&& !library.getUserName().isEmpty()
-			&& library.getPassword() != null
-			&& !library.getPassword().isEmpty();
-	}
-
-	private Promise<IUrlProvider> testUrls(Queue<IUrlProvider> urls) {
-		final IUrlProvider urlProvider = urls.poll();
-		if (urlProvider == null) return Promise.empty();
 
 		return connectionTester
-			.promiseIsConnectionPossible(new ConnectionProvider(urlProvider, okHttpClients))
-			.eventually(result -> result ? new Promise<>(urlProvider) : testUrls(urls));
+			.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
+			.eventually { isValid ->
+				if (isValid) Promise(mediaServerUrlProvider)
+				else serverLookup
+					.promiseServerInformation(library.libraryId)
+					.eventually { serverInfo ->
+						val (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) = serverInfo ?: return@eventually Promise.empty()
+
+						val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
+						if (!library.isLocalOnly) {
+							if (httpsPort != null) {
+								mediaServerUrlProvidersQueue.offer(
+									MediaServerUrlProvider(
+										authKey,
+										remoteIp,
+										httpsPort,
+										if (certificateFingerprint != null) decodeHex(certificateFingerprint.toCharArray())
+										else ByteArray(0)))
+							}
+
+							mediaServerUrlProvidersQueue.offer(
+								MediaServerUrlProvider(
+									authKey,
+									remoteIp,
+									httpPort))
+						}
+
+						for (ip in localIps) {
+							mediaServerUrlProvidersQueue.offer(
+								MediaServerUrlProvider(
+									authKey,
+									ip,
+									httpPort))
+						}
+
+						testUrls(mediaServerUrlProvidersQueue)
+					}
+			}
 	}
 
-	private static URL parseAccessCode(String accessCode) throws MalformedURLException {
-		String url = accessCode;
-
-		String scheme = "http";
-		if (url.startsWith("http://"))
-			url = url.replaceFirst("http://", "");
-
-		if (url.startsWith("https://")) {
-			url = url.replaceFirst("https://", "");
-			scheme = "https";
-		}
-
-		final String[] urlParts = url.split(":", 2);
-
-		final int port =
-			urlParts.length > 1 && isPositiveInteger(urlParts[1])
-				? Integer.parseInt(urlParts[1])
-				: 80;
-
-		return new URL(scheme, urlParts[0], port, "");
+	private fun testUrls(urls: Queue<IUrlProvider>): Promise<IUrlProvider?> {
+		val urlProvider = urls.poll() ?: return Promise.empty()
+		return connectionTester
+			.promiseIsConnectionPossible(ConnectionProvider(urlProvider, okHttpClients))
+			.eventually { result -> if (result) Promise(urlProvider) else testUrls(urls) }
 	}
 
-	private static boolean isPositiveInteger(String string) {
-		for (final char c : string.toCharArray())
-			if (!Character.isDigit(c)) return false;
+	companion object {
+		private fun isUserCredentialsValid(library: Library): Boolean =
+			library.userName?.isNotEmpty() == true && library.password?.isNotEmpty() == true
 
-		return true;
-	}
-
-	private static byte[] decodeHex(final char[] data) {
-
-		final int len = data.length;
-
-		if ((len & 0x01) != 0) {
-			return new byte[0];
+		private fun parseAccessCode(accessCode: String): URL {
+			var url = accessCode
+			var scheme = "http"
+			if (url.startsWith("http://")) url = url.replaceFirst("http://", "")
+			if (url.startsWith("https://")) {
+				url = url.replaceFirst("https://", "")
+				scheme = "https"
+			}
+			val urlParts = url.split(":", limit = 2)
+			val port = if (urlParts.size > 1 && isPositiveInteger(urlParts[1])) urlParts[1].toInt() else 80
+			return URL(scheme, urlParts[0], port, "")
 		}
 
-		final byte[] out = new byte[len >> 1];
-
-		// two characters form the hex value.
-		for (int i = 0, j = 0; j < len; i++) {
-			int f = Character.digit(data[j], 16) << 4;
-			j++;
-			f = f | Character.digit(data[j], 16);
-			j++;
-			out[i] = (byte) (f & 0xFF);
+		private fun isPositiveInteger(string: String): Boolean {
+			for (c in string.toCharArray()) if (!Character.isDigit(c)) return false
+			return true
 		}
 
-		return out;
+		private fun decodeHex(data: CharArray): ByteArray {
+			val len = data.size
+			if (len and 0x01 != 0) {
+				return ByteArray(0)
+			}
+			val out = ByteArray(len shr 1)
+
+			// two characters form the hex value.
+			var i = 0
+			var j = 0
+			while (j < len) {
+				var f = Character.digit(data[j], 16) shl 4
+				j++
+				f = f or Character.digit(data[j], 16)
+				j++
+				out[i] = (f and 0xFF).toByte()
+				i++
+			}
+			return out
+		}
 	}
 }
