@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.libraries
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
@@ -31,10 +30,11 @@ import org.joda.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 class LibraryConnectionProvider(
 	private val libraryProvider: ILibraryProvider,
+	private val validateConnectionSettings: ValidateConnectionSettings,
+	private val lookupConnectionSettings: LookupConnectionSettings,
 	private val wakeAlarm: WakeLibraryServer,
 	private val liveUrlProvider: ProvideLiveUrl,
 	private val connectionTester: TestConnections,
@@ -120,19 +120,16 @@ class LibraryConnectionProvider(
 		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider>() {
 			init {
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
-				libraryProvider
-					.getLibrary(selectedLibraryId)
-					.eventually({ library ->
-						when (library?.accessCode?.isEmpty()) {
-							false -> {
-								if (library.isWakeOnLanEnabled) wakeAndBuildConnection(library)
-								else buildConnection(library)
-							}
-							else -> {
-								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-								resolve(null)
-								empty()
-							}
+				lookupConnectionSettings
+					.lookupConnectionSettings(selectedLibraryId)
+					.eventually({ connectionSettings ->
+						if (validateConnectionSettings.isValid(connectionSettings)) {
+							if (connectionSettings?.isWakeOnLanEnabled == true) wakeAndBuildConnection()
+							else buildConnection()
+						} else {
+							reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+							resolve(null)
+							empty()
 						}
 					}, {
 						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
@@ -153,25 +150,26 @@ class LibraryConnectionProvider(
 					})
 			}
 
-			private fun wakeAndBuildConnection(library: Library): Promise<IUrlProvider> {
+			private fun wakeAndBuildConnection(): Promise<IUrlProvider?> {
 				reportProgress(BuildingConnectionStatus.SendingWakeSignal)
 				return wakeAlarm
 					.awakeLibraryServer(selectedLibraryId)
-					.eventually { buildConnection(library) }
+					.eventually { buildConnection() }
 			}
 
-			private fun buildConnection(library: Library): Promise<IUrlProvider> {
+			private fun buildConnection(): Promise<IUrlProvider?> {
 				reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-				return liveUrlProvider.promiseLiveUrl(library)
+				return liveUrlProvider.promiseLiveUrl(selectedLibraryId)
 			}
 		}
 	}
 
 	companion object Instance {
+		private val syncObject = Object()
 		private const val buildConnectionTimeoutTime = 10000
 
-		private val libraryConnectionProviderReference = AtomicReference<LibraryConnectionProvider>()
+		private var libraryConnectionProvider: LibraryConnectionProvider? = null
 
 		private fun newServerLookup(context: Context): ServerLookup {
 			val client = OkHttpClient.Builder()
@@ -185,28 +183,31 @@ class LibraryConnectionProvider(
 				Base64Encoder(),
 				ConnectionTester(),
 				newServerLookup(context),
+				ConnectionSettingsLookup(LibraryRepository(context)),
 				OkHttpFactory.getInstance())
 		}
 
 		fun get(context: Context): LibraryConnectionProvider {
 			val applicationContext = context.applicationContext
 
-			val connectionProvider = libraryConnectionProviderReference.get()
-				?: LibraryConnectionProvider(
-					LibraryRepository(applicationContext),
-					ServerAlarm(
-						newServerLookup(context),
-						ServerWakeSignal(PacketSender()),
-						AlarmConfiguration(3, Duration.standardSeconds(5))),
-					LiveUrlProvider(
-						ActiveNetworkFinder(applicationContext),
-						newUrlScanner(context)),
-					ConnectionTester(),
-					OkHttpFactory.getInstance())
+			return libraryConnectionProvider
+				?: synchronized(syncObject) {
+					libraryConnectionProvider ?: LibraryConnectionProvider(
+						LibraryRepository(applicationContext),
+						ConnectionSettingsValidation,
+						ConnectionSettingsLookup(LibraryRepository(applicationContext)),
+						ServerAlarm(
+							newServerLookup(context),
+							ServerWakeSignal(PacketSender()),
+							AlarmConfiguration(3, Duration.standardSeconds(5))),
+						LiveUrlProvider(
+							ActiveNetworkFinder(applicationContext),
+							newUrlScanner(context)),
+						ConnectionTester(),
+						OkHttpFactory.getInstance())
+						.also { libraryConnectionProvider = it }
+				}
 
-			libraryConnectionProviderReference.compareAndSet(null, connectionProvider)
-
-			return connectionProvider
 		}
 	}
 }

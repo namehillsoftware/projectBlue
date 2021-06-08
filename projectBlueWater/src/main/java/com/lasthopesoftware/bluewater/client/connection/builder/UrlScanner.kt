@@ -1,15 +1,16 @@
 package com.lasthopesoftware.bluewater.client.connection.builder
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.handoff.promises.Promise
-import java.net.MalformedURLException
 import java.net.URL
 import java.util.*
 
@@ -17,63 +18,60 @@ class UrlScanner(
 	private val base64: EncodeToBase64,
 	private val connectionTester: TestConnections,
 	private val serverLookup: LookupServers,
+	private val connectionSettingsLookup: ConnectionSettingsLookup,
 	private val okHttpClients: ProvideOkHttpClients
 ) : BuildUrlProviders {
 
-	override fun promiseBuiltUrlProvider(library: Library): Promise<IUrlProvider?> {
-		val accessCode = library.accessCode ?: return Promise(IllegalArgumentException("The access code cannot be null"))
+	override fun promiseBuiltUrlProvider(libraryId: LibraryId): Promise<IUrlProvider?> =
+		connectionSettingsLookup.lookupConnectionSettings(libraryId).eventually { connectionSettings ->
+			connectionSettings?.accessCode?.let { accessCode ->
+				val authKey =
+					if (isUserCredentialsValid(connectionSettings)) base64.encodeString(connectionSettings.userName + ":" + connectionSettings.password)
+					else null
 
-		val authKey =
-			if (isUserCredentialsValid(library)) base64.encodeString(library.userName + ":" + library.password) else null
+				val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(accessCode))
 
-		val mediaServerUrlProvider = try {
-			MediaServerUrlProvider(
-				authKey,
-				parseAccessCode(accessCode))
-		} catch (e: MalformedURLException) {
-			return Promise(e)
-		}
+				connectionTester
+					.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
+					.eventually { isValid ->
+						if (isValid) Promise(mediaServerUrlProvider)
+						else serverLookup
+							.promiseServerInformation(libraryId)
+							.eventually {
+								it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
+									val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
+									if (!connectionSettings.isLocalOnly) {
+										if (httpsPort != null) {
+											mediaServerUrlProvidersQueue.offer(
+												MediaServerUrlProvider(
+													authKey,
+													remoteIp,
+													httpsPort,
+													if (certificateFingerprint != null) decodeHex(certificateFingerprint.toCharArray())
+													else ByteArray(0)))
+										}
 
-		return connectionTester
-			.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
-			.eventually { isValid ->
-				if (isValid) Promise(mediaServerUrlProvider)
-				else serverLookup
-					.promiseServerInformation(library.libraryId)
-					.eventually { serverInfo ->
-						val (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) = serverInfo ?: return@eventually Promise.empty()
+										mediaServerUrlProvidersQueue.offer(
+											MediaServerUrlProvider(
+												authKey,
+												remoteIp,
+												httpPort))
+									}
 
-						val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
-						if (!library.isLocalOnly) {
-							if (httpsPort != null) {
-								mediaServerUrlProvidersQueue.offer(
-									MediaServerUrlProvider(
-										authKey,
-										remoteIp,
-										httpsPort,
-										if (certificateFingerprint != null) decodeHex(certificateFingerprint.toCharArray())
-										else ByteArray(0)))
+									for (ip in localIps) {
+										mediaServerUrlProvidersQueue.offer(
+											MediaServerUrlProvider(
+												authKey,
+												ip,
+												httpPort))
+									}
+
+									testUrls(mediaServerUrlProvidersQueue)
+								} ?: Promise.empty()
 							}
-
-							mediaServerUrlProvidersQueue.offer(
-								MediaServerUrlProvider(
-									authKey,
-									remoteIp,
-									httpPort))
-						}
-
-						for (ip in localIps) {
-							mediaServerUrlProvidersQueue.offer(
-								MediaServerUrlProvider(
-									authKey,
-									ip,
-									httpPort))
-						}
-
-						testUrls(mediaServerUrlProvidersQueue)
 					}
-			}
-	}
+			} ?: Promise(IllegalArgumentException("The access code cannot be null"))
+		}
 
 	private fun testUrls(urls: Queue<IUrlProvider>): Promise<IUrlProvider?> {
 		val urlProvider = urls.poll() ?: return Promise.empty()
@@ -83,8 +81,9 @@ class UrlScanner(
 	}
 
 	companion object {
-		private fun isUserCredentialsValid(library: Library): Boolean =
-			library.userName?.isNotEmpty() == true && library.password?.isNotEmpty() == true
+		private fun isUserCredentialsValid(connectionSettings: ConnectionSettings): Boolean =
+			(connectionSettings.userName?.isNotEmpty() ?: true)
+				&& (connectionSettings.password?.isNotEmpty() ?: true)
 
 		private fun parseAccessCode(accessCode: String): URL {
 			var url = accessCode

@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.GivenANullAccessCode;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
@@ -26,10 +27,11 @@ public class WhenScanningForUrls {
 			mock(EncodeToBase64.class),
 			mock(TestConnections.class),
 			mock(LookupServers.class),
+			mock(ConnectionSettingsLookup.class),
 			mock(ProvideOkHttpClients.class));
 
 		try {
-			new FuturePromise<>(urlScanner.promiseBuiltUrlProvider(new Library())).get();
+			new FuturePromise<>(urlScanner.promiseBuiltUrlProvider(new LibraryId(32))).get();
 		} catch (ExecutionException e) {
 			if (e.getCause() instanceof IllegalArgumentException)
 				illegalArgumentException = (IllegalArgumentException) e.getCause();
