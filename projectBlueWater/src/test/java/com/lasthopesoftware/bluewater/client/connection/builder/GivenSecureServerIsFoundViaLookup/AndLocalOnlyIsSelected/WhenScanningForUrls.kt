@@ -1,80 +1,70 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.GivenSecureServerIsFoundViaLookup.AndLocalOnlyIsSelected;
+package com.lasthopesoftware.bluewater.client.connection.builder.GivenSecureServerIsFoundViaLookup.AndLocalOnlyIsSelected
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.lasthopesoftware.resources.strings.EncodeToBase64;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenScanningForUrls {
+	@Test
+	fun thenTheUrlProviderIsReturned() {
+		Assertions.assertThat(urlProvider).isNotNull
+	}
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
+	@Test
+	fun thenTheBaseUrlIsCorrect() {
+		Assertions.assertThat(urlProvider?.baseUrl).isEqualTo("http://192.168.1.56:143/MCWS/v1/")
+	}
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+	companion object {
+		private var urlProvider: IUrlProvider? = null
 
-public class WhenScanningForUrls {
-
-	private static IUrlProvider urlProvider;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException {
-		final TestConnections connectionTester = mock(TestConnections.class);
-		when(connectionTester.promiseIsConnectionPossible(any()))
-			.thenReturn(new Promise<>(false));
-
-		when(connectionTester.promiseIsConnectionPossible(argThat(a ->
-			Arrays.asList(
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val connectionTester = mockk<TestConnections>()
+			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+			every { connectionTester.promiseIsConnectionPossible(match { a -> listOf(
 				"http://192.168.1.56:143/MCWS/v1/",
 				"https://192.168.1.56:143/MCWS/v1/",
-				"http://1.2.3.4:143/MCWS/v1/").contains(a.getUrlProvider().getBaseUrl()))))
-			.thenReturn(new Promise<>(true));
+				"http://1.2.3.4:143/MCWS/v1/").contains(a.urlProvider.baseUrl) }) } returns true.toPromise()
 
-		final LookupServers serverLookup = mock(LookupServers.class);
-		when(serverLookup.promiseServerInformation(new LibraryId(15)))
-			.thenReturn(new Promise<>(
-				new ServerInfo(
-					143,
-					45,
-					"1.2.3.4",
-					Arrays.asList(
-						"53.24.19.245",
-						"192.168.1.56"),
-					Collections.emptyList(),
-					null)));
+			val serverLookup = mockk<LookupServers>()
+			every { serverLookup.promiseServerInformation(LibraryId(15)) } returns Promise(						ServerInfo(
+				143,
+				45,
+				"1.2.3.4",
+				listOf(
+					"53.24.19.245",
+					"192.168.1.56"
+				),
+				emptyList(),
+				null))
 
-		final UrlScanner urlScanner = new UrlScanner(
-			mock(EncodeToBase64.class),
-			connectionTester,
-			serverLookup,
-			OkHttpFactory.getInstance());
+			val connectionSettingsLookup = mockk<ConnectionSettingsLookup>()
+			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(15)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
-		urlProvider = new FuturePromise<>(
-			urlScanner.promiseBuiltUrlProvider(new Library()
-				.setAccessCode("gooPc")
-				.setId(15)
-				.setLocalOnly(true))).get();
-	}
+			val urlScanner = UrlScanner(
+				mockk(),
+				connectionTester,
+				serverLookup,
+				connectionSettingsLookup,
+				OkHttpFactory.getInstance())
 
-	@Test
-	public void thenTheUrlProviderIsReturned() {
-		assertThat(urlProvider).isNotNull();
-	}
-
-	@Test
-	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("http://192.168.1.56:143/MCWS/v1/");
+			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(15)).toFuture().get()
+		}
 	}
 }

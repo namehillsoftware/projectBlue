@@ -1,56 +1,52 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.GivenAnAccessCodeThatIsAValidServer.WithAPort.AndAnHttpsScheme;
+package com.lasthopesoftware.bluewater.client.connection.builder.GivenAnAccessCodeThatIsAValidServer.WithAPort.AndAnHttpsScheme
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.lasthopesoftware.resources.strings.EncodeToBase64;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenScanningForUrls {
 
-import java.util.concurrent.ExecutionException;
+	companion object {
+		private var urlProvider: IUrlProvider? = null
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val connectionTester = mockk<TestConnections>()
+			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+			every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl == "https://gooPc:3504/MCWS/v1/" }) } returns true.toPromise()
 
-public class WhenScanningForUrls {
+			val connectionSettingsLookup = mockk<ConnectionSettingsLookup>()
+			every { connectionSettingsLookup.lookupConnectionSettings(any()) } returns ConnectionSettings(accessCode = "https://gooPc:3504").toPromise()
 
-	private static IUrlProvider urlProvider;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException {
-		final TestConnections connectionTester = mock(TestConnections.class);
-		when(connectionTester.promiseIsConnectionPossible(any()))
-			.thenReturn(new Promise<>(false));
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> a.getUrlProvider().getBaseUrl().equals("https://gooPc:3504/MCWS/v1/"))))
-			.thenReturn(new Promise<>(true));
-
-		final UrlScanner urlScanner = new UrlScanner(
-			mock(EncodeToBase64.class),
-			connectionTester,
-			mock(LookupServers.class),
-			OkHttpFactory.getInstance());
-
-		urlProvider = new FuturePromise<>(
-			urlScanner.promiseBuiltUrlProvider(new Library()
-				.setAccessCode("https://gooPc:3504"))).get();
+			val urlScanner = UrlScanner(
+				mockk(),
+				connectionTester,
+				mockk(),
+				connectionSettingsLookup,
+				OkHttpFactory.getInstance())
+			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(12)).toFuture().get()
+		}
 	}
 
 	@Test
-	public void thenTheUrlProviderIsReturned() {
-		assertThat(urlProvider).isNotNull();
+	fun thenTheUrlProviderIsReturned() {
+		Assertions.assertThat(urlProvider).isNotNull
 	}
 
 	@Test
-	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("https://gooPc:3504/MCWS/v1/");
+	fun thenTheBaseUrlIsCorrect() {
+		Assertions.assertThat(urlProvider!!.baseUrl).isEqualTo("https://gooPc:3504/MCWS/v1/")
 	}
 }
