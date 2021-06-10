@@ -1,76 +1,71 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.GivenSecureServerIsFoundViaLookup.AndTheFingerprintIsNull;
+package com.lasthopesoftware.bluewater.client.connection.builder.GivenSecureServerIsFoundViaLookup.AndTheFingerprintIsNull
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.lasthopesoftware.resources.strings.EncodeToBase64;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenScanningForUrls {
-
-	private static IUrlProvider urlProvider;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException {
-		final TestConnections connectionTester = mock(TestConnections.class);
-		when(connectionTester.promiseIsConnectionPossible(any()))
-			.thenReturn(new Promise<>(false));
-
-		when(connectionTester.promiseIsConnectionPossible(argThat(a -> "https://1.2.3.4:452/MCWS/v1/".equals(a.getUrlProvider().getBaseUrl()))))
-			.thenReturn(new Promise<>(true));
-
-		final LookupServers serverLookup = mock(LookupServers.class);
-		when(serverLookup.promiseServerInformation(new LibraryId(16)))
-			.thenReturn(new Promise<>(new ServerInfo(
-				143,
-				452,
-				"1.2.3.4",
-				Collections.emptyList(),
-				Collections.emptyList(),
-				null)));
-
-		final UrlScanner urlScanner = new UrlScanner(
-			mock(EncodeToBase64.class),
-			connectionTester,
-			serverLookup,
-			OkHttpFactory.getInstance());
-
-		urlProvider = new FuturePromise<>(
-			urlScanner.promiseBuiltUrlProvider(new Library()
-				.setId(16)
-				.setAccessCode("gooPc"))).get();
+class WhenScanningForUrls {
+	@Test
+	fun thenTheUrlProviderIsReturned() {
+		assertThat(urlProvider).isNotNull
 	}
 
 	@Test
-	public void thenTheUrlProviderIsReturned() {
-		assertThat(urlProvider).isNotNull();
+	fun thenTheBaseUrlIsCorrect() {
+		assertThat(urlProvider?.baseUrl).isEqualTo("https://1.2.3.4:452/MCWS/v1/")
 	}
 
 	@Test
-	public void thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider.getBaseUrl()).isEqualTo("https://1.2.3.4:452/MCWS/v1/");
+	fun thenTheCertificateFingerprintIsEmpty() {
+		assertThat(urlProvider?.certificateFingerprint).isEmpty()
 	}
 
-	@Test
-	public void thenTheCertificateFingerprintIsEmpty() {
-		assertThat(urlProvider.getCertificateFingerprint()).isEmpty();
+	companion object {
+		private var urlProvider: IUrlProvider? = null
+
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val connectionTester = mockk<TestConnections>()
+			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+			every { connectionTester.promiseIsConnectionPossible(match { a -> "https://1.2.3.4:452/MCWS/v1/" == a.urlProvider.baseUrl }) } returns true.toPromise()
+
+			val serverLookup = mockk<LookupServers>()
+			every { serverLookup.promiseServerInformation(LibraryId(63)) } returns Promise(
+				ServerInfo(
+					143,
+					452,
+					"1.2.3.4", emptyList(), emptyList(),
+					null
+				)
+			)
+
+			val connectionSettingsLookup = mockk<ConnectionSettingsLookup>()
+			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(16)) } returns ConnectionSettings(accessCode = "gooPc", userName = "user", password = null).toPromise()
+
+			val urlScanner = UrlScanner(
+				mockk(),
+				connectionTester,
+				serverLookup,
+				connectionSettingsLookup,
+				OkHttpFactory.getInstance()
+			)
+
+			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(16)).toFuture().get()
+		}
 	}
 }

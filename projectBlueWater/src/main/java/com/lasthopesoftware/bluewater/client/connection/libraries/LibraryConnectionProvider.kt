@@ -50,20 +50,15 @@ class LibraryConnectionProvider(
 				init {
 					promisedConnectionProvidersCache[libraryId]
 						?.then({ c ->
-							when (c) {
-								null -> {
-									proxy(promiseUpdatedCachedConnection(libraryId))
-								}
-								else -> {
-									connectionTester.promiseIsConnectionPossible(c)
-										.then({ result ->
-											if (result) resolve(c)
-											else proxy(promiseUpdatedCachedConnection(libraryId))
-										}, {
-											proxy(promiseUpdatedCachedConnection(libraryId))
-										})
-								}
-							}
+							c?.let {
+								connectionTester.promiseIsConnectionPossible(it)
+									.then({ isPossible ->
+										if (isPossible) resolve(it)
+										else proxy(promiseUpdatedCachedConnection(libraryId))
+									}, {
+										proxy(promiseUpdatedCachedConnection(libraryId))
+									})
+							} ?: proxy(promiseUpdatedCachedConnection(libraryId))
 						}, {
 							proxy(promiseUpdatedCachedConnection(libraryId))
 						})
@@ -75,29 +70,21 @@ class LibraryConnectionProvider(
 		}
 	}
 
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
-		val cachedConnectionProvider = cachedConnectionProviders[libraryId]
-		if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
-
-		synchronized(buildingConnectionPromiseSync) {
-			val cachedConnectionProvider = cachedConnectionProviders[libraryId]
-			if (cachedConnectionProvider != null) return ProgressingPromise(cachedConnectionProvider)
-
-			val nextPromisedConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
-				init {
-					promisedConnectionProvidersCache[libraryId]?.then({
-						if (it != null) resolve(it)
-						else proxy(promiseUpdatedCachedConnection(libraryId))
-					}, {
-						proxy(promiseUpdatedCachedConnection(libraryId))
-					})
-					?: proxy(promiseUpdatedCachedConnection(libraryId))
-				}
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
+		cachedConnectionProviders[libraryId]?.let { ProgressingPromise(it) } ?:
+			synchronized(buildingConnectionPromiseSync) {
+				cachedConnectionProviders[libraryId]?.let { ProgressingPromise(it) } ?:
+					object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
+						init {
+							promisedConnectionProvidersCache[libraryId]?.then({
+								it?.apply(::resolve) ?: proxy(promiseUpdatedCachedConnection(libraryId))
+							}, {
+								proxy(promiseUpdatedCachedConnection(libraryId))
+							})
+							?: proxy(promiseUpdatedCachedConnection(libraryId))
+						}
+					}.also { promisedConnectionProvidersCache[libraryId] = it }
 			}
-			promisedConnectionProvidersCache[libraryId] = nextPromisedConnectionProvider
-			return nextPromisedConnectionProvider
-		}
-	}
 
 	override fun isConnectionActive(libraryId: LibraryId): Boolean {
 		return cachedConnectionProviders[libraryId] != null
@@ -123,14 +110,16 @@ class LibraryConnectionProvider(
 				lookupConnectionSettings
 					.lookupConnectionSettings(selectedLibraryId)
 					.eventually({ connectionSettings ->
-						if (validateConnectionSettings.isValid(connectionSettings)) {
-							if (connectionSettings?.isWakeOnLanEnabled == true) wakeAndBuildConnection()
-							else buildConnection()
-						} else {
-							reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
-							resolve(null)
-							empty()
-						}
+						connectionSettings?.let {
+							if (validateConnectionSettings.isValid(it)) {
+								if (it.isWakeOnLanEnabled) wakeAndBuildConnection()
+								else buildConnection()
+							} else {
+								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+								resolve(null)
+								empty()
+							}
+						} ?: empty()
 					}, {
 						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 						reject(it)

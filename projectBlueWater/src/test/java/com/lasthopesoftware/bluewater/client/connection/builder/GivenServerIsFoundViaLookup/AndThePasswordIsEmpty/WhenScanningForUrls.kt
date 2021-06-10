@@ -17,7 +17,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.ExecutionException
 
 class WhenScanningForUrls {
 	@Test
@@ -33,7 +32,7 @@ class WhenScanningForUrls {
 	companion object {
 		private var urlProvider: IUrlProvider? = null
 		@BeforeClass
-		@Throws(InterruptedException::class, ExecutionException::class)
+		@JvmStatic
 		fun before() {
 			val connectionTester = mockk<TestConnections>()
 			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()

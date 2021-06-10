@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.live.GivenANetw
 
 import android.net.NetworkInfo;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
@@ -25,7 +25,7 @@ public class WhenGettingTheLiveUrl {
 		final LiveUrlProvider liveUrlProvider = new LiveUrlProvider(
 			() -> mock(NetworkInfo.class),
 			(library) -> Promise.empty());
-		urlProvider = new FuturePromise<>(liveUrlProvider.promiseLiveUrl(new Library())).get();
+		urlProvider = new FuturePromise<>(liveUrlProvider.promiseLiveUrl(new LibraryId(54))).get();
 	}
 
 	@Test
