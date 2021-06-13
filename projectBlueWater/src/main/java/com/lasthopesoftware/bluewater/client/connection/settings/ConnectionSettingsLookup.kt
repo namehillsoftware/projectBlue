@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries
+package com.lasthopesoftware.bluewater.client.connection.settings
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -9,13 +9,13 @@ class ConnectionSettingsLookup(private val libraryProvider: ILibraryProvider) : 
 
 	override fun lookupConnectionSettings(libraryId: LibraryId): Promise<ConnectionSettings?> =
 		libraryProvider.getLibrary(libraryId).then {
-			it?.let {
+			it?.run {
 				ConnectionSettings(
-					it.accessCode,
-					it.userName,
-					it.password,
-					it.isLocalOnly,
-					it.isWakeOnLanEnabled)
+					accessCode,
+					userName,
+					password,
+					isLocalOnly,
+					isWakeOnLanEnabled)
 			}
 		}
 }

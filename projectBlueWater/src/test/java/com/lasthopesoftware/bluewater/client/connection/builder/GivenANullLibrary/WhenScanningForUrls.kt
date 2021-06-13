@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.GivenANullAccessCode
+package com.lasthopesoftware.bluewater.client.connection.builder.GivenANullLibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.MissingConnectionSettingsException
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -16,8 +16,7 @@ import java.util.concurrent.ExecutionException
 class WhenScanningForUrls {
 
 	companion object {
-		private var illegalArgumentException: IllegalArgumentException? = null
-		private var urlProvider: IUrlProvider? = null
+		private var exception: MissingConnectionSettingsException? = null
 
 		@BeforeClass
 		@JvmStatic
@@ -33,26 +32,20 @@ class WhenScanningForUrls {
 				mockk()
 			)
 			try {
-				urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(32)).toFuture().get()
+				urlScanner.promiseBuiltUrlProvider(LibraryId(32)).toFuture().get()
 			} catch (e: ExecutionException) {
-				if (e.cause is IllegalArgumentException) illegalArgumentException =
-					e.cause as IllegalArgumentException? else throw e
+				exception = e.cause as? MissingConnectionSettingsException ?: throw e
 			}
 		}
 	}
 
 	@Test
-	fun thenANullUrlProviderIsReturned() {
-		assertThat(urlProvider).isNull()
-	}
-
-	@Test
-	fun thenAnIllegalArgumentExceptionIsThrown() {
-		assertThat(illegalArgumentException).isNotNull
+	fun thenTheCorrectExceptionIsThrown() {
+		assertThat(exception).isNotNull
 	}
 
 	@Test
 	fun thenTheExceptionMentionsTheLibrary() {
-		assertThat(illegalArgumentException?.message).isEqualTo("The access code cannot be null")
+		assertThat(exception?.message).isEqualTo("Connection settings were not found for ${LibraryId(32)}")
 	}
 }

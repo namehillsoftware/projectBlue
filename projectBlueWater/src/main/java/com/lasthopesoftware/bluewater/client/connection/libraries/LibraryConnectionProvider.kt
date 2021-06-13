@@ -14,6 +14,10 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLive
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
+import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider

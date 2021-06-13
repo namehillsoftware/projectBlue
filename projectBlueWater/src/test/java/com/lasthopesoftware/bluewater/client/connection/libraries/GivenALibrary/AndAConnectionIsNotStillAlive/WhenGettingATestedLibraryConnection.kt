@@ -4,11 +4,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm

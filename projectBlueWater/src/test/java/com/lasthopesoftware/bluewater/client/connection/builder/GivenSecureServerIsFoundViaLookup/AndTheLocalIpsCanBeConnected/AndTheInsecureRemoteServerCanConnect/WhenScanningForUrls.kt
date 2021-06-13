@@ -4,9 +4,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries
+package com.lasthopesoftware.bluewater.client.connection.settings
 
 object ConnectionSettingsValidation : ValidateConnectionSettings {
 	override fun isValid(connectionSettings: ConnectionSettings): Boolean =

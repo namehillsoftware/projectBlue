@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.connection.builder
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
@@ -24,53 +24,63 @@ class UrlScanner(
 
 	override fun promiseBuiltUrlProvider(libraryId: LibraryId): Promise<IUrlProvider?> =
 		connectionSettingsLookup.lookupConnectionSettings(libraryId).eventually { connectionSettings ->
-			connectionSettings?.accessCode?.let { accessCode ->
-				val authKey =
-					if (isUserCredentialsValid(connectionSettings)) base64.encodeString(connectionSettings.userName + ":" + connectionSettings.password)
-					else null
+			connectionSettings?.let { settings ->
+				settings.accessCode?.let { accessCode ->
+					val authKey =
+						if (isUserCredentialsValid(connectionSettings)) base64.encodeString(connectionSettings.userName + ":" + connectionSettings.password)
+						else null
 
-				val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(accessCode))
+					val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(accessCode))
 
-				connectionTester
-					.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
-					.eventually { isValid ->
-						if (isValid) Promise(mediaServerUrlProvider)
-						else serverLookup
-							.promiseServerInformation(libraryId)
-							.eventually {
-								it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
-									val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
-									if (!connectionSettings.isLocalOnly) {
-										if (httpsPort != null) {
+					connectionTester
+						.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
+						.eventually { isValid ->
+							if (isValid) Promise(mediaServerUrlProvider)
+							else serverLookup
+								.promiseServerInformation(libraryId)
+								.eventually {
+									it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
+										val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
+										if (!connectionSettings.isLocalOnly) {
+											if (httpsPort != null) {
+												mediaServerUrlProvidersQueue.offer(
+													MediaServerUrlProvider(
+														authKey,
+														remoteIp,
+														httpsPort,
+														if (certificateFingerprint != null) decodeHex(
+															certificateFingerprint.toCharArray()
+														)
+														else ByteArray(0)
+													)
+												)
+											}
+
 											mediaServerUrlProvidersQueue.offer(
 												MediaServerUrlProvider(
 													authKey,
 													remoteIp,
-													httpsPort,
-													if (certificateFingerprint != null) decodeHex(certificateFingerprint.toCharArray())
-													else ByteArray(0)))
+													httpPort
+												)
+											)
 										}
 
-										mediaServerUrlProvidersQueue.offer(
-											MediaServerUrlProvider(
-												authKey,
-												remoteIp,
-												httpPort))
-									}
+										for (ip in localIps) {
+											mediaServerUrlProvidersQueue.offer(
+												MediaServerUrlProvider(
+													authKey,
+													ip,
+													httpPort
+												)
+											)
+										}
 
-									for (ip in localIps) {
-										mediaServerUrlProvidersQueue.offer(
-											MediaServerUrlProvider(
-												authKey,
-												ip,
-												httpPort))
-									}
-
-									testUrls(mediaServerUrlProvidersQueue)
-								} ?: Promise.empty()
-							}
-					}
-			} ?: Promise(IllegalArgumentException("The access code cannot be null"))
+										testUrls(mediaServerUrlProvidersQueue)
+									} ?: Promise.empty()
+								}
+						}
+				} ?: Promise(IllegalArgumentException("The access code cannot be null"))
+			} ?: Promise(MissingConnectionSettingsException(libraryId))
 		}
 
 	private fun testUrls(urls: Queue<IUrlProvider>): Promise<IUrlProvider?> {
@@ -98,10 +108,7 @@ class UrlScanner(
 			return URL(scheme, urlParts[0], port, "")
 		}
 
-		private fun isPositiveInteger(string: String): Boolean {
-			for (c in string.toCharArray()) if (!Character.isDigit(c)) return false
-			return true
-		}
+		private fun isPositiveInteger(string: String): Boolean = string.toCharArray().all(Character::isDigit)
 
 		private fun decodeHex(data: CharArray): ByteArray {
 			val len = data.size
