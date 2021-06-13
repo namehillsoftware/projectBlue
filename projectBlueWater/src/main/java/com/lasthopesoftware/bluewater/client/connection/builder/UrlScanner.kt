@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
@@ -18,7 +18,7 @@ class UrlScanner(
 	private val base64: EncodeToBase64,
 	private val connectionTester: TestConnections,
 	private val serverLookup: LookupServers,
-	private val connectionSettingsLookup: ConnectionSettingsLookup,
+	private val connectionSettingsLookup: LookupConnectionSettings,
 	private val okHttpClients: ProvideOkHttpClients
 ) : BuildUrlProviders {
 

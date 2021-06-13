@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
@@ -16,25 +16,25 @@ import io.mockk.every
 import io.mockk.mockk
 import org.apache.commons.codec.DecoderException
 import org.apache.commons.codec.binary.Hex
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 
 class WhenScanningForUrls {
 	@Test
 	fun thenTheUrlProviderIsReturned() {
-		Assertions.assertThat(urlProvider).isNotNull
+		assertThat(urlProvider).isNotNull
 	}
 
 	@Test
 	fun thenTheBaseUrlIsCorrect() {
-		Assertions.assertThat(urlProvider!!.baseUrl).isEqualTo("https://1.2.3.4:452/MCWS/v1/")
+		assertThat(urlProvider?.baseUrl).isEqualTo("https://1.2.3.4:452/MCWS/v1/")
 	}
 
 	@Test
 	@Throws(DecoderException::class)
 	fun thenTheCertificateFingerprintIsCorrect() {
-		Assertions.assertThat(urlProvider!!.certificateFingerprint)
+		assertThat(urlProvider!!.certificateFingerprint)
 			.isEqualTo(Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45"))
 	}
 
@@ -60,7 +60,7 @@ class WhenScanningForUrls {
 				)
 			)
 
-			val connectionSettingsLookup = mockk<ConnectionSettingsLookup>()
+			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(35)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
 			val urlScanner = UrlScanner(

@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
@@ -49,7 +49,7 @@ class WhenScanningForUrls {
 				)
 			)
 
-			val connectionSettingsLookup = mockk<ConnectionSettingsLookup>()
+			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(56)) } returns ConnectionSettings(accessCode = "gooPc", userName = "user", password = null).toPromise()
 
 			val urlScanner = UrlScanner(

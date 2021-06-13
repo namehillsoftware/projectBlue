@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.GivenANullAcces
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner;
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers;
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup;
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients;
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
@@ -27,7 +27,7 @@ public class WhenScanningForUrls {
 			mock(EncodeToBase64.class),
 			mock(TestConnections.class),
 			mock(LookupServers.class),
-			mock(ConnectionSettingsLookup.class),
+			mock(LookupConnectionSettings.class),
 			mock(ProvideOkHttpClients.class));
 
 		try {

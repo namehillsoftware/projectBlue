@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
@@ -14,19 +14,19 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 
 class WhenScanningForUrls {
 	@Test
 	fun thenTheInsecureUrlProviderIsReturned() {
-		Assertions.assertThat(urlProvider).isNotNull
+		assertThat(urlProvider).isNotNull
 	}
 
 	@Test
 	fun thenTheBaseUrlIsCorrect() {
-		Assertions.assertThat(urlProvider!!.baseUrl).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
+		assertThat(urlProvider?.baseUrl).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
 	}
 
 	companion object {
@@ -55,7 +55,7 @@ class WhenScanningForUrls {
 				)
 			)
 
-			val connectionSettingsLookup = mockk<ConnectionSettingsLookup>()
+			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(777)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
 			val urlScanner = UrlScanner(

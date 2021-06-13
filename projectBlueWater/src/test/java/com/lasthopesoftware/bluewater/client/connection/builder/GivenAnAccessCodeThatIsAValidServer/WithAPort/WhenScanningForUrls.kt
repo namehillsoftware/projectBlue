@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.GivenAnAccessCo
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -26,7 +26,7 @@ class WhenScanningForUrls {
 			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
 			every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl == "http://gooPc:3504/MCWS/v1/" }) } returns true.toPromise()
 
-			val connectionSettingsLookup = mockk<ConnectionSettingsLookup>()
+			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(13)) } returns ConnectionSettings(accessCode = "https://gooPc:3504").toPromise()
 
 			val urlScanner = UrlScanner(
