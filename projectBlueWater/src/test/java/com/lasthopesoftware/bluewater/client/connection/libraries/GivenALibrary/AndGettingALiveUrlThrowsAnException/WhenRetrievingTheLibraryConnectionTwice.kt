@@ -1,100 +1,37 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndGettingALiveUrlThrowsAnException;
+package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndGettingALiveUrlThrowsAnException
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.ValidateConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
+import java.io.IOException
+import java.util.*
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import kotlin.Unit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenRetrievingTheLibraryConnectionTwice {
-
-	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
-	private static final List<BuildingConnectionStatus> statuses = new ArrayList<>();
-	private static IConnectionProvider connectionProvider;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException {
-
-		final Library library = new Library()
-			.setId(2)
-			.setAccessCode("aB5nf");
-
-		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		final DeferredPromise<Library> firstDeferredLibrary = new DeferredPromise<>(library);
-		final DeferredPromise<Library> secondDeferredLibrary = new DeferredPromise<>(library);
-		when(libraryProvider.getLibrary(new LibraryId(2)))
-			.thenReturn(firstDeferredLibrary)
-			.thenReturn(secondDeferredLibrary);
-
-		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
-		when(liveUrlProvider.promiseLiveUrl(library))
-			.thenReturn(new Promise<>(new IOException("An error!")))
-			.thenReturn(new Promise<>(firstUrlProvider));
-
-		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
-			libraryProvider,
-			new NoopServerAlarm(),
-			liveUrlProvider,
-			mock(TestConnections.class),
-			OkHttpFactory.getInstance());
-
-		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(
-			libraryConnectionProvider
-				.promiseLibraryConnection(new LibraryId(2))
-				.updates(s -> {
-					statuses.add(s);
-					return Unit.INSTANCE;
-				})
-				.eventually(
-					c -> libraryConnectionProvider
-						.promiseLibraryConnection(new LibraryId(2))
-						.updates(s -> {
-							statuses.add(s);
-							return Unit.INSTANCE;
-						}),
-					e -> libraryConnectionProvider
-						.promiseLibraryConnection(new LibraryId(2))
-						.updates(s -> {
-							statuses.add(s);
-							return Unit.INSTANCE;
-						})));
-
-		firstDeferredLibrary.resolve();
-		secondDeferredLibrary.resolve();
-
-		connectionProvider = futureConnectionProvider.get();
+class WhenRetrievingTheLibraryConnectionTwice {
+	@Test
+	fun thenTheConnectionIsCorrect() {
+		assertThat(connectionProvider?.urlProvider).isEqualTo(firstUrlProvider)
 	}
 
 	@Test
-	public void thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider.getUrlProvider()).isEqualTo(firstUrlProvider);
-	}
-
-	@Test
-	public void thenGettingLibraryIsBroadcast() {
+	fun thenGettingLibraryIsBroadcast() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
@@ -102,6 +39,62 @@ public class WhenRetrievingTheLibraryConnectionTwice {
 				BuildingConnectionStatus.BuildingConnectionFailed,
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionComplete);
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
+	}
+
+	companion object {
+		private val firstUrlProvider = mockk<IUrlProvider>()
+		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+		private var connectionProvider: IConnectionProvider? = null
+
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+			every { validateConnectionSettings.isValid(any()) } returns true
+
+			val connectionSettings = ConnectionSettings(accessCode = "aB5nf")
+			val deferredConnectionSettings = DeferredPromise(connectionSettings)
+			val repeatedlyDeferredConnectionSettings = DeferredPromise(connectionSettings)
+
+			val lookupConnection = mockk<LookupConnectionSettings>()
+			every {
+				lookupConnection.lookupConnectionSettings(LibraryId(2))
+			} returns deferredConnectionSettings andThen repeatedlyDeferredConnectionSettings
+
+			val liveUrlProvider = mockk<ProvideLiveUrl>()
+			every {
+				liveUrlProvider.promiseLiveUrl(LibraryId(2))
+			} returns Promise(IOException("An error!")) andThen Promise(firstUrlProvider)
+
+			val libraryConnectionProvider = LibraryConnectionProvider(
+				mockk(),
+				validateConnectionSettings,
+				lookupConnection,
+				NoopServerAlarm(),
+				liveUrlProvider,
+				Mockito.mock(TestConnections::class.java),
+				OkHttpFactory.getInstance()
+			)
+
+			val futureConnectionProvider =
+				libraryConnectionProvider
+					.promiseLibraryConnection(LibraryId(2))
+					.updates(statuses::add)
+					.eventually(
+						{
+							libraryConnectionProvider.promiseTestedLibraryConnection(LibraryId(2))
+								.updates(statuses::add)
+						},
+						{
+							libraryConnectionProvider.promiseTestedLibraryConnection(LibraryId(2))
+								.updates(statuses::add)
+						})
+					.toFuture()
+			deferredConnectionSettings.resolve()
+			repeatedlyDeferredConnectionSettings.resolve()
+			connectionProvider = futureConnectionProvider.get()
+		}
 	}
 }

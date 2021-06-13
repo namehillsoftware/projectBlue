@@ -1,81 +1,88 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndGettingTheLibraryFaults;
+package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndGettingTheLibraryFaults
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl;
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
+import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.LookupConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.libraries.ValidateConnectionSettings
+import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
+import java.io.IOException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenTestingIfTheConnectionIsActive {
+	@Test
+	fun thenTheConnectionIsNotActive() {
+		Assertions.assertThat(isActive).isFalse
+	}
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+	@Test
+	fun thenAnIOExceptionIsReturned() {
+		Assertions.assertThat(exception).isNotNull
+	}
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+	companion object {
+		private val urlProvider = Mockito.mock(IUrlProvider::class.java)
+		private var exception: IOException? = null
+		private var isActive = false
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+			every { validateConnectionSettings.isValid(any()) } returns true
 
-public class WhenTestingIfTheConnectionIsActive {
+			val deferredConnectionSettings = DeferredPromise<ConnectionSettings>(IOException("OMG"))
 
-	private static final IUrlProvider urlProvider = mock(IUrlProvider.class);
-	private static IOException exception;
-	private static boolean isActive;
+			val lookupConnection = mockk<LookupConnectionSettings>()
+			every {
+				lookupConnection.lookupConnectionSettings(LibraryId(2))
+			} returns deferredConnectionSettings
 
-	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException {
+			val liveUrlProvider = mockk<ProvideLiveUrl>()
+			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise(urlProvider)
 
-		final Library library = new Library()
-			.setId(2)
-			.setAccessCode("aB5nf");
+			val libraryConnectionProvider = LibraryConnectionProvider(
+				mockk(),
+				validateConnectionSettings,
+				lookupConnection,
+				NoopServerAlarm(),
+				liveUrlProvider,
+				Mockito.mock(TestConnections::class.java),
+				OkHttpFactory.getInstance()
+			)
 
-		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		final DeferredPromise<Library> libraryDeferredPromise = new DeferredPromise<>(new IOException("OMG"));
-		when(libraryProvider.getLibrary(new LibraryId(2))).thenReturn(libraryDeferredPromise);
+			val futureConnectionProvider =
+				libraryConnectionProvider
+					.promiseLibraryConnection(LibraryId(2))
+					.toFuture()
 
-		final ProvideLiveUrl liveUrlProvider = mock(ProvideLiveUrl.class);
-		when(liveUrlProvider.promiseLiveUrl(library)).thenReturn(new Promise<>(urlProvider));
-
-		final LibraryConnectionProvider libraryConnectionProvider = new LibraryConnectionProvider(
-			libraryProvider,
-			new NoopServerAlarm(),
-			liveUrlProvider,
-			mock(TestConnections.class),
-			OkHttpFactory.getInstance());
-
-		final FuturePromise<IConnectionProvider> futureConnectionProvider = new FuturePromise<>(libraryConnectionProvider
-			.promiseLibraryConnection(new LibraryId(2)));
-
-		libraryDeferredPromise.resolve();
-
-		try {
-			futureConnectionProvider.get(30, TimeUnit.SECONDS);
-		} catch (ExecutionException | TimeoutException e) {
-			if (e.getCause() instanceof IOException) {
-				exception = (IOException) e.getCause();
+			deferredConnectionSettings.resolve()
+			try {
+				futureConnectionProvider[30, TimeUnit.SECONDS]
+			} catch (e: ExecutionException) {
+				if (e.cause is IOException) {
+					exception = e.cause as IOException?
+				}
+			} catch (e: TimeoutException) {
+				if (e.cause is IOException) {
+					exception = e.cause as IOException?
+				}
 			}
+			isActive = libraryConnectionProvider.isConnectionActive(LibraryId(2))
 		}
-
-		isActive = libraryConnectionProvider.isConnectionActive(new LibraryId(2));
-	}
-
-	@Test
-	public void thenTheConnectionIsNotActive() {
-		assertThat(isActive).isFalse();
-	}
-
-	@Test
-	public void thenAnIOExceptionIsReturned() {
-		assertThat(exception).isNotNull();
 	}
 }
