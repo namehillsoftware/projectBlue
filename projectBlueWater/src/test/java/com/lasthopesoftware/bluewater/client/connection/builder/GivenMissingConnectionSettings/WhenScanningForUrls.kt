@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.GivenANullLibrary
+package com.lasthopesoftware.bluewater.client.connection.builder.GivenMissingConnectionSettings
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.MissingConnectionSettingsException
