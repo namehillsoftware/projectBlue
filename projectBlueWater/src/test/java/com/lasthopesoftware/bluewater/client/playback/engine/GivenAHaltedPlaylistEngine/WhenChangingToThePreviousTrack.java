@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
@@ -20,7 +21,6 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -30,8 +30,6 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import kotlin.Unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -57,19 +55,7 @@ public class WhenChangingToThePreviousTrack {
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
 
-		final ILibraryStorage libraryStorage = new ILibraryStorage() {
-			@NotNull
-			@Override
-			public Promise<Library> saveLibrary(@NotNull Library library) {
-				return new Promise<>(library);
-			}
-
-			@NotNull
-			@Override
-			public Promise<Unit> removeLibrary(@NotNull Library library) {
-				return new Promise<>(Unit.INSTANCE);
-			}
-		};
+		final ILibraryStorage libraryStorage = new PassThroughLibraryStorage();
 
 		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
 		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(4))))

@@ -272,14 +272,11 @@ class PlaybackEngine(
 		private val logger = LoggerFactory.getLogger(PlaybackEngine::class.java)
 
 		@Contract(pure = true)
-		private fun getNextPosition(startingPosition: Int, playlist: Collection<ServiceFile>): Int {
-			return if (startingPosition < playlist.size - 1) startingPosition + 1 else 0
-		}
+		private fun getNextPosition(startingPosition: Int, playlist: Collection<ServiceFile>): Int =
+			if (startingPosition < playlist.size - 1) startingPosition + 1 else 0
 
 		@Contract(pure = true)
-		private fun getPreviousPosition(startingPosition: Int): Int {
-			return max(startingPosition - 1, 0)
-		}
+		private fun getPreviousPosition(startingPosition: Int): Int = max(startingPosition - 1, 0)
 
 		@JvmStatic
 		fun createEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>, nowPlayingRepository: INowPlayingRepository, playbackBootstrapper: IStartPlayback): Promise<PlaybackEngine> {
