@@ -48,6 +48,6 @@ class WhenScanningForUrls {
 
 	@Test
 	fun thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider!!.baseUrl).isEqualTo("http://gooPc:3504/MCWS/v1/")
+		assertThat(urlProvider?.baseUrl).isEqualTo("http://gooPc:3504/MCWS/v1/")
 	}
 }

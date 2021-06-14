@@ -56,7 +56,7 @@ class WhenScanningForUrls {
 				null))
 
 			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(15)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
+			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(15)) } returns ConnectionSettings(accessCode = "gooPc", isLocalOnly = true).toPromise()
 
 			val urlScanner = UrlScanner(
 				PassThroughBase64Encoder,
