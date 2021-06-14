@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.GivenServerIsFoundViaLookup.AndTheLocalIpsCanBeConnected
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
@@ -40,7 +41,7 @@ class WhenScanningForUrls {
 			every { connectionTester.promiseIsConnectionPossible(match { a -> "http://192.168.1.56:143/MCWS/v1/" == a.urlProvider.baseUrl }) } returns true.toPromise()
 
 			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(15)) } returns Promise(
+			every { serverLookup.promiseServerInformation(LibraryId(17)) } returns Promise(
 				ServerInfo(
 					143,
 					null,
@@ -57,7 +58,7 @@ class WhenScanningForUrls {
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(17)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
 			val urlScanner = UrlScanner(
-				mockk(),
+				PassThroughBase64Encoder,
 				connectionTester,
 				serverLookup,
 				connectionSettingsLookup,

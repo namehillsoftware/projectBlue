@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.GivenAnAccessCodeThatIsAValidServer.WithAPort.AndAnHttpScheme
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
@@ -30,7 +31,7 @@ class WhenScanningForUrls {
 			every { connectionSettingsLookup.lookupConnectionSettings(any()) } returns ConnectionSettings(accessCode = "http://gooPc:3504").toPromise()
 
 			val urlScanner = UrlScanner(
-				mockk(),
+				PassThroughBase64Encoder,
 				connectionTester,
 				mockk(),
 				connectionSettingsLookup,

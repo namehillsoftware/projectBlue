@@ -1,10 +1,9 @@
-package com.lasthopesoftware.resources.strings;
+package com.lasthopesoftware.resources.strings
 
-import android.util.Base64;
+import android.util.Base64
 
-public class Base64Encoder implements EncodeToBase64 {
-	@Override
-	public String encodeString(String decodedString) {
-		return Base64.encodeToString(decodedString.getBytes(), Base64.DEFAULT).trim();
+class Base64Encoder : EncodeToBase64 {
+	override fun encodeString(decodedString: String): String {
+		return Base64.encodeToString(decodedString.toByteArray(), Base64.DEFAULT).trim { it <= ' ' }
 	}
 }

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.GivenSecureServerIsFoundViaLookup.AndTheLocalIpsCanBeConnected.AndTheInsecureRemoteServerCanConnect
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
@@ -59,7 +60,7 @@ class WhenScanningForUrls {
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(777)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
 			val urlScanner = UrlScanner(
-				mockk(),
+				PassThroughBase64Encoder,
 				connectionTester,
 				serverLookup,
 				connectionSettingsLookup,

@@ -25,61 +25,59 @@ class UrlScanner(
 	override fun promiseBuiltUrlProvider(libraryId: LibraryId): Promise<IUrlProvider?> =
 		connectionSettingsLookup.lookupConnectionSettings(libraryId).eventually { connectionSettings ->
 			connectionSettings?.let { settings ->
-				settings.accessCode?.let { accessCode ->
-					val authKey =
-						if (isUserCredentialsValid(connectionSettings)) base64.encodeString(connectionSettings.userName + ":" + connectionSettings.password)
-						else null
+				val authKey =
+					if (isUserCredentialsValid(settings)) base64.encodeString(settings.userName + ":" + settings.password)
+					else null
 
-					val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(accessCode))
+				val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(settings.accessCode))
 
-					connectionTester
-						.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
-						.eventually { isValid ->
-							if (isValid) Promise(mediaServerUrlProvider)
-							else serverLookup
-								.promiseServerInformation(libraryId)
-								.eventually {
-									it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
-										val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
-										if (!connectionSettings.isLocalOnly) {
-											if (httpsPort != null) {
-												mediaServerUrlProvidersQueue.offer(
-													MediaServerUrlProvider(
-														authKey,
-														remoteIp,
-														httpsPort,
-														if (certificateFingerprint != null) decodeHex(
-															certificateFingerprint.toCharArray()
-														)
-														else ByteArray(0)
-													)
-												)
-											}
-
+				connectionTester
+					.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
+					.eventually { isValid ->
+						if (isValid) Promise(mediaServerUrlProvider)
+						else serverLookup
+							.promiseServerInformation(libraryId)
+							.eventually {
+								it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
+									val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
+									if (!settings.isLocalOnly) {
+										if (httpsPort != null) {
 											mediaServerUrlProvidersQueue.offer(
 												MediaServerUrlProvider(
 													authKey,
 													remoteIp,
-													httpPort
+													httpsPort,
+													if (certificateFingerprint != null) decodeHex(
+														certificateFingerprint.toCharArray()
+													)
+													else ByteArray(0)
 												)
 											)
 										}
 
-										for (ip in localIps) {
-											mediaServerUrlProvidersQueue.offer(
-												MediaServerUrlProvider(
-													authKey,
-													ip,
-													httpPort
-												)
+										mediaServerUrlProvidersQueue.offer(
+											MediaServerUrlProvider(
+												authKey,
+												remoteIp,
+												httpPort
 											)
-										}
+										)
+									}
 
-										testUrls(mediaServerUrlProvidersQueue)
-									} ?: Promise.empty()
-								}
-						}
-				} ?: Promise(IllegalArgumentException("The access code cannot be null"))
+									for (ip in localIps) {
+										mediaServerUrlProvidersQueue.offer(
+											MediaServerUrlProvider(
+												authKey,
+												ip,
+												httpPort
+											)
+										)
+									}
+
+									testUrls(mediaServerUrlProvidersQueue)
+								} ?: Promise.empty()
+							}
+				}
 			} ?: Promise(MissingConnectionSettingsException(libraryId))
 		}
 

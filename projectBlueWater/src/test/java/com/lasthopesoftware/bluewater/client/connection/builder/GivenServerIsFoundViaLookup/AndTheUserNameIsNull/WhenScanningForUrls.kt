@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.GivenServerIsFoundViaLookup.AndTheUserNameIsNull
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
@@ -55,7 +56,7 @@ class WhenScanningForUrls {
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(62)) } returns ConnectionSettings(accessCode = "gooPc", userName = null, password = null).toPromise()
 
 			val urlScanner = UrlScanner(
-				{ it },
+				PassThroughBase64Encoder,
 				connectionTester,
 				serverLookup,
 				connectionSettingsLookup,

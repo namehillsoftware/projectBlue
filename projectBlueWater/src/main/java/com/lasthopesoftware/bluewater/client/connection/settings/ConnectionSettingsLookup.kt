@@ -5,11 +5,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 class ConnectionSettingsLookup(private val libraryProvider: ILibraryProvider) : LookupConnectionSettings {
-
-
 	override fun lookupConnectionSettings(libraryId: LibraryId): Promise<ConnectionSettings?> =
 		libraryProvider.getLibrary(libraryId).then {
 			it?.run {
+				val accessCode = accessCode ?: throw MissingAccessCodeException(libraryId)
 				ConnectionSettings(
 					accessCode,
 					userName,

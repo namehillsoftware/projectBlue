@@ -50,7 +50,7 @@ class WhenScanningForUrls {
 			)
 
 			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(14)) } returns ConnectionSettings(accessCode = "gooPc", userName = "myuser", password = "myPass").toPromise()
+			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(15)) } returns ConnectionSettings(accessCode = "gooPc", userName = "myuser", password = "myPass").toPromise()
 
 			val urlScanner = UrlScanner(
 				{ "gooey" },
@@ -60,7 +60,7 @@ class WhenScanningForUrls {
 				OkHttpFactory.getInstance()
 			)
 
-			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(14)).toFuture().get()
+			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(15)).toFuture().get()
 		}
 	}
 }

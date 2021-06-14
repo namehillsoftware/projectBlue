@@ -1,5 +1,5 @@
-package com.lasthopesoftware.resources.strings;
+package com.lasthopesoftware.resources.strings
 
-public interface EncodeToBase64 {
-	String encodeString(String decodedString);
+fun interface EncodeToBase64 {
+	fun encodeString(decodedString: String): String
 }
