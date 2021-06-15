@@ -1,33 +1,27 @@
-package com.lasthopesoftware.bluewater.client.connection;
+package com.lasthopesoftware.bluewater.client.connection
 
-import com.namehillsoftware.handoff.promises.Promise;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
+import com.namehillsoftware.handoff.promises.Promise
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
+import java.io.IOException
 
-import java.io.IOException;
+class HttpPromisedResponse(private val call: Call) : Promise<Response>(), Callback, Runnable {
 
-public class HttpPromisedResponse extends Promise<Response> implements Callback, Runnable {
-	private final Call call;
-
-	public HttpPromisedResponse(Call call) {
-		this.call = call;
-		respondToCancellation(this);
-		call.enqueue(this);
+	init {
+		respondToCancellation(this)
+		call.enqueue(this)
 	}
 
-	@Override
-	public void onFailure(Call call, IOException e) {
-		reject(e);
+	override fun onFailure(call: Call, e: IOException) {
+		reject(e)
 	}
 
-	@Override
-	public void onResponse(Call call, Response response) {
-		resolve(response);
+	override fun onResponse(call: Call, response: Response) {
+		resolve(response)
 	}
 
-	@Override
-	public void run() {
-		this.call.cancel();
+	override fun run() {
+		call.cancel()
 	}
 }

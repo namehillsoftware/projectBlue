@@ -22,13 +22,12 @@ class ConnectionProvider(override val urlProvider: IUrlProvider, private val okH
 		override fun create(): OkHttpClient = okHttpClients.getOkHttpClient(urlProvider)
 	}
 
-	override fun promiseResponse(vararg params: String): Promise<Response> {
-		return try {
+	override fun promiseResponse(vararg params: String): Promise<Response> =
+		try {
 			HttpPromisedResponse(callServer(*params))
 		} catch (e: Throwable) {
 			Promise(e)
 		}
-	}
 
 	private fun callServer(vararg params: String): Call {
 		val url = URL(urlProvider.getUrl(*params))
