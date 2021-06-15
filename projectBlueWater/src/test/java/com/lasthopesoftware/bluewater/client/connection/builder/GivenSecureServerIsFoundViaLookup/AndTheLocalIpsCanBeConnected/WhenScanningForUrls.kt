@@ -41,7 +41,7 @@ class WhenScanningForUrls {
 			every { connectionTester.promiseIsConnectionPossible(match { a -> "http://192.168.1.56:143/MCWS/v1/" == a.urlProvider.baseUrl }) } returns true.toPromise()
 
 			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(15)) } returns Promise(
+			every { serverLookup.promiseServerInformation(LibraryId(5)) } returns Promise(
 				ServerInfo(
 					143,
 					452,

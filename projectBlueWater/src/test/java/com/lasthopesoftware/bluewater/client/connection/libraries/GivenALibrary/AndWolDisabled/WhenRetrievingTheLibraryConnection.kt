@@ -58,11 +58,11 @@ class WhenRetrievingTheLibraryConnection {
 
 			val lookupConnection = mockk<LookupConnectionSettings>()
 			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(2))
+				lookupConnection.lookupConnectionSettings(LibraryId(3))
 			} returns deferredConnectionSettings
 
 			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise(urlProvider)
+			every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(urlProvider)
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
 				mockk(),

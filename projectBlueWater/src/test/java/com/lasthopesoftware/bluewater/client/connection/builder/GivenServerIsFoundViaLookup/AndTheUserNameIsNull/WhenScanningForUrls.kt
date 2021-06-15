@@ -43,7 +43,7 @@ class WhenScanningForUrls {
 			}) } returns true.toPromise()
 
 			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(15)) } returns Promise(
+			every { serverLookup.promiseServerInformation(LibraryId(62)) } returns Promise(
 				ServerInfo(
 					143,
 					null,

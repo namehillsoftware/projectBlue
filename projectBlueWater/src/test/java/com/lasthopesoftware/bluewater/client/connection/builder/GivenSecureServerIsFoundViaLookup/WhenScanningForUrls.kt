@@ -35,7 +35,7 @@ class WhenScanningForUrls {
 	@Test
 	@Throws(DecoderException::class)
 	fun thenTheCertificateFingerprintIsCorrect() {
-		assertThat(urlProvider!!.certificateFingerprint)
+		assertThat(urlProvider?.certificateFingerprint)
 			.isEqualTo(Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45"))
 	}
 
@@ -52,7 +52,7 @@ class WhenScanningForUrls {
 				"http://1.2.3.4:143/MCWS/v1/").contains(a.urlProvider.baseUrl) }) } returns true.toPromise()
 
 			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(15)) } returns Promise(
+			every { serverLookup.promiseServerInformation(LibraryId(35)) } returns Promise(
 				ServerInfo(
 					143,
 					452,

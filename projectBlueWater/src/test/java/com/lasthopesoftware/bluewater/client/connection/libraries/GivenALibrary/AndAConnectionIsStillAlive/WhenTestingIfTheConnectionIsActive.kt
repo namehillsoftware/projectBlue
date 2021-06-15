@@ -50,7 +50,7 @@ class WhenTestingIfTheConnectionIsActive {
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
 				mockk(),
-				mockk(),
+				validateConnectionSettings,
 				lookupConnection,
 				NoopServerAlarm(),
 				liveUrlProvider,
