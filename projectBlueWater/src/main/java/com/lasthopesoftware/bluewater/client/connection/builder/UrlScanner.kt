@@ -90,8 +90,8 @@ class UrlScanner(
 
 	companion object {
 		private fun isUserCredentialsValid(connectionSettings: ConnectionSettings): Boolean =
-			(connectionSettings.userName?.isNotEmpty() ?: true)
-				&& (connectionSettings.password?.isNotEmpty() ?: true)
+			(connectionSettings.userName?.isNotEmpty() ?: false)
+				&& (connectionSettings.password?.isNotEmpty() ?: false)
 
 		private fun parseAccessCode(accessCode: String): URL {
 			var url = accessCode
