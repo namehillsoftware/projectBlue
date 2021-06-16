@@ -22,21 +22,8 @@ import org.junit.Test
 import java.util.*
 
 class WhenRetrievingTheLibraryConnection {
-	@Test
-	fun thenGettingLibraryFailedIsBroadcast() {
-		assertThat(statuses)
-			.containsExactly(
-				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.GettingLibraryFailed
-			)
-	}
 
-	@Test
-	fun thenTheConnectionIsNull() {
-		assertThat(connectionProvider).isNull()
-	}
-
-	companion object {
+	companion object Setup {
 		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 		private val urlProvider = mockk<IUrlProvider>()
 		private var connectionProvider: IConnectionProvider? = null
@@ -54,6 +41,7 @@ class WhenRetrievingTheLibraryConnection {
 
 			val liveUrlProvider = mockk<ProvideLiveUrl>()
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns urlProvider.toPromise()
+
 			val libraryConnectionProvider = LibraryConnectionProvider(
 				mockk(),
 				validateConnectionSettings,
@@ -69,8 +57,23 @@ class WhenRetrievingTheLibraryConnection {
 					.promiseLibraryConnection(LibraryId(2))
 					.updates(statuses::add)
 					.toFuture()
+
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()
 		}
+	}
+
+	@Test
+	fun thenGettingLibraryFailedIsBroadcast() {
+		assertThat(statuses)
+			.containsExactly(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.GettingLibraryFailed
+			)
+	}
+
+	@Test
+	fun thenTheConnectionIsNull() {
+		assertThat(connectionProvider).isNull()
 	}
 }

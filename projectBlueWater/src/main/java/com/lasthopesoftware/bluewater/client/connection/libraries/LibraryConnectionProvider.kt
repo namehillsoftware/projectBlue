@@ -123,7 +123,10 @@ class LibraryConnectionProvider(
 								resolve(null)
 								empty()
 							}
-						} ?: empty()
+						} ?: empty<IUrlProvider?>().also {
+							reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
+							resolve(null)
+						}
 					}, {
 						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 						reject(it)
