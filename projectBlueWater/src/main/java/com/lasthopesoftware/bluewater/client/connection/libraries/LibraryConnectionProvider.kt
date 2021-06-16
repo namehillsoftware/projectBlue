@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -36,13 +35,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 class LibraryConnectionProvider(
-	private val libraryProvider: ILibraryProvider,
 	private val validateConnectionSettings: ValidateConnectionSettings,
 	private val lookupConnectionSettings: LookupConnectionSettings,
 	private val wakeAlarm: WakeLibraryServer,
 	private val liveUrlProvider: ProvideLiveUrl,
 	private val connectionTester: TestConnections,
-	private val okHttpFactory: OkHttpFactory) : ProvideLibraryConnections {
+	private val okHttpFactory: OkHttpFactory
+) : ProvideLibraryConnections {
 
 	private val cachedConnectionProviders = ConcurrentHashMap<LibraryId, IConnectionProvider>()
 	private val promisedConnectionProvidersCache = HashMap<LibraryId, ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>>()
@@ -174,22 +173,18 @@ class LibraryConnectionProvider(
 			return ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), client))
 		}
 
-		private fun newUrlScanner(context: Context): UrlScanner {
-			return UrlScanner(
-				Base64Encoder(),
-				ConnectionTester(),
-				newServerLookup(context),
-				ConnectionSettingsLookup(LibraryRepository(context)),
-				OkHttpFactory.getInstance())
-		}
+		private fun newUrlScanner(context: Context): UrlScanner = UrlScanner(
+			Base64Encoder(),
+			ConnectionTester(),
+			newServerLookup(context),
+			ConnectionSettingsLookup(LibraryRepository(context)),
+			OkHttpFactory.getInstance())
 
-		fun get(context: Context): LibraryConnectionProvider {
-			val applicationContext = context.applicationContext
-
-			return libraryConnectionProvider
+		fun get(context: Context): LibraryConnectionProvider =
+			libraryConnectionProvider
 				?: synchronized(syncObject) {
+					val applicationContext = context.applicationContext
 					libraryConnectionProvider ?: LibraryConnectionProvider(
-						LibraryRepository(applicationContext),
 						ConnectionSettingsValidation,
 						ConnectionSettingsLookup(LibraryRepository(applicationContext)),
 						ServerAlarm(
@@ -200,10 +195,8 @@ class LibraryConnectionProvider(
 							ActiveNetworkFinder(applicationContext),
 							newUrlScanner(context)),
 						ConnectionTester(),
-						OkHttpFactory.getInstance())
-						.also { libraryConnectionProvider = it }
+						OkHttpFactory.getInstance()
+					).also { libraryConnectionProvider = it }
 				}
-
-		}
 	}
 }

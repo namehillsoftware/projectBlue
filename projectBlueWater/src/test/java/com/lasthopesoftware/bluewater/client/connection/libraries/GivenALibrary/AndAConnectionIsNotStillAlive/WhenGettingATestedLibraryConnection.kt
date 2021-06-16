@@ -53,14 +53,13 @@ class WhenGettingATestedLibraryConnection {
 			every { validConnections.isValid(any()) } returns true
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
-				validConnections,
-				connectionSettings,
-				NoopServerAlarm(),
-				liveUrlProvider,
-				testConnections,
-				OkHttpFactory.getInstance()
-			)
+                validConnections,
+                connectionSettings,
+                NoopServerAlarm(),
+                liveUrlProvider,
+                testConnections,
+                OkHttpFactory.getInstance()
+            )
 
 			val libraryId = LibraryId(2)
 			val futureConnectionProvider =

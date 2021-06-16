@@ -70,14 +70,13 @@ class WhenGettingATestedLibraryConnection {
 			val connectionsTester = mockk<TestConnections>()
 			every  { connectionsTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
-				validateConnectionSettings,
-				lookupConnection,
-				NoopServerAlarm(),
-				liveUrlProvider,
-				connectionsTester,
-				OkHttpFactory.getInstance()
-			)
+                validateConnectionSettings,
+                lookupConnection,
+                NoopServerAlarm(),
+                liveUrlProvider,
+                connectionsTester,
+                OkHttpFactory.getInstance()
+            )
 			val libraryId = LibraryId(2)
 			val futureConnectionProvider = libraryConnectionProvider
 				.promiseLibraryConnection(libraryId)

@@ -69,14 +69,13 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			} returns Promise(IOException("An error!")) andThen Promise(firstUrlProvider)
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
-				validateConnectionSettings,
-				lookupConnection,
-				NoopServerAlarm(),
-				liveUrlProvider,
-				Mockito.mock(TestConnections::class.java),
-				OkHttpFactory.getInstance()
-			)
+                validateConnectionSettings,
+                lookupConnection,
+                NoopServerAlarm(),
+                liveUrlProvider,
+                Mockito.mock(TestConnections::class.java),
+                OkHttpFactory.getInstance()
+            )
 
 			val futureConnectionProvider =
 				libraryConnectionProvider
