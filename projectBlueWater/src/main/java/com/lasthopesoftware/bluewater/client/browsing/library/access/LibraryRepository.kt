@@ -23,7 +23,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	override fun saveLibrary(library: Library): Promise<Library> =
 		QueuedPromise(SaveLibraryWriter(context, library), databaseExecutor())
 
-	override fun removeLibrary(library: Library): Promise<Any?> =
+	override fun removeLibrary(library: Library): Promise<Unit> =
 		QueuedPromise(RemoveLibraryWriter(context, library), databaseExecutor())
 
 	private class GetAllLibrariesWriter constructor(private val context: Context) : MessageWriter<Collection<Library>> {
@@ -42,9 +42,9 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 		override fun prepareMessage(): Library? {
 			val libraryInt = libraryId.id
 			if (libraryInt < 0) return null
-			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
-					return repositoryAccessHelper
+					repositoryAccessHelper
 						.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
 						.addParameter("id", libraryInt)
 						.fetchFirst(Library::class.java)
@@ -54,37 +54,6 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	}
 
 	private class SaveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Library> {
-		override fun prepareMessage(): Library {
-			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-					val isLibraryExists = library.id > -1
-					val artful = repositoryAccessHelper
-						.mapSql(if (isLibraryExists) libraryUpdateSql.value else libraryInsertSql.value)
-						.addParameter(Library.accessCodeColumn, library.accessCode)
-						.addParameter(Library.userNameColumn, library.userName)
-						.addParameter(Library.passwordColumn, library.password)
-						.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly)
-						.addParameter(Library.libraryNameColumn, library.libraryName)
-						.addParameter(Library.isRepeatingColumn, library.isRepeating)
-						.addParameter(Library.isWakeOnLanEnabledColumn, library.isWakeOnLanEnabled)
-						.addParameter(Library.customSyncedFilesPathColumn, library.customSyncedFilesPath)
-						.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly)
-						.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles)
-						.addParameter(Library.nowPlayingIdColumn, library.nowPlayingId)
-						.addParameter(Library.nowPlayingProgressColumn, library.nowPlayingProgress)
-						.addParameter(Library.savedTracksStringColumn, library.savedTracksString)
-						.addParameter(Library.selectedViewColumn, library.selectedView)
-						.addParameter(Library.selectedViewTypeColumn, library.selectedViewType)
-						.addParameter(Library.syncedFileLocationColumn, library.syncedFileLocation)
-					if (isLibraryExists) artful.addParameter("id", library.id)
-					val result = artful.execute()
-					closeableTransaction.setTransactionSuccessful()
-					if (!isLibraryExists) library.setId(result.toInt())
-					logger.debug("Library saved.")
-					return library
-				}
-			}
-		}
 
 		companion object {
 			private val logger = LoggerFactory.getLogger(SaveLibraryWriter::class.java)
@@ -132,9 +101,41 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 					.buildQuery()
 			}
 		}
+
+		override fun prepareMessage(): Library {
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+					val isLibraryExists = library.id > -1
+					val artful = repositoryAccessHelper
+						.mapSql(if (isLibraryExists) libraryUpdateSql.value else libraryInsertSql.value)
+						.addParameter(Library.accessCodeColumn, library.accessCode)
+						.addParameter(Library.userNameColumn, library.userName)
+						.addParameter(Library.passwordColumn, library.password)
+						.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly)
+						.addParameter(Library.libraryNameColumn, library.libraryName)
+						.addParameter(Library.isRepeatingColumn, library.isRepeating)
+						.addParameter(Library.isWakeOnLanEnabledColumn, library.isWakeOnLanEnabled)
+						.addParameter(Library.customSyncedFilesPathColumn, library.customSyncedFilesPath)
+						.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly)
+						.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles)
+						.addParameter(Library.nowPlayingIdColumn, library.nowPlayingId)
+						.addParameter(Library.nowPlayingProgressColumn, library.nowPlayingProgress)
+						.addParameter(Library.savedTracksStringColumn, library.savedTracksString)
+						.addParameter(Library.selectedViewColumn, library.selectedView)
+						.addParameter(Library.selectedViewTypeColumn, library.selectedViewType)
+						.addParameter(Library.syncedFileLocationColumn, library.syncedFileLocation)
+					if (isLibraryExists) artful.addParameter("id", library.id)
+					val result = artful.execute()
+					closeableTransaction.setTransactionSuccessful()
+					if (!isLibraryExists) library.setId(result.toInt())
+					logger.debug("Library saved.")
+					return library
+				}
+			}
+		}
 	}
 
-	private class RemoveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Any?> {
+	private class RemoveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Unit> {
 
 		override fun prepareMessage() {
 			val libraryInt = library.id

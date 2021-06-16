@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.live.GivenANetw
 
 import android.net.NetworkInfo;
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
@@ -30,7 +30,7 @@ public class WhenGettingTheLiveUrl {
 				when(urlProvider.getBaseUrl()).thenReturn("http://test-url");
 				return new Promise<>(urlProvider);
 			});
-		urlProvider = new FuturePromise<>(liveUrlProvider.promiseLiveUrl(new Library())).get();
+		urlProvider = new FuturePromise<>(liveUrlProvider.promiseLiveUrl(new LibraryId(10))).get();
 	}
 
 	@Test

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlayb
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
@@ -21,7 +22,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.Messenger;
 import com.namehillsoftware.handoff.promises.Promise;
 
-import org.jetbrains.annotations.NotNull;
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -57,19 +57,7 @@ public class WhenObservingPlayback {
 		library.setId(1);
 
 		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
-		final ILibraryStorage libraryStorage = new ILibraryStorage() {
-			@NotNull
-			@Override
-			public Promise<Library> saveLibrary(@NotNull Library library) {
-				return new Promise<>(library);
-			}
-
-			@NotNull
-			@Override
-			public Promise<Object> removeLibrary(@NotNull Library library) {
-				return Promise.empty();
-			}
-		};
+		final ILibraryStorage libraryStorage = new PassThroughLibraryStorage();
 
 		final NowPlayingRepository nowPlayingRepository = new NowPlayingRepository(libraryProvider, libraryStorage);
 		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(

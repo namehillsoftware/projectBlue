@@ -59,18 +59,18 @@ class StoredItemServiceFileCollector(
 		val parameters = fileListParameters.getFileListParameters(item)
 		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
 		cancellationProxy.doCancel(serviceFilesPromise)
-		return serviceFilesPromise.then<Collection<ServiceFile>>(forward(), ExceptionHandler(libraryId, item, storedItemAccess))
+		return serviceFilesPromise.then(forward(), ExceptionHandler(libraryId, item, storedItemAccess))
 	}
 
 	private fun promiseServiceFiles(libraryId: LibraryId, playlist: Playlist, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
 		val parameters = fileListParameters.getFileListParameters(playlist)
 		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
 		cancellationProxy.doCancel(serviceFilesPromise)
-		return serviceFilesPromise.then<Collection<ServiceFile>>(forward(), ExceptionHandler(libraryId, playlist, storedItemAccess))
+		return serviceFilesPromise.then(forward(), ExceptionHandler(libraryId, playlist, storedItemAccess))
 	}
 
 	private class ExceptionHandler(private val libraryId: LibraryId, private val item: IItem, private val storedItemAccess: IStoredItemAccess) : ImmediateResponse<Throwable, Collection<ServiceFile>> {
-		@Throws(Throwable::class)
+
 		override fun respond(e: Throwable): List<ServiceFile> {
 			if (e is FileNotFoundException) {
 				logger.warn("The item " + item.key + " was not found, disabling sync for item")

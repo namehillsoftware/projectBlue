@@ -9,5 +9,5 @@ import com.namehillsoftware.handoff.promises.Promise
 interface ILibraryStorage {
 	fun saveLibrary(library: Library): Promise<Library>
 
-	fun removeLibrary(library: Library): Promise<Any?>
+	fun removeLibrary(library: Library): Promise<Unit>
 }

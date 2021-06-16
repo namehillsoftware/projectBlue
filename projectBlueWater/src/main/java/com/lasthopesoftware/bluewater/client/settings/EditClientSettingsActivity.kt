@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.RemoveLibrar
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import java.util.*
@@ -139,9 +140,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		lazyLibraryProvider.value
 			.getLibrary(LibraryId(libraryId))
 			.eventually(LoopedInPromise.response({ result ->
-				if (result == null) return@response
-
-				library = result
+				library = result ?: return@response
 
 				chkLocalOnly.findView().isChecked = result.isLocalOnly
 				chkIsUsingExistingFiles.findView().isChecked = result.isUsingExistingFiles
@@ -180,7 +179,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private fun saveLibraryAndFinish() {
 		val library = library ?: return
 
-		lazyLibraryProvider.value.saveLibrary(library).eventually(LoopedInPromise.response<Library, Unit>({
+		lazyLibraryProvider.value.saveLibrary(library).eventually(LoopedInPromise.response({
 			saveButton.findView().text = getText(R.string.btn_saved)
 			finish()
 		}, this))
@@ -188,7 +187,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 
 	companion object {
 		@JvmField
-		val serverIdExtra = EditClientSettingsActivity::class.java.canonicalName + ".serverIdExtra"
+		val serverIdExtra = MagicPropertyBuilder.buildMagicPropertyName(EditClientSettingsActivity::class.java, "serverIdExtra")
 		private const val selectDirectoryResultId = 93
 		private const val permissionsRequestInteger = 1
 	}

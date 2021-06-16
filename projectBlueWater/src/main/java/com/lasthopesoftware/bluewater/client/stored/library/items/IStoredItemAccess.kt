@@ -8,5 +8,5 @@ interface IStoredItemAccess {
 	fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean)
 	fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean>
 	fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>>
-	fun disableAllLibraryItems(libraryId: LibraryId): Promise<Any?>
+	fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit>
 }

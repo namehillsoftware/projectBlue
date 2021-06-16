@@ -12,27 +12,23 @@ import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import java.net.*
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
+import java.net.URL
 
-class ConnectionProvider(urlProvider: IUrlProvider, okHttpClients: ProvideOkHttpClients) : IConnectionProvider {
-	private val okHttpClients: ProvideOkHttpClients
+class ConnectionProvider(override val urlProvider: IUrlProvider, private val okHttpClients: ProvideOkHttpClients) : IConnectionProvider {
 	private val lazyOkHttpClient: CreateAndHold<OkHttpClient> = object : AbstractSynchronousLazy<OkHttpClient>() {
-		override fun create(): OkHttpClient {
-			return okHttpClients.getOkHttpClient(urlProvider)
-		}
+		override fun create(): OkHttpClient = okHttpClients.getOkHttpClient(urlProvider)
 	}
 
-	override val urlProvider: IUrlProvider
-
-	override fun promiseResponse(vararg params: String): Promise<Response> {
-		return try {
+	override fun promiseResponse(vararg params: String): Promise<Response> =
+		try {
 			HttpPromisedResponse(callServer(*params))
 		} catch (e: Throwable) {
 			Promise(e)
 		}
-	}
 
-	@Throws(MalformedURLException::class)
 	private fun callServer(vararg params: String): Call {
 		val url = URL(urlProvider.getUrl(*params))
 		val request = Request.Builder().url(url).build()
@@ -47,12 +43,5 @@ class ConnectionProvider(urlProvider: IUrlProvider, okHttpClients: ProvideOkHttp
 			val socket = DatagramSocket()
 			socket.use { it.send(packet) }
 		}, HttpThreadPoolExecutor.executor)
-	}
-
-	init {
-		requireNotNull(urlProvider) { "urlProvider != null" }
-		this.urlProvider = urlProvider
-		requireNotNull(okHttpClients) { "okHttpClients != null" }
-		this.okHttpClients = okHttpClients
 	}
 }
