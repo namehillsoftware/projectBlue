@@ -70,7 +70,7 @@ class StoredItemServiceFileCollector(
 	}
 
 	private class ExceptionHandler(private val libraryId: LibraryId, private val item: IItem, private val storedItemAccess: IStoredItemAccess) : ImmediateResponse<Throwable, Collection<ServiceFile>> {
-		@Throws(Throwable::class)
+
 		override fun respond(e: Throwable): List<ServiceFile> {
 			if (e is FileNotFoundException) {
 				logger.warn("The item " + item.key + " was not found, disabling sync for item")

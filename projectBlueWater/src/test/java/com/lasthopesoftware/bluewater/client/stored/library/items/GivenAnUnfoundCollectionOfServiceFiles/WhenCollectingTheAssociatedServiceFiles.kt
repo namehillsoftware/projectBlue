@@ -47,6 +47,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 					super.toggleSync(libraryId, item, enable)
 				}
 			}
+
 			val fileListParameters = FileListParameters.getInstance()
 			val fileProvider = mockk<ProvideLibraryFiles>()
 			every {
