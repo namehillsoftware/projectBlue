@@ -22,7 +22,6 @@ import org.junit.Test
 import java.io.FileNotFoundException
 import java.util.*
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 class WhenCollectingTheAssociatedServiceFiles {
@@ -38,9 +37,9 @@ class WhenCollectingTheAssociatedServiceFiles {
 		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
 			val storedItemAccess: IStoredItemAccess = object : FakeStoredItemAccess(
-				StoredItem(1, 1, StoredItem.ItemType.ITEM),
-				StoredItem(1, 2, StoredItem.ItemType.ITEM),
-				StoredItem(1, 3, StoredItem.ItemType.ITEM)
+				StoredItem(4, 1, StoredItem.ItemType.ITEM),
+				StoredItem(4, 2, StoredItem.ItemType.ITEM),
+				StoredItem(4, 3, StoredItem.ItemType.ITEM)
 			) {
 				override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
 					syncToggledItems[item] = enable
@@ -81,7 +80,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 			collectedFiles = serviceFileCollector
 				.promiseServiceFilesToSync(LibraryId(4))
-				.toFuture()[1000, TimeUnit.SECONDS]!!
+				.toFuture().get()!!
 		}
 
 		private fun givenARandomCollectionOfFiles(): List<ServiceFile> {

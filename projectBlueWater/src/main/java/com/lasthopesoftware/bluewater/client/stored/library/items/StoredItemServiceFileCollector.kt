@@ -37,6 +37,7 @@ class StoredItemServiceFileCollector(
 				.eventually { storedItems ->
 					if (cancellationProxy.isCancelled) Promise(CancellationException())
 					else Promise.whenAll(storedItems
+						.toList()
 						.map { storedItem -> promiseServiceFiles(libraryId, storedItem, cancellationProxy) })
 				}
 			cancellationProxy.doCancel(promisedServiceFileLists)

@@ -17,7 +17,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : IStored
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
 		if (enable) inMemoryStoredItems.add(
 			StoredItem(
-				1,
+				libraryId.id,
 				item.key,
 				StoredItemHelpers.getListType(item)
 			)
