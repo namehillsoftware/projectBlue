@@ -29,7 +29,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : IStored
 	}
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {
-		return Promise(inMemoryStoredItems)
+		return Promise(inMemoryStoredItems.toList())
 	}
 
 	private fun findMatchingItems(item: IItem): List<StoredItem> {
