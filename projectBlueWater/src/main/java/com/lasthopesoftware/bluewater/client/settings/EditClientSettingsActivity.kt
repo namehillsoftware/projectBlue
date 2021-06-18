@@ -150,12 +150,12 @@ class EditClientSettingsActivity : AppCompatActivity() {
 				val customSyncPath = result.customSyncedFilesPath
 				if (customSyncPath != null && customSyncPath.isNotEmpty()) syncPathTextView.text = customSyncPath
 
-				when (result.syncedFileLocation) {
-					SyncedFileLocation.EXTERNAL -> syncFilesRadioGroup.check(R.id.rbPublicLocation)
-					SyncedFileLocation.INTERNAL -> syncFilesRadioGroup.check(R.id.rbPrivateToApp)
-					SyncedFileLocation.CUSTOM -> syncFilesRadioGroup.check(R.id.rbCustomLocation)
-					null -> syncFilesRadioGroup.clearCheck()
-				}
+				syncFilesRadioGroup.check(when (result.syncedFileLocation) {
+					SyncedFileLocation.EXTERNAL -> R.id.rbPublicLocation
+					SyncedFileLocation.INTERNAL -> R.id.rbPrivateToApp
+					SyncedFileLocation.CUSTOM -> R.id.rbCustomLocation
+					else -> -1
+				})
 
 				txtAccessCode.findView().setText(result.accessCode)
 				txtUserName.findView().setText(result.userName)
