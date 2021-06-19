@@ -17,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
-import com.lasthopesoftware.resources.FakeMessageSender
+import com.lasthopesoftware.resources.FakeMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import org.junit.Test
@@ -34,7 +34,7 @@ class WhenTheFileChanges : AndroidContext() {
 		}
 		private val notificationManager = Mockito.mock(NotificationManager::class.java)
 		private val notificationContentBuilder = Mockito.mock(BuildNowPlayingNotificationContent::class.java)
-		private val fakeMessageSender = lazy { FakeMessageSender(ApplicationProvider.getApplicationContext()) }
+		private val fakeMessageSender = lazy { FakeMessageBus(ApplicationProvider.getApplicationContext()) }
 	}
 
 	override fun before() {

@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectio
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise;
-import com.lasthopesoftware.resources.FakeMessageSender;
+import com.lasthopesoftware.resources.FakeMessageBus;
 
 import org.junit.Test;
 
@@ -43,7 +43,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			fakeSelectedLibraryProvider.selectedLibraryId = -1;
 			final SessionConnection sessionConnection = new SessionConnection(
-				new FakeMessageSender(ApplicationProvider.getApplicationContext()),
+				new FakeMessageBus(ApplicationProvider.getApplicationContext()),
 				fakeSelectedLibraryProvider,
 				libraryConnections);
 

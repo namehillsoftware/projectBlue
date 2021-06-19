@@ -9,7 +9,7 @@ import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
-import com.lasthopesoftware.resources.FakeMessageSender;
+import com.lasthopesoftware.resources.FakeMessageBus;
 
 import org.junit.Test;
 
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenPersistingTheSelectedPlaybackEngine extends AndroidContext {
-	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender(ApplicationProvider.getApplicationContext());
+	private static final FakeMessageBus fakeMessageSender = new FakeMessageBus(ApplicationProvider.getApplicationContext());
 
 	private String persistedEngineType;
 

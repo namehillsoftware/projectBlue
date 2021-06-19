@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.settings.changes.GivenALibrary.AndTheConnectionSettingsChange
+package com.lasthopesoftware.bluewater.client.connection.settings.changes.GivenALibrary.AndTheConnectionSettingsDoNotChange
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
@@ -31,7 +31,7 @@ class WhenSavingTheLibrary : AndroidContext() {
 		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 		every {
 			connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
-		} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeTwo").toPromise()
+		} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeOne").toPromise()
 
 		val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(
 			libraryStorage,
@@ -48,8 +48,7 @@ class WhenSavingTheLibrary : AndroidContext() {
 	}
 
 	@Test
-	fun thenAnUpdateIsSentOnTheMessageBus() {
-		assertThat(messageBus.recordedIntents.map { it.action })
-			.containsOnly(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+	fun thenNoUpdatesAreSentOnTheMessageBus() {
+		assertThat(messageBus.recordedIntents).isEmpty()
 	}
 }

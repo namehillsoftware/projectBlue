@@ -5,8 +5,8 @@ import com.namehillsoftware.handoff.promises.Promise
 
 object HandlerThreadCreator {
 	@JvmStatic
-	fun promiseNewHandlerThread(looperThreadName: String?, threadPriority: Int): Promise<HandlerThread> {
-		return object: Promise<HandlerThread>() {
+	fun promiseNewHandlerThread(looperThreadName: String?, threadPriority: Int): Promise<HandlerThread> =
+		object: Promise<HandlerThread>() {
 			init {
 				object : HandlerThread(looperThreadName, threadPriority) {
 					override fun onLooperPrepared() {
@@ -19,5 +19,4 @@ object HandlerThreadCreator {
 				}.start()
 			}
 		}
-	}
 }

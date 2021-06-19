@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.resources.FakeMessageSender;
+import com.lasthopesoftware.resources.FakeMessageBus;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
@@ -54,7 +54,7 @@ public class WhenSynchronizationIsDisposing extends AndroidContext {
 		new StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
 	};
 
-	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender(ApplicationProvider.getApplicationContext());
+	private static final FakeMessageBus fakeMessageSender = new FakeMessageBus(ApplicationProvider.getApplicationContext());
 
 	@Override
 	public void before() throws Exception {
