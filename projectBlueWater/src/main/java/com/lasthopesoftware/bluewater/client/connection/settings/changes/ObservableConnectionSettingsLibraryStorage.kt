@@ -13,25 +13,25 @@ class ObservableConnectionSettingsLibraryStorage(
 	private val inner: ILibraryStorage,
 	private val connectionSettingsLookup: LookupConnectionSettings,
 	private val sendMessages: SendMessages) : ILibraryStorage {
-	override fun saveLibrary(library: Library): Promise<Library> =
-		connectionSettingsLookup.lookupConnectionSettings(library.libraryId)
-			.eventually { originalConnectionSettings ->
-				inner.saveLibrary(library)
-					.eventually { updatedLibrary ->
-						connectionSettingsLookup.lookupConnectionSettings(library.libraryId)
-							.then { updatedConnectionSettings ->
-								if (updatedConnectionSettings != originalConnectionSettings) {
-									sendMessages.sendBroadcast(Intent(connectionSettingsUpdated))
-								}
 
-								updatedLibrary
+	override fun saveLibrary(library: Library): Promise<Library> =
+		connectionSettingsLookup
+			.lookupConnectionSettings(library.libraryId)
+			.eventually { originalConnectionSettings ->
+				inner.saveLibrary(library).eventually { updatedLibrary ->
+					connectionSettingsLookup
+						.lookupConnectionSettings(library.libraryId)
+						.then { updatedConnectionSettings ->
+							if (updatedConnectionSettings != originalConnectionSettings) {
+								sendMessages.sendBroadcast(Intent(connectionSettingsUpdated))
 							}
-					}
+
+							updatedLibrary
+						}
+				}
 			}
 
-	override fun removeLibrary(library: Library): Promise<Unit> {
-		TODO("Not yet implemented")
-	}
+	override fun removeLibrary(library: Library): Promise<Unit> = inner.removeLibrary(library)
 
 	companion object {
 		val connectionSettingsUpdated = MagicPropertyBuilder.buildMagicPropertyName(
