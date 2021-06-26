@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -22,10 +23,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.views.RemoveLibraryConfirmationDialogBuilder
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import java.util.*
@@ -43,7 +47,14 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan)
 	private val applicationWritePermissionsRequirementsProviderLazy = lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy = lazy { ApplicationReadPermissionsRequirementsProvider(this) }
-	private val lazyLibraryProvider = lazy { LibraryRepository(this) }
+	private val lazyLibraryProvider : Lazy<ILibraryProvider> = lazy { LibraryRepository(this) }
+	private val lazyLibraryStorage = lazy {
+		ObservableConnectionSettingsLibraryStorage(
+			LibraryRepository(this),
+			ConnectionSettingsLookup(lazyLibraryProvider.value),
+			MessageBus(LocalBroadcastManager.getInstance(this))
+		)
+	}
 	private val settingsMenu = lazy {
 		EditClientSettingsMenu(
 			this,
@@ -52,7 +63,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 				this,
 				LibraryRemoval(
 					StoredItemAccess(this),
-					lazyLibraryProvider.value,
+					lazyLibraryStorage.value,
 					SelectedBrowserLibraryIdentifierProvider(this),
 					lazyLibraryProvider.value,
 					BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), lazyLibraryProvider.value))))
@@ -179,7 +190,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private fun saveLibraryAndFinish() {
 		val library = library ?: return
 
-		lazyLibraryProvider.value.saveLibrary(library).eventually(LoopedInPromise.response({
+		lazyLibraryStorage.value.saveLibrary(library).eventually(LoopedInPromise.response({
 			saveButton.findView().text = getText(R.string.btn_saved)
 			finish()
 		}, this))

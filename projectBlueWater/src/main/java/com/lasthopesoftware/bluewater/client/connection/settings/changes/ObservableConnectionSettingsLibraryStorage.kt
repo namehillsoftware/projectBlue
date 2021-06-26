@@ -14,22 +14,25 @@ class ObservableConnectionSettingsLibraryStorage(
 	private val connectionSettingsLookup: LookupConnectionSettings,
 	private val sendMessages: SendMessages) : ILibraryStorage {
 
-	override fun saveLibrary(library: Library): Promise<Library> =
-		connectionSettingsLookup
+	override fun saveLibrary(library: Library): Promise<Library> {
+		val promisedOriginalConnectionSettings = connectionSettingsLookup
 			.lookupConnectionSettings(library.libraryId)
-			.eventually { originalConnectionSettings ->
-				inner.saveLibrary(library).eventually { updatedLibrary ->
+
+		return inner.saveLibrary(library).then { updatedLibrary ->
+			promisedOriginalConnectionSettings
+				.then { originalConnectionSettings ->
 					connectionSettingsLookup
 						.lookupConnectionSettings(library.libraryId)
 						.then { updatedConnectionSettings ->
 							if (updatedConnectionSettings != originalConnectionSettings) {
 								sendMessages.sendBroadcast(Intent(connectionSettingsUpdated))
 							}
-
-							updatedLibrary
 						}
 				}
-			}
+
+			updatedLibrary
+		}
+	}
 
 	override fun removeLibrary(library: Library): Promise<Unit> = inner.removeLibrary(library)
 
