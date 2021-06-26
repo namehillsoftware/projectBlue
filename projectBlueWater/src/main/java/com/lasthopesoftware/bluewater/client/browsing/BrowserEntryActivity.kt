@@ -142,13 +142,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		setContentView(R.layout.activity_browse_library)
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 
-		val intentFilter = IntentFilter()
-		intentFilter.addAction(BrowserLibrarySelection.libraryChosenEvent)
-		intentFilter.addAction(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+		val connectionSettingsChangedFilter = IntentFilter()
+		connectionSettingsChangedFilter.addAction(BrowserLibrarySelection.libraryChosenEvent)
+		connectionSettingsChangedFilter.addAction(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
 
 		lazyLocalBroadcastManager.value.registerReceiver(
 			connectionSettingsUpdatedReceiver,
-			intentFilter)
+			connectionSettingsChangedFilter)
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout))
 
