@@ -44,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -446,16 +447,7 @@ open class PlaybackService : Service() {
 		}
 	}
 
-	private val onLibraryChanged = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			val chosenLibrary = intent.getIntExtra(LibrarySelectionKey.chosenLibraryKey, -1)
-			if (chosenLibrary < 0) return
-			pausePlayback()
-			stopSelf(startId)
-		}
-	}
-
-	private val onPlaybackEngineChanged = object : BroadcastReceiver() {
+	private val playbackHaltingEvent = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			pausePlayback()
 			stopSelf(startId)
@@ -534,14 +526,12 @@ open class PlaybackService : Service() {
 	/* Begin Event Handlers */
 	override fun onCreate() {
 		registerRemoteClientControl()
-		localBroadcastManagerLazy.value
-			.registerReceiver(
-				onPlaybackEngineChanged,
-				IntentFilter(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged))
-		localBroadcastManagerLazy.value
-			.registerReceiver(
-				onLibraryChanged,
-				IntentFilter(BrowserLibrarySelection.libraryChosenEvent))
+		val playbackHaltingIntentFilter = IntentFilter()
+		playbackHaltingIntentFilter.addAction(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged)
+		playbackHaltingIntentFilter.addAction(BrowserLibrarySelection.libraryChosenEvent)
+		playbackHaltingIntentFilter.addAction(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+
+		localBroadcastManagerLazy.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
 	}
 
 	override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -1085,8 +1075,7 @@ open class PlaybackService : Service() {
 		if (!localBroadcastManagerLazy.isInitialized()) return
 
 		localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
-		localBroadcastManagerLazy.value.unregisterReceiver(onLibraryChanged)
-		localBroadcastManagerLazy.value.unregisterReceiver(onPlaybackEngineChanged)
+		localBroadcastManagerLazy.value.unregisterReceiver(playbackHaltingEvent)
 
 		remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 		playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)

@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.lasthopesoftware.resources.FakeMessageSender;
+import com.lasthopesoftware.resources.FakeMessageBus;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class WhenGettingThePlaybackEngineType extends AndroidContext {
 		final PlaybackEngineTypeSelectionPersistence playbackEngineTypeSelectionPersistence =
 			new PlaybackEngineTypeSelectionPersistence(
 				sharedPreferences,
-				new PlaybackEngineTypeChangedBroadcaster(new FakeMessageSender(ApplicationProvider.getApplicationContext())));
+				new PlaybackEngineTypeChangedBroadcaster(new FakeMessageBus(ApplicationProvider.getApplicationContext())));
 
 		playbackEngineTypeSelectionPersistence.selectPlaybackEngine(PlaybackEngineType.ExoPlayer);
 
