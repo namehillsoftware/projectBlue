@@ -11,6 +11,8 @@ import com.namehillsoftware.handoff.promises.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import kotlin.Unit;
+
 public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 	private static final Logger logger = LoggerFactory.getLogger(FilePropertiesPlayStatsUpdater.class);
 
@@ -40,10 +42,10 @@ public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 					if (numberPlaysString != null && !numberPlaysString.isEmpty())
 						numberPlays = Integer.parseInt(numberPlaysString);
 
-					final Promise<Void> numberPlaysUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
+					final Promise<Unit> numberPlaysUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
 
 					final String newLastPlayed = String.valueOf(currentTime / 1000);
-					final Promise<Void> lastPlayedUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.LAST_PLAYED, newLastPlayed, false);
+					final Promise<Unit> lastPlayedUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.LAST_PLAYED, newLastPlayed, false);
 
 					return Promise.whenAll(numberPlaysUpdate, lastPlayedUpdate);
 				} catch (NumberFormatException ne) {

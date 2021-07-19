@@ -39,9 +39,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus
 import com.lasthopesoftware.bluewater.client.playback.engine.*
@@ -408,25 +408,27 @@ open class PlaybackService : Service() {
 		}
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 	private val lazyPlaybackStartingNotificationBuilder = lazy {
-			PlaybackStartingNotificationBuilder(
-				this,
-				NotificationBuilderProducer(this),
-				lazyPlaybackNotificationsConfiguration.value,
-				lazyMediaSession.getObject())
-		}
-	private val lazySelectedLibraryProvider = lazy {
-			SelectedBrowserLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(this),
-				LibraryRepository(this))
+		PlaybackStartingNotificationBuilder(
+			this,
+			NotificationBuilderProducer(this),
+			lazyPlaybackNotificationsConfiguration.value,
+			lazyMediaSession.getObject())
 	}
+	private val lazySelectedLibraryProvider = lazy {
+		SelectedBrowserLibraryProvider(
+			SelectedBrowserLibraryIdentifierProvider(this),
+			LibraryRepository(this))
+	}
+
 	private val lazyFileProperties = lazy {
 		FilePropertiesProvider(
-			get(this),
+			ConnectionSessionManager.get(this),
 			FilePropertyCache.getInstance())
 	}
+
 	private val lazyCachedFileProperties = lazy {
 		CachedFilePropertiesProvider(
-			get(this),
+			ConnectionSessionManager.get(this),
 			FilePropertyCache.getInstance(),
 			lazyFileProperties.value)
 	}

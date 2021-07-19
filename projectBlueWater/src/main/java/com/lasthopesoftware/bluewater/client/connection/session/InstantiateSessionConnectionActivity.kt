@@ -34,7 +34,7 @@ class InstantiateSessionConnectionActivity : Activity() {
 
 	private val localBroadcastManager = Lazy { LocalBroadcastManager.getInstance(this) }
 
-	private val handler = Lazy { Handler() }
+	private val handler = Lazy { Handler(mainLooper) }
 
 	private val buildSessionConnectionReceiver: BroadcastReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {

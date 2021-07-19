@@ -496,8 +496,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
 			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 				val stringRating = newRating.roundToInt().toString()
-				SelectedConnection.getInstance(this).promiseSessionConnection()
-					.then { c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, KnownFileProperties.RATING, stringRating, false) }
+				SelectedConnection.getInstance(this)
+					.promiseSessionConnection()
+					.then { c -> c?.let { FilePropertiesStorage.storeFileProperty(it, FilePropertyCache.getInstance(), serviceFile, KnownFileProperties.RATING, stringRating, false) } }
 				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
 			}
 		}
