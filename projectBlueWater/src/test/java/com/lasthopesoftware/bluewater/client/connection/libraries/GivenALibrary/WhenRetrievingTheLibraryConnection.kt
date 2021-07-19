@@ -73,7 +73,6 @@ class WhenRetrievingTheLibraryConnection {
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns urlProvider.toPromise()
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
 				validateConnectionSettings,
 				lookupConnection,
 				NoopServerAlarm(),

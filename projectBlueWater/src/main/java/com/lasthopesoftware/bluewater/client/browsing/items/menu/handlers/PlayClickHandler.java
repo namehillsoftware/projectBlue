@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener;
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access.OnGetFileStringListForClickErrorListener;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 
@@ -26,7 +26,7 @@ public final class PlayClickHandler extends AbstractMenuClickHandler {
 
     @Override
     public void onClick(final View v) {
-    	SessionConnection.getInstance(v.getContext()).promiseSessionConnection()
+    	SelectedConnection.getInstance(v.getContext()).promiseSessionConnection()
 			.then(FileStringListProvider::new)
 			.eventually(p -> p.promiseFileStringList(FileListParameters.Options.None, fileListParameterProvider.getFileListParameters(item)))
 			.then(new OnGetFileStringListForClickCompleteListener(v.getContext()))

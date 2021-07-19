@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISe
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -110,7 +110,7 @@ public class PlaylistListFragment extends Fragment {
 				final Runnable playlistFillAction = new Runnable() {
 					@Override
 					public void run() {
-						SessionConnection.getInstance(activity).promiseSessionConnection()
+						SelectedConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, library.getSelectedView()))
 							.eventually(listResolvedPromise)
 							.excuse(new HandleViewIoException(activity, this))

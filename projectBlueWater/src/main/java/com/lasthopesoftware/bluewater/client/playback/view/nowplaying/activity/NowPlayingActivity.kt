@@ -42,12 +42,11 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity.Companion.restoreSessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
@@ -141,7 +140,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private val lazyImageProvider = lazy {
-			SessionConnection.getInstance(this)
+			SelectedConnection.getInstance(this)
 				.promiseSessionConnection()
 				.then {
 					ImageProvider(
@@ -353,7 +352,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		lazyNowPlayingRepository.value
 			.nowPlaying
 			.eventually { np ->
-				SessionConnection.getInstance(this)
+				SelectedConnection.getInstance(this)
 					.promiseSessionConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						val serviceFile = np.playlist[np.playlistPosition]
@@ -398,7 +397,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		lazyNowPlayingRepository.value
 			.nowPlaying
 			.eventually { np ->
-				SessionConnection.getInstance(this)
+				SelectedConnection.getInstance(this)
 					.promiseSessionConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						if (connectionProvider == null || np.playlistPosition >= np.playlist.size) return@response
@@ -411,7 +410,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
-		SessionConnection.getInstance(this)
+		SelectedConnection.getInstance(this)
 			.promiseSessionConnection()
 			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider ->
 				connectionProvider ?: return@ImmediateResponse
@@ -497,7 +496,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
 			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 				val stringRating = newRating.roundToInt().toString()
-				SessionConnection.getInstance(this).promiseSessionConnection()
+				SelectedConnection.getInstance(this).promiseSessionConnection()
 					.then { c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, KnownFileProperties.RATING, stringRating, false) }
 				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
 			}

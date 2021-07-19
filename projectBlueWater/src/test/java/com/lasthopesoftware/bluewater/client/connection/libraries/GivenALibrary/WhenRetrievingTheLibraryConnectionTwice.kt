@@ -62,7 +62,6 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns firstUrlProvider.toPromise()
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
 				validateConnectionSettings,
 				lookupConnection,
 				NoopServerAlarm(),

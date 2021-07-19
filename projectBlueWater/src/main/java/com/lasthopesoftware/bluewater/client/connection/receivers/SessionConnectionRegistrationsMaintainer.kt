@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.Companion.getInstance
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
@@ -17,8 +17,8 @@ class SessionConnectionRegistrationsMaintainer(private val localBroadcastManager
 
 	@Synchronized
 	override fun onReceive(context: Context, intent: Intent) {
-		val buildSessionStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1)
-		if (buildSessionStatus != SessionConnection.BuildingSessionConnectionStatus.BuildingSessionComplete) return
+		val buildSessionStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
+		if (buildSessionStatus != SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete) return
 
 		registrationPromise = registrationPromise
 			.then(this)

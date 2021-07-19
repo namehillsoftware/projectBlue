@@ -3,6 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.session
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.namehillsoftware.handoff.promises.Promise
 
-interface ProvideSessionConnection {
+interface ProvideSelectedConnection {
 	fun promiseSessionConnection(): Promise<IConnectionProvider?>
 }

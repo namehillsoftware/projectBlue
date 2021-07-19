@@ -12,9 +12,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -39,7 +38,7 @@ class InstantiateSessionConnectionActivity : Activity() {
 
 	private val buildSessionConnectionReceiver: BroadcastReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
-			handleBuildStatusChange(intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1))
+			handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1))
 		}
 	}
 
@@ -50,7 +49,7 @@ class InstantiateSessionConnectionActivity : Activity() {
 
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
 
-		localBroadcastManager.getObject().registerReceiver(buildSessionConnectionReceiver, IntentFilter(SessionConnection.buildSessionBroadcast))
+		localBroadcastManager.getObject().registerReceiver(buildSessionConnectionReceiver, IntentFilter(SelectedConnection.buildSessionBroadcast))
 		getInstance(this)
 			.promiseSessionConnection()
 			.eventually(LoopedInPromise.response({ c: IConnectionProvider? ->

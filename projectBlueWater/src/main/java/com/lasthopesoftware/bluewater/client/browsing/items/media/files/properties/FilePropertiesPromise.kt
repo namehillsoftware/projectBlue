@@ -12,7 +12,6 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import com.namehillsoftware.handoff.promises.response.VoidResponse
 import okhttp3.Response
 import org.slf4j.LoggerFactory
 import xmlwise.XmlParseException
@@ -26,46 +25,6 @@ internal class FilePropertiesPromise(
 	serviceFile: ServiceFile,
 	serverRevision: Int
 ) : Promise<Map<String, String>>() {
-
-	private class FilePropertiesWriter(
-		private val connectionProvider: IConnectionProvider,
-		private val filePropertiesContainerProvider: IFilePropertiesContainerRepository,
-		private val serviceFile: ServiceFile,
-		private val serverRevision: Int
-	) : PromisedResponse<Response, Map<String, String>>, CancellableMessageWriter<Map<String, String>> {
-		private var response: Response? = null
-
-		override fun prepareMessage(cancellationToken: CancellationToken): Map<String, String> {
-			if (cancellationToken.isCancelled) return HashMap()
-			val body = response!!.body ?: return HashMap()
-			return try {
-				val xml = Xmlwise.createXml(body.string())
-				val parent = xml[0]
-				val returnProperties = HashMap<String, String>(parent.size)
-				for (el in parent) returnProperties[el.getAttribute("Name")] = el.value
-				val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
-				filePropertiesContainerProvider.putFilePropertiesContainer(
-					urlKeyHolder, FilePropertiesContainer(
-						serverRevision, returnProperties
-					)
-				)
-				returnProperties
-			} catch (e: IOException) {
-				LoggerFactory.getLogger(SessionFilePropertiesProvider::class.java).error(e.toString(), e)
-				throw e
-			} catch (e: XmlParseException) {
-				LoggerFactory.getLogger(SessionFilePropertiesProvider::class.java).error(e.toString(), e)
-				throw e
-			} finally {
-				body.close()
-			}
-		}
-
-		override fun promiseResponse(response: Response?): Promise<Map<String, String>> {
-			this.response = response
-			return QueuedPromise(this, ParsingScheduler.instance().scheduler)
-		}
-	}
 
 	init {
 		val cancellationProxy = CancellationProxy()
@@ -82,8 +41,44 @@ internal class FilePropertiesPromise(
 				)
 			)
 		cancellationProxy.doCancel(promisedProperties)
-		promisedProperties.then(
-			VoidResponse { resolution: Map<String, String>? -> this.resolve(resolution) },
-			VoidResponse { error: Throwable? -> reject(error) })
+		promisedProperties.then(::resolve, ::reject)
+	}
+
+	private class FilePropertiesWriter(
+		private val connectionProvider: IConnectionProvider,
+		private val filePropertiesContainerProvider: IFilePropertiesContainerRepository,
+		private val serviceFile: ServiceFile,
+		private val serverRevision: Int
+	) : PromisedResponse<Response, Map<String, String>>, CancellableMessageWriter<Map<String, String>> {
+		private var response: Response? = null
+
+		override fun promiseResponse(response: Response?): Promise<Map<String, String>> {
+			this.response = response
+			return QueuedPromise(this, ParsingScheduler.instance().scheduler)
+		}
+
+		override fun prepareMessage(cancellationToken: CancellationToken): Map<String, String> =
+			if (cancellationToken.isCancelled) HashMap()
+			else response?.body?.use { body ->
+				try {
+					val xml = Xmlwise.createXml(body.string())
+					val parent = xml[0]
+					val returnProperties = HashMap<String, String>(parent.size)
+					for (el in parent) returnProperties[el.getAttribute("Name")] = el.value
+					val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
+					filePropertiesContainerProvider.putFilePropertiesContainer(
+						urlKeyHolder, FilePropertiesContainer(
+							serverRevision, returnProperties
+						)
+					)
+					returnProperties
+				} catch (e: IOException) {
+					LoggerFactory.getLogger(SessionFilePropertiesProvider::class.java).error(e.toString(), e)
+					throw e
+				} catch (e: XmlParseException) {
+					LoggerFactory.getLogger(SessionFilePropertiesProvider::class.java).error(e.toString(), e)
+					throw e
+				}
+			} ?: HashMap()
 	}
 }

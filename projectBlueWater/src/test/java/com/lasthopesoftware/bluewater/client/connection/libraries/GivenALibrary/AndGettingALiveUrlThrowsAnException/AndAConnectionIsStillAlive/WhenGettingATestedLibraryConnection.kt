@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -67,14 +66,13 @@ class WhenGettingATestedLibraryConnection {
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise(IOException("An error!")) andThen Promise(firstUrlProvider)
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
-				validateConnectionSettings,
-				lookupConnection,
-				NoopServerAlarm(),
-				liveUrlProvider,
-				Mockito.mock(TestConnections::class.java),
-				OkHttpFactory.getInstance()
-			)
+                validateConnectionSettings,
+                lookupConnection,
+                NoopServerAlarm(),
+                liveUrlProvider,
+                Mockito.mock(TestConnections::class.java),
+                OkHttpFactory.getInstance()
+            )
 			val libraryId = LibraryId(2)
 			val futureConnectionProvider = libraryConnectionProvider
 				.promiseLibraryConnection(libraryId)

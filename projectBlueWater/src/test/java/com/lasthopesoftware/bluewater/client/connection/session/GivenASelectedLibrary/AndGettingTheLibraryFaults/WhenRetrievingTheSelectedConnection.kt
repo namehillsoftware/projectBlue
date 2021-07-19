@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibrary
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus.GettingLibraryFailed
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.GettingLibrary
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.GettingLibraryFailed
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionReservation
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
@@ -22,7 +22,7 @@ import org.junit.Test
 import java.io.IOException
 import java.util.concurrent.ExecutionException
 
-class WhenRetrievingTheSessionConnection : AndroidContext() {
+class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 	companion object {
 		private val fakeMessageSender = lazy { FakeMessageSender(ApplicationProvider.getApplicationContext()) }
@@ -40,7 +40,7 @@ class WhenRetrievingTheSessionConnection : AndroidContext() {
 		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
 
 		SessionConnectionReservation().use {
-			val sessionConnection = SessionConnection(
+			val sessionConnection = SelectedConnection(
 				fakeMessageSender.value,
 				libraryIdentifierProvider,
 				libraryConnections)
@@ -69,7 +69,7 @@ class WhenRetrievingTheSessionConnection : AndroidContext() {
 	@Test
 	fun thenGettingLibraryIsBroadcast() {
 		assertThat(fakeMessageSender.value.recordedIntents
-			.map { i -> i.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1) }
+			.map { i -> i.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1) }
 			.toList())
 			.containsExactly(GettingLibrary, GettingLibraryFailed)
 	}

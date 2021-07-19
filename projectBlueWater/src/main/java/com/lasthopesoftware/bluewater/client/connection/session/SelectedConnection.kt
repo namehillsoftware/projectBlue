@@ -8,18 +8,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISe
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 
-class SessionConnection(
+class SelectedConnection(
 	private val localBroadcastManager: SendMessages,
 	private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider,
-	private val libraryConnections: ProvideLibraryConnections) : (BuildingConnectionStatus) -> Unit {
+	private val libraryConnections: ManageConnectionSessions) : (BuildingConnectionStatus) -> Unit {
 
 	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
@@ -40,6 +38,7 @@ class SessionConnection(
 	fun promiseSessionConnection(): Promise<IConnectionProvider?> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()
+
 		return libraryConnections
 			.promiseLibraryConnection(newSelectedLibraryId)
 			.updates(this)
@@ -83,24 +82,24 @@ class SessionConnection(
 
 	companion object {
 		@JvmField
-		val buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection::class.java, "buildSessionBroadcast")
+		val buildSessionBroadcast = MagicPropertyBuilder.buildMagicPropertyName(SelectedConnection::class.java, "buildSessionBroadcast")
 		@JvmField
-		val buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SessionConnection::class.java, "buildSessionBroadcastStatus")
-		private val logger = LoggerFactory.getLogger(SessionConnection::class.java)
+		val buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SelectedConnection::class.java, "buildSessionBroadcastStatus")
+		private val logger = LoggerFactory.getLogger(SelectedConnection::class.java)
 
 		@Volatile
-		private lateinit var sessionConnectionInstance: SessionConnection
+		private lateinit var selectedConnectionInstance: SelectedConnection
 
 		@JvmStatic
 		@Synchronized
-		fun getInstance(context: Context): SessionConnection {
-			if (::sessionConnectionInstance.isInitialized) return sessionConnectionInstance
+		fun getInstance(context: Context): SelectedConnection {
+			if (::selectedConnectionInstance.isInitialized) return selectedConnectionInstance
 
 			val applicationContext = context.applicationContext
-			return SessionConnection(
+			return SelectedConnection(
 				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
 				SelectedBrowserLibraryIdentifierProvider(applicationContext),
-				get(applicationContext)).apply { sessionConnectionInstance = this }
+				ConnectionSessionManager.get(applicationContext)).apply { selectedConnectionInstance = this }
 		}
 	}
 }

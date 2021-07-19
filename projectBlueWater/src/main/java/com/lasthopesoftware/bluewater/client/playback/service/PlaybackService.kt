@@ -42,8 +42,8 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -464,7 +464,7 @@ open class PlaybackService : Service() {
 
 	private val buildSessionReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
-			val buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1)
+			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
 			handleBuildConnectionStatusChange(buildStatus)
 		}
 	}
@@ -476,8 +476,8 @@ open class PlaybackService : Service() {
 			localBroadcastManagerLazy.value
 				.registerReceiver(
 					buildSessionReceiver,
-					IntentFilter(SessionConnection.buildSessionBroadcast))
-			return SessionConnection.getInstance(this).promiseSessionConnection().must {
+					IntentFilter(SelectedConnection.buildSessionBroadcast))
+			return SelectedConnection.getInstance(this).promiseSessionConnection().must {
 				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
 				lazyNotificationController.value.removeNotification(connectingNotificationId)
 			}

@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISe
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.views.handlers.OnGetLibraryViewItemResultsComplete;
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess;
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -42,7 +42,7 @@ public class ItemListFragment extends Fragment {
 
 	private IItemListMenuChangeHandler itemListMenuChangeHandler;
 
-	private CreateAndHold<ListView> lazyListView = new AbstractSynchronousLazy<ListView>() {
+	private final CreateAndHold<ListView> lazyListView = new AbstractSynchronousLazy<ListView>() {
 		@Override
 		protected ListView create() {
 			final ListView listView = new ListView(getActivity());
@@ -51,7 +51,7 @@ public class ItemListFragment extends Fragment {
 		}
 	};
 
-	private CreateAndHold<ProgressBar> lazyProgressBar = new AbstractSynchronousLazy<ProgressBar>() {
+	private final CreateAndHold<ProgressBar> lazyProgressBar = new AbstractSynchronousLazy<ProgressBar>() {
 		@Override
 		protected ProgressBar create() {
 			final ProgressBar pbLoading = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleLarge);
@@ -62,7 +62,7 @@ public class ItemListFragment extends Fragment {
 		}
 	};
 
-	private CreateAndHold<RelativeLayout> lazyLayout = new AbstractSynchronousLazy<RelativeLayout>() {
+	private final CreateAndHold<RelativeLayout> lazyLayout = new AbstractSynchronousLazy<RelativeLayout>() {
 		@Override
 		protected RelativeLayout create() {
 			final Activity activity = getActivity();
@@ -119,7 +119,7 @@ public class ItemListFragment extends Fragment {
 
 					@Override
 					public void run() {
-						SessionConnection.getInstance(activity).promiseSessionConnection()
+						SelectedConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, activeLibrary.getSelectedView()))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(new HandleViewIoException(activity, this))
@@ -154,7 +154,7 @@ public class ItemListFragment extends Fragment {
 
 					@Override
 					public void run() {
-						SessionConnection.getInstance(activity).promiseSessionConnection()
+						SelectedConnection.getInstance(activity).promiseSessionConnection()
 							.eventually(c -> ItemProvider.provide(c, category.getKey()))
 							.eventually(onGetLibraryViewItemResultsComplete)
 							.excuse(new HandleViewIoException(activity, this))

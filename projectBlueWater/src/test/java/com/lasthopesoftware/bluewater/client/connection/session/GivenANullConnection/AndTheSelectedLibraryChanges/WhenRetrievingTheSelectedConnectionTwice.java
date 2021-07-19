@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISe
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections;
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions;
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection;
 import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionReservation;
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
+public class WhenRetrievingTheSelectedConnectionTwice extends AndroidContext {
 
 	private static final IUrlProvider firstUrlProvider = mock(IUrlProvider.class);
 	private static IConnectionProvider connectionProvider;
@@ -34,7 +34,7 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 	@Override
 	public void before() throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException, InvocationTargetException {
 
-		final ProvideLibraryConnections libraryConnections = mock(ProvideLibraryConnections.class);
+		final ManageConnectionSessions libraryConnections = mock(ManageConnectionSessions.class);
 		when(libraryConnections.promiseLibraryConnection(any())).thenReturn(new ProgressingPromise<>((IConnectionProvider)null));
 		when(libraryConnections.promiseLibraryConnection(new LibraryId(2))).thenReturn(new ProgressingPromise<>(new ConnectionProvider(firstUrlProvider, OkHttpFactory.getInstance())));
 
@@ -42,16 +42,16 @@ public class WhenRetrievingTheSessionConnectionTwice extends AndroidContext {
 
 		try (SessionConnectionReservation ignored = new SessionConnectionReservation()) {
 			fakeSelectedLibraryProvider.selectedLibraryId = -1;
-			final SessionConnection sessionConnection = new SessionConnection(
+			final SelectedConnection selectedConnection = new SelectedConnection(
 				new FakeMessageSender(ApplicationProvider.getApplicationContext()),
 				fakeSelectedLibraryProvider,
 				libraryConnections);
 
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
+			connectionProvider = new FuturePromise<>(selectedConnection.promiseSessionConnection()).get();
 
 			fakeSelectedLibraryProvider.selectedLibraryId = 2;
 
-			connectionProvider = new FuturePromise<>(sessionConnection.promiseSessionConnection()).get();
+			connectionProvider = new FuturePromise<>(selectedConnection.promiseSessionConnection()).get();
 		}
 	}
 

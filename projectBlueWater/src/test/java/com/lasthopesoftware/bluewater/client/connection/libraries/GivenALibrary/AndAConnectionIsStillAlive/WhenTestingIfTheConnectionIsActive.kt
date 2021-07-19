@@ -49,7 +49,6 @@ class WhenTestingIfTheConnectionIsActive {
 			every  { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
 				validateConnectionSettings,
 				lookupConnection,
 				NoopServerAlarm(),

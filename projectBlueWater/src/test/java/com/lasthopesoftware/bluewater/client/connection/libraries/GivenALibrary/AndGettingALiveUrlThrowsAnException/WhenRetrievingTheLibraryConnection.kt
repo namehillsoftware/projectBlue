@@ -73,14 +73,13 @@ class WhenRetrievingTheLibraryConnection {
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns deferredUrlPromise
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
-				validateConnectionSettings,
-				lookupConnection,
-				NoopServerAlarm(),
-				liveUrlProvider,
-				Mockito.mock(TestConnections::class.java),
-				OkHttpFactory.getInstance()
-			)
+                validateConnectionSettings,
+                lookupConnection,
+                NoopServerAlarm(),
+                liveUrlProvider,
+                Mockito.mock(TestConnections::class.java),
+                OkHttpFactory.getInstance()
+            )
 			val futureConnectionProvider =
 				libraryConnectionProvider
 					.promiseLibraryConnection(LibraryId(2))

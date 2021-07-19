@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity.Companion.restoreSessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -92,7 +92,7 @@ class FileDetailsActivity : AppCompatActivity() {
 		fileNameTextViewFinder.findView().text = getText(R.string.lbl_loading)
 		artistTextViewFinder.findView().text = getText(R.string.lbl_loading)
 
-		SessionConnection.getInstance(this).promiseSessionConnection()
+		SelectedConnection.getInstance(this).promiseSessionConnection()
 			.then { c -> FormattedSessionFilePropertiesProvider(c, FilePropertyCache.getInstance()) }
 			.eventually { f -> f.promiseFileProperties(ServiceFile(fileKey)) }
 			.eventually(LoopedInPromise.response({ fileProperties ->

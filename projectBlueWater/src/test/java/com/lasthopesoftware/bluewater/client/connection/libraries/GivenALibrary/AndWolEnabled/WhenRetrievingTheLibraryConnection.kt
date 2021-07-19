@@ -65,17 +65,16 @@ class WhenRetrievingTheLibraryConnection {
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns urlProvider.toPromise()
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
-				validateConnectionSettings,
-				lookupConnection,
-				{
-					isLibraryServerWoken = true
-					Unit.toPromise()
-				},
-				liveUrlProvider,
-				mockk(),
-				OkHttpFactory.getInstance()
-			)
+                validateConnectionSettings,
+                lookupConnection,
+                {
+                    isLibraryServerWoken = true
+                    Unit.toPromise()
+                },
+                liveUrlProvider,
+                mockk(),
+                OkHttpFactory.getInstance()
+            )
 
 			val futureConnectionProvider =
 				libraryConnectionProvider
