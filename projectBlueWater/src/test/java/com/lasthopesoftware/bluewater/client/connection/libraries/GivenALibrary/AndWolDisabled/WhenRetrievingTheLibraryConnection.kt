@@ -72,7 +72,6 @@ class WhenRetrievingTheLibraryConnection {
                     Unit.toPromise()
                 },
                 liveUrlProvider,
-                mockk(),
                 OkHttpFactory.getInstance()
             )
 

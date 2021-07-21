@@ -5,6 +5,10 @@ class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Prog
 		reportProgress(progress)
 	}
 
+	fun sendProgressUpdates(vararg progresses: Progress) {
+		for (progress in progresses) reportProgress(progress)
+	}
+
 	fun sendResolution(resolution: Resolution) {
 		resolve(resolution)
 	}

@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.BuildingConnection
 import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete
@@ -34,7 +34,7 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 	override fun before() {
 		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
-		val libraryConnections = mockk<ProvideLibraryConnections>()
+		val libraryConnections = mockk<ManageConnectionSessions>()
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
 		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()

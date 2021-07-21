@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -20,7 +19,6 @@ import org.assertj.core.api.Assertions
 import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.ExecutionException
@@ -77,7 +75,6 @@ class WhenRetrievingTheLibraryConnection {
                 lookupConnection,
                 NoopServerAlarm(),
                 liveUrlProvider,
-                Mockito.mock(TestConnections::class.java),
                 OkHttpFactory.getInstance()
             )
 			val futureConnectionProvider =
