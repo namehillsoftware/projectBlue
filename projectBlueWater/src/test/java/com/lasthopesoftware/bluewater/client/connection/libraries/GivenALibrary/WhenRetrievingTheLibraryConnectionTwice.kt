@@ -20,13 +20,12 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito
 import java.util.*
 
 class WhenRetrievingTheLibraryConnectionTwice {
 
 	companion object {
-		private val firstUrlProvider = Mockito.mock(IUrlProvider::class.java)
+		private val firstUrlProvider = mockk<IUrlProvider>()
 		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 		private var connectionProvider: IConnectionProvider? = null
 		private var secondConnectionProvider: IConnectionProvider? = null
