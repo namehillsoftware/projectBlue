@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
@@ -23,20 +24,6 @@ import org.mockito.Mockito
 import java.util.*
 
 class WhenRetrievingTheLibraryConnectionTwice {
-	@Test
-	fun thenTheConnectionIsCorrect() {
-		assertThat(secondConnectionProvider).isEqualTo(connectionProvider)
-	}
-
-	@Test
-	fun thenGettingLibraryIsBroadcast() {
-		assertThat(statuses)
-			.containsExactly(
-				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionComplete
-			)
-	}
 
 	companion object {
 		private val firstUrlProvider = Mockito.mock(IUrlProvider::class.java)
@@ -68,14 +55,19 @@ class WhenRetrievingTheLibraryConnectionTwice {
 				OkHttpFactory.getInstance()
 			)
 
-			val futureConnectionProvider =
+			val connectionSessionManager = ConnectionSessionManager(
+				mockk(),
 				libraryConnectionProvider
+			)
+
+			val futureConnectionProvider =
+				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
 					.updates(statuses::add)
 					.toFuture()
 
 			val secondFutureConnectionProvider =
-				libraryConnectionProvider
+				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
 					.updates(statuses::add)
 					.toFuture()
@@ -83,5 +75,20 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			connectionProvider = futureConnectionProvider.get()
 			secondConnectionProvider = secondFutureConnectionProvider.get()
 		}
+	}
+
+	@Test
+	fun thenTheConnectionIsCorrect() {
+		assertThat(secondConnectionProvider).isEqualTo(connectionProvider)
+	}
+
+	@Test
+	fun thenGettingLibraryIsBroadcast() {
+		assertThat(statuses)
+			.containsExactly(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
 	}
 }
