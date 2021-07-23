@@ -1,18 +1,13 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndGettingTheLibraryFaults
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions
@@ -42,34 +37,22 @@ class WhenTestingIfTheConnectionIsActive {
 		@BeforeClass
 		@JvmStatic
 		fun before() {
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(any()) } returns true
+			val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
-			val deferredConnectionSettings = DeferredPromise<ConnectionSettings>(IOException("OMG"))
+			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
-			val lookupConnection = mockk<LookupConnectionSettings>()
-			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(2))
-			} returns deferredConnectionSettings
-
-			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise(urlProvider)
-
-			val libraryConnectionProvider = LibraryConnectionProvider(
-                validateConnectionSettings,
-                lookupConnection,
-                NoopServerAlarm(),
-                liveUrlProvider,
-                Mockito.mock(TestConnections::class.java),
-                OkHttpFactory.getInstance()
-            )
+			val connectionSessionManager = ConnectionSessionManager(
+				mockk(),
+				libraryConnectionProvider
+			)
 
 			val futureConnectionProvider =
-				libraryConnectionProvider
+				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
 					.toFuture()
 
-			deferredConnectionSettings.resolve()
+			deferredConnectionProvider.sendRejection(IOException("OMG"))
 			try {
 				futureConnectionProvider[30, TimeUnit.SECONDS]
 			} catch (e: ExecutionException) {
@@ -81,7 +64,7 @@ class WhenTestingIfTheConnectionIsActive {
 					exception = e.cause as IOException?
 				}
 			}
-			isActive = libraryConnectionProvider.isConnectionActive(LibraryId(2))
+			isActive = connectionSessionManager.isConnectionActive(LibraryId(2))
 		}
 	}
 }
