@@ -19,7 +19,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
@@ -33,6 +32,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
+	private var connectionRestoreCode: Int? = null
 	private val itemProviderComplete = lazy { LoopedInPromise.response(this, this) }
 	private val itemListView = LazyViewFinder<ListView>(this, R.id.lvItems)
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingItems)
@@ -60,12 +60,13 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	public override fun onStart() {
 		super.onStart()
-		val doRestore = restoreSessionConnection(this)
-		if (!doRestore) hydrateItems()
+		connectionRestoreCode = restoreSessionConnection(this).also {
+			if (it == null) hydrateItems()
+		}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == InstantiateSelectedConnectionActivity.ACTIVITY_ID) hydrateItems()
+		if (requestCode == connectionRestoreCode) hydrateItems()
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 

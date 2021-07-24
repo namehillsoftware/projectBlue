@@ -53,6 +53,7 @@ import java.util.*
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 
+	private var connectionRestoreCode: Int? = null
 	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
 	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
 	private val specialLibraryItemsListView = LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
@@ -164,12 +165,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	override fun onStart() {
 		super.onStart()
-		val restore = InstantiateSelectedConnectionActivity.restoreSessionConnection(this)
-		if (!restore) startLibrary()
+		connectionRestoreCode = InstantiateSelectedConnectionActivity.restoreSessionConnection(this).also {
+			if (it == null) startLibrary()
+		}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == InstantiateSelectedConnectionActivity.ACTIVITY_ID) startLibrary()
+		if (requestCode == connectionRestoreCode) startLibrary()
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 

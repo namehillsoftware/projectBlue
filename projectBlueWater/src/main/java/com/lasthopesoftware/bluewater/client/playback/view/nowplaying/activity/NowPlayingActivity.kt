@@ -40,7 +40,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
-import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -85,6 +84,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		}
 	}
 
+	private var connectionRestoreCode: Int? = null
 	private var viewAnimator: ViewAnimator? = null
 	private val messageHandler = lazy { Handler(mainLooper) }
 	private val playButton = LazyViewFinder<ImageButton>(this, R.id.btnPlay)
@@ -319,12 +319,13 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	public override fun onStart() {
 		super.onStart()
 		updateKeepScreenOnStatus()
-		val restore = restoreSessionConnection(this)
-		if (!restore) initializeView()
+		connectionRestoreCode = restoreSessionConnection(this).also {
+			if (it == null) initializeView()
+		}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == InstantiateSelectedConnectionActivity.ACTIVITY_ID) initializeView()
+		if (requestCode == connectionRestoreCode) initializeView()
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 
