@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session
+package com.lasthopesoftware.bluewater.client.connection.selected
 
 import java.util.concurrent.locks.ReentrantLock
 

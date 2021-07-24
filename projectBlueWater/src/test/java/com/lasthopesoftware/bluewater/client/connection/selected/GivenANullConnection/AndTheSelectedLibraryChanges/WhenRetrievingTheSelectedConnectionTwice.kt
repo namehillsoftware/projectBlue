@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenANullConnection.AndTheSelectedLibraryChanges
+package com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
@@ -29,7 +29,8 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 	override fun before() {
 		val libraryConnections = mockk<ManageConnectionSessions>()
 		every { libraryConnections.promiseLibraryConnection(any()) } returns ProgressingPromise(null as IConnectionProvider?)
-		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(ConnectionProvider(firstUrlProvider, OkHttpFactory.getInstance()))
+		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(ConnectionProvider(
+			firstUrlProvider, OkHttpFactory.getInstance()))
 
 		val fakeSelectedLibraryProvider = FakeSelectedLibraryProvider()
 		SelectedConnectionReservation().use {

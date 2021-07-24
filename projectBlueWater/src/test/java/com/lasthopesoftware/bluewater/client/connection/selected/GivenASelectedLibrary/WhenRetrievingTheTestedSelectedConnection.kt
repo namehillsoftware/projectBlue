@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenASelectedLibrary
+package com.lasthopesoftware.bluewater.client.connection.selected.GivenASelectedLibrary
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
@@ -12,8 +12,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.BuildingConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.GettingLibrary
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
@@ -22,25 +22,27 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.mockito.Mockito
 
-class WhenRetrievingTheSelectedConnection : AndroidContext() {
+class WhenRetrievingTheTestedSelectedConnection : AndroidContext() {
 
 	companion object {
 		private val fakeMessageSender = lazy { FakeMessageSender(ApplicationProvider.getApplicationContext()) }
-		private val urlProvider = mockk<IUrlProvider>()
+		private val urlProvider = Mockito.mock(IUrlProvider::class.java)
 		private var connectionProvider: IConnectionProvider? = null
 	}
 
 	override fun before() {
 		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 		val libraryConnections = mockk<ManageConnectionSessions>()
-		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
+		every { libraryConnections.promiseTestedLibraryConnection(LibraryId(51)) } returns deferredConnectionProvider
 
 		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()
-		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
+		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(51)
+
 		SelectedConnectionReservation().use {
-			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider, libraryConnections)
-			val futureConnectionProvider = FuturePromise(sessionConnection.promiseSessionConnection())
+			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider,	libraryConnections)
+			val futureConnectionProvider = FuturePromise(sessionConnection.promiseTestedSessionConnection())
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete)
@@ -56,8 +58,10 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 	@Test
 	fun thenGettingLibraryIsBroadcast() {
-		assertThat(fakeMessageSender.value.recordedIntents
-			.map { i -> i.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1) })
+		assertThat(
+			fakeMessageSender.value.recordedIntents
+			.map { i -> i.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1) }
+			.toList())
 			.containsExactly(GettingLibrary, BuildingConnection, BuildingSessionComplete)
 	}
 }

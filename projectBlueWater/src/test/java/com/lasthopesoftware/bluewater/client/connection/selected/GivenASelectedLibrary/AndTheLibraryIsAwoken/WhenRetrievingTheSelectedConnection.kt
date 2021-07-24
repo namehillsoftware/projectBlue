@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenASelectedLibrary.AndTheLibraryIsAwoken
+package com.lasthopesoftware.bluewater.client.connection.selected.GivenASelectedLibrary.AndTheLibraryIsAwoken
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
@@ -13,8 +13,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.GettingLibrary
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.SendingWakeSignal
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
@@ -62,7 +62,8 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 	@Test
 	fun thenGettingLibraryIsBroadcast() {
-		assertThat(fakeMessageSender.value.recordedIntents
+		assertThat(
+			fakeMessageSender.value.recordedIntents
 			.map { i -> i.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1) }
 			.toList())
 			.containsExactly(GettingLibrary, SendingWakeSignal, BuildingConnection, BuildingSessionComplete)

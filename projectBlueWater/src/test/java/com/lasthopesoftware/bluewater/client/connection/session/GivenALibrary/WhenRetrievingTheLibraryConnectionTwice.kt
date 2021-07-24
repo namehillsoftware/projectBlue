@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus

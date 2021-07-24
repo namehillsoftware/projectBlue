@@ -79,7 +79,9 @@ class ConnectionSessionManager(
 					}.also { promisedConnectionProvidersCache[libraryId] = it }
 			}
 
-	override fun removeConnection(libraryId: LibraryId): Unit = TODO("Not yet implemented")
+	override fun removeConnection(libraryId: LibraryId) {
+		cachedConnectionProviders.remove(libraryId)
+	}
 
 	override fun isConnectionActive(libraryId: LibraryId): Boolean =
 		cachedConnectionProviders[libraryId] != null

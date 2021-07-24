@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndALiveUrlIsNotFound.AndAConnectionIsStillAlive
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndItsConnectionIsStillAlive
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -15,55 +15,56 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class WhenGettingATestedLibraryConnection {
+
 	companion object {
 		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 		private val expectedConnectionProvider = mockk<IConnectionProvider>()
 		private var connectionProvider: IConnectionProvider? = null
+		private var secondConnectionProvider: IConnectionProvider? = null
 
 		@BeforeClass
 		@JvmStatic
 		fun before() {
 			val connectionsTester = mockk<TestConnections>()
-			every  { connectionsTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+			every { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
-			val firstDeferredLibraryConnection = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
-			val secondDeferredLibraryConnection = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			val firstDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			val secondDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
 			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } returns firstDeferredLibraryConnection andThen secondDeferredLibraryConnection
+			every {
+				libraryConnectionProvider.promiseLibraryConnection(LibraryId(2))
+			} returns firstDeferredConnectionProvider andThen secondDeferredConnectionProvider
 
 			val connectionSessionManager = ConnectionSessionManager(
 				connectionsTester,
 				libraryConnectionProvider
 			)
-			val libraryId = LibraryId(2)
-			val futureConnectionProvider = connectionSessionManager
-				.promiseLibraryConnection(libraryId)
-				.updates(statuses::add)
-				.eventually(
-					{
-						connectionSessionManager.promiseTestedLibraryConnection(libraryId)
-							.updates(statuses::add)
-					},
-					{
-						connectionSessionManager.promiseTestedLibraryConnection(libraryId)
-							.updates(statuses::add)
-					})
-				.toFuture()
 
-			firstDeferredLibraryConnection.apply {
+			val libraryId = LibraryId(2)
+
+			val futureConnectionProvider =
+				connectionSessionManager
+					.promiseLibraryConnection(libraryId)
+					.updates(statuses::add)
+					.toFuture()
+
+			firstDeferredConnectionProvider.apply {
 				sendProgressUpdates(
 					BuildingConnectionStatus.GettingLibrary,
 					BuildingConnectionStatus.BuildingConnection,
-					BuildingConnectionStatus.BuildingConnectionFailed,
+					BuildingConnectionStatus.BuildingConnectionComplete
 				)
 
-				sendResolution(null)
+				sendResolution(mockk())
 			}
 
-			secondDeferredLibraryConnection.apply {
+			connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
+
+			secondDeferredConnectionProvider.apply {
 				sendProgressUpdates(
 					BuildingConnectionStatus.GettingLibrary,
 					BuildingConnectionStatus.BuildingConnection,
@@ -72,22 +73,25 @@ class WhenGettingATestedLibraryConnection {
 
 				sendResolution(expectedConnectionProvider)
 			}
-			connectionProvider = futureConnectionProvider.get()
+
+			secondConnectionProvider =
+				connectionSessionManager
+					.promiseTestedLibraryConnection(libraryId)
+					.updates(statuses::add)
+					.toFuture()
+					.get()
 		}
 	}
 
 	@Test
 	fun thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider).isEqualTo(expectedConnectionProvider)
+		assertThat(secondConnectionProvider).isEqualTo(connectionProvider!!)
 	}
 
 	@Test
 	fun thenGettingLibraryIsBroadcast() {
 		assertThat(statuses)
 			.containsExactly(
-				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionFailed,
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionComplete
