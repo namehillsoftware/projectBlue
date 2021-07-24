@@ -87,7 +87,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
 		private const val ACTIVITY_LAUNCH_DELAY = 1500
 
-		fun restoreSessionConnection(activity: Activity): Int? {
+		fun restoreSelectedConnection(activity: Activity): Int? {
 			return when (getInstance(activity).isSessionConnectionActive()) {
 				false -> {
 					val intent = Intent(activity, InstantiateSelectedConnectionActivity::class.java)
