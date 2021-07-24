@@ -21,7 +21,7 @@ class SessionConnectionRegistrationsMaintainer(private val localBroadcastManager
 		if (buildSessionStatus != SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete) return
 
 		registrationPromise = registrationPromise
-			.then(this)
+			.then(this) // remove existing registrations
 			.eventually { getInstance(context).promiseSessionConnection() }
 			.then { connectionProvider ->
 				connectionDependentReceiverRegistrations.map { registration ->

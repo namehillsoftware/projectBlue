@@ -43,14 +43,4 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 
 		return this
 	}
-
-	protected fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromise<Progress, Resolution> {
-		cancellationProxy.doCancel(source)
-
-		source
-			.updates { reportProgress(it) }
-			.then({resolve(it)}, {reject(it)})
-
-		return this
-	}
 }

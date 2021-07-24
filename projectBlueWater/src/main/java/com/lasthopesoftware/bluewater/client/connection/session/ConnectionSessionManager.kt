@@ -21,8 +21,10 @@ import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguratio
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import okhttp3.OkHttpClient
 import org.joda.time.Duration
 import java.util.*
@@ -40,7 +42,7 @@ class ConnectionSessionManager(
 
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		synchronized(buildingConnectionPromiseSync) {
-			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
+			val promisedTestConnectionProvider = object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
 					promisedConnectionProvidersCache[libraryId]
 						?.then({ c ->
@@ -67,16 +69,11 @@ class ConnectionSessionManager(
 		cachedConnectionProviders[libraryId]?.let { ProgressingPromise(it) } ?:
 			synchronized(buildingConnectionPromiseSync) {
 				cachedConnectionProviders[libraryId]?.let { ProgressingPromise(it) } ?:
-					object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
-						init {
-							promisedConnectionProvidersCache[libraryId]?.then({
-								it?.apply(::resolve) ?: proxy(promiseUpdatedCachedConnection(libraryId))
-							}, {
-								proxy(promiseUpdatedCachedConnection(libraryId))
-							})
-							?: proxy(promiseUpdatedCachedConnection(libraryId))
+					promisedConnectionProvidersCache[libraryId]?.apply {
+						eventuallyExcuse {
+							promiseUpdatedCachedConnection(libraryId).also { promisedConnectionProvidersCache[libraryId] = it }
 						}
-					}.also { promisedConnectionProvidersCache[libraryId] = it }
+					} ?: promiseUpdatedCachedConnection(libraryId).also { promisedConnectionProvidersCache[libraryId] = it }
 			}
 
 	override fun removeConnection(libraryId: LibraryId) {
@@ -92,24 +89,18 @@ class ConnectionSessionManager(
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
 			init {
-				promiseBuiltConnection(libraryId)
+				val cancellationProxy = CancellationProxy()
+				respondToCancellation(cancellationProxy)
+
+				val promisedLibraryConnection = libraryConnections.promiseLibraryConnection(libraryId)
+				cancellationProxy.doCancel(promisedLibraryConnection)
+
+				promisedLibraryConnection
 					.updates(::reportProgress)
 					.then({ c ->
 						if (c != null) cachedConnectionProviders[libraryId] = c
 						resolve(c)
 					}, { reject(it) })
-			}
-		}
-
-	private fun promiseBuiltConnection(selectedLibraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
-			init {
-				libraryConnections.promiseLibraryConnection(selectedLibraryId)
-					.updates(::reportProgress)
-					.then({ c ->
-						c?.also { cachedConnectionProviders[selectedLibraryId] = it }
-						resolve(c)
-					}, ::reject)
 			}
 		}
 

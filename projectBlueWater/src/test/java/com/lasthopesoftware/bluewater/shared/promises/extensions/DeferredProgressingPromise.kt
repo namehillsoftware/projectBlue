@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 import kotlin.coroutines.cancellation.CancellationException
 
-class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Progress, Resolution>() {
+class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Progress, Resolution>(), Runnable {
 	init {
 		respondToCancellation(this)
 	}
@@ -25,6 +25,5 @@ class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Prog
 
 	override fun run() {
 		reject(CancellationException())
-		super.run()
 	}
 }
