@@ -2,10 +2,12 @@ package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
-open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress, Resolution> {
+open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress, Resolution>, Runnable {
+	private val cancellationProxy = CancellationProxy()
 	private val updateListeners = ConcurrentLinkedQueue<(Progress) -> Unit>()
 	private val atomicProgress: AtomicReference<Progress?> = AtomicReference()
 	private var isResolved = false
@@ -13,6 +15,10 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 	constructor(resolution: Resolution?) : super(resolution)
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
+
+	override fun run() {
+		cancellationProxy.run()
+	}
 
 	override val progress: Promise<Progress>
 		get() = Promise(atomicProgress.get())
@@ -39,6 +45,8 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 	}
 
 	protected fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromise<Progress, Resolution> {
+		cancellationProxy.doCancel(source)
+
 		source
 			.updates { reportProgress(it) }
 			.then({resolve(it)}, {reject(it)})

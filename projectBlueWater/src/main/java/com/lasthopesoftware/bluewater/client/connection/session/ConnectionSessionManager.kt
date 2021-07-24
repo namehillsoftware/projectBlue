@@ -80,7 +80,10 @@ class ConnectionSessionManager(
 			}
 
 	override fun removeConnection(libraryId: LibraryId) {
-		cachedConnectionProviders.remove(libraryId)
+		promisedConnectionProvidersCache[libraryId]?.apply {
+			cancel()
+			must { cachedConnectionProviders.remove(libraryId) }
+		} ?: cachedConnectionProviders.remove(libraryId)
 	}
 
 	override fun isConnectionActive(libraryId: LibraryId): Boolean =
