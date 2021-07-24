@@ -9,7 +9,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import com.lasthopesoftware.bluewater.client.browsing.items.Item;
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity;
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection;
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;

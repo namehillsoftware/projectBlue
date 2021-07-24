@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session
+package com.lasthopesoftware.bluewater.client.connection.selected
 
 import android.app.Activity
 import android.content.BroadcastReceiver
@@ -11,17 +11,15 @@ import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.lazyj.Lazy
 
-class InstantiateSessionConnectionActivity : Activity() {
+class InstantiateSelectedConnectionActivity : Activity() {
 	private val lblConnectionStatus = LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
 
 	private val selectServerIntent = Lazy { Intent(this, ApplicationSettingsActivity::class.java) }
@@ -49,22 +47,20 @@ class InstantiateSessionConnectionActivity : Activity() {
 
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
 
-		localBroadcastManager.getObject().registerReceiver(buildSessionConnectionReceiver, IntentFilter(SelectedConnection.buildSessionBroadcast))
+		localBroadcastManager.getObject().registerReceiver(buildSessionConnectionReceiver, IntentFilter(
+			SelectedConnection.buildSessionBroadcast
+		))
 		getInstance(this)
 			.promiseSessionConnection()
-			.eventually(LoopedInPromise.response({ c: IConnectionProvider? ->
+			.eventually(LoopedInPromise.response({ c ->
 				if (c == null)
 					launchActivityDelayed(selectServerIntent.getObject())
 				else if (intent == null || START_ACTIVITY_FOR_RETURN != intent.action)
 					launchActivityDelayed(browseLibraryIntent.getObject())
 				else
 					finish()
-
-				Unit.toPromise()
 			}, this), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent.getObject())
-
-				Unit.toPromise()
 			}, this))
 			.must { localBroadcastManager.getObject().unregisterReceiver(buildSessionConnectionReceiver) }
 	}
@@ -87,7 +83,8 @@ class InstantiateSessionConnectionActivity : Activity() {
 
 	companion object {
 		const val ACTIVITY_ID = 2032
-		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(InstantiateSessionConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
+		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(
+			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
 		private const val ACTIVITY_LAUNCH_DELAY = 1500
 
 		/*
@@ -98,7 +95,7 @@ class InstantiateSessionConnectionActivity : Activity() {
 		fun restoreSessionConnection(activity: Activity): Boolean {
 			return when (getInstance(activity).isSessionConnectionActive()) {
 				false -> {
-					val intent = Intent(activity, InstantiateSessionConnectionActivity::class.java)
+					val intent = Intent(activity, InstantiateSelectedConnectionActivity::class.java)
 					intent.action = START_ACTIVITY_FOR_RETURN
 					activity.startActivityForResult(intent, ACTIVITY_ID)
 					true
@@ -109,7 +106,7 @@ class InstantiateSessionConnectionActivity : Activity() {
 
 		@JvmStatic
 		fun startNewConnection(context: Context) {
-			context.startActivity(Intent(context, InstantiateSessionConnectionActivity::class.java))
+			context.startActivity(Intent(context, InstantiateSelectedConnectionActivity::class.java))
 		}
 	}
 }

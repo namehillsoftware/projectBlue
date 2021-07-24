@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session
+package com.lasthopesoftware.bluewater.client.connection.selected
 
 import android.content.Context
 import android.content.Intent
@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISe
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
@@ -17,7 +19,8 @@ import org.slf4j.LoggerFactory
 class SelectedConnection(
 	private val localBroadcastManager: SendMessages,
 	private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider,
-	private val libraryConnections: ManageConnectionSessions) : (BuildingConnectionStatus) -> Unit {
+	private val libraryConnections: ManageConnectionSessions
+) : (BuildingConnectionStatus) -> Unit {
 
 	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> {
 		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
@@ -44,13 +47,14 @@ class SelectedConnection(
 			.updates(this)
 	}
 
-	override fun invoke(connectionStatus: BuildingConnectionStatus) {
-		doStateChange(connectionStatus)
-	}
+	override fun invoke(connectionStatus: BuildingConnectionStatus) = doStateChange(connectionStatus)
 
 	private fun doStateChange(status: BuildingConnectionStatus) {
 		val broadcastIntent = Intent(buildSessionBroadcast)
-		broadcastIntent.putExtra(buildSessionBroadcastStatus, BuildingSessionConnectionStatus.getSessionConnectionStatus(status))
+		broadcastIntent.putExtra(
+			buildSessionBroadcastStatus,
+			BuildingSessionConnectionStatus.getSessionConnectionStatus(status)
+		)
 		localBroadcastManager.sendBroadcast(broadcastIntent)
 		if (status === BuildingConnectionStatus.BuildingConnectionComplete) logger.info("Session started.")
 	}
@@ -64,8 +68,8 @@ class SelectedConnection(
 		const val BuildingSessionComplete = 6
 
 		@SessionConnectionStatus
-		fun getSessionConnectionStatus(connectionStatus: BuildingConnectionStatus): Int {
-			return when (connectionStatus) {
+		fun getSessionConnectionStatus(connectionStatus: BuildingConnectionStatus): Int =
+			when (connectionStatus) {
 				BuildingConnectionStatus.GettingLibrary -> GettingLibrary
 				BuildingConnectionStatus.SendingWakeSignal -> SendingWakeSignal
 				BuildingConnectionStatus.GettingLibraryFailed -> GettingLibraryFailed
@@ -73,7 +77,6 @@ class SelectedConnection(
 				BuildingConnectionStatus.BuildingConnectionFailed -> BuildingConnectionFailed
 				BuildingConnectionStatus.BuildingConnectionComplete -> BuildingSessionComplete
 			}
-		}
 
 		@kotlin.annotation.Retention(AnnotationRetention.SOURCE)
 		@IntDef(GettingLibrary, GettingLibraryFailed, SendingWakeSignal, BuildingConnection, BuildingConnectionFailed, BuildingSessionComplete)
@@ -93,13 +96,14 @@ class SelectedConnection(
 		@JvmStatic
 		@Synchronized
 		fun getInstance(context: Context): SelectedConnection {
-			if (::selectedConnectionInstance.isInitialized) return selectedConnectionInstance
+			if (Companion::selectedConnectionInstance.isInitialized) return selectedConnectionInstance
 
 			val applicationContext = context.applicationContext
 			return SelectedConnection(
 				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
 				SelectedBrowserLibraryIdentifierProvider(applicationContext),
-				ConnectionSessionManager.get(applicationContext)).apply { selectedConnectionInstance = this }
+				ConnectionSessionManager.get(applicationContext)
+			).apply { selectedConnectionInstance = this }
 		}
 	}
 }

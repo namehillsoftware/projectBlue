@@ -11,4 +11,6 @@ interface ManageConnectionSessions {
 	fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>
 
 	fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>
+
+	fun removeConnection(libraryId: LibraryId)
 }

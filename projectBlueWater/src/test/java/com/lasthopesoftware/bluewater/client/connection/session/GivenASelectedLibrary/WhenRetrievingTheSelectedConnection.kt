@@ -8,27 +8,26 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.BuildingConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.GettingLibrary
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.BuildingConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.GettingLibrary
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionReservation
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.resources.FakeMessageSender
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.mockito.Mockito
 
 class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 	companion object {
 		private val fakeMessageSender = lazy { FakeMessageSender(ApplicationProvider.getApplicationContext()) }
-		private val urlProvider = Mockito.mock(IUrlProvider::class.java)
+		private val urlProvider = mockk<IUrlProvider>()
 		private var connectionProvider: IConnectionProvider? = null
 	}
 
@@ -39,7 +38,7 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()
 		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
-		SessionConnectionReservation().use {
+		SelectedConnectionReservation().use {
 			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider, libraryConnections)
 			val futureConnectionProvider = FuturePromise(sessionConnection.promiseSessionConnection())
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
@@ -52,14 +51,13 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 	@Test
 	fun thenTheConnectionIsCorrect() {
-		Assertions.assertThat(connectionProvider!!.urlProvider).isEqualTo(urlProvider)
+		assertThat(connectionProvider!!.urlProvider).isEqualTo(urlProvider)
 	}
 
 	@Test
 	fun thenGettingLibraryIsBroadcast() {
-		Assertions.assertThat(fakeMessageSender.value.recordedIntents
-			.map { i -> i.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1) }
-			.toList())
+		assertThat(fakeMessageSender.value.recordedIntents
+			.map { i -> i.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1) })
 			.containsExactly(GettingLibrary, BuildingConnection, BuildingSessionComplete)
 	}
 }

@@ -38,7 +38,7 @@ class ConnectionSessionManager(
 	private val promisedConnectionProvidersCache = HashMap<LibraryId, ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>>()
 	private val buildingConnectionPromiseSync = Any()
 
-	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
+	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		synchronized(buildingConnectionPromiseSync) {
 			val promisedTestConnectionProvider = object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
@@ -60,9 +60,8 @@ class ConnectionSessionManager(
 				}
 			}
 			promisedConnectionProvidersCache[libraryId] = promisedTestConnectionProvider
-			return promisedTestConnectionProvider
+			promisedTestConnectionProvider
 		}
-	}
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		cachedConnectionProviders[libraryId]?.let { ProgressingPromise(it) } ?:
@@ -80,22 +79,22 @@ class ConnectionSessionManager(
 					}.also { promisedConnectionProvidersCache[libraryId] = it }
 			}
 
-	override fun isConnectionActive(libraryId: LibraryId): Boolean {
-		return cachedConnectionProviders[libraryId] != null
-	}
+	override fun removeConnection(libraryId: LibraryId): Unit = TODO("Not yet implemented")
 
-	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
-		return object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
+	override fun isConnectionActive(libraryId: LibraryId): Boolean =
+		cachedConnectionProviders[libraryId] != null
+
+	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
+		object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
 			init {
 				promiseBuiltConnection(libraryId)
-					.updates { reportProgress(it) }
+					.updates(::reportProgress)
 					.then({ c ->
 						if (c != null) cachedConnectionProviders[libraryId] = c
 						resolve(c)
 					}, { reject(it) })
 			}
 		}
-	}
 
 	private fun promiseBuiltConnection(selectedLibraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
@@ -122,14 +121,13 @@ class ConnectionSessionManager(
 			return ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), client))
 		}
 
-		private fun newUrlScanner(context: Context): UrlScanner {
-			return UrlScanner(
+		private fun newUrlScanner(context: Context): UrlScanner =
+			UrlScanner(
 				Base64Encoder(),
 				ConnectionTester,
 				newServerLookup(context),
 				ConnectionSettingsLookup(LibraryRepository(context)),
 				OkHttpFactory.getInstance())
-		}
 
 		fun get(context: Context): ConnectionSessionManager {
 			val applicationContext = context.applicationContext

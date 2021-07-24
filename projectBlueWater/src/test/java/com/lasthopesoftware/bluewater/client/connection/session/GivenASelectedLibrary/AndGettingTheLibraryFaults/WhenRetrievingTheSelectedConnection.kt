@@ -6,11 +6,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISe
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.GettingLibrary
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus.GettingLibraryFailed
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.GettingLibrary
-import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnection.BuildingSessionConnectionStatus.GettingLibraryFailed
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionReservation
+import com.lasthopesoftware.bluewater.client.connection.session.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.resources.FakeMessageSender
@@ -39,7 +39,7 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()
 		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
 
-		SessionConnectionReservation().use {
+		SelectedConnectionReservation().use {
 			val sessionConnection = SelectedConnection(
 				fakeMessageSender.value,
 				libraryIdentifierProvider,
