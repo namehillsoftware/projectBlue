@@ -36,11 +36,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.access.Selec
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectViewAdapter
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity

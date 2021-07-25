@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ManageConnection
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
-import com.lasthopesoftware.resources.FakeMessageSender
+import com.lasthopesoftware.resources.FakeMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions
@@ -36,7 +36,7 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 		SelectedConnectionReservation().use {
 			fakeSelectedLibraryProvider.selectedLibraryId = LibraryId(-1)
 			val selectedConnection = SelectedConnection(
-				FakeMessageSender(ApplicationProvider.getApplicationContext()),
+				FakeMessageBus(ApplicationProvider.getApplicationContext()),
 				fakeSelectedLibraryProvider,
 				libraryConnections
 			)
