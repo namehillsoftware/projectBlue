@@ -28,7 +28,7 @@ class SelectedConnection(
 
 		return libraryConnections
 			.promiseTestedLibraryConnection(newSelectedLibraryId)
-			.updates(this)
+			.also { it.updates(this) }
 	}
 
 	fun isSessionConnectionActive(): Boolean {
@@ -44,7 +44,7 @@ class SelectedConnection(
 
 		return libraryConnections
 			.promiseLibraryConnection(newSelectedLibraryId)
-			.updates(this)
+			.also { it.updates(this) }
 	}
 
 	override fun invoke(connectionStatus: BuildingConnectionStatus) = doStateChange(connectionStatus)

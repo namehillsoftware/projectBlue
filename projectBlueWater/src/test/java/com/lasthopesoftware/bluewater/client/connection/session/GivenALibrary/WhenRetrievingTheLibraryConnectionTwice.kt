@@ -65,13 +65,14 @@ class WhenRetrievingTheLibraryConnectionTwice {
 					.updates(statuses::add)
 					.toFuture()
 
-			deferredConnectionSettings.resolve()
-
 			val secondFutureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
 					.updates(statuses::add)
 					.toFuture()
+
+			deferredConnectionSettings.resolve()
+
 			connectionProvider = futureConnectionProvider.get()
 			secondConnectionProvider = secondFutureConnectionProvider.get()
 		}
@@ -83,7 +84,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun thenGettingLibraryIsBroadcastOnlyOnce() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
