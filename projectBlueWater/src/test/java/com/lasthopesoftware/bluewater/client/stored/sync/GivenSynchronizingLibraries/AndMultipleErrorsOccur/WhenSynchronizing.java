@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.resources.FakeMessageSender;
+import com.lasthopesoftware.resources.FakeMessageBus;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
@@ -55,7 +55,7 @@ public class WhenSynchronizing extends AndroidContext {
 
 	private static final List<StoredFile> expectedStoredFileJobs = Stream.of(storedFiles).filter(f -> !faultingStoredFileServiceIds.contains(f.getServiceId())).toList();
 
-	private static final FakeMessageSender fakeMessageSender = new FakeMessageSender(ApplicationProvider.getApplicationContext());
+	private static final FakeMessageBus fakeMessageSender = new FakeMessageBus(ApplicationProvider.getApplicationContext());
 
 	@Override
 	public void before() {

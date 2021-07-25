@@ -7,7 +7,7 @@ import android.content.IntentFilter
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 
-class FakeMessageSender(private val context: Context) : SendMessages, RegisterForMessages {
+class FakeMessageBus(private val context: Context) : SendMessages, RegisterForMessages {
 
 	private val _recordedIntents: MutableList<Intent> = ArrayList()
 	private val receivers: MutableList<Pair<BroadcastReceiver, IntentFilter>> = ArrayList()
