@@ -21,7 +21,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
 
-class WhenRetrievingTheLibraryConnection {
+class WhenRetrievingTheLibraryConnectionIsCancelled {
 
 	companion object {
 		private val urlProvider = mockk<IUrlProvider>()
@@ -61,6 +61,9 @@ class WhenRetrievingTheLibraryConnection {
 					.promiseLibraryConnection(LibraryId(3))
 					.updates(statuses::add)
 					.toFuture()
+
+			futureConnectionProvider.cancel(true)
+
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()
 		}
@@ -72,8 +75,8 @@ class WhenRetrievingTheLibraryConnection {
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
+	fun thenTheConnectionIsNull() {
+		assertThat(connectionProvider).isNull()
 	}
 
 	@Test
@@ -81,8 +84,7 @@ class WhenRetrievingTheLibraryConnection {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionComplete
+				BuildingConnectionStatus.BuildingConnectionFailed,
 			)
 	}
 }

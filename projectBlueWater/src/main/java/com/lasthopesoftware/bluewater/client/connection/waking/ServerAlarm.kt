@@ -20,6 +20,6 @@ class ServerAlarm(private val serverLookup: LookupServers, private val server: P
 							alarmConfiguration.timesBetweenWaking)
 					})
 			}
-			.then { Unit }
+			.then { }
 	}
 }

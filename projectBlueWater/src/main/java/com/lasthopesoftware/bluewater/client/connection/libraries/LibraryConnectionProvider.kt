@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.WakeLibraryServer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
 class LibraryConnectionProvider(
 	private val validateConnectionSettings: ValidateConnectionSettings,
@@ -23,7 +24,14 @@ class LibraryConnectionProvider(
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
+			private val cancellationProxy = CancellationProxy()
+
 			init {
+				respondToCancellation(cancellationProxy)
+				fulfillPromise()
+			}
+
+			private fun fulfillPromise() {
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				lookupConnectionSettings
 					.lookupConnectionSettings(libraryId)
@@ -61,6 +69,8 @@ class LibraryConnectionProvider(
 			}
 
 			private fun wakeAndBuildConnection(): Promise<IUrlProvider?> {
+				if (cancellationProxy.isCancelled) return empty()
+
 				reportProgress(BuildingConnectionStatus.SendingWakeSignal)
 				return wakeAlarm
 					.awakeLibraryServer(libraryId)
@@ -68,6 +78,8 @@ class LibraryConnectionProvider(
 			}
 
 			private fun buildConnection(): Promise<IUrlProvider?> {
+				if (cancellationProxy.isCancelled) return empty()
+
 				reportProgress(BuildingConnectionStatus.BuildingConnection)
 
 				return liveUrlProvider.promiseLiveUrl(libraryId)

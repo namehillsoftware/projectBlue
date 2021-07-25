@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndWolDisabled
+package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndWolEnabled
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -21,7 +21,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
 
-class WhenRetrievingTheLibraryConnection {
+class WhenRetrievingTheLibraryConnectionIsCancelled {
 
 	companion object {
 		private val urlProvider = mockk<IUrlProvider>()
@@ -35,7 +35,7 @@ class WhenRetrievingTheLibraryConnection {
 			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
 			every { validateConnectionSettings.isValid(any()) } returns true
 
-			val deferredConnectionSettings = DeferredPromise(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = false))
+			val deferredConnectionSettings = DeferredPromise(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 			val lookupConnection = mockk<LookupConnectionSettings>()
 			every {
@@ -61,6 +61,9 @@ class WhenRetrievingTheLibraryConnection {
 					.promiseLibraryConnection(LibraryId(3))
 					.updates(statuses::add)
 					.toFuture()
+
+			futureConnectionProvider.cancel(true)
+
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()
 		}
@@ -72,8 +75,8 @@ class WhenRetrievingTheLibraryConnection {
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
+	fun thenTheConnectionIsNull() {
+		assertThat(connectionProvider).isNull()
 	}
 
 	@Test
@@ -81,8 +84,7 @@ class WhenRetrievingTheLibraryConnection {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionComplete
+				BuildingConnectionStatus.BuildingConnectionFailed,
 			)
 	}
 }

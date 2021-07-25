@@ -50,16 +50,18 @@ class ConnectionSessionManager(
 								connectionTester.promiseIsConnectionPossible(it)
 									.then({ isPossible ->
 										if (isPossible) resolve(it)
-										else proxy(promiseUpdatedCachedConnection(libraryId))
+										else updateCachedConnection()
 									}, {
-										proxy(promiseUpdatedCachedConnection(libraryId))
+										updateCachedConnection()
 									})
-							} ?: proxy(promiseUpdatedCachedConnection(libraryId))
+							} ?: updateCachedConnection()
 						}, {
-							proxy(promiseUpdatedCachedConnection(libraryId))
+							updateCachedConnection()
 						})
-						?: proxy(promiseUpdatedCachedConnection(libraryId))
+						?: updateCachedConnection()
 				}
+
+				private fun updateCachedConnection() = proxy(promiseUpdatedCachedConnection(libraryId))
 			}
 			promisedConnectionProvidersCache[libraryId] = promisedTestConnectionProvider
 			promisedTestConnectionProvider
@@ -77,10 +79,14 @@ class ConnectionSessionManager(
 			}
 
 	override fun removeConnection(libraryId: LibraryId) {
-		promisedConnectionProvidersCache[libraryId]?.apply {
-			cancel()
-			must { cachedConnectionProviders.remove(libraryId) }
-		} ?: cachedConnectionProviders.remove(libraryId)
+		synchronized(buildingConnectionPromiseSync) {
+			promisedConnectionProvidersCache[libraryId]?.apply {
+				cancel()
+				must { synchronized(buildingConnectionPromiseSync) {
+					cachedConnectionProviders.remove(libraryId)
+				} }
+			} ?: cachedConnectionProviders.remove(libraryId)
+		}
 	}
 
 	override fun isConnectionActive(libraryId: LibraryId): Boolean =
