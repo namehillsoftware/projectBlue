@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
@@ -20,9 +19,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity.Companion.restoreSessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -34,6 +32,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
+	private var connectionRestoreCode: Int? = null
 	private val itemProviderComplete = lazy { LoopedInPromise.response(this, this) }
 	private val itemListView = LazyViewFinder<ListView>(this, R.id.lvItems)
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingItems)
@@ -61,12 +60,13 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	public override fun onStart() {
 		super.onStart()
-		val doRestore = restoreSessionConnection(this)
-		if (!doRestore) hydrateItems()
+		connectionRestoreCode = restoreSelectedConnection(this).also {
+			if (it == null) hydrateItems()
+		}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) hydrateItems()
+		if (requestCode == connectionRestoreCode) hydrateItems()
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 

@@ -36,8 +36,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.access.Selec
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectViewAdapter
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
@@ -55,6 +55,7 @@ import java.util.*
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 
+	private var connectionRestoreCode: Int? = null
 	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
 	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
 	private val specialLibraryItemsListView = LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
@@ -103,7 +104,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val lazyLocalBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
 
-	private val lazySessionConnectionProvider = lazy { SessionConnectionProvider(this) }
+	private val lazySessionConnectionProvider = lazy { SelectedConnectionProvider(this) }
 
 	private val lazyLibraryViewsProvider = lazy {
 		LibraryViewsProvider(
@@ -166,12 +167,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	override fun onStart() {
 		super.onStart()
-		val restore = InstantiateSessionConnectionActivity.restoreSessionConnection(this)
-		if (!restore) startLibrary()
+		connectionRestoreCode = InstantiateSelectedConnectionActivity.restoreSelectedConnection(this).also {
+			if (it == null) startLibrary()
+		}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) startLibrary()
+		if (requestCode == connectionRestoreCode) startLibrary()
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 

@@ -10,10 +10,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection;
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
 import com.namehillsoftware.handoff.promises.Promise;
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
 import com.namehillsoftware.handoff.promises.response.EventualAction;
@@ -113,7 +112,7 @@ public class FileNameTextViewSetter {
 			textView.setText(R.string.lbl_loading);
 
 			final Promise<Void> promisedViewSetting =
-				SessionConnection.getInstance(textView.getContext()).promiseSessionConnection()
+				SelectedConnection.getInstance(textView.getContext()).promiseSessionConnection()
 					.eventually(this)
 					.eventually(LoopedInPromise.response(this, handler));
 

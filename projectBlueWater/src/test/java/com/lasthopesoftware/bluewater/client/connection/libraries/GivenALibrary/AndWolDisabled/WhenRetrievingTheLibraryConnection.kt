@@ -22,25 +22,6 @@ import org.junit.Test
 import java.util.*
 
 class WhenRetrievingTheLibraryConnection {
-	@Test
-	fun thenTheLibraryIsWoken() {
-		assertThat(isLibraryServerWoken).isFalse
-	}
-
-	@Test
-	fun thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
-	}
-
-	@Test
-	fun thenGettingLibraryIsBroadcast() {
-		assertThat(statuses)
-			.containsExactly(
-				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionComplete
-			)
-	}
 
 	companion object {
 		private val urlProvider = mockk<IUrlProvider>()
@@ -65,17 +46,15 @@ class WhenRetrievingTheLibraryConnection {
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(urlProvider)
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-				mockk(),
-				validateConnectionSettings,
-				lookupConnection,
-				{
-					isLibraryServerWoken = true
-					Unit.toPromise()
-				},
-				liveUrlProvider,
-				mockk(),
-				OkHttpFactory.getInstance()
-			)
+                validateConnectionSettings,
+                lookupConnection,
+                {
+                    isLibraryServerWoken = true
+                    Unit.toPromise()
+                },
+                liveUrlProvider,
+                OkHttpFactory.getInstance()
+            )
 
 			val futureConnectionProvider =
 				libraryConnectionProvider
@@ -85,5 +64,25 @@ class WhenRetrievingTheLibraryConnection {
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()
 		}
+	}
+
+	@Test
+	fun thenTheLibraryIsNotWoken() {
+		assertThat(isLibraryServerWoken).isFalse
+	}
+
+	@Test
+	fun thenTheConnectionIsCorrect() {
+		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
+	}
+
+	@Test
+	fun thenGettingLibraryIsBroadcast() {
+		assertThat(statuses)
+			.containsExactly(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
 	}
 }

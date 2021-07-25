@@ -10,6 +10,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class FilePropertiesProvider(private val libraryConnections: ProvideLibraryConnections, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideLibraryFileProperties {
+
+	companion object {
+		private val emptyProperties = lazy { Promise(emptyMap<String, String>()) }
+	}
+
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
 		libraryConnections.promiseLibraryConnection(libraryId).eventually { connectionProvider ->
 			connectionProvider?.let {
@@ -23,6 +28,6 @@ class FilePropertiesProvider(private val libraryConnections: ProvideLibraryConne
 					else
 						FilePropertiesPromise(connectionProvider, filePropertiesContainerProvider, serviceFile,	revision)
 				}
-			} ?: emptyMap<String, String>().toPromise()
+			} ?: emptyProperties.value
 		}
 }

@@ -40,14 +40,12 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.session.InstantiateSessionConnectionActivity.Companion.restoreSessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
@@ -86,6 +84,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		}
 	}
 
+	private var connectionRestoreCode: Int? = null
 	private var viewAnimator: ViewAnimator? = null
 	private val messageHandler = lazy { Handler(mainLooper) }
 	private val playButton = LazyViewFinder<ImageButton>(this, R.id.btnPlay)
@@ -141,7 +140,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private val lazyImageProvider = lazy {
-			SessionConnection.getInstance(this)
+			SelectedConnection.getInstance(this)
 				.promiseSessionConnection()
 				.then {
 					ImageProvider(
@@ -320,12 +319,13 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	public override fun onStart() {
 		super.onStart()
 		updateKeepScreenOnStatus()
-		val restore = restoreSessionConnection(this)
-		if (!restore) initializeView()
+		connectionRestoreCode = restoreSelectedConnection(this).also {
+			if (it == null) initializeView()
+		}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == InstantiateSessionConnectionActivity.ACTIVITY_ID) initializeView()
+		if (requestCode == connectionRestoreCode) initializeView()
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 
@@ -353,7 +353,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		lazyNowPlayingRepository.value
 			.nowPlaying
 			.eventually { np ->
-				SessionConnection.getInstance(this)
+				SelectedConnection.getInstance(this)
 					.promiseSessionConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						val serviceFile = np.playlist[np.playlistPosition]
@@ -398,7 +398,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		lazyNowPlayingRepository.value
 			.nowPlaying
 			.eventually { np ->
-				SessionConnection.getInstance(this)
+				SelectedConnection.getInstance(this)
 					.promiseSessionConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						if (connectionProvider == null || np.playlistPosition >= np.playlist.size) return@response
@@ -411,7 +411,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
-		SessionConnection.getInstance(this)
+		SelectedConnection.getInstance(this)
 			.promiseSessionConnection()
 			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider ->
 				connectionProvider ?: return@ImmediateResponse
@@ -497,8 +497,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
 			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 				val stringRating = newRating.roundToInt().toString()
-				SessionConnection.getInstance(this).promiseSessionConnection()
-					.then { c -> FilePropertiesStorage.storeFileProperty(c, FilePropertyCache.getInstance(), serviceFile, KnownFileProperties.RATING, stringRating, false) }
+				SelectedConnection.getInstance(this)
+					.promiseSessionConnection()
+					.then { c -> c?.let { FilePropertiesStorage.storeFileProperty(it, FilePropertyCache.getInstance(), serviceFile, KnownFileProperties.RATING, stringRating, false) } }
 				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
 			}
 		}

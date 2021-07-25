@@ -21,15 +21,4 @@ public class FakeLibraryConnectionProvider implements ProvideLibraryConnections 
 	public ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> promiseLibraryConnection(@NotNull LibraryId libraryId) {
 		return new ProgressingPromise<>(connectionProviderMap.get(libraryId));
 	}
-
-	@NotNull
-	@Override
-	public ProgressingPromise<BuildingConnectionStatus, IConnectionProvider> promiseTestedLibraryConnection(@NotNull LibraryId libraryId) {
-		return new ProgressingPromise<>(connectionProviderMap.get(libraryId));
-	}
-
-	@Override
-	public boolean isConnectionActive(@NotNull LibraryId libraryId) {
-		return connectionProviderMap.containsKey(libraryId);
-	}
 }

@@ -39,11 +39,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
@@ -409,25 +409,27 @@ open class PlaybackService : Service() {
 		}
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 	private val lazyPlaybackStartingNotificationBuilder = lazy {
-			PlaybackStartingNotificationBuilder(
-				this,
-				NotificationBuilderProducer(this),
-				lazyPlaybackNotificationsConfiguration.value,
-				lazyMediaSession.getObject())
-		}
-	private val lazySelectedLibraryProvider = lazy {
-			SelectedBrowserLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(this),
-				LibraryRepository(this))
+		PlaybackStartingNotificationBuilder(
+			this,
+			NotificationBuilderProducer(this),
+			lazyPlaybackNotificationsConfiguration.value,
+			lazyMediaSession.getObject())
 	}
+	private val lazySelectedLibraryProvider = lazy {
+		SelectedBrowserLibraryProvider(
+			SelectedBrowserLibraryIdentifierProvider(this),
+			LibraryRepository(this))
+	}
+
 	private val lazyFileProperties = lazy {
 		FilePropertiesProvider(
-			get(this),
+			ConnectionSessionManager.get(this),
 			FilePropertyCache.getInstance())
 	}
+
 	private val lazyCachedFileProperties = lazy {
 		CachedFilePropertiesProvider(
-			get(this),
+			ConnectionSessionManager.get(this),
 			FilePropertyCache.getInstance(),
 			lazyFileProperties.value)
 	}
@@ -456,7 +458,7 @@ open class PlaybackService : Service() {
 
 	private val buildSessionReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
-			val buildStatus = intent.getIntExtra(SessionConnection.buildSessionBroadcastStatus, -1)
+			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
 			handleBuildConnectionStatusChange(buildStatus)
 		}
 	}
@@ -468,8 +470,8 @@ open class PlaybackService : Service() {
 			localBroadcastManagerLazy.value
 				.registerReceiver(
 					buildSessionReceiver,
-					IntentFilter(SessionConnection.buildSessionBroadcast))
-			return SessionConnection.getInstance(this).promiseSessionConnection().must {
+					IntentFilter(SelectedConnection.buildSessionBroadcast))
+			return SelectedConnection.getInstance(this).promiseSessionConnection().must {
 				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
 				lazyNotificationController.value.removeNotification(connectingNotificationId)
 			}

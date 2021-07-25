@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -159,7 +159,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 	private val lazyReadPermissionArbitratorForOs = lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
 	private val lazyLibraryRepository = lazy { LibraryRepository(this) }
 	private val lazyLibraryIdentifierProvider = lazy { SelectedBrowserLibraryIdentifierProvider(this) }
-	private val lazyLibraryConnections = lazy { get(this)	}
+	private val lazyLibraryConnections = lazy { ConnectionSessionManager.get(this)	}
 
 	private val lazyFileProperties = lazy {
 		val filePropertyCache = FilePropertyCache.getInstance()

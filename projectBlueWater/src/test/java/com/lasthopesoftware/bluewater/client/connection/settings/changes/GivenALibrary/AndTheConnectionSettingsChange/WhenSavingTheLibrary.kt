@@ -49,7 +49,10 @@ class WhenSavingTheLibrary : AndroidContext() {
 
 	@Test
 	fun thenAnUpdateIsSentOnTheMessageBus() {
-		assertThat(messageBus.recordedIntents.map { it.action })
-			.containsOnly(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+		assertThat(messageBus.recordedIntents.map { Pair(it.action, it.getIntExtra(ObservableConnectionSettingsLibraryStorage.updatedConnectionSettingsLibraryId, -1)) })
+			.containsOnly(Pair(
+				ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated,
+				13
+			))
 	}
 }

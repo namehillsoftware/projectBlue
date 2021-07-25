@@ -7,7 +7,9 @@ import okhttp3.Response
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class ConnectionTester : TestConnections {
+object ConnectionTester : TestConnections {
+	private val logger = LoggerFactory.getLogger(ConnectionTester::class.java)
+
 	override fun promiseIsConnectionPossible(connectionProvider: IConnectionProvider): Promise<Boolean> {
 		return connectionProvider.promiseResponse("Alive").then({ testResponse(it) }, { false })
 	}
@@ -25,9 +27,5 @@ class ConnectionTester : TestConnections {
 			}
 		}
 		return false
-	}
-
-	companion object {
-		private val logger = LoggerFactory.getLogger(ConnectionTester::class.java)
 	}
 }

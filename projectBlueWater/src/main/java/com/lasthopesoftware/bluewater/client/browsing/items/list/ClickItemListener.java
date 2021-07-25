@@ -9,7 +9,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import com.lasthopesoftware.bluewater.client.browsing.items.Item;
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity;
-import com.lasthopesoftware.bluewater.client.connection.session.SessionConnection;
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection;
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
 import com.namehillsoftware.handoff.promises.response.VoidResponse;
@@ -31,7 +31,7 @@ public class ClickItemListener implements OnItemClickListener {
 		this.items = items;
 		this.loadingView = loadingView;
 	}
-	
+
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		parent.setVisibility(ViewUtils.getVisibility(false));
@@ -41,7 +41,7 @@ public class ClickItemListener implements OnItemClickListener {
 
         final Context context = view.getContext();
 
-		SessionConnection.getInstance(context).promiseSessionConnection()
+		SelectedConnection.getInstance(context).promiseSessionConnection()
 			.eventually(c -> ItemProvider.provide(c, item.getKey()))
             .then(new VoidResponse<>(items -> {
 				if (items == null) return;

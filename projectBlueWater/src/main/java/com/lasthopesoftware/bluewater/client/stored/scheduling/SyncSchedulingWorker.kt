@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.L
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider.Instance.get
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
@@ -27,7 +27,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 				LibraryRepository(context),
 				StoredItemServiceFileCollector(
 					StoredItemAccess(context),
-					LibraryFileProvider(LibraryFileStringListProvider(get(context))),
+					LibraryFileProvider(LibraryFileStringListProvider(ConnectionSessionManager.get(context))),
 					FileListParameters.getInstance()))
 	}
 
@@ -69,7 +69,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 				init {
 					val workInfosByName = WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName)
 					respondToCancellation { workInfosByName.cancel(false) }
-					workInfosByName.addListener(Runnable {
+					workInfosByName.addListener({
 						try {
 							resolve(workInfosByName.get())
 						} catch (e: ExecutionException) {
