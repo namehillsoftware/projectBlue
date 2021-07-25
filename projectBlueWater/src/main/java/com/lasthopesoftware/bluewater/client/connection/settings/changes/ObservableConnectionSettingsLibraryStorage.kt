@@ -25,7 +25,11 @@ class ObservableConnectionSettingsLibraryStorage(
 						.lookupConnectionSettings(library.libraryId)
 						.then { updatedConnectionSettings ->
 							if (updatedConnectionSettings != originalConnectionSettings) {
-								sendMessages.sendBroadcast(Intent(connectionSettingsUpdated))
+								val connectionSettingsUpdatedIntent = Intent(connectionSettingsUpdated)
+								connectionSettingsUpdatedIntent.putExtra(
+									updatedConnectionSettingsLibraryId,
+									library.libraryId.id)
+								sendMessages.sendBroadcast(connectionSettingsUpdatedIntent)
 							}
 						}
 				}
@@ -40,6 +44,11 @@ class ObservableConnectionSettingsLibraryStorage(
 		val connectionSettingsUpdated = MagicPropertyBuilder.buildMagicPropertyName(
 			StorageReadPermissionsRequestedBroadcaster::class.java,
 			"connectionSettingsUpdated"
+		)
+
+		val updatedConnectionSettingsLibraryId = MagicPropertyBuilder.buildMagicPropertyName(
+			StorageReadPermissionsRequestedBroadcaster::class.java,
+			"updatedConnectionSettingsLibraryId"
 		)
 	}
 }
