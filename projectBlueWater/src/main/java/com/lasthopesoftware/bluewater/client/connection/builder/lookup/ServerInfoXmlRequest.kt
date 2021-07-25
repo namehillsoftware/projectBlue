@@ -10,21 +10,19 @@ import xmlwise.XmlElement
 import xmlwise.Xmlwise
 
 class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, private val client: OkHttpClient) : RequestServerInfoXml {
-	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<XmlElement?> {
-		return libraryProvider.getLibrary(libraryId)
-			.eventually { library ->
-				if (library == null) return@eventually Promise.empty<XmlElement>()
-
+	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<XmlElement?> =
+		libraryProvider.getLibrary(libraryId).eventually { library ->
+			library?.let {
 				val request = Request.Builder()
-					.url("https://webplay.jriver.com/libraryserver/lookup?id=" + library.accessCode)
+					.url("https://webplay.jriver.com/libraryserver/lookup?id=" + it.accessCode)
 					.build()
 
 				HttpPromisedResponse(client.newCall(request))
-					.then {	r ->
+					.then { r ->
 						r.body?.use { b ->
 							Xmlwise.createXml(b.string())
 						}
 					}
-			}
-	}
+			} ?: Promise.empty()
+		}
 }

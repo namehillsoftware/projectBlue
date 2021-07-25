@@ -74,6 +74,7 @@ class LibraryConnectionProvider(
 				reportProgress(BuildingConnectionStatus.SendingWakeSignal)
 				return wakeAlarm
 					.awakeLibraryServer(libraryId)
+					.also(cancellationProxy::doCancel)
 					.eventually { buildConnection() }
 			}
 
@@ -82,7 +83,7 @@ class LibraryConnectionProvider(
 
 				reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-				return liveUrlProvider.promiseLiveUrl(libraryId)
+				return liveUrlProvider.promiseLiveUrl(libraryId).also(cancellationProxy::doCancel)
 			}
 		}
 }
