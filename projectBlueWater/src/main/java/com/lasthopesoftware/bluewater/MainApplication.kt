@@ -33,14 +33,19 @@ import com.lasthopesoftware.bluewater.client.browsing.library.request.write.Stor
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.promiseIsScheduled
+import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.scheduleSync
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
@@ -51,7 +56,7 @@ open class MainApplication : MultiDexApplication() {
 	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilderLazy = lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy = lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
-	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
+	private val messageRegistrar: Lazy<RegisterForMessages> = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
@@ -70,14 +75,12 @@ open class MainApplication : MultiDexApplication() {
 			isWorkManagerInitialized = true
 		}
 
-		promiseIsScheduled(this)
-			.then { isScheduled ->
-				if (!isScheduled) scheduleSync(this)
-			}
+		SyncSchedulingWorker.promiseIsScheduled(this)
+			.then { isScheduled -> if (!isScheduled) scheduleSync(this) }
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		localBroadcastManagerLazy.value.registerReceiver(object : BroadcastReceiver() {
+		messageRegistrar.value.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
 				if (libraryId < 0) return
@@ -104,7 +107,7 @@ open class MainApplication : MultiDexApplication() {
 			}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		localBroadcastManagerLazy.value.registerReceiver(object : BroadcastReceiver() {
+		messageRegistrar.value.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsLibraryId, -1)
 				if (libraryId < 0) return
@@ -115,7 +118,7 @@ open class MainApplication : MultiDexApplication() {
 			}
 		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded))
 
-		localBroadcastManagerLazy.value.registerReceiver(object : BroadcastReceiver() {
+		messageRegistrar.value.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.WritePermissionsLibraryId, -1)
 				if (libraryId < 0) return
@@ -126,14 +129,19 @@ open class MainApplication : MultiDexApplication() {
 			}
 		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded))
 
+		messageRegistrar.value.registerReceiver(
+			ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)),
+			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+		)
+
 		val connectionDependentReceiverRegistrations = listOf(
 			UpdatePlayStatsOnCompleteRegistration(),
 			PlaybackFileStartedScrobblerRegistration(),
 			PlaybackFileStoppedScrobblerRegistration(),
 			PebbleFileChangedNotificationRegistration())
 
-		localBroadcastManagerLazy.value.registerReceiver(
-			SessionConnectionRegistrationsMaintainer(localBroadcastManagerLazy.value, connectionDependentReceiverRegistrations),
+		messageRegistrar.value.registerReceiver(
+			SessionConnectionRegistrationsMaintainer(messageRegistrar.value, connectionDependentReceiverRegistrations),
 			IntentFilter(SelectedConnection.buildSessionBroadcast))
 	}
 
