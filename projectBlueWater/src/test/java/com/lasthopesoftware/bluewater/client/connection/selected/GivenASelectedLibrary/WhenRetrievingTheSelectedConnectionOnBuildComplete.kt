@@ -42,6 +42,9 @@ class WhenRetrievingTheSelectedConnectionOnBuildComplete : AndroidContext() {
 		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
 		SelectedConnectionReservation().use {
 			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider, libraryConnections)
+			deferredConnectionProvider.sendProgressUpdates(
+				BuildingConnectionStatus.GettingLibrary,
+			)
 			val futureConnectionProvider = sessionConnection.promiseSessionConnection().toFuture()
 			var futureSecondConnectionProvider: Future<IConnectionProvider?>? = null
 			deferredConnectionProvider.updates {
@@ -50,7 +53,6 @@ class WhenRetrievingTheSelectedConnectionOnBuildComplete : AndroidContext() {
 				}
 			}
 			deferredConnectionProvider.sendProgressUpdates(
-				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)

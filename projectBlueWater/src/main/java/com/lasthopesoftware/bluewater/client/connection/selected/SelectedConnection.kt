@@ -44,7 +44,14 @@ class SelectedConnection(
 
 		return libraryConnections
 			.promiseLibraryConnection(selectedLibraryId)
-			.also { it.updates(this) }
+			.also {
+				it.progress.then { progress ->
+					if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
+						it.updates(this)
+						if (progress != null) doStateChange(progress)
+					}
+				}
+			}
 	}
 
 	override fun invoke(connectionStatus: BuildingConnectionStatus) = doStateChange(connectionStatus)
