@@ -22,39 +22,54 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import java.util.concurrent.Future
 
-class WhenRetrievingTheTestedSelectedConnection : AndroidContext() {
+class WhenRetrievingTheSelectedConnectionOnBuildComplete : AndroidContext() {
 
 	companion object {
 		private val fakeMessageSender = lazy { FakeMessageBus(ApplicationProvider.getApplicationContext()) }
 		private val urlProvider = mockk<IUrlProvider>()
 		private var connectionProvider: IConnectionProvider? = null
+		private var secondConnectionProvider: IConnectionProvider? = null
 	}
 
 	override fun before() {
 		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 		val libraryConnections = mockk<ManageConnectionSessions>()
-		every { libraryConnections.promiseTestedLibraryConnection(LibraryId(51)) } returns deferredConnectionProvider
+		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
 		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()
-		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(51)
-
+		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
 		SelectedConnectionReservation().use {
-			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider,	libraryConnections)
-			val futureConnectionProvider = sessionConnection.promiseTestedSessionConnection().toFuture()
+			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider, libraryConnections)
 			deferredConnectionProvider.sendProgressUpdates(
 				BuildingConnectionStatus.GettingLibrary,
+			)
+			val futureConnectionProvider = sessionConnection.promiseSessionConnection().toFuture()
+			var futureSecondConnectionProvider: Future<IConnectionProvider?>? = null
+			deferredConnectionProvider.updates {
+				if (it == BuildingConnectionStatus.BuildingConnectionComplete) {
+					futureSecondConnectionProvider = sessionConnection.promiseSessionConnection().toFuture()
+				}
+			}
+			deferredConnectionProvider.sendProgressUpdates(
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
 			deferredConnectionProvider.sendResolution(ConnectionProvider(urlProvider, OkHttpFactory.getInstance()))
 			connectionProvider = futureConnectionProvider.get()
+			secondConnectionProvider = futureSecondConnectionProvider?.get()
 		}
 	}
 
 	@Test
 	fun thenTheConnectionIsCorrect() {
 		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
+	}
+
+	@Test
+	fun thenTheSecondConnectionIsCorrect() {
+		assertThat(secondConnectionProvider).isEqualTo(connectionProvider)
 	}
 
 	@Test

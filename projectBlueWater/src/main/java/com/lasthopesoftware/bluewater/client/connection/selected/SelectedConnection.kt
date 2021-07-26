@@ -20,15 +20,22 @@ class SelectedConnection(
 	private val localBroadcastManager: SendMessages,
 	private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider,
 	private val libraryConnections: ManageConnectionSessions
-) : (BuildingConnectionStatus) -> Unit {
+) {
 
 	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> {
-		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
+		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()
 
 		return libraryConnections
-			.promiseTestedLibraryConnection(newSelectedLibraryId)
-			.updates(this)
+			.promiseTestedLibraryConnection(selectedLibraryId)
+			.also {
+				it.progress.then { progress ->
+					if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
+						if (progress != null) doStateChange(progress)
+						it.updates(::doStateChange)
+					}
+				}
+			}
 	}
 
 	fun isSessionConnectionActive(): Boolean {
@@ -39,15 +46,20 @@ class SelectedConnection(
 	}
 
 	fun promiseSessionConnection(): Promise<IConnectionProvider?> {
-		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
+		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()
 
 		return libraryConnections
-			.promiseLibraryConnection(newSelectedLibraryId)
-			.updates(this)
+			.promiseLibraryConnection(selectedLibraryId)
+			.also {
+				it.progress.then { progress ->
+					if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
+						if (progress != null) doStateChange(progress)
+						it.updates(::doStateChange)
+					}
+				}
+			}
 	}
-
-	override fun invoke(connectionStatus: BuildingConnectionStatus) = doStateChange(connectionStatus)
 
 	private fun doStateChange(status: BuildingConnectionStatus) {
 		val broadcastIntent = Intent(buildSessionBroadcast)
