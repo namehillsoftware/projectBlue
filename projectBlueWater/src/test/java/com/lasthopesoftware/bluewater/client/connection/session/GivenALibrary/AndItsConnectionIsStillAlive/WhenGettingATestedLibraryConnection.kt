@@ -49,7 +49,7 @@ class WhenGettingATestedLibraryConnection {
 			val futureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(libraryId)
-					.updates(statuses::add)
+					.apply { updates(statuses::add) }
 					.toFuture()
 
 			firstDeferredConnectionProvider.apply {
@@ -77,7 +77,7 @@ class WhenGettingATestedLibraryConnection {
 			secondConnectionProvider =
 				connectionSessionManager
 					.promiseTestedLibraryConnection(libraryId)
-					.updates(statuses::add)
+					.apply { updates(statuses::add) }
 					.toFuture()
 					.get()
 		}

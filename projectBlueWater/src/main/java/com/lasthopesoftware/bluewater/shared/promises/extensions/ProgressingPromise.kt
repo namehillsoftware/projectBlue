@@ -29,6 +29,8 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 	}
 
 	fun updates(action: (Progress) -> Unit): Promise<Progress> {
+		val currentProgress = progress
+
 		if (!isResolved) {
 			updateListeners.add(action)
 			must {
@@ -37,6 +39,6 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 			}
 		}
 
-		return progress
+		return currentProgress
 	}
 }

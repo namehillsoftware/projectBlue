@@ -10,12 +10,14 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 	}
 
 	protected fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
-		with(source) {
-			cancellationProxy.doCancel(this)
+		cancellationProxy.doCancel(source)
 
-			updates(::reportProgress)
-			then(::resolve, ::reject)
+		source.progress.then {
+			reportProgress(it)
+			source.updates(::reportProgress)
 		}
+
+		source.then(::resolve, ::reject)
 
 		return this
 	}

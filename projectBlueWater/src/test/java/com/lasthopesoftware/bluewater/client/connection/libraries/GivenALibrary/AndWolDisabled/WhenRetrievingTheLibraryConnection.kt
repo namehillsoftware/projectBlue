@@ -59,7 +59,7 @@ class WhenRetrievingTheLibraryConnection {
 			val futureConnectionProvider =
 				libraryConnectionProvider
 					.promiseLibraryConnection(LibraryId(3))
-					.updates(statuses::add)
+					.apply { updates(statuses::add) }
 					.toFuture()
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()

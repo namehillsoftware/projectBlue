@@ -59,7 +59,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 			val futureConnectionProvider =
 				libraryConnectionProvider
 					.promiseLibraryConnection(LibraryId(3))
-					.updates(statuses::add)
+					.apply { updates(statuses::add) }
 					.toFuture()
 
 			futureConnectionProvider.cancel(true)
