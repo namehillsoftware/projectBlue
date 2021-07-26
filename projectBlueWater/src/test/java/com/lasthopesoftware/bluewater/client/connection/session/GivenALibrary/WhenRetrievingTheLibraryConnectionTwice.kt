@@ -63,10 +63,8 @@ class WhenRetrievingTheLibraryConnectionTwice {
 				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
 					.apply {
-						progress.then {
-							if (it != null) statuses.add(it)
-							updates(statuses::add)
-						}
+						progress.then { if (it != null) statuses.add(it) }
+						updates(statuses::add)
 					}
 					.toFuture()
 
@@ -78,10 +76,8 @@ class WhenRetrievingTheLibraryConnectionTwice {
 				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
 					.apply {
-						progress.then {
-							if (it != null) statuses.add(it)
-							updates(statuses::add)
-						}
+						progress.then { if (it != null) statuses.add(it) }
+						updates(statuses::add)
 					}
 					.toFuture()
 

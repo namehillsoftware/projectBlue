@@ -23,11 +23,11 @@ class SelectedConnection(
 ) : (BuildingConnectionStatus) -> Unit {
 
 	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> {
-		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
+		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()
 
 		return libraryConnections
-			.promiseTestedLibraryConnection(newSelectedLibraryId)
+			.promiseTestedLibraryConnection(selectedLibraryId)
 			.also { it.updates(this) }
 	}
 
@@ -39,11 +39,11 @@ class SelectedConnection(
 	}
 
 	fun promiseSessionConnection(): Promise<IConnectionProvider?> {
-		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
+		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
 			?: return Promise.empty()
 
 		return libraryConnections
-			.promiseLibraryConnection(newSelectedLibraryId)
+			.promiseLibraryConnection(selectedLibraryId)
 			.also { it.updates(this) }
 	}
 
