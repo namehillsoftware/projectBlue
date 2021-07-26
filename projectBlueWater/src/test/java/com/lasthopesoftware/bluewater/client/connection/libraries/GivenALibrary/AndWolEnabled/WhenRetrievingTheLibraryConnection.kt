@@ -58,32 +58,35 @@ class WhenRetrievingTheLibraryConnection {
 			val futureConnectionProvider =
 				libraryConnectionProvider
 					.promiseLibraryConnection(LibraryId(3))
-					.apply { updates(statuses::add).then(statuses::add) }
+					.apply {
+						progress.then(statuses::add)
+						updates(statuses::add)
+					}
 					.toFuture()
 
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()
 		}
+	}
 
-		@Test
-		fun thenTheLibraryIsWoken() {
-			assertThat(isLibraryServerWoken).isTrue
-		}
+	@Test
+	fun thenTheLibraryIsWoken() {
+		assertThat(isLibraryServerWoken).isTrue
+	}
 
-		@Test
-		fun thenTheConnectionIsCorrect() {
-			assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
-		}
+	@Test
+	fun thenTheConnectionIsCorrect() {
+		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
+	}
 
-		@Test
-		fun thenGettingLibraryIsBroadcast() {
-			assertThat(statuses)
-				.containsExactly(
-					BuildingConnectionStatus.GettingLibrary,
-					BuildingConnectionStatus.SendingWakeSignal,
-					BuildingConnectionStatus.BuildingConnection,
-					BuildingConnectionStatus.BuildingConnectionComplete
-				)
-		}
+	@Test
+	fun thenGettingLibraryIsBroadcast() {
+		assertThat(statuses)
+			.containsExactly(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.SendingWakeSignal,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
 	}
 }

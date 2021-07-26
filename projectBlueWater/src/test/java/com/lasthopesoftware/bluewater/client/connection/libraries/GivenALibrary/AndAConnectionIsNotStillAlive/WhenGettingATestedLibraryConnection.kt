@@ -19,7 +19,7 @@ import java.util.*
 class WhenGettingATestedLibraryConnection {
 
 	companion object {
-		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+		private val statuses = ArrayList<BuildingConnectionStatus>()
 		private val expectedConnectionProvider = mockk<IConnectionProvider>()
 		private var connectionProvider: IConnectionProvider? = null
 		private var secondConnectionProvider: IConnectionProvider? = null
@@ -46,13 +46,19 @@ class WhenGettingATestedLibraryConnection {
 			val futureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(libraryId)
-					.apply { updates(statuses::add) }
+					.apply {
+						progress.then { if (it != null) statuses.add(it) }
+						updates(statuses::add)
+					}
 					.toFuture()
 
 			val secondFutureConnectionProvider =
 				connectionSessionManager
 					.promiseTestedLibraryConnection(libraryId)
-					.apply { updates(statuses::add) }
+					.apply {
+						progress.then { if (it != null) statuses.add(it) }
+						updates(statuses::add)
+					}
 					.toFuture()
 
 			firstDeferredConnectionProvider.apply {

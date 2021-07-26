@@ -13,7 +13,7 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 		cancellationProxy.doCancel(source)
 
 		source.progress.then {
-			reportProgress(it)
+			if (it != null) reportProgress(it)
 			source.updates(::reportProgress)
 		}
 
