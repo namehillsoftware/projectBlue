@@ -62,7 +62,12 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			val futureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
-					.apply { updates(statuses::add) }
+					.apply {
+						progress.then {
+							if (it != null) statuses.add(it)
+							updates(statuses::add)
+						}
+					}
 					.toFuture()
 
 			deferredConnectionSettings.resolve()
@@ -72,7 +77,12 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			val secondFutureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
-					.apply { updates(statuses::add) }
+					.apply {
+						progress.then {
+							if (it != null) statuses.add(it)
+							updates(statuses::add)
+						}
+					}
 					.toFuture()
 
 			secondConnectionProvider = secondFutureConnectionProvider.get()

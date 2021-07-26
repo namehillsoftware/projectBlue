@@ -98,12 +98,15 @@ class ConnectionSessionManager(
 				val cancellationProxy = CancellationProxy()
 				respondToCancellation(cancellationProxy)
 
-				libraryConnections.promiseLibraryConnection(libraryId).let {
-					cancellationProxy.doCancel(it)
+				libraryConnections.promiseLibraryConnection(libraryId).let { promisedLibraryConnection ->
+					cancellationProxy.doCancel(promisedLibraryConnection)
 
-					it.updates(::reportProgress)
+					promisedLibraryConnection.progress.then {
+						reportProgress(it)
+						promisedLibraryConnection.updates(::reportProgress)
+					}
 
-					it.then({ c ->
+					promisedLibraryConnection.then({ c ->
 						if (c != null) cachedConnectionProviders[libraryId] = c
 						resolve(c)
 					},
