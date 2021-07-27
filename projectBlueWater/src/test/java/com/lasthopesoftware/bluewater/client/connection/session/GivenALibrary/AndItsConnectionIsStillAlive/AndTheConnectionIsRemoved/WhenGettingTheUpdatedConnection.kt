@@ -15,10 +15,12 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-class WhenTestingIfTheConnectionIsActive {
+class WhenGettingTheUpdatedConnection {
 
 	companion object {
 		private var isActive: Boolean? = null
+		private var originalConnection: IConnectionProvider? = null
+		private var newConnection: IConnectionProvider? = null
 
 		@JvmStatic
 		@BeforeClass
@@ -27,7 +29,7 @@ class WhenTestingIfTheConnectionIsActive {
 			every  { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
 			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(mockk<IConnectionProvider>())
+			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } answers { ProgressingPromise(mockk<IConnectionProvider>()) }
 
 			val connectionSessionManager = ConnectionSessionManager(
 				connectionsTester,
@@ -37,16 +39,23 @@ class WhenTestingIfTheConnectionIsActive {
 			val libraryId = LibraryId(2)
 			val futureConnectionProvider = connectionSessionManager.promiseLibraryConnection(libraryId).toFuture()
 
-			futureConnectionProvider[30, TimeUnit.SECONDS]
+			originalConnection = futureConnectionProvider[30, TimeUnit.SECONDS]
 
 			connectionSessionManager.removeConnection(libraryId)
 
 			isActive = connectionSessionManager.isConnectionActive(libraryId)
+
+			newConnection = connectionSessionManager.promiseLibraryConnection(libraryId).toFuture()[30, TimeUnit.SECONDS]
 		}
 	}
 
 	@Test
 	fun thenTheConnectionIsNotActive() {
 		assertThat(isActive).isFalse
+	}
+
+	@Test
+	fun thenTheNewConnectionIsNotTheOriginalConnection() {
+		assertThat(newConnection).isNotEqualTo(originalConnection)
 	}
 }

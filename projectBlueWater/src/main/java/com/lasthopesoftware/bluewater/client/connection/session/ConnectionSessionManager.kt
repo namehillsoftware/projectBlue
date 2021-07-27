@@ -83,6 +83,7 @@ class ConnectionSessionManager(
 				cancel()
 				must { synchronized(buildingConnectionPromiseSync) {
 					cachedConnectionProviders.remove(libraryId)
+					promisedConnectionProvidersCache.remove(libraryId)
 				} }
 			} ?: cachedConnectionProviders.remove(libraryId)
 		}
