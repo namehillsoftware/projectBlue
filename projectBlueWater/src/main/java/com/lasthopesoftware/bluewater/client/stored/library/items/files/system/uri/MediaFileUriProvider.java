@@ -10,7 +10,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.ProvideFileUrisForLibrary;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider;
 import com.lasthopesoftware.bluewater.shared.IoCommon;
@@ -37,7 +37,7 @@ public class MediaFileUriProvider implements IFileUriProvider, ProvideFileUrisFo
 	private final Context context;
 	private final IMediaQueryCursorProvider mediaQueryCursorProvider;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
-	private ISelectedLibraryIdentifierProvider libraryIdentifierProvider;
+	private final ProvideSelectedLibraryId libraryIdentifierProvider;
 	private final boolean isSilent;
 
 	/**
@@ -45,7 +45,7 @@ public class MediaFileUriProvider implements IFileUriProvider, ProvideFileUrisFo
 	 * @param context the application context under which to operate
 	 * @param isSilent if true, will not emit broadcast events when media files are found
 	 */
-	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, ISelectedLibraryIdentifierProvider libraryIdentifierProvider, boolean isSilent) {
+	public MediaFileUriProvider(Context context, IMediaQueryCursorProvider mediaQueryCursorProvider, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator, ProvideSelectedLibraryId libraryIdentifierProvider, boolean isSilent) {
 		this.context = context;
 		this.mediaQueryCursorProvider = mediaQueryCursorProvider;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;

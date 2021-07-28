@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.selected.GivenASelected
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -32,7 +32,7 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 		val libraryConnections = mockk<ManageConnectionSessions>()
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
-		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()
+		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
 		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
 		SelectedConnectionReservation().use {
 			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider, libraryConnections)

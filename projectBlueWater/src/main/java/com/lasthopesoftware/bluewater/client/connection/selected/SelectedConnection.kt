@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.IntDef
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 
 class SelectedConnection(
 	private val localBroadcastManager: SendMessages,
-	private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider,
+	private val selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryConnections: ManageConnectionSessions
 ) {
 

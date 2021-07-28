@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access.GivenASele
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess;
@@ -39,7 +39,7 @@ public class WhenRemovingTheLibrary {
 		final ILibraryStorage libraryStorage = mock(ILibraryStorage.class);
 		when(libraryStorage.removeLibrary(library)).thenReturn(Promise.empty());
 
-		final ISelectedLibraryIdentifierProvider libraryIdentifierProvider = library::getLibraryId;
+		final ProvideSelectedLibraryId libraryIdentifierProvider = library::getLibraryId;
 
 		final FakeLibraryProvider libraryProvider = new FakeLibraryProvider(
 			library,
