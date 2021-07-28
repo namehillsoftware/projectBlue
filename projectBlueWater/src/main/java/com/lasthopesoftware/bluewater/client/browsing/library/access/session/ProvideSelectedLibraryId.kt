@@ -5,6 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 /**
  * Created by david on 2/12/17.
  */
-interface ISelectedLibraryIdentifierProvider {
+interface ProvideSelectedLibraryId {
 	val selectedLibraryId: LibraryId?
 }

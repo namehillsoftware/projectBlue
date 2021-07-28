@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 /**
  * Created by david on 2/12/17.
  */
-class SelectedBrowserLibraryIdentifierProvider(private val context: Context) : ISelectedLibraryIdentifierProvider {
+class SelectedBrowserLibraryIdentifierProvider(private val context: Context) : ProvideSelectedLibraryId {
 	override val selectedLibraryId: LibraryId?
 		get() {
 			val libraryId = PreferenceManager.getDefaultSharedPreferences(context).getInt(LibrarySelectionKey.chosenLibraryKey, -1)

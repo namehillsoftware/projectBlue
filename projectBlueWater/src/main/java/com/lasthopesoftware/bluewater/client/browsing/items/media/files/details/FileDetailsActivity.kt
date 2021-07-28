@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
@@ -60,7 +60,7 @@ class FileDetailsActivity : AppCompatActivity() {
 	}
 
 	private val lazyImageProvider = lazy {
-		val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(this)
+		val selectedLibraryIdentifierProvider: ProvideSelectedLibraryId = SelectedBrowserLibraryIdentifierProvider(this)
 		ImageProvider(
 			StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 			MemoryCachedImageAccess.getInstance(this))

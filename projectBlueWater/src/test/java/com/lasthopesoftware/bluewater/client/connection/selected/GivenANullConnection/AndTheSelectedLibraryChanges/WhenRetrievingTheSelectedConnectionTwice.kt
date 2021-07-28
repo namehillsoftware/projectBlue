@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConn
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -51,7 +51,7 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 		Assertions.assertThat(connectionProvider!!.urlProvider).isEqualTo(firstUrlProvider)
 	}
 
-	private class FakeSelectedLibraryProvider : ISelectedLibraryIdentifierProvider {
+	private class FakeSelectedLibraryProvider : ProvideSelectedLibraryId {
 		override var selectedLibraryId: LibraryId? = LibraryId(0)
 	}
 }
