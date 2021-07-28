@@ -8,9 +8,15 @@ import com.lasthopesoftware.bluewater.client.connection.settings.changes.Observa
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 
-class SelectedConnectionSettingsChangeReceiver(private val selectedLibraryIdProvider: ProvideSelectedLibraryId, private val sendMessages: SendMessages) : BroadcastReceiver() {
+class SelectedConnectionSettingsChangeReceiver(
+	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
+	private val sendMessages: SendMessages
+) : BroadcastReceiver() {
 	override fun onReceive(context: Context?, intent: Intent?) {
-		val updatedLibraryId = intent?.getIntExtra(ObservableConnectionSettingsLibraryStorage.updatedConnectionSettingsLibraryId, -1)
+		val updatedLibraryId =
+			intent?.getIntExtra(ObservableConnectionSettingsLibraryStorage.updatedConnectionSettingsLibraryId, -1)
+				?: return
+
 		if (selectedLibraryIdProvider.selectedLibraryId?.id == updatedLibraryId)
 			sendMessages.sendBroadcast(Intent(connectionSettingsUpdated))
 	}
