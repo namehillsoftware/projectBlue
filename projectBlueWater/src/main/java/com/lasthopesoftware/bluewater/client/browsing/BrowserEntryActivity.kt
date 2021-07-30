@@ -367,6 +367,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
 
+	override fun onDestroy() {
+		if (lazyLocalBroadcastManager.isInitialized())
+			lazyLocalBroadcastManager.value.unregisterReceiver(connectionSettingsUpdatedReceiver)
+
+		super.onDestroy()
+	}
+
 	companion object {
 		@JvmField
 		val showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowserEntryActivity::class.java, "showDownloadsAction")
