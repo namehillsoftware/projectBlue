@@ -1,4 +1,4 @@
-FROM gradle:7.0.2-jdk8
+FROM gradle:7.1.1-jdk11
 
 # set default build arguments
 ARG SDK_VERSION=commandlinetools-linux-6609375_latest.zip
