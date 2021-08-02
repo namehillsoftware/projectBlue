@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerAlarm(private val serverLookup: LookupServers, private val server: PokeServer, private val alarmConfiguration: AlarmConfiguration) : WakeLibraryServer {
@@ -20,6 +21,6 @@ class ServerAlarm(private val serverLookup: LookupServers, private val server: P
 							alarmConfiguration.timesBetweenWaking)
 					})
 			}
-			.then { }
+			.unitResponse()
 	}
 }

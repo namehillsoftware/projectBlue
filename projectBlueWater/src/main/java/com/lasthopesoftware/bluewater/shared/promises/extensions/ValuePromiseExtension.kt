@@ -17,9 +17,9 @@ private class UnitResponse<Resolution> private constructor() : ImmediateResponse
 	override fun respond(resolution: Resolution) {}
 
 	companion object {
-		private val singlePassThrough = lazy { UnitResponse<Any>() }
+		private val singleUnitResponse = lazy { UnitResponse<Any>() }
 
 		@Suppress("UNCHECKED_CAST")
-		fun <Resolution> respond(): UnitResponse<Resolution> = singlePassThrough.value as UnitResponse<Resolution>
+		fun <Resolution> respond(): UnitResponse<Resolution> = singleUnitResponse.value as UnitResponse<Resolution>
 	}
 }
