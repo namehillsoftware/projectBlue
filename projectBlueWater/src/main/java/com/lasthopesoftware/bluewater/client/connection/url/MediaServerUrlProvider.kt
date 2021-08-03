@@ -19,8 +19,7 @@ class MediaServerUrlProvider private constructor(
 	constructor(authCode: String?, ipAddress: String?, port: Int)
 		: this(authCode, URL(IoCommon.httpUriScheme, ipAddress, port, ""))
 
-	constructor(authCode: String?, baseUrl: URL)
-		: this(authCode, baseUrl, ByteArray(0))
+	constructor(authCode: String?, baseUrl: URL) : this(authCode, baseUrl, ByteArray(0))
 
 	override val baseUrl: String
 		get() = baseURL.toString()

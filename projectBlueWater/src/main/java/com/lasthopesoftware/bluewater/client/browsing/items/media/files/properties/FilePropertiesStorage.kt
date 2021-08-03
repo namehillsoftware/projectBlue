@@ -15,6 +15,10 @@ class FilePropertiesStorage(
 ) {
 
 	fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
+		if (connectionProvider.urlProvider.authCode == null) {
+			return Promise(SecurityException("Authentication is required to save properties"))
+		}
+
 		val promisedUpdate = connectionProvider.promiseResponse(
 			"File/SetInfo",
 			"File=${serviceFile.key}",
