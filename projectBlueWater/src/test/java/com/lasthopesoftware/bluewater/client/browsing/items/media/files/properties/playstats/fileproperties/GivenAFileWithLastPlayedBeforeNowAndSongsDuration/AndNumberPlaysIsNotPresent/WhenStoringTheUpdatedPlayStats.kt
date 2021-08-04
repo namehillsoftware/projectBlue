@@ -1,82 +1,81 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.GivenAFileWithLastPlayedBeforeNowAndSongsDuration.AndNumberPlaysIsNotPresent;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.GivenAFileWithLastPlayedBeforeNowAndSongsDuration.AndNumberPlaysIsNotPresent
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.data.Offset
+import org.joda.time.DateTime
+import org.joda.time.Duration
+import org.junit.BeforeClass
+import org.junit.Test
 
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenStoringTheUpdatedPlayStats {
 
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+    companion object {
+        private var fileProperties: Map<String, String>? = null
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Offset.offset;
+		@BeforeClass
+		@JvmStatic
+        @Throws(InterruptedException::class)
+        fun before() {
+            val connectionProvider = FakeRevisionConnectionProvider()
+            connectionProvider.setSyncRevision(1)
+            val duration = Duration.standardMinutes(5).millis
+            val lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).millis).standardSeconds
 
-public class WhenStoringTheUpdatedPlayStats {
+            connectionProvider.mapResponse(
+                {
+					FakeConnectionResponseTuple(
+                        200, """<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<MPL Version="2.0" Title="MCWS - Files - 10936" PathSeparator="\">
+<Item>
+<Field Name="Key">23</Field>
+<Field Name="Media Type">Audio</Field>
+<Field Name="${KnownFileProperties.LAST_PLAYED}">$lastPlayed</Field>
+<Field Name="Rating">4</Field>
+<Field Name="File Size">2345088</Field>
+<Field Name="${KnownFileProperties.DURATION}">$duration</Field>
+</Item>
+</MPL>
+""".toByteArray()
+                    )
+                },
+                "File/GetInfo", "File=23"
+            )
 
-	private static Map<String, String> fileProperties;
+            val filePropertiesContainer = FakeFilePropertiesContainer()
+            val sessionFilePropertiesProvider =
+                SessionFilePropertiesProvider(connectionProvider, filePropertiesContainer)
+            val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
+                sessionFilePropertiesProvider,
+                FilePropertiesStorage(connectionProvider, filePropertiesContainer)
+            )
 
-	@BeforeClass
-	public static void before() throws InterruptedException {
-		final FakeRevisionConnectionProvider connectionProvider = new FakeRevisionConnectionProvider();
+            val serviceFile = ServiceFile(23)
+            fileProperties = filePropertiesPlayStatsUpdater
+                .promisePlaystatsUpdate(serviceFile)
+                .eventually {
+					sessionFilePropertiesProvider.promiseFileProperties(serviceFile)
+                }
+				.toFuture()
+				.get()
+        }
+    }
 
-		connectionProvider.setSyncRevision(1);
-
-		final long duration = Duration.standardMinutes(5).getMillis();
-		final long lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).getMillis()).getStandardSeconds();
-
-		connectionProvider.mapResponse((params) ->
-			new FakeConnectionResponseTuple(200, ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
-			"<MPL Version=\"2.0\" Title=\"MCWS - Files - 10936\" PathSeparator=\"\\\">\n" +
-				"<Item>\n" +
-					"<Field Name=\"Key\">23</Field>\n" +
-					"<Field Name=\"Media Type\">Audio</Field>\n" +
-					"<Field Name=\"" + KnownFileProperties.LAST_PLAYED + "\">" + lastPlayed + "</Field>\n" +
-					"<Field Name=\"Rating\">4</Field>\n" +
-					"<Field Name=\"File Size\">2345088</Field>\n" +
-					"<Field Name=\"" + KnownFileProperties.DURATION + "\">" + duration + "</Field>\n" +
-				"</Item>\n" +
-			"</MPL>\n").getBytes()),
-			"File/GetInfo", "File=23");
-
-		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
-		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, filePropertiesContainer);
-
-		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(sessionFilePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
-
-		final ServiceFile serviceFile = new ServiceFile(23);
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		filePropertiesPlayStatsUpdater
-			.promisePlaystatsUpdate(serviceFile)
-			.eventually(o -> sessionFilePropertiesProvider.promiseFileProperties(serviceFile))
-			.then(o -> {
-				fileProperties = o;
-				countDownLatch.countDown();
-				return null;
-			})
-			.excuse(e -> {
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
+	@Test
+	fun thenTheLastPlayedIsRecent() {
+		assertThat(fileProperties!![KnownFileProperties.LAST_PLAYED]?.toLong()).isCloseTo(Duration.millis(System.currentTimeMillis()).standardSeconds, Offset.offset(10L))
 	}
 
 	@Test
-	public void thenTheLastPlayedIsRecent() {
-		assertThat(Long.parseLong(fileProperties.get(KnownFileProperties.LAST_PLAYED))).isCloseTo(Duration.millis(System.currentTimeMillis()).getStandardSeconds(), offset(10L));
-	}
-
-	@Test
-	public void thenTheNumberPlaysIsIncremented() {
-		assertThat(fileProperties.get(KnownFileProperties.NUMBER_PLAYS)).isEqualTo("1");
+	fun thenTheNumberPlaysIsIncremented() {
+		assertThat(fileProperties!![KnownFileProperties.NUMBER_PLAYS]).isEqualTo("1")
 	}
 }
