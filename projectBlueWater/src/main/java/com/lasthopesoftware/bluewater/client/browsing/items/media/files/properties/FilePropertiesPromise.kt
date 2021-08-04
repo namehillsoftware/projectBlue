@@ -13,11 +13,7 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMess
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
-import org.slf4j.LoggerFactory
-import xmlwise.XmlParseException
 import xmlwise.Xmlwise
-import java.io.IOException
-import java.util.*
 
 internal class FilePropertiesPromise(
 	connectionProvider: IConnectionProvider,
@@ -60,25 +56,14 @@ internal class FilePropertiesPromise(
 		override fun prepareMessage(cancellationToken: CancellationToken): Map<String, String> =
 			if (cancellationToken.isCancelled) HashMap()
 			else response?.body?.use { body ->
-				try {
-					val xml = Xmlwise.createXml(body.string())
-					val parent = xml[0]
-					val returnProperties = HashMap<String, String>(parent.size)
-					for (el in parent) returnProperties[el.getAttribute("Name")] = el.value
-					val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile)
-					filePropertiesContainerProvider.putFilePropertiesContainer(
-						urlKeyHolder, FilePropertiesContainer(
-							serverRevision, returnProperties
-						)
-					)
-					returnProperties
-				} catch (e: IOException) {
-					LoggerFactory.getLogger(SessionFilePropertiesProvider::class.java).error(e.toString(), e)
-					throw e
-				} catch (e: XmlParseException) {
-					LoggerFactory.getLogger(SessionFilePropertiesProvider::class.java).error(e.toString(), e)
-					throw e
-				}
+				val xml = Xmlwise.createXml(body.string())
+				val parent = xml[0]
+				val returnProperties = parent.associateTo(HashMap(), { el -> Pair(el.getAttribute("Name"), el.value) })
+				filePropertiesContainerProvider.putFilePropertiesContainer(
+					UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile),
+					FilePropertiesContainer(serverRevision, returnProperties)
+				)
+				returnProperties
 			} ?: HashMap()
 	}
 }
