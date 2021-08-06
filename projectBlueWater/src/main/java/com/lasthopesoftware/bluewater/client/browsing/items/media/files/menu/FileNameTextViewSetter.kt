@@ -1,204 +1,167 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
-import android.os.Handler;
-import android.widget.TextView;
+import android.os.Handler
+import android.widget.TextView
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SessionRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import com.namehillsoftware.handoff.promises.response.EventualAction
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import org.joda.time.Duration
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.net.SocketException
+import java.util.*
+import java.util.concurrent.CancellationException
+import javax.net.ssl.SSLProtocolException
 
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection;
-import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy;
-import com.namehillsoftware.handoff.promises.response.EventualAction;
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
-import com.namehillsoftware.handoff.promises.response.PromisedResponse;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
+class FileNameTextViewSetter(private val textView: TextView) {
+    private val textViewUpdateSync = Any()
+    private val handler = Handler(textView.context.mainLooper)
 
-import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+	@Volatile
+    private var promisedState = Promise.empty<Void>()
 
-import java.io.IOException;
-import java.net.SocketException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.CancellationException;
+    @Volatile
+    private var currentlyPromisedTextViewUpdate: PromisedTextViewUpdate? = null
 
-import javax.net.ssl.SSLProtocolException;
+    @Synchronized
+    fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Void> {
+        promisedState.cancel()
+        promisedState = promisedState
+            .inevitably(EventualTextViewUpdate(serviceFile))
+        return promisedState
+    }
 
-import static com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.delay;
-
-public class FileNameTextViewSetter {
-
-	private static final Logger logger = LoggerFactory.getLogger(FileNameTextViewSetter.class);
-
-	private static final Duration timeoutDuration = Duration.standardMinutes(1);
-
-	private final Object textViewUpdateSync = new Object();
-
-	private final TextView textView;
-	private final Handler handler;
-
-	private volatile Promise<Void> promisedState = Promise.empty();
-	private volatile PromisedTextViewUpdate currentlyPromisedTextViewUpdate;
-
-	public FileNameTextViewSetter(TextView textView) {
-		this.textView = textView;
-		this.handler = new Handler(textView.getContext().getMainLooper());
-	}
-
-	public synchronized Promise<Void> promiseTextViewUpdate(ServiceFile serviceFile) {
-		promisedState.cancel();
-
-		promisedState = promisedState
-			.inevitably(new EventualTextViewUpdate(serviceFile));
-
-		return promisedState;
-	}
-
-	private class EventualTextViewUpdate implements EventualAction {
-
-		private final ServiceFile serviceFile;
-
-		EventualTextViewUpdate(ServiceFile serviceFile) {
-			this.serviceFile = serviceFile;
-		}
-
-		@Override
-		public Promise<?> promiseAction() {
-			synchronized (textViewUpdateSync) {
-				currentlyPromisedTextViewUpdate = new PromisedTextViewUpdate(serviceFile);
-				currentlyPromisedTextViewUpdate.beginUpdate();
-				return currentlyPromisedTextViewUpdate;
+    private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
+        override fun promiseAction(): Promise<*> =
+        	synchronized(textViewUpdateSync) {
+				PromisedTextViewUpdate(serviceFile)
+					.apply {
+						beginUpdate()
+						currentlyPromisedTextViewUpdate = this
+					}
 			}
-		}
-	}
+    }
 
-	private class PromisedTextViewUpdate extends Promise<Void> implements
-		Runnable,
-		ImmediateResponse<Map<String, String>, Void>,
-		PromisedResponse<IConnectionProvider, Map<String, String>>
-	{
+    private inner class PromisedTextViewUpdate(private val serviceFile: ServiceFile) :
+        Promise<Unit>(), Runnable, ImmediateResponse<Map<String, String>, Unit>,
+        PromisedResponse<IConnectionProvider?, Map<String, String>> {
+        private val cancellationProxy = CancellationProxy()
+        fun beginUpdate() {
+            if (handler.looper.thread === Thread.currentThread()) {
+                run()
+                return
+            }
 
-		private final CancellationProxy cancellationProxy = new CancellationProxy();
-		private final ServiceFile serviceFile;
+            if (handler.post(this)) return
 
-		PromisedTextViewUpdate(ServiceFile serviceFile) {
-			this.serviceFile = serviceFile;
+            logger.warn("Handler failed to post text view update: $handler")
+            resolve(Unit)
+        }
 
-			respondToCancellation(cancellationProxy);
-		}
+        override fun run() {
+            textView.setText(R.string.lbl_loading)
+            val promisedViewSetting = getInstance(textView.context)
+				.promiseSessionConnection()
+                .eventually(this)
+                .eventually(response(this, handler))
+            val delayPromise = delay<Unit>(timeoutDuration)
+            cancellationProxy.doCancel(delayPromise)
+            whenAny(promisedViewSetting, delayPromise)
+                .must {
 
-		void beginUpdate() {
-			if (handler.getLooper().getThread() == Thread.currentThread()) {
-				run();
-				return;
-			}
-
-			if (handler.post(this)) return;
-
-			logger.warn("Handler failed to post text view update: " + handler);
-			resolve(null);
-		}
-
-		@Override
-		public void run() {
-			textView.setText(R.string.lbl_loading);
-
-			final Promise<Void> promisedViewSetting =
-				SelectedConnection.getInstance(textView.getContext()).promiseSessionConnection()
-					.eventually(this)
-					.eventually(LoopedInPromise.response(this, handler));
-
-			final Promise<Void> delayPromise = delay(timeoutDuration);
-			cancellationProxy.doCancel(delayPromise);
-
-			Promise.whenAny(promisedViewSetting, delayPromise)
-				.must(() -> {
-					// First, cancel everything if the delay promise finished first
-					delayPromise.then(new VoidResponse<>($ -> cancellationProxy.run()));
+                    // First, cancel everything if the delay promise finished first
+                    delayPromise.then { cancellationProxy.run() }
 					// Then cancel the delay promise, in case the promised view setting
-					// finished first
-					delayPromise.cancel();
+                    // finished first
+                    delayPromise.cancel()
 
-					// Finally, always resolve the parent promise
-					resolve(null);
-				})
-				.excuse(e -> {
-					LoggerUncaughtExceptionHandler
-						.getErrorExecutor()
-						.execute(() -> handleError(e));
+                    // Finally, always resolve the parent promise
+                    resolve(Unit)
+                }
+                .excuse { e ->
+                    LoggerUncaughtExceptionHandler
+                        .getErrorExecutor()
+                        .execute { handleError(e) }
+                }
+        }
 
-					return null;
-				});
-		}
+        override fun promiseResponse(connectionProvider: IConnectionProvider?): Promise<Map<String, String>> {
+            if (isNotCurrentPromise || isUpdateCancelled || connectionProvider == null)
+            	return Promise(emptyMap())
 
-		@Override
-		public Promise<Map<String, String>> promiseResponse(IConnectionProvider connectionProvider) {
-			if (isNotCurrentPromise() || isUpdateCancelled())
-				return new Promise<>(Collections.emptyMap());
+			val filePropertyCache = FilePropertyCache.getInstance()
+            val cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
+                connectionProvider,
+				filePropertyCache,
+                SessionFilePropertiesProvider(
+					SessionRevisionProvider(SelectedConnectionProvider(textView.context)),
+					connectionProvider,
+					filePropertyCache)
+            )
 
-			final FilePropertyCache filePropertyCache = FilePropertyCache.getInstance();
-			final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
-				new CachedSessionFilePropertiesProvider(connectionProvider, filePropertyCache,
-					new SessionFilePropertiesProvider(connectionProvider, filePropertyCache));
+			val filePropertiesPromise = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile)
+            cancellationProxy.doCancel(filePropertiesPromise)
+            return filePropertiesPromise
+        }
 
-			final Promise<Map<String, String>> filePropertiesPromise = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile);
+        override fun respond(properties: Map<String, String>) {
+            if (isNotCurrentPromise || isUpdateCancelled) return
+            val fileName = properties[KnownFileProperties.NAME]
+            if (fileName != null) textView.text = fileName
+        }
 
-			cancellationProxy.doCancel(filePropertiesPromise);
+        private fun handleError(e: Throwable) {
+            if (isUpdateCancelled) return
+            if (e is CancellationException) return
+            if (e is SocketException) {
+                val message = e.message
+                if (message != null && message.lowercase(Locale.getDefault()).contains("socket closed")) return
+            }
+            if (e is IOException) {
+                val message = e.message
+                if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) return
+            }
+            if (e is SSLProtocolException) {
+                val message = e.message
+                if (message != null && message.lowercase(Locale.getDefault()).contains("ssl handshake aborted")) return
+            }
+            logger.error(
+                "An error occurred getting the file properties for the file with ID " + serviceFile.key,
+                e
+            )
+        }
 
-			return filePropertiesPromise;
-		}
+        private val isNotCurrentPromise: Boolean
+            get() = synchronized(textViewUpdateSync) { currentlyPromisedTextViewUpdate !== this }
+        private val isUpdateCancelled: Boolean
+            get() = cancellationProxy.isCancelled
 
-		@Override
-		public Void respond(Map<String, String> properties) {
-			if (isNotCurrentPromise() || isUpdateCancelled()) return null;
+        init {
+            respondToCancellation(cancellationProxy)
+        }
+    }
 
-			final String fileName = properties.get(KnownFileProperties.NAME);
+    companion object {
+        private val logger = LoggerFactory.getLogger(
+            FileNameTextViewSetter::class.java
+        )
+        private val timeoutDuration = Duration.standardMinutes(1)
+    }
 
-			if (fileName != null)
-				textView.setText(fileName);
-
-			return null;
-		}
-
-		private void handleError(Throwable e) {
-			if (isUpdateCancelled()) return;
-
-			if (e instanceof CancellationException) return;
-
-			if (e instanceof SocketException) {
-				final String message = e.getMessage();
-				if (message != null && message.toLowerCase().contains("socket closed")) return;
-			}
-
-			if (e instanceof IOException) {
-				final String message = e.getMessage();
-				if (message != null && message.toLowerCase().contains("canceled")) return;
-			}
-
-			if (e instanceof SSLProtocolException) {
-				final String message = e.getMessage();
-				if (message != null && message.toLowerCase().contains("ssl handshake aborted")) return;
-			}
-
-			logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.getKey(), e);
-		}
-
-		private boolean isNotCurrentPromise() {
-			synchronized (textViewUpdateSync) {
-				return currentlyPromisedTextViewUpdate != this;
-			}
-		}
-
-		private boolean isUpdateCancelled() {
-			return cancellationProxy.isCancelled();
-		}
-	}
 }

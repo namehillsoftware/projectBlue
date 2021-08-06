@@ -29,6 +29,7 @@ class EmptyPlaybackHandler(private val fileDuration: Int) : ProgressedPromise<Du
 		return promisedThis as Promise<IBufferingPlaybackFile>
 	}
 
+	@Suppress("UNCHECKED_CAST")
 	override fun promisePause(): Promise<PlayableFile> {
 		return promisedThis as Promise<PlayableFile>
 	}

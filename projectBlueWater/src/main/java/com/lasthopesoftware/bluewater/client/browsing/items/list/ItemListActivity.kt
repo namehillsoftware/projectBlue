@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
@@ -75,8 +76,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		pbLoading.findView().visibility = View.VISIBLE
 		getInstance(this).promiseSessionConnection()
 			.eventually { c ->
-				val itemProvider = ItemProvider(c)
-				itemProvider.promiseItems(mItemId)
+				c?.let(::ItemProvider)?.promiseItems(mItemId) ?: Promise(emptyList())
 			}
 			.eventually(itemProviderComplete.value)
 			.excuse(HandleViewIoException(this) { hydrateItems() })
