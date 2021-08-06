@@ -37,11 +37,12 @@ class ConnectionProvider(override val urlProvider: IUrlProvider, private val okH
 
 	override fun promiseSentPacket(packets: ByteArray): Promise<Unit> {
 		return QueuedPromise(MessageWriter {
-			val url = URL(urlProvider.baseUrl)
-			val address = InetAddress.getByName(url.host)
-			val packet = DatagramPacket(packets, packets.size, address, url.port)
-			val socket = DatagramSocket()
-			socket.use { it.send(packet) }
+			urlProvider.baseUrl?.run {
+				val address = InetAddress.getByName(host)
+				val packet = DatagramPacket(packets, packets.size, address, port)
+				val socket = DatagramSocket()
+				socket.use { it.send(packet) }
+			}
 		}, HttpThreadPoolExecutor.executor)
 	}
 }

@@ -38,6 +38,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.RevisionChecker
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
@@ -422,8 +423,10 @@ open class PlaybackService : Service() {
 	}
 
 	private val lazyFileProperties = lazy {
+		val connectionSessionManager = ConnectionSessionManager.get(this)
 		FilePropertiesProvider(
-			ConnectionSessionManager.get(this),
+			connectionSessionManager,
+			RevisionChecker(connectionSessionManager),
 			FilePropertyCache.getInstance())
 	}
 

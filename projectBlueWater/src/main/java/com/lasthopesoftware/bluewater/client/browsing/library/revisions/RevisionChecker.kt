@@ -20,6 +20,10 @@ class RevisionChecker(private val libraryConnections: ProvideLibraryConnections)
 		private val lastRevisions: MutableMap<String, Long> = HashMap()
 
 		@JvmStatic
+		fun promiseRevision(libraryConnections: ProvideLibraryConnections, connectionProvider: IConnectionProvider): Promise<Int> =
+			RevisionChecker(libraryConnections).promiseRevision(connectionProvider)
+
+		@JvmStatic
 		fun promiseRevision(context: Context, connectionProvider: IConnectionProvider): Promise<Int> =
 			RevisionChecker(ConnectionSessionManager.get(context)).promiseRevision(connectionProvider)
 
@@ -51,12 +55,12 @@ class RevisionChecker(private val libraryConnections: ProvideLibraryConnections)
 								?.use { body -> body.byteStream().use(StandardRequest::fromInputStream) }
 								?.let { standardRequest -> standardRequest.items["Sync"] }
 								?.takeIf { revisionValue -> revisionValue.isNotEmpty() }
+								?.let(Integer::valueOf)
 								?.also { revisionValue ->
-									cachedRevisions[baseServerUrl] = Integer.valueOf(revisionValue)
+									cachedRevisions[baseServerUrl] = revisionValue
 									lastRevisions[baseServerUrl] = System.currentTimeMillis()
 								}
-
-							getCachedRevision(connectionProvider)
+								?: getCachedRevision(connectionProvider)
 						}, { getCachedRevision(connectionProvider) })
 		} ?: badRevision.toPromise()
 }

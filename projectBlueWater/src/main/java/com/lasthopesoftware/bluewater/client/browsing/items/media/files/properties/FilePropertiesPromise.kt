@@ -55,15 +55,19 @@ internal class FilePropertiesPromise(
 
 		override fun prepareMessage(cancellationToken: CancellationToken): Map<String, String> =
 			if (cancellationToken.isCancelled) HashMap()
-			else response?.body?.use { body ->
-				val xml = Xmlwise.createXml(body.string())
-				val parent = xml[0]
-				val returnProperties = parent.associateTo(HashMap(), { el -> Pair(el.getAttribute("Name"), el.value) })
-				filePropertiesContainerProvider.putFilePropertiesContainer(
-					UrlKeyHolder(connectionProvider.urlProvider.baseUrl, serviceFile),
-					FilePropertiesContainer(serverRevision, returnProperties)
-				)
-				returnProperties
+			else connectionProvider.urlProvider.baseUrl?.let { baseUrl ->
+				response?.body
+					?.use { body -> Xmlwise.createXml(body.string()) }
+					?.let { xml ->
+						val parent = xml[0]
+						val returnProperties =
+							parent.associateTo(HashMap(), { el -> Pair(el.getAttribute("Name"), el.value) })
+						filePropertiesContainerProvider.putFilePropertiesContainer(
+							UrlKeyHolder(baseUrl, serviceFile),
+							FilePropertiesContainer(serverRevision, returnProperties)
+						)
+						returnProperties
+				}
 			} ?: HashMap()
 	}
 }
