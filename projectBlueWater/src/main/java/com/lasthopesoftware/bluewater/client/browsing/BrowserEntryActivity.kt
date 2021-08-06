@@ -29,8 +29,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SessionRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsByConnectionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
@@ -109,7 +109,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val lazyLibraryViewsProvider = lazy {
 		LibraryViewsProvider(
 			lazySessionConnectionProvider.value,
-			LibraryViewsByConnectionProvider())
+			SessionRevisionProvider(lazySessionConnectionProvider.value))
 	}
 
 	private val lazySelectedLibraryViews = lazy {

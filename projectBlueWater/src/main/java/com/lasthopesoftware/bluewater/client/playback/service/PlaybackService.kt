@@ -38,12 +38,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.RevisionChecker
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SessionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.*
@@ -74,7 +76,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSes
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.RemoteControlClientBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
@@ -426,7 +427,7 @@ open class PlaybackService : Service() {
 		val connectionSessionManager = ConnectionSessionManager.get(this)
 		FilePropertiesProvider(
 			connectionSessionManager,
-			RevisionChecker(connectionSessionManager),
+			LibraryRevisionProvider(connectionSessionManager),
 			FilePropertyCache.getInstance())
 	}
 
@@ -435,6 +436,10 @@ open class PlaybackService : Service() {
 			ConnectionSessionManager.get(this),
 			FilePropertyCache.getInstance(),
 			lazyFileProperties.value)
+	}
+
+	private val lazySessionRevisions = lazy {
+		SessionRevisionProvider(SelectedConnectionProvider(this))
 	}
 
 	private val playbackEngineCloseables = CloseableManager()
@@ -503,12 +508,7 @@ open class PlaybackService : Service() {
 	}
 
 	private fun registerRemoteClientControl() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			lazyMediaSession.getObject().isActive = true
-			return
-		}
-		audioManagerLazy.value.registerMediaButtonEventReceiver(remoteControlReceiver.value)
-		audioManagerLazy.value.registerRemoteControlClient(remoteControlClient.value)
+		lazyMediaSession.getObject().isActive = true
 	}
 
 	private fun registerListeners() {
@@ -675,23 +675,18 @@ open class PlaybackService : Service() {
 			val cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
 				connectionProvider,
 				FilePropertyCache.getInstance(),
-				SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance()))
+				SessionFilePropertiesProvider(lazySessionRevisions.value, connectionProvider, FilePropertyCache.getInstance()))
 
 			val imageProvider = ImageProvider(
 				StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.value),
 				MemoryCachedImageAccess.getInstance(this))
 
 			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-			val broadcaster = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) MediaSessionBroadcaster(
+			val broadcaster = MediaSessionBroadcaster(
 				this,
 				cachedSessionFilePropertiesProvider,
 				imageProvider,
 				lazyMediaSession.getObject())
-			else RemoteControlClientBroadcaster(
-				this,
-				cachedSessionFilePropertiesProvider,
-				imageProvider,
-				remoteControlClient.value)
 			remoteControlProxy = RemoteControlProxy(broadcaster)
 				.also { rcp ->
 					localBroadcastManagerLazy

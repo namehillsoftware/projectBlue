@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.access;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsByConnectionProvider;
+import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -24,7 +24,7 @@ public class ItemProvider implements ProvideItems {
 	public static Promise<List<Item>> provide(IConnectionProvider connectionProvider, int itemKey) {
 		return new ItemProvider(connectionProvider).promiseItems(itemKey);
 	}
-	
+
 	public ItemProvider(IConnectionProvider connectionProvider) {
 		this.connectionProvider = connectionProvider;
 	}
@@ -32,7 +32,7 @@ public class ItemProvider implements ProvideItems {
 	@Override
     public Promise<List<Item>> promiseItems(int itemKey) {
 		return connectionProvider.promiseResponse(
-			LibraryViewsByConnectionProvider.browseLibraryParameter,
+			LibraryViewsProvider.browseLibraryParameter,
 			"ID=" + itemKey,
 			"Version=2").then(response -> {
 			final ResponseBody body = response.body();

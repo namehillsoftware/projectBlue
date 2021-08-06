@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.propert
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckSessionRevisions
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.lazyj.Lazy
 import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.joda.time.format.DateTimeFormatterBuilder
@@ -12,7 +12,8 @@ import org.joda.time.format.PeriodFormatterBuilder
 import java.util.*
 import kotlin.math.ceil
 
-class FormattedSessionFilePropertiesProvider(connectionProvider: IConnectionProvider?, filePropertiesContainerProvider: IFilePropertiesContainerRepository?) : SessionFilePropertiesProvider(connectionProvider!!, filePropertiesContainerProvider!!) {
+class FormattedSessionFilePropertiesProvider(checkSessionRevisions: CheckSessionRevisions, connectionProvider: IConnectionProvider, filePropertiesContainerProvider: IFilePropertiesContainerRepository)
+	: SessionFilePropertiesProvider(checkSessionRevisions, connectionProvider, filePropertiesContainerProvider) {
 
 	companion object {
 		private val yearFormatter = lazy { DateTimeFormatterBuilder().appendYear(4, 4).toFormatter() }

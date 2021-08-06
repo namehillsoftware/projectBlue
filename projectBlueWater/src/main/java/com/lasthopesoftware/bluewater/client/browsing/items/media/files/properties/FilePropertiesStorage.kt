@@ -46,10 +46,9 @@ class FilePropertiesStorage(
 					promisedUpdate.eventually { checkRevisions.promiseRevision(libraryId) }
 						.then { revision ->
 							val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-							filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)?.also {
-								if (it.revision == revision)
-									it.updateProperty(property, value)
-							}
+							filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
+								?.takeIf { it.revision == revision }
+								?.updateProperty(property, value)
 						}
 						.excuse { e ->
 							logger.warn(

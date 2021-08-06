@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.RevisionChecker
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
@@ -169,7 +169,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 			filePropertyCache,
 			FilePropertiesProvider(
 				lazyLibraryConnections.value,
-				RevisionChecker(lazyLibraryConnections.value),
+				LibraryRevisionProvider(lazyLibraryConnections.value),
 				filePropertyCache))
 	}
 

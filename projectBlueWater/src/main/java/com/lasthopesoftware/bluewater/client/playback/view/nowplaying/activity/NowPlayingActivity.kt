@@ -35,7 +35,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.RevisionChecker
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SessionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
@@ -43,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -156,9 +158,13 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		val connectionSessionManager = ConnectionSessionManager.get(this)
 		FilePropertiesStorage(
 			connectionSessionManager,
-			RevisionChecker(connectionSessionManager),
+			LibraryRevisionProvider(connectionSessionManager),
 			FilePropertyCache.getInstance()
 		)
+	}
+
+	private val lazySessionRevisionProvider = lazy {
+		SessionRevisionProvider(SelectedConnectionProvider(this))
 	}
 
 	private val lazyDefaultImage = lazy { DefaultImageProvider(this).promiseFileBitmap() }
@@ -450,7 +456,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				}
 
 				disableViewWithMessage()
-				val sessionFilePropertiesProvider = SessionFilePropertiesProvider(connectionProvider, FilePropertyCache.getInstance())
+				val sessionFilePropertiesProvider = SessionFilePropertiesProvider(lazySessionRevisionProvider.value, connectionProvider, FilePropertyCache.getInstance())
 				sessionFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually { fileProperties ->
