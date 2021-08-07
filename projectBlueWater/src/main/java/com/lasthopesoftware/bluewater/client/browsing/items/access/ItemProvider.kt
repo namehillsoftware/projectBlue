@@ -15,11 +15,7 @@ class ItemProvider(private val connectionProvider: IConnectionProvider) : Provid
 	}
 
     override fun promiseItems(itemKey: Int): Promise<List<Item>> =
-    	connectionProvider.promiseResponse(
-			LibraryViewsProvider.browseLibraryParameter,
-			"ID=$itemKey",
-			"Version=2"
-		).then { response ->
-			response.body?.use { body -> body.byteStream().use(ItemResponse::GetItems) }
-		}
+    	connectionProvider
+			.promiseResponse(LibraryViewsProvider.browseLibraryParameter, "ID=$itemKey", "Version=2")
+			.then { it.body?.use { body -> body.byteStream().use(ItemResponse::GetItems) } }
 }
