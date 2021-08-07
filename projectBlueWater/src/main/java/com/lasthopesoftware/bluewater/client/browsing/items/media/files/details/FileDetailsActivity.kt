@@ -16,7 +16,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedSessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.Me
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SessionRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
@@ -97,7 +97,7 @@ class FileDetailsActivity : AppCompatActivity() {
 		selectedConnectionProvider.promiseSessionConnection()
 			.eventually { connectionProvider ->
 				connectionProvider
-					?.let { c -> FormattedSessionFilePropertiesProvider(SessionRevisionProvider(selectedConnectionProvider), c, FilePropertyCache.getInstance()) }
+					?.let { c -> FormattedScopedFilePropertiesProvider(c, ScopedRevisionProvider(c), FilePropertyCache.getInstance()) }
 					?.promiseFileProperties(ServiceFile(fileKey))
 					?.eventually(LoopedInPromise.response({ fileProperties ->
 						setFileNameFromProperties(fileProperties)

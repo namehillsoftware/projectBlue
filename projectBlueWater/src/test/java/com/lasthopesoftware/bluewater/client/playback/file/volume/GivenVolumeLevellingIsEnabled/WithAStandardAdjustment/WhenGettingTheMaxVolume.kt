@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAStandardAdjustment
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -40,8 +40,8 @@ class WhenGettingTheMaxVolume {
 						put(KnownFileProperties.VolumeLevelReplayGain, "-13.5")
 					}
 				}))
-			val sessionFilePropertiesProvider = SessionFilePropertiesProvider(connectionProvider, repository)
-			val cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
+			val sessionFilePropertiesProvider = ScopedFilePropertiesProvider(connectionProvider, repository)
+			val cachedSessionFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				repository,
 				sessionFilePropertiesProvider)

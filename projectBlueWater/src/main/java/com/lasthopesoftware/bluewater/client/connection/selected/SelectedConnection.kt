@@ -105,6 +105,9 @@ class SelectedConnection(
 		@Volatile
 		private lateinit var selectedConnectionInstance: SelectedConnection
 
+		fun Context.promiseSelectedConnection(): Promise<IConnectionProvider?> =
+			getInstance(this).promiseSessionConnection()
+
 		@JvmStatic
 		@Synchronized
 		fun getInstance(context: Context): SelectedConnection {

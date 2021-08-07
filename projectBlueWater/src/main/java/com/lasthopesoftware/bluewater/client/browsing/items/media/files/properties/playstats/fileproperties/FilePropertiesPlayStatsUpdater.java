@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideFilePropertiesForSession;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.IPlaystatsUpdate;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -16,12 +16,12 @@ import kotlin.Unit;
 public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 	private static final Logger logger = LoggerFactory.getLogger(FilePropertiesPlayStatsUpdater.class);
 
-	private final ProvideFilePropertiesForSession filePropertiesProvider;
-	private final FilePropertiesStorage filePropertiesStorage;
+	private final ProvideScopedFileProperties filePropertiesProvider;
+	private final ScopedFilePropertiesStorage scopedFilePropertiesStorage;
 
-	public FilePropertiesPlayStatsUpdater(ProvideFilePropertiesForSession filePropertiesProvider, FilePropertiesStorage filePropertiesStorage) {
+	public FilePropertiesPlayStatsUpdater(ProvideScopedFileProperties filePropertiesProvider, ScopedFilePropertiesStorage scopedFilePropertiesStorage) {
 		this.filePropertiesProvider = filePropertiesProvider;
-		this.filePropertiesStorage = filePropertiesStorage;
+		this.scopedFilePropertiesStorage = scopedFilePropertiesStorage;
 	}
 
 	@Override
@@ -42,10 +42,10 @@ public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 					if (numberPlaysString != null && !numberPlaysString.isEmpty())
 						numberPlays = Integer.parseInt(numberPlaysString);
 
-					final Promise<Unit> numberPlaysUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
+					final Promise<Unit> numberPlaysUpdate = scopedFilePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
 
 					final String newLastPlayed = String.valueOf(currentTime / 1000);
-					final Promise<Unit> lastPlayedUpdate = filePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.LAST_PLAYED, newLastPlayed, false);
+					final Promise<Unit> lastPlayedUpdate = scopedFilePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.LAST_PLAYED, newLastPlayed, false);
 
 					return Promise.whenAll(numberPlaysUpdate, lastPlayedUpdate);
 				} catch (NumberFormatException ne) {

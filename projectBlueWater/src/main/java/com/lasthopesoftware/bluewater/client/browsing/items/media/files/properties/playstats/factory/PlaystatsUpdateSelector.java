@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.factory;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideFilePropertiesForSession;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.IPlaystatsUpdate;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater;
@@ -12,16 +12,16 @@ import com.namehillsoftware.handoff.promises.Promise;
 public class PlaystatsUpdateSelector {
 
 	private final IConnectionProvider connectionProvider;
-	private final ProvideFilePropertiesForSession filePropertiesProvider;
-	private final FilePropertiesStorage filePropertiesStorage;
+	private final ProvideScopedFileProperties filePropertiesProvider;
+	private final ScopedFilePropertiesStorage scopedFilePropertiesStorage;
 	private final IProgramVersionProvider programVersionProvider;
 
 	private volatile Promise<IPlaystatsUpdate> promisedPlaystatsUpdater = Promise.empty();
 
-	public PlaystatsUpdateSelector(IConnectionProvider connectionProvider, ProvideFilePropertiesForSession filePropertiesProvider, FilePropertiesStorage filePropertiesStorage, IProgramVersionProvider programVersionProvider) {
+	public PlaystatsUpdateSelector(IConnectionProvider connectionProvider, ProvideScopedFileProperties filePropertiesProvider, ScopedFilePropertiesStorage scopedFilePropertiesStorage, IProgramVersionProvider programVersionProvider) {
 		this.connectionProvider = connectionProvider;
 		this.filePropertiesProvider = filePropertiesProvider;
-		this.filePropertiesStorage = filePropertiesStorage;
+		this.scopedFilePropertiesStorage = scopedFilePropertiesStorage;
 		this.programVersionProvider = programVersionProvider;
 	}
 
@@ -35,6 +35,6 @@ public class PlaystatsUpdateSelector {
 		return programVersionProvider.promiseServerVersion()
 			.then(programVersion -> programVersion != null && programVersion.major >= 22
 					? new PlayedFilePlayStatsUpdater(connectionProvider)
-					: new FilePropertiesPlayStatsUpdater(filePropertiesProvider, filePropertiesStorage));
+					: new FilePropertiesPlayStatsUpdater(filePropertiesProvider, scopedFilePropertiesStorage));
 	}
 }

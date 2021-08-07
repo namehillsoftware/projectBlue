@@ -1,8 +1,12 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.factory.GivenAVersionOfMediaCenterIsNotReturned;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.IPlaystatsUpdate;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
@@ -14,10 +18,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenGettingThePlaystatsUpdater {
 
@@ -34,8 +34,8 @@ public class WhenGettingThePlaystatsUpdater {
 		final FakeFilePropertiesContainer fakeFilePropertiesContainer = new FakeFilePropertiesContainer();
 		final PlaystatsUpdateSelector playstatsUpdateSelector = new PlaystatsUpdateSelector(
 			fakeConnectionProvider,
-			new SessionFilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer),
-			new FilePropertiesStorage(fakeConnectionProvider, fakeFilePropertiesContainer),
+			new ScopedFilePropertiesProvider(fakeConnectionProvider, fakeFilePropertiesContainer),
+			new ScopedFilePropertiesStorage(fakeConnectionProvider, fakeFilePropertiesContainer),
 			programVersionProvider);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);

@@ -7,10 +7,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
@@ -26,11 +26,11 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 
 	@Override
 	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
-		final CachedSessionFilePropertiesProvider filePropertiesProvider =
-			new CachedSessionFilePropertiesProvider(
+		final ScopedCachedFilePropertiesProvider filePropertiesProvider =
+			new ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				FilePropertyCache.getInstance(),
-				new SessionFilePropertiesProvider(
+				new ScopedFilePropertiesProvider(
 					connectionProvider,
 					FilePropertyCache.getInstance()
 				));
@@ -45,11 +45,11 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 
 	private static class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
 
-		private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
+		private final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider;
 		private final ScrobbleIntentProvider scrobbleIntentProvider;
 
-		public PlaybackFileChangedScrobbleDroidProxy(CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ScrobbleIntentProvider scrobbleIntentProvider) {
-			this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
+		public PlaybackFileChangedScrobbleDroidProxy(ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider, ScrobbleIntentProvider scrobbleIntentProvider) {
+			this.scopedCachedFilePropertiesProvider = scopedCachedFilePropertiesProvider;
 			this.scrobbleIntentProvider = scrobbleIntentProvider;
 		}
 
@@ -58,7 +58,7 @@ public class PlaybackFileStartedScrobblerRegistration implements IConnectionDepe
 			final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
 			if (fileKey < 0) return;
 
-			cachedSessionFilePropertiesProvider
+			scopedCachedFilePropertiesProvider
 				.promiseFileProperties(new ServiceFile(fileKey))
 				.then(new VoidResponse<>(fileProperties -> {
 					final String artist = fileProperties.get(KnownFileProperties.ARTIST);

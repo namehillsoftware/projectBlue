@@ -1,10 +1,14 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAVeryHighAdjustment;
 
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
@@ -18,10 +22,6 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenGettingTheMaxVolume {
 
@@ -41,19 +41,19 @@ public class WhenGettingTheMaxVolume {
 				put(KnownFileProperties.VolumeLevelReplayGain, "25");
 			}}));
 
-		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, repository);
+		final ScopedFilePropertiesProvider scopedFilePropertiesProvider = new ScopedFilePropertiesProvider(connectionProvider, repository);
 
-		final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider =
-			new CachedSessionFilePropertiesProvider(
+		final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider =
+			new ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				repository,
-				sessionFilePropertiesProvider);
+				scopedFilePropertiesProvider);
 
 		final IVolumeLevelSettings volumeLevelSettings = mock(IVolumeLevelSettings.class);
 		when(volumeLevelSettings.isVolumeLevellingEnabled()).thenReturn(true);
 
 		final MaxFileVolumeProvider maxFileVolumeProvider =
-			new MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider);
+			new MaxFileVolumeProvider(volumeLevelSettings, scopedCachedFilePropertiesProvider);
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		maxFileVolumeProvider

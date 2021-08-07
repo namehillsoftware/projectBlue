@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FakeCachedSessionFilesPropertiesProvider extends CachedSessionFilePropertiesProvider {
+public class FakeScopedCachedFilesPropertiesProvider extends ScopedCachedFilePropertiesProvider {
 	private final Map<ServiceFile, Map<String, String>> cachedFileProperties = new HashMap<>();
 
-	public FakeCachedSessionFilesPropertiesProvider() {
+	public FakeScopedCachedFilesPropertiesProvider() {
 		super(null, null, null);
 	}
 

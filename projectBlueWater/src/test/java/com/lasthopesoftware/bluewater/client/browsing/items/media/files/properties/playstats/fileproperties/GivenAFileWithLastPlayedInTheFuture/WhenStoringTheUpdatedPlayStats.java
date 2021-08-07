@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.GivenAFileWithLastPlayedInTheFuture;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple;
@@ -16,8 +18,6 @@ import org.junit.Test;
 
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class WhenStoringTheUpdatedPlayStats {
 
@@ -48,14 +48,14 @@ public class WhenStoringTheUpdatedPlayStats {
 			"File/GetInfo", "File=23");
 
 		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
-		final SessionFilePropertiesProvider sessionFilePropertiesProvider = new SessionFilePropertiesProvider(connectionProvider, filePropertiesContainer);
+		final ScopedFilePropertiesProvider scopedFilePropertiesProvider = new ScopedFilePropertiesProvider(connectionProvider, filePropertiesContainer);
 
-		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(sessionFilePropertiesProvider, new FilePropertiesStorage(connectionProvider, filePropertiesContainer));
+		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(scopedFilePropertiesProvider, new ScopedFilePropertiesStorage(connectionProvider, filePropertiesContainer));
 
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		filePropertiesPlayStatsUpdater
 			.promisePlaystatsUpdate(new ServiceFile(23))
-			.eventually(o -> sessionFilePropertiesProvider.promiseFileProperties(new ServiceFile(23)))
+			.eventually(o -> scopedFilePropertiesProvider.promiseFileProperties(new ServiceFile(23)))
 			.then(o -> {
 				fileProperties = o;
 				countDownLatch.countDown();

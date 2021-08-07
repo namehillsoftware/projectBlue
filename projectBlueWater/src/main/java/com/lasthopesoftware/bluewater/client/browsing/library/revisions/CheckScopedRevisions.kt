@@ -2,6 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.library.revisions
 
 import com.namehillsoftware.handoff.promises.Promise
 
-interface CheckSessionRevisions {
+interface CheckScopedRevisions {
 	fun promiseRevision(): Promise<Int>
 }

@@ -1,15 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import kotlin.math.pow
 
-class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSettings, private val cachedSessionFilePropertiesProvider: CachedSessionFilePropertiesProvider) : ProvideMaxFileVolume {
+class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSettings, private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider) : ProvideMaxFileVolume {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(MaxFileVolumeProvider::class.java)
@@ -18,7 +18,7 @@ class MaxFileVolumeProvider(private val volumeLevelSettings: IVolumeLevelSetting
 	}
 
 	override fun promiseMaxFileVolume(serviceFile: ServiceFile): Promise<Float> {
-		return if (!volumeLevelSettings.isVolumeLevellingEnabled) promisedUnityVolume else cachedSessionFilePropertiesProvider
+		return if (!volumeLevelSettings.isVolumeLevellingEnabled) promisedUnityVolume else scopedCachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.then { fileProperties ->
 				if (!fileProperties.containsKey(KnownFileProperties.VolumeLevelReplayGain)) return@then UnityVolume

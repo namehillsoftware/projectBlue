@@ -22,10 +22,10 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
@@ -36,7 +36,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SessionRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
@@ -156,7 +156,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private val lazyFilePropertiesStorage = lazy {
 		val connectionSessionManager = ConnectionSessionManager.get(this)
-		FilePropertiesStorage(
+		ScopedFilePropertiesStorage(
 			connectionSessionManager,
 			LibraryRevisionProvider(connectionSessionManager),
 			FilePropertyCache.getInstance()
@@ -164,7 +164,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private val lazySessionRevisionProvider = lazy {
-		SessionRevisionProvider(SelectedConnectionProvider(this))
+		ScopedRevisionProvider(SelectedConnectionProvider(this))
 	}
 
 	private val lazyDefaultImage = lazy { DefaultImageProvider(this).promiseFileBitmap() }
@@ -456,7 +456,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				}
 
 				disableViewWithMessage()
-				val sessionFilePropertiesProvider = SessionFilePropertiesProvider(lazySessionRevisionProvider.value, connectionProvider, FilePropertyCache.getInstance())
+				val sessionFilePropertiesProvider = ScopedFilePropertiesProvider(lazySessionRevisionProvider.value, connectionProvider, FilePropertyCache.getInstance())
 				sessionFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually { fileProperties ->
@@ -521,7 +521,12 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 				val stringRating = newRating.roundToInt().toString()
 				lazySelectedLibraryIdProvider.value.selectedLibraryId?.also { libraryId ->
-					lazyFilePropertiesStorage.value.promiseFileUpdate(libraryId, serviceFile, KnownFileProperties.RATING, stringRating, false)
+					lazyFilePropertiesStorage.value.promiseFileUpdate(
+						serviceFile,
+						KnownFileProperties.RATING,
+						stringRating,
+						false
+					)
 				}
 				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
 			}

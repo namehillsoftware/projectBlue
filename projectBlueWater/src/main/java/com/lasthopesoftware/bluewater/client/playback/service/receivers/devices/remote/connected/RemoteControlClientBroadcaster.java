@@ -7,9 +7,9 @@ import android.media.MediaMetadataRetriever;
 import android.media.RemoteControlClient;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -29,7 +29,7 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 			RemoteControlClient.FLAG_KEY_MEDIA_STOP;
 
 	private final Context context;
-	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
+	private final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
 	private final RemoteControlClient remoteControlClient;
 
@@ -38,9 +38,9 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 	private volatile boolean isPlaying;
 	private Bitmap remoteClientBitmap;
 
-	public RemoteControlClientBroadcaster(Context context, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
+	public RemoteControlClientBroadcaster(Context context, ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider, ImageProvider imageProvider, RemoteControlClient remoteControlClient) {
 		this.context = context;
-		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
+		this.scopedCachedFilePropertiesProvider = scopedCachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
 		this.remoteControlClient = remoteControlClient;
 		remoteControlClient.setTransportControlFlags(standardControlFlags);
@@ -71,7 +71,7 @@ public class RemoteControlClientBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
-		cachedSessionFilePropertiesProvider
+		scopedCachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.eventually(LoopedInPromise.response(fileProperties -> {
 				final String artist = fileProperties.get(KnownFileProperties.ARTIST);

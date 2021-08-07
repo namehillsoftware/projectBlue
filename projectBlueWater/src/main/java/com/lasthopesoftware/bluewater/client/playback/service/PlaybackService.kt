@@ -39,13 +39,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SessionRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.*
@@ -438,10 +437,6 @@ open class PlaybackService : Service() {
 			lazyFileProperties.value)
 	}
 
-	private val lazySessionRevisions = lazy {
-		SessionRevisionProvider(SelectedConnectionProvider(this))
-	}
-
 	private val playbackEngineCloseables = CloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
@@ -672,10 +667,12 @@ open class PlaybackService : Service() {
 		return sessionConnection.eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
 
-			val cachedSessionFilePropertiesProvider = CachedSessionFilePropertiesProvider(
+			val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
+
+			val cachedSessionFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				FilePropertyCache.getInstance(),
-				SessionFilePropertiesProvider(lazySessionRevisions.value, connectionProvider, FilePropertyCache.getInstance()))
+				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
 
 			val imageProvider = ImageProvider(
 				StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.value),

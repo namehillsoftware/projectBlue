@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.propert
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -31,7 +31,7 @@ class WhenStoringFiles {
 			val urlProvider = MediaServerUrlProvider(null, URL("http://hewo"))
 			every { connectionProvider.urlProvider } returns urlProvider
 
-			val fileStorage = FilePropertiesStorage(
+			val fileStorage = ScopedFilePropertiesStorage(
 				connectionProvider,
 				fakeFilePropertiesContainer
 			)

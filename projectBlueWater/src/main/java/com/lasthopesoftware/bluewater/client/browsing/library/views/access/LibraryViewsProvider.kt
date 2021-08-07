@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access
 
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemResponse
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckSessionRevisions
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class LibraryViewsProvider(private val selectedConnection: ProvideSelectedConnection, private val checkSessionRevisions: CheckSessionRevisions) : ProvideLibraryViews {
+class LibraryViewsProvider(private val selectedConnection: ProvideSelectedConnection, private val checkScopedRevisions: CheckScopedRevisions) : ProvideLibraryViews {
 	companion object {
 		const val browseLibraryParameter = "Browse/Children"
 	}
@@ -27,7 +27,7 @@ class LibraryViewsProvider(private val selectedConnection: ProvideSelectedConnec
 	private fun promiseLibraryViewsFromConnection(connectionProvider: IConnectionProvider?): Promise<Collection<ViewItem>> {
 		connectionProvider ?: return Promise(emptySet())
 
-		return checkSessionRevisions.promiseRevision()
+		return checkScopedRevisions.promiseRevision()
 			.eventually { serverRevision ->
 				synchronized(browseLibraryParameter) {
 					cachedFileSystemItems?.takeIf { revision == serverRevision }?.toPromise()

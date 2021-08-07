@@ -1,5 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.building.GivenATypicalServiceFile.ThatIsPaused;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import android.graphics.Bitmap;
 
 import androidx.core.app.NotificationCompat;
@@ -9,10 +16,10 @@ import com.annimon.stream.Stream;
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider;
@@ -25,13 +32,6 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class WhenBuildingTheNotification extends AndroidContext {
 
@@ -65,10 +65,10 @@ public class WhenBuildingTheNotification extends AndroidContext {
 			ApplicationProvider.getApplicationContext(),
 			() -> spiedBuilder,
 			connectionProvider,
-			new CachedSessionFilePropertiesProvider(
+			new ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				containerRepository,
-				new SessionFilePropertiesProvider(
+				new ScopedFilePropertiesProvider(
 					connectionProvider,
 					containerRepository
 				)),

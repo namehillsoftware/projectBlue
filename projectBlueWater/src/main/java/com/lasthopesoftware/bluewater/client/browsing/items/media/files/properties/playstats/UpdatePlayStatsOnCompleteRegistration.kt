@@ -1,40 +1,37 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats
 
-import android.content.BroadcastReceiver;
-import android.content.IntentFilter;
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesStorage;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SessionFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider;
+class UpdatePlayStatsOnCompleteRegistration : IConnectionDependentReceiverRegistration {
+    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): BroadcastReceiver {
+        val cache = FilePropertyCache.getInstance()
+		val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
+        return UpdatePlayStatsOnPlaybackCompleteReceiver(
+            PlaystatsUpdateSelector(
+                connectionProvider,
+                ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, cache),
+                ScopedFilePropertiesStorage(connectionProvider, scopedRevisionProvider, cache),
+                ProgramVersionProvider(connectionProvider)
+            )
+        )
+    }
 
-import java.util.Collection;
-import java.util.Collections;
+    override fun forIntents(): Collection<IntentFilter> {
+        return intents
+    }
 
-public class UpdatePlayStatsOnCompleteRegistration implements IConnectionDependentReceiverRegistration {
-
-	private static final Collection<IntentFilter> intents = Collections.singleton(new IntentFilter(PlaylistEvents.onPlaylistTrackComplete));
-
-	@Override
-	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
-		final FilePropertyCache cache = FilePropertyCache.getInstance();
-
-		return new UpdatePlayStatsOnPlaybackCompleteReceiver(
-			new PlaystatsUpdateSelector(
-				connectionProvider,
-				new SessionFilePropertiesProvider(connectionProvider, cache),
-				new FilePropertiesStorage(connectionProvider, cache),
-				new ProgramVersionProvider(connectionProvider)));
-	}
-
-	@Override
-	public Collection<IntentFilter> forIntents() {
-		return intents;
-	}
-
-
+    companion object {
+        private val intents: Collection<IntentFilter> =
+            setOf(IntentFilter(PlaylistEvents.onPlaylistTrackComplete))
+    }
 }
