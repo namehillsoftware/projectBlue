@@ -29,16 +29,15 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectViewAdapter
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.promiseSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
@@ -55,13 +54,6 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
-
-	inner class ScopedConnectionProviderDependencies(connectionProvider: IConnectionProvider) {
-		val libraryViewsProvider = LibraryViewsProvider(connectionProvider, ScopedRevisionProvider(connectionProvider))
-
-		val selectedLibraryViews = SelectedLibraryViewProvider(lazySelectedBrowserLibraryProvider.value, libraryViewsProvider, lazyLibraryRepository.value)
-	}
-
 	private var connectionRestoreCode: Int? = null
 	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
 	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
@@ -70,6 +62,15 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val loadingViewsProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingViews)
 
 	private val lazyLibraryRepository = lazy { LibraryRepository(this)	}
+
+	private val lazyLibraryViewsProvider = lazy {
+		val selectedConnectionProvider = SelectedConnectionProvider(this)
+		LibraryViewsProvider(selectedConnectionProvider, SelectedConnectionRevisionProvider(selectedConnectionProvider))
+	}
+
+	private val lazySelectedLibraryViews = lazy {
+		SelectedLibraryViewProvider(lazySelectedBrowserLibraryProvider.value, lazyLibraryViewsProvider.value, lazyLibraryRepository.value)
+	}
 
 	private val drawerToggle = object : AbstractSynchronousLazy<ActionBarDrawerToggle>() {
 		override fun create(): ActionBarDrawerToggle {
@@ -110,10 +111,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private val lazyLocalBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
-
-	private val lazyConnectionProviderDependencies = lazy {
-		promiseSelectedConnection().then { ScopedConnectionProviderDependencies(it!!) }
-	}
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
@@ -217,22 +214,18 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	override fun run() {
-		lazyConnectionProviderDependencies.value
-			.eventually { dependencies ->
-				dependencies.selectedLibraryViews
-					.promiseSelectedOrDefaultView()
-					.eventually {
-						it?.let { selectedView ->
-							dependencies.libraryViewsProvider
-								.promiseLibraryViews()
-								.eventually(
-									LoopedInPromise.response(
-										{ items -> updateLibraryView(selectedView, items) },
-										this
-									)
-								)
-						} ?: Unit.toPromise()
-					}
+		lazySelectedLibraryViews.value
+			.promiseSelectedOrDefaultView()
+			.eventually { selectedView ->
+				selectedView?.let {
+					lazyLibraryViewsProvider.value.promiseLibraryViews()
+						.eventually(
+							LoopedInPromise.response(
+								{ items -> updateLibraryView(it, items) },
+								this
+							)
+						)
+				} ?: Unit.toPromise()
 			}
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))

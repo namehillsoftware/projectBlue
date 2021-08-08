@@ -6,11 +6,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class LibraryViewsProvider(private val scopedConnectionProvider: IConnectionProvider, private val checkScopedRevisions: CheckScopedRevisions) : ProvideLibraryViews {
+class LibraryViewsProvider(private val selectedConnectionProvider: ProvideSelectedConnection, private val checkScopedRevisions: CheckScopedRevisions) : ProvideLibraryViews {
 	companion object {
 		const val browseLibraryParameter = "Browse/Children"
 	}
@@ -23,24 +23,27 @@ class LibraryViewsProvider(private val scopedConnectionProvider: IConnectionProv
 			.eventually { serverRevision ->
 				synchronized(browseLibraryParameter) {
 					cachedFileSystemItems?.takeIf { revision == serverRevision }?.toPromise()
-				} ?: scopedConnectionProvider.promiseResponse(browseLibraryParameter)
-					.then { response ->
-						response.body?.use { b ->
-							val viewItems = b.byteStream().use(ItemResponse::GetItems)
-								.map { i ->
-									when (i.value) {
-										KnownViews.Playlists -> PlaylistViewItem(i.key)
-										else -> StandardViewItem(i.key, i.value)
+				} ?: selectedConnectionProvider.promiseSessionConnection().eventually { c ->
+					c?.promiseResponse(browseLibraryParameter)
+						?.then { response ->
+							response.body?.use { b ->
+								val viewItems = b.byteStream().use(ItemResponse::GetItems)
+									.map { i ->
+										when (i.value) {
+											KnownViews.Playlists -> PlaylistViewItem(i.key)
+											else -> StandardViewItem(i.key, i.value)
+										}
 									}
+
+								synchronized(browseLibraryParameter) {
+									revision = serverRevision
+									cachedFileSystemItems = viewItems
 								}
 
-							synchronized(browseLibraryParameter) {
-								revision = serverRevision
-								cachedFileSystemItems = viewItems
-							}
-
-							viewItems
-						} ?: emptySet()
-					}
+								viewItems
+							} ?: emptySet()
+						}
+						?: Promise(emptySet())
+				}
 			}
 }
