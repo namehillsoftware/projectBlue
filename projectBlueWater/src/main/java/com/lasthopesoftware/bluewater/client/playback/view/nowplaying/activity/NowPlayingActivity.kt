@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
@@ -173,6 +174,10 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				FilePropertyCache.getInstance()
 			)
 		}
+	}
+
+	private val lazySelectedConnectionAuthenticationChecker = lazy {
+		SelectedConnectionAuthenticationChecker(lazySelectedConnectionProvider.value)
 	}
 
 	private val lazyDefaultImage = lazy { DefaultImageProvider(this).promiseFileBitmap() }
@@ -473,7 +478,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 							setFileProperties(serviceFile, initialFilePosition, fileProperties)
 						}, messageHandler.value)
 					}
-					.excuse { e: Throwable -> LoopedInPromise.response({ exception: Throwable -> handleIoException(serviceFile, initialFilePosition, exception) }, messageHandler.value).promiseResponse(e) }
+					.eventuallyExcuse(LoopedInPromise.response({ exception: Throwable -> handleIoException(serviceFile, initialFilePosition, exception) }, messageHandler.value))
 			}, messageHandler.value))
 	}
 
@@ -524,16 +529,26 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private fun setFileRating(serviceFile: ServiceFile, rating: Float?) {
 		val songRatingBar = songRating.findView()
 		songRatingBar.rating = rating ?: 0f
-		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
-			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
-				val stringRating = newRating.roundToInt().toString()
-				lazyFilePropertiesStorage.value
-					.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, stringRating, false)
-					.eventuallyExcuse(LoopedInPromise.response({ e -> UnexpectedExceptionToaster.announce(this, e) }, messageHandler.value))
-				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
-			}
-		}
-		songRatingBar.isEnabled = true
+		lazySelectedConnectionAuthenticationChecker.value.promiseIsAuthenticated()
+			.eventually(LoopedInPromise.response({ isAuthenticated ->
+				if (isAuthenticated) {
+					songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
+						if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
+							val stringRating = newRating.roundToInt().toString()
+							lazyFilePropertiesStorage.value
+								.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, stringRating, false)
+								.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
+							viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
+						}
+					}
+					songRatingBar.isEnabled = true
+				} else {
+					songRatingBar.setOnClickListener {
+						Toast.makeText(this, "Authentication must be set in order to set ratings.", Toast.LENGTH_LONG).show()
+					}
+				}
+			}, messageHandler.value))
+			.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
 	}
 
 	private fun setTrackDuration(duration: Long) {
@@ -546,14 +561,15 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		viewStructure?.filePosition = progress
 	}
 
-	private fun handleIoException(serviceFile: ServiceFile, position: Long, exception: Throwable): Boolean {
-		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) {
-			resetViewOnReconnect(serviceFile, position)
-			return true
+	private fun handleIoException(serviceFile: ServiceFile, position: Long, exception: Throwable): Boolean =
+		handleIoException(exception).also { if (it) resetViewOnReconnect(serviceFile, position) }
+
+	private fun handleIoException(exception: Throwable) =
+		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
+		else {
+			UnexpectedExceptionToaster.announce(this, exception)
+			false
 		}
-		UnexpectedExceptionToaster.announce(this, exception)
-		return false
-	}
 
 	private fun displayImageBitmap() {
 		val nowPlayingImage = nowPlayingImageViewFinder.findView()

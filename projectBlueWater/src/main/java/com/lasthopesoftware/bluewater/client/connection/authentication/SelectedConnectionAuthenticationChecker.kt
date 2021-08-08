@@ -4,6 +4,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.namehillsoftware.handoff.promises.Promise
 
 class SelectedConnectionAuthenticationChecker(private val selectedConnection: ProvideSelectedConnection) : CheckIfScopedConnectionIsAuthenticated {
-	override fun isAuthenticated(): Promise<Boolean> =
+	override fun promiseIsAuthenticated(): Promise<Boolean> =
 		selectedConnection.promiseSessionConnection().then { it?.urlProvider?.authCode != null }
 }

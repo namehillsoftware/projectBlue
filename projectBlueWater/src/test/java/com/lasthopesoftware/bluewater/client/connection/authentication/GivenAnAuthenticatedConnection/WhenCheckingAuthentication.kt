@@ -24,7 +24,7 @@ class WhenCheckingAuthentication {
 			every { selectedConnections.promiseSessionConnection() } returns Promise(FakeConnectionProvider())
 
 			val authenticationChecker = SelectedConnectionAuthenticationChecker(selectedConnections)
-			isAuthenticated = authenticationChecker.isAuthenticated().toFuture().get()
+			isAuthenticated = authenticationChecker.promiseIsAuthenticated().toFuture().get()
 		}
 	}
 
