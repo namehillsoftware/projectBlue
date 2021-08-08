@@ -7,7 +7,6 @@ import android.app.Service
 import android.content.*
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.media.RemoteControlClient
 import android.os.*
 import android.os.PowerManager.WakeLock
 import android.support.v4.media.session.MediaSessionCompat
@@ -360,14 +359,6 @@ open class PlaybackService : Service() {
 	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
 	private val remoteControlReceiver = lazy { ComponentName(packageName, RemoteControlReceiver::class.java.name) }
-	private val remoteControlClient = lazy {
-			// build the PendingIntent for the remote control client
-			val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
-			mediaButtonIntent.component = remoteControlReceiver.value
-			val mediaPendingIntent = PendingIntent.getBroadcast(this, 0, mediaButtonIntent, 0)
-			// create and register the remote control client
-			RemoteControlClient(mediaPendingIntent)
-		}
 	private val lazyMediaSession = object : AbstractSynchronousLazy<MediaSessionCompat>() {
 		@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 		override fun create(): MediaSessionCompat {
@@ -1035,12 +1026,14 @@ open class PlaybackService : Service() {
 	}
 
 	private fun onPlaylistPlaybackComplete() {
-		lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also {
-			lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistStop,
-				it,
-				positionedPlayingFile!!.asPositionedFile()
-			)
+		lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also { libraryId ->
+			positionedPlayingFile?.asPositionedFile()?.also { positionedFile ->
+				lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+					PlaylistEvents.onPlaylistStop,
+					libraryId,
+					positionedFile
+				)
+			}
 		}
 		isMarkedForPlay = false
 		stopSelf(startId)
@@ -1056,10 +1049,9 @@ open class PlaybackService : Service() {
 		if (areListenersRegistered) unregisterListeners()
 
 		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
-		if (remoteControlClient.isInitialized()) audioManagerLazy.value.unregisterRemoteControlClient(remoteControlClient.value)
 		if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && lazyMediaSession.isCreated) {
+		if (lazyMediaSession.isCreated) {
 			lazyMediaSession.getObject().isActive = false
 			lazyMediaSession.getObject().release()
 		}
