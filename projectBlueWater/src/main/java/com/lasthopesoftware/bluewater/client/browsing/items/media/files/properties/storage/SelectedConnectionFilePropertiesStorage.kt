@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.namehillsoftware.handoff.promises.Promise
 
 class SelectedConnectionFilePropertiesStorage(private val selectedConnectionProvider: SelectedConnectionProvider, private val innerConstructor: (IConnectionProvider) -> ScopedFilePropertiesStorage) : UpdateFileProperties {
-	private val lazyInner = lazy { selectedConnectionProvider.promiseSessionConnection().then { it?.let(innerConstructor) } }
-
 	override fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
-		lazyInner.value.eventually { it?.promiseFileUpdate(serviceFile, property, value, isFormatted) }
+		selectedConnectionProvider
+			.promiseSessionConnection()
+			.eventually { it?.let(innerConstructor)?.promiseFileUpdate(serviceFile, property, value, isFormatted) }
 }
