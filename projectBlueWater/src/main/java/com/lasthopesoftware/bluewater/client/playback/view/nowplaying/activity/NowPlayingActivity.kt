@@ -145,13 +145,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private val lazyImageProvider = lazy {
-			SelectedConnection.getInstance(this)
-				.promiseSessionConnection()
-				.then {
-					ImageProvider(
-						StaticLibraryIdentifierProvider(SelectedBrowserLibraryIdentifierProvider(this)),
-						MemoryCachedImageAccess.getInstance(this))
-				}
+			ImageProvider(
+				StaticLibraryIdentifierProvider(SelectedBrowserLibraryIdentifierProvider(this)),
+				MemoryCachedImageAccess.getInstance(this))
 		}
 
 	private val lazySelectedConnectionProvider = lazy { SelectedConnectionProvider(this) }
@@ -486,7 +482,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		loadingProgressBar.findView().visibility = View.VISIBLE
 		nowPlayingImage.visibility = View.INVISIBLE
 		if (viewStructure.promisedNowPlayingImage == null) {
-			viewStructure.promisedNowPlayingImage = lazyImageProvider.value.eventually { provider -> provider.promiseFileBitmap(serviceFile) }
+			viewStructure.promisedNowPlayingImage = lazyImageProvider.value.promiseFileBitmap(serviceFile)
 		}
 		viewStructure.promisedNowPlayingImage
 			?.eventually { bitmap ->
