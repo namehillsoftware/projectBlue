@@ -23,7 +23,7 @@ class WhenGettingThePlaystatsUpdater {
 		private var updater: IPlaystatsUpdate? = null
 
 		@BeforeClass
-		@Throws(InterruptedException::class)
+		@JvmStatic
 		fun before() {
 			val fakeConnectionProvider = FakeConnectionProvider()
 			val programVersionProvider = mockk<IProgramVersionProvider>()

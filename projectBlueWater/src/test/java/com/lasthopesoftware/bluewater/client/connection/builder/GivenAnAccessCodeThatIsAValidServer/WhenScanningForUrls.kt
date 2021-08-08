@@ -12,20 +12,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 
 class WhenScanningForUrls {
-	@Test
-	fun thenTheUrlProviderIsReturned() {
-		Assertions.assertThat(urlProvider).isNotNull
-	}
-
-	@Test
-	fun thenTheBaseUrlIsCorrect() {
-		Assertions.assertThat(urlProvider?.baseUrl).isEqualTo("http://gooPc:80/MCWS/v1/")
-	}
 
 	companion object {
 		private var urlProvider: IUrlProvider? = null
@@ -48,5 +39,15 @@ class WhenScanningForUrls {
 
 			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(14)).toFuture().get()
 		}
+	}
+
+	@Test
+	fun thenTheUrlProviderIsReturned() {
+		assertThat(urlProvider).isNotNull
+	}
+
+	@Test
+	fun thenTheBaseUrlIsCorrect() {
+		assertThat(urlProvider?.baseUrl).isEqualTo("http://gooPc:80/MCWS/v1/")
 	}
 }

@@ -10,24 +10,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisio
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 
 class WhenStoringTheUpdatedPlayStats {
-    @Test
-    fun thenTheLastPlayedIsNotUpdated() {
-        Assertions.assertThat(fileProperties!![KnownFileProperties.LAST_PLAYED]).isEqualTo(
-            lastPlayed.toString()
-        )
-    }
-
-    @Test
-    fun thenTheNumberPlaysIsTheSame() {
-        Assertions.assertThat(fileProperties!![KnownFileProperties.NUMBER_PLAYS]).isEqualTo("52")
-    }
 
     companion object {
         private var fileProperties: Map<String, String>? = null
@@ -80,4 +69,14 @@ class WhenStoringTheUpdatedPlayStats {
 				.get()
         }
     }
+
+	@Test
+	fun thenTheLastPlayedIsNotUpdated() {
+		assertThat(fileProperties!![KnownFileProperties.LAST_PLAYED]).isEqualTo(lastPlayed.toString())
+	}
+
+	@Test
+	fun thenTheNumberPlaysIsTheSame() {
+		assertThat(fileProperties!![KnownFileProperties.NUMBER_PLAYS]).isEqualTo("52")
+	}
 }
