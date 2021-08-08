@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
 
+import com.lasthopesoftware.EmptyUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
@@ -26,7 +27,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import org.mockito.Mockito
-import java.net.URL
 import java.util.concurrent.TimeUnit
 
 class WhenRemovingTheCurrentlyPlayingFile {
@@ -63,7 +63,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 			val libraryStorage = PassThroughLibraryStorage()
 			val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 			every {
-				filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(URL(""), ServiceFile(5)))
+				filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(5)))
 			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
 
 			val playbackEngine =

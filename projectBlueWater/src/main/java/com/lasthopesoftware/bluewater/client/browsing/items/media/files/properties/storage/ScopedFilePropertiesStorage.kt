@@ -17,9 +17,7 @@ class ScopedFilePropertiesStorage(
 
 	override fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
 		val urlProvider = scopedConnectionProvider.urlProvider
-		if (urlProvider.authCode == null) {
-			throw SecurityException("Authentication is required to save properties")
-		}
+		urlProvider.authCode ?: return Promise(SecurityException("Authentication is required to save properties"))
 
 		val promisedUpdate = scopedConnectionProvider.promiseResponse(
 			"File/SetInfo",

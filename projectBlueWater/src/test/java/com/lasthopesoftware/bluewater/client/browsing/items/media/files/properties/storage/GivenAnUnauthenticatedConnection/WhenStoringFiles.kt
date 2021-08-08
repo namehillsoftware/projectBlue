@@ -62,6 +62,7 @@ class WhenStoringFiles {
 
 	@Test
 	fun thenTheContainerWasNotUpdated() {
-		assertThat(fakeFilePropertiesContainer.getFilePropertiesContainer(UrlKeyHolder(URL("http://hewo"), ServiceFile(33)))?.properties).doesNotContainKey("myProperty")
+		assertThat(fakeFilePropertiesContainer
+			.getFilePropertiesContainer(UrlKeyHolder(URL("http://hewo"), ServiceFile(33)))).isNull()
 	}
 }

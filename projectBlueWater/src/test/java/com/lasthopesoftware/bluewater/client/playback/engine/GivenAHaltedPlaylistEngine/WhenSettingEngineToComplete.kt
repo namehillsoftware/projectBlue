@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlaylistEngine
 
+import com.lasthopesoftware.EmptyUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
@@ -25,7 +26,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.net.URL
 
 class WhenSettingEngineToComplete {
 
@@ -57,7 +57,7 @@ class WhenSettingEngineToComplete {
 			val libraryStorage = PassThroughLibraryStorage()
 			val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 			every {
-				filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(URL(""), ServiceFile(4)))
+				filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(4)))
 			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
 
 			val repository = NowPlayingRepository(libraryProvider, libraryStorage)

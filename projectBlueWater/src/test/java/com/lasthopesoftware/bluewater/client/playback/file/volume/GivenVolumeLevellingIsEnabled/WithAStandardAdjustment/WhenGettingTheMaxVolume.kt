@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.GivenVolumeLevellingIsEnabled.WithAStandardAdjustment
 
+import com.lasthopesoftware.EmptyUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
@@ -19,7 +20,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions
 import org.junit.BeforeClass
 import org.junit.Test
-import java.net.URL
 
 class WhenGettingTheMaxVolume {
 
@@ -30,13 +30,13 @@ class WhenGettingTheMaxVolume {
 		@JvmStatic
 		fun before() {
 			val urlProvider = mockk<IUrlProvider>()
-			every { urlProvider.baseUrl } returns URL("")
+			every { urlProvider.baseUrl } returns EmptyUrl.url
 			val connectionProvider = mockk<IConnectionProvider>()
 			every { connectionProvider.urlProvider } returns urlProvider
 
 			val repository = mockk<IFilePropertiesContainerRepository>()
 			every {
-				repository.getFilePropertiesContainer(UrlKeyHolder(URL(""), ServiceFile(1)))
+				repository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(1)))
 			} returns FilePropertiesContainer(0, mapOf(Pair(KnownFileProperties.VolumeLevelReplayGain, "-13.5")))
 
 			val scopedRevisionProvider = mockk<CheckScopedRevisions>()

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlaylistEngine
 
+import com.lasthopesoftware.EmptyUrl
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
@@ -18,32 +19,22 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.No
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
-import java.net.URL
-import java.util.*
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeoutException
 
 class WhenSettingEngineToRepeat {
-	@Test
-	fun thenNowPlayingIsSetToRepeating() {
-		Assertions.assertThat(nowPlaying!!.isRepeating).isTrue
-	}
-
 	companion object {
 		private val library = Library()
 		private var nowPlaying: NowPlaying? = null
+
 		@BeforeClass
 		@JvmStatic
-		@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
 		fun before() {
 			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 			library.setId(1)
@@ -67,30 +58,33 @@ class WhenSettingEngineToRepeat {
 
 			val libraryStorage = PassThroughLibraryStorage()
 
-			val filePropertiesContainerRepository = mock(
-				IFilePropertiesContainerRepository::class.java
-			)
-			`when`(
+			val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
+			every {
 				filePropertiesContainerRepository.getFilePropertiesContainer(
 					UrlKeyHolder(
-						URL(""),
+						EmptyUrl.url,
 						ServiceFile(4)
 					)
 				)
-			).thenReturn(FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100"))))
+			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
+
 			val repository = NowPlayingRepository(libraryProvider, libraryStorage)
-			val playbackEngine = FuturePromise(
+			val playbackEngine =
 				createEngine(
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 },
-					Arrays.asList(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
+					listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
 					repository,
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				)
-			).get()
-			playbackEngine!!.playRepeatedly()
-			nowPlaying = FuturePromise(repository.nowPlaying).get()
+				).toFuture().get()
+			playbackEngine!!.playRepeatedly().toFuture().get()
+			nowPlaying = repository.nowPlaying.toFuture().get()
 		}
+	}
+
+	@Test
+	fun thenNowPlayingIsSetToRepeating() {
+		Assertions.assertThat(nowPlaying!!.isRepeating).isTrue
 	}
 }
