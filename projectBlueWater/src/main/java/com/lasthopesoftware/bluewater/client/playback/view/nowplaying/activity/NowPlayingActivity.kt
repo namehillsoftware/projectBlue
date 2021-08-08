@@ -527,12 +527,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
 			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 				val stringRating = newRating.roundToInt().toString()
-				lazyFilePropertiesStorage.value.promiseFileUpdate(
-					serviceFile,
-					KnownFileProperties.RATING,
-					stringRating,
-					false
-				)
+				lazyFilePropertiesStorage.value
+					.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, stringRating, false)
+					.eventuallyExcuse(LoopedInPromise.response({ e -> UnexpectedExceptionToaster.announce(this, e) }, messageHandler.value))
 				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
 			}
 		}
