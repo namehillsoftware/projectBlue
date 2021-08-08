@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
@@ -36,8 +37,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
@@ -83,16 +84,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		private fun setRepeatingIcon(imageButton: ImageButton?, isRepeating: Boolean) {
 			imageButton?.setImageDrawable(
 				ViewUtils.getDrawable(imageButton.context, if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
-		}
-	}
-
-	private class ScopedConnectionDependencies(val connectionProvider: IConnectionProvider) {
-		val lazyFilePropertiesStorage = lazy {
-			ScopedFilePropertiesStorage(
-				connectionProvider,
-				ScopedRevisionProvider(connectionProvider),
-				FilePropertyCache.getInstance()
-			)
 		}
 	}
 
@@ -163,11 +154,20 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				}
 		}
 
+	private val lazySelectedConnectionProvider = lazy { SelectedConnectionProvider(this) }
+
 	private val lazySessionRevisionProvider = lazy {
-		ScopedRevisionProvider(SelectedConnectionProvider(this))
+		SelectedConnectionRevisionProvider(lazySelectedConnectionProvider.value)
 	}
 
-	private val lazyScoped
+	private val lazyFilePropertiesStorage = lazy {
+		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider.value) { c ->
+			ScopedFilePropertiesStorage(
+			c,
+			ScopedRevisionProvider(c),
+			FilePropertyCache.getInstance())
+		}
+	}
 
 	private val lazyDefaultImage = lazy { DefaultImageProvider(this).promiseFileBitmap() }
 
@@ -522,14 +522,12 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
 			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 				val stringRating = newRating.roundToInt().toString()
-				lazyScoped?.also { libraryId ->
-					lazyFilePropertiesStorage.value.promiseFileUpdate(
-						serviceFile,
-						KnownFileProperties.RATING,
-						stringRating,
-						false
-					)
-				}
+				lazyFilePropertiesStorage.value.promiseFileUpdate(
+					serviceFile,
+					KnownFileProperties.RATING,
+					stringRating,
+					false
+				)
 				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
 			}
 		}
