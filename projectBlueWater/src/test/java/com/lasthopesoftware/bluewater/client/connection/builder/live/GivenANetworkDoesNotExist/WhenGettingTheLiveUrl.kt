@@ -1,38 +1,43 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.live.GivenANetworkDoesNotExist;
+package com.lasthopesoftware.bluewater.client.connection.builder.live.GivenANetworkDoesNotExist
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders
+import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
+import java.net.URL
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenGettingTheLiveUrl {
 
-import java.util.concurrent.ExecutionException;
+    companion object {
+        private var urlProvider: IUrlProvider? = null
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+        @BeforeClass
+		@JvmStatic
+        fun before() {
+			val urlProviderBuilder = mockk<BuildUrlProviders>()
+			every { urlProviderBuilder.promiseBuiltUrlProvider(LibraryId(23)) } answers {
+				val urlProvider = mockk<IUrlProvider>()
+				Mockito.`when`(urlProvider.baseUrl).thenReturn(URL("http://test-url"))
+				Promise(urlProvider)
+			}
 
-public class WhenGettingTheLiveUrl {
-
-	private static IUrlProvider urlProvider;
-
-	@BeforeClass
-	public static void before() throws ExecutionException, InterruptedException {
-		final LiveUrlProvider liveUrlProvider = new LiveUrlProvider(
-			() -> null,
-			(library) -> {
-				final IUrlProvider urlProvider = mock(IUrlProvider.class);
-				when(urlProvider.getBaseUrl()).thenReturn("http://test-url");
-				return new Promise<>(urlProvider);
-			});
-		urlProvider = new FuturePromise<>(liveUrlProvider.promiseLiveUrl(new LibraryId(23))).get();
-	}
+            val liveUrlProvider = LiveUrlProvider(
+                { null },
+                urlProviderBuilder)
+            urlProvider = liveUrlProvider.promiseLiveUrl(LibraryId(23)).toFuture().get()
+        }
+    }
 
 	@Test
-	public void thenAUrlProviderIsNotReturned() {
-		assertThat(urlProvider).isNull();
+	fun thenAUrlProviderIsNotReturned() {
+		assertThat(urlProvider).isNull()
 	}
 }

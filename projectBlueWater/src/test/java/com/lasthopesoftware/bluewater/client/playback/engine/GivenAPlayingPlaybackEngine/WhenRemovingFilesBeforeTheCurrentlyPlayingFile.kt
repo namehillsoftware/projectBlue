@@ -1,110 +1,93 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine;
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine;
-import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement;
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying;
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository;
-import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager;
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.verify
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
+import java.util.concurrent.TimeUnit
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+	companion object {
+		private val fileQueueProvider = spyk(CompletingFileQueueProvider())
+		private val library = Library()
+		private var nowPlaying: NowPlaying? = null
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.intThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+			library.setId(1)
+			library.setSavedTracksString(
+				FileStringListUtilities.promiseSerializedFileStringList(
+					listOf(
+						ServiceFile(1),
+						ServiceFile(2),
+						ServiceFile(3),
+						ServiceFile(4),
+						ServiceFile(5)
+					)
+				)
+					.toFuture().get()
+			)
+			library.setNowPlayingId(2)
 
-public class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
+			val libraryProvider = mockk<ISpecificLibraryProvider>()
+			every { libraryProvider.library } returns Promise(library)
 
-	private static final CompletingFileQueueProvider fileQueueProvider = spy(new CompletingFileQueueProvider());
-	private static final Library library = new Library();
-	private static NowPlaying nowPlaying;
+			val libraryStorage = PassThroughLibraryStorage()
 
-	@BeforeClass
-	public static void before() throws InterruptedException, ExecutionException, TimeoutException {
-		final FakeDeferredPlayableFilePreparationSourceProvider fakePlaybackPreparerProvider = new FakeDeferredPlayableFilePreparationSourceProvider();
+			val repository = NowPlayingRepository(libraryProvider, libraryStorage)
+			val playbackEngine =
+				createEngine(
+					PreparedPlaybackQueueResourceManagement(
+						fakePlaybackPreparerProvider
+					) { 1 }, listOf(fileQueueProvider),
+					NowPlayingRepository(libraryProvider, libraryStorage),
+					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+				).toFuture().get()
 
-		library.setId(1);
-		library.setSavedTracksString(new FuturePromise<>(FileStringListUtilities.promiseSerializedFileStringList(Arrays.asList(
-			new ServiceFile(1),
-			new ServiceFile(2),
-			new ServiceFile(3),
-			new ServiceFile(4),
-			new ServiceFile(5)))).get());
-		library.setNowPlayingId(2);
-
-		final ISpecificLibraryProvider libraryProvider = () -> new Promise<>(library);
-		final ILibraryStorage libraryStorage = new PassThroughLibraryStorage();
-
-		final IFilePropertiesContainerRepository filePropertiesContainerRepository = mock(IFilePropertiesContainerRepository.class);
-		when(filePropertiesContainerRepository.getFilePropertiesContainer(new UrlKeyHolder<>("", new ServiceFile(5))))
-			.thenReturn(new FilePropertiesContainer(1, new HashMap<String, String>() {{
-				put(KnownFileProperties.DURATION, "100");
-			}}));
-
-		final NowPlayingRepository repository = new NowPlayingRepository(libraryProvider, libraryStorage);
-
-		final PlaybackEngine playbackEngine = new FuturePromise<>(PlaybackEngine.createEngine(
-			new PreparedPlaybackQueueResourceManagement(
-				fakePlaybackPreparerProvider,
-				() -> 1),
-			Collections.singletonList(fileQueueProvider),
-			new NowPlayingRepository(libraryProvider, libraryStorage),
-			new PlaylistPlaybackBootstrapper(new PlaylistVolumeManager(1.0f)))).get();
-
-		new FuturePromise<>(playbackEngine.resume()).get(1, TimeUnit.SECONDS);
-
-		final ResolvablePlaybackHandler resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve();
-		resolvablePlaybackHandler.setCurrentPosition(35);
-
-		new FuturePromise<>(playbackEngine.removeFileAtPosition(0)).get(1, TimeUnit.SECONDS);
-
-		resolvablePlaybackHandler.setCurrentPosition(92);
-
-		new FuturePromise<>(playbackEngine.pause()).get();
-
-		nowPlaying = new FuturePromise<>(repository.getNowPlaying()).get();
+			playbackEngine!!.resume().toFuture()[1, TimeUnit.SECONDS]
+			val resolvablePlaybackHandler =
+				fakePlaybackPreparerProvider.deferredResolution.resolve()
+			resolvablePlaybackHandler.setCurrentPosition(35)
+			playbackEngine.removeFileAtPosition(0).toFuture()[1, TimeUnit.SECONDS]
+			resolvablePlaybackHandler.setCurrentPosition(92)
+			playbackEngine.pause().toFuture().get()
+			nowPlaying = repository.nowPlaying.toFuture().get()
+		}
 	}
 
 	@Test
-	public void thenTheCurrentlyPlayingFileShifts() {
-		assertThat(library.getNowPlayingId()).isEqualTo(1);
+	fun thenTheCurrentlyPlayingFileShifts() {
+		assertThat(library.nowPlayingId).isEqualTo(1)
 	}
 
 	@Test
-	public void thenTheFileQueueIsShifted() {
-		verify(fileQueueProvider, times(2)).provideQueue(any(), intThat(i -> i == 2));
+	fun thenTheFileQueueIsShifted() {
+		verify(exactly = 2) { fileQueueProvider.provideQueue(any(), match { i -> i == 2 }) }
 	}
 
 	@Test
-	public void thenTheCurrentlyPlayingFileStillTracksFileProgress() {
-		assertThat(nowPlaying.filePosition).isEqualTo(92);
+	fun thenTheCurrentlyPlayingFileStillTracksFileProgress() {
+		assertThat(nowPlaying!!.filePosition).isEqualTo(92)
 	}
 }
