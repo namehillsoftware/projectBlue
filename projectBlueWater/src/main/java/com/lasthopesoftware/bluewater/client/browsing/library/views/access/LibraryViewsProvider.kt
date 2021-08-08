@@ -7,11 +7,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistView
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class LibraryViewsProvider(private val selectedConnection: ProvideSelectedConnection, private val checkScopedRevisions: CheckScopedRevisions) : ProvideLibraryViews {
+class LibraryViewsProvider(private val scopedConnectionProvider: IConnectionProvider, private val checkScopedRevisions: CheckScopedRevisions) : ProvideLibraryViews {
 	companion object {
 		const val browseLibraryParameter = "Browse/Children"
 	}
@@ -20,18 +19,11 @@ class LibraryViewsProvider(private val selectedConnection: ProvideSelectedConnec
 	private var revision: Int? = null
 
 	override fun promiseLibraryViews(): Promise<Collection<ViewItem>> =
-		selectedConnection
-			.promiseSessionConnection()
-			.eventually(::promiseLibraryViewsFromConnection)
-
-	private fun promiseLibraryViewsFromConnection(connectionProvider: IConnectionProvider?): Promise<Collection<ViewItem>> {
-		connectionProvider ?: return Promise(emptySet())
-
-		return checkScopedRevisions.promiseRevision()
+		checkScopedRevisions.promiseRevision()
 			.eventually { serverRevision ->
 				synchronized(browseLibraryParameter) {
 					cachedFileSystemItems?.takeIf { revision == serverRevision }?.toPromise()
-				} ?: connectionProvider.promiseResponse(browseLibraryParameter)
+				} ?: scopedConnectionProvider.promiseResponse(browseLibraryParameter)
 					.then { response ->
 						response.body?.use { b ->
 							val viewItems = b.byteStream().use(ItemResponse::GetItems)
@@ -51,5 +43,4 @@ class LibraryViewsProvider(private val selectedConnection: ProvideSelectedConnec
 						} ?: emptySet()
 					}
 			}
-	}
 }

@@ -25,8 +25,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
@@ -35,9 +35,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
@@ -45,7 +45,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectio
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
@@ -84,6 +83,16 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		private fun setRepeatingIcon(imageButton: ImageButton?, isRepeating: Boolean) {
 			imageButton?.setImageDrawable(
 				ViewUtils.getDrawable(imageButton.context, if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
+		}
+	}
+
+	private class ScopedConnectionDependencies(val connectionProvider: IConnectionProvider) {
+		val lazyFilePropertiesStorage = lazy {
+			ScopedFilePropertiesStorage(
+				connectionProvider,
+				ScopedRevisionProvider(connectionProvider),
+				FilePropertyCache.getInstance()
+			)
 		}
 	}
 
@@ -154,18 +163,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				}
 		}
 
-	private val lazyFilePropertiesStorage = lazy {
-		val connectionSessionManager = ConnectionSessionManager.get(this)
-		ScopedFilePropertiesStorage(
-			connectionSessionManager,
-			LibraryRevisionProvider(connectionSessionManager),
-			FilePropertyCache.getInstance()
-		)
-	}
-
 	private val lazySessionRevisionProvider = lazy {
 		ScopedRevisionProvider(SelectedConnectionProvider(this))
 	}
+
+	private val lazyScoped
 
 	private val lazyDefaultImage = lazy { DefaultImageProvider(this).promiseFileBitmap() }
 
@@ -520,7 +522,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
 			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 				val stringRating = newRating.roundToInt().toString()
-				lazySelectedLibraryIdProvider.value.selectedLibraryId?.also { libraryId ->
+				lazyScoped?.also { libraryId ->
 					lazyFilePropertiesStorage.value.promiseFileUpdate(
 						serviceFile,
 						KnownFileProperties.RATING,

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository
@@ -13,9 +13,9 @@ class ScopedFilePropertiesStorage(
 	private val scopedConnectionProvider: IConnectionProvider,
 	private val checkScopedRevisions: CheckScopedRevisions,
 	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository
-) {
+) : UpdateFileProperties {
 
-	fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
+	override fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
 		val urlProvider = scopedConnectionProvider.urlProvider
 		if (urlProvider.authCode == null) {
 			throw SecurityException("Authentication is required to save properties")

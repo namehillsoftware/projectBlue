@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
@@ -25,8 +24,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.promiseSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
@@ -34,11 +34,21 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<ServiceFile>?, Unit> {
+class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer {
+
+	private class ScopedConnectionProviderDependencies(val connectionProvider: IConnectionProvider) {
+		val lazyFileProvider = lazy {
+			val stringListProvider = FileStringListProvider(connectionProvider)
+			FileProvider(stringListProvider)
+		}
+	}
+
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
+	private val lazyScopedConnectionProviderDependencies = lazy {
+		promiseSelectedConnection().then { ScopedConnectionProviderDependencies(it!!) }
+	}
 	private var viewAnimator: ViewAnimator? = null
 	private var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton? = null
 
@@ -73,51 +83,46 @@ class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer, Immedia
 		fileListView.findView().visibility = View.VISIBLE
 		pbLoading.findView().visibility = View.INVISIBLE
 
-		val onSearchFilesComplete = LoopedInPromise.response(this, this)
+		val context = this
 		(object : Runnable {
 			override fun run() {
-				getInstance(this@SearchFilesActivity).promiseSessionConnection()
-					.eventually { connection ->
+				lazyScopedConnectionProviderDependencies.value
+					.eventually { dependencies ->
 						val parameters = SearchFileParameterProvider.getFileListParameters(query)
-						val stringListProvider = FileStringListProvider(connection)
-						val fileProvider = FileProvider(stringListProvider)
-						fileProvider.promiseFiles(FileListParameters.Options.None, *parameters)
+						dependencies.lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
+							.eventually(LoopedInPromise.response({ serviceFiles ->
+								fromActiveLibrary(context)
+									?.let { nowPlayingFileProvider ->
+										FileListItemMenuBuilder(
+											serviceFiles,
+											nowPlayingFileProvider,
+											dependencies.connectionProvider,
+											FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(context)))
+									}
+									?.also { fileListItemMenuBuilder ->
+										ItemListMenuChangeHandler(context).apply {
+											fileListItemMenuBuilder.setOnViewChangedListener(
+												ViewChangedHandler()
+													.setOnViewChangedListener(this)
+													.setOnAnyMenuShown(this)
+													.setOnAllMenusHidden(this))
+										}
+
+										val fileListView = fileListView.findView()
+										fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
+										val layoutManager = LinearLayoutManager(context)
+										fileListView.layoutManager = layoutManager
+										fileListView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
+										fileListView.visibility = View.VISIBLE
+										pbLoading.findView().visibility = View.INVISIBLE
+									}
+							}, context))
 					}
-					.eventually(onSearchFilesComplete)
-					.excuse(HandleViewIoException(this@SearchFilesActivity, this))
-					.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this@SearchFilesActivity), this@SearchFilesActivity))
+					.excuse(HandleViewIoException(context, this))
+					.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
 					.then { finish() }
 			}
-		}).apply {
-			run()
-		}
-	}
-
-	override fun respond(serviceFiles: List<ServiceFile>?) {
-		if (serviceFiles == null) return
-
-		val nowPlayingFileProvider = fromActiveLibrary(this) ?: return
-
-		val fileListItemMenuBuilder = FileListItemMenuBuilder(
-			serviceFiles,
-			nowPlayingFileProvider,
-			FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(this)))
-
-		ItemListMenuChangeHandler(this).apply {
-			fileListItemMenuBuilder.setOnViewChangedListener(
-				ViewChangedHandler()
-					.setOnViewChangedListener(this)
-					.setOnAnyMenuShown(this)
-					.setOnAllMenusHidden(this))
-		}
-
-		val fileListView = fileListView.findView()
-		fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
-		val layoutManager = LinearLayoutManager(this)
-		fileListView.layoutManager = layoutManager
-		fileListView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
-		fileListView.visibility = View.VISIBLE
-		pbLoading.findView().visibility = View.INVISIBLE
+		}).run()
 	}
 
 	public override fun onStart() {
