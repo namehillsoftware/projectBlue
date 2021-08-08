@@ -19,15 +19,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 
 class WhenScanningForUrls {
-	@Test
-	fun thenTheUrlProviderIsReturned() {
-		assertThat(urlProvider).isNotNull
-	}
-
-	@Test
-	fun thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider?.baseUrl).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
-	}
 
 	companion object {
 		private var urlProvider: IUrlProvider? = null
@@ -62,5 +53,15 @@ class WhenScanningForUrls {
 
 			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(15)).toFuture().get()
 		}
+	}
+
+	@Test
+	fun thenTheUrlProviderIsReturned() {
+		assertThat(urlProvider).isNotNull
+	}
+
+	@Test
+	fun thenTheBaseUrlIsCorrect() {
+		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
 	}
 }

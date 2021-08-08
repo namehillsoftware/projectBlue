@@ -65,6 +65,6 @@ class WhenScanningForUrls {
 
 	@Test
 	fun thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider?.baseUrl).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
+		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
 	}
 }

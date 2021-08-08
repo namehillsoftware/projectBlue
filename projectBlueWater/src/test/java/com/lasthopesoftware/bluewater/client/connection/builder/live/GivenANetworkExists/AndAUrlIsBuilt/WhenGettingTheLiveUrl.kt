@@ -36,6 +36,6 @@ class WhenGettingTheLiveUrl {
 
 	@Test
 	fun thenTheUrlIsCorrect() {
-		assertThat(urlProvider!!.baseUrl).isEqualTo("http://test-url")
+		assertThat(urlProvider!!.baseUrl.toString()).isEqualTo("http://test-url")
 	}
 }

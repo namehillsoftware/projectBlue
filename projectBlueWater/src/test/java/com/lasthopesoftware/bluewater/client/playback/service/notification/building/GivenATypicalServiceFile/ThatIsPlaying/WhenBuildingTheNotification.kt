@@ -24,7 +24,6 @@ import io.mockk.spyk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 
 class WhenBuildingTheNotification : AndroidContext() {
 
@@ -51,7 +50,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 				Pair(KnownFileProperties.NAME, "song")))
 		val containerRepository: IFilePropertiesContainerRepository = FakeFilePropertiesContainer()
 		val imageProvider = mockk<ImageProvider>()
-		every { imageProvider.promiseFileBitmap(ArgumentMatchers.any()) } returns Promise(expectedBitmap.value)
+		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
 			{ spiedBuilder },
