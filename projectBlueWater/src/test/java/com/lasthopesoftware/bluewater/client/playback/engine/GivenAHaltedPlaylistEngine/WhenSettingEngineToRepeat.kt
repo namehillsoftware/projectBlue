@@ -27,6 +27,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import java.net.URL
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
@@ -72,7 +73,7 @@ class WhenSettingEngineToRepeat {
 			`when`(
 				filePropertiesContainerRepository.getFilePropertiesContainer(
 					UrlKeyHolder(
-						"",
+						URL(""),
 						ServiceFile(4)
 					)
 				)

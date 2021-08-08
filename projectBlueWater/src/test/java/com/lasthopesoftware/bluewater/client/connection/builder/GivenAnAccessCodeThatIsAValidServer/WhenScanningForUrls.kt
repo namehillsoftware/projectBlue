@@ -34,7 +34,7 @@ class WhenScanningForUrls {
 		@JvmStatic
 		fun before() {
 			val connectionTester = mockk<TestConnections>()
-			every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl == "http://gooPc:80/MCWS/v1/" }) } returns true.toPromise()
+			every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl.toString() == "http://gooPc:80/MCWS/v1/" }) } returns true.toPromise()
 
 			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
 			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(14)) } returns ConnectionSettings(accessCode = "http://gooPc:80").toPromise()

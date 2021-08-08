@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
@@ -23,7 +24,6 @@ class WhenStoringTheUpdatedPlayStats {
 
 		@BeforeClass
 		@JvmStatic
-        @Throws(InterruptedException::class)
         fun before() {
             val connectionProvider = FakeRevisionConnectionProvider()
             connectionProvider.setSyncRevision(1)
@@ -51,11 +51,12 @@ class WhenStoringTheUpdatedPlayStats {
             )
 
             val filePropertiesContainer = FakeFilePropertiesContainer()
+			val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
             val sessionFilePropertiesProvider =
-                ScopedFilePropertiesProvider(connectionProvider, filePropertiesContainer)
+                ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, filePropertiesContainer)
             val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
                 sessionFilePropertiesProvider,
-                ScopedFilePropertiesStorage(connectionProvider, filePropertiesContainer)
+                ScopedFilePropertiesStorage(connectionProvider, scopedRevisionProvider, filePropertiesContainer)
             )
 
             val serviceFile = ServiceFile(23)
