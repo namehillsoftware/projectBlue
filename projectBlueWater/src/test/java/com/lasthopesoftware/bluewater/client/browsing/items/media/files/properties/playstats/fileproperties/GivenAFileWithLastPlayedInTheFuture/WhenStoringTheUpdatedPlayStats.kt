@@ -1,81 +1,83 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.GivenAFileWithLastPlayedInTheFuture;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.GivenAFileWithLastPlayedInTheFuture
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import org.assertj.core.api.Assertions
+import org.joda.time.DateTime
+import org.joda.time.Duration
+import org.junit.BeforeClass
+import org.junit.Test
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple;
+class WhenStoringTheUpdatedPlayStats {
+    @Test
+    fun thenTheLastPlayedIsNotUpdated() {
+        Assertions.assertThat(fileProperties!![KnownFileProperties.LAST_PLAYED]).isEqualTo(
+            lastPlayed.toString()
+        )
+    }
 
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+    @Test
+    fun thenTheNumberPlaysIsTheSame() {
+        Assertions.assertThat(fileProperties!![KnownFileProperties.NUMBER_PLAYS]).isEqualTo("52")
+    }
 
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+    companion object {
+        private var fileProperties: Map<String, String>? = null
+        private val lastPlayed =
+            Duration.millis(DateTime.now().plus(Duration.standardDays(10)).millis).standardSeconds
 
-public class WhenStoringTheUpdatedPlayStats {
-
-	private static Map<String, String> fileProperties;
-	private static final long lastPlayed = Duration.millis(DateTime.now().plus(Duration.standardDays(10)).getMillis()).getStandardSeconds();
-
-	@BeforeClass
-	public static void before() throws InterruptedException {
-		final FakeRevisionConnectionProvider connectionProvider = new FakeRevisionConnectionProvider();
-
-		connectionProvider.setSyncRevision(1);
-
-		final long duration = Duration.standardMinutes(5).getMillis();
-
-		connectionProvider.mapResponse((params) ->
-			new FakeConnectionResponseTuple(200, ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n" +
-			"<MPL Version=\"2.0\" Title=\"MCWS - Files - 10936\" PathSeparator=\"\\\">\n" +
-				"<Item>\n" +
-					"<Field Name=\"Key\">23</Field>\n" +
-					"<Field Name=\"Media Type\">Audio</Field>\n" +
-					"<Field Name=\"" + KnownFileProperties.LAST_PLAYED + "\">" + lastPlayed + "</Field>\n" +
-					"<Field Name=\"Rating\">4</Field>\n" +
-					"<Field Name=\"File Size\">2345088</Field>\n" +
-					"<Field Name=\"" + KnownFileProperties.DURATION + "\">" + duration + "</Field>\n" +
-					"<Field Name=\"" + KnownFileProperties.NUMBER_PLAYS + "\">52</Field>\n" +
-				"</Item>\n" +
-			"</MPL>\n").getBytes()),
-			"File/GetInfo", "File=23");
-
-		final FakeFilePropertiesContainer filePropertiesContainer = new FakeFilePropertiesContainer();
-		final ScopedFilePropertiesProvider scopedFilePropertiesProvider = new ScopedFilePropertiesProvider(connectionProvider, filePropertiesContainer);
-
-		final FilePropertiesPlayStatsUpdater filePropertiesPlayStatsUpdater = new FilePropertiesPlayStatsUpdater(scopedFilePropertiesProvider, new ScopedFilePropertiesStorage(connectionProvider, filePropertiesContainer));
-
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		filePropertiesPlayStatsUpdater
-			.promisePlaystatsUpdate(new ServiceFile(23))
-			.eventually(o -> scopedFilePropertiesProvider.promiseFileProperties(new ServiceFile(23)))
-			.then(o -> {
-				fileProperties = o;
-				countDownLatch.countDown();
-				return null;
-			})
-			.excuse(e -> {
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
-	}
-
-	@Test
-	public void thenTheLastPlayedIsNotUpdated() {
-		assertThat(fileProperties.get(KnownFileProperties.LAST_PLAYED)).isEqualTo(String.valueOf(lastPlayed));
-	}
-
-	@Test
-	public void thenTheNumberPlaysIsTheSame() {
-		assertThat(fileProperties.get(KnownFileProperties.NUMBER_PLAYS)).isEqualTo("52");
-	}
+        @BeforeClass
+        @JvmStatic
+        fun before() {
+            val connectionProvider = FakeRevisionConnectionProvider()
+            connectionProvider.setSyncRevision(1)
+            val duration = Duration.standardMinutes(5).millis
+            connectionProvider.mapResponse(
+                {
+					FakeConnectionResponseTuple(
+                        200, """<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<MPL Version="2.0" Title="MCWS - Files - 10936" PathSeparator="\">
+<Item>
+<Field Name="Key">23</Field>
+<Field Name="Media Type">Audio</Field>
+<Field Name="${KnownFileProperties.LAST_PLAYED}">$lastPlayed</Field>
+<Field Name="Rating">4</Field>
+<Field Name="File Size">2345088</Field>
+<Field Name="${KnownFileProperties.DURATION}">$duration</Field>
+<Field Name="${KnownFileProperties.NUMBER_PLAYS}">52</Field>
+</Item>
+</MPL>
+""".toByteArray()
+                    )
+                },
+                "File/GetInfo", "File=23"
+            )
+            val filePropertiesContainer = FakeFilePropertiesContainer()
+			val checkScopedRevisions = ScopedRevisionProvider(connectionProvider)
+			val scopedFilePropertiesProvider = ScopedFilePropertiesProvider(
+                connectionProvider,
+				checkScopedRevisions,
+                filePropertiesContainer
+            )
+            val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
+                scopedFilePropertiesProvider,
+                ScopedFilePropertiesStorage(connectionProvider, checkScopedRevisions, filePropertiesContainer)
+            )
+			fileProperties = filePropertiesPlayStatsUpdater
+                .promisePlaystatsUpdate(ServiceFile(23))
+                .eventually {
+					scopedFilePropertiesProvider.promiseFileProperties(ServiceFile(23))
+                }
+				.toFuture()
+				.get()
+        }
+    }
 }

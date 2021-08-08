@@ -1,83 +1,74 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+class PlaybackFileStartedScrobblerRegistration : IConnectionDependentReceiverRegistration {
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
-
-import java.util.Collection;
-import java.util.Collections;
-
-public class PlaybackFileStartedScrobblerRegistration implements IConnectionDependentReceiverRegistration {
-
-	private static final Collection<IntentFilter> intents = Collections.singleton(new IntentFilter(PlaylistEvents.onPlaylistTrackStart));
-
-	@Override
-	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
-		final ScopedCachedFilePropertiesProvider filePropertiesProvider =
-			new ScopedCachedFilePropertiesProvider(
-				connectionProvider,
-				FilePropertyCache.getInstance(),
-				new ScopedFilePropertiesProvider(
-					connectionProvider,
-					FilePropertyCache.getInstance()
-				));
-
-		return new PlaybackFileChangedScrobbleDroidProxy(filePropertiesProvider, ScrobbleIntentProvider.getInstance());
+	companion object {
+		private val intents: Collection<IntentFilter> =
+			setOf(IntentFilter(PlaylistEvents.onPlaylistTrackStart))
 	}
 
-	@Override
-	public Collection<IntentFilter> forIntents() {
-		return intents;
-	}
+    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): BroadcastReceiver {
+        val filePropertiesProvider = ScopedCachedFilePropertiesProvider(
+            connectionProvider,
+            FilePropertyCache.getInstance(),
+            ScopedFilePropertiesProvider(
+                connectionProvider,
+				ScopedRevisionProvider(connectionProvider),
+                FilePropertyCache.getInstance()
+            )
+        )
+        return PlaybackFileChangedScrobbleDroidProxy(
+            filePropertiesProvider,
+            ScrobbleIntentProvider.getInstance()
+        )
+    }
 
-	private static class PlaybackFileChangedScrobbleDroidProxy extends BroadcastReceiver {
+    override fun forIntents(): Collection<IntentFilter> = intents
 
-		private final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider;
-		private final ScrobbleIntentProvider scrobbleIntentProvider;
+    private class PlaybackFileChangedScrobbleDroidProxy(
+        private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
+        private val scrobbleIntentProvider: ScrobbleIntentProvider
+    ) : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
+            if (fileKey < 0) return
+            scopedCachedFilePropertiesProvider
+                .promiseFileProperties(ServiceFile(fileKey))
+                .then { fileProperties ->
+                    val artist = fileProperties[KnownFileProperties.ARTIST]
+                    val name = fileProperties[KnownFileProperties.NAME]
+                    val album = fileProperties[KnownFileProperties.ALBUM]
+                    val duration =
+                        FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties).toLong()
 
-		public PlaybackFileChangedScrobbleDroidProxy(ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider, ScrobbleIntentProvider scrobbleIntentProvider) {
-			this.scopedCachedFilePropertiesProvider = scopedCachedFilePropertiesProvider;
-			this.scrobbleIntentProvider = scrobbleIntentProvider;
-		}
+                    val scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true)
+                    scrobbleDroidIntent.putExtra("artist", artist)
+                    scrobbleDroidIntent.putExtra("album", album)
+                    scrobbleDroidIntent.putExtra("track", name)
+                    scrobbleDroidIntent.putExtra("secs", (duration / 1000).toInt())
 
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
-			if (fileKey < 0) return;
-
-			scopedCachedFilePropertiesProvider
-				.promiseFileProperties(new ServiceFile(fileKey))
-				.then(new VoidResponse<>(fileProperties -> {
-					final String artist = fileProperties.get(KnownFileProperties.ARTIST);
-					final String name = fileProperties.get(KnownFileProperties.NAME);
-					final String album = fileProperties.get(KnownFileProperties.ALBUM);
-					final long duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
-					final String trackNumberString = fileProperties.get(KnownFileProperties.TRACK);
-					final Integer trackNumber = trackNumberString != null && !trackNumberString.isEmpty() ? Integer.valueOf(trackNumberString) : null;
-
-					final Intent scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true);
-					scrobbleDroidIntent.putExtra("artist", artist);
-					scrobbleDroidIntent.putExtra("album", album);
-					scrobbleDroidIntent.putExtra("track", name);
-					scrobbleDroidIntent.putExtra("secs", (int) (duration / 1000));
-					if (trackNumber != null)
-						scrobbleDroidIntent.putExtra("tracknumber", trackNumber.intValue());
-
-					context.sendBroadcast(scrobbleDroidIntent);
-				}));
-		}
-	}
+					fileProperties[KnownFileProperties.TRACK]
+						?.takeIf { it.isNotEmpty() }
+						?.also {
+							scrobbleDroidIntent.putExtra("tracknumber", it.toInt())
+						}
+                    context.sendBroadcast(scrobbleDroidIntent)
+                }
+        }
+    }
 }

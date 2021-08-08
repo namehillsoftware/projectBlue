@@ -6,9 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -24,9 +25,23 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
-class FileNameTextViewSetter(private val textView: TextView, private val scopedConnectionProvider: IConnectionProvider) {
-    private val textViewUpdateSync = Any()
+class FileNameTextViewSetter(private val textView: TextView) {
+	private val textViewUpdateSync = Any()
     private val handler = Handler(textView.context.mainLooper)
+	private val lazyFilePropertiesProvider = lazy {
+		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(textView.context)) { c ->
+			val filePropertyCache = FilePropertyCache.getInstance()
+			ScopedCachedFilePropertiesProvider(
+				c,
+				filePropertyCache,
+				ScopedFilePropertiesProvider(
+					c,
+					ScopedRevisionProvider(c),
+					filePropertyCache
+				)
+			)
+		}
+	}
 
 	@Volatile
     private var promisedState = Promise.empty<Void>()
@@ -69,19 +84,9 @@ class FileNameTextViewSetter(private val textView: TextView, private val scopedC
         }
 
         override fun run() {
-			val filePropertyCache = FilePropertyCache.getInstance()
-			val cachedSessionFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
-				scopedConnectionProvider,
-				filePropertyCache,
-				ScopedFilePropertiesProvider(
-					scopedConnectionProvider,
-					ScopedRevisionProvider(scopedConnectionProvider),
-					filePropertyCache)
-			)
-
 			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
 
-			val filePropertiesPromise = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile)
+			val filePropertiesPromise = lazyFilePropertiesProvider.value.promiseFileProperties(serviceFile)
 			cancellationProxy.doCancel(filePropertiesPromise)
 
 			val promisedViewSetting = filePropertiesPromise.eventually(response(this, handler))

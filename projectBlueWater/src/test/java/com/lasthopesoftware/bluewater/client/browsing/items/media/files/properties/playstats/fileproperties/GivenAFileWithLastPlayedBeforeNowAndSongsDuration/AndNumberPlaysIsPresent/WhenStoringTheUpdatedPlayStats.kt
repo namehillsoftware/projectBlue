@@ -7,14 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.namehillsoftware.handoff.promises.Promise
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -57,13 +52,10 @@ class WhenStoringTheUpdatedPlayStats {
                 "File/GetInfo", "File=23"
             )
 
-			val checkScopedRevision = mockk<CheckScopedRevisions>()
-			every { checkScopedRevision.promiseRevision() } returns 1.toPromise()
-			val selectedConnectionProvider = mockk<ProvideSelectedConnection>()
-			every { selectedConnectionProvider.promiseSessionConnection() } returns Promise(connectionProvider)
+			val checkScopedRevision = ScopedRevisionProvider(connectionProvider)
             val filePropertiesContainer = FakeFilePropertiesContainer()
             val sessionFilePropertiesProvider =
-                ScopedFilePropertiesProvider(checkScopedRevision, selectedConnectionProvider, filePropertiesContainer)
+                ScopedFilePropertiesProvider(connectionProvider, checkScopedRevision, filePropertiesContainer)
 
             val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
                 sessionFilePropertiesProvider,

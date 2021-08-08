@@ -30,7 +30,7 @@ class FileListItemMenuBuilder(private val serviceFiles: Collection<ServiceFile>,
 		private val viewFileDetailsButtonFinder = LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
 		private val playButtonFinder = LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
 		private val addButtonFinder = LazyViewFinder<ImageButton>(itemView, R.id.btnAddToPlaylist)
-		private val fileNameTextViewSetter = FileNameTextViewSetter(fileListItemContainer.findTextView(), scopedConnectionProvider)
+		private val fileNameTextViewSetter = FileNameTextViewSetter(fileListItemContainer.findTextView())
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
 		private var promisedTextViewUpdate: Promise<*>? = null

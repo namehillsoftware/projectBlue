@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
@@ -36,7 +37,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
@@ -164,8 +164,18 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider.value) { c ->
 			ScopedFilePropertiesStorage(
 			c,
-			ScopedRevisionProvider(c),
+			lazySessionRevisionProvider.value,
 			FilePropertyCache.getInstance())
+		}
+	}
+
+	private val lazyFilePropertiesProvider = lazy {
+		SelectedConnectionFilePropertiesProvider(lazySelectedConnectionProvider.value) { c ->
+			ScopedFilePropertiesProvider(
+				c,
+				lazySessionRevisionProvider.value,
+				FilePropertyCache.getInstance()
+			)
 		}
 	}
 
@@ -458,8 +468,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				}
 
 				disableViewWithMessage()
-				val sessionFilePropertiesProvider = ScopedFilePropertiesProvider(lazySessionRevisionProvider.value, connectionProvider, FilePropertyCache.getInstance())
-				sessionFilePropertiesProvider
+				lazyFilePropertiesProvider.value
 					.promiseFileProperties(serviceFile)
 					.eventually { fileProperties ->
 						if (localViewStructure !== viewStructure) Unit.toPromise()
