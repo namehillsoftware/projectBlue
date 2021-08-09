@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.authentication.GivenAnAuthenticatedConnection
+package com.lasthopesoftware.bluewater.client.connection.authentication.GivenAReadWriteServer
 
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
@@ -16,7 +16,7 @@ class WhenCheckingAuthentication {
 
 	companion object setup {
 
-		private var isAuthenticated: Boolean? = false
+		private var isReadOnly: Boolean? = false
 
 		@JvmStatic
 		@BeforeClass
@@ -37,12 +37,12 @@ class WhenCheckingAuthentication {
 			every { selectedConnections.promiseSessionConnection() } returns Promise(fakeConnectionProvider)
 
 			val authenticationChecker = SelectedConnectionAuthenticationChecker(selectedConnections)
-			isAuthenticated = authenticationChecker.promiseIsAuthenticated().toFuture().get()
+			isReadOnly = authenticationChecker.promiseIsReadOnly().toFuture().get()
 		}
 	}
 
 	@Test
-	fun thenTheConnectionReportsAuthenticated() {
-		assertThat(isAuthenticated).isTrue
+	fun thenTheConnectionIsNotReadOnly() {
+		assertThat(isReadOnly).isFalse
 	}
 }

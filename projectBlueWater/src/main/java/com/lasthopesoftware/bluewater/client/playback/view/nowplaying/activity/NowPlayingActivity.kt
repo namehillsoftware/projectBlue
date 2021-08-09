@@ -530,9 +530,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		val songRatingBar = songRating.findView()
 		songRatingBar.rating = rating ?: 0f
 		songRatingBar.isEnabled = false
-		lazySelectedConnectionAuthenticationChecker.value.promiseIsAuthenticated()
-			.eventually(LoopedInPromise.response({ isAuthenticated ->
-				if (isAuthenticated) {
+		lazySelectedConnectionAuthenticationChecker.value.promiseIsReadOnly()
+			.eventually(LoopedInPromise.response({ isReadOnly ->
+				if (!isReadOnly) {
 					songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
 						if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
 							val stringRating = newRating.roundToInt().toString()
