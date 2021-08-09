@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.authentication.GivenAnUnauthenticatedConnection
+package com.lasthopesoftware.bluewater.client.connection.authentication.GivenAnOlderServer
 
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
@@ -27,7 +27,6 @@ class WhenCheckingAuthentication {
 					200, (
 						"""<Response Status="OK">
 	<Item Name="Token">B9yXQtTL</Item>
-	<Item Name="ReadOnly">1</Item>
 	<Item Name="PreLicensed">0</Item>
 </Response>""").toByteArray()
 				)
@@ -42,7 +41,7 @@ class WhenCheckingAuthentication {
 	}
 
 	@Test
-	fun thenTheConnectionReportsUnauthenticated() {
-		assertThat(isAuthenticated).isFalse
+	fun thenTheConnectionReportsAuthenticated() {
+		assertThat(isAuthenticated).isTrue
 	}
 }

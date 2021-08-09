@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.authentication.GivenAnAuthenticatedConnection
 
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -20,8 +21,20 @@ class WhenCheckingAuthentication {
 		@JvmStatic
 		@BeforeClass
 		fun before() {
+			val fakeConnectionProvider = FakeConnectionProvider()
+			fakeConnectionProvider.mapResponse({
+				FakeConnectionResponseTuple(
+					200, (
+"""<Response Status="OK">
+	<Item Name="Token">B9yXQtTL</Item>
+	<Item Name="ReadOnly">0</Item>
+	<Item Name="PreLicensed">0</Item>
+</Response>""").toByteArray()
+				)
+			}, "Authenticate")
+
 			val selectedConnections = mockk<ProvideSelectedConnection>()
-			every { selectedConnections.promiseSessionConnection() } returns Promise(FakeConnectionProvider())
+			every { selectedConnections.promiseSessionConnection() } returns Promise(fakeConnectionProvider)
 
 			val authenticationChecker = SelectedConnectionAuthenticationChecker(selectedConnections)
 			isAuthenticated = authenticationChecker.promiseIsAuthenticated().toFuture().get()

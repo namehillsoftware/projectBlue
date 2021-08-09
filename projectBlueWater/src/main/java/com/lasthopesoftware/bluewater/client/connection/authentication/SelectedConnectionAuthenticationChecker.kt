@@ -14,7 +14,8 @@ class SelectedConnectionAuthenticationChecker(private val selectedConnection: Pr
 						?.use { b -> b.byteStream().use(StandardRequest::fromInputStream) }
 						?.let { sr -> sr.items["ReadOnly"]?.toInt() }
 						?.let { ro -> ro == 0 }
+						?: true
 				}
-				?: false.toPromise()
+				?: true.toPromise()
 		}
 }
