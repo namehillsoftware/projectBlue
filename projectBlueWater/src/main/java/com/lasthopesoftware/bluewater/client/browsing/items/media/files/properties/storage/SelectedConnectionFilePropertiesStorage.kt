@@ -9,5 +9,5 @@ class SelectedConnectionFilePropertiesStorage(private val selectedConnectionProv
 	override fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		selectedConnectionProvider
 			.promiseSessionConnection()
-			.eventually { it?.let(innerConstructor)?.promiseFileUpdate(serviceFile, property, value, isFormatted) }
+			.eventually { it?.let(innerConstructor)?.promiseFileUpdate(serviceFile, property, value, isFormatted) ?: Promise.empty() }
 }
