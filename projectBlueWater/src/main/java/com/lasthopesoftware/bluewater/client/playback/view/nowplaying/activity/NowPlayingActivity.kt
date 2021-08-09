@@ -529,6 +529,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private fun setFileRating(serviceFile: ServiceFile, rating: Float?) {
 		val songRatingBar = songRating.findView()
 		songRatingBar.rating = rating ?: 0f
+		songRatingBar.isEnabled = false
 		lazySelectedConnectionAuthenticationChecker.value.promiseIsAuthenticated()
 			.eventually(LoopedInPromise.response({ isAuthenticated ->
 				if (isAuthenticated) {
@@ -544,7 +545,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 					songRatingBar.isEnabled = true
 				} else {
 					songRatingBar.setOnClickListener {
-						Toast.makeText(this, "Authentication must be set in order to set ratings.", Toast.LENGTH_LONG).show()
+						Toast.makeText(this, R.string.authenticationRequired, Toast.LENGTH_LONG).show()
 					}
 				}
 			}, messageHandler.value))
