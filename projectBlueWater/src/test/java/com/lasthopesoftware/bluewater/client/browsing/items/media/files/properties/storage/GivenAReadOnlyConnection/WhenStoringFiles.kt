@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.GivenAnUnauthenticatedConnection
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.GivenAReadOnlyConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -36,8 +37,12 @@ class WhenStoringFiles {
 			val revisionChecker = mockk<CheckScopedRevisions>()
 			every { revisionChecker.promiseRevision() } returns 1.toPromise()
 
+			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+			every { checkConnection.promiseIsReadOnly() } returns true.toPromise()
+
 			val fileStorage = ScopedFilePropertiesStorage(
 				connectionProvider,
+				checkConnection,
 				revisionChecker,
 				fakeFilePropertiesContainer
 			)

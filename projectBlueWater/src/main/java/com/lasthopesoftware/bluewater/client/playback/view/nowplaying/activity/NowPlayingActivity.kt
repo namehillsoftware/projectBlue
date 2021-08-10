@@ -39,6 +39,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.authentication.CachingScopedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
@@ -157,15 +159,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		SelectedConnectionRevisionProvider(lazySelectedConnectionProvider.value)
 	}
 
-	private val lazyFilePropertiesStorage = lazy {
-		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider.value) { c ->
-			ScopedFilePropertiesStorage(
-			c,
-			lazySessionRevisionProvider.value,
-			FilePropertyCache.getInstance())
-		}
-	}
-
 	private val lazyFilePropertiesProvider = lazy {
 		SelectedConnectionFilePropertiesProvider(lazySelectedConnectionProvider.value) { c ->
 			ScopedFilePropertiesProvider(
@@ -177,7 +170,24 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private val lazySelectedConnectionAuthenticationChecker = lazy {
-		SelectedConnectionAuthenticationChecker(lazySelectedConnectionProvider.value)
+		SelectedConnectionAuthenticationChecker(
+			lazySelectedConnectionProvider.value
+		) { c ->
+			CachingScopedConnectionAuthenticationChecker(
+				c,
+				ScopedConnectionAuthenticationChecker(c)
+			)
+		}
+	}
+
+	private val lazyFilePropertiesStorage = lazy {
+		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider.value) { c ->
+			ScopedFilePropertiesStorage(
+				c,
+				lazySelectedConnectionAuthenticationChecker.value,
+				lazySessionRevisionProvider.value,
+				FilePropertyCache.getInstance())
+		}
 	}
 
 	private val lazyDefaultImage = lazy { DefaultImageProvider(this).promiseFileBitmap() }

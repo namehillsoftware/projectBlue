@@ -6,8 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -28,12 +30,15 @@ class WhenGettingThePlaystatsUpdater {
 			val programVersionProvider = mockk<IProgramVersionProvider>()
 			every { programVersionProvider.promiseServerVersion() } returns Promise(Exception(":("))
 
+			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+			every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
+
 			val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
 			val fakeScopedRevisionProvider = FakeScopedRevisionProvider(20)
 			val playstatsUpdateSelector = PlaystatsUpdateSelector(
 				fakeConnectionProvider,
 				ScopedFilePropertiesProvider(fakeConnectionProvider, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
-				ScopedFilePropertiesStorage(fakeConnectionProvider, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
+				ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
 				programVersionProvider
 			)
 			try {

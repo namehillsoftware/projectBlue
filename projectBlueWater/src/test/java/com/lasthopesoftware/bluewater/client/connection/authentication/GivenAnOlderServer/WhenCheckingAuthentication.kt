@@ -2,12 +2,8 @@ package com.lasthopesoftware.bluewater.client.connection.authentication.GivenAnO
 
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
-import com.namehillsoftware.handoff.promises.Promise
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -32,10 +28,7 @@ class WhenCheckingAuthentication {
 				)
 			}, "Authenticate")
 
-			val selectedConnections = mockk<ProvideSelectedConnection>()
-			every { selectedConnections.promiseSessionConnection() } returns Promise(fakeConnectionProvider)
-
-			val authenticationChecker = SelectedConnectionAuthenticationChecker(selectedConnections)
+			val authenticationChecker = ScopedConnectionAuthenticationChecker(fakeConnectionProvider)
 			isReadOnly = authenticationChecker.promiseIsReadOnly().toFuture().get()
 		}
 	}

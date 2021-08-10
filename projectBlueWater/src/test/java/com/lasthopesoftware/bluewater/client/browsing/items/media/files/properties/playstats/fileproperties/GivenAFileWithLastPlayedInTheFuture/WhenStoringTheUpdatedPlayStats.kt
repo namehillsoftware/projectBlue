@@ -9,7 +9,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -56,9 +60,11 @@ class WhenStoringTheUpdatedPlayStats {
 				checkScopedRevisions,
                 filePropertiesContainer
             )
+			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+			every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
             val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
                 scopedFilePropertiesProvider,
-                ScopedFilePropertiesStorage(connectionProvider, checkScopedRevisions, filePropertiesContainer)
+                ScopedFilePropertiesStorage(connectionProvider, checkConnection, checkScopedRevisions, filePropertiesContainer)
             )
 			fileProperties = filePropertiesPlayStatsUpdater
                 .promisePlaystatsUpdate(ServiceFile(23))
