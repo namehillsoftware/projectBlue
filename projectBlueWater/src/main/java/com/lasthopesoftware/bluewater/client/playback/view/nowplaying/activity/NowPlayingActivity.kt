@@ -540,8 +540,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		songRatingBar.rating = rating ?: 0f
 		songRatingBar.isEnabled = false
 
-		val readOnlyConnectionLabel = readOnlyConnectionLabel.findView()
-		readOnlyConnectionLabel.visibility = View.VISIBLE
 		lazySelectedConnectionAuthenticationChecker.value
 			.promiseIsReadOnly()
 			.eventually(LoopedInPromise.response({ isReadOnly ->
@@ -557,8 +555,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 					}
 
 					songRatingBar.isEnabled = true
-					readOnlyConnectionLabel.visibility = View.GONE
 				}
+
+				readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
 			}, messageHandler.value))
 			.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
 	}

@@ -34,7 +34,7 @@ class FileNameTextViewSetter(private val textView: TextView) {
 	}
 
 	private val textViewUpdateSync = Any()
-    private val handler = Handler(textView.context.mainLooper)
+	private val handler = Handler(textView.context.mainLooper)
 	private val lazyFilePropertiesProvider = lazy {
 		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(textView.context)) { c ->
 			val filePropertyCache = FilePropertyCache.getInstance()
@@ -51,32 +51,32 @@ class FileNameTextViewSetter(private val textView: TextView) {
 	}
 
 	@Volatile
-    private var promisedState = Promise.empty<Void>()
+	private var promisedState = Promise.empty<Void>()
 
-    @Volatile
-    private var currentlyPromisedTextViewUpdate: PromisedTextViewUpdate? = null
+	@Volatile
+	private var currentlyPromisedTextViewUpdate: PromisedTextViewUpdate? = null
 
-    @Synchronized
-    fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Void> {
-        promisedState.cancel()
-        promisedState = promisedState
-            .inevitably(EventualTextViewUpdate(serviceFile))
-        return promisedState
-    }
+	@Synchronized
+	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Void> {
+		promisedState.cancel()
+		promisedState = promisedState
+			.inevitably(EventualTextViewUpdate(serviceFile))
+		return promisedState
+	}
 
-    private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
-        override fun promiseAction(): Promise<*> =
-        	synchronized(textViewUpdateSync) {
+	private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
+		override fun promiseAction(): Promise<*> =
+			synchronized(textViewUpdateSync) {
 				PromisedTextViewUpdate(serviceFile)
 					.apply {
 						currentlyPromisedTextViewUpdate = this
 						beginUpdate()
 					}
 			}
-    }
+	}
 
-    private inner class PromisedTextViewUpdate(private val serviceFile: ServiceFile) :
-        Promise<Unit>(), Runnable, ImmediateResponse<Map<String, String>, Unit> {
+	private inner class PromisedTextViewUpdate(private val serviceFile: ServiceFile) :
+		Promise<Unit>(), Runnable, ImmediateResponse<Map<String, String>, Unit> {
 
 		private val cancellationProxy = CancellationProxy()
 
@@ -84,19 +84,19 @@ class FileNameTextViewSetter(private val textView: TextView) {
 			respondToCancellation(cancellationProxy)
 		}
 
-        fun beginUpdate() {
-            if (handler.looper.thread === Thread.currentThread()) {
-                run()
-                return
-            }
+		fun beginUpdate() {
+			if (handler.looper.thread === Thread.currentThread()) {
+				run()
+				return
+			}
 
-            if (handler.post(this)) return
+			if (handler.post(this)) return
 
-            logger.warn("Handler failed to post text view update: $handler")
-            resolve(Unit)
-        }
+			logger.warn("Handler failed to post text view update: $handler")
+			resolve(Unit)
+		}
 
-        override fun run() {
+		override fun run() {
 			textView.setText(R.string.lbl_loading)
 
 			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
@@ -106,57 +106,57 @@ class FileNameTextViewSetter(private val textView: TextView) {
 
 			val promisedViewSetting = filePropertiesPromise.eventually(response(this, handler))
 
-            val delayPromise = delay<Unit>(timeoutDuration)
-            cancellationProxy.doCancel(delayPromise)
-            whenAny(promisedViewSetting, delayPromise)
-                .must {
+			val delayPromise = delay<Unit>(timeoutDuration)
+			cancellationProxy.doCancel(delayPromise)
+			whenAny(promisedViewSetting, delayPromise)
+				.must {
 
-                    // First, cancel everything if the delay promise finished first
-                    delayPromise.then { cancellationProxy.run() }
+					// First, cancel everything if the delay promise finished first
+					delayPromise.then { cancellationProxy.run() }
 					// Then cancel the delay promise, in case the promised view setting
-                    // finished first
-                    delayPromise.cancel()
+					// finished first
+					delayPromise.cancel()
 
-                    // Finally, always resolve the parent promise
-                    resolve(Unit)
-                }
-                .excuse { e ->
-                    LoggerUncaughtExceptionHandler
-                        .getErrorExecutor()
-                        .execute { handleError(e) }
-                }
-        }
+					// Finally, always resolve the parent promise
+					resolve(Unit)
+				}
+				.excuse { e ->
+					LoggerUncaughtExceptionHandler
+						.getErrorExecutor()
+						.execute { handleError(e) }
+				}
+		}
 
-        override fun respond(properties: Map<String, String>) {
-            if (isNotCurrentPromise || isUpdateCancelled) return
-            val fileName = properties[KnownFileProperties.NAME]
-            if (fileName != null) textView.text = fileName
-        }
+		override fun respond(properties: Map<String, String>) {
+			if (isNotCurrentPromise || isUpdateCancelled) return
+			val fileName = properties[KnownFileProperties.NAME]
+			if (fileName != null) textView.text = fileName
+		}
 
-        private fun handleError(e: Throwable) {
-            if (isUpdateCancelled) return
-            if (e is CancellationException) return
-            if (e is SocketException) {
-                val message = e.message
-                if (message != null && message.lowercase(Locale.getDefault()).contains("socket closed")) return
-            }
-            if (e is IOException) {
-                val message = e.message
-                if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) return
-            }
-            if (e is SSLProtocolException) {
-                val message = e.message
-                if (message != null && message.lowercase(Locale.getDefault()).contains("ssl handshake aborted")) return
-            }
-            logger.error(
-                "An error occurred getting the file properties for the file with ID " + serviceFile.key,
-                e
-            )
-        }
+		private fun handleError(e: Throwable) {
+			if (isUpdateCancelled) return
+			if (e is CancellationException) return
+			if (e is SocketException) {
+				val message = e.message
+				if (message != null && message.lowercase(Locale.getDefault()).contains("socket closed")) return
+			}
+			if (e is IOException) {
+				val message = e.message
+				if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) return
+			}
+			if (e is SSLProtocolException) {
+				val message = e.message
+				if (message != null && message.lowercase(Locale.getDefault()).contains("ssl handshake aborted")) return
+			}
+			logger.error(
+				"An error occurred getting the file properties for the file with ID " + serviceFile.key,
+				e
+			)
+		}
 
-        private val isNotCurrentPromise: Boolean
-            get() = synchronized(textViewUpdateSync) { currentlyPromisedTextViewUpdate !== this }
-        private val isUpdateCancelled: Boolean
-            get() = cancellationProxy.isCancelled
-    }
+		private val isNotCurrentPromise: Boolean
+			get() = synchronized(textViewUpdateSync) { currentlyPromisedTextViewUpdate !== this }
+		private val isUpdateCancelled: Boolean
+			get() = cancellationProxy.isCancelled
+	}
 }
