@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.authentication.CachingScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
@@ -24,10 +23,7 @@ class UpdatePlayStatsOnCompleteRegistration : IConnectionDependentReceiverRegist
                 ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, cache),
                 ScopedFilePropertiesStorage(
 					connectionProvider,
-					CachingScopedConnectionAuthenticationChecker(
-						connectionProvider,
-						ScopedConnectionAuthenticationChecker(connectionProvider)
-					),
+					ScopedConnectionAuthenticationChecker(connectionProvider),
 					scopedRevisionProvider,
 					cache),
                 ProgramVersionProvider(connectionProvider)

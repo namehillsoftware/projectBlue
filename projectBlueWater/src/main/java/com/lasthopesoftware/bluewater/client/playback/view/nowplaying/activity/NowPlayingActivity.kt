@@ -39,7 +39,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.authentication.CachingScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
@@ -176,13 +175,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private val lazySelectedConnectionAuthenticationChecker = lazy {
 		SelectedConnectionAuthenticationChecker(
-			lazySelectedConnectionProvider.value
-		) { c ->
-			CachingScopedConnectionAuthenticationChecker(
-				c,
-				ScopedConnectionAuthenticationChecker(c)
-			)
-		}
+			lazySelectedConnectionProvider.value,
+			::ScopedConnectionAuthenticationChecker)
 	}
 
 	private val lazyFilePropertiesStorage = lazy {
