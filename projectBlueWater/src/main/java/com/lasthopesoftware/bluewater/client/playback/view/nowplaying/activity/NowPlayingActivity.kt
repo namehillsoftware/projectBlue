@@ -111,7 +111,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
 
 	private val nowPlayingToggledVisibilityControls = lazy {
-		NowPlayingToggledVisibilityControls(LazyViewFinder(this@NowPlayingActivity, R.id.llNpButtons), LazyViewFinder(this@NowPlayingActivity, R.id.menuControlsLinearLayout), songRating)
+		NowPlayingToggledVisibilityControls(
+			LazyViewFinder(this, R.id.llNpButtons),
+			LazyViewFinder(this, R.id.menuControlsLinearLayout),
+			LazyViewFinder(this, R.id.songRatingLinearLayout)
+		)
 	}
 
 	private val lazySelectedLibraryIdProvider = lazy { SelectedBrowserLibraryIdentifierProvider(this) }
@@ -541,6 +545,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		val songRatingBar = songRating.findView()
 		songRatingBar.rating = rating ?: 0f
 		songRatingBar.isEnabled = false
+
+		val readOnlyConnectionLabel = readOnlyConnectionLabel.findView()
+		readOnlyConnectionLabel.visibility = View.VISIBLE
 		lazySelectedConnectionAuthenticationChecker.value
 			.promiseIsReadOnly()
 			.eventually(LoopedInPromise.response({ isReadOnly ->
@@ -556,7 +563,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 					}
 
 					songRatingBar.isEnabled = true
-					readOnlyConnectionLabel.findView().visibility = View.GONE
+					readOnlyConnectionLabel.visibility = View.GONE
 				}
 			}, messageHandler.value))
 			.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
