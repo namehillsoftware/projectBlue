@@ -26,6 +26,12 @@ import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
 class FileNameTextViewSetter(private val textView: TextView) {
+
+	companion object {
+		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
+		private val timeoutDuration = Duration.standardMinutes(1)
+	}
+
 	private val textViewUpdateSync = Any()
     private val handler = Handler(textView.context.mainLooper)
 	private val lazyFilePropertiesProvider = lazy {
@@ -62,15 +68,21 @@ class FileNameTextViewSetter(private val textView: TextView) {
         	synchronized(textViewUpdateSync) {
 				PromisedTextViewUpdate(serviceFile)
 					.apply {
-						beginUpdate()
 						currentlyPromisedTextViewUpdate = this
+						beginUpdate()
 					}
 			}
     }
 
     private inner class PromisedTextViewUpdate(private val serviceFile: ServiceFile) :
         Promise<Unit>(), Runnable, ImmediateResponse<Map<String, String>, Unit> {
-        private val cancellationProxy = CancellationProxy()
+
+		private val cancellationProxy = CancellationProxy()
+
+		init {
+			respondToCancellation(cancellationProxy)
+		}
+
         fun beginUpdate() {
             if (handler.looper.thread === Thread.currentThread()) {
                 run()
@@ -143,17 +155,5 @@ class FileNameTextViewSetter(private val textView: TextView) {
             get() = synchronized(textViewUpdateSync) { currentlyPromisedTextViewUpdate !== this }
         private val isUpdateCancelled: Boolean
             get() = cancellationProxy.isCancelled
-
-        init {
-            respondToCancellation(cancellationProxy)
-        }
     }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(
-            FileNameTextViewSetter::class.java
-        )
-        private val timeoutDuration = Duration.standardMinutes(1)
-    }
-
 }
