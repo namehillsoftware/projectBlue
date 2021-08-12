@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
 import android.os.Handler
 import android.widget.TextView
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
@@ -96,6 +97,8 @@ class FileNameTextViewSetter(private val textView: TextView) {
         }
 
         override fun run() {
+			textView.setText(R.string.lbl_loading)
+
 			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
 
 			val filePropertiesPromise = lazyFilePropertiesProvider.value.promiseFileProperties(serviceFile)
