@@ -87,16 +87,31 @@
         </LinearLayout>
     </RelativeLayout>
 
-    <RatingBar
-        android:id="@+id/rbSongRating"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/llNpButtons"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="44dp"
-        android:max="5"
-        android:rating="0"
-        android:stepSize="1" />
+        android:orientation="vertical"
+        android:layout_marginBottom="44dp">
+
+        <RatingBar
+            android:id="@+id/rbSongRating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:max="5"
+            android:rating="0"
+            android:stepSize="1" />
+
+        <TextView
+            android:id="@+id/readOnlyConnectionLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/readOnlyConnection"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_gravity="center_horizontal"/>
+
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/pbNowPlaying"

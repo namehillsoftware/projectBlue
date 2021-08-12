@@ -106,6 +106,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 	private val drawerLayout = LazyViewFinder<DrawerLayout>(this, R.id.nowPlayingDrawer)
+	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 
 	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
 
@@ -540,7 +541,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		val songRatingBar = songRating.findView()
 		songRatingBar.rating = rating ?: 0f
 		songRatingBar.isEnabled = false
-		lazySelectedConnectionAuthenticationChecker.value.promiseIsReadOnly()
+		val readOnlyConnectionLabel = readOnlyConnectionLabel.findView()
+		lazySelectedConnectionAuthenticationChecker.value
+			.promiseIsReadOnly()
 			.eventually(LoopedInPromise.response({ isReadOnly ->
 				if (!isReadOnly) {
 					songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
@@ -552,11 +555,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 							viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
 						}
 					}
+
 					songRatingBar.isEnabled = true
-				} else {
-					songRatingBar.setOnClickListener {
-						Toast.makeText(this, R.string.authenticationRequired, Toast.LENGTH_LONG).show()
-					}
+					readOnlyConnectionLabel.visibility = View.GONE
 				}
 			}, messageHandler.value))
 			.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
@@ -609,7 +610,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private fun resetViewOnReconnect(serviceFile: ServiceFile, position: Long) {
 		pollSessionConnection(this).then {
 			if (serviceFile == viewStructure?.serviceFile) {
-				viewStructure?.promisedNowPlayingImage!!.cancel()
+				viewStructure?.promisedNowPlayingImage?.cancel()
 				viewStructure?.promisedNowPlayingImage = null
 			}
 			setView(serviceFile, position)
