@@ -454,18 +454,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
-		fun displayImageBitmap() {
-			val nowPlayingImage = nowPlayingImageViewFinder.findView()
-			nowPlayingImage.scaleType = ScaleType.CENTER_CROP
-			nowPlayingImage.visibility = View.VISIBLE
-		}
-
-		fun setNowPlayingImage(bitmap: Bitmap?) {
-			nowPlayingImageViewFinder.findView().setImageBitmap(bitmap)
-			loadingProgressBar.findView().visibility = View.INVISIBLE
-			if (bitmap != null) displayImageBitmap()
-		}
-
 		fun setNowPlayingImage(viewStructure: ViewStructure, serviceFile: ServiceFile) {
 			val nowPlayingImage = nowPlayingImageViewFinder.findView()
 			loadingProgressBar.findView().visibility = View.VISIBLE
@@ -476,31 +464,19 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			viewStructure.promisedNowPlayingImage
 				?.eventually { bitmap ->
 					if (viewStructure !== Companion.viewStructure) Unit.toPromise()
-					else LoopedInPromise(MessageWriter { setNowPlayingImage(bitmap) }, messageHandler.value)
+					else LoopedInPromise(MessageWriter {
+						nowPlayingImage.setImageBitmap(bitmap)
+						loadingProgressBar.findView().visibility = View.INVISIBLE
+						if (bitmap != null) {
+							nowPlayingImage.scaleType = ScaleType.CENTER_CROP
+							nowPlayingImage.visibility = View.VISIBLE
+						}
+					}, messageHandler.value)
 				}
 				?.excuse { e ->
 					if (e is CancellationException)	logger.info("Bitmap retrieval cancelled", e)
 					else logger.error("There was an error retrieving the image for serviceFile $serviceFile", e)
 				}
-		}
-
-		fun setFileRating(serviceFile: ServiceFile, rating: Float?, isReadOnly: Boolean) {
-			val songRatingBar = songRating.findView()
-			songRatingBar.rating = rating ?: 0f
-			songRatingBar.isEnabled = !isReadOnly
-			readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
-
-			if (isReadOnly) return
-
-			songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
-				if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
-					val stringRating = newRating.roundToInt().toString()
-					lazyFilePropertiesStorage.value
-						.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, stringRating, false)
-						.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
-					viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
-				}
-			}
 		}
 
 		fun setFileProperties(serviceFile: ServiceFile, initialFilePosition: Long, fileProperties: Map<String, String>, isReadOnly: Boolean) {
@@ -509,12 +485,29 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			val title = fileProperties[KnownFileProperties.NAME]
 			nowPlayingTitle.findView().text = title
 			nowPlayingTitle.findView().isSelected = true
-			val stringRating = fileProperties[KnownFileProperties.RATING]
-			val fileRating = stringRating?.toFloatOrNull()
-			setFileRating(serviceFile, fileRating, isReadOnly)
 			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 			setTrackDuration(if (duration > 0) duration.toLong() else 100.toLong())
 			setTrackProgress(initialFilePosition)
+
+			val stringRating = fileProperties[KnownFileProperties.RATING]
+			val fileRating = stringRating?.toFloatOrNull()
+
+			val songRatingBar = songRating.findView()
+			songRatingBar.rating = fileRating ?: 0f
+			songRatingBar.isEnabled = !isReadOnly
+			readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
+
+			if (isReadOnly) return
+
+			songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
+				if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
+					val ratingToString = newRating.roundToInt().toString()
+					lazyFilePropertiesStorage.value
+						.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
+						.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
+					viewStructure?.fileProperties?.put(KnownFileProperties.RATING, ratingToString)
+				}
+			}
 		}
 
 		fun disableViewWithMessage() {
