@@ -24,9 +24,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.promiseSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
@@ -37,18 +36,14 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer {
 
-	private class ScopedConnectionProviderDependencies(val connectionProvider: IConnectionProvider) {
-		val lazyFileProvider = lazy {
-			val stringListProvider = FileStringListProvider(connectionProvider)
-			FileProvider(stringListProvider)
-		}
-	}
-
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
-	private val lazyScopedConnectionProviderDependencies = lazy {
-		promiseSelectedConnection().then { ScopedConnectionProviderDependencies(it!!) }
+
+	private val lazyFileProvider = lazy {
+		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(this))
+		FileProvider(stringListProvider)
 	}
+
 	private var viewAnimator: ViewAnimator? = null
 	private var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton? = null
 
@@ -86,41 +81,38 @@ class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer {
 		val context = this
 		(object : Runnable {
 			override fun run() {
-				lazyScopedConnectionProviderDependencies.value
-					.eventually { dependencies ->
-						val parameters = SearchFileParameterProvider.getFileListParameters(query)
-						dependencies.lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
-							.eventually(LoopedInPromise.response({ serviceFiles ->
-								fromActiveLibrary(context)
-									?.let { nowPlayingFileProvider ->
-										FileListItemMenuBuilder(
-											serviceFiles,
-											nowPlayingFileProvider,
-											dependencies.connectionProvider,
-											FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(context)))
-									}
-									?.also { fileListItemMenuBuilder ->
-										ItemListMenuChangeHandler(context).apply {
-											fileListItemMenuBuilder.setOnViewChangedListener(
-												ViewChangedHandler()
-													.setOnViewChangedListener(this)
-													.setOnAnyMenuShown(this)
-													.setOnAllMenusHidden(this))
-										}
+				val parameters = SearchFileParameterProvider.getFileListParameters(query)
+				lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
+					.eventually(LoopedInPromise.response({ serviceFiles ->
+						fromActiveLibrary(context)
+							?.let { nowPlayingFileProvider ->
+								FileListItemMenuBuilder(
+									serviceFiles,
+									nowPlayingFileProvider,
+									FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(context))
+								)
+							}
+							?.also { fileListItemMenuBuilder ->
+								ItemListMenuChangeHandler(context).apply {
+									fileListItemMenuBuilder.setOnViewChangedListener(
+										ViewChangedHandler()
+											.setOnViewChangedListener(this)
+											.setOnAnyMenuShown(this)
+											.setOnAllMenusHidden(this))
+								}
 
-										val fileListView = fileListView.findView()
-										fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
-										val layoutManager = LinearLayoutManager(context)
-										fileListView.layoutManager = layoutManager
-										fileListView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
-										fileListView.visibility = View.VISIBLE
-										pbLoading.findView().visibility = View.INVISIBLE
-									}
-							}, context))
-					}
-					.excuse(HandleViewIoException(context, this))
-					.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
-					.then { finish() }
+								val fileListView = fileListView.findView()
+								fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
+								val layoutManager = LinearLayoutManager(context)
+								fileListView.layoutManager = layoutManager
+								fileListView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
+								fileListView.visibility = View.VISIBLE
+								pbLoading.findView().visibility = View.INVISIBLE
+							}
+					}, context))
+				.excuse(HandleViewIoException(context, this))
+				.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
+				.then { finish() }
 			}
 		}).run()
 	}

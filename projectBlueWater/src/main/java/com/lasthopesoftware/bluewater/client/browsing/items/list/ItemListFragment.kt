@@ -1,6 +1,5 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.playlists
+package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +8,8 @@ import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider.Companion.provide
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -24,14 +25,14 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 
-class PlaylistListFragment : Fragment() {
-    private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
-    private val lazyListView = lazy {
+class ItemListFragment : Fragment() {
+	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
+	private val lazyListView = lazy {
 		val listView = ListView(activity)
 		listView.visibility = View.INVISIBLE
 		listView
 	}
-    private val lazyProgressBar = lazy {
+	private val lazyProgressBar = lazy {
 		val pbLoading = ProgressBar(activity, null, android.R.attr.progressBarStyleLarge)
 		val pbParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -40,9 +41,8 @@ class PlaylistListFragment : Fragment() {
 		pbParams.addRule(RelativeLayout.CENTER_IN_PARENT)
 		pbLoading.layoutParams = pbParams
 		pbLoading
-}
-    private val lazyLayout = lazy {
-		val activity: Activity? = activity
+	}
+	private val lazyLayout = lazy {
 		val layout = RelativeLayout(activity)
 		layout.layoutParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT,
@@ -60,46 +60,45 @@ class PlaylistListFragment : Fragment() {
 	private val lazySelectedLibraryProvider = lazy {
 		SelectedBrowserLibraryProvider(
 			SelectedBrowserLibraryIdentifierProvider(requireContext()),
-			LibraryRepository(requireContext()))
+			LibraryRepository(requireContext())
+		)
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        return lazyLayout.value
-    }
+		return lazyLayout.value
+	}
 
-    override fun onStart() {
-        super.onStart()
-
+	override fun onStart() {
+		super.onStart()
 		val activity = activity ?: return
-
-        lazyListView.value.visibility = View.INVISIBLE
-        lazyProgressBar.value.visibility = View.VISIBLE
+		lazyListView.value.visibility = View.INVISIBLE
+		lazyProgressBar.value.visibility = View.VISIBLE
 
 		lazySelectedLibraryProvider.value
-            .browserLibrary
-            .then { library ->
-				if (library == null) return@then
-				val itemListMenuChangeHandler = itemListMenuChangeHandler ?: return@then
-
-				val listResolvedPromise = response(
-					OnGetLibraryViewItemResultsComplete(
-						activity,
-						lazyListView.value,
-						lazyProgressBar.value,
-						itemListMenuChangeHandler,
-						FileListParameters.getInstance(),
-						lazyFileStringListProvider.value,
-						StoredItemAccess(activity),
-						library
-					), activity
-				)
-				val playlistFillAction = object : Runnable {
+			.browserLibrary
+			.then { activeLibrary ->
+				val onGetVisibleViewsCompleteListener =
+					response<List<Item>, Unit>({ result ->
+						result
+							.takeUnless { result.isEmpty() }
+							?.let { list ->
+								arguments
+									?.getInt(ARG_CATEGORY_POSITION)
+									?.let { categoryPosition ->
+										if (categoryPosition < list.size) list[categoryPosition] else list[list.size - 1]
+									}
+							}
+							?.also(::fillStandardItemView)
+					}, activity)
+				val fillItemsRunnable = object : Runnable {
 					override fun run() {
 						getInstance(activity).promiseSessionConnection()
 							.eventually { c ->
-								provide(c!!, library.selectedView)
+								provide(
+									c!!, activeLibrary!!.selectedView
+								)
 							}
-							.eventually(listResolvedPromise)
+							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(HandleViewIoException(activity, this))
 							.eventuallyExcuse(
 								response(
@@ -109,11 +108,64 @@ class PlaylistListFragment : Fragment() {
 							)
 					}
 				}
-				playlistFillAction.run()
+				fillItemsRunnable.run()
 			}
 	}
 
-    fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
-        this.itemListMenuChangeHandler = itemListMenuChangeHandler
-    }
+	private fun fillStandardItemView(category: IItem) {
+		val activity = activity ?: return
+
+		lazySelectedLibraryProvider.value
+			.browserLibrary
+			.then { library ->
+				if (library == null) return@then
+				val itemListMenuChangeHandler = itemListMenuChangeHandler ?: return@then
+
+				val onGetLibraryViewItemResultsComplete =
+					response(
+						OnGetLibraryViewItemResultsComplete(
+							activity,
+							lazyListView.value,
+							lazyProgressBar.value,
+							itemListMenuChangeHandler,
+							FileListParameters.getInstance(),
+							lazyFileStringListProvider.value,
+							StoredItemAccess(activity),
+							library
+						), activity
+					)
+				val fillItemsRunnable = object : Runnable {
+					override fun run() {
+						getInstance(activity).promiseSessionConnection()
+							.eventually { c -> provide(c!!, category.key) }
+							.eventually(onGetLibraryViewItemResultsComplete)
+							.excuse(HandleViewIoException(activity, this))
+							.eventuallyExcuse(
+								response(
+									UnexpectedExceptionToasterResponse(activity),
+									activity
+								)
+							)
+					}
+				}
+				fillItemsRunnable.run()
+			}
+	}
+
+	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
+		this.itemListMenuChangeHandler = itemListMenuChangeHandler
+	}
+
+	companion object {
+		private const val ARG_CATEGORY_POSITION = "category_position"
+
+		@JvmStatic
+		fun getPreparedFragment(libraryViewId: Int): ItemListFragment {
+			val returnFragment = ItemListFragment()
+			val args = Bundle()
+			args.putInt(ARG_CATEGORY_POSITION, libraryViewId)
+			returnFragment.arguments = args
+			return returnFragment
+		}
+	}
 }

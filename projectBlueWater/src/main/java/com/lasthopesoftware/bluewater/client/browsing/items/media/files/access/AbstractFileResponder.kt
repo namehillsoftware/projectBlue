@@ -8,11 +8,11 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.util.*
 
 abstract class AbstractFileResponder : PromisedResponse<String, Collection<ServiceFile>>, ImmediateResponse<Collection<ServiceFile>, List<ServiceFile>> {
-	override fun promiseResponse(stringList: String): Promise<Collection<ServiceFile>> {
-		return FileStringListUtilities.promiseParsedFileStringList(stringList)
+	final override fun promiseResponse(stringList: String?): Promise<Collection<ServiceFile>> {
+		return stringList?.let(FileStringListUtilities::promiseParsedFileStringList) ?: Promise(emptyList())
 	}
 
-	override fun respond(serviceFiles: Collection<ServiceFile>): List<ServiceFile> {
+	final override fun respond(serviceFiles: Collection<ServiceFile>): List<ServiceFile> {
 		return if (serviceFiles is List<*>) serviceFiles as List<ServiceFile> else ArrayList(serviceFiles)
 	}
 }

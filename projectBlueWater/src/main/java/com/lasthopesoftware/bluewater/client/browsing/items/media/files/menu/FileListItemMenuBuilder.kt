@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.AbstractMenuClickHandler
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
@@ -21,7 +20,11 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class FileListItemMenuBuilder(private val serviceFiles: Collection<ServiceFile>, private val nowPlayingFileProvider: INowPlayingFileProvider, private val scopedConnectionProvider: IConnectionProvider, private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar)
+class FileListItemMenuBuilder(
+	private val serviceFiles: Collection<ServiceFile>,
+	private val nowPlayingFileProvider: INowPlayingFileProvider,
+	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar
+)
 	: AbstractFileListItemMenuBuilder<FileListItemMenuBuilder.ViewHolder>(R.layout.layout_file_item_menu) {
 
 	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
