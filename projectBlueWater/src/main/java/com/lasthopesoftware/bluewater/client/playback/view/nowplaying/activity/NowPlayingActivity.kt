@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.promiseSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -392,7 +391,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		lazyNowPlayingRepository.value
 			.nowPlaying
 			.eventually { np ->
-				promiseSelectedConnection()
+				lazySelectedConnectionProvider.value.promiseSessionConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						val serviceFile = np.playlist[np.playlistPosition]
 						val filePosition = connectionProvider?.urlProvider?.baseUrl
@@ -438,7 +437,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			.nowPlaying
 			.eventually { np ->
 				if (np.playlistPosition >= np.playlist.size) Unit.toPromise()
-				else promiseSelectedConnection()
+				else lazySelectedConnectionProvider.value
+					.promiseSessionConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
 							val serviceFile = np.playlist[np.playlistPosition]
@@ -454,7 +454,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
-		promiseSelectedConnection()
+		lazySelectedConnectionProvider.value.promiseSessionConnection()
 			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider ->
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@ImmediateResponse
 
