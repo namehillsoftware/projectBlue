@@ -454,7 +454,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
-		fun setNowPlayingImage(viewStructure: ViewStructure, serviceFile: ServiceFile) {
+		fun setNowPlayingImage(viewStructure: ViewStructure) {
 			val nowPlayingImage = nowPlayingImageViewFinder.findView()
 			loadingProgressBar.findView().visibility = View.VISIBLE
 			nowPlayingImage.visibility = View.INVISIBLE
@@ -479,7 +479,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				}
 		}
 
-		fun setFileProperties(serviceFile: ServiceFile, initialFilePosition: Long, fileProperties: Map<String, String>, isReadOnly: Boolean) {
+		fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
 			val artist = fileProperties[KnownFileProperties.ARTIST]
 			nowPlayingArtist.findView().text = artist
 			val title = fileProperties[KnownFileProperties.NAME]
@@ -544,12 +544,12 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				val localViewStructure = viewStructure ?: ViewStructure(urlKeyHolder, serviceFile)
 				viewStructure = localViewStructure
 
-				setNowPlayingImage(localViewStructure, serviceFile)
+				setNowPlayingImage(localViewStructure)
 
-				val localFileProperties = localViewStructure.fileProperties
+				val cachedFileProperties = localViewStructure.fileProperties
 				val isReadOnly = localViewStructure.isFilePropertiesReadOnly
-				if (localFileProperties != null && isReadOnly != null) {
-					setFileProperties(serviceFile, initialFilePosition, localFileProperties, isReadOnly)
+				if (cachedFileProperties != null && isReadOnly != null) {
+					setFileProperties(cachedFileProperties, isReadOnly)
 					return@ImmediateResponse
 				}
 
@@ -564,7 +564,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 							else LoopedInPromise(MessageWriter {
 								localViewStructure.fileProperties = fileProperties.toMutableMap()
 								localViewStructure.isFilePropertiesReadOnly = isReadOnly
-								setFileProperties(serviceFile, initialFilePosition, fileProperties, isReadOnly)
+								setFileProperties(fileProperties, isReadOnly)
 							}, messageHandler.value)
 						}
 					}
