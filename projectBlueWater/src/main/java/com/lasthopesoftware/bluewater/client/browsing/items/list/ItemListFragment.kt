@@ -77,15 +77,18 @@ class ItemListFragment : Fragment() {
 		lazySelectedLibraryProvider.value
 			.browserLibrary
 			.then { activeLibrary ->
+				if (activeLibrary == null) return@then
+
 				val onGetVisibleViewsCompleteListener =
 					response<List<Item>, Unit>({ result ->
 						result
 							.takeUnless { result.isEmpty() }
-							?.let { list ->
+							?.let {
 								arguments
 									?.getInt(ARG_CATEGORY_POSITION)
 									?.let { categoryPosition ->
-										if (categoryPosition < list.size) list[categoryPosition] else list[list.size - 1]
+										if (categoryPosition < result.size) result[categoryPosition]
+										else result[result.size - 1]
 									}
 							}
 							?.also(::fillStandardItemView)
@@ -95,7 +98,7 @@ class ItemListFragment : Fragment() {
 						getInstance(activity).promiseSessionConnection()
 							.eventually { c ->
 								provide(
-									c!!, activeLibrary!!.selectedView
+									c!!, activeLibrary.selectedView
 								)
 							}
 							.eventually(onGetVisibleViewsCompleteListener)
