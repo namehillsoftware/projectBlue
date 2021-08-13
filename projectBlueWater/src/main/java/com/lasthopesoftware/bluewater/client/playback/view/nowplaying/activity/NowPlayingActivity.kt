@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.promiseSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -393,8 +392,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		lazyNowPlayingRepository.value
 			.nowPlaying
 			.eventually { np ->
-				SelectedConnection.getInstance(this)
-					.promiseSessionConnection()
+				promiseSelectedConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						val serviceFile = np.playlist[np.playlistPosition]
 						val filePosition = connectionProvider?.urlProvider?.baseUrl
@@ -440,8 +438,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			.nowPlaying
 			.eventually { np ->
 				if (np.playlistPosition >= np.playlist.size) Unit.toPromise()
-				else SelectedConnection.getInstance(this)
-					.promiseSessionConnection()
+				else promiseSelectedConnection()
 					.eventually(LoopedInPromise.response({ connectionProvider ->
 						connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
 							val serviceFile = np.playlist[np.playlistPosition]
