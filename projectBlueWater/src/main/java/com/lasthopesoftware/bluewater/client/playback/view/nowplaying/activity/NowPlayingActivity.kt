@@ -528,9 +528,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			WaitForConnectionDialog.show(this)
 		}
 
-		fun handleIoException(exception: Throwable): Boolean {
+		fun handleException(exception: Throwable) {
 			val isIoException = handleIoException(exception)
-			if (!isIoException) return isIoException
+			if (!isIoException)
 
 			pollSessionConnection(this).then {
 				if (serviceFile == viewStructure?.serviceFile) {
@@ -540,7 +540,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				setView(serviceFile, initialFilePosition)
 			}
 			WaitForConnectionDialog.show(this)
-			return isIoException
 		}
 
 		lazySelectedConnectionProvider.value.promiseSessionConnection()
@@ -580,7 +579,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 							}, messageHandler.value)
 						}
 					}
-					.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
+					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler.value))
 			}, messageHandler.value))
 	}
 
