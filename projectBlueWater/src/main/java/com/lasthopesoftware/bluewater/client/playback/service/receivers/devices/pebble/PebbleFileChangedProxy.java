@@ -5,18 +5,18 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
 
 class PebbleFileChangedProxy extends BroadcastReceiver {
 
 	private static final String PEBBLE_NOTIFY_INTENT = "com.getpebble.action.NOW_PLAYING";
 
-	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
+	private final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider;
 
-	public PebbleFileChangedProxy(CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider) {
-		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
+	public PebbleFileChangedProxy(ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider) {
+		this.scopedCachedFilePropertiesProvider = scopedCachedFilePropertiesProvider;
 	}
 
 	@Override
@@ -24,7 +24,7 @@ class PebbleFileChangedProxy extends BroadcastReceiver {
 		final int fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1);
 		if (fileKey < 0) return;
 
-		cachedSessionFilePropertiesProvider
+		scopedCachedFilePropertiesProvider
 			.promiseFileProperties(new ServiceFile(fileKey))
 			.then(fileProperties -> {
 				final String artist = fileProperties.get(KnownFileProperties.ARTIST);

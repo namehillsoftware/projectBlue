@@ -13,9 +13,9 @@ import androidx.annotation.IntDef;
 import androidx.annotation.RequiresApi;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise;
@@ -36,7 +36,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 		PlaybackState.ACTION_STOP;
 
 	private final Context context;
-	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
+	private final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
 	private final MediaSessionCompat mediaSession;
 
@@ -47,9 +47,9 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 	private Bitmap remoteClientBitmap;
 	private volatile boolean isPlaying;
 
-	public MediaSessionBroadcaster(Context context, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ImageProvider imageProvider, MediaSessionCompat mediaSession) {
+	public MediaSessionBroadcaster(Context context, ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider, ImageProvider imageProvider, MediaSessionCompat mediaSession) {
 		this.context = context;
-		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
+		this.scopedCachedFilePropertiesProvider = scopedCachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
 		this.mediaSession = mediaSession;
 	}
@@ -100,7 +100,7 @@ public class MediaSessionBroadcaster implements IRemoteBroadcaster {
 
 	@Override
 	public void updateNowPlaying(ServiceFile serviceFile) {
-		cachedSessionFilePropertiesProvider
+		scopedCachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.eventually(LoopedInPromise.response(fileProperties -> {
 				final String artist = fileProperties.get(KnownFileProperties.ARTIST);

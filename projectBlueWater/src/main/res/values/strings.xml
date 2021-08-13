@@ -98,4 +98,5 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="kill_playback">Kill Active Playback Engine</string>
+    <string name="readOnlyConnection">Read-only Connection</string>
 </resources>

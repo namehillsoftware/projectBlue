@@ -130,11 +130,13 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 				.then { it?.let { library ->
 					getInstance(context)
 						.promiseSessionConnection()
-						.eventually { c -> ItemProvider.provide(c, library.selectedView) }
+						.eventually { c ->
+							c?.let(::ItemProvider)?.promiseItems(library.selectedView) ?: Promise(emptyList())
+						}
 						.eventually(fillVisibleViews.value)
 						.run {
 							if (savedInstanceState == null) this
-							else this.eventually<Unit>(LoopedInPromise.response({
+							else eventually(LoopedInPromise.response({
 								val savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1)
 								if (savedSelectedView < 0 || savedSelectedView != library.selectedView) return@response
 

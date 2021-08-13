@@ -1,10 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.GivenNoStoredFileProperties;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
@@ -16,9 +20,6 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class WhenGettingFileProperties {
 
@@ -33,8 +34,11 @@ public class WhenGettingFileProperties {
 			}
 		});
 
+		final FakeLibraryConnectionProvider fakeLibraryConnectionProvider = new FakeLibraryConnectionProvider(new HashMap<LibraryId, IConnectionProvider>() {{ put(new LibraryId(14), fakeFileConnectionProvider); }});
+
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(
-			new FakeLibraryConnectionProvider(new HashMap<LibraryId, IConnectionProvider>() {{ put(new LibraryId(14), fakeFileConnectionProvider); }}),
+			fakeLibraryConnectionProvider,
+			new LibraryRevisionProvider(fakeLibraryConnectionProvider),
 			mock(IFilePropertiesContainerRepository.class));
 
 		fileProperties = new FuturePromise<>(filePropertiesProvider.promiseFileProperties(new LibraryId(14), new ServiceFile(15))).get();

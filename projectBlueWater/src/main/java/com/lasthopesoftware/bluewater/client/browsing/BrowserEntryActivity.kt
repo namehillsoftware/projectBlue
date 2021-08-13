@@ -29,8 +29,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsByConnectionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
@@ -47,14 +47,13 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.namehillsoftware.handoff.promises.Promise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 import org.slf4j.LoggerFactory
 import java.util.*
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
-
 	private var connectionRestoreCode: Int? = null
 	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
 	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
@@ -63,6 +62,15 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val loadingViewsProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingViews)
 
 	private val lazyLibraryRepository = lazy { LibraryRepository(this)	}
+
+	private val lazyLibraryViewsProvider = lazy {
+		val selectedConnectionProvider = SelectedConnectionProvider(this)
+		LibraryViewsProvider(selectedConnectionProvider, SelectedConnectionRevisionProvider(selectedConnectionProvider))
+	}
+
+	private val lazySelectedLibraryViews = lazy {
+		SelectedLibraryViewProvider(lazySelectedBrowserLibraryProvider.value, lazyLibraryViewsProvider.value, lazyLibraryRepository.value)
+	}
 
 	private val drawerToggle = object : AbstractSynchronousLazy<ActionBarDrawerToggle>() {
 		override fun create(): ActionBarDrawerToggle {
@@ -76,15 +84,15 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 				/** Called when a drawer has settled in a completely closed state.  */
 				override fun onDrawerClosed(view: View) {
 					super.onDrawerClosed(view)
-					supportActionBar!!.title = oldTitle
+					supportActionBar?.title = oldTitle
 					invalidateOptionsMenu() // creates resultFrom to onPrepareOptionsMenu()
 				}
 
 				/** Called when a drawer has settled in a completely open state.  */
 				override fun onDrawerOpened(drawerView: View) {
 					super.onDrawerOpened(drawerView)
-					oldTitle = supportActionBar!!.title
-					supportActionBar!!.title = selectViewTitle
+					oldTitle = supportActionBar?.title
+					supportActionBar?.title = selectViewTitle
 					invalidateOptionsMenu() // creates resultFrom to onPrepareOptionsMenu()
 				}
 			}
@@ -92,7 +100,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private val lazySelectedBrowserLibraryProvider = lazy { SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(this@BrowserEntryActivity),
+			SelectedBrowserLibraryIdentifierProvider(this),
 			lazyLibraryRepository.value)
 	}
 
@@ -103,21 +111,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private val lazyLocalBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
-
-	private val lazySessionConnectionProvider = lazy { SelectedConnectionProvider(this) }
-
-	private val lazyLibraryViewsProvider = lazy {
-		LibraryViewsProvider(
-			lazySessionConnectionProvider.value,
-			LibraryViewsByConnectionProvider())
-	}
-
-	private val lazySelectedLibraryViews = lazy {
-		SelectedLibraryViewProvider(
-			lazySelectedBrowserLibraryProvider.value,
-			lazyLibraryViewsProvider.value,
-			lazyLibraryRepository.value)
-	}
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
@@ -155,8 +148,10 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		setTitle(R.string.title_activity_library)
 
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
-		supportActionBar?.setHomeButtonEnabled(true)
+		supportActionBar?.run {
+			setDisplayHomeAsUpEnabled(true)
+			setHomeButtonEnabled(true)
+		}
 
 		val drawerLayout = drawerLayout.findView()
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
@@ -230,7 +225,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 								this
 							)
 						)
-				} ?: Promise.empty()
+				} ?: Unit.toPromise()
 			}
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))

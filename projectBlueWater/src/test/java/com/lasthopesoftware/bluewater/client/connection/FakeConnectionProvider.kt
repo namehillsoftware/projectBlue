@@ -28,7 +28,6 @@ open class FakeConnectionProvider : IConnectionProvider {
 		}
 	}
 
-	@Throws(IOException::class)
 	private fun getResponse(vararg params: String): Response {
 		val builder = Request.Builder()
 		builder.url(urlProvider.getUrl(*params)!!)
@@ -62,7 +61,7 @@ open class FakeConnectionProvider : IConnectionProvider {
 	}
 
 	override val urlProvider: IUrlProvider
-		get() = MediaServerUrlProvider(null, "test", 80)
+		get() = MediaServerUrlProvider("auth", "test", 80)
 
 	override fun promiseSentPacket(packets: ByteArray): Promise<Unit> {
 		return Promise(Unit)

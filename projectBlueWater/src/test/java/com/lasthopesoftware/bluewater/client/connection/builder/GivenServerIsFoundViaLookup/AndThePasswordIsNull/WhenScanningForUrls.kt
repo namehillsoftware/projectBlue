@@ -20,15 +20,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 
 class WhenScanningForUrls {
-	@Test
-	fun thenTheUrlProviderIsReturned() {
-		assertThat(urlProvider).isNotNull
-	}
-
-	@Test
-	fun thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider?.baseUrl).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
-	}
 
 	companion object {
 		private var urlProvider: IUrlProvider? = null
@@ -38,7 +29,7 @@ class WhenScanningForUrls {
 		fun before() {
 			val connectionTester = mockk<TestConnections>()
 			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-			every { connectionTester.promiseIsConnectionPossible(match { a -> "http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl && a.urlProvider.authCode == null }) } returns true.toPromise()
+			every { connectionTester.promiseIsConnectionPossible(match { a -> "http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl.toString() && a.urlProvider.authCode == null }) } returns true.toPromise()
 
 			val serverLookup = mockk<LookupServers>()
 			every { serverLookup.promiseServerInformation(LibraryId(56)) } returns Promise(
@@ -63,5 +54,15 @@ class WhenScanningForUrls {
 
 			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(56)).toFuture().get()
 		}
+	}
+
+	@Test
+	fun thenTheUrlProviderIsReturned() {
+		assertThat(urlProvider).isNotNull
+	}
+
+	@Test
+	fun thenTheBaseUrlIsCorrect() {
+		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("http://1.2.3.4:143/MCWS/v1/")
 	}
 }

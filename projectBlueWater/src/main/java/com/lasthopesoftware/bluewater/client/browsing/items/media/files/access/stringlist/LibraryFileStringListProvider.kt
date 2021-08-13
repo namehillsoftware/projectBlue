@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import okhttp3.Response
 
-class LibraryFileStringListProvider(private val libraryConnections: ConnectionSessionManager) : ImmediateResponse<Response, String> {
+class LibraryFileStringListProvider(private val libraryConnections: ManageConnectionSessions) : ImmediateResponse<Response, String> {
 
 	fun promiseFileStringList(libraryId: LibraryId, option: FileListParameters.Options, vararg params: String): Promise<String> {
 		return libraryConnections

@@ -13,15 +13,9 @@ class HttpPromisedResponse(private val call: Call) : Promise<Response>(), Callba
 		call.enqueue(this)
 	}
 
-	override fun onFailure(call: Call, e: IOException) {
-		reject(e)
-	}
+	override fun onFailure(call: Call, e: IOException) = reject(e)
 
-	override fun onResponse(call: Call, response: Response) {
-		resolve(response)
-	}
+	override fun onResponse(call: Call, response: Response) = resolve(response)
 
-	override fun run() {
-		call.cancel()
-	}
+	override fun run() = call.cancel()
 }

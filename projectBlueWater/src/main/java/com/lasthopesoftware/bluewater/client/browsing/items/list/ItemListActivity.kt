@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
@@ -21,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -29,6 +31,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
@@ -41,6 +44,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 				SelectedBrowserLibraryIdentifierProvider(this),
 				LibraryRepository(this))
 		}
+	private val lazyFileStringListProvider = lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
@@ -75,8 +79,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		pbLoading.findView().visibility = View.VISIBLE
 		getInstance(this).promiseSessionConnection()
 			.eventually { c ->
-				val itemProvider = ItemProvider(c)
-				itemProvider.promiseItems(mItemId)
+				c?.let(::ItemProvider)?.promiseItems(mItemId) ?: Promise(emptyList())
 			}
 			.eventually(itemProviderComplete.value)
 			.excuse(HandleViewIoException(this) { hydrateItems() })
@@ -91,21 +94,24 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	private fun buildItemListView(items: List<Item>) {
 		lazySpecificLibraryProvider.value.browserLibrary
 			.eventually(LoopedInPromise.response({ library ->
-				val storedItemAccess = StoredItemAccess(this)
-				val itemListAdapter = ItemListAdapter(
-					this,
-					R.id.tvStandard,
-					items,
-					FileListParameters.getInstance(),
-					ItemListMenuChangeHandler(this),
-					storedItemAccess,
-					library)
-				val localItemListView = itemListView.findView()
-				localItemListView.adapter = itemListAdapter
-				localItemListView.onItemClickListener = ClickItemListener(items, pbLoading.findView())
-				localItemListView.onItemLongClickListener = LongClickViewAnimatorListener()
-				itemListView.findView().visibility = View.VISIBLE
-				pbLoading.findView().visibility = View.INVISIBLE
+				library?.also {
+					val storedItemAccess = StoredItemAccess(this)
+					val itemListAdapter = ItemListAdapter(
+						this,
+						R.id.tvStandard,
+						items,
+						FileListParameters.getInstance(),
+						lazyFileStringListProvider.value,
+						ItemListMenuChangeHandler(this),
+						storedItemAccess,
+						it)
+					val localItemListView = itemListView.findView()
+					localItemListView.adapter = itemListAdapter
+					localItemListView.onItemClickListener = ClickItemListener(items, pbLoading.findView())
+					localItemListView.onItemLongClickListener = LongClickViewAnimatorListener()
+					itemListView.findView().visibility = View.VISIBLE
+					pbLoading.findView().visibility = View.INVISIBLE
+				}
 			}, this))
 	}
 
