@@ -517,19 +517,31 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			songRating.findView().isEnabled = false
 		}
 
-		fun resetViewOnReconnect(serviceFile: ServiceFile, position: Long) {
+		fun resetViewOnReconnect() {
 			pollSessionConnection(this).then {
 				if (serviceFile == viewStructure?.serviceFile) {
 					viewStructure?.promisedNowPlayingImage?.cancel()
 					viewStructure?.promisedNowPlayingImage = null
 				}
-				setView(serviceFile, position)
+				setView(serviceFile, initialFilePosition)
 			}
 			WaitForConnectionDialog.show(this)
 		}
 
-		fun handleIoException(serviceFile: ServiceFile, position: Long, exception: Throwable): Boolean =
-			handleIoException(exception).also { if (it) resetViewOnReconnect(serviceFile, position) }
+		fun handleIoException(exception: Throwable): Boolean {
+			val isIoException = handleIoException(exception)
+			if (!isIoException) return isIoException
+
+			pollSessionConnection(this).then {
+				if (serviceFile == viewStructure?.serviceFile) {
+					viewStructure?.promisedNowPlayingImage?.cancel()
+					viewStructure?.promisedNowPlayingImage = null
+				}
+				setView(serviceFile, initialFilePosition)
+			}
+			WaitForConnectionDialog.show(this)
+			return isIoException
+		}
 
 		lazySelectedConnectionProvider.value.promiseSessionConnection()
 			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider ->
@@ -568,7 +580,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 							}, messageHandler.value)
 						}
 					}
-					.eventuallyExcuse(LoopedInPromise.response({ exception -> handleIoException(serviceFile, initialFilePosition, exception) }, messageHandler.value))
+					.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
 			}, messageHandler.value))
 	}
 
