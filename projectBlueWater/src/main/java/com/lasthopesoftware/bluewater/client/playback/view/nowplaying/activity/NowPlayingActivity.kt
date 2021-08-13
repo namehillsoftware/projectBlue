@@ -47,6 +47,7 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.promiseSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -456,8 +457,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
-		SelectedConnection.getInstance(this)
-			.promiseSessionConnection()
+		promiseSelectedConnection()
 			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider ->
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@ImmediateResponse
 
@@ -472,22 +472,29 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 				setNowPlayingImage(localViewStructure, serviceFile)
 
-				if (localViewStructure.fileProperties != null) {
-					setFileProperties(serviceFile, initialFilePosition, localViewStructure.fileProperties)
+				val localFileProperties = localViewStructure.fileProperties
+				val isReadOnly = localViewStructure.isFilePropertiesReadOnly
+				if (localFileProperties != null && isReadOnly != null) {
+					setFileProperties(serviceFile, initialFilePosition, localFileProperties, isReadOnly)
 					return@ImmediateResponse
 				}
 
 				disableViewWithMessage()
+				val promisedIsConnectionReadOnly = lazySelectedConnectionAuthenticationChecker.value.promiseIsReadOnly()
 				lazyFilePropertiesProvider.value
 					.promiseFileProperties(serviceFile)
 					.eventually { fileProperties ->
 						if (localViewStructure !== viewStructure) Unit.toPromise()
-						else LoopedInPromise(MessageWriter<Unit> {
-							localViewStructure.fileProperties = fileProperties.toMutableMap()
-							setFileProperties(serviceFile, initialFilePosition, fileProperties)
-						}, messageHandler.value)
+						else promisedIsConnectionReadOnly.eventually { isReadOnly ->
+							if (localViewStructure !== viewStructure) Unit.toPromise()
+							else LoopedInPromise(MessageWriter {
+								localViewStructure.fileProperties = fileProperties.toMutableMap()
+								localViewStructure.isFilePropertiesReadOnly = isReadOnly
+								setFileProperties(serviceFile, initialFilePosition, fileProperties, isReadOnly)
+							}, messageHandler.value)
+						}
 					}
-					.eventuallyExcuse(LoopedInPromise.response({ exception: Throwable -> handleIoException(serviceFile, initialFilePosition, exception) }, messageHandler.value))
+					.eventuallyExcuse(LoopedInPromise.response({ exception -> handleIoException(serviceFile, initialFilePosition, exception) }, messageHandler.value))
 			}, messageHandler.value))
 	}
 
@@ -515,7 +522,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		if (bitmap != null) displayImageBitmap()
 	}
 
-	private fun setFileProperties(serviceFile: ServiceFile, initialFilePosition: Long, fileProperties: Map<String, String>?): Void? {
+	private fun setFileProperties(serviceFile: ServiceFile, initialFilePosition: Long, fileProperties: Map<String, String>?, isReadOnly: Boolean) {
 		val artist = fileProperties!![KnownFileProperties.ARTIST]
 		nowPlayingArtist.findView().text = artist
 		val title = fileProperties[KnownFileProperties.NAME]
@@ -528,38 +535,29 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		} catch (e: NumberFormatException) {
 			logger.info("Failed to parse rating", e)
 		}
-		setFileRating(serviceFile, fileRating)
+		setFileRating(serviceFile, fileRating, isReadOnly)
 		val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 		setTrackDuration(if (duration > 0) duration.toLong() else 100.toLong())
 		setTrackProgress(initialFilePosition)
-		return null
 	}
 
-	private fun setFileRating(serviceFile: ServiceFile, rating: Float?) {
+	private fun setFileRating(serviceFile: ServiceFile, rating: Float?, isReadOnly: Boolean) {
 		val songRatingBar = songRating.findView()
 		songRatingBar.rating = rating ?: 0f
-		songRatingBar.isEnabled = false
+		songRatingBar.isEnabled = !isReadOnly
+		readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
 
-		lazySelectedConnectionAuthenticationChecker.value
-			.promiseIsReadOnly()
-			.eventually(LoopedInPromise.response({ isReadOnly ->
-				if (!isReadOnly) {
-					songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
-						if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
-							val stringRating = newRating.roundToInt().toString()
-							lazyFilePropertiesStorage.value
-								.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, stringRating, false)
-								.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
-							viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
-						}
-					}
+		if (isReadOnly) return
 
-					songRatingBar.isEnabled = true
-				}
-
-				readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
-			}, messageHandler.value))
-			.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
+		songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
+			if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
+				val stringRating = newRating.roundToInt().toString()
+				lazyFilePropertiesStorage.value
+					.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, stringRating, false)
+					.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
+				viewStructure?.fileProperties?.put(KnownFileProperties.RATING, stringRating)
+			}
+		}
 	}
 
 	private fun setTrackDuration(duration: Long) {
@@ -661,6 +659,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		var promisedNowPlayingImage: Promise<Bitmap?>? = null
 		var filePosition: Long = 0
 		var fileDuration: Long = 0
+		var isFilePropertiesReadOnly: Boolean? = null
 
 		fun release() {
 			promisedNowPlayingImage?.cancel()
