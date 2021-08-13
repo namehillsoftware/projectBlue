@@ -530,7 +530,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 		fun handleException(exception: Throwable) {
 			val isIoException = handleIoException(exception)
-			if (!isIoException)
+			if (!isIoException) return
 
 			pollSessionConnection(this).then {
 				if (serviceFile == viewStructure?.serviceFile) {
