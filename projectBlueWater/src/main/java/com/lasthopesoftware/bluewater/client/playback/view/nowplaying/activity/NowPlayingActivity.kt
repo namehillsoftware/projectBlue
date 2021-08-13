@@ -509,13 +509,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			val title = fileProperties[KnownFileProperties.NAME]
 			nowPlayingTitle.findView().text = title
 			nowPlayingTitle.findView().isSelected = true
-			var fileRating: Float? = null
 			val stringRating = fileProperties[KnownFileProperties.RATING]
-			try {
-				if (stringRating != null && stringRating.isNotEmpty()) fileRating = java.lang.Float.valueOf(stringRating)
-			} catch (e: NumberFormatException) {
-				logger.info("Failed to parse rating", e)
-			}
+			val fileRating = stringRating?.toFloatOrNull()
 			setFileRating(serviceFile, fileRating, isReadOnly)
 			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 			setTrackDuration(if (duration > 0) duration.toLong() else 100.toLong())
