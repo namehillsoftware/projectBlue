@@ -2,20 +2,14 @@ package com.lasthopesoftware.bluewater.client.servers.version.GivenAStandardConn
 
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.net.URL
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 class WhenReceivingThePromisedProgramVersion {
 
@@ -24,10 +18,8 @@ class WhenReceivingThePromisedProgramVersion {
 		private var expectedVersion: SemanticVersion? = null
 
 		@BeforeClass
-		@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+		@JvmStatic
 		fun before() {
-			val urlProvider = mockk<IUrlProvider>()
-			every { urlProvider.baseUrl } returns URL("")
 			val connectionProvider = FakeConnectionProvider()
 			val random = Random()
 			expectedVersion = SemanticVersion(random.nextInt(), random.nextInt(), random.nextInt())
@@ -46,6 +38,11 @@ class WhenReceivingThePromisedProgramVersion {
 			val programVersionProvider = ProgramVersionProvider(connectionProvider)
 			version = programVersionProvider.promiseServerVersion().toFuture()[100, TimeUnit.MILLISECONDS]
 		}
+	}
+
+	@Test
+	fun thenTheServerVersionIsPresent() {
+		assertThat(version).isNotNull
 	}
 
 	@Test
