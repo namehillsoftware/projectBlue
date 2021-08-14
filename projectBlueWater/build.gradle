@@ -85,7 +85,7 @@ android {
             returnDefaultValues = true
 			all {
 				maxHeapSize = "1024m"
-				maxParallelForks = Runtime.runtime.availableProcessors()
+				maxParallelForks = Math.max(Math.floorDiv(Runtime.runtime.availableProcessors(), 2), 1)
 			}
 		}
 	}

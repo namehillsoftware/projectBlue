@@ -16,7 +16,7 @@ class ProgramVersionProvider(private val connectionProvider: IConnectionProvider
 					?.use { body -> body.byteStream().use(StandardRequest::fromInputStream) }
 					?.let { standardRequest -> standardRequest.items["ProgramVersion"] }
 					?.let { semVerString ->
-						val semVerParts = semVerString.split("\\.").toTypedArray()
+						val semVerParts = semVerString.split(".").toTypedArray()
 						var major = 0
 						var minor = 0
 						var patch = 0
