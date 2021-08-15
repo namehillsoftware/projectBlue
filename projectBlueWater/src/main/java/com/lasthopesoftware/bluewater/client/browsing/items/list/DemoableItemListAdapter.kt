@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.app.Activity
+import android.os.Build
 import android.preference.PreferenceManager
 import android.view.View
 import android.view.ViewGroup
@@ -52,7 +53,9 @@ class DemoableItemListAdapter(
 
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
 		if (!DEBUGGING_TUTORIAL && sharedPreferences.getBoolean(isListTutorialShownPreference, false)) return
-		val displayColor = activity.resources.getColor(R.color.clearstream_blue)
+		val displayColor =
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)	activity.resources.getColor(R.color.clearstream_blue, null)
+			else activity.resources.getColor(R.color.clearstream_blue)
 
 		val tourGuide = TourGuide.init(activity).with(TourGuide.Technique.CLICK)
 			.setPointer(Pointer().setColor(displayColor))
