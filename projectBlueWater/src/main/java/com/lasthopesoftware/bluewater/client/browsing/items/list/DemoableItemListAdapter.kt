@@ -1,18 +1,17 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.app.Activity
+import android.os.Build
 import android.preference.PreferenceManager
 import android.view.View
 import android.view.ViewGroup
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
 import tourguide.tourguide.Overlay
 import tourguide.tourguide.Pointer
 import tourguide.tourguide.ToolTip
@@ -49,10 +48,15 @@ class DemoableItemListAdapter(
 	private fun buildTutorialView(view: View) {
 		// use this flag to ensure the least amount of possible work is done for this tutorial
 		if (wasTutorialShown) return
+
 		wasTutorialShown = true
+
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
-		if (!DEBUGGING_TUTORIAL && sharedPreferences.getBoolean(PREFS_KEY, false)) return
-		val displayColor = activity.resources.getColor(R.color.clearstream_blue)
+		if (!DEBUGGING_TUTORIAL && sharedPreferences.getBoolean(isListTutorialShownPreference, false)) return
+		val displayColor =
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)	activity.resources.getColor(R.color.clearstream_blue, null)
+			else activity.resources.getColor(R.color.clearstream_blue)
+
 		val tourGuide = TourGuide.init(activity).with(TourGuide.Technique.CLICK)
 			.setPointer(Pointer().setColor(displayColor))
 			.setToolTip(
@@ -63,18 +67,18 @@ class DemoableItemListAdapter(
 			)
 			.setOverlay(Overlay())
 			.playOn(view)
-		view.setOnLongClickListener { v: View? ->
+
+		view.setOnLongClickListener {
 			tourGuide.cleanUp()
 			view.setOnLongClickListener(null)
 			false
 		}
-		sharedPreferences.edit().putBoolean(PREFS_KEY, true).apply()
+
+		sharedPreferences.edit().putBoolean(isListTutorialShownPreference, true).apply()
 	}
 
 	companion object {
-		private val PREFS_KEY = buildMagicPropertyName(
-			DemoableItemListAdapter::class.java, "TUTORIAL_SHOWN"
-		)
+		private const val isListTutorialShownPreference = "isListTutorialShownPreference"
 		private const val DEBUGGING_TUTORIAL = false
 	}
 }
