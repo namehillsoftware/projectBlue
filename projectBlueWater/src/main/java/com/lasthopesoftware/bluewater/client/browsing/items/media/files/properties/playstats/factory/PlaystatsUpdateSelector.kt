@@ -11,25 +11,32 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaystatsUpdateSelector(
-    private val connectionProvider: IConnectionProvider,
-    private val filePropertiesProvider: ProvideScopedFileProperties,
-    private val scopedFilePropertiesStorage: ScopedFilePropertiesStorage,
-    private val programVersionProvider: IProgramVersionProvider
+	private val connectionProvider: IConnectionProvider,
+	private val filePropertiesProvider: ProvideScopedFileProperties,
+	private val scopedFilePropertiesStorage: ScopedFilePropertiesStorage,
+	private val programVersionProvider: IProgramVersionProvider
 ) {
-    @Volatile
-    private var promisedPlaystatsUpdater = Promise.empty<IPlaystatsUpdate>()
+	private val sync = Any()
 
-    @Synchronized
-    fun promisePlaystatsUpdater(): Promise<IPlaystatsUpdate> {
-        return promisedPlaystatsUpdater.eventually(
-            { u -> u?.toPromise() ?: promiseNewPlaystatsUpdater() },
-			{ promiseNewPlaystatsUpdater() }).also { promisedPlaystatsUpdater = it }
-    }
+	@Volatile
+	private var promisedPlaystatsUpdater = Promise.empty<IPlaystatsUpdate>()
 
-    private fun promiseNewPlaystatsUpdater(): Promise<IPlaystatsUpdate> =
-        programVersionProvider.promiseServerVersion()
-            .then { programVersion ->
-				if (programVersion != null && programVersion.major >= 22) PlayedFilePlayStatsUpdater(connectionProvider)
-				else FilePropertiesPlayStatsUpdater(filePropertiesProvider, scopedFilePropertiesStorage)
-			}
+	fun promisePlaystatsUpdater(): Promise<IPlaystatsUpdate> =
+		synchronized(sync) {
+			promisedPlaystatsUpdater.eventually(
+				{ u -> u?.toPromise() ?: promiseNewPlaystatsUpdater() },
+				{ promiseNewPlaystatsUpdater() })
+		}
+
+	private fun promiseNewPlaystatsUpdater(): Promise<IPlaystatsUpdate> =
+		synchronized(sync) {
+			programVersionProvider.promiseServerVersion()
+				.then { v ->
+					if (v != null && v.major >= 22) PlayedFilePlayStatsUpdater(connectionProvider)
+					else FilePropertiesPlayStatsUpdater(filePropertiesProvider, scopedFilePropertiesStorage)
+				}
+				.also {
+					promisedPlaystatsUpdater = it
+				}
+		}
 }
