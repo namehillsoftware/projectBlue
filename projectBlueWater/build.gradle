@@ -104,7 +104,7 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	def exoplayer_version = '2.13.3'
+	def exoplayer_version = '2.15.0'
 	def core_version = "1.6.0"
 
 	implementation "androidx.core:core-ktx:$core_version"

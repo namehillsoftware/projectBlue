@@ -2,69 +2,58 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 
 import android.net.Uri
 import com.google.android.exoplayer2.ExoPlaybackException
+import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
-import com.lasthopesoftware.any
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import org.assertj.core.api.AssertionsForClassTypes
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.ArgumentMatchers
-import org.mockito.Mockito
+import java.io.IOException
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 
 	companion object {
-		private var exoPlayerException: ExoPlayerException? = null
-		private var eventListener: Player.EventListener? = null
-		private var isComplete = false
+		private var playedFile: PlayedFile? = null
+		private var eventListener: Player.Listener? = null
 
 		@JvmStatic
 		@BeforeClass
-		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
-			val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
-			Mockito.`when`(mockExoPlayer.setPlayWhenReady(ArgumentMatchers.anyBoolean())).thenReturn(mockExoPlayer.toPromise())
-			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
-			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
-			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
-			Mockito.doAnswer { invocation ->
-				eventListener = invocation.getArgument(0)
+			val mockExoPlayer = mockk<PromisingExoPlayer>(relaxed = true)
+			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
+			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
+			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
+			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
+			every { mockExoPlayer.addListener(any()) } answers {
+				eventListener = firstArg()
 				mockExoPlayer.toPromise()
-			}.`when`(mockExoPlayer).addListener(any())
+			}
+
 			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
-			val promisedFuture = FuturePromise(exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
-				.eventually { obj: PlayingFile -> obj.promisePlayedFile() }
-				.then(
-					{ isComplete = true },
-					{ e ->
-						if (e is ExoPlayerException) {
-							exoPlayerException = e
-						}
-						isComplete = false
-					}))
-			eventListener!!.onPlayerError(ExoPlaybackException.createForSource(InvalidResponseCodeException(416, "", HashMap(), DataSpec(Uri.EMPTY))))
-			promisedFuture[1, TimeUnit.SECONDS]
+			val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
+				.eventually { obj -> obj.promisePlayedFile() }
+				.toFuture()
+
+			eventListener?.onPlayerError(ExoPlaybackException.createForSource(
+				InvalidResponseCodeException(416, "", IOException(), HashMap(), DataSpec(Uri.EMPTY), ByteArray(0)),
+				PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS))
+
+			playedFile = promisedFuture[1, TimeUnit.SECONDS]
 		}
 	}
 
 	@Test
 	fun thenPlaybackCompletes() {
-		AssertionsForClassTypes.assertThat(isComplete).isTrue
-	}
-
-	@Test
-	fun thenNoPlaybackErrorOccurs() {
-		AssertionsForClassTypes.assertThat(exoPlayerException).isNull()
+		assertThat(playedFile).isNotNull
 	}
 }

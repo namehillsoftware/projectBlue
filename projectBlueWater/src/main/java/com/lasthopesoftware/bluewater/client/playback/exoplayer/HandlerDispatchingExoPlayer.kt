@@ -14,27 +14,27 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
 class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) : PromisingExoPlayer {
 
-	override fun getAudioComponent(): Promise<Player.AudioComponent?> =
+	override fun getAudioComponent(): Promise<ExoPlayer.AudioComponent?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.audioComponent },
 			handler)
 
-	override fun getVideoComponent(): Promise<Player.VideoComponent?> =
+	override fun getVideoComponent(): Promise<ExoPlayer.VideoComponent?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.videoComponent },
 			handler)
 
-	override fun getTextComponent(): Promise<Player.TextComponent?> =
+	override fun getTextComponent(): Promise<ExoPlayer.TextComponent?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.textComponent },
 			handler)
 
-	override fun getMetadataComponent(): Promise<Player.MetadataComponent?> =
+	override fun getMetadataComponent(): Promise<ExoPlayer.MetadataComponent?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.metadataComponent },
 			handler)
 
-	override fun getDeviceComponent(): Promise<Player.DeviceComponent?> =
+	override fun getDeviceComponent(): Promise<ExoPlayer.DeviceComponent?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.deviceComponent },
 			handler)
@@ -300,36 +300,36 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
-	override fun hasPrevious(): Promise<Boolean> =
+	override fun hasPreviousWindow(): Promise<Boolean> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.hasPrevious() },
+			MessageWriter { innerPlayer.hasPreviousWindow() },
 			handler)
 
-	override fun previous(): Promise<PromisingExoPlayer> =
+	override fun seekToPreviousWindow(): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
-				innerPlayer.previous()
+				innerPlayer.seekToPreviousWindow()
 				this
 			},
 			handler)
 
-	override fun hasNext(): Promise<Boolean> =
+	override fun hasNextWindow(): Promise<Boolean> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.hasNext() },
+			MessageWriter { innerPlayer.hasNextWindow() },
 			handler)
 
-	override fun next(): Promise<PromisingExoPlayer> =
+	override fun seekToNextWindow(): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
-				innerPlayer.next()
+				innerPlayer.seekToNextWindow()
 				this
 			},
 			handler)
 
-	override fun setPlaybackParameters(playbackParameters: PlaybackParameters?): Promise<PromisingExoPlayer> =
+	override fun setPlaybackParameters(playbackParameters: PlaybackParameters): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
-				innerPlayer.setPlaybackParameters(playbackParameters)
+				innerPlayer.playbackParameters = playbackParameters
 				this
 			},
 			handler)

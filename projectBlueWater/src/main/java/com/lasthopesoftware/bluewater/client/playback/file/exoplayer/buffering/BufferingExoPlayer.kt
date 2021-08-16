@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering
 
 import android.os.Handler
-import com.google.android.exoplayer2.ExoPlaybackException
+import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.LoadEventInfo
 import com.google.android.exoplayer2.source.MediaLoadData
@@ -13,7 +13,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile, MediaSourceEventListener, Player.EventListener {
+class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile, MediaSourceEventListener, Player.Listener {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(BufferingExoPlayer::class.java)
@@ -38,7 +38,7 @@ class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource,
 		logger.error("An error occurred during playback buffering", error)
 	}
 
-	override fun onPlayerError(error: ExoPlaybackException) {
+	override fun onPlayerError(error: PlaybackException) {
 		logger.error("A player error occurred during playback buffering", error)
 		reject(error)
 		mediaSource.removeEventListener(this)

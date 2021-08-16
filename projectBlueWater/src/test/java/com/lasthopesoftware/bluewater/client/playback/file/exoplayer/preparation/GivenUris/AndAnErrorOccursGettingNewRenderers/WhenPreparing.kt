@@ -1,63 +1,52 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.GivenUris.AndAnErrorOccursGettingNewRenderers;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.GivenUris.AndAnErrorOccursGettingNewRenderers
 
-import android.content.Context;
-import android.net.Uri;
-import android.os.Handler;
+import android.net.Uri
+import com.google.android.exoplayer2.LoadControl
+import com.google.android.exoplayer2.source.BaseMediaSource
+import com.google.android.exoplayer2.upstream.DefaultAllocator
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
+import org.junit.BeforeClass
+import org.junit.Test
+import org.mockito.Mockito
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
 
-import com.google.android.exoplayer2.LoadControl;
-import com.google.android.exoplayer2.source.BaseMediaSource;
-import com.google.android.exoplayer2.upstream.DefaultAllocator;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+class WhenPreparing {
 
-import org.joda.time.Duration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+	companion object {
+		private var exception: Throwable? = null
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val loadControl = Mockito.mock(LoadControl::class.java)
+			Mockito.`when`(loadControl.allocator).thenReturn(DefaultAllocator(true, 1024))
+			val preparer = ExoPlayerPlaybackPreparer(
+				mockk(relaxed = true),
+				{ mockk<BaseMediaSource>() },
+				loadControl,
+				{ Promise(Exception("Oops")) },
+				mockk(),
+				mockk(),
+				{ Promise(mockk<Uri>()) }
+			)
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenPreparing {
-
-	private static Throwable exception;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, TimeoutException {
-		final LoadControl loadControl = mock(LoadControl.class);
-		when(loadControl.getAllocator()).thenReturn(new DefaultAllocator(true, 1024));
-
-		final ExoPlayerPlaybackPreparer preparer = new ExoPlayerPlaybackPreparer(
-			mock(Context.class),
-			(uri) -> mock(BaseMediaSource.class),
-			loadControl,
-			() -> new Promise<>(new Exception("Oops")),
-			mock(Handler.class),
-                mock(Handler.class),
-			(sf) -> new Promise<>(mock(Uri.class))
-        );
-
-		final Promise<PreparedPlayableFile> promisedPreparedFile =
-			preparer.promisePreparedPlaybackFile(
-				new ServiceFile(1),
-				Duration.ZERO);
-
-		try {
-			new FuturePromise<>(promisedPreparedFile).get(1, TimeUnit.SECONDS);
-		} catch (ExecutionException ex) {
-			exception = ex.getCause();
+			try {
+				preparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO).toFuture()[1, TimeUnit.SECONDS]
+			} catch (ex: ExecutionException) {
+				exception = ex.cause
+			}
 		}
 	}
 
 	@Test
-	public void thenAnExceptionIsThrown() {
-		assertThat(exception.getMessage()).isEqualTo("Oops");
+	fun thenAnExceptionIsThrown() {
+		assertThat(exception?.message).isEqualTo("Oops")
 	}
 }
