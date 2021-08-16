@@ -4,8 +4,8 @@ import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
@@ -14,15 +14,13 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.EOFException
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class WhenAnEofExceptionOccurs {
 
 	companion object {
-		private var exoPlayerException: ExoPlayerException? = null
+		private var playedFile: PlayedFile? = null
 		private var eventListener: Player.Listener? = null
-		private var isComplete = false
 
 		@JvmStatic
 		@BeforeClass
@@ -46,21 +44,12 @@ class WhenAnEofExceptionOccurs {
 				EOFException(),
 				PlaybackException.ERROR_CODE_IO_UNSPECIFIED))
 
-			try {
-				futurePlayedFile[1, TimeUnit.SECONDS]
-			} catch (e: ExecutionException) {
-				exoPlayerException = e.cause as? ExoPlayerException
-			}
+			playedFile = futurePlayedFile[1, TimeUnit.SECONDS]
 		}
 	}
 
 	@Test
 	fun thenPlaybackCompletes() {
-		assertThat(isComplete).isTrue
-	}
-
-	@Test
-	fun thenNoPlaybackErrorOccurs() {
-		assertThat(exoPlayerException).isNull()
+		assertThat(playedFile).isNotNull
 	}
 }
