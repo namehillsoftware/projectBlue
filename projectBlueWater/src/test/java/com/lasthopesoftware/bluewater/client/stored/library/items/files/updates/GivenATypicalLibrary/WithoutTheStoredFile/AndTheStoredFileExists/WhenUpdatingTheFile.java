@@ -1,5 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithoutTheStoredFile.AndTheStoredFileExists;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import android.net.Uri;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -13,7 +17,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater;
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
@@ -27,10 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class WhenUpdatingTheFile extends AndroidContext {
 
 	private static StoredFile storedFile;
@@ -41,7 +41,7 @@ public class WhenUpdatingTheFile extends AndroidContext {
 		when(mediaFileUriProvider.promiseFileUri(new ServiceFile(4)))
 			.thenReturn(new Promise<>(Uri.fromFile(new File("/custom-root/a-file.mp3"))));
 
-		final MediaFileIdProvider mediaFileIdProvider = mock(MediaFileIdProvider.class);
+		final ProvideMediaFileIds mediaFileIdProvider = mock(ProvideMediaFileIds.class);
 		when(mediaFileIdProvider.getMediaId(new LibraryId(14), new ServiceFile(4)))
 			.thenReturn(new Promise<>(12));
 

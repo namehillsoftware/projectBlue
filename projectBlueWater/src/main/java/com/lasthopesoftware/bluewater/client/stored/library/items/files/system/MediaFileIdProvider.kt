@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory
 class MediaFileIdProvider(
     private val mediaQueryCursorProvider: IMediaQueryCursorProvider,
     private val externalStorageReadPermissionsArbitrator: IStorageReadPermissionArbitratorForOs
-) : ImmediateResponse<Cursor?, Int> {
-    fun getMediaId(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Int> =
+) : ImmediateResponse<Cursor?, Int>, ProvideMediaFileIds {
+    override fun getMediaId(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Int> =
         if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted) Promise(-1)
 		else mediaQueryCursorProvider
             .getMediaQueryCursor(libraryId, serviceFile)

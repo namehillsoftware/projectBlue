@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
@@ -28,7 +28,7 @@ import java.util.regex.Pattern
 class StoredFileUpdater(
 	private val context: Context,
 	private val mediaFileUriProvider: MediaFileUriProvider,
-	private val mediaFileIdProvider: MediaFileIdProvider,
+	private val mediaFileIdProvider: ProvideMediaFileIds,
 	private val storedFiles: GetStoredFiles,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryFileProperties: ProvideLibraryFileProperties,
