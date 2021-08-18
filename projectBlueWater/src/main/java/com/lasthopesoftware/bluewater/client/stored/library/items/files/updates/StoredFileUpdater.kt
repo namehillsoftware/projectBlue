@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import com.namehillsoftware.lazyj.Lazy
 import org.apache.commons.io.FilenameUtils
 import org.slf4j.LoggerFactory
 import java.util.regex.Pattern
@@ -36,6 +35,62 @@ class StoredFileUpdater(
 	private val lookupSyncDirectory: LookupSyncDirectory
 ) : UpdateStoredFiles {
 
+	companion object {
+		private val logger = LoggerFactory.getLogger(StoredFileUpdater::class.java)
+
+		private val insertSql = lazy {
+			fromTable(StoredFileEntityInformation.tableName)
+				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
+				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
+				.addColumn(StoredFileEntityInformation.isOwnerColumnName)
+				.build()
+		}
+
+		private val updateSql = lazy {
+			UpdateBuilder
+				.fromTable(StoredFileEntityInformation.tableName)
+				.addSetter(StoredFileEntityInformation.serviceIdColumnName)
+				.addSetter(StoredFileEntityInformation.storedMediaIdColumnName)
+				.addSetter(StoredFileEntityInformation.pathColumnName)
+				.addSetter(StoredFileEntityInformation.isOwnerColumnName)
+				.addSetter(StoredFileEntityInformation.isDownloadCompleteColumnName)
+				.setFilter("WHERE id = @id")
+				.buildQuery()
+		}
+
+		private val reservedCharactersPattern = lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
+
+		private fun replaceReservedCharsAndPath(path: String): String =
+			reservedCharactersPattern.value.matcher(path).replaceAll("_")
+
+		private fun RepositoryAccessHelper.updateStoredFile(storedFile: StoredFile) {
+			beginTransaction().use { closeableTransaction ->
+					mapSql(updateSql.value)
+						.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.serviceId)
+						.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.storedMediaId)
+						.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
+						.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner)
+						.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, storedFile.isDownloadComplete)
+						.addParameter("id", storedFile.id)
+						.execute()
+				closeableTransaction.setTransactionSuccessful()
+			}
+		}
+
+
+
+		private fun RepositoryAccessHelper.createStoredFile(libraryId: LibraryId, serviceFile: ServiceFile) {
+			beginTransaction().use { closeableTransaction ->
+				mapSql(insertSql.value)
+					.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
+					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
+					.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
+					.execute()
+				closeableTransaction.setTransactionSuccessful()
+			}
+		}
+	}
+
 	override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> {
 		val promisedLibrary = libraryProvider.getLibrary(libraryId)
 		return storedFiles.promiseStoredFile(libraryId, serviceFile)
@@ -45,15 +100,17 @@ class StoredFileUpdater(
 					?: QueuedPromise(MessageWriter {
 						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 							logger.info("Stored file was not found for " + serviceFile.key + ", creating file")
-							createStoredFile(libraryId, repositoryAccessHelper, serviceFile)
+							repositoryAccessHelper.createStoredFile(libraryId, serviceFile)
 						}
 					}, storedFileAccessExecutor())
 						.eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
 			}
 			.eventually { storedFile ->
 				promisedLibrary.eventually { library ->
-					if (storedFile.path != null || !library!!.isUsingExistingFiles) return@eventually Promise(storedFile)
-					mediaFileUriProvider
+					library
+						?.takeUnless { it.isUsingExistingFiles && storedFile.path == null }
+						?.let { Promise(storedFile) }
+						?: mediaFileUriProvider
 						.promiseFileUri(serviceFile)
 						.eventually { localUri ->
 							localUri?.let { u ->
@@ -91,14 +148,13 @@ class StoredFileUpdater(
 								val fileName = fileProperties[KnownFileProperties.FILENAME]?.let { f ->
 									var lastPathIndex = f.lastIndexOf('\\')
 									if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')
-									if (lastPathIndex > -1) {
+									if (lastPathIndex <= -1) f
+									else {
 										var fileName = f.substring(lastPathIndex + 1)
 										val extensionIndex = fileName.lastIndexOf('.')
 										if (extensionIndex > -1) fileName =
 											fileName.substring(0, extensionIndex + 1) + "mp3"
 										fileName
-									} else {
-										f
 									}
 								}
 								fullPath =
@@ -112,80 +168,11 @@ class StoredFileUpdater(
 				storedFile?.let { sf ->
 					QueuedPromise(MessageWriter {
 						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-							updateStoredFile(repositoryAccessHelper, sf)
+							repositoryAccessHelper.updateStoredFile(sf)
 							sf
 						}
 					}, storedFileAccessExecutor())
 				} ?: Promise.empty()
 			}
-	}
-
-	private fun createStoredFile(
-		libraryId: LibraryId,
-		repositoryAccessHelper: RepositoryAccessHelper,
-		serviceFile: ServiceFile
-	) {
-		repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-			repositoryAccessHelper
-				.mapSql(insertSql.getObject())
-				.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
-				.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
-				.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
-				.execute()
-			closeableTransaction.setTransactionSuccessful()
-		}
-	}
-
-	companion object {
-		private val logger = LoggerFactory.getLogger(StoredFileUpdater::class.java)
-		private val insertSql = Lazy {
-			fromTable(StoredFileEntityInformation.tableName)
-				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
-				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
-				.addColumn(StoredFileEntityInformation.isOwnerColumnName)
-				.build()
-		}
-		private val updateSql = Lazy {
-			UpdateBuilder
-				.fromTable(StoredFileEntityInformation.tableName)
-				.addSetter(StoredFileEntityInformation.serviceIdColumnName)
-				.addSetter(StoredFileEntityInformation.storedMediaIdColumnName)
-				.addSetter(StoredFileEntityInformation.pathColumnName)
-				.addSetter(StoredFileEntityInformation.isOwnerColumnName)
-				.addSetter(StoredFileEntityInformation.isDownloadCompleteColumnName)
-				.setFilter("WHERE id = @id")
-				.buildQuery()
-		}
-		private val reservedCharactersPattern = Lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
-		private fun replaceReservedCharsAndPath(path: String): String {
-			return reservedCharactersPattern.getObject().matcher(path).replaceAll("_")
-		}
-
-		private fun updateStoredFile(
-			repositoryAccessHelper: RepositoryAccessHelper,
-			storedFile: StoredFile
-		) {
-			repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-				repositoryAccessHelper
-					.mapSql(updateSql.getObject())
-					.addParameter(
-						StoredFileEntityInformation.serviceIdColumnName,
-						storedFile.serviceId
-					)
-					.addParameter(
-						StoredFileEntityInformation.storedMediaIdColumnName,
-						storedFile.storedMediaId
-					)
-					.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
-					.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner)
-					.addParameter(
-						StoredFileEntityInformation.isDownloadCompleteColumnName,
-						storedFile.isDownloadComplete
-					)
-					.addParameter("id", storedFile.id)
-					.execute()
-				closeableTransaction.setTransactionSuccessful()
-			}
-		}
 	}
 }
