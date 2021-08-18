@@ -134,31 +134,32 @@ class StoredFileUpdater(
 						lookupSyncDirectory.promiseSyncDirectory(libraryId)
 							.then { syncDir ->
 								var fullPath = syncDir?.path ?: return@then null
-								var artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
-								if (artist == null) artist = fileProperties[KnownFileProperties.ARTIST]
+
+								val artist = fileProperties[KnownFileProperties.ALBUM_ARTIST] ?: fileProperties[KnownFileProperties.ARTIST]
 								if (artist != null) fullPath = FilenameUtils.concat(
 									fullPath,
 									replaceReservedCharsAndPath(artist.trim { it <= ' ' })
 								)
+
 								val album = fileProperties[KnownFileProperties.ALBUM]
 								if (album != null) fullPath = FilenameUtils.concat(
 									fullPath,
 									replaceReservedCharsAndPath(album.trim { it <= ' ' })
 								)
+
 								val fileName = fileProperties[KnownFileProperties.FILENAME]?.let { f ->
 									var lastPathIndex = f.lastIndexOf('\\')
 									if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')
-									if (lastPathIndex <= -1) f
+									if (lastPathIndex < 0) f
 									else {
-										var fileName = f.substring(lastPathIndex + 1)
-										val extensionIndex = fileName.lastIndexOf('.')
-										if (extensionIndex > -1) fileName =
-											fileName.substring(0, extensionIndex + 1) + "mp3"
-										fileName
+										var newFileName = f.substring(lastPathIndex + 1)
+										val extensionIndex = newFileName.lastIndexOf('.')
+										if (extensionIndex > -1)
+											newFileName = newFileName.substring(0, extensionIndex + 1) + "mp3"
+										newFileName
 									}
 								}
-								fullPath =
-									FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
+								fullPath = FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
 								storedFile.path = fullPath
 								storedFile
 							}
