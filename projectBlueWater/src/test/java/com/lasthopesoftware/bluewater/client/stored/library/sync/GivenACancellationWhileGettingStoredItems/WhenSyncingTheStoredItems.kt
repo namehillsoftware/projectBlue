@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredF
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -55,23 +56,26 @@ open class WhenSyncingTheStoredItems {
 					mockFileProvider,
 					FileListParameters.getInstance()),
 				storedFileAccess,
-				{ l, f -> Promise(StoredFile(l,1, f, "fake-file-name", true)) },
-				{ jobs ->
-					Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
-						Observable.just(
-							StoredFileJobStatus(
-								mockk(),
-								storedFile,
-								StoredFileJobState.Downloading
-							),
-							StoredFileJobStatus(
-								mockk(),
-								storedFile,
-								StoredFileJobState.Downloaded
-							)
+				object : UpdateStoredFiles {
+					override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
+						Promise(StoredFile(libraryId,1, serviceFile, "fake-file-name", true))
+				}
+			) { jobs ->
+				Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
+					Observable.just(
+						StoredFileJobStatus(
+							mockk(),
+							storedFile,
+							StoredFileJobState.Downloading
+						),
+						StoredFileJobStatus(
+							mockk(),
+							storedFile,
+							StoredFileJobState.Downloaded
 						)
-					}
-				})
+					)
+				}
+			}
 			val syncedFiles = librarySyncHandler.observeLibrarySync(LibraryId(5)).map { j -> j.storedFile }
 			val countDownLatch = CountDownLatch(1)
 			syncedFiles.subscribe(object : Observer<StoredFile> {
