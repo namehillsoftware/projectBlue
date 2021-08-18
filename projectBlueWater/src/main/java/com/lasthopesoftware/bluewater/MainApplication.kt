@@ -203,7 +203,7 @@ open class MainApplication : MultiDexApplication() {
 
 			// UNCOMMENT TO TWEAK OPTIONAL SETTINGS
 		    // excluding caller data (used for stack traces) improves appender's performance
-			asyncAppender.isIncludeCallerData = !DebugFlag.getInstance().isDebugCompilation
+			asyncAppender.isIncludeCallerData = !DebugFlag.isDebugCompilation
 
 			asyncAppender.start()
 			rootLogger.addAppender(asyncAppender)
@@ -213,7 +213,7 @@ open class MainApplication : MultiDexApplication() {
 		val logger = LoggerFactory.getLogger(javaClass)
 		logger.info("Uncaught exceptions logging to custom uncaught exception handler.")
 
-		if (!DebugFlag.getInstance().isDebugCompilation) return
+		if (!DebugFlag.isDebugCompilation) return
 
 		rootLogger.level = Level.DEBUG
 		logger.info("DEBUG_MODE active")
