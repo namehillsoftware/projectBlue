@@ -22,9 +22,9 @@ interface PromisingExoPlayer {
 
 	fun getApplicationLooper(): Promise<Looper>
 
-	fun addListener(listener: Player.EventListener): Promise<PromisingExoPlayer>
+	fun addListener(listener: Player.Listener): Promise<PromisingExoPlayer>
 
-	fun removeListener(listener: Player.EventListener): Promise<PromisingExoPlayer>
+	fun removeListener(listener: Player.Listener): Promise<PromisingExoPlayer>
 
 	fun setMediaItems(mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer>
 

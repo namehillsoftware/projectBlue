@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,21 +25,21 @@ public class ViewUtils {
 
 	public static boolean buildStandardMenu(final Activity activity, final Menu menu) {
 		activity.getMenuInflater().inflate(R.menu.menu_blue_water, menu);
-		
+
 		final SearchManager searchManager = (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
 	    final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
 	    searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
 
 		return true;
 	}
-	
+
 	public static boolean handleMenuClicks(final Context context, final MenuItem item) {
 		if (item.getItemId() != R.id.menu_connection_settings) return false;
 
 		context.startActivity(new Intent(context, ApplicationSettingsActivity.class));
 		return true;
 	}
-	
+
 	public static boolean handleNavMenuClicks(Activity activity, MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
@@ -62,7 +61,7 @@ public class ViewUtils {
 				return true;
 		}
 		return ViewUtils.handleMenuClicks(activity, item);
-		
+
 	}
 
 	@IntDef({View.VISIBLE, View.INVISIBLE, View.GONE})
@@ -80,9 +79,7 @@ public class ViewUtils {
 	}
 
 	public static Drawable getDrawable(Context context, int id) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) return context.getDrawable(id);
-
-		return context.getResources().getDrawable(id);
+		return context.getDrawable(id);
 	}
 
 	public static int getActiveListItemTextViewStyle(boolean isActive) {

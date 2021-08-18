@@ -42,6 +42,6 @@ class SyncDirectoryLookup(
 	private fun Promise<Collection<File>>.promiseDirectoriesWithLibrary(libraryId: LibraryId): Promise<Collection<File>> {
 		if (libraryId.id < 0) return this
 		val libraryIdString = libraryId.id.toString()
-		return this.then { files -> files.map { f -> File(f, libraryIdString) } }
+		return then { files -> files.map { f -> File(f, libraryIdString) } }
 	}
 }
