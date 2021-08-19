@@ -1,101 +1,94 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile.InAnotherLocation;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile.InAnotherLocation
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.Test
+import java.io.File
 
-import androidx.test.core.app.ApplicationProvider;
+class WhenUpdatingTheFile : AndroidContext() {
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilesPropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+	companion object {
+		private var storedFile: StoredFile? = null
+	}
 
-import org.junit.Test;
+    override fun before() {
+		val mediaFileUriProvider = mockk<MediaFileUriProvider>()
+		every { mediaFileUriProvider.promiseFileUri(any()) } returns Promise.empty()
 
-import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
+		val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
+		every { mediaFileIdProvider.getMediaId(any(), any()) } returns Promise.empty()
 
-public class WhenUpdatingTheFile extends AndroidContext {
-
-	private static StoredFile storedFile;
-
-	@Override
-	public void before() throws ExecutionException, InterruptedException {
-		final MediaFileUriProvider mediaFileUriProvider = mock(MediaFileUriProvider.class);
-		when(mediaFileUriProvider.promiseFileUri(any()))
-			.thenReturn(Promise.empty());
-
-		final ProvideMediaFileIds mediaFileIdProvider = mock(ProvideMediaFileIds.class);
-		when(mediaFileIdProvider.getMediaId(any(), any()))
-			.thenReturn(Promise.empty());
-
-		final FakeFilesPropertiesProvider filePropertiesProvider = new FakeFilesPropertiesProvider();
+		val filePropertiesProvider = FakeFilesPropertiesProvider()
 		filePropertiesProvider.addFilePropertiesToCache(
-			new ServiceFile(4),
-			new HashMap<String, String>() {{
-				put(KnownFileProperties.ARTIST, "artist");
-				put(KnownFileProperties.ALBUM, "album");
-				put(KnownFileProperties.FILENAME, "my-filename.mp3");
-			}});
+			ServiceFile(4),
+			mapOf(
+				Pair(KnownFileProperties.ARTIST, "artist"),
+				Pair(KnownFileProperties.ALBUM, "album"),
+				Pair(KnownFileProperties.FILENAME, "my-filename.mp3")
+			)
+		)
 
-		final FakeLibraryProvider fakeLibraryProvider = new FakeLibraryProvider(new Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL));
+        val fakeLibraryProvider = FakeLibraryProvider(
+            Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+        )
+        StoredFileUpdater(
+            ApplicationProvider.getApplicationContext(),
+            mediaFileUriProvider,
+            mediaFileIdProvider,
+            StoredFileQuery(ApplicationProvider.getApplicationContext()),
+            fakeLibraryProvider,
+            filePropertiesProvider,
+            SyncDirectoryLookup(
+                fakeLibraryProvider,
+                { Promise(listOf(File("/my-public-drive-1"))) },
+                { Promise(emptyList()) }
+            ) { 0 }).promiseStoredFileUpdate(
+            LibraryId(14),
+            ServiceFile(4)
+        ).toFuture().get()
+        val storedFileUpdater = StoredFileUpdater(
+            ApplicationProvider.getApplicationContext(),
+            mediaFileUriProvider,
+            mediaFileIdProvider,
+            StoredFileQuery(ApplicationProvider.getApplicationContext()),
+            fakeLibraryProvider,
+            filePropertiesProvider,
+            SyncDirectoryLookup(
+                fakeLibraryProvider,
+                { Promise(listOf(File("/my-public-drive"))) },
+                { Promise(emptyList()) }
+            ) { 0 })
+        storedFile =
+            storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
+        		.toFuture()
+				.get()
+    }
 
-		new FuturePromise<>(new StoredFileUpdater(
-			ApplicationProvider.getApplicationContext(),
-			mediaFileUriProvider,
-			mediaFileIdProvider,
-			new StoredFileQuery(ApplicationProvider.getApplicationContext()),
-			fakeLibraryProvider,
-			filePropertiesProvider,
-			new SyncDirectoryLookup(
-				fakeLibraryProvider,
-				() -> new Promise<>(Collections.singletonList(new File("/my-public-drive-1"))),
-				() -> new Promise<>(Collections.emptyList()),
-				f -> 0)).promiseStoredFileUpdate(
-					new LibraryId(14),
-			new ServiceFile(4))).get();
+    @Test
+    fun thenTheFileIsOwnedByTheLibrary() {
+        assertThat(storedFile!!.isOwner).isTrue
+    }
 
-
-		final StoredFileUpdater storedFileUpdater = new StoredFileUpdater(
-			ApplicationProvider.getApplicationContext(),
-			mediaFileUriProvider,
-			mediaFileIdProvider,
-			new StoredFileQuery(ApplicationProvider.getApplicationContext()),
-			fakeLibraryProvider,
-			filePropertiesProvider,
-			new SyncDirectoryLookup(
-				fakeLibraryProvider,
-				() -> new Promise<>(Collections.singletonList(new File("/my-public-drive"))),
-				() -> new Promise<>(Collections.emptyList()),
-				f -> 0));
-
-		storedFile = new FuturePromise<>(storedFileUpdater.promiseStoredFileUpdate(
-			new LibraryId(14),
-			new ServiceFile(4))).get();
-	}
-
-	@Test
-	public void thenTheFileIsOwnedByTheLibrary() {
-		assertThat(storedFile.isOwner()).isTrue();
-	}
-
-	@Test
-	public void thenTheFilePathIsCorrect() {
-		assertThat(storedFile.getPath()).isEqualTo("/my-public-drive-1/14/artist/album/my-filename.mp3");
-	}
+    @Test
+    fun thenTheFilePathIsCorrect() {
+        assertThat(storedFile!!.path)
+            .isEqualTo("/my-public-drive-1/14/artist/album/my-filename.mp3")
+    }
 }
