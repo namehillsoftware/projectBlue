@@ -44,7 +44,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.applicationLooper },
 			handler)
 
-	override fun addListener(listener: Player.EventListener): Promise<PromisingExoPlayer> =
+	override fun addListener(listener: Player.Listener): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.addListener(listener)
@@ -52,7 +52,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
-	override fun removeListener(listener: Player.EventListener): Promise<PromisingExoPlayer> =
+	override fun removeListener(listener: Player.Listener): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
 				innerPlayer.removeListener(listener)

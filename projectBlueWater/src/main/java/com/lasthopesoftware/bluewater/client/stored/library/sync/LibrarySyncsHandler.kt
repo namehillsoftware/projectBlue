@@ -42,15 +42,13 @@ class LibrarySyncsHandler(
 		.map { serviceFile ->
 			val promiseDownloadedStoredFile = storedFileUpdater
 				.promiseStoredFileUpdate(libraryId, serviceFile)
-				.then<StoredFileJob> { storedFile ->
+				.then { storedFile ->
 					if (storedFile == null || storedFile.isDownloadComplete) null
 					else StoredFileJob(libraryId, serviceFile, storedFile)
 				}
 
 			promiseDownloadedStoredFile
-				.excuse { r ->
-					logger.warn("An error occurred creating or updating $serviceFile", r)
-				}
+				.excuse { r -> logger.warn("An error occurred creating or updating $serviceFile", r) }
 			promiseDownloadedStoredFile
 		}
 		.toList()

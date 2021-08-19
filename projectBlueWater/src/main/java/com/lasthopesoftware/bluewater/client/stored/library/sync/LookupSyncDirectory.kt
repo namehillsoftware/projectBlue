@@ -5,5 +5,5 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.File
 
 interface LookupSyncDirectory {
-	fun promiseSyncDirectory(libraryId: LibraryId): Promise<File>
+	fun promiseSyncDirectory(libraryId: LibraryId): Promise<File?>
 }
