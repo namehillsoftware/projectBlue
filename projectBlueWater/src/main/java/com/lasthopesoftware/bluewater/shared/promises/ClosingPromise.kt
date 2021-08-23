@@ -10,11 +10,9 @@ fun <C : AutoCloseable, T> C.promiseUse(block: (C) -> Promise<T>): Promise<T> = 
 
 private class ClosingMessenger<C : AutoCloseable, T>(private val closeable: C, private val block: (C) -> Promise<T>): MessengerOperator<T>, ImmediateAction {
 
-	override fun send(messenger: Messenger<T>) {
-		val promiseProxy = PromiseProxy(messenger)
-		val inner = block(closeable).must(this)
-		promiseProxy.proxy(inner)
-	}
+	override fun send(messenger: Messenger<T>) =
+		PromiseProxy(messenger)
+			.proxy(block(closeable).must(this))
 
 	override fun act() = closeable.close()
 }
