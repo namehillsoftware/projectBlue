@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.scheduling.constraints
 import android.content.SharedPreferences
 import androidx.work.Constraints
 import androidx.work.NetworkType
-import com.lasthopesoftware.bluewater.ApplicationConstants
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
 
 class SyncWorkerConstraints(private val sharedPreferences: SharedPreferences) : ConstrainSyncWork {
 	override fun getCurrentConstraints(): Constraints {

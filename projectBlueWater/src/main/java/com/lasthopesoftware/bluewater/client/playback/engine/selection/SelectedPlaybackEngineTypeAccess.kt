@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection
 
 import android.content.SharedPreferences
-import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.LookupDefaultPlaybackEngine
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 

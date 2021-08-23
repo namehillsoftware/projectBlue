@@ -18,7 +18,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -33,6 +32,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder

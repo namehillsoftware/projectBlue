@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater
+package com.lasthopesoftware.bluewater.settings.repository
 
 object ApplicationConstants {
 	object PreferenceConstants {
@@ -6,5 +6,6 @@ object ApplicationConstants {
 		const val isSyncOnPowerOnlyKey = "isSyncOnPowerOnly"
 		const val isVolumeLevelingEnabled = "isVolumeLevelingEnabled"
 		const val playbackEngine = "playbackEngine"
+		const val chosenLibraryKey = "chosen_library"
 	}
 }
