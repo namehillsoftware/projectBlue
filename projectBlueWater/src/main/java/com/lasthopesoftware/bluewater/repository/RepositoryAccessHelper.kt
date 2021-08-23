@@ -9,13 +9,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityCreator
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityUpdater
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsCreator
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsMigrator
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsUpdater
 import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor
 import com.namehillsoftware.artful.Artful
 import java.io.Closeable
 import java.util.concurrent.Executor
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class RepositoryAccessHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), Closeable {
+class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), Closeable {
 
 	companion object {
 		@JvmStatic
@@ -25,11 +28,14 @@ class RepositoryAccessHelper(context: Context) : SQLiteOpenHelper(context, DATAB
 
 		private val databaseSynchronization = lazy { ReentrantReadWriteLock() }
 		private val databaseExecutor = lazy { CachedSingleThreadExecutor() }
-		private const val DATABASE_VERSION = 8
+		private const val DATABASE_VERSION = 9
 		private const val DATABASE_NAME = "sessions_db"
-		private val entityCreators = lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile()) }
-		private val entityUpdaters = lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile()) }
 	}
+
+	private val applicationSettingsMigrator = lazy { ApplicationSettingsMigrator(context) }
+
+	private val entityCreators = lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator.value)) }
+	private val entityUpdaters = lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator.value)) }
 
 	private val sqliteDb = lazy { this.writableDatabase }
 

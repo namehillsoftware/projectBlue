@@ -19,9 +19,9 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.IBrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibrarySession
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServerOnClickListener
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -70,7 +70,8 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 			localBroadcastManager.value.registerReceiver(
 				object : BroadcastReceiver() {
 					override fun onReceive(context: Context, intent: Intent) {
-						textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == intent.getIntExtra(LibrarySession.chosenLibraryInt, -1)))
+						textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == intent.getIntExtra(
+							ApplicationConstants.PreferenceConstants.chosenLibraryKey, -1)))
 					}
 				}.apply { broadcastReceiver = this },
 				IntentFilter(BrowserLibrarySelection.libraryChosenEvent))

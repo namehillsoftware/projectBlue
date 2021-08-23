@@ -52,12 +52,14 @@ import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStarte
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
+import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
@@ -121,11 +123,15 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 
+	private val lazyApplicationSettings = lazy { ApplicationSettingsRepository(this) }
+
 	private val onWifiStateChangedReceiver = lazy {
 		object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				val isSyncOnWifiOnly = lazySharedPreferences.value.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false)
-				if (isSyncOnWifiOnly && !IoCommon.isWifiConnected(context)) cancelSync(this@StoredSyncService)
+				lazyApplicationSettings.value.promiseApplicationSettings()
+					.eventually(LoopedInPromise.response({ s ->
+						if (s.isSyncOnWifiOnly && !IoCommon.isWifiConnected(context)) cancelSync(this@StoredSyncService)
+					}, context))
 			}
 		}
 	}
