@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository.SaveLibraryWriter
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
@@ -31,7 +33,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
-						.mapSql("SELECT * FROM " + Library.tableName)
+						.mapSql("SELECT * FROM $tableName")
 						.fetch(Library::class.java)
 				}
 			}
@@ -45,7 +47,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
-						.mapSql("SELECT * FROM " + Library.tableName + " WHERE id = @id")
+						.mapSql("SELECT * FROM $tableName WHERE id = @id")
 						.addParameter("id", libraryInt)
 						.fetchFirst(Library::class.java)
 				}
@@ -58,81 +60,80 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 		companion object {
 			private val logger = LoggerFactory.getLogger(SaveLibraryWriter::class.java)
 			private val libraryInsertSql = lazy {
-				fromTable(Library.tableName)
-					.addColumn(Library.accessCodeColumn)
-					.addColumn(Library.userNameColumn)
-					.addColumn(Library.passwordColumn)
-					.addColumn(Library.isLocalOnlyColumn)
-					.addColumn(Library.libraryNameColumn)
-					.addColumn(Library.isRepeatingColumn)
-					.addColumn(Library.isWakeOnLanEnabledColumn)
-					.addColumn(Library.customSyncedFilesPathColumn)
-					.addColumn(Library.isSyncLocalConnectionsOnlyColumn)
-					.addColumn(Library.isUsingExistingFilesColumn)
-					.addColumn(Library.nowPlayingIdColumn)
-					.addColumn(Library.nowPlayingProgressColumn)
-					.addColumn(Library.savedTracksStringColumn)
-					.addColumn(Library.selectedViewColumn)
-					.addColumn(Library.selectedViewTypeColumn)
-					.addColumn(Library.syncedFileLocationColumn)
+				fromTable(tableName)
+					.addColumn(LibraryEntityInformation.accessCodeColumn)
+					.addColumn(LibraryEntityInformation.userNameColumn)
+					.addColumn(LibraryEntityInformation.passwordColumn)
+					.addColumn(LibraryEntityInformation.isLocalOnlyColumn)
+					.addColumn(LibraryEntityInformation.libraryNameColumn)
+					.addColumn(LibraryEntityInformation.isRepeatingColumn)
+					.addColumn(LibraryEntityInformation.isWakeOnLanEnabledColumn)
+					.addColumn(LibraryEntityInformation.customSyncedFilesPathColumn)
+					.addColumn(LibraryEntityInformation.isSyncLocalConnectionsOnlyColumn)
+					.addColumn(LibraryEntityInformation.isUsingExistingFilesColumn)
+					.addColumn(LibraryEntityInformation.nowPlayingIdColumn)
+					.addColumn(LibraryEntityInformation.nowPlayingProgressColumn)
+					.addColumn(LibraryEntityInformation.savedTracksStringColumn)
+					.addColumn(LibraryEntityInformation.selectedViewColumn)
+					.addColumn(LibraryEntityInformation.selectedViewTypeColumn)
+					.addColumn(LibraryEntityInformation.syncedFileLocationColumn)
 					.build()
 			}
 
 			private val libraryUpdateSql = lazy {
 				UpdateBuilder
-					.fromTable(Library.tableName)
-					.addSetter(Library.accessCodeColumn)
-					.addSetter(Library.userNameColumn)
-					.addSetter(Library.passwordColumn)
-					.addSetter(Library.isLocalOnlyColumn)
-					.addSetter(Library.libraryNameColumn)
-					.addSetter(Library.isRepeatingColumn)
-					.addSetter(Library.isWakeOnLanEnabledColumn)
-					.addSetter(Library.customSyncedFilesPathColumn)
-					.addSetter(Library.isSyncLocalConnectionsOnlyColumn)
-					.addSetter(Library.isUsingExistingFilesColumn)
-					.addSetter(Library.nowPlayingIdColumn)
-					.addSetter(Library.nowPlayingProgressColumn)
-					.addSetter(Library.savedTracksStringColumn)
-					.addSetter(Library.selectedViewColumn)
-					.addSetter(Library.selectedViewTypeColumn)
-					.addSetter(Library.syncedFileLocationColumn)
+					.fromTable(tableName)
+					.addSetter(LibraryEntityInformation.accessCodeColumn)
+					.addSetter(LibraryEntityInformation.userNameColumn)
+					.addSetter(LibraryEntityInformation.passwordColumn)
+					.addSetter(LibraryEntityInformation.isLocalOnlyColumn)
+					.addSetter(LibraryEntityInformation.libraryNameColumn)
+					.addSetter(LibraryEntityInformation.isRepeatingColumn)
+					.addSetter(LibraryEntityInformation.isWakeOnLanEnabledColumn)
+					.addSetter(LibraryEntityInformation.customSyncedFilesPathColumn)
+					.addSetter(LibraryEntityInformation.isSyncLocalConnectionsOnlyColumn)
+					.addSetter(LibraryEntityInformation.isUsingExistingFilesColumn)
+					.addSetter(LibraryEntityInformation.nowPlayingIdColumn)
+					.addSetter(LibraryEntityInformation.nowPlayingProgressColumn)
+					.addSetter(LibraryEntityInformation.savedTracksStringColumn)
+					.addSetter(LibraryEntityInformation.selectedViewColumn)
+					.addSetter(LibraryEntityInformation.selectedViewTypeColumn)
+					.addSetter(LibraryEntityInformation.syncedFileLocationColumn)
 					.setFilter("WHERE id = @id")
 					.buildQuery()
 			}
 		}
 
-		override fun prepareMessage(): Library {
+		override fun prepareMessage(): Library =
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					val isLibraryExists = library.id > -1
 					val artful = repositoryAccessHelper
 						.mapSql(if (isLibraryExists) libraryUpdateSql.value else libraryInsertSql.value)
-						.addParameter(Library.accessCodeColumn, library.accessCode)
-						.addParameter(Library.userNameColumn, library.userName)
-						.addParameter(Library.passwordColumn, library.password)
-						.addParameter(Library.isLocalOnlyColumn, library.isLocalOnly)
-						.addParameter(Library.libraryNameColumn, library.libraryName)
-						.addParameter(Library.isRepeatingColumn, library.isRepeating)
-						.addParameter(Library.isWakeOnLanEnabledColumn, library.isWakeOnLanEnabled)
-						.addParameter(Library.customSyncedFilesPathColumn, library.customSyncedFilesPath)
-						.addParameter(Library.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly)
-						.addParameter(Library.isUsingExistingFilesColumn, library.isUsingExistingFiles)
-						.addParameter(Library.nowPlayingIdColumn, library.nowPlayingId)
-						.addParameter(Library.nowPlayingProgressColumn, library.nowPlayingProgress)
-						.addParameter(Library.savedTracksStringColumn, library.savedTracksString)
-						.addParameter(Library.selectedViewColumn, library.selectedView)
-						.addParameter(Library.selectedViewTypeColumn, library.selectedViewType)
-						.addParameter(Library.syncedFileLocationColumn, library.syncedFileLocation)
+						.addParameter(LibraryEntityInformation.accessCodeColumn, library.accessCode)
+						.addParameter(LibraryEntityInformation.userNameColumn, library.userName)
+						.addParameter(LibraryEntityInformation.passwordColumn, library.password)
+						.addParameter(LibraryEntityInformation.isLocalOnlyColumn, library.isLocalOnly)
+						.addParameter(LibraryEntityInformation.libraryNameColumn, library.libraryName)
+						.addParameter(LibraryEntityInformation.isRepeatingColumn, library.isRepeating)
+						.addParameter(LibraryEntityInformation.isWakeOnLanEnabledColumn, library.isWakeOnLanEnabled)
+						.addParameter(LibraryEntityInformation.customSyncedFilesPathColumn, library.customSyncedFilesPath)
+						.addParameter(LibraryEntityInformation.isSyncLocalConnectionsOnlyColumn, library.isSyncLocalConnectionsOnly)
+						.addParameter(LibraryEntityInformation.isUsingExistingFilesColumn, library.isUsingExistingFiles)
+						.addParameter(LibraryEntityInformation.nowPlayingIdColumn, library.nowPlayingId)
+						.addParameter(LibraryEntityInformation.nowPlayingProgressColumn, library.nowPlayingProgress)
+						.addParameter(LibraryEntityInformation.savedTracksStringColumn, library.savedTracksString)
+						.addParameter(LibraryEntityInformation.selectedViewColumn, library.selectedView)
+						.addParameter(LibraryEntityInformation.selectedViewTypeColumn, library.selectedViewType)
+						.addParameter(LibraryEntityInformation.syncedFileLocationColumn, library.syncedFileLocation)
 					if (isLibraryExists) artful.addParameter("id", library.id)
 					val result = artful.execute()
 					closeableTransaction.setTransactionSuccessful()
 					if (!isLibraryExists) library.setId(result.toInt())
 					logger.debug("Library saved.")
-					return library
+					library
 				}
 			}
-		}
 	}
 
 	private class RemoveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Unit> {
@@ -143,7 +144,7 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use {
 					repositoryAccessHelper
-						.mapSql("DELETE FROM ${Library.tableName} WHERE id = @id")
+						.mapSql("DELETE FROM $tableName WHERE id = @id")
 						.addParameter("id", libraryInt)
 						.execute()
 					it.setTransactionSuccessful()

@@ -4,7 +4,8 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityCreator
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityCreator
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityUpdater
@@ -26,8 +27,8 @@ class RepositoryAccessHelper(context: Context) : SQLiteOpenHelper(context, DATAB
 		private val databaseExecutor = lazy { CachedSingleThreadExecutor() }
 		private const val DATABASE_VERSION = 8
 		private const val DATABASE_NAME = "sessions_db"
-		private val entityCreators = lazy { arrayOf(Library(), StoredFileEntityCreator(), StoredItem(), CachedFile()) }
-		private val entityUpdaters = lazy { arrayOf(Library(), StoredFileEntityUpdater(), StoredItem(), CachedFile()) }
+		private val entityCreators = lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile()) }
+		private val entityUpdaters = lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile()) }
 	}
 
 	private val sqliteDb = lazy { this.writableDatabase }
