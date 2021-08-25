@@ -33,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
+import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -52,6 +53,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
 	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
+	private val lazyApplicationSettingsRepository = lazy { ApplicationSettingsRepository(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -61,13 +63,15 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val sharedPreferences = lazySharedPreferences.value
 		HandleSyncCheckboxPreference.handle(
-			sharedPreferences,
-			ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey,
+			lazyApplicationSettingsRepository.value,
+			{ it.isSyncOnPowerOnly },
+			{ s -> s::isSyncOnPowerOnly::set },
 			findViewById(R.id.syncOnPowerCheckbox))
 
 		HandleSyncCheckboxPreference.handle(
-			sharedPreferences,
-			ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey,
+			lazyApplicationSettingsRepository.value,
+			{ it.isSyncOnWifiOnly },
+			{ s -> s::isSyncOnWifiOnly::set },
 			findViewById(R.id.syncOnWifiCheckbox))
 
 		HandleCheckboxPreference.handle(

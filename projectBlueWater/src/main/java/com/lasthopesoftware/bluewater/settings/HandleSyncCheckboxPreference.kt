@@ -1,27 +1,32 @@
 package com.lasthopesoftware.bluewater.settings
 
-import android.content.SharedPreferences
 import android.widget.CheckBox
 import android.widget.CompoundButton
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.scheduleSync
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 
-internal class HandleSyncCheckboxPreference private constructor(private val sharedPreferences: SharedPreferences, private val settingKey: String) : CompoundButton.OnCheckedChangeListener {
+internal class HandleSyncCheckboxPreference private constructor(private val applicationSettings: HoldApplicationSettings, private val updateSetting: (ApplicationSettings) -> (Boolean) -> Unit) : CompoundButton.OnCheckedChangeListener {
 	override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
-		sharedPreferences
-			.edit()
-			.putBoolean(settingKey, isChecked)
-			.apply()
+		applicationSettings.promiseApplicationSettings()
+			.then { s ->
+				updateSetting(s)(isChecked)
+				applicationSettings.promiseUpdatedSettings(s)
+			}
 		scheduleSync(buttonView.context)
 	}
 
 	companion object {
-		fun handle(sharedPreferences: SharedPreferences, settingKey: String, settingCheckbox: CheckBox) {
+		fun handle(applicationSettings: HoldApplicationSettings, getSetting: (ApplicationSettings) -> Boolean, updateSetting: (ApplicationSettings) -> (Boolean) -> Unit, settingCheckbox: CheckBox) {
 			settingCheckbox.isEnabled = false
-			val preference = sharedPreferences.getBoolean(settingKey, false)
-			settingCheckbox.isChecked = preference
-			settingCheckbox.setOnCheckedChangeListener(
-				HandleSyncCheckboxPreference(sharedPreferences, settingKey))
-			settingCheckbox.isEnabled = true
+			applicationSettings.promiseApplicationSettings()
+				.then { s ->
+					val preference = getSetting(s)
+					settingCheckbox.isChecked = preference
+					settingCheckbox.setOnCheckedChangeListener(
+						HandleSyncCheckboxPreference(applicationSettings, updateSetting))
+					settingCheckbox.isEnabled = true
+				}
 		}
 	}
 }
