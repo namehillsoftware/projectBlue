@@ -32,7 +32,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
 import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
@@ -75,8 +74,9 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			findViewById(R.id.syncOnWifiCheckbox))
 
 		HandleCheckboxPreference.handle(
-			sharedPreferences,
-			ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled,
+			applicationSettingsRepository,
+			{ it.isVolumeLevelingEnabled },
+			{ s -> s::isVolumeLevelingEnabled::set },
 			findViewById(R.id.isVolumeLevelingEnabled))
 
 		val selection = PlaybackEngineTypeSelectionPersistence(

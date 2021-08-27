@@ -14,15 +14,16 @@ class LibraryRemoval(
 	private val librarySelection: IBrowserLibrarySelection) : RemoveLibraries {
 
 	override fun removeLibrary(library: Library): Promise<*> {
-		val selectedLibraryId = selectedLibraryIdProvider.selectedLibraryId
-
 		val promisedNewLibrarySelection =
-			if (selectedLibraryId != library.libraryId) Promise.empty()
-			else libraryProvider.allLibraries.eventually { libraries ->
-				val firstOtherLibrary = libraries.firstOrNull { l -> l.libraryId != library.libraryId }
-				if (firstOtherLibrary != null) librarySelection.selectBrowserLibrary(firstOtherLibrary.libraryId)
-				else Promise.empty()
-			}
+			selectedLibraryIdProvider.selectedLibraryId
+				.eventually {
+					if (library.libraryId != it) Promise.empty()
+					else libraryProvider.allLibraries.eventually { libraries ->
+						val firstOtherLibrary = libraries.firstOrNull { l -> l.libraryId != library.libraryId }
+						if (firstOtherLibrary != null) librarySelection.selectBrowserLibrary(firstOtherLibrary.libraryId)
+						else Promise.empty()
+					}
+				}
 
 		return promisedNewLibrarySelection.eventually {
 			Promise.whenAll(
