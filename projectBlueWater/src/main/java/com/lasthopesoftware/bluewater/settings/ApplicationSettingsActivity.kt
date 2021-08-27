@@ -44,7 +44,7 @@ import tourguide.tourguide.ToolTip
 import tourguide.tourguide.TourGuide
 
 class ApplicationSettingsActivity : AppCompatActivity() {
-	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
+	private val channelConfiguration: SharedChannelProperties by lazy { SharedChannelProperties(this) }
 	private val progressBar = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val serverListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 	private val notificationSettingsContainer = LazyViewFinder<LinearLayout>(this, R.id.notificationSettingsContainer)
@@ -53,7 +53,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
 	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
-	private val lazyApplicationSettingsRepository = lazy { ApplicationSettingsRepository(this) }
+	private val applicationSettingsRepository: ApplicationSettingsRepository by lazy { ApplicationSettingsRepository(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -63,13 +63,13 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val sharedPreferences = lazySharedPreferences.value
 		HandleSyncCheckboxPreference.handle(
-			lazyApplicationSettingsRepository.value,
-			{ it.isSyncOnPowerOnly },
+			applicationSettingsRepository,
+			{ s -> s.isSyncOnPowerOnly },
 			{ s -> s::isSyncOnPowerOnly::set },
 			findViewById(R.id.syncOnPowerCheckbox))
 
 		HandleSyncCheckboxPreference.handle(
-			lazyApplicationSettingsRepository.value,
+			applicationSettingsRepository,
 			{ it.isSyncOnWifiOnly },
 			{ s -> s::isSyncOnWifiOnly::set },
 			findViewById(R.id.syncOnWifiCheckbox))
@@ -80,10 +80,10 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			findViewById(R.id.isVolumeLevelingEnabled))
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
-			sharedPreferences,
+			applicationSettingsRepository,
 			PlaybackEngineTypeChangedBroadcaster(MessageBus(LocalBroadcastManager.getInstance(this))))
 
-		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(sharedPreferences, DefaultPlaybackEngineLookup())
+		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettingsRepository, DefaultPlaybackEngineLookup())
 
 		val playbackEngineTypeSelectionView = PlaybackEngineTypeSelectionView(this)
 
@@ -155,7 +155,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private fun launchNotificationSettings() {
 		val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
 		intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-		intent.putExtra(Settings.EXTRA_CHANNEL_ID, lazyChannelConfiguration.value.channelId)
+		intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelConfiguration.channelId)
 		startActivity(intent)
 	}
 

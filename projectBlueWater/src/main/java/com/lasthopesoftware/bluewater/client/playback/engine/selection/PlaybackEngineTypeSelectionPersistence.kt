@@ -1,14 +1,16 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection
 
-import android.content.SharedPreferences
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.namehillsoftware.handoff.promises.Promise
 
-class PlaybackEngineTypeSelectionPersistence(private val sharedPreferences: SharedPreferences, private val playbackEngineTypeChangedBroadcaster: PlaybackEngineTypeChangedBroadcaster) : SelectPlaybackEngineType {
-	override fun selectPlaybackEngine(playbackEngineType: PlaybackEngineType) {
-		sharedPreferences.edit()
-			.putString(ApplicationConstants.PreferenceConstants.playbackEngine, playbackEngineType.name)
-			.apply()
-		playbackEngineTypeChangedBroadcaster.broadcastPlaybackEngineTypeChanged(playbackEngineType)
-	}
+class PlaybackEngineTypeSelectionPersistence(private val applicationSettings: HoldApplicationSettings, private val playbackEngineTypeChangedBroadcaster: PlaybackEngineTypeChangedBroadcaster) : SelectPlaybackEngineType {
+	override fun selectPlaybackEngine(playbackEngineType: PlaybackEngineType): Promise<Unit> =
+		applicationSettings.promiseApplicationSettings()
+			.eventually { s ->
+				s.playbackEngineType = playbackEngineType.name
+				applicationSettings.promiseUpdatedSettings(s)
+			}
+			.unitResponse()
 }
