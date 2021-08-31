@@ -22,17 +22,19 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.namehillsoftware.handoff.promises.Promise
 
 class ItemListFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
-	private val lazyListView = lazy {
+	private val listView by lazy {
 		val listView = ListView(activity)
 		listView.visibility = View.INVISIBLE
 		listView
 	}
-	private val lazyProgressBar = lazy {
+	private val progressBar by lazy {
 		val pbLoading = ProgressBar(activity, null, android.R.attr.progressBarStyleLarge)
 		val pbParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -42,39 +44,37 @@ class ItemListFragment : Fragment() {
 		pbLoading.layoutParams = pbParams
 		pbLoading
 	}
-	private val lazyLayout = lazy {
+	private val layout by lazy {
 		val layout = RelativeLayout(activity)
 		layout.layoutParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT,
 			ViewGroup.LayoutParams.MATCH_PARENT
 		)
-		layout.addView(lazyProgressBar.value)
-		layout.addView(lazyListView.value)
+		layout.addView(progressBar)
+		layout.addView(listView)
 		layout
 	}
 
-	private val lazyFileStringListProvider = lazy {
+	private val fileStringListProvider by lazy {
 		FileStringListProvider(SelectedConnectionProvider(requireContext()))
 	}
 
-	private val lazySelectedLibraryProvider = lazy {
+	private val lazySelectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(requireContext()),
+			SelectedBrowserLibraryIdentifierProvider(ApplicationSettingsRepository(requireContext())),
 			LibraryRepository(requireContext())
 		)
 	}
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-		return lazyLayout.value
-	}
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
 
 	override fun onStart() {
 		super.onStart()
 		val activity = activity ?: return
-		lazyListView.value.visibility = View.INVISIBLE
-		lazyProgressBar.value.visibility = View.VISIBLE
+		listView.visibility = View.INVISIBLE
+		progressBar.visibility = View.VISIBLE
 
-		lazySelectedLibraryProvider.value
+		lazySelectedLibraryProvider
 			.browserLibrary
 			.then { activeLibrary ->
 				if (activeLibrary == null) return@then
@@ -93,32 +93,23 @@ class ItemListFragment : Fragment() {
 							}
 							?.also(::fillStandardItemView)
 					}, activity)
-				val fillItemsRunnable = object : Runnable {
+
+				object : Runnable {
 					override fun run() {
 						getInstance(activity).promiseSessionConnection()
-							.eventually { c ->
-								provide(
-									c!!, activeLibrary.selectedView
-								)
-							}
+							.eventually { c -> c?.let { provide(c, activeLibrary.selectedView) } ?: Promise(emptyList()) }
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(HandleViewIoException(activity, this))
-							.eventuallyExcuse(
-								response(
-									UnexpectedExceptionToasterResponse(activity),
-									activity
-								)
-							)
+							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(activity), activity))
 					}
-				}
-				fillItemsRunnable.run()
+				}.run()
 			}
 	}
 
 	private fun fillStandardItemView(category: IItem) {
 		val activity = activity ?: return
 
-		lazySelectedLibraryProvider.value
+		lazySelectedLibraryProvider
 			.browserLibrary
 			.then { library ->
 				if (library == null) return@then
@@ -128,11 +119,11 @@ class ItemListFragment : Fragment() {
 					response(
 						OnGetLibraryViewItemResultsComplete(
 							activity,
-							lazyListView.value,
-							lazyProgressBar.value,
+							listView,
+							progressBar,
 							itemListMenuChangeHandler,
 							FileListParameters.getInstance(),
-							lazyFileStringListProvider.value,
+							fileStringListProvider,
 							StoredItemAccess(activity),
 							library
 						), activity

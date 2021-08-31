@@ -83,36 +83,41 @@ class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer {
 			override fun run() {
 				val parameters = SearchFileParameterProvider.getFileListParameters(query)
 				lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
-					.eventually(LoopedInPromise.response({ serviceFiles ->
+					.eventually { serviceFiles ->
 						fromActiveLibrary(context)
-							?.let { nowPlayingFileProvider ->
-								FileListItemMenuBuilder(
-									serviceFiles,
-									nowPlayingFileProvider,
-									FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(context))
-								)
-							}
-							?.also { fileListItemMenuBuilder ->
-								ItemListMenuChangeHandler(context).apply {
-									fileListItemMenuBuilder.setOnViewChangedListener(
-										ViewChangedHandler()
-											.setOnViewChangedListener(this)
-											.setOnAnyMenuShown(this)
-											.setOnAllMenusHidden(this))
-								}
+							.eventually(LoopedInPromise.response({
+								it
+									?.let { nowPlayingFileProvider ->
+										FileListItemMenuBuilder(
+											serviceFiles,
+											nowPlayingFileProvider,
+											FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(context))
+										)
+									}
+									?.also { fileListItemMenuBuilder ->
+										ItemListMenuChangeHandler(context).apply {
+											fileListItemMenuBuilder.setOnViewChangedListener(
+												ViewChangedHandler()
+													.setOnViewChangedListener(this)
+													.setOnAnyMenuShown(this)
+													.setOnAllMenusHidden(this)
+											)
+										}
 
-								val fileListView = fileListView.findView()
-								fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
-								val layoutManager = LinearLayoutManager(context)
-								fileListView.layoutManager = layoutManager
-								fileListView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
-								fileListView.visibility = View.VISIBLE
-								pbLoading.findView().visibility = View.INVISIBLE
-							}
-					}, context))
-				.excuse(HandleViewIoException(context, this))
-				.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
-				.then { finish() }
+										val fileListView = fileListView.findView()
+										fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
+
+										val layoutManager = LinearLayoutManager(context)
+										fileListView.layoutManager = layoutManager
+										fileListView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
+										fileListView.visibility = View.VISIBLE
+										pbLoading.findView().visibility = View.INVISIBLE
+									}
+							}, context))
+					}
+					.excuse(HandleViewIoException(context, this))
+					.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
+					.then { finish() }
 			}
 		}).run()
 	}

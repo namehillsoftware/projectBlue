@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.toImmutableList
@@ -34,7 +35,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 	private var onSyncStoppedReceiver: BroadcastReceiver? = null
 	private var onFileQueuedReceiver: BroadcastReceiver? = null
 	private var onFileDownloadedReceiver: BroadcastReceiver? = null
-	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(activity!!) }
+	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(requireContext()) }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		if (container == null) return null
@@ -53,9 +54,10 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 		listView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
 
+		val applicationSettingsRepository = ApplicationSettingsRepository(context)
 		val libraryRepository = LibraryRepository(context)
 		val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(context),
+			SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository),
 			libraryRepository)
 
 		selectedBrowserLibraryProvider
@@ -142,9 +144,9 @@ class ActiveFileDownloadsFragment : Fragment() {
 		super.onDestroy()
 		if (!localBroadcastManager.isInitialized()) return
 
-		onSyncStartedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
-		onSyncStoppedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
-		onFileDownloadedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
-		onFileQueuedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
+		onSyncStartedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
+		onSyncStoppedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
+		onFileDownloadedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
+		onFileQueuedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
 	}
 }

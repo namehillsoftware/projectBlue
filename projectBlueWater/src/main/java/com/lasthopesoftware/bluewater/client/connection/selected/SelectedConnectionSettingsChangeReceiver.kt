@@ -17,8 +17,9 @@ class SelectedConnectionSettingsChangeReceiver(
 			intent?.getIntExtra(ObservableConnectionSettingsLibraryStorage.updatedConnectionSettingsLibraryId, -1)
 				?: return
 
-		if (selectedLibraryIdProvider.selectedLibraryId?.id == updatedLibraryId)
-			sendMessages.sendBroadcast(Intent(connectionSettingsUpdated))
+		selectedLibraryIdProvider.selectedLibraryId.then { l ->
+			if (l?.id == updatedLibraryId) sendMessages.sendBroadcast(Intent(connectionSettingsUpdated))
+		}
 	}
 
 	companion object {

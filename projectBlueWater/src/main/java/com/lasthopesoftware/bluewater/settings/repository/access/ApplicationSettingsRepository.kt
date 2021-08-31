@@ -41,7 +41,7 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 					.addParameter(isSyncOnWifiOnlyColumn, applicationSettings.isSyncOnWifiOnly)
 					.addParameter(isSyncOnPowerOnlyColumn, applicationSettings.isSyncOnPowerOnly)
 					.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
-					.addParameter(playbackEngineColumn, applicationSettings.playbackEngineType.name)
+					.addParameter(playbackEngineColumn, applicationSettings.playbackEngineType)
 					.addParameter(chosenLibraryColumn, applicationSettings.chosenLibraryId)
 					.promiseExecution()
 			}
