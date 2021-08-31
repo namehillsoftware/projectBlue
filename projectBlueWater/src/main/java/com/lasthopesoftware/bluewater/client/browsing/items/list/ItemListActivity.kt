@@ -65,9 +65,10 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	public override fun onStart() {
 		super.onStart()
-		connectionRestoreCode = restoreSelectedConnection(this).also {
+		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+			connectionRestoreCode = it
 			if (it == null) hydrateItems()
-		}
+		}, this))
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

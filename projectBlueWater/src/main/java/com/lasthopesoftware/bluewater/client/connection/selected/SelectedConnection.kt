@@ -10,9 +10,11 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 
@@ -22,44 +24,45 @@ class SelectedConnection(
 	private val libraryConnections: ManageConnectionSessions
 ) {
 
-	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> {
-		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
-			?: return Promise.empty()
-
-		return libraryConnections
-			.promiseTestedLibraryConnection(selectedLibraryId)
-			.also {
-				it.progress.then { progress ->
-					if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
-						if (progress != null) doStateChange(progress)
-						it.updates(::doStateChange)
-					}
+	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> =
+		selectedLibraryIdentifierProvider.selectedLibraryId.eventually { selectedLibraryId ->
+			selectedLibraryId
+				?.let {
+					libraryConnections.promiseTestedLibraryConnection(selectedLibraryId)
+						.also {
+							it.progress.then { progress ->
+								if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
+									if (progress != null) doStateChange(progress)
+									it.updates(::doStateChange)
+								}
+							}
+						}
 				}
-			}
-	}
+				.keepPromise()
+		}
 
-	fun isSessionConnectionActive(): Boolean {
-		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
-			?: return false
+	fun isSessionConnectionActive(): Promise<Boolean> =
+		selectedLibraryIdentifierProvider.selectedLibraryId.then { id ->
+			id?.let(libraryConnections::isConnectionActive) ?: false
+		}
 
-		return libraryConnections.isConnectionActive(selectedLibraryId)
-	}
-
-	fun promiseSessionConnection(): Promise<IConnectionProvider?> {
-		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
-			?: return Promise.empty()
-
-		return libraryConnections
-			.promiseLibraryConnection(selectedLibraryId)
-			.also {
-				it.progress.then { progress ->
-					if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
-						if (progress != null) doStateChange(progress)
-						it.updates(::doStateChange)
-					}
+	fun promiseSessionConnection(): Promise<IConnectionProvider?> =
+		selectedLibraryIdentifierProvider.selectedLibraryId.eventually { selectedLibraryId ->
+			selectedLibraryId
+				?.let {
+					libraryConnections
+						.promiseLibraryConnection(selectedLibraryId)
+						.also {
+							it.progress.then { progress ->
+								if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
+									if (progress != null) doStateChange(progress)
+									it.updates(::doStateChange)
+								}
+							}
+						}
 				}
-			}
-	}
+				.keepPromise()
+		}
 
 	private fun doStateChange(status: BuildingConnectionStatus) {
 		val broadcastIntent = Intent(buildSessionBroadcast)
@@ -105,9 +108,6 @@ class SelectedConnection(
 		@Volatile
 		private lateinit var selectedConnectionInstance: SelectedConnection
 
-		fun Context.promiseSelectedConnection(): Promise<IConnectionProvider?> =
-			getInstance(this).promiseSessionConnection()
-
 		@JvmStatic
 		@Synchronized
 		fun getInstance(context: Context): SelectedConnection {
@@ -116,7 +116,7 @@ class SelectedConnection(
 			val applicationContext = context.applicationContext
 			return SelectedConnection(
 				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
-				SelectedBrowserLibraryIdentifierProvider(applicationContext),
+				SelectedBrowserLibraryIdentifierProvider(ApplicationSettingsRepository(applicationContext)),
 				ConnectionSessionManager.get(applicationContext)
 			).apply { selectedConnectionInstance = this }
 		}

@@ -14,6 +14,8 @@ private object UnitPromise : Promise<Unit>(Unit)
 
 fun <T> Promise<T>?.keepPromise(): Promise<T> = this ?: Promise.empty()
 
+fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
+
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
 private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit> {

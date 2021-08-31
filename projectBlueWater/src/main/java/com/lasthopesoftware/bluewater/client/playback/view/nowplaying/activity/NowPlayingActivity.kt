@@ -373,9 +373,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	public override fun onStart() {
 		super.onStart()
 		updateKeepScreenOnStatus()
-		connectionRestoreCode = restoreSelectedConnection(this).also {
+
+		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+			connectionRestoreCode = it
 			if (it == null) initializeView()
-		}
+		}, messageHandler))
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

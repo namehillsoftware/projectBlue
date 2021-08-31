@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.namehillsoftware.handoff.promises.Promise
 
 class InstantiateSelectedConnectionActivity : Activity() {
 	private val lblConnectionStatus = LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
@@ -87,17 +88,18 @@ class InstantiateSelectedConnectionActivity : Activity() {
 			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
 		private const val ACTIVITY_LAUNCH_DELAY = 1500
 
-		fun restoreSelectedConnection(activity: Activity): Int? {
-			return when (getInstance(activity).isSessionConnectionActive()) {
-				false -> {
-					val intent = Intent(activity, InstantiateSelectedConnectionActivity::class.java)
-					intent.action = START_ACTIVITY_FOR_RETURN
-					activity.startActivityForResult(intent, ACTIVITY_ID)
-					ACTIVITY_ID
+		fun restoreSelectedConnection(activity: Activity): Promise<Int?> =
+			getInstance(activity).isSessionConnectionActive().then {
+				when (it) {
+					false -> {
+						val intent = Intent(activity, InstantiateSelectedConnectionActivity::class.java)
+						intent.action = START_ACTIVITY_FOR_RETURN
+						activity.startActivityForResult(intent, ACTIVITY_ID)
+						ACTIVITY_ID
+					}
+					else -> null
 				}
-				else -> null
 			}
-		}
 
 		fun startNewConnection(context: Context) {
 			context.startActivity(Intent(context, InstantiateSelectedConnectionActivity::class.java))
