@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.settings
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -51,7 +52,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
-	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
+	private val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 	private val applicationSettingsRepository: ApplicationSettingsRepository by lazy { ApplicationSettingsRepository(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +61,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_application_settings)
 		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
 
-		val sharedPreferences = lazySharedPreferences.value
 		HandleSyncCheckboxPreference.handle(
 			applicationSettingsRepository,
 			{ s -> s.isSyncOnPowerOnly },
@@ -165,6 +165,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val libraryProvider = LibraryRepository(this)
 		val promisedLibraries = libraryProvider.allLibraries
+		val promisedSelectedLibrary = SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository).selectedLibraryId
 
 		val adapter = ServerListAdapter(
 			this,
@@ -175,15 +176,17 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		serverListView.layoutManager = LinearLayoutManager(this)
 
 		promisedLibraries
-			.eventually(LoopedInPromise.response({ libraries ->
-				val chosenLibraryId = SelectedBrowserLibraryIdentifierProvider(this).selectedLibraryId
-				val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
+			.eventually { libraries ->
+				promisedSelectedLibrary
+					.eventually(LoopedInPromise.response({ chosenLibraryId ->
+						val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
 
-				adapter.updateLibraries(libraries, selectedBrowserLibrary)
+						adapter.updateLibraries(libraries, selectedBrowserLibrary)
 
-				progressBar.findView().visibility = View.INVISIBLE
-				serverListView.visibility = View.VISIBLE
-			}, this))
+						progressBar.findView().visibility = View.INVISIBLE
+						serverListView.visibility = View.VISIBLE
+					}, this))
+			}
 	}
 
 	companion object {

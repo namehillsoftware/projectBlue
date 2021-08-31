@@ -47,14 +47,16 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 	companion object {
 		private val workName = MagicPropertyBuilder.buildMagicPropertyName(SyncSchedulingWorker::class.java, "")
 		@JvmStatic
-		fun scheduleSync(context: Context): Operation {
-			val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncSchedulingWorker::class.java, 3, TimeUnit.HOURS)
-			periodicWorkRequest.setConstraints(constraints(context))
-			return WorkManager.getInstance(context)
-				.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build())
+		fun scheduleSync(context: Context): Promise<Operation> {
+			return constraints(context).then { c ->
+				val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncSchedulingWorker::class.java, 3, TimeUnit.HOURS)
+				periodicWorkRequest.setConstraints(c)
+				WorkManager.getInstance(context)
+					.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build())
+			}
 		}
 
-		private fun constraints(context: Context): Constraints {
+		private fun constraints(context: Context): Promise<Constraints> {
 			val manager = PreferenceManager.getDefaultSharedPreferences(context)
 			return SyncWorkerConstraints(manager).currentConstraints
 		}

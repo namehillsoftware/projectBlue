@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.scheduling.ParsingScheduler
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
@@ -16,7 +17,7 @@ open class ImageProvider(private val selectedLibraryId: ProvideSelectedLibraryId
 				libraryId
 					?.let { l -> rawImages.promiseImageBytes(l, serviceFile) }
 					?.eventually { bytes -> QueuedPromise(BitmapWriter(bytes), ParsingScheduler.instance().scheduler) }
-					?: Promise.empty()
+					.keepPromise()
 				}
 
 	private class BitmapWriter(private val imageBytes: ByteArray) : MessageWriter<Bitmap?> {

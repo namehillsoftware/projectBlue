@@ -1,7 +1,8 @@
-package com.lasthopesoftware.bluewater.client.stored.scheduling.constraints;
+package com.lasthopesoftware.bluewater.client.stored.scheduling.constraints
 
-import androidx.work.Constraints;
+import androidx.work.Constraints
+import com.namehillsoftware.handoff.promises.Promise
 
-public interface ConstrainSyncWork {
-	Constraints getCurrentConstraints();
+interface ConstrainSyncWork {
+    val currentConstraints: Promise<Constraints>
 }
