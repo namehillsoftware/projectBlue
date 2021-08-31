@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.settings
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -52,8 +51,8 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
-	private val sharedPreferences: SharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
-	private val applicationSettingsRepository: ApplicationSettingsRepository by lazy { ApplicationSettingsRepository(this) }
+	private val sharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
+	private val applicationSettingsRepository by lazy { ApplicationSettingsRepository(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)

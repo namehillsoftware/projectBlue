@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.scheduling
 
 import android.content.Context
 import android.os.AsyncTask
-import androidx.preference.PreferenceManager
 import androidx.work.*
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
@@ -16,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServ
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
+import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ExecutionException
@@ -57,8 +57,8 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 		}
 
 		private fun constraints(context: Context): Promise<Constraints> {
-			val manager = PreferenceManager.getDefaultSharedPreferences(context)
-			return SyncWorkerConstraints(manager).currentConstraints
+			val applicationSettings = ApplicationSettingsRepository(context)
+			return SyncWorkerConstraints(applicationSettings).currentConstraints
 		}
 
 		fun promiseIsScheduled(context: Context): Promise<Boolean> {
