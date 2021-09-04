@@ -28,12 +28,12 @@ class MediaFileUriProvider
     private val libraryIdentifierProvider: ProvideSelectedLibraryId,
     private val isSilent: Boolean
 ) : IFileUriProvider, ProvideFileUrisForLibrary {
-    override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri> =
+    override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri?> =
 		libraryIdentifierProvider.selectedLibraryId.eventually {
 			it?.let { promiseUri(it, serviceFile) }.keepPromise()
 		}
 
-    override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri> =
+    override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted) Promise.empty() else mediaQueryCursorProvider
 			.getMediaQueryCursor(libraryId, serviceFile)
 			.then { cursor ->

@@ -6,5 +6,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ProvideFileUrisForLibrary {
-	fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri>
+	fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?>
 }
