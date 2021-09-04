@@ -49,7 +49,7 @@ class WhenGettingTheMaxVolume {
 				sessionFilePropertiesProvider)
 
 			val volumeLevelSettings = mockk<IVolumeLevelSettings>()
-			every { volumeLevelSettings.isVolumeLevellingEnabled } returns true
+			every { volumeLevelSettings.isVolumeLevellingEnabled } returns true.toPromise()
 
 			val maxFileVolumeProvider = MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider)
 			returnedVolume = maxFileVolumeProvider.promiseMaxFileVolume(ServiceFile(1)).toFuture().get()!!

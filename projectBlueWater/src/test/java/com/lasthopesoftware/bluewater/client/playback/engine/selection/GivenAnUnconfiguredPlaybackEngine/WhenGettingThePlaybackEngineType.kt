@@ -1,44 +1,38 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenAnUnconfiguredPlaybackEngine;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenAnUnconfiguredPlaybackEngine
 
-import android.content.SharedPreferences;
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
 
-import androidx.preference.PreferenceManager;
-import androidx.test.core.app.ApplicationProvider;
+class WhenGettingThePlaybackEngineType {
 
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+	companion object {
+		private var playbackEngineType: PlaybackEngineType? = null
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val applicationSettings = mockk<HoldApplicationSettings>()
+			every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
 
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-@RunWith(RobolectricTestRunner.class)
-public class WhenGettingThePlaybackEngineType {
-
-	private PlaybackEngineType playbackEngineType;
-
-	@Before
-	public void before() throws ExecutionException, InterruptedException {
-		final SharedPreferences sharedPreferences = PreferenceManager
-			.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
-
-		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
-			new SelectedPlaybackEngineTypeAccess(
-				sharedPreferences,
-				() -> new Promise<>(PlaybackEngineType.ExoPlayer));
-
-		playbackEngineType = new FuturePromise<>(selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType()).get();
+			val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(
+				applicationSettings
+			) { Promise(PlaybackEngineType.ExoPlayer) }
+			playbackEngineType =
+				FuturePromise(selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType()).get()
+		}
 	}
 
 	@Test
-	public void thenThePlaybackEngineTypeIsExoPlayer() {
-		assertThat(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer);
+	fun thenThePlaybackEngineTypeIsExoPlayer() {
+		Assertions.assertThat(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer)
 	}
 }

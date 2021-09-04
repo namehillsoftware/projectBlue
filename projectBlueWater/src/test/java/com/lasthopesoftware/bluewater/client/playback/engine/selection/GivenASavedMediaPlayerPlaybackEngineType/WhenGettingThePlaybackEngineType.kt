@@ -1,59 +1,46 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenASavedMediaPlayerPlaybackEngineType;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenASavedMediaPlayerPlaybackEngineType
 
-import android.content.SharedPreferences;
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
 
-import androidx.preference.PreferenceManager;
-import androidx.test.core.app.ApplicationProvider;
+class WhenGettingThePlaybackEngineType : AndroidContext() {
+	private val applicationSettings = FakeApplicationSettings()
+    private var playbackEngineType: PlaybackEngineType? = null
 
-import com.lasthopesoftware.bluewater.ApplicationConstants;
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+    override fun before() {
+		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings)
+			{ Promise(PlaybackEngineType.ExoPlayer) }
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
+		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toFuture().get()
+    }
 
-import java.util.concurrent.ExecutionException;
+    @Test
+    fun thenThePlaybackEngineTypeIsExoPlayer() {
+        assertThat<PlaybackEngineType>(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer)
+    }
 
-import static org.assertj.core.api.Assertions.assertThat;
+    @Test
+    fun thenTheExoPlayerEngineIsTheSavedEngineType() {
+        assertThat(applicationSettings.promiseApplicationSettings().toFuture().get()?.playbackEngineType)
+            .isEqualTo(PlaybackEngineType.ExoPlayer)
+    }
 
-@RunWith(RobolectricTestRunner.class)
-public class WhenGettingThePlaybackEngineType {
+	private class FakeApplicationSettings : HoldApplicationSettings {
+		private var applicationSettings = ApplicationSettings(playbackEngineType = "MediaPlayer")
 
-	private PlaybackEngineType playbackEngineType;
+		override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
+			Promise(applicationSettings)
 
-	@Before
-	public void before() throws ExecutionException, InterruptedException {
-		final SharedPreferences sharedPreferences = PreferenceManager
-			.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
-
-		sharedPreferences.edit()
-			.putString(ApplicationConstants.PreferenceConstants.playbackEngine, "MediaPlayer")
-			.apply();
-
-		final SelectedPlaybackEngineTypeAccess selectedPlaybackEngineTypeAccess =
-			new SelectedPlaybackEngineTypeAccess(
-				sharedPreferences,
-				() -> new Promise<>(PlaybackEngineType.ExoPlayer));
-
-		playbackEngineType = new FuturePromise<>(selectedPlaybackEngineTypeAccess
-			.promiseSelectedPlaybackEngineType()).get();
-	}
-
-	@Test
-	public void thenThePlaybackEngineTypeIsExoPlayer() {
-		assertThat(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer);
-	}
-
-	@Test
-	public void thenTheExoPlayerEngineIsTheSavedEngineType() {
-		assertThat(PlaybackEngineType.valueOf(PreferenceManager
-			.getDefaultSharedPreferences(RuntimeEnvironment.application)
-			.getString(ApplicationConstants.PreferenceConstants.playbackEngine, "")))
-			.isEqualTo(PlaybackEngineType.ExoPlayer);
+		override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> {
+			this.applicationSettings = applicationSettings
+			return Promise(applicationSettings)
+		}
 	}
 }

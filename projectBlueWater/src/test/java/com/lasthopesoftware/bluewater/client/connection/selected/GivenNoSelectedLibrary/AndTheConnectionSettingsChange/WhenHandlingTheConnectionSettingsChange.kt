@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage.Companion.connectionSettingsUpdated
 import com.lasthopesoftware.resources.FakeMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -20,7 +21,7 @@ class WhenHandlingTheConnectionSettingsChange : AndroidContext() {
 
 	override fun before() {
 		val mockSelectedLibraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-		every { mockSelectedLibraryIdentifierProvider.selectedLibraryId } returns null
+		every { mockSelectedLibraryIdentifierProvider.selectedLibraryId } returns Promise.empty()
 
 		val connectionSettingsUpdatedIntent = Intent(connectionSettingsUpdated)
 		connectionSettingsUpdatedIntent.putExtra(

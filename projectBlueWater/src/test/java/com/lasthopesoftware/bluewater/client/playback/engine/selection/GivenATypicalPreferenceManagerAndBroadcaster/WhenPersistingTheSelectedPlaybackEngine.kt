@@ -1,54 +1,44 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenATypicalPreferenceManagerAndBroadcaster;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection.GivenATypicalPreferenceManagerAndBroadcaster
 
-import android.content.SharedPreferences;
+import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.resources.FakeMessageBus
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
+import java.util.concurrent.TimeUnit
 
-import androidx.preference.PreferenceManager;
-import androidx.test.core.app.ApplicationProvider;
+class WhenPersistingTheSelectedPlaybackEngine : AndroidContext() {
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType;
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence;
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster;
-import com.lasthopesoftware.resources.FakeMessageBus;
-
-import org.junit.Test;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class WhenPersistingTheSelectedPlaybackEngine extends AndroidContext {
-	private static final FakeMessageBus fakeMessageSender = new FakeMessageBus(ApplicationProvider.getApplicationContext());
-
-	private String persistedEngineType;
-
-	@Override
-	public void before() throws InterruptedException {
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		final SharedPreferences sharedPreferences = PreferenceManager
-			.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
-		sharedPreferences
-			.registerOnSharedPreferenceChangeListener((sp, key) -> {
-				persistedEngineType = sp.getString(key, null);
-				countDownLatch.countDown();
-			});
-
-		new PlaybackEngineTypeSelectionPersistence(
-			sharedPreferences,
-			new PlaybackEngineTypeChangedBroadcaster(fakeMessageSender))
-				.selectPlaybackEngine(PlaybackEngineType.ExoPlayer);
-
-		countDownLatch.await(1, TimeUnit.SECONDS);
+	companion object {
+		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
+		private var persistedEngineType: String? = null
 	}
 
-	@Test
-	public void thenTheExoPlayerSelectionIsBroadcast() {
-		assertThat(fakeMessageSender.getRecordedIntents().stream().findFirst().get().getStringExtra(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeKey)).isEqualTo(PlaybackEngineType.ExoPlayer.name());
-	}
+    override fun before() {
+		val applicationSettings = mockk<HoldApplicationSettings>()
+		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
 
-	@Test
-	public void thenTheExoPlayerSelectionIsPersisted() {
-		assertThat(persistedEngineType).isEqualTo(PlaybackEngineType.ExoPlayer.name());
-	}
+        PlaybackEngineTypeSelectionPersistence(applicationSettings, PlaybackEngineTypeChangedBroadcaster(fakeMessageSender))
+			.selectPlaybackEngine(PlaybackEngineType.ExoPlayer)
+			.toFuture()[1, TimeUnit.SECONDS]
+    }
+
+    @Test
+    fun thenTheExoPlayerSelectionIsBroadcast() {
+        assertThat(fakeMessageSender.recordedIntents.first().getStringExtra(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeKey)).isEqualTo(PlaybackEngineType.ExoPlayer.name)
+    }
+
+    @Test
+    fun thenTheExoPlayerSelectionIsPersisted() {
+        assertThat(persistedEngineType).isEqualTo(PlaybackEngineType.ExoPlayer.name)
+    }
 }

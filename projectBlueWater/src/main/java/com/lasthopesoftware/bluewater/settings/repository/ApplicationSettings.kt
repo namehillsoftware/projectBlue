@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.settings.repository
 
 data class ApplicationSettings(
-	var isSyncOnWifiOnly: Boolean,
-	var isSyncOnPowerOnly: Boolean,
-	var isVolumeLevelingEnabled: Boolean,
-	var playbackEngineType: String,
-	var chosenLibraryId: Int,
+	var isSyncOnWifiOnly: Boolean = false,
+	var isSyncOnPowerOnly: Boolean = false,
+	var isVolumeLevelingEnabled: Boolean = false,
+	var playbackEngineType: String? = null,
+	var chosenLibraryId: Int = -1,
 )

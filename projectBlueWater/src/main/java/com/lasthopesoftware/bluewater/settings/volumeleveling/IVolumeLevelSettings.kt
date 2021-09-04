@@ -1,6 +1,7 @@
-package com.lasthopesoftware.bluewater.settings.volumeleveling;
+package com.lasthopesoftware.bluewater.settings.volumeleveling
 
+import com.namehillsoftware.handoff.promises.Promise
 
-public interface IVolumeLevelSettings {
-	boolean isVolumeLevellingEnabled();
+interface IVolumeLevelSettings {
+    val isVolumeLevellingEnabled: Promise<Boolean>
 }

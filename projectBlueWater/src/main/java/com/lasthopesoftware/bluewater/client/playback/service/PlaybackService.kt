@@ -380,9 +380,9 @@ open class PlaybackService : Service() {
 	private val applicationSettings by lazy { ApplicationSettingsRepository(this) }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
 	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(localBroadcastManagerLazy.value) }
-	private val lazyLibraryRepository = lazy { LibraryRepository(this) }
+	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val lazyPlaylistVolumeManager = lazy { PlaylistVolumeManager(1.0f) }
-	private val lazyVolumeLevelSettings = lazy { VolumeLevelSettings(this) }
+	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
 	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
 	private val lazyPlaybackNotificationsConfiguration = lazy {
 			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.value) else NoOpChannelActivator()
@@ -754,9 +754,7 @@ open class PlaybackService : Service() {
 
 						MaxFileVolumePreparationProvider(
 							playbackEngineBuilder.build(library),
-							MaxFileVolumeProvider(
-								lazyVolumeLevelSettings.value,
-								cachedSessionFilePropertiesProvider))
+							MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider))
 					}
 				}
 			}
@@ -777,10 +775,8 @@ open class PlaybackService : Service() {
 							}
 							.let { bootstrapper ->
 								val nowPlayingRepository = NowPlayingRepository(
-									SpecificLibraryProvider(
-										l!!,
-										lazyLibraryRepository.value),
-									lazyLibraryRepository.value)
+									SpecificLibraryProvider(l!!, libraryRepository),
+									libraryRepository)
 
 								createEngine(
 									queues,

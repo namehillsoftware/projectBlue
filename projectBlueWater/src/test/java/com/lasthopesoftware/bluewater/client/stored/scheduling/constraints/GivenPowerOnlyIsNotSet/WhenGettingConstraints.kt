@@ -1,35 +1,34 @@
-package com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.GivenPowerOnlyIsNotSet;
+package com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.GivenPowerOnlyIsNotSet
 
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.work.Constraints
+import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
 
-import androidx.test.core.app.ApplicationProvider;
-import androidx.work.Constraints;
+class WhenGettingConstraints {
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.ApplicationConstants;
-import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints;
+	companion object {
+		private var constraints: Constraints? = null
 
-import org.junit.Test;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-public class WhenGettingConstraints extends AndroidContext {
-
-	private static Constraints constraints;
-
-	@Override
-	public void before() {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
-		sharedPreferences.edit()
-			.putBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false)
-			.apply();
-		final SyncWorkerConstraints syncWorkerConstraints = new SyncWorkerConstraints(sharedPreferences);
-		constraints = syncWorkerConstraints.getCurrentConstraints();
+		@JvmStatic
+		@BeforeClass
+		fun before() {
+			val applicationSettings = mockk<HoldApplicationSettings>()
+			every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
+			val syncWorkerConstraints = SyncWorkerConstraints(applicationSettings)
+			constraints = syncWorkerConstraints.currentConstraints.toFuture().get()
+		}
 	}
 
-	@Test
-	public void thenTheConstraintsAreCorrect() {
-		assertThat(constraints.requiresCharging()).isFalse();
-	}
+    @Test
+    fun thenTheConstraintsAreCorrect() {
+        assertThat(constraints!!.requiresCharging()).isFalse
+    }
 }

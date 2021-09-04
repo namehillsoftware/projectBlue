@@ -17,15 +17,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 
 class WhenGettingTheMaxVolume {
-    @Test
-    fun thenTheReturnedVolumeIsOne() {
-        Assertions.assertThat(returnedVolume).isEqualTo(1f)
-    }
 
     companion object {
         private var returnedVolume = 0f
@@ -53,7 +49,7 @@ class WhenGettingTheMaxVolume {
                 scopedFilePropertiesProvider
             )
             val volumeLevelSettings = mockk<IVolumeLevelSettings>()
-            every { volumeLevelSettings.isVolumeLevellingEnabled } returns true
+            every { volumeLevelSettings.isVolumeLevellingEnabled } returns true.toPromise()
 
             val maxFileVolumeProvider =
                 MaxFileVolumeProvider(volumeLevelSettings, scopedCachedFilePropertiesProvider)
@@ -63,4 +59,9 @@ class WhenGettingTheMaxVolume {
 				.get()!!
         }
     }
+
+	@Test
+	fun thenTheReturnedVolumeIsOne() {
+		assertThat(returnedVolume).isEqualTo(1f)
+	}
 }
