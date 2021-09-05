@@ -38,14 +38,16 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> =
 		QueuedPromise(MessageWriter {
 			RepositoryAccessHelper(context).use { helper ->
-				helper.mapSql(lazyUpdateStatement)
-					.addParameter(isSyncOnWifiOnlyColumn, applicationSettings.isSyncOnWifiOnly)
-					.addParameter(isSyncOnPowerOnlyColumn, applicationSettings.isSyncOnPowerOnly)
-					.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
-					.addParameter(playbackEngineColumn, applicationSettings.playbackEngineType)
-					.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
-					.execute()
+				helper.beginTransaction().use {
+					helper.mapSql(lazyUpdateStatement)
+						.addParameter(isSyncOnWifiOnlyColumn, applicationSettings.isSyncOnWifiOnly)
+						.addParameter(isSyncOnPowerOnlyColumn, applicationSettings.isSyncOnPowerOnly)
+						.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
+						.addParameter(playbackEngineColumn, applicationSettings.playbackEngineType)
+						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
+						.execute()
+				}
 			}
 		}, databaseExecutor())
-			.then { applicationSettings }
+			.eventually { promiseApplicationSettings() }
 }
