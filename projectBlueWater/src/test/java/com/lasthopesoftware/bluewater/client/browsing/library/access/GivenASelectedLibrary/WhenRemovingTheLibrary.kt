@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
@@ -35,7 +36,8 @@ class WhenRemovingTheLibrary {
             )
             val libraryStorage = mockk<ILibraryStorage>()
             every { libraryStorage.removeLibrary(library) } returns Promise.empty()
-            val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
+
+			val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
 			every { libraryIdentifierProvider.selectedLibraryId } returns Promise(library.libraryId)
 
             val libraryProvider = FakeLibraryProvider(
@@ -43,17 +45,22 @@ class WhenRemovingTheLibrary {
                 Library().setId(4),
                 Library().setId(15)
             )
-            val libraryRemoval = LibraryRemoval(
-                fakeStoredItemAccess,
-                libraryStorage,
-                libraryIdentifierProvider,
-                libraryProvider
-			) { libraryId->
-				libraryProvider.getLibrary(libraryId!!).then { l ->
+
+			val selectBrowserLibrary = mockk<SelectBrowserLibrary>()
+			every { selectBrowserLibrary.selectBrowserLibrary(any()) } answers {
+				libraryProvider.getLibrary(firstArg()).then { l ->
 					selectedLibraryId = l?.libraryId
 					l
 				}
 			}
+
+            val libraryRemoval = LibraryRemoval(
+                fakeStoredItemAccess,
+                libraryStorage,
+                libraryIdentifierProvider,
+                libraryProvider,
+				selectBrowserLibrary
+			)
 			libraryRemoval.removeLibrary(library).toFuture().get()
         }
     }
