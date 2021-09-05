@@ -5,6 +5,6 @@ object ApplicationSettingsEntityInformation {
 	const val isSyncOnPowerOnlyColumn = "isSyncOnPowerOnly"
 	const val isVolumeLevelingEnabledColumn = "isVolumeLevelingEnabled"
 	const val playbackEngineColumn = "playbackEngine"
-	const val chosenLibraryColumn = "chosenLibrary"
+	const val chosenLibraryIdColumn = "chosenLibraryId"
 	const val tableName = "ApplicationSettings"
 }

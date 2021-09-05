@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.repository.InsertBuilder
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
@@ -38,14 +38,14 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			`$isSyncOnPowerOnlyColumn` SMALLINT ,
 			`$isVolumeLevelingEnabledColumn` SMALLINT ,
 			`$playbackEngineColumn` VARCHAR ,
-			`$chosenLibraryColumn` INTEGER DEFAULT -1 NOT NULL )""")
+			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL )""")
 
 		val insertQuery = InsertBuilder.fromTable(tableName)
 			.addColumn(isSyncOnWifiOnlyColumn)
 			.addColumn(isSyncOnPowerOnlyColumn)
 			.addColumn(isVolumeLevelingEnabledColumn)
 			.addColumn(playbackEngineColumn)
-			.addColumn(chosenLibraryColumn)
+			.addColumn(chosenLibraryIdColumn)
 			.build()
 
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -55,7 +55,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			.addParameter(isSyncOnPowerOnlyColumn, sharedPreferences.getBoolean(OldConstants.isSyncOnPowerOnlyKey, false))
 			.addParameter(isVolumeLevelingEnabledColumn, sharedPreferences.getBoolean(OldConstants.isVolumeLevelingEnabled, false))
 			.addParameter(playbackEngineColumn, sharedPreferences.getString(OldConstants.playbackEngine, PlaybackEngineType.ExoPlayer.name))
-			.addParameter(chosenLibraryColumn, sharedPreferences.getInt(OldConstants.chosenLibraryKey, -1))
+			.addParameter(chosenLibraryIdColumn, sharedPreferences.getInt(OldConstants.chosenLibraryKey, -1))
 			.execute()
 	}
 }
