@@ -9,7 +9,12 @@ class PlaybackEngineTypeSelectionPersistence(private val applicationSettings: Ho
 	override fun selectPlaybackEngine(playbackEngineType: PlaybackEngineType): Promise<Unit> =
 		applicationSettings.promiseApplicationSettings()
 			.eventually { s ->
-				s.playbackEngineType = playbackEngineType.name
+				val playbackEngineName = playbackEngineType.name
+				if (s.playbackEngineType != playbackEngineName) {
+					playbackEngineTypeChangedBroadcaster.broadcastPlaybackEngineTypeChanged(playbackEngineType)
+				}
+
+				s.playbackEngineType = playbackEngineName
 				applicationSettings.promiseUpdatedSettings(s)
 			}
 			.unitResponse()
