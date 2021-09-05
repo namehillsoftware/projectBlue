@@ -11,8 +11,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class WhenGettingThePlaybackEngineType : AndroidContext() {
-	private val applicationSettings = FakeApplicationSettings()
-    private var playbackEngineType: PlaybackEngineType? = null
+	companion object {
+		private val applicationSettings = FakeApplicationSettings()
+		private var playbackEngineType: PlaybackEngineType? = null
+	}
 
     override fun before() {
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings)
