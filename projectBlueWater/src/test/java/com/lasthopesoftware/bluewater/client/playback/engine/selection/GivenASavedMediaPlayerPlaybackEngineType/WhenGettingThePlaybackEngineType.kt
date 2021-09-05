@@ -23,13 +23,13 @@ class WhenGettingThePlaybackEngineType : AndroidContext() {
 
     @Test
     fun thenThePlaybackEngineTypeIsExoPlayer() {
-        assertThat<PlaybackEngineType>(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer)
+        assertThat(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer)
     }
 
     @Test
     fun thenTheExoPlayerEngineIsTheSavedEngineType() {
         assertThat(applicationSettings.promiseApplicationSettings().toFuture().get()?.playbackEngineType)
-            .isEqualTo(PlaybackEngineType.ExoPlayer)
+            .isEqualTo(PlaybackEngineType.ExoPlayer.name)
     }
 
 	private class FakeApplicationSettings : HoldApplicationSettings {
