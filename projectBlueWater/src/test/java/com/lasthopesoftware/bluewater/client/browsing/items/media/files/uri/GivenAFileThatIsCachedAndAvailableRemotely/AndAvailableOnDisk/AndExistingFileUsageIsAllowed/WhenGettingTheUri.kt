@@ -15,7 +15,6 @@ import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers
 import org.robolectric.RobolectricTestRunner
 import java.io.File
 
@@ -25,13 +24,13 @@ class WhenGettingTheUri {
     companion object {
         private val returnedFileUri by lazy {
 			val mockStoredFileUriProvider = mockk<StoredFileUriProvider>()
-			every { mockStoredFileUriProvider.promiseFileUri(ArgumentMatchers.any()) } returns Promise.empty()
+			every { mockStoredFileUriProvider.promiseFileUri(any()) } returns Promise.empty()
 
 			val cachedAudioFileUriProvider = mockk<CachedAudioFileUriProvider>()
 			every { cachedAudioFileUriProvider.promiseFileUri(ServiceFile(3)) } returns Promise(Uri.fromFile(File("/a_cached_path/to_a_file.mp3")))
 
 			val mockMediaFileUriProvider = mockk<MediaFileUriProvider>()
-			every { mockMediaFileUriProvider.promiseFileUri(ArgumentMatchers.any()) } returns Promise(Uri.fromFile(File("/a_media_path/to_a_file.mp3")))
+			every { mockMediaFileUriProvider.promiseFileUri(any()) } returns Promise(Uri.fromFile(File("/a_media_path/to_a_file.mp3")))
 
 			val mockRemoteFileUriProvider = mockk<RemoteFileUriProvider>()
 			every { mockRemoteFileUriProvider.promiseFileUri(ServiceFile(3)) } returns Promise(Uri.parse("http://remote-url/to_a_file.mp3"))

@@ -22,7 +22,7 @@ class MaxFileVolumeProvider(
 
 	override fun promiseMaxFileVolume(serviceFile: ServiceFile): Promise<Float> =
 		volumeLevelSettings.isVolumeLevellingEnabled.eventually { isEnabled ->
-			if (isEnabled) promisedUnityVolume
+			if (!isEnabled) promisedUnityVolume
 			else scopedCachedFilePropertiesProvider
 				.promiseFileProperties(serviceFile)
 				.then { fileProperties ->
