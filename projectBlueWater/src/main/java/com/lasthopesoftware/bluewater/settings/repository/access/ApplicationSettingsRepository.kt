@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.settings.repository.access
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper.Companion.databaseExecutor
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
-import com.lasthopesoftware.bluewater.repository.promiseExecution
-import com.lasthopesoftware.bluewater.repository.promiseFirst
+import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
@@ -12,13 +12,14 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
-import com.lasthopesoftware.bluewater.shared.promises.promiseUse
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class ApplicationSettingsRepository(private val context: Context): HoldApplicationSettings {
 
 	companion object {
-		private val lazyUpdateStatement = lazy {
+		private val lazyUpdateStatement by lazy {
 			UpdateBuilder.fromTable(tableName)
 				.addSetter(isSyncOnWifiOnlyColumn)
 				.addSetter(isSyncOnPowerOnlyColumn)
@@ -30,20 +31,21 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 	}
 
 	override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
-		RepositoryAccessHelper(context).promiseUse { r ->
-			r.mapSql("SELECT * FROM $tableName").promiseFirst(ApplicationSettings::class.java)
-		}
+		QueuedPromise(MessageWriter {
+			RepositoryAccessHelper(context).use { it.mapSql("SELECT * FROM $tableName").fetchFirst() }
+		}, databaseExecutor())
 
 	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> =
-		RepositoryAccessHelper(context)
-			.promiseUse { r ->
-				r.mapSql(lazyUpdateStatement.value)
+		QueuedPromise(MessageWriter {
+			RepositoryAccessHelper(context).use { helper ->
+				helper.mapSql(lazyUpdateStatement)
 					.addParameter(isSyncOnWifiOnlyColumn, applicationSettings.isSyncOnWifiOnly)
 					.addParameter(isSyncOnPowerOnlyColumn, applicationSettings.isSyncOnPowerOnly)
 					.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
 					.addParameter(playbackEngineColumn, applicationSettings.playbackEngineType)
 					.addParameter(chosenLibraryColumn, applicationSettings.chosenLibraryId)
-					.promiseExecution()
+					.execute()
 			}
+		}, databaseExecutor())
 			.then { applicationSettings }
 }

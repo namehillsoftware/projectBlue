@@ -53,6 +53,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
 	private val sharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 	private val applicationSettingsRepository by lazy { ApplicationSettingsRepository(this) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -168,7 +169,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val adapter = ServerListAdapter(
 			this,
-			BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider))
+			BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider))
 
 		val serverListView = serverListView.findView()
 		serverListView.adapter = adapter

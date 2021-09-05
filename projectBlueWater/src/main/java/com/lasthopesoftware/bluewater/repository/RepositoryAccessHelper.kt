@@ -14,6 +14,9 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsMig
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsUpdater
 import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor
 import com.namehillsoftware.artful.Artful
+import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import java.io.Closeable
 import java.util.concurrent.Executor
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -22,24 +25,25 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 
 	companion object {
 		@JvmStatic
-		fun databaseExecutor(): Executor {
-			return databaseExecutor.value
-		}
+		fun databaseExecutor(): Executor = databaseExecutor
 
-		private val databaseSynchronization = lazy { ReentrantReadWriteLock() }
-		private val databaseExecutor = lazy { CachedSingleThreadExecutor() }
+		private val databaseSynchronization by lazy { ReentrantReadWriteLock() }
+		private val databaseExecutor by lazy { CachedSingleThreadExecutor() }
 		private const val DATABASE_VERSION = 9
 		private const val DATABASE_NAME = "sessions_db"
 	}
 
-	private val applicationSettingsMigrator = lazy { ApplicationSettingsMigrator(context) }
+	private val applicationSettingsMigrator by lazy { ApplicationSettingsMigrator(context) }
 
-	private val entityCreators = lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator.value)) }
-	private val entityUpdaters = lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator.value)) }
+	private val entityCreators = lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator)) }
+	private val entityUpdaters = lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator)) }
 
-	private val sqliteDb = lazy { this.writableDatabase }
+	private val sqliteDb = lazy { writableDatabase }
 
-	fun mapSql(sqlQuery: String?): Artful = Artful(sqliteDb.value, sqlQuery)
+	fun mapSql(sqlQuery: String): Artful = Artful(sqliteDb.value, sqlQuery)
+
+	fun promiseSqlMapper(sqlQuery: String): Promise<PromisingArtful> =
+		QueuedPromise(MessageWriter { PromisingArtful(sqliteDb.value, sqlQuery) }, databaseExecutor)
 
 	override fun onCreate(db: SQLiteDatabase) {
 		for (entityCreator in entityCreators.value) entityCreator.onCreate(db)
@@ -49,10 +53,10 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 		for (entityUpdater in entityUpdaters.value) entityUpdater.onUpdate(db, oldVersion, newVersion)
 	}
 
-	fun beginTransaction(): CloseableTransaction = CloseableTransaction(sqliteDb.value, databaseSynchronization.value)
+	fun beginTransaction(): CloseableTransaction = CloseableTransaction(sqliteDb.value, databaseSynchronization)
 
 	fun beginNonExclusiveTransaction(): CloseableNonExclusiveTransaction =
-		CloseableNonExclusiveTransaction(sqliteDb.value, databaseSynchronization.value)
+		CloseableNonExclusiveTransaction(sqliteDb.value, databaseSynchronization)
 
 	override fun close() {
 		super.close()

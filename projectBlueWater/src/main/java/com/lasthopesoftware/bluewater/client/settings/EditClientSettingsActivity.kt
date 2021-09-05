@@ -47,14 +47,16 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	private val chkIsWakeOnLanEnabled = LazyViewFinder<CheckBox>(this, R.id.isWakeOnLan)
 	private val applicationWritePermissionsRequirementsProviderLazy by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
-	private val lazyLibraryProvider by lazy { LibraryRepository(this) }
+	private val libraryProvider by lazy { LibraryRepository(this) }
 	private val libraryStorage by lazy {
 		ObservableConnectionSettingsLibraryStorage(
 			LibraryRepository(this),
-			ConnectionSettingsLookup(lazyLibraryProvider),
+			ConnectionSettingsLookup(libraryProvider),
 			MessageBus(LocalBroadcastManager.getInstance(this))
 		)
 	}
+	private val applicationSettingsRepository by lazy { ApplicationSettingsRepository(this) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val settingsMenu = lazy {
 		EditClientSettingsMenu(
 			this,
@@ -65,8 +67,8 @@ class EditClientSettingsActivity : AppCompatActivity() {
 					StoredItemAccess(this),
 					libraryStorage,
 					SelectedBrowserLibraryIdentifierProvider(ApplicationSettingsRepository(this)),
-					lazyLibraryProvider,
-					BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), lazyLibraryProvider))))
+					libraryProvider,
+					BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider))))
 	}
 	private var library: Library? = null
 
@@ -148,7 +150,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
 		if (libraryId < 0) return
 
-		lazyLibraryProvider
+		libraryProvider
 			.getLibrary(LibraryId(libraryId))
 			.eventually(LoopedInPromise.response({ result ->
 				library = result ?: return@response

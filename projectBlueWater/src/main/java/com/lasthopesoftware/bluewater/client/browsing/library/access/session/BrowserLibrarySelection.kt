@@ -1,48 +1,38 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.access.session;
+package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import android.content.Intent
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.namehillsoftware.handoff.promises.Promise
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+class BrowserLibrarySelection(
+    private val applicationSettings: HoldApplicationSettings,
+    private val localBroadcastManager: SendMessages,
+    private val libraryProvider: ILibraryProvider
+) : SelectBrowserLibrary {
+    override fun selectBrowserLibrary(libraryId: LibraryId): Promise<Library> =
+		applicationSettings.promiseApplicationSettings().eventually { a ->
+			if (a.chosenLibraryId == libraryId.id) libraryProvider.getLibrary(libraryId)
+			else {
+				a.chosenLibraryId = libraryId.id
+				applicationSettings.promiseUpdatedSettings(a).eventually {
+					val broadcastIntent = Intent(libraryChosenEvent)
+					broadcastIntent.putExtra(ApplicationConstants.PreferenceConstants.chosenLibraryKey, libraryId.id)
+					localBroadcastManager.sendBroadcast(broadcastIntent)
+					libraryProvider.getLibrary(libraryId)
+				}
+			}
+		}
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants;
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
-import com.namehillsoftware.handoff.promises.Promise;
-
-/**
- * Created by david on 2/19/17.
- */
-public class BrowserLibrarySelection implements IBrowserLibrarySelection {
-
-	public static final String libraryChosenEvent = MagicPropertyBuilder.buildMagicPropertyName(BrowserLibrarySelection.class, "libraryChosenEvent");
-
-	private final Context context;
-	private final LocalBroadcastManager localBroadcastManager;
-	private final ILibraryProvider libraryProvider;
-
-	public BrowserLibrarySelection(Context context, LocalBroadcastManager localBroadcastManager, ILibraryProvider libraryProvider) {
-		this.context = context;
-		this.localBroadcastManager = localBroadcastManager;
-		this.libraryProvider = libraryProvider;
-	}
-
-	@Override
-	public Promise<Library> selectBrowserLibrary(LibraryId libraryId) {
-		final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-		if (libraryId.getId() == sharedPreferences.getInt(ApplicationConstants.PreferenceConstants.chosenLibraryKey, -1))
-			return libraryProvider.getLibrary(libraryId);
-
-		sharedPreferences.edit().putInt(ApplicationConstants.PreferenceConstants.chosenLibraryKey, libraryId.getId()).apply();
-
-		final Intent broadcastIntent = new Intent(libraryChosenEvent);
-		broadcastIntent.putExtra(ApplicationConstants.PreferenceConstants.chosenLibraryKey, libraryId.getId());
-		localBroadcastManager.sendBroadcast(broadcastIntent);
-
-		return libraryProvider.getLibrary(libraryId);
-	}
+    companion object {
+        @JvmField
+		val libraryChosenEvent = buildMagicPropertyName(
+            BrowserLibrarySelection::class.java, "libraryChosenEvent"
+        )
+    }
 }
