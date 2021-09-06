@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsCreator
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsMigrator
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsUpdater
+import com.lasthopesoftware.bluewater.tutorials.TutorialMigrator
 import com.namehillsoftware.artful.Artful
 import java.io.Closeable
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -25,9 +26,10 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 	}
 
 	private val applicationSettingsMigrator by lazy { ApplicationSettingsMigrator(context) }
+	private val tutorialMigrator by lazy { TutorialMigrator(context) }
 
-	private val entityCreators by lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator)) }
-	private val entityUpdaters by lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator)) }
+	private val entityCreators by lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator), tutorialMigrator) }
+	private val entityUpdaters by lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator), tutorialMigrator) }
 
 	private val sqliteDb = lazy { writableDatabase }
 

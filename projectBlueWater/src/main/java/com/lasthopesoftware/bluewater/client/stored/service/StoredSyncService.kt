@@ -14,7 +14,6 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
@@ -67,18 +66,17 @@ import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
 import io.reactivex.disposables.Disposable
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import java.util.*
 
 class StoredSyncService : Service(), PostSyncNotification {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(StoredSyncService::class.java)
-		private val doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "doSyncAction")
-		private val isUninterruptedSyncSetting = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "isUninterruptedSyncSetting")
-		private val cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "cancelSyncAction")
-		private val lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "lastSyncTime")
+		private val logger by lazy { LoggerFactory.getLogger(StoredSyncService::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(StoredSyncService::class.java) }
+		private val doSyncAction by lazy { magicPropertyBuilder.buildProperty("doSyncAction") }
+		private val isUninterruptedSyncSetting by lazy { magicPropertyBuilder.buildProperty("isUninterruptedSyncSetting") }
+		private val cancelSyncAction by lazy { magicPropertyBuilder.buildProperty("cancelSyncAction") }
 		private const val notificationId = 23
 
 		@JvmStatic
@@ -119,8 +117,6 @@ class StoredSyncService : Service(), PostSyncNotification {
 			return intent
 		}
 	}
-
-	private val lazySharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 
 	private val applicationSettings by lazy { getApplicationSettings() }
 
@@ -279,7 +275,6 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	@Synchronized
 	override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-
 		val action = intent.action
 
 		if (cancelSyncAction == action) {
@@ -344,10 +339,6 @@ class StoredSyncService : Service(), PostSyncNotification {
 	}
 
 	private fun finish() {
-		lazySharedPreferences
-			.edit()
-			.putLong(lastSyncTime, DateTime.now().millis)
-			.apply()
 		stopSelf()
 	}
 
