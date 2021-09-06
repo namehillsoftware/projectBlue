@@ -26,7 +26,7 @@ class OnGetLibraryViewItemResultsComplete(
 	private val storedItemAccess: StoredItemAccess,
 	private val library: Library,
 	private val manageTutorials: ManageTutorials
-) : ImmediateResponse<List<Item>, Unit> {
+) : ImmediateResponse<List<Item>?, Unit> {
 	override fun respond(result: List<Item>?) {
 		if (result == null) return
 

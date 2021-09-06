@@ -84,7 +84,7 @@ class PlaylistListFragment : Fragment() {
 		selectedLibraryProvider
             .browserLibrary
             .then { library ->
-				if (library == null) return@then
+				if (library == null || context == null) return@then
 				val itemListMenuChangeHandler = itemListMenuChangeHandler ?: return@then
 
 				val listResolvedPromise = response(

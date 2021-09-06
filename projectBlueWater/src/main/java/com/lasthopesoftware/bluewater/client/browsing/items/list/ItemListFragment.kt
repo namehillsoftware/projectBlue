@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -117,7 +118,7 @@ class ItemListFragment : Fragment() {
 		lazySelectedLibraryProvider
 			.browserLibrary
 			.then { library ->
-				if (library == null) return@then
+				if (library == null || context == null) return@then
 				val itemListMenuChangeHandler = itemListMenuChangeHandler ?: return@then
 
 				val onGetLibraryViewItemResultsComplete =
@@ -137,7 +138,7 @@ class ItemListFragment : Fragment() {
 				val fillItemsRunnable = object : Runnable {
 					override fun run() {
 						getInstance(activity).promiseSessionConnection()
-							.eventually { c -> provide(c!!, category.key) }
+							.eventually { c -> c?.let { provide(c, category.key) }.keepPromise() }
 							.eventually(onGetLibraryViewItemResultsComplete)
 							.excuse(HandleViewIoException(activity, this))
 							.eventuallyExcuse(
