@@ -41,6 +41,7 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 						h.mapSql(insertQuery)
 							.addParameter(tutorialKeyColumn, tutorialKey)
 							.execute()
+						it.setTransactionSuccessful()
 					}
 				}
 			}.then {
