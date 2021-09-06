@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.changes.Observa
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -55,7 +55,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 			MessageBus(LocalBroadcastManager.getInstance(this))
 		)
 	}
-	private val applicationSettingsRepository by lazy { getApplicationSettings() }
+	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val settingsMenu = lazy {
 		EditClientSettingsMenu(
@@ -66,7 +66,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 				LibraryRemoval(
 					StoredItemAccess(this),
 					libraryStorage,
-					SelectedBrowserLibraryIdentifierProvider(getApplicationSettings()),
+					SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
 					libraryProvider,
 					BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider))))
 	}

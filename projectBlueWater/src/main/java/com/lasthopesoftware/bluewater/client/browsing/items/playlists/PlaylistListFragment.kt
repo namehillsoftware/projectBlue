@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -65,7 +65,7 @@ class PlaylistListFragment : Fragment() {
 
 	private val selectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettings()),
+			SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()),
 			LibraryRepository(requireContext()))
 	}
 

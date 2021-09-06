@@ -50,7 +50,7 @@ import com.lasthopesoftware.bluewater.client.stored.service.notifications.SyncCh
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -118,7 +118,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 		}
 	}
 
-	private val applicationSettings by lazy { getApplicationSettings() }
+	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	private val onWifiStateChangedReceiver = lazy {
 		object : BroadcastReceiver() {

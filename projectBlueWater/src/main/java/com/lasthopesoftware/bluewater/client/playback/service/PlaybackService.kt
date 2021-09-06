@@ -83,7 +83,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -377,7 +377,7 @@ open class PlaybackService : Service() {
 	}
 	private val lazyMessageBus = lazy { MessageBus(localBroadcastManagerLazy.value) }
 	private val lazyPlaybackBroadcaster = lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
-	private val applicationSettings by lazy { getApplicationSettings() }
+	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
 	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(localBroadcastManagerLazy.value) }
 	private val libraryRepository by lazy { LibraryRepository(this) }

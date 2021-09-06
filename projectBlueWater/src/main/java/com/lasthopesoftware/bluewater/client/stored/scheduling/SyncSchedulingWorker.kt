@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServ
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ExecutionException
@@ -57,7 +57,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 		}
 
 		private fun constraints(context: Context): Promise<Constraints> {
-			val applicationSettings = context.getApplicationSettings()
+			val applicationSettings = context.getApplicationSettingsRepository()
 			return SyncWorkerConstraints(applicationSettings).currentConstraints
 		}
 

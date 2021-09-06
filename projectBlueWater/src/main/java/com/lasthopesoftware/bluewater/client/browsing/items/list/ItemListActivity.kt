@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -42,7 +42,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingItems)
 	private val lazySpecificLibraryProvider by lazy {
 			SelectedBrowserLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(getApplicationSettings()),
+				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
 				LibraryRepository(this))
 		}
 	private val lazyFileStringListProvider by lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
