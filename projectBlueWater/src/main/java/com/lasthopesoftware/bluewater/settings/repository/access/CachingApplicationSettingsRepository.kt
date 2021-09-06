@@ -30,8 +30,17 @@ class CachingApplicationSettingsRepository(private val inner: HoldApplicationSet
 				?: inner.promiseApplicationSettings().also { promisedApplicationSettings = it }
 		}
 
-	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> =
-		synchronized(syncObj) {
-			inner.promiseUpdatedSettings(applicationSettings).also { promisedApplicationSettings = it }
+	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> {
+		fun Promise<ApplicationSettings>.updatePromisedInstance(): Promise<ApplicationSettings> {
+			promisedApplicationSettings = this
+			return this
 		}
+
+		return synchronized(syncObj) {
+			promisedApplicationSettings
+				?.eventually { inner.promiseUpdatedSettings(applicationSettings) }
+				?.updatePromisedInstance()
+				?: inner.promiseUpdatedSettings(applicationSettings).updatePromisedInstance()
+		}
+	}
 }
