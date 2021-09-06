@@ -49,12 +49,12 @@ class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUp
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 		val insertArtSql = Artful(db, insertQuery)
 		insertArtSql
-			.addParameter(tutorialKeyColumn, Tutorials.longPressListTutorial)
+			.addParameter(tutorialKeyColumn, TutorialManager.longPressListTutorial)
 			.addParameter(isShownColumn, sharedPreferences.getBoolean(OldConstants.isListTutorialShownPreference, false))
 			.execute()
 
 		insertArtSql
-			.addParameter(tutorialKeyColumn, Tutorials.adjustNotificationInApplicationSettingsTutorial)
+			.addParameter(tutorialKeyColumn, TutorialManager.adjustNotificationInApplicationSettingsTutorial)
 			.addParameter(isShownColumn, sharedPreferences.getBoolean(OldConstants.isApplicationSettingsTutorialShownPreference, false))
 			.execute()
 	}

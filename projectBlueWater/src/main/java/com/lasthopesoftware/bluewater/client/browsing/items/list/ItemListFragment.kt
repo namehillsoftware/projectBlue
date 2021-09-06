@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 import com.namehillsoftware.handoff.promises.Promise
 
 class ItemListFragment : Fragment() {
@@ -34,6 +35,7 @@ class ItemListFragment : Fragment() {
 		listView.visibility = View.INVISIBLE
 		listView
 	}
+
 	private val progressBar by lazy {
 		val pbLoading = ProgressBar(activity, null, android.R.attr.progressBarStyleLarge)
 		val pbParams = RelativeLayout.LayoutParams(
@@ -44,6 +46,7 @@ class ItemListFragment : Fragment() {
 		pbLoading.layoutParams = pbParams
 		pbLoading
 	}
+
 	private val layout by lazy {
 		val layout = RelativeLayout(activity)
 		layout.layoutParams = RelativeLayout.LayoutParams(
@@ -65,6 +68,8 @@ class ItemListFragment : Fragment() {
 			LibraryRepository(requireContext())
 		)
 	}
+
+	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
 
@@ -125,7 +130,8 @@ class ItemListFragment : Fragment() {
 							FileListParameters.getInstance(),
 							fileStringListProvider,
 							StoredItemAccess(activity),
-							library
+							library,
+							tutorialManager
 						), activity
 					)
 				val fillItemsRunnable = object : Runnable {

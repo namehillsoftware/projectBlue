@@ -15,7 +15,6 @@ import android.widget.RadioGroup
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
@@ -37,6 +36,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 import tourguide.tourguide.Overlay
 import tourguide.tourguide.Pointer
 import tourguide.tourguide.ToolTip
@@ -51,9 +51,9 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
-	private val sharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
 	private val applicationSettingsRepository by lazy { getApplicationSettings() }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val tutorialManager by lazy { TutorialManager(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -116,30 +116,32 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		notificationSettingsContainer.findView().visibility = View.VISIBLE
 
-		val wasTutorialShown = sharedPreferences.getBoolean(isTutorialShownPreference, false)
-		if (wasTutorialShown) {
-			modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
-			return
-		}
+		tutorialManager
+			.promiseIsTutorialShown(TutorialManager.adjustNotificationInApplicationSettingsTutorial)
+			.eventually(LoopedInPromise.response({ wasTutorialShown ->
+				if (wasTutorialShown) {
+					modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
+				} else {
+					val displayColor = getColor(R.color.clearstream_blue)
+					val tourGuide = TourGuide.init(this).with(TourGuide.Technique.CLICK)
+						.setPointer(Pointer().setColor(displayColor))
+						.setToolTip(ToolTip()
+							.setTitle(getString(R.string.notification_settings_tutorial_title))
+							.setDescription(getString(R.string.notification_settings_tutorial).format(
+								getString(R.string.modify_notification_settings),
+								getString(R.string.app_name)))
+							.setBackgroundColor(displayColor))
+						.setOverlay(Overlay())
+						.playOn(modifyNotificationSettingsButton.findView())
 
-		val displayColor = getColor(R.color.clearstream_blue)
-		val tourGuide = TourGuide.init(this).with(TourGuide.Technique.CLICK)
-			.setPointer(Pointer().setColor(displayColor))
-			.setToolTip(ToolTip()
-				.setTitle(getString(R.string.notification_settings_tutorial_title))
-				.setDescription(getString(R.string.notification_settings_tutorial).format(
-					getString(R.string.modify_notification_settings),
-					getString(R.string.app_name)))
-				.setBackgroundColor(displayColor))
-			.setOverlay(Overlay())
-			.playOn(modifyNotificationSettingsButton.findView())
+					modifyNotificationSettingsButton.findView().setOnClickListener {
+						tourGuide.cleanUp()
+						launchNotificationSettings()
+					}
 
-		modifyNotificationSettingsButton.findView().setOnClickListener {
-			tourGuide.cleanUp()
-			launchNotificationSettings()
-		}
-
-		sharedPreferences.edit().putBoolean(isTutorialShownPreference, true).apply()
+					tutorialManager.promiseTutorialMarked(TutorialManager.adjustNotificationInApplicationSettingsTutorial)
+				}
+			}, this))
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
@@ -192,7 +194,5 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	companion object {
 		fun launch(context: Context) =
 			context.startActivity(Intent(context, ApplicationSettingsActivity::class.java))
-
-		private const val isTutorialShownPreference = "isApplicationSettingsTutorialShownPreference"
 	}
 }

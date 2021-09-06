@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.tutorials.TutorialEntityInformation.isShow
 import com.lasthopesoftware.bluewater.tutorials.TutorialEntityInformation.tutorialKeyColumn
 import com.namehillsoftware.handoff.promises.Promise
 
-class Tutorials(private val context: Context) : ManageTutorials {
+class TutorialManager(private val context: Context) : ManageTutorials {
 	companion object KnownTutorials {
 		const val longPressListTutorial = "longPressListTutorial"
 		const val adjustNotificationInApplicationSettingsTutorial = "adjustNotificationInApplicationSettings"

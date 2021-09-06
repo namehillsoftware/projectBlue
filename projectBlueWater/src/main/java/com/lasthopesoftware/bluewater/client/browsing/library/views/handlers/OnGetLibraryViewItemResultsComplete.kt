@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.tutorials.ManageTutorials
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class OnGetLibraryViewItemResultsComplete(
@@ -23,7 +24,8 @@ class OnGetLibraryViewItemResultsComplete(
 	private val fileListParameterProvider: IFileListParameterProvider,
 	private val fileStringListProvider: FileStringListProvider,
 	private val storedItemAccess: StoredItemAccess,
-	private val library: Library
+	private val library: Library,
+	private val manageTutorials: ManageTutorials
 ) : ImmediateResponse<List<Item>, Unit> {
 	override fun respond(result: List<Item>?) {
 		if (result == null) return
@@ -37,7 +39,8 @@ class OnGetLibraryViewItemResultsComplete(
 			fileStringListProvider,
 			itemListMenuChangeHandler,
 			storedItemAccess,
-			library
+			library,
+			manageTutorials
 		)
 		loadingView.visibility = View.INVISIBLE
 		listView.visibility = View.VISIBLE

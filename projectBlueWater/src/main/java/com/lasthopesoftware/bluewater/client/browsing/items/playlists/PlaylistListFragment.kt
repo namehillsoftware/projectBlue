@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class PlaylistListFragment : Fragment() {
     private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
@@ -68,6 +69,8 @@ class PlaylistListFragment : Fragment() {
 			LibraryRepository(requireContext()))
 	}
 
+	private val tutorialManager by lazy { TutorialManager(requireContext()) }
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = lazyLayout
 
     override fun onStart() {
@@ -93,7 +96,8 @@ class PlaylistListFragment : Fragment() {
 						FileListParameters.getInstance(),
 						fileStringListProvider,
 						StoredItemAccess(activity),
-						library
+						library,
+						tutorialManager
 					), activity
 				)
 				val playlistFillAction = object : Runnable {
