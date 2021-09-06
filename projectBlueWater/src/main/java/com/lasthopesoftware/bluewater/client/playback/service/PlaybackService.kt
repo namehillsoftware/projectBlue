@@ -83,6 +83,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -98,6 +99,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.observe
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
@@ -354,7 +356,7 @@ open class PlaybackService : Service() {
 				Thread.MIN_PRIORITY,
 				false))
 	}
-	private val lazyBinder = lazy { GenericBinder(this) }
+	private val binder by lazy { GenericBinder(this) }
 	private val notificationManagerLazy = lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
@@ -375,11 +377,12 @@ open class PlaybackService : Service() {
 	}
 	private val lazyMessageBus = lazy { MessageBus(localBroadcastManagerLazy.value) }
 	private val lazyPlaybackBroadcaster = lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
-	private val lazyChosenLibraryIdentifierProvider = lazy { SelectedBrowserLibraryIdentifierProvider(this) }
-	private val lazyPlaybackStartedBroadcaster = lazy { PlaybackStartedBroadcaster(localBroadcastManagerLazy.value) }
-	private val lazyLibraryRepository = lazy { LibraryRepository(this) }
+	private val applicationSettings by lazy { getApplicationSettingsRepository() }
+	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
+	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(localBroadcastManagerLazy.value) }
+	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val lazyPlaylistVolumeManager = lazy { PlaylistVolumeManager(1.0f) }
-	private val lazyVolumeLevelSettings = lazy { VolumeLevelSettings(this) }
+	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
 	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
 	private val lazyPlaybackNotificationsConfiguration = lazy {
 			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.value) else NoOpChannelActivator()
@@ -409,7 +412,7 @@ open class PlaybackService : Service() {
 	}
 	private val lazySelectedLibraryProvider = lazy {
 		SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(this),
+			selectedLibraryIdentifierProvider,
 			LibraryRepository(this))
 	}
 
@@ -666,7 +669,7 @@ open class PlaybackService : Service() {
 				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
 
 			val imageProvider = ImageProvider(
-				StaticLibraryIdentifierProvider(lazyChosenLibraryIdentifierProvider.value),
+				StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 				MemoryCachedImageAccess.getInstance(this))
 
 			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
@@ -733,7 +736,7 @@ open class PlaybackService : Service() {
 							this,
 							MediaQueryCursorProvider(this, lazyCachedFileProperties.value),
 							arbitratorForOs,
-							lazyChosenLibraryIdentifierProvider.value,
+							selectedLibraryIdentifierProvider,
 							false),
 						remoteFileUriProvider)
 
@@ -751,19 +754,20 @@ open class PlaybackService : Service() {
 
 						MaxFileVolumePreparationProvider(
 							playbackEngineBuilder.build(library),
-							MaxFileVolumeProvider(
-								lazyVolumeLevelSettings.value,
-								cachedSessionFilePropertiesProvider))
+							MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider))
 					}
 				}
 			}
-			.eventually { preparationSourceProvider ->
+			.then { preparationSourceProvider ->
 				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
 					.also {
 						playbackEngineCloseables.manage(it)
 						playbackQueues = it
 					}
-					.let { queues ->
+			}
+			.eventually { queues ->
+				selectedLibraryIdentifierProvider.selectedLibraryId
+					.eventually { l ->
 						PlaylistPlaybackBootstrapper(lazyPlaylistVolumeManager.value)
 							.also {
 								playbackEngineCloseables.manage(it)
@@ -771,10 +775,8 @@ open class PlaybackService : Service() {
 							}
 							.let { bootstrapper ->
 								val nowPlayingRepository = NowPlayingRepository(
-									SpecificLibraryProvider(
-										lazyChosenLibraryIdentifierProvider.value.selectedLibraryId!!,
-										lazyLibraryRepository.value),
-									lazyLibraryRepository.value)
+									SpecificLibraryProvider(l!!, libraryRepository),
+									libraryRepository)
 
 								createEngine(
 									queues,
@@ -832,18 +834,21 @@ open class PlaybackService : Service() {
 
 	private fun handlePlaybackStarted() {
 		isMarkedForPlay = true
-		lazyPlaybackStartedBroadcaster.value.broadcastPlaybackStarted()
+		playbackStartedBroadcaster.broadcastPlaybackStarted()
 	}
 
 	private fun handlePlaybackPaused() {
 		isMarkedForPlay = false
 		positionedPlayingFile?.also { file ->
-			lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also { libraryId ->
-				lazyPlaybackBroadcaster.value
-					.sendPlaybackBroadcast(
-						PlaylistEvents.onPlaylistPause,
-						libraryId,
-						file.asPositionedFile())
+			selectedLibraryIdentifierProvider.selectedLibraryId.then {
+				it?.also { libraryId ->
+					lazyPlaybackBroadcaster.value
+						.sendPlaybackBroadcast(
+							PlaylistEvents.onPlaylistPause,
+							libraryId,
+							file.asPositionedFile()
+						)
+				}
 			}
 		}
 
@@ -954,13 +959,10 @@ open class PlaybackService : Service() {
 			return
 		}
 
-		lazyLibraryRepository.value
-			.getLibrary(lazyChosenLibraryIdentifierProvider.value.selectedLibraryId!!)
+		lazySelectedLibraryProvider.value
+			.browserLibrary
 			.eventually { library ->
-				if (library != null)
-					initializePlaybackPlaylistStateManagerSerially(library)
-				else
-					Promise.empty()
+				library?.let(::initializePlaybackPlaylistStateManagerSerially).keepPromise()
 			}
 			.then { if (isMarkedForPlay) resumePlayback() }
 			.excuse(unhandledRejectionHandler)
@@ -975,12 +977,14 @@ open class PlaybackService : Service() {
 		if (playingFile is EmptyPlaybackHandler) return
 
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile())
-		lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also {
-			lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistTrackStart,
-				it,
-				positionedPlayingFile.asPositionedFile()
-			)
+		selectedLibraryIdentifierProvider.selectedLibraryId.then {
+			it?.also { l ->
+				lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+					PlaylistEvents.onPlaylistTrackStart,
+					l,
+					positionedPlayingFile.asPositionedFile()
+				)
+			}
 		}
 		val promisedPlayedFile = playingFile.promisePlayedFile()
 		val localSubscription = Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
@@ -989,14 +993,16 @@ open class PlaybackService : Service() {
 			.subscribe(TrackPositionBroadcaster(lazyMessageBus.value, playingFile))
 
 		promisedPlayedFile.then {
-			lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also {
-				lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistTrackComplete,
-					it,
-					positionedPlayingFile.asPositionedFile()
-				)
+			selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
+				l?.also {
+					lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+						PlaylistEvents.onPlaylistTrackComplete,
+						it,
+						positionedPlayingFile.asPositionedFile()
+					)
+				}
+				localSubscription?.dispose()
 			}
-			localSubscription?.dispose()
 		}
 
 		filePositionSubscription = localSubscription
@@ -1006,33 +1012,39 @@ open class PlaybackService : Service() {
 	}
 
 	private fun broadcastResetPlaylist(positionedFile: PositionedFile) {
-		lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also {
-			lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistTrackChange,
-				it,
-				positionedFile
-			)
+		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
+			l?.also {
+				lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+					PlaylistEvents.onPlaylistTrackChange,
+					it,
+					positionedFile
+				)
+			}
 		}
 	}
 
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
-		lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also {
-			lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
-				PlaylistEvents.onPlaylistTrackChange,
-				it,
-				positionedFile
-			)
+		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
+			l?.also {
+				lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+					PlaylistEvents.onPlaylistTrackChange,
+					it,
+					positionedFile
+				)
+			}
 		}
 	}
 
 	private fun onPlaylistPlaybackComplete() {
-		lazyChosenLibraryIdentifierProvider.value.selectedLibraryId?.also { libraryId ->
-			positionedPlayingFile?.asPositionedFile()?.also { positionedFile ->
-				lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistStop,
-					libraryId,
-					positionedFile
-				)
+		selectedLibraryIdentifierProvider.selectedLibraryId.then {
+			it?.also { libraryId ->
+				positionedPlayingFile?.asPositionedFile()?.also { positionedFile ->
+					lazyPlaybackBroadcaster.value.sendPlaybackBroadcast(
+						PlaylistEvents.onPlaylistStop,
+						libraryId,
+						positionedFile
+					)
+				}
 			}
 		}
 		isMarkedForPlay = false
@@ -1071,7 +1083,7 @@ open class PlaybackService : Service() {
 	}
 
 	/* End Event Handlers */ /* Begin Binder Code */
-	override fun onBind(intent: Intent) = lazyBinder.value
+	override fun onBind(intent: Intent) = binder
 
 	/* End Binder Code */
 	private object Action {

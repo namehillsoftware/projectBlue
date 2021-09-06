@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.resources.FakeMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions
@@ -34,14 +35,14 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 
 		val fakeSelectedLibraryProvider = FakeSelectedLibraryProvider()
 		SelectedConnectionReservation().use {
-			fakeSelectedLibraryProvider.selectedLibraryId = LibraryId(-1)
+			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(-1))
 			val selectedConnection = SelectedConnection(
 				FakeMessageBus(ApplicationProvider.getApplicationContext()),
 				fakeSelectedLibraryProvider,
 				libraryConnections
 			)
 			connectionProvider = FuturePromise(selectedConnection.promiseSessionConnection()).get()
-			fakeSelectedLibraryProvider.selectedLibraryId = LibraryId(2)
+			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(2))
 			connectionProvider = FuturePromise(selectedConnection.promiseSessionConnection()).get()
 		}
 	}
@@ -52,6 +53,6 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 	}
 
 	private class FakeSelectedLibraryProvider : ProvideSelectedLibraryId {
-		override var selectedLibraryId: LibraryId? = LibraryId(0)
+		override var selectedLibraryId: Promise<LibraryId?> = Promise(LibraryId(0))
 	}
 }

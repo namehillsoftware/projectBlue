@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 class NowPlayingFloatingActionButton private constructor(context: Context) : FloatingActionButton(context) {
 	private var isNowPlayingFileSet = false
@@ -30,21 +31,24 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 		// now playing menu item should change
 
 		fromActiveLibrary(context)
-			?.nowPlayingFile
-			?.then { result ->
-				isNowPlayingFileSet = result != null
-				visibility = ViewUtils.getVisibility(isNowPlayingFileSet)
-				if (isNowPlayingFileSet) return@then
+			.then {
+				it
+					?.nowPlayingFile
+					?.eventually(LoopedInPromise.response({result ->
+						isNowPlayingFileSet = result != null
+						visibility = ViewUtils.getVisibility(isNowPlayingFileSet)
+						if (isNowPlayingFileSet) return@response
 
-				val localBroadcastManager = LocalBroadcastManager.getInstance(context)
-				localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
-					@Synchronized
-					override fun onReceive(context: Context, intent: Intent) {
-						isNowPlayingFileSet = true
-						visibility = ViewUtils.getVisibility(true)
-						localBroadcastManager.unregisterReceiver(this)
-					}
-				}, IntentFilter(PlaylistEvents.onPlaylistStart))
+						val localBroadcastManager = LocalBroadcastManager.getInstance(context)
+						localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
+							@Synchronized
+							override fun onReceive(context: Context, intent: Intent) {
+								isNowPlayingFileSet = true
+								visibility = ViewUtils.getVisibility(true)
+								localBroadcastManager.unregisterReceiver(this)
+							}
+						}, IntentFilter(PlaylistEvents.onPlaylistStart))
+					}, context))
 			}
 	}
 

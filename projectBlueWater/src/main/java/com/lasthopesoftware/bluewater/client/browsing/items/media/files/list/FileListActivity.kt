@@ -76,34 +76,36 @@ class FileListActivity :
 	override fun run() {
 		val parameters = FileListParameters.getInstance().getFileListParameters(Item(itemId))
 		lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
-			.eventually(LoopedInPromise.response({ serviceFiles ->
+			.eventually { serviceFiles ->
 				fromActiveLibrary(this)
-					?.let { nowPlayingFileProvider ->
-						val fileListItemMenuBuilder = FileListItemMenuBuilder(
-							serviceFiles,
-							nowPlayingFileProvider,
-							FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(this))
-						)
-
-						ItemListMenuChangeHandler(this).apply {
-							fileListItemMenuBuilder.setOnViewChangedListener(
-								ViewChangedHandler()
-									.setOnViewChangedListener(this)
-									.setOnAnyMenuShown(this)
-									.setOnAllMenusHidden(this)
+					.eventually(LoopedInPromise.response({ l ->
+						l?.let { nowPlayingFileProvider ->
+							val fileListItemMenuBuilder = FileListItemMenuBuilder(
+								serviceFiles,
+								nowPlayingFileProvider,
+								FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(this))
 							)
+
+							ItemListMenuChangeHandler(this).apply {
+								fileListItemMenuBuilder.setOnViewChangedListener(
+									ViewChangedHandler()
+										.setOnViewChangedListener(this)
+										.setOnAnyMenuShown(this)
+										.setOnAllMenusHidden(this)
+								)
+							}
+
+							val fileListView = fileListView.findView()
+							fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
+							val layoutManager = LinearLayoutManager(this)
+							fileListView.layoutManager = layoutManager
+							fileListView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
+							fileListView.visibility = View.VISIBLE
+
+							pbLoading.findView().visibility = View.INVISIBLE
 						}
-
-						val fileListView = fileListView.findView()
-						fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
-						val layoutManager = LinearLayoutManager(this)
-						fileListView.layoutManager = layoutManager
-						fileListView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
-						fileListView.visibility = View.VISIBLE
-
-						pbLoading.findView().visibility = View.INVISIBLE
-					}
-			}, this))
+					}, this))
+			}
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }

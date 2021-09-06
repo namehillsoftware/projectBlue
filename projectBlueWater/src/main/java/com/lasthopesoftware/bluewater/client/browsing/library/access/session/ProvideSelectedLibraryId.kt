@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.namehillsoftware.handoff.promises.Promise
 
-/**
- * Created by david on 2/12/17.
- */
 interface ProvideSelectedLibraryId {
-	val selectedLibraryId: LibraryId?
+	val selectedLibraryId: Promise<LibraryId?>
 }

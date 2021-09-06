@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ManageConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.resources.FakeMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -33,7 +34,7 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
 		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
+		every { libraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(2))
 		SelectedConnectionReservation().use {
 			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider, libraryConnections)
 			val futureConnectionProvider = FuturePromise(sessionConnection.promiseSessionConnection())

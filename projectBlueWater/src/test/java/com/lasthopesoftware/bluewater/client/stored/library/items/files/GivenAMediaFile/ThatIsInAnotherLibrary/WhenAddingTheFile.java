@@ -1,5 +1,10 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.GivenAMediaFile.ThatIsInAnotherLibrary;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.mock;
+
+import androidx.test.core.app.ApplicationProvider;
+
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
@@ -9,12 +14,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class WhenAddingTheFile extends AndroidContext {
 
@@ -23,7 +24,7 @@ public class WhenAddingTheFile extends AndroidContext {
 	@Override
 	public void before() throws ExecutionException, InterruptedException {
 		new FuturePromise<>(new StoredFileAccess(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			mock(GetAllStoredFilesInLibrary.class))
 			.addMediaFile(
 				new Library().setId(13),
@@ -33,7 +34,7 @@ public class WhenAddingTheFile extends AndroidContext {
 			.get();
 
 		final StoredFileAccess storedFileAccess = new StoredFileAccess(
-			RuntimeEnvironment.application,
+			ApplicationProvider.getApplicationContext(),
 			mock(GetAllStoredFilesInLibrary.class));
 
 		new FuturePromise<>(storedFileAccess.addMediaFile(

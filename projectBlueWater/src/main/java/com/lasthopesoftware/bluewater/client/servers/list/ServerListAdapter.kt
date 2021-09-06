@@ -17,9 +17,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.IBrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibrarySession
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServerOnClickListener
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
@@ -27,7 +26,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.namehillsoftware.handoff.promises.Promise
 
-class ServerListAdapter(private val activity: Activity, private val browserLibrarySelection: IBrowserLibrarySelection)
+class ServerListAdapter(private val activity: Activity, private val browserLibrarySelection: SelectBrowserLibrary)
 	: DeferredListAdapter<Library, ServerListAdapter.ViewHolder>(activity, LibraryDiffer) {
 
 	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(activity) }
@@ -70,7 +69,8 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 			localBroadcastManager.value.registerReceiver(
 				object : BroadcastReceiver() {
 					override fun onReceive(context: Context, intent: Intent) {
-						textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == intent.getIntExtra(LibrarySession.chosenLibraryInt, -1)))
+						textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == intent.getIntExtra(
+							BrowserLibrarySelection.chosenLibraryId, -1)))
 					}
 				}.apply { broadcastReceiver = this },
 				IntentFilter(BrowserLibrarySelection.libraryChosenEvent))

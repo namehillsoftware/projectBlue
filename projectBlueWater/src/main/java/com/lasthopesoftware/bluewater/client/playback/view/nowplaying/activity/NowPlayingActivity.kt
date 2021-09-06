@@ -54,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -90,7 +91,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private var connectionRestoreCode: Int? = null
 	private var viewAnimator: ViewAnimator? = null
-	private val messageHandler = lazy { Handler(mainLooper) }
+	private val messageHandler by lazy { Handler(mainLooper) }
 	private val playButton = LazyViewFinder<ImageButton>(this, R.id.btnPlay)
 	private val pauseButton = LazyViewFinder<ImageButton>(this, R.id.btnPause)
 	private val songRating = LazyViewFinder<RatingBar>(this, R.id.rbSongRating)
@@ -106,9 +107,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private val drawerLayout = LazyViewFinder<DrawerLayout>(this, R.id.nowPlayingDrawer)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 
-	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
+	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
 
-	private val nowPlayingToggledVisibilityControls = lazy {
+	private val nowPlayingToggledVisibilityControls by lazy {
 		NowPlayingToggledVisibilityControls(
 			LazyViewFinder(this, R.id.llNpButtons),
 			LazyViewFinder(this, R.id.menuControlsLinearLayout),
@@ -116,106 +117,111 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		)
 	}
 
-	private val lazySelectedLibraryIdProvider = lazy { SelectedBrowserLibraryIdentifierProvider(this) }
+	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
-	private val lazyNowPlayingRepository = lazy {
+	private val nowPlayingRepository by lazy {
 		val libraryRepository = LibraryRepository(this)
-		NowPlayingRepository(
-			SpecificLibraryProvider(
-				lazySelectedLibraryIdProvider.value.selectedLibraryId!!,
-				libraryRepository),
-			libraryRepository)
+		selectedLibraryIdProvider.selectedLibraryId
+			.then { l ->
+				NowPlayingRepository(
+					SpecificLibraryProvider(l!!, libraryRepository),
+					libraryRepository)
+			}
 	}
 
-	private val lazyNowPlayingListAdapter = lazy {
-		val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
-			lazyNowPlayingRepository.value,
-			FileListItemNowPlayingRegistrar(localBroadcastManager.value))
+	private val nowPlayingListAdapter by lazy {
+		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
+			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
+				r,
+				FileListItemNowPlayingRegistrar(localBroadcastManager))
 
-		nowPlayingFileListMenuBuilder.setOnViewChangedListener(
-			ViewChangedHandler()
-				.setOnViewChangedListener(this)
-				.setOnAnyMenuShown(this)
-				.setOnAllMenusHidden(this))
+			nowPlayingFileListMenuBuilder.setOnViewChangedListener(
+				ViewChangedHandler()
+					.setOnViewChangedListener(this)
+					.setOnAnyMenuShown(this)
+					.setOnAllMenusHidden(this))
 
-		NowPlayingFileListAdapter(
-			this,
-			nowPlayingFileListMenuBuilder)
+			NowPlayingFileListAdapter(this, nowPlayingFileListMenuBuilder)
+		}, messageHandler))
 	}
 
-	private val nowPlayingDrawerListView = lazy {
+	private val nowPlayingDrawerListView by lazy {
 		val listView = findViewById<RecyclerView>(R.id.nowPlayingDrawerListView)
-		listView.adapter = lazyNowPlayingListAdapter.value
-		listView.layoutManager = LinearLayoutManager(this)
-		listView
+		nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
+			listView.adapter = a
+			listView.layoutManager = LinearLayoutManager(this)
+			listView
+		}, messageHandler))
 	}
 
-	private val lazyImageProvider = lazy {
+	private val lazyImageProvider by lazy {
 			ImageProvider(
-				StaticLibraryIdentifierProvider(SelectedBrowserLibraryIdentifierProvider(this)),
+				StaticLibraryIdentifierProvider(SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository())),
 				MemoryCachedImageAccess.getInstance(this))
 		}
 
-	private val lazySelectedConnectionProvider = lazy { SelectedConnectionProvider(this) }
+	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
 
-	private val lazySessionRevisionProvider = lazy {
-		SelectedConnectionRevisionProvider(lazySelectedConnectionProvider.value)
+	private val lazySessionRevisionProvider by lazy {
+		SelectedConnectionRevisionProvider(lazySelectedConnectionProvider)
 	}
 
-	private val lazyFilePropertiesProvider = lazy {
-		SelectedConnectionFilePropertiesProvider(lazySelectedConnectionProvider.value) { c ->
+	private val lazyFilePropertiesProvider by lazy {
+		SelectedConnectionFilePropertiesProvider(lazySelectedConnectionProvider) { c ->
 			ScopedFilePropertiesProvider(
 				c,
-				lazySessionRevisionProvider.value,
+				lazySessionRevisionProvider,
 				FilePropertyCache.getInstance()
 			)
 		}
 	}
 
-	private val lazySelectedConnectionAuthenticationChecker = lazy {
+	private val lazySelectedConnectionAuthenticationChecker by lazy {
 		SelectedConnectionAuthenticationChecker(
-			lazySelectedConnectionProvider.value,
+			lazySelectedConnectionProvider,
 			::ScopedConnectionAuthenticationChecker)
 	}
 
-	private val lazyFilePropertiesStorage = lazy {
-		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider.value) { c ->
+	private val filePropertiesStorage by lazy {
+		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider) { c ->
 			ScopedFilePropertiesStorage(
 				c,
-				lazySelectedConnectionAuthenticationChecker.value,
-				lazySessionRevisionProvider.value,
+				lazySelectedConnectionAuthenticationChecker,
+				lazySessionRevisionProvider,
 				FilePropertyCache.getInstance())
 		}
 	}
 
-	private val lazyDefaultImage = lazy { DefaultImageProvider(this).promiseFileBitmap() }
+	private val lazyDefaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
 
-	private val drawerToggle = lazy {
-		object : ActionBarDrawerToggle(
-			this@NowPlayingActivity,  /* host Activity */
-			drawerLayout.findView(),  /* DrawerLayout object */
-			R.string.drawer_open,  /* "open drawer" description */
-			R.string.drawer_close /* "close drawer" description */
-		) {
-			/** Called when a drawer has settled in a completely closed state.  */
-			override fun onDrawerClosed(view: View) {
-				super.onDrawerClosed(view)
-				isDrawerOpened = false
-			}
+	private val drawerToggle by lazy {
+		nowPlayingDrawerListView.eventually(LoopedInPromise.response({ lv ->
+			object : ActionBarDrawerToggle(
+				this@NowPlayingActivity,  /* host Activity */
+				drawerLayout.findView(),  /* DrawerLayout object */
+				R.string.drawer_open,  /* "open drawer" description */
+				R.string.drawer_close /* "close drawer" description */
+			) {
+				/** Called when a drawer has settled in a completely closed state.  */
+				override fun onDrawerClosed(view: View) {
+					super.onDrawerClosed(view)
+					isDrawerOpened = false
+				}
 
-			/** Called when a drawer has settled in a completely open state.  */
-			override fun onDrawerOpened(drawerView: View) {
-				super.onDrawerOpened(drawerView)
-				isDrawerOpened = true
-				nowPlayingDrawerListView.value.bringToFront()
-				drawerLayout.findView().requestLayout()
+				/** Called when a drawer has settled in a completely open state.  */
+				override fun onDrawerOpened(drawerView: View) {
+					super.onDrawerOpened(drawerView)
+					isDrawerOpened = true
+					lv.bringToFront()
+					drawerLayout.findView().requestLayout()
+				}
 			}
-		}
+		}, messageHandler))
 	}
 
 	private val onConnectionLostListener = Runnable { WaitForConnectionDialog.show(this) }
 
-	private val onPlaybackChangedReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+	private val onPlaybackChangedReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			if (!isDrawerOpened) updateNowPlayingListViewPosition()
 			showNowPlayingControls()
@@ -224,32 +230,36 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		}
 	}
 
-	private val onPlaybackStartedReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+	private val onPlaybackStartedReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			togglePlayingButtons(true)
 			updateKeepScreenOnStatus()
 		}
 	}
 
-	private val onPlaybackStoppedReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+	private val onPlaybackStoppedReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			togglePlayingButtons(false)
 			disableKeepScreenOn()
 		}
 	}
 
-	private val onPlaylistChangedReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+	private val onPlaylistChangedReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
-			lazyNowPlayingRepository.value.nowPlaying
-				.eventually { np ->
-					lazyNowPlayingListAdapter.value
-						.updateListEventually(np.playlist.mapIndexed { i, s -> PositionedFile(i, s) })
-						.eventually(LoopedInPromise.response(
-							{
-								if (!isDrawerOpened) updateNowPlayingListViewPosition()
-								setView()
-							}, messageHandler.value))
-				}
+			nowPlayingRepository.then { r ->
+				r.nowPlaying
+					.then { np ->
+						nowPlayingListAdapter
+							.then { adapter ->
+								adapter
+									.updateListEventually(np.playlist.mapIndexed { i, s -> PositionedFile(i, s) })
+									.eventually(LoopedInPromise.response({
+										if (!isDrawerOpened) updateNowPlayingListViewPosition()
+										setView()
+									}, messageHandler))
+							}
+					}
+			}
 		}
 	}
 
@@ -269,16 +279,16 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_view_now_playing)
 
-		nowPlayingToggledVisibilityControls.value.toggleVisibility(false)
+		nowPlayingToggledVisibilityControls.toggleVisibility(false)
 
 		val playbackStoppedIntentFilter = IntentFilter()
 		playbackStoppedIntentFilter.addAction(PlaylistEvents.onPlaylistPause)
 		playbackStoppedIntentFilter.addAction(PlaylistEvents.onPlaylistStop)
-		localBroadcastManager.value.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-		localBroadcastManager.value.registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
-		localBroadcastManager.value.registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
-		localBroadcastManager.value.registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
-		localBroadcastManager.value.registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
+		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
+		localBroadcastManager.registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
+		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
+		localBroadcastManager.registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
+		localBroadcastManager.registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
 
 		addOnConnectionLostListener(onConnectionLostListener)
 
@@ -287,39 +297,39 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		contentView.findView().setOnClickListener { showNowPlayingControls() }
 
 		playButton.findView().setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.value.isVisible) return@setOnClickListener
+			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
 			PlaybackService.play(v.context)
 			playButton.findView().visibility = View.INVISIBLE
 			pauseButton.findView().visibility = View.VISIBLE
 		}
 
 		pauseButton.findView().setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.value.isVisible) return@setOnClickListener
+			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
 			PlaybackService.pause(v.context)
 			playButton.findView().visibility = View.VISIBLE
 			pauseButton.findView().visibility = View.INVISIBLE
 		}
 
 		findViewById<ImageButton>(R.id.btnNext)?.setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.value.isVisible) return@setOnClickListener
-			PlaybackService.next(v.context)
+			if (nowPlayingToggledVisibilityControls.isVisible) PlaybackService.next(v.context)
 		}
 
 		findViewById<ImageButton>(R.id.btnPrevious)?.setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.value.isVisible) return@setOnClickListener
-			PlaybackService.previous(v.context)
+			if (nowPlayingToggledVisibilityControls.isVisible) PlaybackService.previous(v.context)
 		}
 
 		val shuffleButton = findViewById<ImageButton>(R.id.repeatButton)
 		setRepeatingIcon(shuffleButton)
 		shuffleButton?.setOnClickListener { v ->
-			lazyNowPlayingRepository.value
-				.nowPlaying
-				.eventually(LoopedInPromise.response({ result ->
-					val isRepeating = !result.isRepeating
-					if (isRepeating) PlaybackService.setRepeating(v.context) else PlaybackService.setCompleting(v.context)
-					setRepeatingIcon(shuffleButton, isRepeating)
-				}, messageHandler.value))
+			nowPlayingRepository
+				.then { r ->
+					r.nowPlaying.eventually(LoopedInPromise.response({ result ->
+						val isRepeating = !result.isRepeating
+						if (isRepeating) PlaybackService.setRepeating(v.context)
+						else PlaybackService.setCompleting(v.context)
+						setRepeatingIcon(shuffleButton, isRepeating)
+					}, messageHandler))
+				}
 		}
 
 		isScreenKeptOnButton.findView().setOnClickListener {
@@ -329,12 +339,16 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 		setupNowPlayingListDrawer()
 
-		lazyNowPlayingRepository.value.nowPlaying
-			.eventually { nowPlaying ->
-				lazyNowPlayingListAdapter.value
-					.updateListEventually(nowPlaying.playlist.mapIndexed { i, sf -> PositionedFile(i, sf) })
-					.eventually(LoopedInPromise.response({ updateNowPlayingListViewPosition() },	messageHandler.value))
-			}
+		nowPlayingRepository.then { npr ->
+			npr.nowPlaying
+				.then { nowPlaying ->
+					nowPlayingListAdapter
+						.eventually { npa ->
+							npa.updateListEventually(nowPlaying.playlist.mapIndexed { i, sf -> PositionedFile(i, sf) })
+						}
+						.eventually(LoopedInPromise.response({ updateNowPlayingListViewPosition() }, messageHandler))
+				}
+		}
 	}
 
 	private fun setupNowPlayingListDrawer() {
@@ -342,9 +356,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			.setOnClickListener { drawerLayout.findView().openDrawer(GravityCompat.END) }
 		drawerLayout.findView().setScrimColor(ContextCompat.getColor(this, android.R.color.transparent))
 		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
-		drawerLayout.findView().addDrawerListener(drawerToggle.value)
+		drawerToggle.then(drawerLayout.findView()::addDrawerListener)
+
 		val rotation = windowManager.defaultDisplay.rotation
 		if (rotation != Surface.ROTATION_90) return
+
 		val nowPlayingDrawerContainer = findViewById<LinearLayout>(R.id.nowPlayingDrawerContainer)
 		val newLayoutParams = DrawerLayout.LayoutParams(nowPlayingDrawerContainer.layoutParams)
 		newLayoutParams.gravity = GravityCompat.START
@@ -357,9 +373,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	public override fun onStart() {
 		super.onStart()
 		updateKeepScreenOnStatus()
-		connectionRestoreCode = restoreSelectedConnection(this).also {
+
+		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+			connectionRestoreCode = it
 			if (it == null) initializeView()
-		}
+		}, messageHandler))
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -368,41 +386,47 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun updateNowPlayingListViewPosition() {
-		lazyNowPlayingRepository.value.nowPlaying
-			.eventually(LoopedInPromise.response(
-				{ nowPlaying ->
+		nowPlayingRepository.then { npr ->
+			npr
+				.nowPlaying
+				.then { nowPlaying ->
 					val newPosition = nowPlaying.playlistPosition
-					if (newPosition > -1 && newPosition < nowPlaying.playlist.size) nowPlayingDrawerListView.value.scrollToPosition(newPosition)
-				},
-				messageHandler.value))
+					if (newPosition > -1 && newPosition < nowPlaying.playlist.size)
+						nowPlayingDrawerListView.eventually(LoopedInPromise.response({ lv -> lv.scrollToPosition(newPosition) }, messageHandler))
+				}
+		}
 	}
 
 	private fun setNowPlayingBackgroundBitmap() =
-		lazyDefaultImage.value
+		lazyDefaultImage
 			.eventually(LoopedInPromise.response({ bitmap ->
 				val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
 				nowPlayingImageLoadingView.setImageBitmap(bitmap)
 				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
-			}, messageHandler.value))
+			}, messageHandler))
 
 	private fun initializeView() {
 		playButton.findView().visibility = View.VISIBLE
 		pauseButton.findView().visibility = View.INVISIBLE
-		lazyNowPlayingRepository.value
-			.nowPlaying
-			.eventually { np ->
-				lazySelectedConnectionProvider.value.promiseSessionConnection()
-					.eventually(LoopedInPromise.response({ connectionProvider ->
-						val serviceFile = np.playlist[np.playlistPosition]
-						val filePosition = connectionProvider?.urlProvider?.baseUrl
-							?.let { baseUrl ->
-								viewStructure
-									?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
-							}
-							?.filePosition
-							?: np.filePosition
-						setView(serviceFile, filePosition)
-					}, messageHandler.value))
+		nowPlayingRepository
+			.eventually { npr ->
+				npr
+					.nowPlaying
+					.eventually { np ->
+						lazySelectedConnectionProvider
+							.promiseSessionConnection()
+							.eventually(LoopedInPromise.response({ connectionProvider ->
+								val serviceFile = np.playlist[np.playlistPosition]
+								val filePosition = connectionProvider?.urlProvider?.baseUrl
+									?.let { baseUrl ->
+										viewStructure
+											?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
+									}
+									?.filePosition
+									?: np.filePosition
+								setView(serviceFile, filePosition)
+							}, messageHandler))
+					}
 			}
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
@@ -411,11 +435,14 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private fun setRepeatingIcon(imageButton: ImageButton?) {
 		setRepeatingIcon(imageButton, false)
-		lazyNowPlayingRepository.value
-			.nowPlaying
-			.eventually(LoopedInPromise.response({ result ->
-				if (result != null) setRepeatingIcon(imageButton, result.isRepeating)
-			}, messageHandler.value))
+		nowPlayingRepository
+			.then { npr ->
+				npr
+					.nowPlaying
+					.eventually(LoopedInPromise.response({ result ->
+						if (result != null) setRepeatingIcon(imageButton, result.isRepeating)
+					}, messageHandler))
+			}
 	}
 
 	private fun updateKeepScreenOnStatus() {
@@ -433,22 +460,24 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun setView() {
-		lazyNowPlayingRepository.value
-			.nowPlaying
-			.eventually { np ->
-				if (np.playlistPosition >= np.playlist.size) Unit.toPromise()
-				else lazySelectedConnectionProvider.value
-					.promiseSessionConnection()
-					.eventually(LoopedInPromise.response({ connectionProvider ->
-						connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
-							val serviceFile = np.playlist[np.playlistPosition]
-							val filePosition = viewStructure
-								?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
-								?.filePosition
-								?: 0
-							setView(serviceFile, filePosition)
-						}
-					}, messageHandler.value))
+		nowPlayingRepository
+			.then { npr ->
+				npr.nowPlaying
+				.eventually { np ->
+					if (np.playlistPosition >= np.playlist.size) Unit.toPromise()
+					else lazySelectedConnectionProvider
+						.promiseSessionConnection()
+						.eventually(LoopedInPromise.response({ connectionProvider ->
+							connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
+								val serviceFile = np.playlist[np.playlistPosition]
+								val filePosition = viewStructure
+									?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
+									?.filePosition
+									?: 0
+								setView(serviceFile, filePosition)
+							}
+						}, messageHandler))
+				}
 			}
 			.excuse { e -> logger.error("An error occurred while getting the Now Playing data", e) }
 	}
@@ -459,7 +488,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			loadingProgressBar.findView().visibility = View.VISIBLE
 			nowPlayingImage.visibility = View.INVISIBLE
 			if (viewStructure.promisedNowPlayingImage == null) {
-				viewStructure.promisedNowPlayingImage = lazyImageProvider.value.promiseFileBitmap(serviceFile)
+				viewStructure.promisedNowPlayingImage = lazyImageProvider.promiseFileBitmap(serviceFile)
 			}
 			viewStructure.promisedNowPlayingImage
 				?.eventually { bitmap ->
@@ -471,7 +500,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 							nowPlayingImage.scaleType = ScaleType.CENTER_CROP
 							nowPlayingImage.visibility = View.VISIBLE
 						}
-					}, messageHandler.value)
+					}, messageHandler)
 				}
 				?.excuse { e ->
 					if (e is CancellationException)	logger.info("Bitmap retrieval cancelled", e)
@@ -500,11 +529,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			if (isReadOnly) return
 
 			songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
-				if (fromUser && nowPlayingToggledVisibilityControls.value.isVisible) {
+				if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
 					val ratingToString = newRating.roundToInt().toString()
-					lazyFilePropertiesStorage.value
+					filePropertiesStorage
 						.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
-						.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler.value))
+						.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler))
 					viewStructure?.fileProperties?.put(KnownFileProperties.RATING, ratingToString)
 				}
 			}
@@ -515,17 +544,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			nowPlayingArtist.findView().text = ""
 			songRating.findView().rating = 0f
 			songRating.findView().isEnabled = false
-		}
-
-		fun resetViewOnReconnect() {
-			pollSessionConnection(this).then {
-				if (serviceFile == viewStructure?.serviceFile) {
-					viewStructure?.promisedNowPlayingImage?.cancel()
-					viewStructure?.promisedNowPlayingImage = null
-				}
-				setView(serviceFile, initialFilePosition)
-			}
-			WaitForConnectionDialog.show(this)
 		}
 
 		fun handleException(exception: Throwable) {
@@ -542,7 +560,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			WaitForConnectionDialog.show(this)
 		}
 
-		lazySelectedConnectionProvider.value.promiseSessionConnection()
+		lazySelectedConnectionProvider.promiseSessionConnection()
 			.eventually(LoopedInPromise.response(ImmediateResponse { connectionProvider ->
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@ImmediateResponse
 
@@ -565,8 +583,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				}
 
 				disableViewWithMessage()
-				val promisedIsConnectionReadOnly = lazySelectedConnectionAuthenticationChecker.value.promiseIsReadOnly()
-				lazyFilePropertiesProvider.value
+				val promisedIsConnectionReadOnly = lazySelectedConnectionAuthenticationChecker.promiseIsReadOnly()
+				lazyFilePropertiesProvider
 					.promiseFileProperties(serviceFile)
 					.eventually { fileProperties ->
 						if (localViewStructure !== viewStructure) Unit.toPromise()
@@ -576,11 +594,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 								localViewStructure.fileProperties = fileProperties.toMutableMap()
 								localViewStructure.isFilePropertiesReadOnly = isReadOnly
 								setFileProperties(fileProperties, isReadOnly)
-							}, messageHandler.value)
+							}, messageHandler)
 						}
 					}
-					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler.value))
-			}, messageHandler.value))
+					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler))
+			}, messageHandler))
 	}
 
 	private fun setTrackDuration(duration: Long) {
@@ -601,13 +619,13 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		}
 
 	private fun showNowPlayingControls() {
-		nowPlayingToggledVisibilityControls.value.toggleVisibility(true)
+		nowPlayingToggledVisibilityControls.toggleVisibility(true)
 		contentView.findView().invalidate()
 		timerTask?.cancel()
 		val newTimerTask = object : TimerTask() {
 			var cancelled = false
 			override fun run() {
-				if (!cancelled) nowPlayingToggledVisibilityControls.value.toggleVisibility(false)
+				if (!cancelled) nowPlayingToggledVisibilityControls.toggleVisibility(false)
 			}
 
 			override fun cancel(): Boolean {
@@ -615,7 +633,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				return super.cancel()
 			}
 		}.apply { timerTask = this }
-		messageHandler.value.postDelayed(newTimerTask, 5000)
+		messageHandler.postDelayed(newTimerTask, 5000)
 	}
 
 	override fun onStop() {
@@ -626,11 +644,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	public override fun onDestroy() {
 		super.onDestroy()
 		timerTask?.cancel()
-		localBroadcastManager.value.unregisterReceiver(onPlaybackStoppedReceiver)
-		localBroadcastManager.value.unregisterReceiver(onPlaybackStartedReceiver)
-		localBroadcastManager.value.unregisterReceiver(onPlaybackChangedReceiver)
-		localBroadcastManager.value.unregisterReceiver(onPlaylistChangedReceiver)
-		localBroadcastManager.value.unregisterReceiver(onTrackPositionChanged)
+		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver)
+		localBroadcastManager.unregisterReceiver(onPlaybackStartedReceiver)
+		localBroadcastManager.unregisterReceiver(onPlaybackChangedReceiver)
+		localBroadcastManager.unregisterReceiver(onPlaylistChangedReceiver)
+		localBroadcastManager.unregisterReceiver(onTrackPositionChanged)
 		removeOnConnectionLostListener(onConnectionLostListener)
 	}
 

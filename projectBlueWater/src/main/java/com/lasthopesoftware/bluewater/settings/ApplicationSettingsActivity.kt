@@ -15,10 +15,8 @@ import android.widget.RadioGroup
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -33,17 +31,19 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 import tourguide.tourguide.Overlay
 import tourguide.tourguide.Pointer
 import tourguide.tourguide.ToolTip
 import tourguide.tourguide.TourGuide
 
 class ApplicationSettingsActivity : AppCompatActivity() {
-	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
+	private val channelConfiguration: SharedChannelProperties by lazy { SharedChannelProperties(this) }
 	private val progressBar = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val serverListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 	private val notificationSettingsContainer = LazyViewFinder<LinearLayout>(this, R.id.notificationSettingsContainer)
@@ -51,7 +51,9 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
-	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
+	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val tutorialManager by lazy { TutorialManager(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -59,27 +61,29 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_application_settings)
 		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
 
-		val sharedPreferences = lazySharedPreferences.value
 		HandleSyncCheckboxPreference.handle(
-			sharedPreferences,
-			ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey,
+			applicationSettingsRepository,
+			{ s -> s.isSyncOnPowerOnly },
+			{ s -> s::isSyncOnPowerOnly::set },
 			findViewById(R.id.syncOnPowerCheckbox))
 
 		HandleSyncCheckboxPreference.handle(
-			sharedPreferences,
-			ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey,
+			applicationSettingsRepository,
+			{ it.isSyncOnWifiOnly },
+			{ s -> s::isSyncOnWifiOnly::set },
 			findViewById(R.id.syncOnWifiCheckbox))
 
 		HandleCheckboxPreference.handle(
-			sharedPreferences,
-			ApplicationConstants.PreferenceConstants.isVolumeLevelingEnabled,
+			applicationSettingsRepository,
+			{ it.isVolumeLevelingEnabled },
+			{ s -> s::isVolumeLevelingEnabled::set },
 			findViewById(R.id.isVolumeLevelingEnabled))
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
-			sharedPreferences,
+			applicationSettingsRepository,
 			PlaybackEngineTypeChangedBroadcaster(MessageBus(LocalBroadcastManager.getInstance(this))))
 
-		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(sharedPreferences, DefaultPlaybackEngineLookup())
+		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettingsRepository, DefaultPlaybackEngineLookup())
 
 		val playbackEngineTypeSelectionView = PlaybackEngineTypeSelectionView(this)
 
@@ -112,30 +116,32 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		notificationSettingsContainer.findView().visibility = View.VISIBLE
 
-		val wasTutorialShown = sharedPreferences.getBoolean(isTutorialShownPreference, false)
-		if (wasTutorialShown) {
-			modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
-			return
-		}
+		tutorialManager
+			.promiseWasTutorialShown(TutorialManager.KnownTutorials.adjustNotificationInApplicationSettingsTutorial)
+			.eventually(LoopedInPromise.response({ wasTutorialShown ->
+				if (wasTutorialShown) {
+					modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
+				} else {
+					val displayColor = getColor(R.color.clearstream_blue)
+					val tourGuide = TourGuide.init(this).with(TourGuide.Technique.CLICK)
+						.setPointer(Pointer().setColor(displayColor))
+						.setToolTip(ToolTip()
+							.setTitle(getString(R.string.notification_settings_tutorial_title))
+							.setDescription(getString(R.string.notification_settings_tutorial).format(
+								getString(R.string.modify_notification_settings),
+								getString(R.string.app_name)))
+							.setBackgroundColor(displayColor))
+						.setOverlay(Overlay())
+						.playOn(modifyNotificationSettingsButton.findView())
 
-		val displayColor = getColor(R.color.clearstream_blue)
-		val tourGuide = TourGuide.init(this).with(TourGuide.Technique.CLICK)
-			.setPointer(Pointer().setColor(displayColor))
-			.setToolTip(ToolTip()
-				.setTitle(getString(R.string.notification_settings_tutorial_title))
-				.setDescription(getString(R.string.notification_settings_tutorial).format(
-					getString(R.string.modify_notification_settings),
-					getString(R.string.app_name)))
-				.setBackgroundColor(displayColor))
-			.setOverlay(Overlay())
-			.playOn(modifyNotificationSettingsButton.findView())
+					modifyNotificationSettingsButton.findView().setOnClickListener {
+						tourGuide.cleanUp()
+						launchNotificationSettings()
+					}
 
-		modifyNotificationSettingsButton.findView().setOnClickListener {
-			tourGuide.cleanUp()
-			launchNotificationSettings()
-		}
-
-		sharedPreferences.edit().putBoolean(isTutorialShownPreference, true).apply()
+					tutorialManager.promiseTutorialMarked(TutorialManager.KnownTutorials.adjustNotificationInApplicationSettingsTutorial)
+				}
+			}, this))
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
@@ -151,7 +157,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private fun launchNotificationSettings() {
 		val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
 		intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-		intent.putExtra(Settings.EXTRA_CHANNEL_ID, lazyChannelConfiguration.value.channelId)
+		intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelConfiguration.channelId)
 		startActivity(intent)
 	}
 
@@ -161,31 +167,32 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val libraryProvider = LibraryRepository(this)
 		val promisedLibraries = libraryProvider.allLibraries
+		val promisedSelectedLibrary = SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository).selectedLibraryId
 
 		val adapter = ServerListAdapter(
 			this,
-			BrowserLibrarySelection(this, LocalBroadcastManager.getInstance(this), libraryProvider))
+			BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider))
 
 		val serverListView = serverListView.findView()
 		serverListView.adapter = adapter
 		serverListView.layoutManager = LinearLayoutManager(this)
 
 		promisedLibraries
-			.eventually(LoopedInPromise.response({ libraries ->
-				val chosenLibraryId = SelectedBrowserLibraryIdentifierProvider(this).selectedLibraryId
-				val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
+			.eventually { libraries ->
+				promisedSelectedLibrary
+					.eventually(LoopedInPromise.response({ chosenLibraryId ->
+						val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
 
-				adapter.updateLibraries(libraries, selectedBrowserLibrary)
+						adapter.updateLibraries(libraries, selectedBrowserLibrary)
 
-				progressBar.findView().visibility = View.INVISIBLE
-				serverListView.visibility = View.VISIBLE
-			}, this))
+						progressBar.findView().visibility = View.INVISIBLE
+						serverListView.visibility = View.VISIBLE
+					}, this))
+			}
 	}
 
 	companion object {
 		fun launch(context: Context) =
 			context.startActivity(Intent(context, ApplicationSettingsActivity::class.java))
-
-		private const val isTutorialShownPreference = "isApplicationSettingsTutorialShownPreference"
 	}
 }

@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.scheduleSync
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
@@ -54,10 +55,11 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 open class MainApplication : MultiDexApplication() {
-	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
-	private val storageReadPermissionsRequestNotificationBuilderLazy = lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
-	private val storageWritePermissionsRequestNotificationBuilderLazy = lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
-	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
+	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
@@ -81,7 +83,7 @@ open class MainApplication : MultiDexApplication() {
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		messageBus.value.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
 				if (libraryId < 0) return
@@ -108,37 +110,37 @@ open class MainApplication : MultiDexApplication() {
 			}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		messageBus.value.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsLibraryId, -1)
 				if (libraryId < 0) return
-				notificationManagerLazy.value.notify(
+				notificationManagerLazy.notify(
 					336,
-					storageReadPermissionsRequestNotificationBuilderLazy.value
+					storageReadPermissionsRequestNotificationBuilderLazy
 						.buildReadPermissionsRequestNotification(libraryId))
 			}
 		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded))
 
-		messageBus.value.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.WritePermissionsLibraryId, -1)
 				if (libraryId < 0) return
-				notificationManagerLazy.value.notify(
+				notificationManagerLazy.notify(
 					396,
-					storageWritePermissionsRequestNotificationBuilderLazy.value
+					storageWritePermissionsRequestNotificationBuilderLazy
 						.buildWritePermissionsRequestNotification(libraryId))
 			}
 		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded))
 
-		messageBus.value.registerReceiver(
+		messageBus.registerReceiver(
 			ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)),
 			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
 		)
 
-		messageBus.value.registerReceiver(
+		messageBus.registerReceiver(
 			SelectedConnectionSettingsChangeReceiver(
-				SelectedBrowserLibraryIdentifierProvider(this),
-				messageBus.value),
+				SelectedBrowserLibraryIdentifierProvider(applicationSettings),
+				messageBus),
 			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
 		)
 
@@ -148,8 +150,8 @@ open class MainApplication : MultiDexApplication() {
 			PlaybackFileStoppedScrobblerRegistration(),
 			PebbleFileChangedNotificationRegistration())
 
-		messageBus.value.registerReceiver(
-			SessionConnectionRegistrationsMaintainer(messageBus.value, connectionDependentReceiverRegistrations),
+		messageBus.registerReceiver(
+			SessionConnectionRegistrationsMaintainer(messageBus, connectionDependentReceiverRegistrations),
 			IntentFilter(SelectedConnection.buildSessionBroadcast))
 	}
 

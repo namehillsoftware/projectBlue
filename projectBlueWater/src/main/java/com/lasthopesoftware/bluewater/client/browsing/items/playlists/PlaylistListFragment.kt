@@ -21,17 +21,22 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class PlaylistListFragment : Fragment() {
     private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
-    private val lazyListView = lazy {
+
+	private val listView by lazy {
 		val listView = ListView(activity)
 		listView.visibility = View.INVISIBLE
 		listView
 	}
-    private val lazyProgressBar = lazy {
+
+	private val progressBar by lazy {
 		val pbLoading = ProgressBar(activity, null, android.R.attr.progressBarStyleLarge)
 		val pbParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -40,65 +45,65 @@ class PlaylistListFragment : Fragment() {
 		pbParams.addRule(RelativeLayout.CENTER_IN_PARENT)
 		pbLoading.layoutParams = pbParams
 		pbLoading
-}
-    private val lazyLayout = lazy {
+	}
+
+    private val lazyLayout by lazy {
 		val activity: Activity? = activity
 		val layout = RelativeLayout(activity)
 		layout.layoutParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT,
 			ViewGroup.LayoutParams.MATCH_PARENT
 		)
-		layout.addView(lazyProgressBar.value)
-		layout.addView(lazyListView.value)
+		layout.addView(progressBar)
+		layout.addView(listView)
 		layout
 	}
 
-	private val lazyFileStringListProvider = lazy {
+	private val fileStringListProvider by lazy {
 		FileStringListProvider(SelectedConnectionProvider(requireContext()))
 	}
 
-	private val lazySelectedLibraryProvider = lazy {
+	private val selectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(requireContext()),
+			SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()),
 			LibraryRepository(requireContext()))
 	}
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        return lazyLayout.value
-    }
+	private val tutorialManager by lazy { TutorialManager(requireContext()) }
+
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = lazyLayout
 
     override fun onStart() {
         super.onStart()
 
 		val activity = activity ?: return
 
-        lazyListView.value.visibility = View.INVISIBLE
-        lazyProgressBar.value.visibility = View.VISIBLE
+        listView.visibility = View.INVISIBLE
+        progressBar.visibility = View.VISIBLE
 
-		lazySelectedLibraryProvider.value
+		selectedLibraryProvider
             .browserLibrary
             .then { library ->
-				if (library == null) return@then
+				if (library == null || context == null) return@then
 				val itemListMenuChangeHandler = itemListMenuChangeHandler ?: return@then
 
 				val listResolvedPromise = response(
 					OnGetLibraryViewItemResultsComplete(
 						activity,
-						lazyListView.value,
-						lazyProgressBar.value,
+						listView,
+						progressBar,
 						itemListMenuChangeHandler,
 						FileListParameters.getInstance(),
-						lazyFileStringListProvider.value,
+						fileStringListProvider,
 						StoredItemAccess(activity),
-						library
+						library,
+						tutorialManager
 					), activity
 				)
 				val playlistFillAction = object : Runnable {
 					override fun run() {
 						getInstance(activity).promiseSessionConnection()
-							.eventually { c ->
-								provide(c!!, library.selectedView)
-							}
+							.eventually { c -> c?.let { provide(it, library.selectedView) }.keepPromise(emptyList()) }
 							.eventually(listResolvedPromise)
 							.excuse(HandleViewIoException(activity, this))
 							.eventuallyExcuse(

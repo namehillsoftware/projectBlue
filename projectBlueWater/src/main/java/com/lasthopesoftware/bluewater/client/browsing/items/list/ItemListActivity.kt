@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -36,15 +37,15 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
 	private var connectionRestoreCode: Int? = null
-	private val itemProviderComplete = lazy { LoopedInPromise.response(this, this) }
+	private val itemProviderComplete by lazy { LoopedInPromise.response(this, this) }
 	private val itemListView = LazyViewFinder<ListView>(this, R.id.lvItems)
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingItems)
-	private val lazySpecificLibraryProvider = lazy {
+	private val lazySpecificLibraryProvider by lazy {
 			SelectedBrowserLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(this),
+				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
 				LibraryRepository(this))
 		}
-	private val lazyFileStringListProvider = lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
+	private val lazyFileStringListProvider by lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
@@ -64,9 +65,10 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	public override fun onStart() {
 		super.onStart()
-		connectionRestoreCode = restoreSelectedConnection(this).also {
+		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+			connectionRestoreCode = it
 			if (it == null) hydrateItems()
-		}
+		}, this))
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -81,7 +83,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 			.eventually { c ->
 				c?.let(::ItemProvider)?.promiseItems(mItemId) ?: Promise(emptyList())
 			}
-			.eventually(itemProviderComplete.value)
+			.eventually(itemProviderComplete)
 			.excuse(HandleViewIoException(this) { hydrateItems() })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
@@ -92,7 +94,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	}
 
 	private fun buildItemListView(items: List<Item>) {
-		lazySpecificLibraryProvider.value.browserLibrary
+		lazySpecificLibraryProvider.browserLibrary
 			.eventually(LoopedInPromise.response({ library ->
 				library?.also {
 					val storedItemAccess = StoredItemAccess(this)
@@ -101,7 +103,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 						R.id.tvStandard,
 						items,
 						FileListParameters.getInstance(),
-						lazyFileStringListProvider.value,
+						lazyFileStringListProvider,
 						ItemListMenuChangeHandler(this),
 						storedItemAccess,
 						it)
@@ -125,13 +127,10 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		mItemId = savedInstanceState.getInt(KEY)
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean {
-		return ViewUtils.buildStandardMenu(this, menu)
-	}
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = ViewUtils.buildStandardMenu(this, menu)
 
-	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		return ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item)
-	}
+	override fun onOptionsItemSelected(item: MenuItem): Boolean =
+		ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item)
 
 	override fun onBackPressed() {
 		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return

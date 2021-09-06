@@ -5,13 +5,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
+import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper.Companion.databaseExecutor
+import com.lasthopesoftware.bluewater.repository.fetch
+import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import com.namehillsoftware.lazyj.Lazy
 
 class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
@@ -21,16 +20,21 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 	}
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> {
-		return QueuedPromise(MessageWriter<Boolean> {
+		return DatabasePromise {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				val inferredItem = inferItem(item)
-				isItemMarkedForSync(repositoryAccessHelper, libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
+				isItemMarkedForSync(
+					repositoryAccessHelper,
+					libraryId,
+					inferredItem,
+					StoredItemHelpers.getListType(inferredItem)
+				)
 			}
-		}, databaseExecutor())
+		}
 	}
 
 	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> =
-		QueuedPromise(MessageWriter {
+		DatabasePromise {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -40,15 +44,15 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 					closeableTransaction.setTransactionSuccessful()
 				}
 			}
-		}, databaseExecutor())
+		}
 
 	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
-		databaseExecutor().execute {
+		DatabasePromise {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				if (isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType)) return@execute
+				if (isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType)) return@DatabasePromise
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
-						.mapSql(storedItemInsertSql.getObject())
+						.mapSql(storedItemInsertSql)
 						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 						.addParameter(StoredItem.serviceIdColumnName, item.key)
 						.addParameter(StoredItem.itemTypeColumnName, itemType)
@@ -60,7 +64,7 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 	}
 
 	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
-		databaseExecutor().execute {
+		DatabasePromise {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -79,19 +83,18 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 		}
 	}
 
-	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {
-		return QueuedPromise(MessageWriter<Collection<StoredItem>> {
+	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> =
+		DatabasePromise {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql("SELECT * FROM ${StoredItem.tableName} WHERE ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}")
 					.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
-					.fetch(StoredItem::class.java)
+					.fetch()
 			}
-		}, databaseExecutor())
-	}
+		}
 
 	companion object {
-		private val storedItemInsertSql = Lazy {
+		private val storedItemInsertSql by lazy {
 			fromTable(StoredItem.tableName)
 				.addColumn(StoredItem.libraryIdColumnName)
 				.addColumn(StoredItem.serviceIdColumnName)
@@ -99,7 +102,6 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 				.build()
 		}
 
-		@JvmStatic
 		private fun isItemMarkedForSync(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): Boolean {
 			return getStoredItem(helper, libraryId, item, itemType) != null
 		}
@@ -113,7 +115,7 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 				.addParameter(StoredItem.serviceIdColumnName, item.key)
 				.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 				.addParameter(StoredItem.itemTypeColumnName, itemType)
-				.fetchFirst(StoredItem::class.java)
+				.fetchFirst()
 		}
 
 		private fun inferItem(item: IItem): IItem {

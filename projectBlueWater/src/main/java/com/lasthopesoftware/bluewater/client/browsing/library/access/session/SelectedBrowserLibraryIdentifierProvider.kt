@@ -1,16 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
-import android.content.Context
-import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.namehillsoftware.handoff.promises.Promise
 
 /**
  * Created by david on 2/12/17.
  */
-class SelectedBrowserLibraryIdentifierProvider(private val context: Context) : ProvideSelectedLibraryId {
-	override val selectedLibraryId: LibraryId?
-		get() {
-			val libraryId = PreferenceManager.getDefaultSharedPreferences(context).getInt(LibrarySelectionKey.chosenLibraryKey, -1)
-			return if (libraryId > -1) LibraryId(libraryId) else null
-		}
+class SelectedBrowserLibraryIdentifierProvider(private val applicationSettings: HoldApplicationSettings) : ProvideSelectedLibraryId {
+	override val selectedLibraryId: Promise<LibraryId?>
+		get() = applicationSettings.promiseApplicationSettings()
+				.then { s -> s.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId) }
 }
