@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.tutorials
 
-data class Tutorial(
+data class DisplayedTutorial(
 	var tutorialKey: String,
-	var isShown: Boolean
 )

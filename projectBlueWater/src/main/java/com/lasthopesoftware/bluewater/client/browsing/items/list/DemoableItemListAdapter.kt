@@ -84,11 +84,11 @@ class DemoableItemListAdapter
 		}
 
 		manageTutorials
-			.promiseIsTutorialShown(TutorialManager.longPressListTutorial)
+			.promiseIsTutorialShown(TutorialManager.KnownTutorials.longPressListTutorial)
 			.eventually(LoopedInPromise.response({ wasShown ->
 				if (!wasShown) {
 					showTutorial()
-					manageTutorials.promiseTutorialMarked(TutorialManager.longPressListTutorial)
+					manageTutorials.promiseTutorialMarked(TutorialManager.KnownTutorials.longPressListTutorial)
 				}
 			}, context))
 	}

@@ -117,7 +117,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		notificationSettingsContainer.findView().visibility = View.VISIBLE
 
 		tutorialManager
-			.promiseIsTutorialShown(TutorialManager.adjustNotificationInApplicationSettingsTutorial)
+			.promiseIsTutorialShown(TutorialManager.KnownTutorials.adjustNotificationInApplicationSettingsTutorial)
 			.eventually(LoopedInPromise.response({ wasTutorialShown ->
 				if (wasTutorialShown) {
 					modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
@@ -139,7 +139,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 						launchNotificationSettings()
 					}
 
-					tutorialManager.promiseTutorialMarked(TutorialManager.adjustNotificationInApplicationSettingsTutorial)
+					tutorialManager.promiseTutorialMarked(TutorialManager.KnownTutorials.adjustNotificationInApplicationSettingsTutorial)
 				}
 			}, this))
 	}

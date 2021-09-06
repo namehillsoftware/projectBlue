@@ -6,9 +6,8 @@ import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.repository.IEntityCreator
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.InsertBuilder
-import com.lasthopesoftware.bluewater.tutorials.TutorialEntityInformation.isShownColumn
-import com.lasthopesoftware.bluewater.tutorials.TutorialEntityInformation.tableName
-import com.lasthopesoftware.bluewater.tutorials.TutorialEntityInformation.tutorialKeyColumn
+import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tableName
+import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tutorialKeyColumn
 import com.namehillsoftware.artful.Artful
 
 class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUpdater {
@@ -37,25 +36,26 @@ class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUp
 
 		db.execSQL("""CREATE TABLE `$tableName` (
 			`id` INTEGER PRIMARY KEY AUTOINCREMENT ,
-			`$tutorialKeyColumn` VARCHAR ,
-			`$isShownColumn` SMALLINT
+			`$tutorialKeyColumn` VARCHAR UNIQUE
 			)""")
 
 		val insertQuery = InsertBuilder.fromTable(tableName)
 			.addColumn(tutorialKeyColumn)
-			.addColumn(isShownColumn)
 			.build()
 
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 		val insertArtSql = Artful(db, insertQuery)
-		insertArtSql
-			.addParameter(tutorialKeyColumn, TutorialManager.longPressListTutorial)
-			.addParameter(isShownColumn, sharedPreferences.getBoolean(OldConstants.isListTutorialShownPreference, false))
-			.execute()
 
-		insertArtSql
-			.addParameter(tutorialKeyColumn, TutorialManager.adjustNotificationInApplicationSettingsTutorial)
-			.addParameter(isShownColumn, sharedPreferences.getBoolean(OldConstants.isApplicationSettingsTutorialShownPreference, false))
-			.execute()
+		if (sharedPreferences.getBoolean(OldConstants.isListTutorialShownPreference, false)) {
+			insertArtSql
+				.addParameter(tutorialKeyColumn, TutorialManager.KnownTutorials.longPressListTutorial)
+				.execute()
+		}
+
+		if (sharedPreferences.getBoolean(OldConstants.isApplicationSettingsTutorialShownPreference, false)) {
+			insertArtSql
+				.addParameter(tutorialKeyColumn, TutorialManager.KnownTutorials.adjustNotificationInApplicationSettingsTutorial)
+				.execute()
+		}
 	}
 }
