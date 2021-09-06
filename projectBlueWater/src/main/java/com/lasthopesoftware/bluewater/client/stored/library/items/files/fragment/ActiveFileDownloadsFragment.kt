@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
-import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.toImmutableList
@@ -54,7 +54,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 		listView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
 
-		val applicationSettingsRepository = ApplicationSettingsRepository(context)
+		val applicationSettingsRepository = context.getApplicationSettings()
 		val libraryRepository = LibraryRepository(context)
 		val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
 			SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository),

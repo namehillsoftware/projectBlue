@@ -46,7 +46,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.scheduleSync
-import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
@@ -59,7 +59,7 @@ open class MainApplication : MultiDexApplication() {
 	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
-	private val applicationSettings by lazy { ApplicationSettingsRepository(this) }
+	private val applicationSettings by lazy { getApplicationSettings() }
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {

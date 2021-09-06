@@ -28,7 +28,7 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
-import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView
@@ -61,7 +61,7 @@ class FileDetailsActivity : AppCompatActivity() {
 	}
 
 	private val lazyImageProvider by lazy {
-		val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(ApplicationSettingsRepository(this))
+		val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(getApplicationSettings())
 		ImageProvider(
 			StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 			MemoryCachedImageAccess.getInstance(this))

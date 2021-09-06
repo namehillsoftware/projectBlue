@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
-import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
@@ -116,7 +116,7 @@ class SelectedConnection(
 			val applicationContext = context.applicationContext
 			return SelectedConnection(
 				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
-				SelectedBrowserLibraryIdentifierProvider(ApplicationSettingsRepository(applicationContext)),
+				SelectedBrowserLibraryIdentifierProvider(applicationContext.getApplicationSettings()),
 				ConnectionSessionManager.get(applicationContext)
 			).apply { selectedConnectionInstance = this }
 		}

@@ -32,7 +32,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
-import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -52,7 +52,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
 	private val sharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(this) }
-	private val applicationSettingsRepository by lazy { ApplicationSettingsRepository(this) }
+	private val applicationSettingsRepository by lazy { getApplicationSettings() }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {

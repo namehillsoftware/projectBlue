@@ -54,7 +54,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.settings.repository.access.ApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettings
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -117,7 +117,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		)
 	}
 
-	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(ApplicationSettingsRepository(this)) }
+	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettings()) }
 
 	private val nowPlayingRepository by lazy {
 		val libraryRepository = LibraryRepository(this)
@@ -156,7 +156,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	private val lazyImageProvider by lazy {
 			ImageProvider(
-				StaticLibraryIdentifierProvider(SelectedBrowserLibraryIdentifierProvider(ApplicationSettingsRepository(this))),
+				StaticLibraryIdentifierProvider(SelectedBrowserLibraryIdentifierProvider(getApplicationSettings())),
 				MemoryCachedImageAccess.getInstance(this))
 		}
 

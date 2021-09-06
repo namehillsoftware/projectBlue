@@ -14,9 +14,6 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsMig
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsUpdater
 import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor
 import com.namehillsoftware.artful.Artful
-import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import java.io.Closeable
 import java.util.concurrent.Executor
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -35,22 +32,19 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 
 	private val applicationSettingsMigrator by lazy { ApplicationSettingsMigrator(context) }
 
-	private val entityCreators = lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator)) }
-	private val entityUpdaters = lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator)) }
+	private val entityCreators by lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator)) }
+	private val entityUpdaters by lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator)) }
 
 	private val sqliteDb = lazy { writableDatabase }
 
 	fun mapSql(sqlQuery: String): Artful = Artful(sqliteDb.value, sqlQuery)
 
-	fun promiseSqlMapper(sqlQuery: String): Promise<PromisingArtful> =
-		QueuedPromise(MessageWriter { PromisingArtful(sqliteDb.value, sqlQuery) }, databaseExecutor)
-
 	override fun onCreate(db: SQLiteDatabase) {
-		for (entityCreator in entityCreators.value) entityCreator.onCreate(db)
+		for (entityCreator in entityCreators) entityCreator.onCreate(db)
 	}
 
 	override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-		for (entityUpdater in entityUpdaters.value) entityUpdater.onUpdate(db, oldVersion, newVersion)
+		for (entityUpdater in entityUpdaters) entityUpdater.onUpdate(db, oldVersion, newVersion)
 	}
 
 	fun beginTransaction(): CloseableTransaction = CloseableTransaction(sqliteDb.value, databaseSynchronization)
