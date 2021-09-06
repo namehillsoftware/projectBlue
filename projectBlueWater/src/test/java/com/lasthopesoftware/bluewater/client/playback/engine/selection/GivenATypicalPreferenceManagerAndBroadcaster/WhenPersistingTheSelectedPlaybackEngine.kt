@@ -28,7 +28,7 @@ class WhenPersistingTheSelectedPlaybackEngine : AndroidContext() {
 		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
 		every { applicationSettings.promiseUpdatedSettings(any()) } answers {
 			val settings = firstArg<ApplicationSettings>()
-			persistedEngineType = settings.playbackEngineType
+			persistedEngineType = settings.playbackEngineTypeName
 			Promise(settings)
 		}
 

@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.settings.repository.access
 
 import android.content.Context
+import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper.Companion.databaseExecutor
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
 import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -10,44 +10,47 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class ApplicationSettingsRepository(private val context: Context): HoldApplicationSettings {
 
 	companion object {
-		private val lazyUpdateStatement by lazy {
+		private val updateStatement by lazy {
 			UpdateBuilder.fromTable(tableName)
 				.addSetter(isSyncOnWifiOnlyColumn)
 				.addSetter(isSyncOnPowerOnlyColumn)
 				.addSetter(isVolumeLevelingEnabledColumn)
-				.addSetter(playbackEngineColumn)
+				.addSetter(playbackEngineTypeNameColumn)
 				.addSetter(chosenLibraryIdColumn)
 				.buildQuery()
 		}
 	}
 
 	override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
-		QueuedPromise(MessageWriter {
-			RepositoryAccessHelper(context).use { it.mapSql("SELECT * FROM $tableName").fetchFirst() }
-		}, databaseExecutor())
+		DatabasePromise {
+			RepositoryAccessHelper(context).use { helper ->
+				helper.beginNonExclusiveTransaction().use {
+					helper.mapSql("SELECT * FROM $tableName").fetchFirst()
+				}
+			}
+		}
 
 	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> =
-		QueuedPromise(MessageWriter {
+		DatabasePromise {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginTransaction().use {
-					helper.mapSql(lazyUpdateStatement)
+					helper.mapSql(updateStatement)
 						.addParameter(isSyncOnWifiOnlyColumn, applicationSettings.isSyncOnWifiOnly)
 						.addParameter(isSyncOnPowerOnlyColumn, applicationSettings.isSyncOnPowerOnly)
 						.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
-						.addParameter(playbackEngineColumn, applicationSettings.playbackEngineType)
+						.addParameter(playbackEngineTypeNameColumn, applicationSettings.playbackEngineTypeName)
 						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
 						.execute()
+					it.setTransactionSuccessful()
 				}
 			}
-		}, databaseExecutor())
+		}
 			.eventually { promiseApplicationSettings() }
 }

@@ -16,15 +16,15 @@ class SelectedPlaybackEngineTypeAccess
 		applicationSettings
 			.promiseApplicationSettings()
 			.eventually { s ->
-				engineTypes.firstOrNull { e -> e.name == s.playbackEngineType }
+				engineTypes.firstOrNull { e -> e.name == s.playbackEngineTypeName }
 					?.toPromise()
 					?: defaultPlaybackEngineLookup.promiseDefaultEngineType()
 						.eventually { t ->
-							s.playbackEngineType = t.name
+							s.playbackEngineTypeName = t.name
 							applicationSettings
 								.promiseUpdatedSettings(s)
 								.then { ns ->
-									engineTypes.first { e -> e.name == ns.playbackEngineType }
+									engineTypes.first { e -> e.name == ns.playbackEngineTypeName }
 								}
 						}
 					}

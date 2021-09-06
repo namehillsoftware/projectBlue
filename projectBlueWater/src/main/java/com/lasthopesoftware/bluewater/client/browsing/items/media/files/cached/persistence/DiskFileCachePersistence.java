@@ -9,11 +9,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.c
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
+import com.lasthopesoftware.bluewater.repository.DatabasePromise;
 import com.lasthopesoftware.bluewater.repository.InsertBuilder;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.artful.Artful;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 import com.namehillsoftware.lazyj.Lazy;
 
 import org.slf4j.Logger;
@@ -72,7 +72,7 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 						: diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile);
 				}
 
-				return new QueuedPromise<>(() -> {
+				return new DatabasePromise<>(() -> {
 					logger.info("File with unique key " + uniqueKey + " doesn't exist. Creating...");
 					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
 						final Artful sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
@@ -100,13 +100,13 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 					}
 
 					return null;
-				}, RepositoryAccessHelper.databaseExecutor())
+				})
 				.eventually(v -> cachedFilesProvider.promiseCachedFile(uniqueKey));
 			});
 	}
 
 	private Promise<CachedFile> promiseFilePathUpdate(final CachedFile cachedFile) {
-		return new QueuedPromise<>(() -> {
+		return new DatabasePromise<>(() -> {
 			final long cachedFileId = cachedFile.getId();
 			final String cachedFilePath = cachedFile.getFileName();
 
@@ -128,6 +128,6 @@ public class DiskFileCachePersistence implements IDiskFileCachePersistence {
 			}
 
 			return cachedFile;
-		}, RepositoryAccessHelper.databaseExecutor());
+		});
 	}
 }

@@ -6,27 +6,26 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper.Companion.databaseExecutor
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import org.slf4j.LoggerFactory
 
 class LibraryRepository(private val context: Context) : ILibraryStorage, ILibraryProvider {
 	override fun getLibrary(libraryId: LibraryId): Promise<Library?> =
-		QueuedPromise(GetLibraryWriter(context, libraryId), databaseExecutor())
+		DatabasePromise(GetLibraryWriter(context, libraryId))
 
 	override val allLibraries: Promise<Collection<Library>>
-		get() = QueuedPromise(GetAllLibrariesWriter(context), databaseExecutor())
+		get() = DatabasePromise(GetAllLibrariesWriter(context))
 
 	override fun saveLibrary(library: Library): Promise<Library> =
-		QueuedPromise(SaveLibraryWriter(context, library), databaseExecutor())
+		DatabasePromise(SaveLibraryWriter(context, library))
 
 	override fun removeLibrary(library: Library): Promise<Unit> =
-		QueuedPromise(RemoveLibraryWriter(context, library), databaseExecutor())
+		DatabasePromise(RemoveLibraryWriter(context, library))
 
 	private class GetAllLibrariesWriter constructor(private val context: Context) : MessageWriter<Collection<Library>> {
 		override fun prepareMessage(): Collection<Library> =

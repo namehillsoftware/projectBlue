@@ -21,7 +21,7 @@ class WhenGettingThePlaybackEngineType : AndroidContext() {
 
     override fun before() {
 		val applicationSettings = mockk<HoldApplicationSettings>()
-		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings(playbackEngineType = "ExoPlayer"))
+		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings(playbackEngineTypeName = "ExoPlayer"))
 
         val playbackEngineTypeSelectionPersistence = PlaybackEngineTypeSelectionPersistence(
             applicationSettings,

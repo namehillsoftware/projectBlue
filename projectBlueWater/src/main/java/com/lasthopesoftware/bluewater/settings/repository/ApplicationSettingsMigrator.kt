@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
 import com.namehillsoftware.artful.Artful
 
@@ -37,14 +37,14 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			`$isSyncOnWifiOnlyColumn` SMALLINT ,
 			`$isSyncOnPowerOnlyColumn` SMALLINT ,
 			`$isVolumeLevelingEnabledColumn` SMALLINT ,
-			`$playbackEngineColumn` VARCHAR ,
+			`$playbackEngineTypeNameColumn` VARCHAR ,
 			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL )""")
 
 		val insertQuery = InsertBuilder.fromTable(tableName)
 			.addColumn(isSyncOnWifiOnlyColumn)
 			.addColumn(isSyncOnPowerOnlyColumn)
 			.addColumn(isVolumeLevelingEnabledColumn)
-			.addColumn(playbackEngineColumn)
+			.addColumn(playbackEngineTypeNameColumn)
 			.addColumn(chosenLibraryIdColumn)
 			.build()
 
@@ -54,7 +54,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			.addParameter(isSyncOnWifiOnlyColumn, sharedPreferences.getBoolean(OldConstants.isSyncOnWifiOnlyKey, false))
 			.addParameter(isSyncOnPowerOnlyColumn, sharedPreferences.getBoolean(OldConstants.isSyncOnPowerOnlyKey, false))
 			.addParameter(isVolumeLevelingEnabledColumn, sharedPreferences.getBoolean(OldConstants.isVolumeLevelingEnabled, false))
-			.addParameter(playbackEngineColumn, sharedPreferences.getString(OldConstants.playbackEngine, PlaybackEngineType.ExoPlayer.name))
+			.addParameter(playbackEngineTypeNameColumn, sharedPreferences.getString(OldConstants.playbackEngine, PlaybackEngineType.ExoPlayer.name))
 			.addParameter(chosenLibraryIdColumn, sharedPreferences.getInt(OldConstants.chosenLibraryKey, -1))
 			.execute()
 	}

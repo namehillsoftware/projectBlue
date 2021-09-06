@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.D
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransaction;
+import com.lasthopesoftware.bluewater.repository.DatabasePromise;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ public class CachedFilesProvider implements ICachedFilesProvider {
 
 	@Override
 	public Promise<CachedFile> promiseCachedFile(String uniqueKey) {
-		return new QueuedPromise<>(() -> getCachedFile(uniqueKey), RepositoryAccessHelper.databaseExecutor());
+		return new DatabasePromise<>(() -> getCachedFile(uniqueKey));
 	}
 
 	private CachedFile getCachedFile(final String uniqueKey) {

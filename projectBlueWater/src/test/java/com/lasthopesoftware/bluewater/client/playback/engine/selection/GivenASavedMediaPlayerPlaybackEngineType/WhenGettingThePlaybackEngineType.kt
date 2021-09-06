@@ -30,12 +30,12 @@ class WhenGettingThePlaybackEngineType : AndroidContext() {
 
     @Test
     fun thenTheExoPlayerEngineIsTheSavedEngineType() {
-        assertThat(applicationSettings.promiseApplicationSettings().toFuture().get()?.playbackEngineType)
+        assertThat(applicationSettings.promiseApplicationSettings().toFuture().get()?.playbackEngineTypeName)
             .isEqualTo(PlaybackEngineType.ExoPlayer.name)
     }
 
 	private class FakeApplicationSettings : HoldApplicationSettings {
-		private var applicationSettings = ApplicationSettings(playbackEngineType = "MediaPlayer")
+		private var applicationSettings = ApplicationSettings(playbackEngineTypeName = "MediaPlayer")
 
 		override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
 			Promise(applicationSettings)

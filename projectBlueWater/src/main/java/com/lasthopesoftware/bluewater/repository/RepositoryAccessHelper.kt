@@ -12,20 +12,14 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsCreator
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsMigrator
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsUpdater
-import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor
 import com.namehillsoftware.artful.Artful
 import java.io.Closeable
-import java.util.concurrent.Executor
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), Closeable {
 
 	companion object {
-		@JvmStatic
-		fun databaseExecutor(): Executor = databaseExecutor
-
 		private val databaseSynchronization by lazy { ReentrantReadWriteLock() }
-		private val databaseExecutor by lazy { CachedSingleThreadExecutor() }
 		private const val DATABASE_VERSION = 9
 		private const val DATABASE_NAME = "sessions_db"
 	}
