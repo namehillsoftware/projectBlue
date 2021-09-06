@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.tutorials.TutorialManager
-import com.namehillsoftware.handoff.promises.Promise
 
 class ItemListFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
@@ -103,7 +102,7 @@ class ItemListFragment : Fragment() {
 				object : Runnable {
 					override fun run() {
 						getInstance(activity).promiseSessionConnection()
-							.eventually { c -> c?.let { provide(c, activeLibrary.selectedView) } ?: Promise(emptyList()) }
+							.eventually { c -> c?.let { provide(c, activeLibrary.selectedView) }.keepPromise(emptyList()) }
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(HandleViewIoException(activity, this))
 							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(activity), activity))
@@ -138,7 +137,7 @@ class ItemListFragment : Fragment() {
 				val fillItemsRunnable = object : Runnable {
 					override fun run() {
 						getInstance(activity).promiseSessionConnection()
-							.eventually { c -> c?.let { provide(c, category.key) }.keepPromise() }
+							.eventually { c -> c?.let { provide(c, category.key) }.keepPromise(emptyList()) }
 							.eventually(onGetLibraryViewItemResultsComplete)
 							.excuse(HandleViewIoException(activity, this))
 							.eventuallyExcuse(

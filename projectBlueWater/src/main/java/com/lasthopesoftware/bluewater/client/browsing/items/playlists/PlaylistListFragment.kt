@@ -103,7 +103,7 @@ class PlaylistListFragment : Fragment() {
 				val playlistFillAction = object : Runnable {
 					override fun run() {
 						getInstance(activity).promiseSessionConnection()
-							.eventually { c -> c?.let { provide(it, library.selectedView) }.keepPromise() }
+							.eventually { c -> c?.let { provide(it, library.selectedView) }.keepPromise(emptyList()) }
 							.eventually(listResolvedPromise)
 							.excuse(HandleViewIoException(activity, this))
 							.eventuallyExcuse(
