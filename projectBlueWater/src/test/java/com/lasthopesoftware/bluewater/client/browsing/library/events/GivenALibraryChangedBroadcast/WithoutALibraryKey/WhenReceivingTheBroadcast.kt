@@ -1,33 +1,28 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenALibraryChangedBroadcast.WithoutALibraryKey;
+package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenALibraryChangedBroadcast.WithoutALibraryKey
 
-import android.content.Intent;
+import android.content.Intent
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.Test
+import org.robolectric.Robolectric
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+class WhenReceivingTheBroadcast : AndroidContext() {
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection;
-
-import org.junit.Test;
-import org.robolectric.Robolectric;
-import org.robolectric.android.controller.ActivityController;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-public class WhenReceivingTheBroadcast extends AndroidContext {
-
-	private static final ActivityController<BrowserEntryActivity> activityController = Robolectric.buildActivity(BrowserEntryActivity.class).create();
-
-	@Override
-	public void before() {
-		final LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(activityController.get());
-
-		final Intent broadcastIntent = new Intent(BrowserLibrarySelection.libraryChosenEvent);
-		localBroadcastManager.sendBroadcast(broadcastIntent);
+	companion object {
+		private val activityController = Robolectric.buildActivity(BrowserEntryActivity::class.java).create()
 	}
 
-	@Test
-	public void thenTheActivityIsNotFinished() {
-		assertThat(activityController.get().isFinishing()).isFalse();
-	}
+    override fun before() {
+        val localBroadcastManager = LocalBroadcastManager.getInstance(activityController.get())
+        val broadcastIntent = Intent(BrowserLibrarySelection.libraryChosenEvent)
+        localBroadcastManager.sendBroadcast(broadcastIntent)
+    }
+
+    @Test
+    fun thenTheActivityIsNotFinished() {
+        assertThat(activityController.get().isFinishing).isFalse
+    }
 }

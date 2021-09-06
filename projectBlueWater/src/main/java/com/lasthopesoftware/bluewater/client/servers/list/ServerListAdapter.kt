@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServerOnClickListener
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -71,7 +70,7 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 				object : BroadcastReceiver() {
 					override fun onReceive(context: Context, intent: Intent) {
 						textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == intent.getIntExtra(
-							ApplicationConstants.PreferenceConstants.chosenLibraryKey, -1)))
+							BrowserLibrarySelection.chosenLibraryId, -1)))
 					}
 				}.apply { broadcastReceiver = this },
 				IntentFilter(BrowserLibrarySelection.libraryChosenEvent))

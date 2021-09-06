@@ -4,9 +4,8 @@ import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationConstants
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -22,7 +21,7 @@ class BrowserLibrarySelection(
 				a.chosenLibraryId = libraryId.id
 				applicationSettings.promiseUpdatedSettings(a).eventually {
 					val broadcastIntent = Intent(libraryChosenEvent)
-					broadcastIntent.putExtra(ApplicationConstants.PreferenceConstants.chosenLibraryKey, libraryId.id)
+					broadcastIntent.putExtra(chosenLibraryId, libraryId.id)
 					localBroadcastManager.sendBroadcast(broadcastIntent)
 					libraryProvider.getLibrary(libraryId)
 				}
@@ -30,9 +29,9 @@ class BrowserLibrarySelection(
 		}
 
     companion object {
-        @JvmField
-		val libraryChosenEvent = buildMagicPropertyName(
-            BrowserLibrarySelection::class.java, "libraryChosenEvent"
-        )
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(BrowserLibrarySelection::class.java) }
+
+		val libraryChosenEvent by lazy { magicPropertyBuilder.buildProperty("libraryChosenEvent") }
+		val chosenLibraryId by lazy { magicPropertyBuilder.buildProperty("chosenLibraryId") }
     }
 }
