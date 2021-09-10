@@ -1,32 +1,31 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.selection
 
-import android.content.SharedPreferences
-import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.LookupDefaultPlaybackEngine
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class SelectedPlaybackEngineTypeAccess(private val sharedPreferences: SharedPreferences, private val defaultPlaybackEngineLookup: LookupDefaultPlaybackEngine) : LookupSelectedPlaybackEngineType {
-	override fun promiseSelectedPlaybackEngineType(): Promise<PlaybackEngineType> {
-		val playbackEngineTypeString = sharedPreferences
-			.getString(
-				ApplicationConstants.PreferenceConstants.playbackEngine,
-				null)
+class SelectedPlaybackEngineTypeAccess
+(
+	private val applicationSettings: HoldApplicationSettings,
+	private val defaultPlaybackEngineLookup: LookupDefaultPlaybackEngine
+) : LookupSelectedPlaybackEngineType {
+	private val engineTypes by lazy { PlaybackEngineType.values() }
 
-		return if (playbackEngineTypeString != null && PlaybackEngineType.values().any { e -> playbackEngineTypeString == e.name }) PlaybackEngineType.valueOf(playbackEngineTypeString).toPromise()
-		else defaultPlaybackEngineLookup.promiseDefaultEngineType()
-			.then { t ->
-				sharedPreferences
-					.edit()
-					.putString(
-						ApplicationConstants.PreferenceConstants.playbackEngine,
-						t.name)
-					.apply()
-
-				PlaybackEngineType.valueOf(sharedPreferences
-					.getString(
-						ApplicationConstants.PreferenceConstants.playbackEngine,
-						PlaybackEngineType.ExoPlayer.name)!!)
-			}
-	}
+	override fun promiseSelectedPlaybackEngineType(): Promise<PlaybackEngineType> =
+		applicationSettings
+			.promiseApplicationSettings()
+			.eventually { s ->
+				engineTypes.firstOrNull { e -> e.name == s.playbackEngineTypeName }
+					?.toPromise()
+					?: defaultPlaybackEngineLookup.promiseDefaultEngineType()
+						.eventually { t ->
+							s.playbackEngineTypeName = t.name
+							applicationSettings
+								.promiseUpdatedSettings(s)
+								.then { ns ->
+									engineTypes.first { e -> e.name == ns.playbackEngineTypeName }
+								}
+						}
+					}
 }

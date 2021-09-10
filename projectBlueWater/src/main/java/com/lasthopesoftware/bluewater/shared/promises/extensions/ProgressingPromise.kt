@@ -28,19 +28,13 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		for (action in updateListeners) action(progress)
 	}
 
-	fun updates(action: (Progress) -> Unit): ProgressingPromise<Progress, Resolution> {
-		val currentProgress = atomicProgress.get()
-		if (currentProgress != null)
-			action(currentProgress)
+	fun updates(action: (Progress) -> Unit) {
+		if (isResolved) return
 
-		if (!isResolved) {
-			updateListeners.add(action)
-			must {
-				isResolved = true
-				updateListeners.remove(action)
-			}
+		updateListeners.add(action)
+		must {
+			isResolved = true
+			updateListeners.remove(action)
 		}
-
-		return this
 	}
 }

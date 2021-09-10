@@ -14,8 +14,6 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.preference.PreferenceManager
-import com.lasthopesoftware.bluewater.ApplicationConstants
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
@@ -31,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
@@ -51,12 +50,14 @@ import com.lasthopesoftware.bluewater.client.stored.service.notifications.SyncCh
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
@@ -65,18 +66,17 @@ import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
 import io.reactivex.disposables.Disposable
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import java.util.*
 
 class StoredSyncService : Service(), PostSyncNotification {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(StoredSyncService::class.java)
-		private val doSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "doSyncAction")
-		private val isUninterruptedSyncSetting = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "isUninterruptedSyncSetting")
-		private val cancelSyncAction = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "cancelSyncAction")
-		private val lastSyncTime = MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "lastSyncTime")
+		private val logger by lazy { LoggerFactory.getLogger(StoredSyncService::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(StoredSyncService::class.java) }
+		private val doSyncAction by lazy { magicPropertyBuilder.buildProperty("doSyncAction") }
+		private val isUninterruptedSyncSetting by lazy { magicPropertyBuilder.buildProperty("isUninterruptedSyncSetting") }
+		private val cancelSyncAction by lazy { magicPropertyBuilder.buildProperty("cancelSyncAction") }
 		private const val notificationId = 23
 
 		@JvmStatic
@@ -118,13 +118,15 @@ class StoredSyncService : Service(), PostSyncNotification {
 		}
 	}
 
-	private val lazySharedPreferences = lazy { PreferenceManager.getDefaultSharedPreferences(this) }
+	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	private val onWifiStateChangedReceiver = lazy {
 		object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				val isSyncOnWifiOnly = lazySharedPreferences.value.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnWifiOnlyKey, false)
-				if (isSyncOnWifiOnly && !IoCommon.isWifiConnected(context)) cancelSync(this@StoredSyncService)
+				applicationSettings.promiseApplicationSettings()
+					.eventually(LoopedInPromise.response({ s ->
+						if (s.isSyncOnWifiOnly && !IoCommon.isWifiConnected(context)) cancelSync(this@StoredSyncService)
+					}, context))
 			}
 		}
 	}
@@ -132,82 +134,83 @@ class StoredSyncService : Service(), PostSyncNotification {
 	private val onPowerDisconnectedReceiver = lazy {
 		object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				val isSyncOnPowerOnly = lazySharedPreferences.value.getBoolean(ApplicationConstants.PreferenceConstants.isSyncOnPowerOnlyKey, false)
-				if (isSyncOnPowerOnly) cancelSync(context)
+				applicationSettings.promiseApplicationSettings()
+					.then { a -> if (a.isSyncOnPowerOnly) cancelSync(context) }
 			}
 		}
 	}
 
-	private val lazyActiveNotificationChannelId = lazy {
+	private val lazyActiveNotificationChannelId by lazy {
 		val notificationChannelActivator =
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.value)
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy)
 			else NoOpChannelActivator()
-		notificationChannelActivator.activateChannel(lazyChannelConfiguration.value)
+		notificationChannelActivator.activateChannel(lazyChannelConfiguration)
 	}
 
-	private val browseLibraryIntent = lazy {
+	private val browseLibraryIntent by lazy {
 		val browseLibraryIntent = Intent(this, BrowserEntryActivity::class.java)
 		browseLibraryIntent.action = BrowserEntryActivity.showDownloadsAction
 		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
 		browseLibraryIntent
 	}
 
-	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
-	private val lazyChannelConfiguration = lazy { SyncChannelProperties(this) }
+	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val lazyChannelConfiguration by lazy { SyncChannelProperties(this) }
 	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
-	private val lazyStoredFileAccess = lazy { StoredFileAccess(this, StoredFilesCollection(this)) }
-	private val lazyReadPermissionArbitratorForOs = lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
-	private val lazyLibraryRepository = lazy { LibraryRepository(this) }
-	private val lazyLibraryIdentifierProvider = lazy { SelectedBrowserLibraryIdentifierProvider(this) }
-	private val lazyLibraryConnections = lazy { ConnectionSessionManager.get(this)	}
+	private val lazyStoredFileAccess by lazy { StoredFileAccess(this, StoredFilesCollection(this)) }
+	private val lazyReadPermissionArbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
+	private val lazyLibraryRepository by lazy { LibraryRepository(this) }
+	private val lazyLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
+	private val lazyLibraryConnections by lazy { ConnectionSessionManager.get(this)	}
 
-	private val lazyFileProperties = lazy {
+	private val lazyFileProperties by lazy {
 		val filePropertyCache = FilePropertyCache.getInstance()
 		CachedFilePropertiesProvider(
-			lazyLibraryConnections.value,
+			lazyLibraryConnections,
 			filePropertyCache,
 			FilePropertiesProvider(
-				lazyLibraryConnections.value,
+				lazyLibraryConnections,
+				LibraryRevisionProvider(lazyLibraryConnections),
 				filePropertyCache))
 	}
 
-	private val lazyStoredFilesSynchronization = lazy {
+	private val lazyStoredFilesSynchronization by lazy {
 		val storedSyncService = this
 		val storedItemAccess = StoredItemAccess(storedSyncService)
 		val cursorProvider = MediaQueryCursorProvider(
 			storedSyncService,
-			lazyFileProperties.value)
+			lazyFileProperties)
 		val storedFileUpdater = StoredFileUpdater(
 			storedSyncService,
 			MediaFileUriProvider(
 				storedSyncService,
 				cursorProvider,
-				lazyReadPermissionArbitratorForOs.value,
-				lazyLibraryIdentifierProvider.value,
+				lazyReadPermissionArbitratorForOs,
+				lazyLibraryIdentifierProvider,
 				true),
 			MediaFileIdProvider(
 				cursorProvider,
-				lazyReadPermissionArbitratorForOs.value),
+				lazyReadPermissionArbitratorForOs),
 			StoredFileQuery(storedSyncService),
-			lazyLibraryRepository.value,
-			lazyFileProperties.value,
-			SyncDirectoryLookup(lazyLibraryRepository.value, PublicDirectoryLookup(storedSyncService), PrivateDirectoryLookup(storedSyncService), FreeSpaceLookup))
+			lazyLibraryRepository,
+			lazyFileProperties,
+			SyncDirectoryLookup(lazyLibraryRepository, PublicDirectoryLookup(storedSyncService), PrivateDirectoryLookup(storedSyncService), FreeSpaceLookup))
 		val syncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
 				storedItemAccess,
-				LibraryFileProvider(LibraryFileStringListProvider(lazyLibraryConnections.value)),
+				LibraryFileProvider(LibraryFileStringListProvider(lazyLibraryConnections)),
 				FileListParameters.getInstance()),
-			lazyStoredFileAccess.value,
+			lazyStoredFileAccess,
 			storedFileUpdater,
 			StoredFileJobProcessor(
 				StoredFileSystemFileProducer(),
-				lazyStoredFileAccess.value,
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider(), lazyLibraryConnections.value),
+				lazyStoredFileAccess,
+				StoredFileDownloader(ServiceFileUriQueryParamsProvider(), lazyLibraryConnections),
 				FileReadPossibleArbitrator(),
 				FileWritePossibleArbitrator(),
 				FileStreamWriter()))
 		StoredFileSynchronization(
-			lazyLibraryRepository.value,
+			lazyLibraryRepository,
 			lazyMessageBus.value,
 			syncHandler)
 	}
@@ -215,21 +218,21 @@ class StoredSyncService : Service(), PostSyncNotification {
 	private val lazyStoredFileEventReceivers = lazy {
 		val storedSyncService = this
 		val storedFileDownloadingNotifier = StoredFileDownloadingNotifier(
-			lazyStoredFileAccess.value,
-			lazyFileProperties.value,
+			lazyStoredFileAccess,
+			lazyFileProperties,
 			storedSyncService,
 			storedSyncService)
 		val storedFileMediaScannerNotifier = StoredFileMediaScannerNotifier(
-			lazyStoredFileAccess.value,
+			lazyStoredFileAccess,
 			ScanMediaFileBroadcaster(this))
 		val storedFileReadPermissionsReceiver = StoredFileReadPermissionsReceiver(
-			lazyReadPermissionArbitratorForOs.value,
+			lazyReadPermissionArbitratorForOs,
 			StorageReadPermissionsRequestedBroadcaster(lazyMessageBus.value),
-			lazyStoredFileAccess.value)
+			lazyStoredFileAccess)
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
 			ExternalStorageWritePermissionsArbitratorForOs(this),
 			StorageWritePermissionsRequestedBroadcaster(lazyMessageBus.value),
-			lazyStoredFileAccess.value)
+			lazyStoredFileAccess)
 
 		arrayOf(
 			storedFileDownloadingNotifier,
@@ -240,20 +243,20 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	private val lazySyncStartedReceiver = lazy { SyncStartedReceiver(this) }
 
-	private val lazyWakeLock = lazy {
+	private val wakeLock = lazy {
 		val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
 		powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "wakeLock"))
 	}
 
-	private val lazyShowDownloadsIntent = lazy {
+	private val lazyShowDownloadsIntent by lazy {
 		PendingIntent.getActivity(
 			this,
 			0,
-			browseLibraryIntent.value,
+			browseLibraryIntent,
 			0)
 	}
 
-	private val lazyCancelIntent = lazy {
+	private val lazyCancelIntent by lazy {
 		PendingIntent.getService(
 			this,
 			0,
@@ -267,12 +270,11 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 	override fun onCreate() {
 		super.onCreate()
-		lazyWakeLock.value.acquire()
+		wakeLock.value.acquire()
 	}
 
 	@Synchronized
 	override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-
 		val action = intent.action
 
 		if (cancelSyncAction == action) {
@@ -324,7 +326,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 		}
 
 		isSyncRunning = true
-		synchronizationDisposable = lazyStoredFilesSynchronization.value
+		synchronizationDisposable = lazyStoredFilesSynchronization
 			.streamFileSynchronization()
 			.subscribe(::finish, ::finish)
 
@@ -337,10 +339,6 @@ class StoredSyncService : Service(), PostSyncNotification {
 	}
 
 	private fun finish() {
-		lazySharedPreferences.value
-			.edit()
-			.putLong(lastSyncTime, DateTime.now().millis)
-			.apply()
 		stopSelf()
 	}
 
@@ -357,23 +355,23 @@ class StoredSyncService : Service(), PostSyncNotification {
 
 		if (onWifiStateChangedReceiver.isInitialized()) unregisterReceiver(onWifiStateChangedReceiver.value)
 		if (onPowerDisconnectedReceiver.isInitialized()) unregisterReceiver(onPowerDisconnectedReceiver.value)
-		if (lazyWakeLock.isInitialized()) lazyWakeLock.value.release()
+		if (wakeLock.isInitialized()) wakeLock.value.release()
 
 		stopForeground(true)
 
 		super.onDestroy()
 	}
 
-	override fun onBind(intent: Intent): IBinder? = lazyBinder.value
+	override fun onBind(intent: Intent): IBinder = lazyBinder
 
-	private val lazyBinder = lazy { GenericBinder(this) }
+	private val lazyBinder by lazy { GenericBinder(this) }
 
 	override fun notify(notificationText: String?) {
-		val notifyBuilder = NotificationCompat.Builder(this, lazyActiveNotificationChannelId.value)
+		val notifyBuilder = NotificationCompat.Builder(this, lazyActiveNotificationChannelId)
 		notifyBuilder
 			.setSmallIcon(R.drawable.ic_stat_water_drop_white)
-			.setContentIntent(lazyShowDownloadsIntent.value)
-			.addAction(0, getString(R.string.stop_sync_button), lazyCancelIntent.value)
+			.setContentIntent(lazyShowDownloadsIntent)
+			.addAction(0, getString(R.string.stop_sync_button), lazyCancelIntent)
 			.setOngoing(true)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.setPriority(NotificationCompat.PRIORITY_MIN)

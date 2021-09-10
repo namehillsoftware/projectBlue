@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.FakeMessageSender
+import com.lasthopesoftware.resources.FakeMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
@@ -21,7 +21,7 @@ class WhenBroadcastingTheFileProgress {
 
 	companion object {
 		private val receivedIntent = lazy {
-			val messageBus = FakeMessageSender(ApplicationProvider.getApplicationContext())
+			val messageBus = FakeMessageBus(ApplicationProvider.getApplicationContext())
 			val trackPositionBroadcaster = TrackPositionBroadcaster(
 				messageBus,
 				object : PlayingFile {

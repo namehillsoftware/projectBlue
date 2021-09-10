@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.scheduling
 
 import android.content.Context
 import android.os.AsyncTask
-import androidx.preference.PreferenceManager
 import androidx.work.*
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
@@ -16,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServ
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ExecutionException
@@ -47,16 +47,18 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 	companion object {
 		private val workName = MagicPropertyBuilder.buildMagicPropertyName(SyncSchedulingWorker::class.java, "")
 		@JvmStatic
-		fun scheduleSync(context: Context): Operation {
-			val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncSchedulingWorker::class.java, 3, TimeUnit.HOURS)
-			periodicWorkRequest.setConstraints(constraints(context))
-			return WorkManager.getInstance(context)
-				.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build())
+		fun scheduleSync(context: Context): Promise<Operation> {
+			return constraints(context).then { c ->
+				val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncSchedulingWorker::class.java, 3, TimeUnit.HOURS)
+				periodicWorkRequest.setConstraints(c)
+				WorkManager.getInstance(context)
+					.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build())
+			}
 		}
 
-		private fun constraints(context: Context): Constraints {
-			val manager = PreferenceManager.getDefaultSharedPreferences(context)
-			return SyncWorkerConstraints(manager).currentConstraints
+		private fun constraints(context: Context): Promise<Constraints> {
+			val applicationSettings = context.getApplicationSettingsRepository()
+			return SyncWorkerConstraints(applicationSettings).currentConstraints
 		}
 
 		fun promiseIsScheduled(context: Context): Promise<Boolean> {

@@ -4,50 +4,65 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.IntDef
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 
 class SelectedConnection(
 	private val localBroadcastManager: SendMessages,
-	private val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider,
+	private val selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryConnections: ManageConnectionSessions
-) : (BuildingConnectionStatus) -> Unit {
+) {
 
-	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> {
-		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
-			?: return Promise.empty()
+	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> =
+		selectedLibraryIdentifierProvider.selectedLibraryId.eventually { selectedLibraryId ->
+			selectedLibraryId
+				?.let {
+					libraryConnections.promiseTestedLibraryConnection(selectedLibraryId)
+						.also {
+							it.progress.then { progress ->
+								if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
+									if (progress != null) doStateChange(progress)
+									it.updates(::doStateChange)
+								}
+							}
+						}
+				}
+				.keepPromise()
+		}
 
-		return libraryConnections
-			.promiseTestedLibraryConnection(newSelectedLibraryId)
-			.updates(this)
-	}
+	fun isSessionConnectionActive(): Promise<Boolean> =
+		selectedLibraryIdentifierProvider.selectedLibraryId.then { id ->
+			id?.let(libraryConnections::isConnectionActive) ?: false
+		}
 
-	fun isSessionConnectionActive(): Boolean {
-		val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
-			?: return false
-
-		return libraryConnections.isConnectionActive(selectedLibraryId)
-	}
-
-	fun promiseSessionConnection(): Promise<IConnectionProvider?> {
-		val newSelectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId
-			?: return Promise.empty()
-
-		return libraryConnections
-			.promiseLibraryConnection(newSelectedLibraryId)
-			.updates(this)
-	}
-
-	override fun invoke(connectionStatus: BuildingConnectionStatus) = doStateChange(connectionStatus)
+	fun promiseSessionConnection(): Promise<IConnectionProvider?> =
+		selectedLibraryIdentifierProvider.selectedLibraryId.eventually { selectedLibraryId ->
+			selectedLibraryId
+				?.let {
+					libraryConnections
+						.promiseLibraryConnection(selectedLibraryId)
+						.also {
+							it.progress.then { progress ->
+								if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
+									if (progress != null) doStateChange(progress)
+									it.updates(::doStateChange)
+								}
+							}
+						}
+				}
+				.keepPromise()
+		}
 
 	private fun doStateChange(status: BuildingConnectionStatus) {
 		val broadcastIntent = Intent(buildSessionBroadcast)
@@ -101,7 +116,7 @@ class SelectedConnection(
 			val applicationContext = context.applicationContext
 			return SelectedConnection(
 				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
-				SelectedBrowserLibraryIdentifierProvider(applicationContext),
+				SelectedBrowserLibraryIdentifierProvider(applicationContext.getApplicationSettingsRepository()),
 				ConnectionSessionManager.get(applicationContext)
 			).apply { selectedConnectionInstance = this }
 		}

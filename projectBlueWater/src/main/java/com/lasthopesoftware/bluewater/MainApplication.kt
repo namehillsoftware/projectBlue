@@ -26,6 +26,7 @@ import ch.qos.logback.core.util.StatusPrinter
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
@@ -33,14 +34,20 @@ import com.lasthopesoftware.bluewater.client.browsing.library.request.write.Stor
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.promiseIsScheduled
+import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.scheduleSync
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
@@ -48,10 +55,11 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 open class MainApplication : MultiDexApplication() {
-	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
-	private val storageReadPermissionsRequestNotificationBuilderLazy = lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
-	private val storageWritePermissionsRequestNotificationBuilderLazy = lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
-	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
+	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
+	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
@@ -70,14 +78,12 @@ open class MainApplication : MultiDexApplication() {
 			isWorkManagerInitialized = true
 		}
 
-		promiseIsScheduled(this)
-			.then { isScheduled ->
-				if (!isScheduled) scheduleSync(this)
-			}
+		SyncSchedulingWorker.promiseIsScheduled(this)
+			.then { isScheduled -> if (!isScheduled) scheduleSync(this) }
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		localBroadcastManagerLazy.value.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
 				if (libraryId < 0) return
@@ -104,27 +110,39 @@ open class MainApplication : MultiDexApplication() {
 			}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		localBroadcastManagerLazy.value.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsLibraryId, -1)
 				if (libraryId < 0) return
-				notificationManagerLazy.value.notify(
+				notificationManagerLazy.notify(
 					336,
-					storageReadPermissionsRequestNotificationBuilderLazy.value
+					storageReadPermissionsRequestNotificationBuilderLazy
 						.buildReadPermissionsRequestNotification(libraryId))
 			}
 		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded))
 
-		localBroadcastManagerLazy.value.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.WritePermissionsLibraryId, -1)
 				if (libraryId < 0) return
-				notificationManagerLazy.value.notify(
+				notificationManagerLazy.notify(
 					396,
-					storageWritePermissionsRequestNotificationBuilderLazy.value
+					storageWritePermissionsRequestNotificationBuilderLazy
 						.buildWritePermissionsRequestNotification(libraryId))
 			}
 		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded))
+
+		messageBus.registerReceiver(
+			ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)),
+			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+		)
+
+		messageBus.registerReceiver(
+			SelectedConnectionSettingsChangeReceiver(
+				SelectedBrowserLibraryIdentifierProvider(applicationSettings),
+				messageBus),
+			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+		)
 
 		val connectionDependentReceiverRegistrations = listOf(
 			UpdatePlayStatsOnCompleteRegistration(),
@@ -132,8 +150,8 @@ open class MainApplication : MultiDexApplication() {
 			PlaybackFileStoppedScrobblerRegistration(),
 			PebbleFileChangedNotificationRegistration())
 
-		localBroadcastManagerLazy.value.registerReceiver(
-			SessionConnectionRegistrationsMaintainer(localBroadcastManagerLazy.value, connectionDependentReceiverRegistrations),
+		messageBus.registerReceiver(
+			SessionConnectionRegistrationsMaintainer(messageBus, connectionDependentReceiverRegistrations),
 			IntentFilter(SelectedConnection.buildSessionBroadcast))
 	}
 
@@ -187,7 +205,7 @@ open class MainApplication : MultiDexApplication() {
 
 			// UNCOMMENT TO TWEAK OPTIONAL SETTINGS
 		    // excluding caller data (used for stack traces) improves appender's performance
-			asyncAppender.isIncludeCallerData = !DebugFlag.getInstance().isDebugCompilation
+			asyncAppender.isIncludeCallerData = !DebugFlag.isDebugCompilation
 
 			asyncAppender.start()
 			rootLogger.addAppender(asyncAppender)
@@ -197,7 +215,7 @@ open class MainApplication : MultiDexApplication() {
 		val logger = LoggerFactory.getLogger(javaClass)
 		logger.info("Uncaught exceptions logging to custom uncaught exception handler.")
 
-		if (!DebugFlag.getInstance().isDebugCompilation) return
+		if (!DebugFlag.isDebugCompilation) return
 
 		rootLogger.level = Level.DEBUG
 		logger.info("DEBUG_MODE active")

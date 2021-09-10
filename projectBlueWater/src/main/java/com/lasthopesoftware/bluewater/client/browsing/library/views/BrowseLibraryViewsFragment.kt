@@ -17,9 +17,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -102,10 +104,10 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 	private val selectedBrowserLibrary: Promise<Library?>
 		get() {
 			val context = context ?: return Promise.empty()
-			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(context)
-			val libraryProvider = LibraryRepository(context)
-			val selectedLibraryId = selectedLibraryIdentifierProvider.selectedLibraryId ?: return Promise.empty()
-			return libraryProvider.getLibrary(selectedLibraryId)
+			val applicationSettingsRepository = context.getApplicationSettingsRepository()
+			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository)
+			val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(selectedLibraryIdentifierProvider, LibraryRepository(context))
+			return selectedBrowserLibraryProvider.browserLibrary
 		}
 
 	private inner class CreateVisibleLibraryView(
@@ -130,11 +132,13 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 				.then { it?.let { library ->
 					getInstance(context)
 						.promiseSessionConnection()
-						.eventually { c -> ItemProvider.provide(c, library.selectedView) }
+						.eventually { c ->
+							c?.let(::ItemProvider)?.promiseItems(library.selectedView) ?: Promise(emptyList())
+						}
 						.eventually(fillVisibleViews.value)
 						.run {
 							if (savedInstanceState == null) this
-							else this.eventually<Unit>(LoopedInPromise.response({
+							else eventually(LoopedInPromise.response({
 								val savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1)
 								if (savedSelectedView < 0 || savedSelectedView != library.selectedView) return@response
 

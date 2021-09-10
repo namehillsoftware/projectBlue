@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import okhttp3.OkHttpClient
 import org.joda.time.Duration
 import java.util.*
@@ -84,6 +83,7 @@ class ConnectionSessionManager(
 				cancel()
 				must { synchronized(buildingConnectionPromiseSync) {
 					cachedConnectionProviders.remove(libraryId)
+					promisedConnectionProvidersCache.remove(libraryId)
 				} }
 			} ?: cachedConnectionProviders.remove(libraryId)
 		}
@@ -93,20 +93,12 @@ class ConnectionSessionManager(
 		cachedConnectionProviders[libraryId] != null
 
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
+		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 			init {
-				val cancellationProxy = CancellationProxy()
-				respondToCancellation(cancellationProxy)
-
 				val promisedLibraryConnection = libraryConnections.promiseLibraryConnection(libraryId)
-				cancellationProxy.doCancel(promisedLibraryConnection)
+				proxy(promisedLibraryConnection)
 
-				promisedLibraryConnection
-					.updates(::reportProgress)
-					.then({ c ->
-						if (c != null) cachedConnectionProviders[libraryId] = c
-						resolve(c)
-					}, { reject(it) })
+				promisedLibraryConnection.then { c -> if (c != null) cachedConnectionProviders[libraryId] = c }
 			}
 		}
 

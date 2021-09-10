@@ -7,8 +7,8 @@ import androidx.core.app.NotificationCompat;
 
 import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedSessionFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -25,7 +25,7 @@ implements
 	AutoCloseable {
 
 	private final IConnectionProvider connectionProvider;
-	private final CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider;
+	private final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider;
 	private final ImageProvider imageProvider;
 	private final Context context;
 	private final SetupMediaStyleNotifications mediaStyleNotificationSetup;
@@ -50,11 +50,11 @@ implements
 
 	private ViewStructure viewStructure;
 
-	public NowPlayingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationSetup, IConnectionProvider connectionProvider, CachedSessionFilePropertiesProvider cachedSessionFilePropertiesProvider, ImageProvider imageProvider) {
+	public NowPlayingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationSetup, IConnectionProvider connectionProvider, ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider, ImageProvider imageProvider) {
 		this.context = context;
 		this.mediaStyleNotificationSetup = mediaStyleNotificationSetup;
 		this.connectionProvider = connectionProvider;
-		this.cachedSessionFilePropertiesProvider = cachedSessionFilePropertiesProvider;
+		this.scopedCachedFilePropertiesProvider = scopedCachedFilePropertiesProvider;
 		this.imageProvider = imageProvider;
 	}
 
@@ -74,7 +74,7 @@ implements
 			viewStructure.promisedNowPlayingImage = imageProvider.promiseFileBitmap(serviceFile);
 
 		if (viewStructure.promisedFileProperties == null)
-			viewStructure.promisedFileProperties = cachedSessionFilePropertiesProvider.promiseFileProperties(serviceFile);
+			viewStructure.promisedFileProperties = scopedCachedFilePropertiesProvider.promiseFileProperties(serviceFile);
 
 		return viewStructure.promisedFileProperties
 			.eventually(fileProperties -> {

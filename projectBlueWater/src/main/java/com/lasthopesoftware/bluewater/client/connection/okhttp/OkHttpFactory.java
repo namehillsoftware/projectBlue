@@ -8,8 +8,6 @@ import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
 import com.namehillsoftware.lazyj.CreateAndHold;
 import com.namehillsoftware.lazyj.Lazy;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -130,12 +128,8 @@ public class OkHttpFactory implements ProvideOkHttpClients {
 	private static HostnameVerifier getHostnameVerifier(IUrlProvider urlProvider) {
 		final HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
 
-		try {
-			return urlProvider.getCertificateFingerprint().length == 0
-				? defaultHostnameVerifier
-				: new AdditionalHostnameVerifier(new URL(urlProvider.getBaseUrl()).getHost(), defaultHostnameVerifier);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
+		return urlProvider.getCertificateFingerprint().length == 0
+			? defaultHostnameVerifier
+			: new AdditionalHostnameVerifier(urlProvider.getBaseUrl().getHost(), defaultHostnameVerifier);
 	}
 }

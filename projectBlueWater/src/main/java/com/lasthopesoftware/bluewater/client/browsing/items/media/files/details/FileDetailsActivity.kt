@@ -16,18 +16,19 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedSessionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView
@@ -59,14 +60,14 @@ class FileDetailsActivity : AppCompatActivity() {
 		}
 	}
 
-	private val lazyImageProvider = lazy {
-		val selectedLibraryIdentifierProvider: ISelectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(this)
+	private val lazyImageProvider by lazy {
+		val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository())
 		ImageProvider(
 			StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
 			MemoryCachedImageAccess.getInstance(this))
 	}
 
-	private val defaultImageProvider = lazy { DefaultImageProvider(this) }
+	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 	private var fileKey = -1
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,31 +93,36 @@ class FileDetailsActivity : AppCompatActivity() {
 		fileNameTextViewFinder.findView().text = getText(R.string.lbl_loading)
 		artistTextViewFinder.findView().text = getText(R.string.lbl_loading)
 
-		SelectedConnection.getInstance(this).promiseSessionConnection()
-			.then { c -> FormattedSessionFilePropertiesProvider(c, FilePropertyCache.getInstance()) }
-			.eventually { f -> f.promiseFileProperties(ServiceFile(fileKey)) }
-			.eventually(LoopedInPromise.response({ fileProperties ->
-				setFileNameFromProperties(fileProperties)
+		val selectedConnectionProvider = SelectedConnectionProvider(this)
+		selectedConnectionProvider.promiseSessionConnection()
+			.eventually { connectionProvider ->
+				connectionProvider
+					?.let { c -> FormattedScopedFilePropertiesProvider(c, ScopedRevisionProvider(c), FilePropertyCache.getInstance()) }
+					?.promiseFileProperties(ServiceFile(fileKey))
+					?.eventually(LoopedInPromise.response({ fileProperties ->
+						setFileNameFromProperties(fileProperties)
 
-				val artist = fileProperties[KnownFileProperties.ARTIST]
-				artistTextViewFinder.findView().text = artist
+						val artist = fileProperties[KnownFileProperties.ARTIST]
+						artistTextViewFinder.findView().text = artist
 
-				val filePropertyList = fileProperties.entries
-					.filter { e -> !propertiesToSkip.contains(e.key) }
-					.sortedBy { e -> e.key }
+						val filePropertyList = fileProperties.entries
+							.filter { e -> !propertiesToSkip.contains(e.key) }
+							.sortedBy { e -> e.key }
 
-				lvFileDetails.findView().adapter = FileDetailsAdapter(this, R.id.linFileDetailsRow, filePropertyList)
-				pbLoadingFileDetails.findView().visibility = View.INVISIBLE
-				lvFileDetails.findView().visibility = View.VISIBLE
-			}, this))
+						lvFileDetails.findView().adapter = FileDetailsAdapter(this, R.id.linFileDetailsRow, filePropertyList)
+						pbLoadingFileDetails.findView().visibility = View.INVISIBLE
+						lvFileDetails.findView().visibility = View.VISIBLE
+					}, this))
+					?: Unit.toPromise()
+			}
 			.excuse(HandleViewIoException(this) { setView(fileKey) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 
-		lazyImageProvider.value
+		lazyImageProvider
 			.promiseFileBitmap(ServiceFile(fileKey))
 			.eventually { bitmap ->
-				bitmap?.toPromise() ?: defaultImageProvider.value.promiseFileBitmap()
+				bitmap?.toPromise() ?: defaultImageProvider.promiseFileBitmap()
 			}
 			.eventually(LoopedInPromise.response({ result ->
 				imgFileThumbnailBuilder.getObject().setImageBitmap(result)

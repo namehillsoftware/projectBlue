@@ -21,7 +21,6 @@ class WhenGettingATestedLibraryConnection {
 
 	companion object {
 		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-		private val expectedConnectionProvider = mockk<IConnectionProvider>()
 		private var connectionProvider: IConnectionProvider? = null
 		private var secondConnectionProvider: IConnectionProvider? = null
 
@@ -49,7 +48,7 @@ class WhenGettingATestedLibraryConnection {
 			val futureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(libraryId)
-					.updates(statuses::add)
+					.apply { updates(statuses::add) }
 					.toFuture()
 
 			firstDeferredConnectionProvider.apply {
@@ -64,6 +63,12 @@ class WhenGettingATestedLibraryConnection {
 
 			connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
 
+			val secondFutureConnectionProvider =
+				connectionSessionManager
+					.promiseTestedLibraryConnection(libraryId)
+					.apply { updates(statuses::add) }
+					.toFuture()
+
 			secondDeferredConnectionProvider.apply {
 				sendProgressUpdates(
 					BuildingConnectionStatus.GettingLibrary,
@@ -71,15 +76,10 @@ class WhenGettingATestedLibraryConnection {
 					BuildingConnectionStatus.BuildingConnectionComplete
 				)
 
-				sendResolution(expectedConnectionProvider)
+				sendResolution(mockk())
 			}
 
-			secondConnectionProvider =
-				connectionSessionManager
-					.promiseTestedLibraryConnection(libraryId)
-					.updates(statuses::add)
-					.toFuture()
-					.get()
+			secondConnectionProvider = secondFutureConnectionProvider.get()
 		}
 	}
 

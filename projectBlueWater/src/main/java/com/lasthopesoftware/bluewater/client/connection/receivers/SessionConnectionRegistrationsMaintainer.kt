@@ -3,16 +3,16 @@ package com.lasthopesoftware.bluewater.client.connection.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 /**
  * Created by david on 3/19/17.
  */
-class SessionConnectionRegistrationsMaintainer(private val localBroadcastManager: LocalBroadcastManager, private val connectionDependentReceiverRegistrations: Collection<IConnectionDependentReceiverRegistration>) : BroadcastReceiver(), AutoCloseable, ImmediateResponse<List<BroadcastReceiver>, Unit> {
+class SessionConnectionRegistrationsMaintainer(private val messageRegistrar: RegisterForMessages, private val connectionDependentReceiverRegistrations: Collection<IConnectionDependentReceiverRegistration>) : BroadcastReceiver(), AutoCloseable, ImmediateResponse<List<BroadcastReceiver>, Unit> {
 	private var registrationPromise = Promise(emptyList<BroadcastReceiver>())
 
 	@Synchronized
@@ -27,7 +27,7 @@ class SessionConnectionRegistrationsMaintainer(private val localBroadcastManager
 				connectionDependentReceiverRegistrations.map { registration ->
 					val receiver = registration.registerWithConnectionProvider(connectionProvider)
 					for (i in registration.forIntents())
-						localBroadcastManager.registerReceiver(receiver, i)
+						messageRegistrar.registerReceiver(receiver, i)
 
 					receiver
 				}
@@ -40,6 +40,6 @@ class SessionConnectionRegistrationsMaintainer(private val localBroadcastManager
 
 	override fun respond(registeredReceivers: List<BroadcastReceiver>) {
 		for (receiver in registeredReceivers)
-			localBroadcastManager.unregisterReceiver(receiver)
+			messageRegistrar.unregisterReceiver(receiver)
 	}
 }

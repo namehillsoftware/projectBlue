@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer
 
-import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.PlaybackParameters
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.Timeline
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
@@ -18,7 +16,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
-class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : PlayableFile, PlayingFile, Player.EventListener, Runnable {
+class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : PlayableFile, PlayingFile, Player.Listener, Runnable {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java)
@@ -74,10 +72,6 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 		exoPlayer.release()
 	}
 
-	override fun onTimelineChanged(timeline: Timeline, manifest: Any?, reason: Int) {
-		logger.debug("Timeline changed")
-	}
-
 	override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {
 		logger.debug("Tracks changed")
 	}
@@ -97,14 +91,10 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 		logger.debug("Repeat mode has changed")
 	}
 
-	override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {}
-	override fun onPlayerError(error: ExoPlaybackException) {}
-	override fun onPositionDiscontinuity(reason: Int) {}
 	override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
 		logger.debug("Playback parameters have changed")
 	}
 
-	override fun onSeekProcessed() {}
 	override fun run() {
 		close()
 	}

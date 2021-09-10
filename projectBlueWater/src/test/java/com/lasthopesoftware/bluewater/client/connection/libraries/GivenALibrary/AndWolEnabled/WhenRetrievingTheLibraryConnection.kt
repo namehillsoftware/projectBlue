@@ -21,26 +21,6 @@ import org.junit.Test
 import java.util.*
 
 class WhenRetrievingTheLibraryConnection {
-	@Test
-	fun thenTheLibraryIsWoken() {
-		assertThat(isLibraryServerWoken).isTrue
-	}
-
-	@Test
-	fun thenTheConnectionIsCorrect() {
-		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
-	}
-
-	@Test
-	fun thenGettingLibraryIsBroadcast() {
-		assertThat(statuses)
-			.containsExactly(
-				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.SendingWakeSignal,
-				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionComplete
-			)
-	}
 
 	companion object {
 		private val urlProvider = mockk<IUrlProvider>()
@@ -78,11 +58,35 @@ class WhenRetrievingTheLibraryConnection {
 			val futureConnectionProvider =
 				libraryConnectionProvider
 					.promiseLibraryConnection(LibraryId(3))
-					.updates(statuses::add)
+					.apply {
+						progress.then(statuses::add)
+						updates(statuses::add)
+					}
 					.toFuture()
 
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()
 		}
+	}
+
+	@Test
+	fun thenTheLibraryIsWoken() {
+		assertThat(isLibraryServerWoken).isTrue
+	}
+
+	@Test
+	fun thenTheConnectionIsCorrect() {
+		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
+	}
+
+	@Test
+	fun thenGettingLibraryIsBroadcast() {
+		assertThat(statuses)
+			.containsExactly(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.SendingWakeSignal,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
 	}
 }

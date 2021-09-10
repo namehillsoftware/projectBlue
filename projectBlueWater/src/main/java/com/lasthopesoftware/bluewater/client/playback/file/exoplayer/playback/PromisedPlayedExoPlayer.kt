@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback
 
 import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.source.TrackGroupArray
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
@@ -18,7 +16,7 @@ import org.slf4j.LoggerFactory
 import java.io.EOFException
 import java.net.ProtocolException
 
-class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private val progressReader: ExoPlayerFileProgressReader, private val handler: ExoPlayerPlaybackHandler) : ProgressedPromise<Duration, PlayedFile>(), PlayedFile, Player.EventListener {
+class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private val progressReader: ExoPlayerFileProgressReader, private val handler: ExoPlayerPlaybackHandler) : ProgressedPromise<Duration, PlayedFile>(), PlayedFile, Player.Listener {
 
 	companion object {
 		private val minutesAndSecondsFormatter = Lazy {
@@ -68,7 +66,7 @@ class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private
 		resolve(this)
 	}
 
-	override fun onPlayerError(error: ExoPlaybackException) {
+	override fun onPlayerError(error: PlaybackException) {
 		removeListener()
 		when (val cause = error.cause) {
 			is EOFException -> {
@@ -103,13 +101,4 @@ class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private
 	}
 
 	private fun removeListener() = exoPlayer.removeListener(this)
-
-	override fun onTimelineChanged(timeline: Timeline, manifest: Any?, reason: Int) {}
-	override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {}
-	override fun onLoadingChanged(isLoading: Boolean) {}
-	override fun onRepeatModeChanged(repeatMode: Int) {}
-	override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {}
-	override fun onPositionDiscontinuity(reason: Int) {}
-	override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {}
-	override fun onSeekProcessed() {}
 }

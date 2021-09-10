@@ -10,21 +10,21 @@ import com.google.android.exoplayer2.trackselection.TrackSelector
 import com.namehillsoftware.handoff.promises.Promise
 
 interface PromisingExoPlayer {
-	fun getAudioComponent(): Promise<Player.AudioComponent?>
+	fun getAudioComponent(): Promise<ExoPlayer.AudioComponent?>
 
-	fun getVideoComponent(): Promise<Player.VideoComponent?>
+	fun getVideoComponent(): Promise<ExoPlayer.VideoComponent?>
 
-	fun getTextComponent(): Promise<Player.TextComponent?>
+	fun getTextComponent(): Promise<ExoPlayer.TextComponent?>
 
-	fun getMetadataComponent(): Promise<Player.MetadataComponent?>
+	fun getMetadataComponent(): Promise<ExoPlayer.MetadataComponent?>
 
-	fun getDeviceComponent(): Promise<Player.DeviceComponent?>
+	fun getDeviceComponent(): Promise<ExoPlayer.DeviceComponent?>
 
 	fun getApplicationLooper(): Promise<Looper>
 
-	fun addListener(listener: Player.EventListener): Promise<PromisingExoPlayer>
+	fun addListener(listener: Player.Listener): Promise<PromisingExoPlayer>
 
-	fun removeListener(listener: Player.EventListener): Promise<PromisingExoPlayer>
+	fun removeListener(listener: Player.Listener): Promise<PromisingExoPlayer>
 
 	fun setMediaItems(mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer>
 
@@ -92,15 +92,15 @@ interface PromisingExoPlayer {
 
 	fun seekTo(windowIndex: Int, positionMs: Long): Promise<PromisingExoPlayer>
 
-	fun hasPrevious(): Promise<Boolean>
+	fun hasPreviousWindow(): Promise<Boolean>
 
-	fun previous(): Promise<PromisingExoPlayer>
+	fun seekToPreviousWindow(): Promise<PromisingExoPlayer>
 
-	fun hasNext(): Promise<Boolean>
+	fun hasNextWindow(): Promise<Boolean>
 
-	fun next(): Promise<PromisingExoPlayer>
+	fun seekToNextWindow(): Promise<PromisingExoPlayer>
 
-	fun setPlaybackParameters(playbackParameters: PlaybackParameters?): Promise<PromisingExoPlayer>
+	fun setPlaybackParameters(playbackParameters: PlaybackParameters): Promise<PromisingExoPlayer>
 
 	fun getPlaybackParameters(): Promise<PlaybackParameters>
 

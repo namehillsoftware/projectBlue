@@ -4,9 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
-import com.google.android.exoplayer2.source.TrackGroupArray
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HandlerDispatchingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
@@ -35,8 +32,8 @@ internal class PreparedExoPlayerPromise(
 	private val prepareAt: Duration
 ) :
 	Promise<PreparedPlayableFile>(),
-	Player.EventListener,
-	ImmediateResponse<Array<MediaCodecAudioRenderer>, Unit>,
+	Player.Listener,
+	ImmediateResponse<Array<Renderer>, Unit>,
 	Runnable {
 
 	companion object {
@@ -46,26 +43,27 @@ internal class PreparedExoPlayerPromise(
 	private val cancellationToken = CancellationToken()
 
 	private var exoPlayer: PromisingExoPlayer? = null
-	private var audioRenderers: Array<MediaCodecAudioRenderer> = emptyArray()
+	private var audioRenderers: Array<Renderer> = emptyArray()
 	private var bufferingExoPlayer: BufferingExoPlayer? = null
 	private var isResolved = false
 
 	init {
-		initialize()
+		try {
+			initialize()
+		} catch (e: Throwable) {
+			reject(e)
+		}
 	}
 
 	private fun initialize() {
 		respondToCancellation(this)
 
-		if (cancellationToken.isCancelled) {
-			reject(CancellationException())
-			return
-		}
+		if (cancellationToken.isCancelled) return
 
 		renderersFactory.newRenderers().then(this, ::handleError)
 	}
 
-	override fun respond(renderers: Array<MediaCodecAudioRenderer>) {
+	override fun respond(renderers: Array<Renderer>) {
 		audioRenderers = renderers
 		val exoPlayerBuilder = ExoPlayer.Builder(context, *renderers)
 			.setLoadControl(loadControl)
@@ -126,7 +124,7 @@ internal class PreparedExoPlayerPromise(
 				bufferingExoPlayer))
 	}
 
-	override fun onPlayerError(error: ExoPlaybackException) {
+	override fun onPlayerError(error: PlaybackException) {
 		handleError(error)
 	}
 
@@ -149,20 +147,4 @@ internal class PreparedExoPlayerPromise(
 			else -> reject(error)
 		}
 	}
-
-	override fun onTimelineChanged(timeline: Timeline, manifest: Any?, reason: Int) {}
-
-	override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {}
-
-	override fun onLoadingChanged(isLoading: Boolean) {}
-
-	override fun onRepeatModeChanged(repeatMode: Int) {}
-
-	override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {}
-
-	override fun onPositionDiscontinuity(reason: Int) {}
-
-	override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {}
-
-	override fun onSeekProcessed() {}
 }

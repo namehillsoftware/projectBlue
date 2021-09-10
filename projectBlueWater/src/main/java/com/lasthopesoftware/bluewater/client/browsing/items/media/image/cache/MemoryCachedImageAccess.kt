@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.Messenger
@@ -35,7 +36,10 @@ class MemoryCachedImageAccess(private val sourceImages: GetRawImages, private va
 			val imageCacheKeyLookup = ImageCacheKeyLookup(CachedFilePropertiesProvider(
 				libraryConnectionProvider,
 				filePropertiesCache,
-				FilePropertiesProvider(libraryConnectionProvider, filePropertiesCache)))
+				FilePropertiesProvider(
+					libraryConnectionProvider,
+					LibraryRevisionProvider(libraryConnectionProvider),
+					filePropertiesCache)))
 
 			instance = MemoryCachedImageAccess(
 				DiskCacheImageAccess(

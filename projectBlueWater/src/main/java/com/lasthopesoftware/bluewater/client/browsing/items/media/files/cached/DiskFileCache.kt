@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
@@ -74,7 +75,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 						!returnFile.exists() -> {
 							logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
 
-							deleteCachedFile(cachedFile.id);
+							deleteCachedFile(cachedFile.id)
 							null
 						}
 						// Remove the cached file and return null if it's past its expired time
@@ -108,28 +109,38 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 			}
 	}
 
-	private fun deleteCachedFile(cachedFileId: Long): Promise<Long> {
-		return QueuedPromise(MessageWriter {
+	private fun deleteCachedFile(cachedFileId: Long): Promise<Long> =
+		DatabasePromise {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 						logger.info("Deleting cached file with id $cachedFileId")
-						if (logger.isDebugEnabled) logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper))
+						if (logger.isDebugEnabled) logger.debug(
+							"Cached file count: " + getTotalCachedFileCount(
+								repositoryAccessHelper
+							)
+						)
 						val executionResult = repositoryAccessHelper
 							.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 							.addParameter("id", cachedFileId)
 							.execute()
-						if (logger.isDebugEnabled) logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper))
+						if (logger.isDebugEnabled) logger.debug(
+							"Cached file count: " + getTotalCachedFileCount(
+								repositoryAccessHelper
+							)
+						)
 						closeableTransaction.setTransactionSuccessful()
 						executionResult
 					}
 				} catch (sqlException: SQLException) {
-					logger.warn("There was an error trying to delete the cached file with id $cachedFileId", sqlException)
+					logger.warn(
+						"There was an error trying to delete the cached file with id $cachedFileId",
+						sqlException
+					)
 				}
 			}
 			-1L
-		}, RepositoryAccessHelper.databaseExecutor())
-	}
+		}
 
 	private val freeDiskSpace: Long
 		get() = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration).usableSpace

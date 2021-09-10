@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.selected.GivenASelected
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -14,7 +14,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
-import com.lasthopesoftware.resources.FakeMessageSender
+import com.lasthopesoftware.resources.FakeMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -23,7 +24,7 @@ import org.junit.Test
 class WhenRetrievingTheSelectedConnection : AndroidContext() {
 
 	companion object {
-		private val fakeMessageSender = lazy { FakeMessageSender(ApplicationProvider.getApplicationContext()) }
+		private val fakeMessageSender = lazy { FakeMessageBus(ApplicationProvider.getApplicationContext()) }
 		private var connectionProvider: IConnectionProvider? = null
 	}
 
@@ -32,8 +33,8 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 		val libraryConnections = mockk<ManageConnectionSessions>()
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
-		val libraryIdentifierProvider = mockk<ISelectedLibraryIdentifierProvider>()
-		every { libraryIdentifierProvider.selectedLibraryId } returns LibraryId(2)
+		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
+		every { libraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(2))
 		SelectedConnectionReservation().use {
 			val sessionConnection = SelectedConnection(fakeMessageSender.value, libraryIdentifierProvider, libraryConnections)
 			val futureConnectionProvider = FuturePromise(sessionConnection.promiseSessionConnection())

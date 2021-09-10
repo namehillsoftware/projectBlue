@@ -5,9 +5,9 @@ import android.database.SQLException;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
+import com.lasthopesoftware.bluewater.repository.DatabasePromise;
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
 import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +25,10 @@ public class DiskFileAccessTimeUpdater implements IDiskFileAccessTimeUpdater {
 
 	@Override
 	public Promise<CachedFile> promiseFileAccessedUpdate(CachedFile cachedFile) {
-		return new QueuedPromise<>(() -> {
+		return new DatabasePromise<>(() -> {
 			doFileAccessedUpdate(cachedFile.getId());
 			return cachedFile;
-		}, RepositoryAccessHelper.databaseExecutor());
+		});
 	}
 
 	private void doFileAccessedUpdate(final long cachedFileId) {

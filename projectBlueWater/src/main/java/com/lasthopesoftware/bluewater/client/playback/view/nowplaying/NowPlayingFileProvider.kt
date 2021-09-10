@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingFileProvider private constructor(private val nowPlayingRepository: INowPlayingRepository) : INowPlayingFileProvider {
@@ -17,17 +18,19 @@ class NowPlayingFileProvider private constructor(private val nowPlayingRepositor
 
 	companion object {
 		@JvmStatic
-		fun fromActiveLibrary(context: Context): NowPlayingFileProvider? {
+		fun fromActiveLibrary(context: Context): Promise<NowPlayingFileProvider?> {
 			val libraryRepository = LibraryRepository(context)
-			val selectedBrowserLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(context)
-			val libraryId = selectedBrowserLibraryIdentifierProvider.selectedLibraryId ?: return null
-
-			return NowPlayingFileProvider(
-				NowPlayingRepository(
-					SpecificLibraryProvider(
-						libraryId,
-						libraryRepository),
-					libraryRepository))
+			val applicationSettingsRepository = context.getApplicationSettingsRepository()
+			val selectedBrowserLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository)
+			return selectedBrowserLibraryIdentifierProvider.selectedLibraryId
+				.then { l ->
+					l?.let {
+						NowPlayingFileProvider(
+							NowPlayingRepository(
+								SpecificLibraryProvider(it, libraryRepository),
+								libraryRepository))
+					}
+				}
 		}
 	}
 }

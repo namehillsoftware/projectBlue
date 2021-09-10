@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
-import com.lasthopesoftware.resources.FakeMessageSender
+import com.lasthopesoftware.resources.FakeMessageBus
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -35,7 +35,7 @@ class WhenSynchronizing : AndroidContext() {
 			StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4)
 		)
 		private val expectedStoredFileJobs = storedFiles.filter { f: StoredFile -> f.serviceId != 114 }.toList()
-		private val fakeMessageSender = FakeMessageSender(ApplicationProvider.getApplicationContext())
+		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
 	}
 
 	override fun before() {

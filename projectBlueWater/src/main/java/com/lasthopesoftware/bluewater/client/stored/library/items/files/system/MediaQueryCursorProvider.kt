@@ -12,15 +12,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
 import java.util.*
 
-class MediaQueryCursorProvider(context: Context, cachedFilePropertiesProvider: CachedFilePropertiesProvider) : IMediaQueryCursorProvider, ImmediateResponse<Map<String, String>, Cursor?> {
-	private val context: Context
+class MediaQueryCursorProvider
+(
+	private val context: Context,
 	private val cachedFilePropertiesProvider: CachedFilePropertiesProvider
-
-	init {
-		requireNotNull(context) { "Context cannot be null" }
-		this.context = context
-		this.cachedFilePropertiesProvider = cachedFilePropertiesProvider
-	}
+) : IMediaQueryCursorProvider, ImmediateResponse<Map<String, String>, Cursor?> {
 
 	override fun getMediaQueryCursor(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Cursor?> {
 		return cachedFilePropertiesProvider

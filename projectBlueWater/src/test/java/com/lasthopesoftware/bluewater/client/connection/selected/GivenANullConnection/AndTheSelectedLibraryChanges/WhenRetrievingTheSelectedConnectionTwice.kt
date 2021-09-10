@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConn
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -13,7 +13,8 @@ import com.lasthopesoftware.bluewater.client.connection.session.ManageConnection
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
-import com.lasthopesoftware.resources.FakeMessageSender
+import com.lasthopesoftware.resources.FakeMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions
@@ -34,14 +35,14 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 
 		val fakeSelectedLibraryProvider = FakeSelectedLibraryProvider()
 		SelectedConnectionReservation().use {
-			fakeSelectedLibraryProvider.selectedLibraryId = LibraryId(-1)
+			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(-1))
 			val selectedConnection = SelectedConnection(
-				FakeMessageSender(ApplicationProvider.getApplicationContext()),
+				FakeMessageBus(ApplicationProvider.getApplicationContext()),
 				fakeSelectedLibraryProvider,
 				libraryConnections
 			)
 			connectionProvider = FuturePromise(selectedConnection.promiseSessionConnection()).get()
-			fakeSelectedLibraryProvider.selectedLibraryId = LibraryId(2)
+			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(2))
 			connectionProvider = FuturePromise(selectedConnection.promiseSessionConnection()).get()
 		}
 	}
@@ -51,7 +52,7 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 		Assertions.assertThat(connectionProvider!!.urlProvider).isEqualTo(firstUrlProvider)
 	}
 
-	private class FakeSelectedLibraryProvider : ISelectedLibraryIdentifierProvider {
-		override var selectedLibraryId: LibraryId? = LibraryId(0)
+	private class FakeSelectedLibraryProvider : ProvideSelectedLibraryId {
+		override var selectedLibraryId: Promise<LibraryId?> = Promise(LibraryId(0))
 	}
 }

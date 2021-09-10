@@ -1,25 +1,31 @@
 package com.lasthopesoftware.bluewater.settings
 
-import android.content.SharedPreferences
 import android.widget.CheckBox
 import android.widget.CompoundButton
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
-internal class HandleCheckboxPreference private constructor(private val sharedPreferences: SharedPreferences, private val settingKey: String) : CompoundButton.OnCheckedChangeListener {
+internal class HandleCheckboxPreference private constructor(private val applicationSettings: HoldApplicationSettings, private val updateSetting: (ApplicationSettings) -> (Boolean) -> Unit) : CompoundButton.OnCheckedChangeListener {
 	override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
-		sharedPreferences
-			.edit()
-			.putBoolean(settingKey, isChecked)
-			.apply()
+		applicationSettings.promiseApplicationSettings()
+			.then { s ->
+				updateSetting(s)(isChecked)
+				applicationSettings.promiseUpdatedSettings(s)
+			}
 	}
 
 	companion object {
-		fun handle(sharedPreferences: SharedPreferences, settingKey: String, settingCheckbox: CheckBox) {
+		fun handle(applicationSettings: HoldApplicationSettings, getSetting: (ApplicationSettings) -> Boolean, updateSetting: (ApplicationSettings) -> (Boolean) -> Unit, settingCheckbox: CheckBox) {
 			settingCheckbox.isEnabled = false
-			val preference = sharedPreferences.getBoolean(settingKey, false)
-			settingCheckbox.isChecked = preference
-			settingCheckbox.setOnCheckedChangeListener(
-				HandleCheckboxPreference(sharedPreferences, settingKey))
-			settingCheckbox.isEnabled = true
+			applicationSettings.promiseApplicationSettings()
+				.eventually(LoopedInPromise.response({ s ->
+					val preference = getSetting(s)
+					settingCheckbox.isChecked = preference
+					settingCheckbox.setOnCheckedChangeListener(
+						HandleCheckboxPreference(applicationSettings, updateSetting))
+					settingCheckbox.isEnabled = true
+				}, settingCheckbox.context))
 		}
 	}
 }

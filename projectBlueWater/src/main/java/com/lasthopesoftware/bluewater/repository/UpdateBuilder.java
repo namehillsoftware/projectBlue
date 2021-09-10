@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class UpdateBuilder {
 	private final StringBuilder sqlStringBuilder;
 	private final ArrayList<String> setters = new ArrayList<>();
-	private String filter;
+	private String filter = "";
 
 	public static UpdateBuilder fromTable(String tableName) {
 		return new UpdateBuilder(tableName);
