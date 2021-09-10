@@ -34,7 +34,7 @@ class WhenRetrievingTheLibraryConnection {
 			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
 			every { validateConnectionSettings.isValid(any()) } returns true
 
-			val deferredConnectionSettings = DeferredPromise(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
+			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 			val lookupConnection = mockk<LookupConnectionSettings>()
 			every {

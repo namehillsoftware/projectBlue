@@ -48,7 +48,7 @@ class WhenRetrievingTheLibraryConnection {
 			every { validateConnectionSettings.isValid(any()) } returns true
 
 			val connectionSettings = ConnectionSettings(accessCode = "aB5nf")
-			val deferredConnectionSettings = DeferredPromise(connectionSettings)
+			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(connectionSettings)
 
 			val lookupConnection = mockk<LookupConnectionSettings>()
 			every {
