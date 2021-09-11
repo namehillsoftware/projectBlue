@@ -27,9 +27,8 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 				m.cancellationRequested(cancellationProxy)
 				packetSender.promiseSentPackets(machineAddress.host, wakePort, bytes)
 					.also(cancellationProxy::doCancel)
-					.eventually {
-						delay<Unit>(durationBetween).also(cancellationProxy::doCancel)
-					}
+					.eventually { delay<Unit>(durationBetween) }
+					.also(cancellationProxy::doCancel)
 					.then(ResolutionProxy(m), RejectionProxy(m))
 			}
 		}, timesToSendSignal)

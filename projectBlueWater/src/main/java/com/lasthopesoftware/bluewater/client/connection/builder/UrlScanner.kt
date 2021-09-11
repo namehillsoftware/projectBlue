@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import java.net.URL
 import java.util.*
 
@@ -20,7 +21,13 @@ class UrlScanner(
 	private val serverLookup: LookupServers,
 	private val connectionSettingsLookup: LookupConnectionSettings,
 	private val okHttpClients: ProvideOkHttpClients
-) : BuildUrlProviders {
+) : BuildUrlProviders, Promise<IUrlProvider?>() {
+
+	private val cancellationProxy = CancellationProxy()
+
+	init {
+		respondToCancellation(cancellationProxy)
+	}
 
 	override fun promiseBuiltUrlProvider(libraryId: LibraryId): Promise<IUrlProvider?> =
 		connectionSettingsLookup.lookupConnectionSettings(libraryId).eventually { connectionSettings ->
@@ -75,14 +82,14 @@ class UrlScanner(
 									}
 
 									testUrls(mediaServerUrlProvidersQueue)
-								} ?: Promise.empty()
+								} ?: empty()
 							}
 				}
 			} ?: Promise(MissingConnectionSettingsException(libraryId))
 		}
 
 	private fun testUrls(urls: Queue<IUrlProvider>): Promise<IUrlProvider?> {
-		val urlProvider = urls.poll() ?: return Promise.empty()
+		val urlProvider = urls.poll() ?: return empty()
 		return connectionTester
 			.promiseIsConnectionPossible(ConnectionProvider(urlProvider, okHttpClients))
 			.eventually { result -> if (result) Promise(urlProvider) else testUrls(urls) }
