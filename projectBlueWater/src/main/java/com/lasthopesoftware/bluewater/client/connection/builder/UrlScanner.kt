@@ -12,6 +12,8 @@ import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvid
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import com.namehillsoftware.handoff.promises.propagation.RejectionProxy
+import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy
 import java.net.URL
 import java.util.*
 
@@ -21,84 +23,90 @@ class UrlScanner(
 	private val serverLookup: LookupServers,
 	private val connectionSettingsLookup: LookupConnectionSettings,
 	private val okHttpClients: ProvideOkHttpClients
-) : BuildUrlProviders, Promise<IUrlProvider?>() {
-
-	private val cancellationProxy = CancellationProxy()
-
-	init {
-		respondToCancellation(cancellationProxy)
-	}
+) : BuildUrlProviders {
 
 	override fun promiseBuiltUrlProvider(libraryId: LibraryId): Promise<IUrlProvider?> =
 		connectionSettingsLookup.lookupConnectionSettings(libraryId).eventually { connectionSettings ->
-			connectionSettings?.let { settings ->
-				val authKey =
-					if (isUserCredentialsValid(settings)) base64.encodeString(settings.userName + ":" + settings.password)
-					else null
-
-				val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(settings.accessCode))
-
-				connectionTester
-					.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
-					.eventually { isValid ->
-						if (isValid) Promise(mediaServerUrlProvider)
-						else serverLookup
-							.promiseServerInformation(libraryId)
-							.eventually {
-								it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
-									val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
-									if (!settings.isLocalOnly) {
-										if (httpsPort != null) {
-											mediaServerUrlProvidersQueue.offer(
-												MediaServerUrlProvider(
-													authKey,
-													remoteIp,
-													httpsPort,
-													if (certificateFingerprint != null) decodeHex(
-														certificateFingerprint.toCharArray()
-													)
-													else ByteArray(0)
-												)
-											)
-										}
-
-										mediaServerUrlProvidersQueue.offer(
-											MediaServerUrlProvider(
-												authKey,
-												remoteIp,
-												httpPort
-											)
-										)
-									}
-
-									for (ip in localIps) {
-										mediaServerUrlProvidersQueue.offer(
-											MediaServerUrlProvider(
-												authKey,
-												ip,
-												httpPort
-											)
-										)
-									}
-
-									testUrls(mediaServerUrlProvidersQueue)
-								} ?: empty()
-							}
-				}
-			} ?: Promise(MissingConnectionSettingsException(libraryId))
+			connectionSettings
+				?.let { settings -> promiseBuiltUrlProvider(libraryId, settings) }
+				?: Promise(MissingConnectionSettingsException(libraryId))
 		}
 
-	private fun testUrls(urls: Queue<IUrlProvider>): Promise<IUrlProvider?> {
-		val urlProvider = urls.poll() ?: return empty()
-		return connectionTester
-			.promiseIsConnectionPossible(ConnectionProvider(urlProvider, okHttpClients))
-			.eventually { result -> if (result) Promise(urlProvider) else testUrls(urls) }
+	private fun promiseBuiltUrlProvider(libraryId: LibraryId, settings: ConnectionSettings): Promise<IUrlProvider?> = Promise { m ->
+		val cancellationProxy = CancellationProxy()
+		m.cancellationRequested(cancellationProxy)
+
+		val authKey =
+			if (settings.isUserCredentialsValid()) base64.encodeString(settings.userName + ":" + settings.password)
+			else null
+
+		if (cancellationProxy.isCancelled) {
+			m.sendResolution(null)
+			return@Promise
+		}
+
+		val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(settings.accessCode))
+		connectionTester
+			.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
+			.also(cancellationProxy::doCancel)
+			.eventually { isValid ->
+				if (isValid) Promise(mediaServerUrlProvider)
+				else serverLookup
+					.promiseServerInformation(libraryId)
+					.eventually {
+						it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
+							val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
+
+							fun testUrls(): Promise<IUrlProvider?> {
+								if (cancellationProxy.isCancelled) return Promise.empty()
+								val urlProvider = mediaServerUrlProvidersQueue.poll() ?: return Promise.empty()
+								return connectionTester
+									.promiseIsConnectionPossible(ConnectionProvider(urlProvider, okHttpClients))
+									.also(cancellationProxy::doCancel)
+									.eventually { result -> if (result) Promise(urlProvider) else testUrls() }
+							}
+
+							if (!settings.isLocalOnly) {
+								if (httpsPort != null) {
+									mediaServerUrlProvidersQueue.offer(
+										MediaServerUrlProvider(
+											authKey,
+											remoteIp,
+											httpsPort,
+											certificateFingerprint?.decodeHex() ?: ByteArray(0)
+										)
+									)
+								}
+
+								mediaServerUrlProvidersQueue.offer(
+									MediaServerUrlProvider(
+										authKey,
+										remoteIp,
+										httpPort
+									)
+								)
+							}
+
+							for (ip in localIps) {
+								mediaServerUrlProvidersQueue.offer(
+									MediaServerUrlProvider(
+										authKey,
+										ip,
+										httpPort
+									)
+								)
+							}
+
+							testUrls()
+						} ?: Promise.empty()
+					}
+			}
+			.then(ResolutionProxy(m), RejectionProxy(m))
 	}
 
 	companion object {
-		private fun isUserCredentialsValid(connectionSettings: ConnectionSettings): Boolean =
-			(connectionSettings.userName?.isNotEmpty() ?: false)
-				&& (connectionSettings.password?.isNotEmpty() ?: false)
+		private fun ConnectionSettings.isUserCredentialsValid(): Boolean =
+				userName != null && userName.isNotEmpty() && password != null && password.isNotEmpty()
 
 		private fun parseAccessCode(accessCode: String): URL {
 			var url = accessCode
@@ -115,7 +123,8 @@ class UrlScanner(
 
 		private fun isPositiveInteger(string: String): Boolean = string.toCharArray().all(Character::isDigit)
 
-		private fun decodeHex(data: CharArray): ByteArray {
+		private fun String.decodeHex(): ByteArray {
+			val data = this.toCharArray()
 			val len = data.size
 			if (len and 0x01 != 0) {
 				return ByteArray(0)

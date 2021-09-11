@@ -14,21 +14,27 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 
-class WhenScanningForUrls {
+class WhenCancellingTheUrlScan {
 
 	companion object {
-		private val urlProvider by lazy {
+		private val cancellationException by lazy {
 			val connectionTester = mockk<TestConnections>()
 			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
 			every {
 				connectionTester.promiseIsConnectionPossible(match { a -> listOf(
 					"https://1.2.3.4:452/MCWS/v1/",
 					"http://1.2.3.4:143/MCWS/v1/").contains(a.urlProvider.baseUrl.toString()) })
-			} returns true.toPromise()
+			} returns Promise { m ->
+				m.cancellationRequested {
+					m.sendRejection(CancellationException("Maybe later!"))
+				}
+			}
 
 			val serverLookup = mockk<LookupServers>()
 			every { serverLookup.promiseServerInformation(LibraryId(35)) } returns Promise(
@@ -53,18 +59,21 @@ class WhenScanningForUrls {
 				OkHttpFactory.getInstance()
 			)
 
-			urlScanner.promiseBuiltUrlProvider(LibraryId(35)).toFuture().get()
+			val urlScan = urlScanner.promiseBuiltUrlProvider(LibraryId(35))
+
+			urlScan.cancel()
+
+			try {
+				urlScan.toFuture()[5, TimeUnit.SECONDS]
+				null
+			} catch (ee: ExecutionException) {
+				ee.cause as? CancellationException
+			}
 		}
 	}
 
 	@Test
-	fun thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("https://1.2.3.4:452/MCWS/v1/")
-	}
-
-	@Test
-	fun thenTheCertificateFingerprintIsCorrect() {
-		assertThat(urlProvider?.certificateFingerprint)
-			.isEqualTo(Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45"))
+	fun thenTheCancellationExceptionIsReturned() {
+		assertThat(cancellationException?.message).isEqualTo("Maybe later!")
 	}
 }
