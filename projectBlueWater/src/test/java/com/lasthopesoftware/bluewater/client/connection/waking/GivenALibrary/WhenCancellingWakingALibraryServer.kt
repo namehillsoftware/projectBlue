@@ -17,11 +17,12 @@ import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
+import java.util.concurrent.TimeUnit
 
-class WhenWakingALibraryServerFourTimes {
+class WhenCancellingWakingALibraryServer {
 
 	companion object {
-		private val expectedPokedMachineAddresses = arrayOf(
+		private val expectedCancelledPokes = arrayOf(
 			MachineAddress("local-address", "AB-E0-9F-24-F5"),
 			MachineAddress("local-address", "99-53-7F-2C-A1"),
 			MachineAddress("second-local-address", "AB-E0-9F-24-F5"),
@@ -29,7 +30,7 @@ class WhenWakingALibraryServerFourTimes {
 			MachineAddress("remote-address", "AB-E0-9F-24-F5"),
 			MachineAddress("remote-address", "99-53-7F-2C-A1")
 		)
-		private val pokedMachineAddresses: MutableList<MachineAddress> = ArrayList()
+		private val cancelledPokes: MutableList<MachineAddress> = ArrayList()
 
 		@BeforeClass
 		@JvmStatic
@@ -47,13 +48,15 @@ class WhenWakingALibraryServerFourTimes {
 			)
 
 			val pokeServer = mockk<PokeServer>()
-			every { pokeServer.promiseWakeSignal(any(), any(), any()) } answers {
-				Unit.toPromise()
-			}
+			every { pokeServer.promiseWakeSignal(any(), any(), any()) } returns Unit.toPromise()
 
 			every { pokeServer.promiseWakeSignal(any(), 4, Duration.standardSeconds(60)) } answers {
-				pokedMachineAddresses.add(firstArg())
-				Unit.toPromise()
+				Promise { m ->
+					m.cancellationRequested {
+						cancelledPokes.add(firstArg())
+						m.sendResolution(Unit)
+					}
+				}
 			}
 
 			val serverAlarm = ServerAlarm(
@@ -61,13 +64,15 @@ class WhenWakingALibraryServerFourTimes {
 				pokeServer,
 				AlarmConfiguration(4, Duration.standardMinutes(1))
 			)
-			serverAlarm.awakeLibraryServer(LibraryId(14)).toFuture().get()
+			val promisedLibraryServerPoke = serverAlarm.awakeLibraryServer(LibraryId(14))
+			promisedLibraryServerPoke.cancel()
+			promisedLibraryServerPoke.toFuture()[5, TimeUnit.SECONDS]
 		}
 	}
 
 	@Test
-	fun thenTheMachineIsAlertedAtAllEndpoints() {
-		assertThat(pokedMachineAddresses)
-			.containsExactlyInAnyOrder(*expectedPokedMachineAddresses)
+	fun thenThePokesAreCancelled() {
+		assertThat(cancelledPokes)
+			.containsExactlyInAnyOrder(*expectedCancelledPokes)
 	}
 }
