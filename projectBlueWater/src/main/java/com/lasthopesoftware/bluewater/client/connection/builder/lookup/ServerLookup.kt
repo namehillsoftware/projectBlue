@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : LookupServers {
@@ -18,13 +19,16 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 		private const val macAddressElement = "macaddresslist"
 	}
 
-	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> {
-		return serverInfoXmlRequest.promiseServerInfoXml(libraryId)
+	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> = CancellableProxyPromise { cp ->
+		serverInfoXmlRequest.promiseServerInfoXml(libraryId)
 			.then {
-				if (it == null) return@then null
+				if (it == null || cp.isCancelled) return@then null
 
 				if (it.containsAttribute(statusAttribute) && errorStatusValue == it.getAttribute(statusAttribute)) {
-					if (it.contains(msgElement)) throw ServerDiscoveryException(libraryId, it.getUnique(msgElement).value)
+					if (it.contains(msgElement)) throw ServerDiscoveryException(
+						libraryId,
+						it.getUnique(msgElement).value
+					)
 					throw ServerDiscoveryException(libraryId)
 				}
 
@@ -37,13 +41,15 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 					remoteIp = remoteIp.value,
 					localIps = listOf(*localIps.value.split(",").toTypedArray()),
 					httpPort = portXml.value.toInt(),
-					macAddresses = listOf(*macAddresses.value.trim().split(",").toTypedArray()))
+					macAddresses = listOf(*macAddresses.value.trim().split(",").toTypedArray())
+				)
 
 				if (it.contains(httpsPortElement))
 					serverInfo = serverInfo.copy(httpsPort = it.getUnique(httpsPortElement).value.toInt())
 
 				if (it.contains(certificateFingerprintElement))
-					serverInfo = serverInfo.copy(certificateFingerprint = it.getUnique(certificateFingerprintElement).value)
+					serverInfo =
+						serverInfo.copy(certificateFingerprint = it.getUnique(certificateFingerprintElement).value)
 
 				serverInfo
 			}

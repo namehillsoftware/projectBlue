@@ -9,11 +9,10 @@ import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectio
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.propagation.RejectionProxy
-import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy
 import java.net.URL
 import java.util.*
 
@@ -32,37 +31,32 @@ class UrlScanner(
 				?: Promise(MissingConnectionSettingsException(libraryId))
 		}
 
-	private fun promiseBuiltUrlProvider(libraryId: LibraryId, settings: ConnectionSettings): Promise<IUrlProvider?> = Promise { m ->
-		val cancellationProxy = CancellationProxy()
-		m.cancellationRequested(cancellationProxy)
-
+	private fun promiseBuiltUrlProvider(libraryId: LibraryId, settings: ConnectionSettings): Promise<IUrlProvider?> = CancellableProxyPromise { cp ->
 		val authKey =
 			if (settings.isUserCredentialsValid()) base64.encodeString(settings.userName + ":" + settings.password)
 			else null
 
-		if (cancellationProxy.isCancelled) {
-			m.sendResolution(null)
-			return@Promise
-		}
-
 		val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(settings.accessCode))
-		connectionTester
+
+		if (cp.isCancelled) Promise.empty()
+		else connectionTester
 			.promiseIsConnectionPossible(ConnectionProvider(mediaServerUrlProvider, okHttpClients))
-			.also(cancellationProxy::doCancel)
+			.also(cp::doCancel)
 			.eventually { isValid ->
 				if (isValid) Promise(mediaServerUrlProvider)
 				else serverLookup
 					.promiseServerInformation(libraryId)
+					.also(cp::doCancel)
 					.eventually {
 						it?.let { (httpPort, httpsPort, remoteIp, localIps, _, certificateFingerprint) ->
 							val mediaServerUrlProvidersQueue = LinkedList<IUrlProvider>()
 
 							fun testUrls(): Promise<IUrlProvider?> {
-								if (cancellationProxy.isCancelled) return Promise.empty()
+								if (cp.isCancelled) return Promise.empty()
 								val urlProvider = mediaServerUrlProvidersQueue.poll() ?: return Promise.empty()
 								return connectionTester
 									.promiseIsConnectionPossible(ConnectionProvider(urlProvider, okHttpClients))
-									.also(cancellationProxy::doCancel)
+									.also(cp::doCancel)
 									.eventually { result -> if (result) Promise(urlProvider) else testUrls() }
 							}
 
@@ -98,10 +92,9 @@ class UrlScanner(
 							}
 
 							testUrls()
-						} ?: Promise.empty()
+						}.keepPromise()
 					}
 			}
-			.then(ResolutionProxy(m), RejectionProxy(m))
 	}
 
 	companion object {
