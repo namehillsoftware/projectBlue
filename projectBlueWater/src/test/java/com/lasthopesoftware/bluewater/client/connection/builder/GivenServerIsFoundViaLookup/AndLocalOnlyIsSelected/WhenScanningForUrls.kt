@@ -58,7 +58,7 @@ class WhenScanningForUrls {
 				connectionTester,
 				serverLookup,
 				connectionSettingsLookup,
-				OkHttpFactory.getInstance()
+				OkHttpFactory
 			)
 
 			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(6)).toFuture().get()

@@ -121,7 +121,8 @@ class ConnectionSessionManager(
 				ConnectionTester,
 				newServerLookup(context),
 				ConnectionSettingsLookup(LibraryRepository(context)),
-				OkHttpFactory.getInstance())
+				OkHttpFactory
+            )
 
 		fun get(context: Context): ConnectionSessionManager {
 			val applicationContext = context.applicationContext
@@ -141,7 +142,8 @@ class ConnectionSessionManager(
 								ActiveNetworkFinder(applicationContext),
 								newUrlScanner(context)
 							),
-							OkHttpFactory.getInstance())
+							OkHttpFactory
+                        )
 					).also { connectionSessionManager = it }
 				}
 		}

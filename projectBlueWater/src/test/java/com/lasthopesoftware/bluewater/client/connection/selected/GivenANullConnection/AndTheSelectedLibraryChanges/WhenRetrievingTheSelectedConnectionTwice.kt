@@ -31,7 +31,8 @@ class WhenRetrievingTheSelectedConnectionTwice : AndroidContext() {
 		val libraryConnections = mockk<ManageConnectionSessions>()
 		every { libraryConnections.promiseLibraryConnection(any()) } returns ProgressingPromise(null as IConnectionProvider?)
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(ConnectionProvider(
-			firstUrlProvider, OkHttpFactory.getInstance()))
+			firstUrlProvider, OkHttpFactory
+        ))
 
 		val fakeSelectedLibraryProvider = FakeSelectedLibraryProvider()
 		SelectedConnectionReservation().use {

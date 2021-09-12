@@ -1,135 +1,111 @@
-package com.lasthopesoftware.bluewater.client.connection.okhttp;
+package com.lasthopesoftware.bluewater.client.connection.okhttp
 
-import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
-import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager;
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider;
-import com.lasthopesoftware.resources.executors.HttpThreadPoolExecutor;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
+import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
+import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
+import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.resources.executors.HttpThreadPoolExecutor.executor
+import com.namehillsoftware.lazyj.CreateAndHold
+import com.namehillsoftware.lazyj.Lazy
+import okhttp3.Dispatcher
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import java.security.KeyManagementException
+import java.security.KeyStore
+import java.security.KeyStoreException
+import java.security.NoSuchAlgorithmException
+import java.util.*
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.*
 
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+object OkHttpFactory : ProvideOkHttpClients {
+    override fun getOkHttpClient(urlProvider: IUrlProvider): OkHttpClient =
+        commonBuilder
+            .addNetworkInterceptor(Interceptor { chain ->
+                val requestBuilder = chain.request().newBuilder()
+                val authCode = urlProvider.authCode
+                if (authCode != null && authCode.isNotEmpty()) requestBuilder.addHeader(
+                    "Authorization",
+                    "basic ${urlProvider.authCode}"
+                )
+                chain.proceed(requestBuilder.build())
+            })
+            .sslSocketFactory(getSslSocketFactory(urlProvider), getTrustManager(urlProvider))
+            .hostnameVerifier(getHostnameVerifier(urlProvider))
+            .build()
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-
-import okhttp3.Dispatcher;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-
-public class OkHttpFactory implements ProvideOkHttpClients {
-
-	private static final CreateAndHold<Dispatcher> dispatcher = new Lazy<>(() -> {
-		final int maxDownloadThreadPoolSize = 4;
-		final int downloadThreadPoolSize = Math.min(maxDownloadThreadPoolSize, Runtime.getRuntime().availableProcessors());
-
-		final int requestPoolSize = downloadThreadPoolSize * 3;
-
-		final Dispatcher dispatcher = new Dispatcher(HttpThreadPoolExecutor.INSTANCE.getExecutor());
-		dispatcher.setMaxRequests(requestPoolSize);
-		dispatcher.setMaxRequestsPerHost(requestPoolSize);
-		return dispatcher;
-	});
-
-	private static final CreateAndHold<OkHttpClient.Builder> lazyCommonBuilder = new AbstractSynchronousLazy<OkHttpClient.Builder>() {
-		@Override
-		protected OkHttpClient.Builder create() {
-			return new OkHttpClient.Builder()
-				.addNetworkInterceptor(chain -> {
-					final Request.Builder requestBuilder = chain.request().newBuilder().addHeader("Connection", "close");
-					return chain.proceed(requestBuilder.build());
-				})
-				.cache(null)
-				.readTimeout(1, TimeUnit.MINUTES)
-				.dispatcher(dispatcher.getObject());
-		}
-	};
-
-	private static final CreateAndHold<OkHttpFactory> lazyHttpFactory = new Lazy<>(OkHttpFactory::new);
-
-	public static OkHttpFactory getInstance() {
-		return lazyHttpFactory.getObject();
+	private val dispatcher: CreateAndHold<Dispatcher> = Lazy {
+		val maxDownloadThreadPoolSize = 4
+		val downloadThreadPoolSize =
+			maxDownloadThreadPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
+		val requestPoolSize = downloadThreadPoolSize * 3
+		val dispatcher = Dispatcher(executor)
+		dispatcher.maxRequests = requestPoolSize
+		dispatcher.maxRequestsPerHost = requestPoolSize
+		dispatcher
 	}
 
-	private OkHttpFactory() {}
-
-	@Override
-	public OkHttpClient getOkHttpClient(IUrlProvider urlProvider) {
-		return lazyCommonBuilder.getObject()
-			.addNetworkInterceptor(chain -> {
-				final Request.Builder requestBuilder = chain.request().newBuilder();
-
-				final String authCode = urlProvider.getAuthCode();
-
-				if (authCode != null && !authCode.isEmpty())
-					requestBuilder.addHeader("Authorization", "basic " + urlProvider.getAuthCode());
-
-				return chain.proceed(requestBuilder.build());
+	private val commonBuilder by lazy {
+		OkHttpClient.Builder()
+			.addNetworkInterceptor(Interceptor { chain: Interceptor.Chain ->
+				val requestBuilder =
+					chain.request().newBuilder().addHeader("Connection", "close")
+				chain.proceed(requestBuilder.build())
 			})
-			.sslSocketFactory(getSslSocketFactory(urlProvider), getTrustManager(urlProvider))
-			.hostnameVerifier(getHostnameVerifier(urlProvider))
-			.build();
+			.cache(null)
+			.readTimeout(1, TimeUnit.MINUTES)
+			.dispatcher(dispatcher.getObject())
 	}
 
-	private static SSLSocketFactory getSslSocketFactory(IUrlProvider urlProvider) {
-		final SSLContext sslContext;
-		try {
-			sslContext = SSLContext.getInstance("TLS");
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
+	private fun getSslSocketFactory(urlProvider: IUrlProvider): SSLSocketFactory {
+		val sslContext = try {
+			SSLContext.getInstance("TLS")
+		} catch (e: NoSuchAlgorithmException) {
+			throw RuntimeException(e)
 		}
 
 		try {
-			sslContext.init(null, new TrustManager[] { getTrustManager(urlProvider) }, null);
-		} catch (KeyManagementException e) {
-			throw new RuntimeException(e);
+			sslContext.init(null, arrayOf<TrustManager>(getTrustManager(urlProvider)), null)
+		} catch (e: KeyManagementException) {
+			throw RuntimeException(e)
 		}
 
-		return sslContext.getSocketFactory();
+		return sslContext.socketFactory
 	}
 
-	private static X509TrustManager getTrustManager(IUrlProvider urlProvider) {
-		final TrustManagerFactory trustManagerFactory;
-		try {
-			trustManagerFactory = TrustManagerFactory.getInstance(
-				TrustManagerFactory.getDefaultAlgorithm());
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
+	private fun getTrustManager(urlProvider: IUrlProvider): X509TrustManager {
+		val trustManagerFactory = try {
+			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+		} catch (e: NoSuchAlgorithmException) {
+			throw RuntimeException(e)
 		}
 
 		try {
-			trustManagerFactory.init((KeyStore) null);
-		} catch (KeyStoreException e) {
-			throw new RuntimeException(e);
+			trustManagerFactory.init(null as KeyStore?)
+		} catch (e: KeyStoreException) {
+			throw RuntimeException(e)
 		}
 
-		final TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-		if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-			throw new IllegalStateException("Unexpected default trust managers:"
-				+ Arrays.toString(trustManagers));
+		val trustManagers = trustManagerFactory.trustManagers
+		check(!(trustManagers.size != 1 || trustManagers[0] !is X509TrustManager)) {
+			("Unexpected default trust managers:" + Arrays.toString(trustManagers))
 		}
 
-		final X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-		return urlProvider.getCertificateFingerprint().length == 0
-			? trustManager
-			: new SelfSignedTrustManager(urlProvider.getCertificateFingerprint(), trustManager);
+		val trustManager = trustManagers[0] as X509TrustManager
+		return urlProvider.certificateFingerprint
+			?.takeIf { it.isNotEmpty() }
+			?.let { fingerprint -> SelfSignedTrustManager(fingerprint, trustManager) }
+			?: trustManager
 	}
 
-	private static HostnameVerifier getHostnameVerifier(IUrlProvider urlProvider) {
-		final HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
-
-		return urlProvider.getCertificateFingerprint().length == 0
-			? defaultHostnameVerifier
-			: new AdditionalHostnameVerifier(urlProvider.getBaseUrl().getHost(), defaultHostnameVerifier);
+	private fun getHostnameVerifier(urlProvider: IUrlProvider): HostnameVerifier {
+		val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
+		return urlProvider.certificateFingerprint
+			?.takeIf { it.isNotEmpty() }
+			?.let {
+				urlProvider.baseUrl?.host?.let { host ->
+					AdditionalHostnameVerifier(host, defaultHostnameVerifier)
+				}
+			}
+			?: defaultHostnameVerifier
 	}
 }

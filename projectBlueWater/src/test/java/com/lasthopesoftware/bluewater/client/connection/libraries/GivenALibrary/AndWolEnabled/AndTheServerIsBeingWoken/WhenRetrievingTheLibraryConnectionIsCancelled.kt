@@ -59,7 +59,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 					deferredLibraryWake
                 },
                 liveUrlProvider,
-                OkHttpFactory.getInstance()
+                OkHttpFactory
             )
 
 			val futureConnectionProvider =

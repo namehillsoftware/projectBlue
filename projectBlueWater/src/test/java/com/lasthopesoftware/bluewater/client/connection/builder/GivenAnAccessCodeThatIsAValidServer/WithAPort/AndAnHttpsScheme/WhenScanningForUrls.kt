@@ -36,7 +36,8 @@ class WhenScanningForUrls {
 				connectionTester,
 				mockk(),
 				connectionSettingsLookup,
-				OkHttpFactory.getInstance())
+				OkHttpFactory
+            )
 			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(12)).toFuture().get()
 		}
 	}

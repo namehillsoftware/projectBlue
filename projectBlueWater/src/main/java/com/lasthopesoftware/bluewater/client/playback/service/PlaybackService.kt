@@ -747,7 +747,7 @@ open class PlaybackService : Service() {
 							Handler(mainLooper),
 							MediaSourceProvider(
 								library,
-								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory.getInstance()),
+								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
 								simpleCache),
 							bestMatchUriProvider
 						)
