@@ -21,21 +21,22 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 
 	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> = CancellableProxyPromise { cp ->
 		serverInfoXmlRequest.promiseServerInfoXml(libraryId)
-			.then {
-				if (it == null || cp.isCancelled) return@then null
+			.also(cp::doCancel)
+			.then { xml ->
+				if (xml == null || cp.isCancelled) return@then null
 
-				if (it.containsAttribute(statusAttribute) && errorStatusValue == it.getAttribute(statusAttribute)) {
-					if (it.contains(msgElement)) throw ServerDiscoveryException(
+				if (xml.containsAttribute(statusAttribute) && errorStatusValue == xml.getAttribute(statusAttribute)) {
+					if (xml.contains(msgElement)) throw ServerDiscoveryException(
 						libraryId,
-						it.getUnique(msgElement).value
+						xml.getUnique(msgElement).value
 					)
 					throw ServerDiscoveryException(libraryId)
 				}
 
-				val remoteIp = it.getUnique(ipElement)
-				val localIps = it.getUnique(localIpListElement)
-				val portXml = it.getUnique(portElement)
-				val macAddresses = it.getUnique(macAddressElement)
+				val remoteIp = xml.getUnique(ipElement)
+				val localIps = xml.getUnique(localIpListElement)
+				val portXml = xml.getUnique(portElement)
+				val macAddresses = xml.getUnique(macAddressElement)
 
 				var serverInfo = ServerInfo(
 					remoteIp = remoteIp.value,
@@ -44,12 +45,12 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 					macAddresses = listOf(*macAddresses.value.trim().split(",").toTypedArray())
 				)
 
-				if (it.contains(httpsPortElement))
-					serverInfo = serverInfo.copy(httpsPort = it.getUnique(httpsPortElement).value.toInt())
+				if (xml.contains(httpsPortElement))
+					serverInfo = serverInfo.copy(httpsPort = xml.getUnique(httpsPortElement).value.toInt())
 
-				if (it.contains(certificateFingerprintElement))
+				if (xml.contains(certificateFingerprintElement))
 					serverInfo =
-						serverInfo.copy(certificateFingerprint = it.getUnique(certificateFingerprintElement).value)
+						serverInfo.copy(certificateFingerprint = xml.getUnique(certificateFingerprintElement).value)
 
 				serverInfo
 			}

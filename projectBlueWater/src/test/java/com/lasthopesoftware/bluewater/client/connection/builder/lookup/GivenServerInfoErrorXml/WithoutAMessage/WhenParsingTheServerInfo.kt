@@ -1,51 +1,47 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenServerInfoErrorXml.WithoutAMessage;
+package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenServerInfoErrorXml.WithoutAMessage
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerDiscoveryException;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerDiscoveryException
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
+import xmlwise.Xmlwise
+import java.util.concurrent.ExecutionException
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenParsingTheServerInfo {
 
-import java.util.concurrent.ExecutionException;
+	companion object {
+		private var exception: ServerDiscoveryException? = null
 
-import xmlwise.XmlParseException;
-import xmlwise.Xmlwise;
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val serverInfoXml = mockk<RequestServerInfoXml>()
+			every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise(
+				Xmlwise.createXml(
+					"""<?xml version="1.0" encoding="UTF-8"?>
+<Response Status="Error">
+</Response>"""
+				)
+			)
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenParsingTheServerInfo {
-
-	private static ServerDiscoveryException exception;
-
-	@BeforeClass
-	public static void before() throws XmlParseException, ExecutionException, InterruptedException {
-		final RequestServerInfoXml serverInfoXml = mock(RequestServerInfoXml.class);
-		when(serverInfoXml.promiseServerInfoXml(any()))
-			.thenReturn(new Promise<>(Xmlwise.createXml(
-				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-				"<Response Status=\"Error\">\n" +
-				"</Response>")));
-
-		final ServerLookup serverLookup = new ServerLookup(serverInfoXml);
-
-		try {
-			new FuturePromise<>(serverLookup.promiseServerInformation(new LibraryId(5))).get();
-		} catch (ExecutionException e) {
-			if (e.getCause() instanceof ServerDiscoveryException)
-				exception = (ServerDiscoveryException)e.getCause();
-			else throw e;
+			val serverLookup = ServerLookup(serverInfoXml)
+			try {
+				serverLookup.promiseServerInformation(LibraryId(5)).toFuture().get()
+			} catch (e: ExecutionException) {
+				exception = e.cause as? ServerDiscoveryException ?: throw e
+			}
 		}
 	}
 
 	@Test
-	public void thenAServerDiscoveryExceptionIsThrownWithTheCorrectMessage() {
-		assertThat(exception).isNotNull();
+	fun thenAServerDiscoveryExceptionIsThrownWithTheCorrectMessage() {
+		assertThat(exception).isNotNull
 	}
 }

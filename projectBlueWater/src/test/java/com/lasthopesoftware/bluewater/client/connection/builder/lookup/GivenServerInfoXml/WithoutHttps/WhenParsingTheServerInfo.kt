@@ -1,76 +1,68 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenServerInfoXml.WithoutHttps;
+package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenServerInfoXml.WithoutHttps
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
+import xmlwise.Xmlwise
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenParsingTheServerInfo {
 
-import java.util.concurrent.ExecutionException;
+    companion object {
+		private val serverInfo by lazy {
+			val serverInfoXml = mockk<RequestServerInfoXml>()
+			every { serverInfoXml.promiseServerInfoXml(any()) } returns  Promise(
+				Xmlwise.createXml(
+					"""<?xml version="1.0" encoding="UTF-8"?>
+<Response Status="OK">
+<keyid>gooPc</keyid>
+<ip>108.491.23.154</ip>
+<port>52199</port>
+<localiplist>169.254.72.216,192.168.1.50</localiplist>
+<macaddresslist>
+5c-f3-70-8b-db-e9,b4-2e-99-31-f7-eb
+</macaddresslist>
+</Response>"""
+				)
+			)
+			val serverLookup = ServerLookup(serverInfoXml)
+			serverLookup.promiseServerInformation(LibraryId(10)).toFuture().get()
+		}
+    }
 
-import xmlwise.XmlParseException;
-import xmlwise.Xmlwise;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenParsingTheServerInfo {
-
-	private static ServerInfo serverInfo;
-
-	@BeforeClass
-	public static void before() throws XmlParseException, ExecutionException, InterruptedException {
-		final RequestServerInfoXml serverInfoXml = mock(RequestServerInfoXml.class);
-		when(serverInfoXml.promiseServerInfoXml(any()))
-			.thenReturn(new Promise<>(Xmlwise.createXml(
-				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-					"<Response Status=\"OK\">\n" +
-					"<keyid>gooPc</keyid>\n" +
-					"<ip>108.491.23.154</ip>\n" +
-					"<port>52199</port>\n" +
-					"<localiplist>169.254.72.216,192.168.1.50</localiplist>\n" +
-					"<macaddresslist>\n" +
-						"5c-f3-70-8b-db-e9,b4-2e-99-31-f7-eb\n" +
-					"</macaddresslist>\n" +
-				"</Response>")));
-
-		final ServerLookup serverLookup = new ServerLookup(serverInfoXml);
-		serverInfo = new FuturePromise<>(serverLookup.promiseServerInformation(new LibraryId(10))).get();
+	@Test
+	fun thenTheRemoteIpIsCorrect() {
+		assertThat(serverInfo!!.remoteIp).isEqualTo("108.491.23.154")
 	}
 
 	@Test
-	public void thenTheRemoteIpIsCorrect() {
-		assertThat(serverInfo.getRemoteIp()).isEqualTo("108.491.23.154");
+	fun thenTheLocalIpsAreCorrect() {
+		assertThat(serverInfo!!.localIps).contains("169.254.72.216", "192.168.1.50")
 	}
 
 	@Test
-	public void thenTheLocalIpsAreCorrect() {
-		assertThat(serverInfo.getLocalIps()).contains("169.254.72.216", "192.168.1.50");
+	fun thenTheHttpPortIsCorrect() {
+		assertThat(serverInfo!!.httpPort).isEqualTo(52199)
 	}
 
 	@Test
-	public void thenTheHttpPortIsCorrect() {
-		assertThat(serverInfo.getHttpPort()).isEqualTo(52199);
+	fun thenTheHttpsPortIsNull() {
+		assertThat(serverInfo!!.httpsPort).isNull()
 	}
 
 	@Test
-	public void thenTheHttpsPortIsNull() {
-		assertThat(serverInfo.getHttpsPort()).isNull();
+	fun thenTheCertificateFingerprintIsCorrectIsNull() {
+		assertThat(serverInfo!!.certificateFingerprint).isNull()
 	}
 
 	@Test
-	public void thenTheCertificateFingerprintIsCorrectIsNull() {
-		assertThat(serverInfo.getCertificateFingerprint()).isNull();
-	}
-
-	@Test
-	public void thenTheMacAddressesAreCorrect() {
-		assertThat(serverInfo.getMacAddresses()).containsExactlyInAnyOrder("5c-f3-70-8b-db-e9", "b4-2e-99-31-f7-eb");
+	fun thenTheMacAddressesAreCorrect() {
+		assertThat(serverInfo!!.macAddresses)
+			.containsExactlyInAnyOrder("5c-f3-70-8b-db-e9", "b4-2e-99-31-f7-eb")
 	}
 }

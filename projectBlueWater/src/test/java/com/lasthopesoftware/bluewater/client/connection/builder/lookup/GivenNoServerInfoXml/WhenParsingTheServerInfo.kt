@@ -1,38 +1,26 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenNoServerInfoXml;
+package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenNoServerInfoXml
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo;
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml
+import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenParsingTheServerInfo {
 
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenParsingTheServerInfo {
-
-	private static ServerInfo serverInfo;
-
-	@BeforeClass
-	public static void before() throws ExecutionException, InterruptedException {
-		final RequestServerInfoXml serverInfoXml = mock(RequestServerInfoXml.class);
-		when(serverInfoXml.promiseServerInfoXml(any()))
-			.thenReturn(Promise.empty());
-
-		final ServerLookup serverLookup = new ServerLookup(serverInfoXml);
-		serverInfo = new FuturePromise<>(serverLookup.promiseServerInformation(new LibraryId(14))).get();
+	companion object {
+		private val serverInfo by lazy {
+			val serverInfoXml = mockk<RequestServerInfoXml>()
+			every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise.empty()
+			val serverLookup = ServerLookup(serverInfoXml)
+			serverLookup.promiseServerInformation(LibraryId(14)).toFuture().get()
+		}
 	}
 
 	@Test
-	public void thenNoServerInfoIsReturned() {
-		assertThat(serverInfo).isNull();
-	}
+	fun thenNoServerInfoIsReturned() = assertThat(serverInfo).isNull()
 }
