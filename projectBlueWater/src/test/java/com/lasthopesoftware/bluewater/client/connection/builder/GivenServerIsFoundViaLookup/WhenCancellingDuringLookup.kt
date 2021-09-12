@@ -1,10 +1,9 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.GivenSecureServerIsFoundViaLookup
+package com.lasthopesoftware.bluewater.client.connection.builder.GivenServerIsFoundViaLookup
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.PassThroughBase64Encoder
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
@@ -14,36 +13,34 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
 
-class WhenScanningForUrls {
-
+class WhenCancellingDuringLookup {
 	companion object {
-		private val urlProvider by lazy {
+		private val cancellationException by lazy {
 			val connectionTester = mockk<TestConnections>()
 			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-			every {
-				connectionTester.promiseIsConnectionPossible(match { a -> listOf(
-					"https://1.2.3.4:452/MCWS/v1/",
-					"http://1.2.3.4:143/MCWS/v1/").contains(a.urlProvider.baseUrl.toString()) })
-			} returns true.toPromise()
+			every { connectionTester.promiseIsConnectionPossible(match { a ->
+				"http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl.toString()
+			}) } returns Promise { m ->
+				m.cancellationRequested {
+					m.sendRejection(CancellationException("I'm not supposed to be cancelled"))
+				}
+			}
 
 			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(35)) } returns Promise(
-				ServerInfo(
-					143,
-					452,
-					"1.2.3.4",
-					emptyList(),
-					emptyList(),
-					"2386166660562C5AAA1253B2BED7C2483F9C2D45"
-				)
-			)
+			every { serverLookup.promiseServerInformation(LibraryId(55)) } returns Promise { m ->
+				m.cancellationRequested {
+					m.sendRejection(CancellationException("Yup I'm cancelled"))
+				}
+			}
 
 			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(35)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
+			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(55)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
 			val urlScanner = UrlScanner(
 				PassThroughBase64Encoder,
@@ -53,18 +50,20 @@ class WhenScanningForUrls {
 				OkHttpFactory.getInstance()
 			)
 
-			urlScanner.promiseBuiltUrlProvider(LibraryId(35)).toFuture().get()
+			val promisedUrl = urlScanner.promiseBuiltUrlProvider(LibraryId(55))
+			promisedUrl.cancel()
+
+			try {
+				promisedUrl.toFuture()[5, TimeUnit.SECONDS]
+				null
+			} catch (ee: ExecutionException) {
+				ee.cause as? CancellationException
+			}
 		}
 	}
 
 	@Test
-	fun thenTheBaseUrlIsCorrect() {
-		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("https://1.2.3.4:452/MCWS/v1/")
-	}
-
-	@Test
-	fun thenTheCertificateFingerprintIsCorrect() {
-		assertThat(urlProvider?.certificateFingerprint)
-			.isEqualTo(Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45"))
+	fun thenTheLookupIsCancelled() {
+		assertThat(cancellationException?.message).isEqualTo("Yup I'm cancelled")
 	}
 }

@@ -35,19 +35,15 @@ class LibraryConnectionProvider(
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				lookupConnectionSettings
 					.lookupConnectionSettings(libraryId)
-					.eventually({ connectionSettings ->
+					.eventually({ c ->
 						when {
-							connectionSettings == null || !validateConnectionSettings.isValid(connectionSettings) -> {
+							c == null || !validateConnectionSettings.isValid(c) -> {
 								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 								resolve(null)
 								empty()
 							}
-							connectionSettings.isWakeOnLanEnabled -> {
-								wakeAndBuildConnection()
-							}
-							else -> {
-								buildConnection()
-							}
+							c.isWakeOnLanEnabled -> wakeAndBuildConnection()
+							else -> buildConnection()
 						}
 					}, {
 						reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
@@ -74,6 +70,7 @@ class LibraryConnectionProvider(
 				reportProgress(BuildingConnectionStatus.SendingWakeSignal)
 				return wakeAlarm
 					.awakeLibraryServer(libraryId)
+					.also(cancellationProxy::doCancel)
 					.eventually { buildConnection() }
 			}
 
@@ -82,7 +79,7 @@ class LibraryConnectionProvider(
 
 				reportProgress(BuildingConnectionStatus.BuildingConnection)
 
-				return liveUrlProvider.promiseLiveUrl(libraryId)
+				return liveUrlProvider.promiseLiveUrl(libraryId).also(cancellationProxy::doCancel)
 			}
 		}
 }

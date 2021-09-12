@@ -35,7 +35,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
 			every { validateConnectionSettings.isValid(any()) } returns true
 
-			val deferredConnectionSettings = DeferredPromise(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
+			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 			val lookupConnection = mockk<LookupConnectionSettings>()
 			every {
@@ -60,7 +60,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 				libraryConnectionProvider
 					.promiseLibraryConnection(LibraryId(3))
 					.apply {
-						progress.then { statuses.add(it) }
+						progress.then(statuses::add)
 						updates(statuses::add)
 					}
 					.toFuture()

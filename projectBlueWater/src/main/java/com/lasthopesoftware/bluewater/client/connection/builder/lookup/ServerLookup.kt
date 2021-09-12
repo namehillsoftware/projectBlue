@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : LookupServers {
@@ -18,32 +19,38 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 		private const val macAddressElement = "macaddresslist"
 	}
 
-	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> {
-		return serverInfoXmlRequest.promiseServerInfoXml(libraryId)
-			.then {
-				if (it == null) return@then null
+	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> = CancellableProxyPromise { cp ->
+		serverInfoXmlRequest.promiseServerInfoXml(libraryId)
+			.also(cp::doCancel)
+			.then { xml ->
+				if (xml == null || cp.isCancelled) return@then null
 
-				if (it.containsAttribute(statusAttribute) && errorStatusValue == it.getAttribute(statusAttribute)) {
-					if (it.contains(msgElement)) throw ServerDiscoveryException(libraryId, it.getUnique(msgElement).value)
+				if (xml.containsAttribute(statusAttribute) && errorStatusValue == xml.getAttribute(statusAttribute)) {
+					if (xml.contains(msgElement)) throw ServerDiscoveryException(
+						libraryId,
+						xml.getUnique(msgElement).value
+					)
 					throw ServerDiscoveryException(libraryId)
 				}
 
-				val remoteIp = it.getUnique(ipElement)
-				val localIps = it.getUnique(localIpListElement)
-				val portXml = it.getUnique(portElement)
-				val macAddresses = it.getUnique(macAddressElement)
+				val remoteIp = xml.getUnique(ipElement)
+				val localIps = xml.getUnique(localIpListElement)
+				val portXml = xml.getUnique(portElement)
+				val macAddresses = xml.getUnique(macAddressElement)
 
 				var serverInfo = ServerInfo(
 					remoteIp = remoteIp.value,
 					localIps = listOf(*localIps.value.split(",").toTypedArray()),
 					httpPort = portXml.value.toInt(),
-					macAddresses = listOf(*macAddresses.value.trim().split(",").toTypedArray()))
+					macAddresses = listOf(*macAddresses.value.trim().split(",").toTypedArray())
+				)
 
-				if (it.contains(httpsPortElement))
-					serverInfo = serverInfo.copy(httpsPort = it.getUnique(httpsPortElement).value.toInt())
+				if (xml.contains(httpsPortElement))
+					serverInfo = serverInfo.copy(httpsPort = xml.getUnique(httpsPortElement).value.toInt())
 
-				if (it.contains(certificateFingerprintElement))
-					serverInfo = serverInfo.copy(certificateFingerprint = it.getUnique(certificateFingerprintElement).value)
+				if (xml.contains(certificateFingerprintElement))
+					serverInfo =
+						serverInfo.copy(certificateFingerprint = xml.getUnique(certificateFingerprintElement).value)
 
 				serverInfo
 			}

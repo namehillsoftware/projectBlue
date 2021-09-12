@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary
+package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndWolDisabled.AndTheLiveUrlIsBeingRetrieved
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -6,12 +6,10 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -22,13 +20,14 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
 
-class WhenRetrievingTheLibraryConnectionTwice {
+class WhenRetrievingTheLibraryConnectionIsCancelled {
 
 	companion object {
-		private val firstUrlProvider = mockk<IUrlProvider>()
+		private val urlProvider = mockk<IUrlProvider>()
 		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 		private var connectionProvider: IConnectionProvider? = null
-		private var secondConnectionProvider: IConnectionProvider? = null
+		private var isLibraryServerWoken = false
+		private var isLiveUrlProviderCancelled = false
 
 		@BeforeClass
 		@JvmStatic
@@ -36,58 +35,70 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
 			every { validateConnectionSettings.isValid(any()) } returns true
 
-			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf"))
+			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(
+				ConnectionSettings(
+					accessCode = "aB5nf",
+					isWakeOnLanEnabled = false
+				)
+			)
 
 			val lookupConnection = mockk<LookupConnectionSettings>()
 			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(2))
+				lookupConnection.lookupConnectionSettings(LibraryId(3))
 			} returns deferredConnectionSettings
 
+			val deferredLiveUrlProvider = object : DeferredPromise<IUrlProvider?>(urlProvider) {
+				override fun run() {
+					isLiveUrlProviderCancelled = true
+					resolve(null)
+				}
+			}
 			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns firstUrlProvider.toPromise()
+			every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns deferredLiveUrlProvider
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
 				validateConnectionSettings,
 				lookupConnection,
-				NoopServerAlarm(),
+				{
+					isLibraryServerWoken = true
+					Unit.toPromise()
+				},
 				liveUrlProvider,
 				OkHttpFactory.getInstance()
 			)
 
-			val connectionSessionManager = ConnectionSessionManager(
-				mockk(),
-				libraryConnectionProvider
-			)
-
 			val futureConnectionProvider =
-				connectionSessionManager
-					.promiseLibraryConnection(LibraryId(2))
+				libraryConnectionProvider
+					.promiseLibraryConnection(LibraryId(3))
 					.apply {
-						progress.then { if (it != null) statuses.add(it) }
+						progress.then(statuses::add)
 						updates(statuses::add)
 					}
 					.toFuture()
 
 			deferredConnectionSettings.resolve()
 
+			futureConnectionProvider.cancel(true)
+
+			deferredLiveUrlProvider.resolve()
+
 			connectionProvider = futureConnectionProvider.get()
-
-			val secondFutureConnectionProvider =
-				connectionSessionManager
-					.promiseLibraryConnection(LibraryId(2))
-					.apply {
-						progress.then { if (it != null) statuses.add(it) }
-						updates(statuses::add)
-					}
-					.toFuture()
-
-			secondConnectionProvider = secondFutureConnectionProvider.get()
 		}
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
-		assertThat(secondConnectionProvider).isEqualTo(connectionProvider)
+	fun thenTheLibraryIsNotWoken() {
+		assertThat(isLibraryServerWoken).isFalse
+	}
+
+	@Test
+	fun thenTheConnectionIsNull() {
+		assertThat(connectionProvider).isNull()
+	}
+
+	@Test
+	fun thenTheLiveUrlIsCancelled() {
+		assertThat(isLiveUrlProviderCancelled).isTrue
 	}
 
 	@Test
@@ -96,7 +107,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
-				BuildingConnectionStatus.BuildingConnectionComplete
+				BuildingConnectionStatus.BuildingConnectionFailed,
 			)
 	}
 }
