@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class InstantiateSelectedConnectionActivity : Activity() {
+	private var isCancelled = false
 	private val lblConnectionStatus = LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
 	private val cancelButton = LazyViewFinder<TextView>(this, R.id.cancelButton)
 
@@ -49,9 +50,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		setContentView(R.layout.layout_status)
 
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
-		cancelButton.findView().setOnClickListener {
-			lazyPromisedSessionConnection.value.cancel()
-		}
+		cancelButton.findView().setOnClickListener { cancel() }
 
 		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
 			SelectedConnection.buildSessionBroadcast
@@ -60,12 +59,13 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		lazyPromisedSessionConnection
 			.value
 			.eventually(LoopedInPromise.response({ c ->
-				if (c == null)
+				if (isCancelled) return@response
+				else if (c == null)
 					launchActivityDelayed(selectServerIntent)
 				else if (intent == null || START_ACTIVITY_FOR_RETURN != intent.action)
 					launchActivityDelayed(browseLibraryIntent)
 				else
-					finish()
+					finishForResultDelayed()
 			}, handler), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent)
 			}, handler))
@@ -73,15 +73,8 @@ class InstantiateSelectedConnectionActivity : Activity() {
 	}
 
 	override fun onBackPressed() {
-		if (lazyPromisedSessionConnection.isInitialized())
-			lazyPromisedSessionConnection.value.cancel()
+		cancel()
 		super.onBackPressed()
-	}
-
-	override fun onDestroy() {
-		if (lazyPromisedSessionConnection.isInitialized())
-			lazyPromisedSessionConnection.value.cancel()
-		super.onDestroy()
 	}
 
 	private fun handleBuildStatusChange(status: Int) {
@@ -97,14 +90,27 @@ class InstantiateSelectedConnectionActivity : Activity() {
 	}
 
 	private fun launchActivityDelayed(intent: Intent) {
-		handler.postDelayed({ startActivity(intent) }, ACTIVITY_LAUNCH_DELAY.toLong())
+		if (!isCancelled)
+			handler.postDelayed({ if (!isCancelled) startActivity(intent) }, ACTIVITY_LAUNCH_DELAY)
+	}
+
+	private fun finishForResultDelayed() {
+		if (!isCancelled)
+			handler.postDelayed({ if (!isCancelled) finish() }, ACTIVITY_LAUNCH_DELAY)
+	}
+
+	private fun cancel() {
+		isCancelled = true
+		if (lazyPromisedSessionConnection.isInitialized())
+			lazyPromisedSessionConnection.value.cancel()
+		startActivity(selectServerIntent)
 	}
 
 	companion object {
 		private const val ACTIVITY_ID = 2032
 		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(
 			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
-		private const val ACTIVITY_LAUNCH_DELAY = 1500
+		private const val ACTIVITY_LAUNCH_DELAY = 3000L
 
 		fun restoreSelectedConnection(activity: Activity): Promise<Int?> =
 			getInstance(activity).isSessionConnectionActive().then { isActive ->
