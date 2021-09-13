@@ -4,8 +4,6 @@ import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostname
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.resources.executors.HttpThreadPoolExecutor.executor
-import com.namehillsoftware.lazyj.CreateAndHold
-import com.namehillsoftware.lazyj.Lazy
 import okhttp3.Dispatcher
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -33,7 +31,7 @@ object OkHttpFactory : ProvideOkHttpClients {
             .hostnameVerifier(getHostnameVerifier(urlProvider))
             .build()
 
-	private val dispatcher: CreateAndHold<Dispatcher> = Lazy {
+	private val dispatcher by lazy {
 		val maxDownloadThreadPoolSize = 4
 		val downloadThreadPoolSize =
 			maxDownloadThreadPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
@@ -46,14 +44,14 @@ object OkHttpFactory : ProvideOkHttpClients {
 
 	private val commonBuilder by lazy {
 		OkHttpClient.Builder()
-			.addNetworkInterceptor(Interceptor { chain: Interceptor.Chain ->
+			.addNetworkInterceptor(Interceptor { chain ->
 				val requestBuilder =
 					chain.request().newBuilder().addHeader("Connection", "close")
 				chain.proceed(requestBuilder.build())
 			})
 			.cache(null)
 			.readTimeout(1, TimeUnit.MINUTES)
-			.dispatcher(dispatcher.getObject())
+			.dispatcher(dispatcher)
 	}
 
 	private fun getSslSocketFactory(urlProvider: IUrlProvider): SSLSocketFactory {
