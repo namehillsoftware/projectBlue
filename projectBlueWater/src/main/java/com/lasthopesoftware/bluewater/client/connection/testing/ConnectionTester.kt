@@ -21,16 +21,14 @@ object ConnectionTester : TestConnections {
 
 			connectionProvider.promiseResponse("Alive")
 				.also(cancellationProxy::doCancel)
-				.then({ resolve(testResponse(it)) }, { resolve(false) })
+				.then({ resolve(!cancellationProxy.isCancelled && testResponse(it)) }, { resolve(false) })
 		}
 	}
 
 	private fun testResponse(response: Response): Boolean {
 		response.body?.use { body ->
 			try {
-				body.byteStream().use {
-					return StandardRequest.fromInputStream(it)?.isStatus ?: false
-				}
+				return body.byteStream().use(StandardRequest::fromInputStream)?.isStatus ?: false
 			} catch (e: IOException) {
 				logger.error("Error closing connection, device failure?", e)
 			} catch (e: IllegalArgumentException) {

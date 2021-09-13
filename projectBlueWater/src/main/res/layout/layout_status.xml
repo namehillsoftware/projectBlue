@@ -11,16 +11,25 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="115dp"
         android:gravity="center"
-        android:text="Placeholder Text"
+        android:text=""
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <ProgressBar
-        android:id="@+id/pbConnectionSpinner"
+        android:id="@+id/connectionSpinner"
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:layout_marginTop="27dp" />
+
+    <Button
+        android:id="@+id/cancelButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/connectionSpinner"
+        android:text="@string/btn_cancel"
+        android:layout_marginTop="10dp"/>
 
 </RelativeLayout>

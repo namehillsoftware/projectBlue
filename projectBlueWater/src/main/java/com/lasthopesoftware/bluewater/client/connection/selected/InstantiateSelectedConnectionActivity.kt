@@ -20,19 +20,21 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class InstantiateSelectedConnectionActivity : Activity() {
+	private var isCancelled = false
 	private val lblConnectionStatus = LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
+	private val cancelButton = LazyViewFinder<TextView>(this, R.id.cancelButton)
 
-	private val selectServerIntent = lazy { Intent(this, ApplicationSettingsActivity::class.java) }
+	private val selectServerIntent by lazy { Intent(this, ApplicationSettingsActivity::class.java) }
 
-	private val browseLibraryIntent = lazy {
+	private val browseLibraryIntent by lazy {
 		val browseLibraryIntent = Intent(this, BrowserEntryActivity::class.java)
 		browseLibraryIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
 		browseLibraryIntent
 	}
 
-	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
+	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
 
-	private val handler = lazy { Handler(mainLooper) }
+	private val handler by lazy { Handler(mainLooper) }
 
 	private val buildSessionConnectionReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
@@ -40,30 +42,39 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		}
 	}
 
+	private val lazyPromisedSessionConnection = lazy { getInstance(this).promiseSessionConnection() }
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		setContentView(R.layout.layout_status)
 
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
+		cancelButton.findView().setOnClickListener { cancel() }
 
-		localBroadcastManager.value.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
+		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
 			SelectedConnection.buildSessionBroadcast
 		))
 
-		getInstance(this)
-			.promiseSessionConnection()
+		lazyPromisedSessionConnection
+			.value
 			.eventually(LoopedInPromise.response({ c ->
-				if (c == null)
-					launchActivityDelayed(selectServerIntent.value)
+				if (isCancelled) return@response
+				else if (c == null)
+					launchActivityDelayed(selectServerIntent)
 				else if (intent == null || START_ACTIVITY_FOR_RETURN != intent.action)
-					launchActivityDelayed(browseLibraryIntent.value)
+					launchActivityDelayed(browseLibraryIntent)
 				else
-					finish()
-			}, handler.value), LoopedInPromise.response({
-				launchActivityDelayed(selectServerIntent.value)
-			}, handler.value))
-			.must { localBroadcastManager.value.unregisterReceiver(buildSessionConnectionReceiver) }
+					finishForResultDelayed()
+			}, handler), LoopedInPromise.response({
+				launchActivityDelayed(selectServerIntent)
+			}, handler))
+			.must { localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver) }
+	}
+
+	override fun onBackPressed() {
+		cancel()
+		super.onBackPressed()
 	}
 
 	private fun handleBuildStatusChange(status: Int) {
@@ -79,26 +90,37 @@ class InstantiateSelectedConnectionActivity : Activity() {
 	}
 
 	private fun launchActivityDelayed(intent: Intent) {
-		handler.value.postDelayed({ startActivity(intent) }, ACTIVITY_LAUNCH_DELAY.toLong())
+		if (!isCancelled)
+			handler.postDelayed({ if (!isCancelled) startActivity(intent) }, ACTIVITY_LAUNCH_DELAY)
+	}
+
+	private fun finishForResultDelayed() {
+		if (!isCancelled)
+			handler.postDelayed({ if (!isCancelled) finish() }, ACTIVITY_LAUNCH_DELAY)
+	}
+
+	private fun cancel() {
+		isCancelled = true
+		if (lazyPromisedSessionConnection.isInitialized())
+			lazyPromisedSessionConnection.value.cancel()
+		startActivity(selectServerIntent)
 	}
 
 	companion object {
 		private const val ACTIVITY_ID = 2032
 		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(
 			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
-		private const val ACTIVITY_LAUNCH_DELAY = 1500
+		private const val ACTIVITY_LAUNCH_DELAY = 3000L
 
 		fun restoreSelectedConnection(activity: Activity): Promise<Int?> =
-			getInstance(activity).isSessionConnectionActive().then {
-				when (it) {
-					false -> {
-						val intent = Intent(activity, InstantiateSelectedConnectionActivity::class.java)
-						intent.action = START_ACTIVITY_FOR_RETURN
-						activity.startActivityForResult(intent, ACTIVITY_ID)
-						ACTIVITY_ID
-					}
-					else -> null
+			getInstance(activity).isSessionConnectionActive().then { isActive ->
+				if (!isActive) {
+					val intent = Intent(activity, InstantiateSelectedConnectionActivity::class.java)
+					intent.action = START_ACTIVITY_FOR_RETURN
+					activity.startActivityForResult(intent, ACTIVITY_ID)
+					ACTIVITY_ID
 				}
+				else null
 			}
 
 		fun startNewConnection(context: Context) {
