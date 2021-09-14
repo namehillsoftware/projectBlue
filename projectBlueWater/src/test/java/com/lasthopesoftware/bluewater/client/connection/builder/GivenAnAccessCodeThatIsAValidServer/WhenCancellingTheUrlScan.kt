@@ -37,7 +37,8 @@ class WhenCancellingTheUrlScan {
 				connectionTester,
 				mockk(),
 				connectionSettingsLookup,
-				OkHttpFactory.getInstance())
+				OkHttpFactory
+            )
 
 			val promisedScan = urlScanner.promiseBuiltUrlProvider(LibraryId(14))
 			promisedScan.cancel()

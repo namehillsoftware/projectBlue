@@ -64,7 +64,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 					Unit.toPromise()
 				},
 				liveUrlProvider,
-				OkHttpFactory.getInstance()
+				OkHttpFactory
 			)
 
 			val futureConnectionProvider =

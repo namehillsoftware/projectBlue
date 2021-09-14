@@ -63,7 +63,7 @@ class WhenRetrievingTheLibraryConnection {
                 lookupConnection,
                 NoopServerAlarm(),
                 liveUrlProvider,
-                OkHttpFactory.getInstance()
+                OkHttpFactory
             )
 
 			val futureConnectionProvider = libraryConnectionProvider

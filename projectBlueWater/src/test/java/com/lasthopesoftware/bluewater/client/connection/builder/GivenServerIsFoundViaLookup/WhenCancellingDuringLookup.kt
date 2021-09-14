@@ -47,7 +47,7 @@ class WhenCancellingDuringLookup {
 				connectionTester,
 				serverLookup,
 				connectionSettingsLookup,
-				OkHttpFactory.getInstance()
+				OkHttpFactory
 			)
 
 			val promisedUrl = urlScanner.promiseBuiltUrlProvider(LibraryId(55))

@@ -52,7 +52,7 @@ class WhenRetrievingTheLibraryConnection {
                     Unit.toPromise()
                 },
                 liveUrlProvider,
-                OkHttpFactory.getInstance()
+                OkHttpFactory
             )
 
 			val futureConnectionProvider =

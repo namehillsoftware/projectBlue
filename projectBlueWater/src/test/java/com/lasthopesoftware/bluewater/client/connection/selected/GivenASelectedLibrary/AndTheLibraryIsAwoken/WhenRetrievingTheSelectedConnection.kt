@@ -51,7 +51,7 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.SendingWakeSignal)
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete)
-			deferredConnectionProvider.sendResolution(ConnectionProvider(urlProvider, OkHttpFactory.getInstance()))
+			deferredConnectionProvider.sendResolution(ConnectionProvider(urlProvider, OkHttpFactory))
 			connectionProvider = futureConnectionProvider.get()
 		}
 	}
