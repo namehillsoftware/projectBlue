@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit
 class ConnectionSessionManager(
 	private val connectionTester: TestConnections,
 	private val libraryConnections: ProvideLibraryConnections
+	private val holdConnectionSettings: HoldConnections
 ) : ManageConnectionSessions, ProvideLibraryConnections {
 
 	private val cachedConnectionProviders = ConcurrentHashMap<LibraryId, IConnectionProvider>()
