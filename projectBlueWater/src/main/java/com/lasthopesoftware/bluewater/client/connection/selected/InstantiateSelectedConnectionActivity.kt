@@ -110,7 +110,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		private const val ACTIVITY_ID = 2032
 		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(
 			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
-		private const val ACTIVITY_LAUNCH_DELAY = 3000L
+		private const val ACTIVITY_LAUNCH_DELAY = 2500L
 
 		fun restoreSelectedConnection(activity: Activity): Promise<Int?> =
 			getInstance(activity).isSessionConnectionActive().then { isActive ->
