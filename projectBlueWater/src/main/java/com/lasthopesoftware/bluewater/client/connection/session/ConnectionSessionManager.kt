@@ -32,8 +32,8 @@ import java.util.concurrent.TimeUnit
 
 class ConnectionSessionManager(
 	private val connectionTester: TestConnections,
-	private val libraryConnections: ProvideLibraryConnections
-	private val holdConnectionSettings: HoldConnections
+	private val libraryConnections: ProvideLibraryConnections,
+	private val holdConnections: HoldConnections
 ) : ManageConnectionSessions, ProvideLibraryConnections {
 
 	private val cachedConnectionProviders = ConcurrentHashMap<LibraryId, IConnectionProvider>()
@@ -90,8 +90,7 @@ class ConnectionSessionManager(
 		}
 	}
 
-	override fun isConnectionActive(libraryId: LibraryId): Boolean =
-		cachedConnectionProviders[libraryId] != null
+	override fun isConnectionActive(libraryId: LibraryId): Boolean = holdConnections.isConnectionActive(libraryId)
 
 	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
@@ -144,7 +143,8 @@ class ConnectionSessionManager(
 								newUrlScanner(context)
 							),
 							OkHttpFactory
-                        )
+                        ),
+						ConnectionRepository,
 					).also { connectionSessionManager = it }
 				}
 		}
