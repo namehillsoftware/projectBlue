@@ -104,6 +104,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.CloseableManager
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
@@ -111,8 +112,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
-import io.reactivex.internal.schedulers.RxThreadFactory
-import io.reactivex.internal.schedulers.SingleScheduler
+import io.reactivex.internal.schedulers.ExecutorScheduler
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -349,13 +349,7 @@ open class PlaybackService : Service() {
 
 	/* End streamer intent helpers */
 
-	private val lazyObservationScheduler = lazy {
-		SingleScheduler(
-			RxThreadFactory(
-				"Playback Observation",
-				Thread.MIN_PRIORITY,
-				false))
-	}
+	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true) }
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManagerLazy = lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
@@ -649,7 +643,7 @@ open class PlaybackService : Service() {
 	}
 
 	@Synchronized
-	private fun initializePlaybackPlaylistStateManagerSerially(library: Library): Promise<PlaybackEngine> {
+	private fun initializePlaybackPlaylistStateManagerSerially(library: Library): Promise<PlaybackEngine?> {
 		return playbackEnginePromise.eventually(
 			{ initializePlaybackEngine(library) },
 			{ initializePlaybackEngine(library) }).also { playbackEnginePromise = it }

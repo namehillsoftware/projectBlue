@@ -4,8 +4,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -58,25 +59,24 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 						.eventually { cache ->
 							cache?.promiseCachedFile(uniqueKey)
 								?.eventually { imageFile ->
-									if (imageFile != null) QueuedPromise(ImageDiskCacheWriter(imageFile), ParsingScheduler.instance().scheduler)
-									else Promise.empty<ByteArray?>()
+									if (imageFile != null) QueuedPromise(ImageDiskCacheWriter(imageFile), ThreadPools.io)
+									else Promise.empty()
 								}
 								?.eventually { bytes ->
 									bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
 										.then {
 											cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
-
 											it
 										}
 								}
-								?: Promise.empty()
+								.keepPromise()
 						}
 				}
 			promiseProxy.proxy(promisedBytes)
 		}
 	}
 
-	private class ImageDiskCacheWriter internal constructor(private val imageCacheFile: File) : MessageWriter<ByteArray> {
+	private class ImageDiskCacheWriter(private val imageCacheFile: File) : MessageWriter<ByteArray> {
 		override fun prepareMessage(): ByteArray = getBytesFromFiles(imageCacheFile)
 	}
 }

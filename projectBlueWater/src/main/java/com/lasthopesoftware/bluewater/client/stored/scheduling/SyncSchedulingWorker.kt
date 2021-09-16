@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.scheduling
 
 import android.content.Context
-import android.os.AsyncTask
 import androidx.work.*
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
@@ -17,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncW
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -79,7 +79,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 						} catch (e: InterruptedException) {
 							reject(e)
 						}
-					}, AsyncTask.THREAD_POOL_EXECUTOR)
+					}, ThreadPools.compute)
 				}
 			}
 		}

@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached
 
 import android.content.Context
 import android.database.SQLException
-import android.os.AsyncTask
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
@@ -12,6 +11,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -42,20 +43,26 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 				fos.commitToCache()
 			}) { e ->
 				logger.error("Unable to write to file!", e)
-				if (e !is IOException) return@eventually Promise.empty<CachedFile>()
 
-				// Check if free space is too low and then attempt to free up enough space
-				// to store image
-				val currentFreeDiskSpace = freeDiskSpace
-				if (currentFreeDiskSpace > fileData.size) return@eventually Promise.empty<CachedFile>()
-
-				val targetSize = diskFileCacheConfiguration.maxSize.coerceAtMost(currentFreeDiskSpace + fileData.size)
-				CacheFlusherTask
-					.promisedCacheFlushing(context, diskCacheDirectory, diskFileCacheConfiguration, targetSize)
-					.eventually {
-						if (freeDiskSpace > fileData.size) put(uniqueKey, fileData)
-						else Promise.empty()
+				when (e) {
+					is IOException -> {
+						// Check if free space is too low and then attempt to free up enough space
+						// to store image
+						freeDiskSpace
+							.takeIf { it <= fileData.size }
+							?.let { currentFreeDiskSpace ->
+								val targetSize = diskFileCacheConfiguration.maxSize.coerceAtMost(currentFreeDiskSpace + fileData.size)
+								CacheFlusherTask
+									.promisedCacheFlushing(context, diskCacheDirectory, diskFileCacheConfiguration, targetSize)
+									.eventually {
+										if (freeDiskSpace > fileData.size) put(uniqueKey, fileData)
+										else Promise.empty()
+									}
+							}
+							.keepPromise()
 					}
+					else -> Promise.empty()
+				}
 			}
 			.must { cachedFileOutputStream.close() }
 	}
@@ -64,42 +71,43 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
 			.then { cachedFile ->
-				val fileName = cachedFile?.fileName ?: return@then null
-				try {
+				cachedFile?.fileName?.let { fileName ->
+					try {
 
-					val returnFile = File(fileName)
+						val returnFile = File(fileName)
 
-					logger.info("Checking if " + cachedFile.fileName + " exists.")
+						logger.info("Checking if " + cachedFile.fileName + " exists.")
 
-					when {
-						!returnFile.exists() -> {
-							logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
+						when {
+							!returnFile.exists() -> {
+								logger.warn("Cached file `" + cachedFile.fileName + "` doesn't exist! Removing from database.")
 
-							deleteCachedFile(cachedFile.id)
-							null
+								deleteCachedFile(cachedFile.id)
+								null
+							}
+							// Remove the cached file and return null if it's past its expired time
+							expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
+								logger.info("Cached file $uniqueKey expired. Deleting.")
+
+								promiseDeletedFile(cachedFile, returnFile)
+								null
+							}
+							else -> {
+								diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
+								logger.info("Returning cached file $uniqueKey")
+								returnFile
+							}
 						}
-						// Remove the cached file and return null if it's past its expired time
-						expirationTime > -1 && cachedFile.createdTime < System.currentTimeMillis() - expirationTime -> {
-							logger.info("Cached file $uniqueKey expired. Deleting.")
-
-							promiseDeletedFile(cachedFile, returnFile)
-							null
-						}
-						else -> {
-							diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile)
-							logger.info("Returning cached file $uniqueKey")
-							returnFile
-						}
+					} catch (sqlException: SQLException) {
+						logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
+						null
 					}
-				} catch (sqlException: SQLException) {
-					logger.error("There was an error attempting to get the cached file $uniqueKey", sqlException)
-					null
 				}
 			}
 	}
 
 	private fun promiseDeletedFile(cachedFile: CachedFile, file: File): Promise<Long> {
-		return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, AsyncTask.THREAD_POOL_EXECUTOR)
+		return QueuedPromise(MessageWriter { file.delete() || !file.exists() }, ThreadPools.io)
 			.eventually { isDeleted ->
 				if (isDeleted) deleteCachedFile(cachedFile.id)
 				else {

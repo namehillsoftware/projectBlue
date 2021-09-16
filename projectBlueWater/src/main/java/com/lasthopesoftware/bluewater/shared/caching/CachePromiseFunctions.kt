@@ -1,7 +1,7 @@
-package com.lasthopesoftware.resources.caching
+package com.lasthopesoftware.bluewater.shared.caching
 
 import com.namehillsoftware.handoff.promises.Promise
 
-interface CacheFunctions<Input : Any, Output> {
+interface CachePromiseFunctions<Input : Any, Output> {
 	fun getOrAdd(input: Input, factory: (Input) -> Promise<Output>): Promise<Output>
 }

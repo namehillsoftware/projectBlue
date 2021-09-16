@@ -1,54 +1,48 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist
 
-import androidx.annotation.NonNull;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.resources.executors.ThreadPools
+import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import java.util.*
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
+object FileStringListUtilities {
+    @JvmStatic
+	fun promiseParsedFileStringList(fileList: String): Promise<Collection<ServiceFile>> {
+        return QueuedPromise(
+            MessageWriter { parseFileStringList(fileList) },
+            ThreadPools.compute
+        )
+    }
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+    private fun parseFileStringList(fileList: String): Collection<ServiceFile> {
+        val keys = fileList.split(";").toTypedArray()
+        if (keys.size < 2) return emptySet()
+        val offset = keys[0].toInt() + 1
+        val serviceFiles = ArrayList<ServiceFile>(keys[1].toInt())
+        for (i in offset until keys.size) {
+            if (keys[i] == "-1") continue
+            serviceFiles.add(ServiceFile(keys[i].toInt()))
+        }
+        return serviceFiles
+    }
 
-public class FileStringListUtilities {
+    @JvmStatic
+	fun promiseSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> {
+        return QueuedPromise(
+            MessageWriter { serializeFileStringList(serviceFiles) },
+			ThreadPools.compute
+        )
+    }
 
-	public static Promise<Collection<ServiceFile>> promiseParsedFileStringList(@NonNull String fileList) {
-		return new QueuedPromise<>(() -> parseFileStringList(fileList), ParsingScheduler.instance().getScheduler());
-	}
-
-	@NonNull
-	private static Collection<ServiceFile> parseFileStringList(@NonNull String fileList) {
-		final String[] keys = fileList.split(";");
-
-		if (keys.length < 2) return Collections.emptySet();
-
-		final int offset = Integer.parseInt(keys[0]) + 1;
-		final ArrayList<ServiceFile> serviceFiles = new ArrayList<>(Integer.parseInt(keys[1]));
-
-		for (int i = offset; i < keys.length; i++) {
-			if (keys[i].equals("-1")) continue;
-
-			serviceFiles.add(new ServiceFile(Integer.parseInt(keys[i])));
-		}
-
-		return serviceFiles;
-	}
-
-	public static Promise<String> promiseSerializedFileStringList(Collection<ServiceFile> serviceFiles) {
-		return new QueuedPromise<>(() -> serializeFileStringList(serviceFiles), ParsingScheduler.instance().getScheduler());
-	}
-
-	private static String serializeFileStringList(Collection<ServiceFile> serviceFiles) {
-		final int fileSize = serviceFiles.size();
-		// Take a guess that most keys will not be greater than 8 characters and add some more
-		// for the first characters
-		final StringBuilder sb = new StringBuilder(fileSize * 9 + 8);
-		sb.append("2;").append(fileSize).append(";-1;");
-
-		for (ServiceFile serviceFile : serviceFiles)
-			sb.append(serviceFile.getKey()).append(";");
-
-		return sb.toString();
-	}
+    private fun serializeFileStringList(serviceFiles: Collection<ServiceFile>): String {
+        val fileSize = serviceFiles.size
+        // Take a guess that most keys will not be greater than 8 characters and add some more
+        // for the first characters
+        val sb = StringBuilder(fileSize * 9 + 8)
+        sb.append("2;").append(fileSize).append(";-1;")
+        for (serviceFile in serviceFiles) sb.append(serviceFile.key).append(";")
+        return sb.toString()
+    }
 }

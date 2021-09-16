@@ -44,10 +44,10 @@ internal class PruneFilesTask(private val storedFileAccess: StoredFileAccess, se
 					directoryToDelete = directoryToDelete.parentFile
 				}
 			}
-		}, pruneFilesExecutor.value)
+		}, pruneFilesExecutor)
 	}
 
 	companion object {
-		private val pruneFilesExecutor = lazy { CachedSingleThreadExecutor() }
+		private val pruneFilesExecutor by lazy { CachedSingleThreadExecutor() }
 	}
 }
