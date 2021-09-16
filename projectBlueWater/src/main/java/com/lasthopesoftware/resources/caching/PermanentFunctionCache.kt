@@ -9,10 +9,17 @@ class PermanentFunctionCache<Input : Any, Output> : CacheFunctions<Input, Output
 	private val cachedPromises = HashMap<Input, Promise<Output>>()
 	private val cachedValues = HashMap<Input, Output>()
 
-	override fun getOrAdd(input: Input, addFunc: (Input) -> Promise<Output>): Promise<Output> =
-		cachedValues[input]?.toPromise() ?: synchronized(cachedSyncs.getOrPut(input, ::Any)) {
-			cachedValues[input]?.toPromise()
-				?: cachedPromises[input]?.eventually({ o -> o.toPromise() }, { addFunc(input).then { o -> o.also { cachedValues[input] = o } } })?.also { cachedPromises[input] = it }
-				?: addFunc(input).then { o -> o.also { cachedValues[input] = it } }.also { cachedPromises[input] = it }
+	override fun getOrAdd(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
+		fun Promise<Output>?.promiseValue(): Promise<Output> {
+			fun produceAndStoreValue() = factory(input).then { o -> o.also { cachedValues[input] = o } }
+
+			return this?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() })
+				?: produceAndStoreValue()
 		}
+
+		return cachedValues[input]?.toPromise() ?: synchronized(cachedSyncs.getOrPut(input, ::Any)) {
+			cachedValues[input]?.toPromise()
+				?: cachedPromises[input].promiseValue().also { cachedPromises[input] = it }
+		}
+	}
 }
