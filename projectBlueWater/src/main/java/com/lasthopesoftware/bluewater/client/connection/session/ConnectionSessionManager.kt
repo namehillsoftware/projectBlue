@@ -38,19 +38,25 @@ class ConnectionSessionManager(
 		holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
 			object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
-					promised?.then({ c ->
-						c?.let {
-							connectionTester.promiseIsConnectionPossible(it)
-								.then({ isPossible ->
-									if (isPossible) resolve(it)
-									else updateCachedConnection()
-								}, {
-									updateCachedConnection()
-								})
-						} ?: updateCachedConnection()
-					}, {
-						updateCachedConnection()
-					}) ?: updateCachedConnection()
+					promised
+						?.also {
+							doCancel(it)
+							it.progress.then { p -> p?.also(::reportProgress) }
+							it.updates(::reportProgress)
+						}
+						?.then({ c ->
+							c?.let {
+								connectionTester.promiseIsConnectionPossible(it)
+									.then({ isPossible ->
+										if (isPossible) resolve(it)
+										else updateCachedConnection()
+									}, {
+										updateCachedConnection()
+									})
+							} ?: updateCachedConnection()
+						}, {
+							updateCachedConnection()
+						}) ?: updateCachedConnection()
 				}
 
 				private fun updateCachedConnection() = proxy(libraryConnections.promiseLibraryConnection(l))

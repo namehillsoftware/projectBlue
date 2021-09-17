@@ -54,15 +54,6 @@ class WhenGettingATestedLibraryConnection {
 					}
 					.toFuture()
 
-			val secondFutureConnectionProvider =
-				connectionSessionManager
-					.promiseTestedLibraryConnection(libraryId)
-					.apply {
-						progress.then { if (it != null) statuses.add(it) }
-						updates(statuses::add)
-					}
-					.toFuture()
-
 			firstDeferredConnectionProvider.apply {
 				sendProgressUpdates(
 					BuildingConnectionStatus.GettingLibrary,
@@ -72,6 +63,15 @@ class WhenGettingATestedLibraryConnection {
 
 				sendResolution(mockk())
 			}
+
+			val secondFutureConnectionProvider =
+				connectionSessionManager
+					.promiseTestedLibraryConnection(libraryId)
+					.apply {
+						progress.then { if (it != null) statuses.add(it) }
+						updates(statuses::add)
+					}
+					.toFuture()
 
 			secondDeferredConnectionProvider.apply {
 				sendProgressUpdates(
@@ -99,6 +99,7 @@ class WhenGettingATestedLibraryConnection {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete,
 				BuildingConnectionStatus.BuildingConnectionComplete,
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
