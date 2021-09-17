@@ -7,15 +7,24 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 	private val cancellationProxy = CancellationProxy()
 	private val proxyResolution = ImmediateResponse<Resolution, Unit> { resolve(it) }
 	private val proxyRejection = ImmediateResponse<Throwable, Unit> { reject(it) }
+	private val proxyUpdates = object : ImmediateResponse<Progress, Unit>, (Progress) -> Unit {
+		override fun respond(resolution: Progress) {
+			if (resolution != null) reportProgress(resolution)
+		}
+
+		override fun invoke(progress: Progress) {
+			reportProgress(progress)
+		}
+	}
 
 	init {
 		respondToCancellation(cancellationProxy)
 	}
 
 	protected fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
-		cancellationProxy.doCancel(source)
+		doCancel(source)
 
-		source.progress.then(UpdatesProxy(source))
+		proxyUpdates(source)
 
 		source.then(proxyResolution, proxyRejection)
 
@@ -23,9 +32,9 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 	}
 
 	protected fun proxySuccess(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
-		cancellationProxy.doCancel(source)
+		doCancel(source)
 
-		source.progress.then(UpdatesProxy(source))
+		proxyUpdates(source)
 
 		source.then(proxyResolution)
 
@@ -37,14 +46,9 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 		return this
 	}
 
-	private inner class UpdatesProxy(private val source: ProgressingPromise<Progress, Resolution>) : ImmediateResponse<Progress, Unit>, (Progress) -> Unit {
-		override fun respond(resolution: Progress) {
-			if (resolution != null) reportProgress(resolution)
-			source.updates(this)
-		}
-
-		override fun invoke(progress: Progress) {
-			reportProgress(progress)
-		}
+	protected fun proxyUpdates(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
+		source.progress.then(proxyUpdates)
+		source.updates(proxyUpdates)
+		return this
 	}
 }
