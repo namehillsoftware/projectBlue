@@ -26,8 +26,6 @@ import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import okhttp3.OkHttpClient
 import org.joda.time.Duration
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 class ConnectionSessionManager(
@@ -36,15 +34,16 @@ class ConnectionSessionManager(
 	private val holdConnections: HoldConnections
 ) : ManageConnectionSessions, ProvideLibraryConnections {
 
-	private val cachedConnectionProviders = ConcurrentHashMap<LibraryId, IConnectionProvider>()
-	private val promisedConnectionProvidersCache = HashMap<LibraryId, ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>>()
-	private val buildingConnectionPromiseSync = Any()
-
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		synchronized(buildingConnectionPromiseSync) {
-			val promisedTestConnectionProvider = object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
+		holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
+			object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
-					promisedConnectionProvidersCache[libraryId]
+					promised
+						?.also {
+							doCancel(it)
+							it.progress.then { p -> p?.also(::reportProgress) }
+							it.updates(::reportProgress)
+						}
 						?.then({ c ->
 							c?.let {
 								connectionTester.promiseIsConnectionPossible(it)
@@ -57,56 +56,39 @@ class ConnectionSessionManager(
 							} ?: updateCachedConnection()
 						}, {
 							updateCachedConnection()
-						})
-						?: updateCachedConnection()
+						}) ?: updateCachedConnection()
 				}
 
-				private fun updateCachedConnection() = proxy(promiseUpdatedCachedConnection(libraryId))
+				private fun updateCachedConnection() = proxy(libraryConnections.promiseLibraryConnection(l))
 			}
-			promisedConnectionProvidersCache[libraryId] = promisedTestConnectionProvider
-			promisedTestConnectionProvider
 		}
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		cachedConnectionProviders[libraryId]?.let { ProgressingPromise(it) } ?:
-			synchronized(buildingConnectionPromiseSync) {
-				cachedConnectionProviders[libraryId]?.let { ProgressingPromise(it) } ?:
-					promisedConnectionProvidersCache[libraryId]?.apply {
-						eventuallyExcuse {
-							promiseUpdatedCachedConnection(libraryId).also { promisedConnectionProvidersCache[libraryId] = it }
-						}
-					} ?: promiseUpdatedCachedConnection(libraryId).also { promisedConnectionProvidersCache[libraryId] = it }
+		holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
+			object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
+				init {
+					promised
+						?.also(::proxySuccess)
+						?.excuse { proxy(libraryConnections.promiseLibraryConnection(l)) }
+						?: proxy(libraryConnections.promiseLibraryConnection(l))
+				}
 			}
+		}
 
 	override fun removeConnection(libraryId: LibraryId) {
-		synchronized(buildingConnectionPromiseSync) {
-			promisedConnectionProvidersCache[libraryId]?.apply {
-				cancel()
-				must { synchronized(buildingConnectionPromiseSync) {
-					cachedConnectionProviders.remove(libraryId)
-					promisedConnectionProvidersCache.remove(libraryId)
-				} }
-			} ?: cachedConnectionProviders.remove(libraryId)
-		}
+		holdConnections.removeConnection(libraryId)?.cancel()
 	}
 
 	override fun isConnectionActive(libraryId: LibraryId): Boolean = holdConnections.isConnectionActive(libraryId)
 
-	private fun promiseUpdatedCachedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
-			init {
-				val promisedLibraryConnection = libraryConnections.promiseLibraryConnection(libraryId)
-				proxy(promisedLibraryConnection)
-
-				promisedLibraryConnection.then { c -> if (c != null) cachedConnectionProviders[libraryId] = c }
-			}
-		}
-
 	companion object Instance {
-		private val syncObject = Object()
 		private const val buildConnectionTimeoutTime = 10000
 
-		private var connectionSessionManager: ConnectionSessionManager? = null
+		private val connectionRepository by lazy { ConnectionRepository() }
+
+		private val serverWakeSignal by lazy { ServerWakeSignal(PacketSender()) }
+
+		private val alarmConfiguration by lazy { AlarmConfiguration(3, Duration.standardSeconds(5)) }
 
 		private fun newServerLookup(context: Context): ServerLookup {
 			val client = OkHttpClient.Builder()
@@ -115,38 +97,30 @@ class ConnectionSessionManager(
 			return ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), client))
 		}
 
-		private fun newUrlScanner(context: Context): UrlScanner =
-			UrlScanner(
-				Base64Encoder(),
-				ConnectionTester,
-				newServerLookup(context),
-				ConnectionSettingsLookup(LibraryRepository(context)),
-				OkHttpFactory
-            )
-
 		fun get(context: Context): ConnectionSessionManager {
-			val applicationContext = context.applicationContext
+			val serverLookup = newServerLookup(context)
+			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 
-			return connectionSessionManager
-				?: synchronized(syncObject) {
-					connectionSessionManager ?: ConnectionSessionManager(
-						ConnectionTester,
-						LibraryConnectionProvider(
-							ConnectionSettingsValidation,
-							ConnectionSettingsLookup(LibraryRepository(applicationContext)),
-							ServerAlarm(
-								newServerLookup(context),
-								ServerWakeSignal(PacketSender()),
-								AlarmConfiguration(3, Duration.standardSeconds(5))),
-							LiveUrlProvider(
-								ActiveNetworkFinder(applicationContext),
-								newUrlScanner(context)
-							),
+			return ConnectionSessionManager(
+				ConnectionTester,
+				LibraryConnectionProvider(
+					ConnectionSettingsValidation,
+					connectionSettingsLookup,
+					ServerAlarm(serverLookup, serverWakeSignal, alarmConfiguration),
+					LiveUrlProvider(
+						ActiveNetworkFinder(context),
+						UrlScanner(
+							Base64Encoder,
+							ConnectionTester,
+							serverLookup,
+							connectionSettingsLookup,
 							OkHttpFactory
-                        ),
-						ConnectionRepository,
-					).also { connectionSessionManager = it }
-				}
+						)
+					),
+					OkHttpFactory
+				),
+				connectionRepository
+			)
 		}
 	}
 }

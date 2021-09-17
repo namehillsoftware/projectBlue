@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionRepository
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
@@ -40,21 +41,13 @@ class WhenGettingATestedLibraryConnection {
 
 			val connectionSessionManager = ConnectionSessionManager(
 				testConnections,
-				libraryConnectionProvider)
+				libraryConnectionProvider,
+				ConnectionRepository())
 
 			val libraryId = LibraryId(2)
 			val futureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(libraryId)
-					.apply {
-						progress.then { if (it != null) statuses.add(it) }
-						updates(statuses::add)
-					}
-					.toFuture()
-
-			val secondFutureConnectionProvider =
-				connectionSessionManager
-					.promiseTestedLibraryConnection(libraryId)
 					.apply {
 						progress.then { if (it != null) statuses.add(it) }
 						updates(statuses::add)
@@ -70,6 +63,15 @@ class WhenGettingATestedLibraryConnection {
 
 				sendResolution(mockk())
 			}
+
+			val secondFutureConnectionProvider =
+				connectionSessionManager
+					.promiseTestedLibraryConnection(libraryId)
+					.apply {
+						progress.then { if (it != null) statuses.add(it) }
+						updates(statuses::add)
+					}
+					.toFuture()
 
 			secondDeferredConnectionProvider.apply {
 				sendProgressUpdates(
@@ -97,6 +99,7 @@ class WhenGettingATestedLibraryConnection {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete,
 				BuildingConnectionStatus.BuildingConnectionComplete,
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
