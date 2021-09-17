@@ -80,6 +80,10 @@ class ConnectionSessionManager(
 
 		private val connectionRepository by lazy { ConnectionRepository() }
 
+		private val serverWakeSignal by lazy { ServerWakeSignal(PacketSender()) }
+
+		private val alarmConfiguration by lazy { AlarmConfiguration(3, Duration.standardSeconds(5)) }
+
 		private fun newServerLookup(context: Context): ServerLookup {
 			val client = OkHttpClient.Builder()
 				.connectTimeout(buildConnectionTimeoutTime.toLong(), TimeUnit.MILLISECONDS)
@@ -87,26 +91,30 @@ class ConnectionSessionManager(
 			return ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), client))
 		}
 
-		private fun newUrlScanner(context: Context): UrlScanner =
-			UrlScanner(
-				Base64Encoder(),
-				ConnectionTester,
-				newServerLookup(context),
-				ConnectionSettingsLookup(LibraryRepository(context)),
-				OkHttpFactory
-            )
+		fun get(context: Context): ConnectionSessionManager {
+			val serverLookup = newServerLookup(context)
+			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 
-		fun get(context: Context): ConnectionSessionManager =
-			ConnectionSessionManager(
+			return ConnectionSessionManager(
 				ConnectionTester,
 				LibraryConnectionProvider(
 					ConnectionSettingsValidation,
-					ConnectionSettingsLookup(LibraryRepository(context)),
-					ServerAlarm(newServerLookup(context), ServerWakeSignal(PacketSender()), AlarmConfiguration(3, Duration.standardSeconds(5))),
-					LiveUrlProvider(ActiveNetworkFinder(context), newUrlScanner(context)),
+					connectionSettingsLookup,
+					ServerAlarm(serverLookup, serverWakeSignal, alarmConfiguration),
+					LiveUrlProvider(
+						ActiveNetworkFinder(context),
+						UrlScanner(
+							Base64Encoder,
+							ConnectionTester,
+							serverLookup,
+							connectionSettingsLookup,
+							OkHttpFactory
+						)
+					),
 					OkHttpFactory
 				),
 				connectionRepository
 			)
+		}
 	}
 }
