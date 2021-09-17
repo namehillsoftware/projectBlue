@@ -22,10 +22,8 @@ object FileStringListUtilities {
 
 		return keys.asSequence()
 			.drop(offset)
-			.takeWhile { it.isNotEmpty() && it != "-1" }
-			.map { k ->
-				ServiceFile(k.toInt())
-			}
+			.filter { it.isNotEmpty() && it != "-1" }
+			.map { k -> ServiceFile(k.toInt()) }
 			.toList()
 	}
 
