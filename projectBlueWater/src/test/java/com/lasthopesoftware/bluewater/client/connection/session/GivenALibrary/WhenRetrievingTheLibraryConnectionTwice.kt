@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionRepository
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
@@ -56,7 +57,8 @@ class WhenRetrievingTheLibraryConnectionTwice {
 
 			val connectionSessionManager = ConnectionSessionManager(
 				mockk(),
-				libraryConnectionProvider
+				libraryConnectionProvider,
+				ConnectionRepository()
 			)
 
 			val futureConnectionProvider =
@@ -96,6 +98,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete,
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
 	}

@@ -21,4 +21,17 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 
 		return this
 	}
+
+	protected fun proxySuccess(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
+		cancellationProxy.doCancel(source)
+
+		source.progress.then {
+			if (it != null) reportProgress(it)
+			source.updates(::reportProgress)
+		}
+
+		source.then(::resolve)
+
+		return this
+	}
 }

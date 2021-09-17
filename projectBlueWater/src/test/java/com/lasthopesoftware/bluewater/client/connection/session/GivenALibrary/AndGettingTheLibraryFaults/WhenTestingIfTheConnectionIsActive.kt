@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionRepository
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -43,7 +44,8 @@ class WhenTestingIfTheConnectionIsActive {
 
 			val connectionSessionManager = ConnectionSessionManager(
                 mockk(),
-                libraryConnectionProvider
+                libraryConnectionProvider,
+				ConnectionRepository()
             )
 
 			val futureConnectionProvider =
