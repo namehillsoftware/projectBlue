@@ -1,33 +1,24 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval
 
-import android.content.Context;
+import android.content.Context
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
+import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.repository.fetch
+import com.lasthopesoftware.resources.executors.ThreadPools
+import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation;
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise;
-
-import java.util.Collection;
-
-public class StoredFilesCollection implements GetAllStoredFilesInLibrary {
-	private final Context context;
-
-	public StoredFilesCollection(Context context) {
-		this.context = context;
-	}
-
-	@Override
-	public Promise<Collection<StoredFile>> promiseAllStoredFiles(LibraryId libraryId) {
-		return new QueuedPromise<>(() -> {
-			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				return repositoryAccessHelper
+class StoredFilesCollection(private val context: Context) : GetAllStoredFilesInLibrary {
+	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> =
+		QueuedPromise(MessageWriter {
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				repositoryAccessHelper
 					.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
-					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.getId())
-					.fetch(StoredFile.class);
+					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
+					.fetch()
 			}
-		}, StoredFileAccess.storedFileAccessExecutor());
-	}
+		}, ThreadPools.databaseTableExecutor<StoredFile>())
 }
