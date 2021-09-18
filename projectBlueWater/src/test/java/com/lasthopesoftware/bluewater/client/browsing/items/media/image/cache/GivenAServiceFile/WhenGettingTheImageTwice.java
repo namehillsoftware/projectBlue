@@ -1,9 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.GivenAServiceFile;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.shared.caching.PermanentPromiseFunctionCache;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -11,10 +16,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenGettingTheImageTwice {
 
@@ -30,7 +31,8 @@ public class WhenGettingTheImageTwice {
 
 		final MemoryCachedImageAccess memoryCachedImageAccess = new MemoryCachedImageAccess(
 			images,
-			(libraryId, serviceFile) -> new Promise<>("the-key"));
+			(libraryId, serviceFile) -> new Promise<>("the-key"),
+			new PermanentPromiseFunctionCache<>());
 
 		new FuturePromise<>(memoryCachedImageAccess.promiseImageBytes(new LibraryId(33), new ServiceFile(5555))).get();
 

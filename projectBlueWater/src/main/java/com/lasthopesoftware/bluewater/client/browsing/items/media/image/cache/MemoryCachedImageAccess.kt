@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache
 
 import android.content.Context
-import androidx.collection.LruCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
@@ -12,25 +11,27 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteIm
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.caching.CachePromiseFunctions
+import com.lasthopesoftware.bluewater.shared.caching.LruPromiseCache
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 
-class MemoryCachedImageAccess(private val sourceImages: GetRawImages, private val imageCacheKeys: LookupImageCacheKey) : GetRawImages {
+class MemoryCachedImageAccess
+(
+	private val sourceImages: GetRawImages,
+	private val imageCacheKeys: LookupImageCacheKey,
+	private val cache: CachePromiseFunctions<String, ByteArray>
+): GetRawImages {
 
 	companion object {
 		private const val MAX_MEMORY_CACHE_SIZE = 10
 
-		private lateinit var instance: MemoryCachedImageAccess
+		private val cache by lazy { LruPromiseCache<String, ByteArray>(MAX_MEMORY_CACHE_SIZE) }
 
-		@Synchronized
-		@JvmStatic
 		fun getInstance(context: Context): MemoryCachedImageAccess {
-			if (::instance.isInitialized) return instance
-
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
 			val filePropertiesCache = FilePropertyCache.getInstance()
 			val imageCacheKeyLookup = ImageCacheKeyLookup(CachedFilePropertiesProvider(
@@ -41,24 +42,15 @@ class MemoryCachedImageAccess(private val sourceImages: GetRawImages, private va
 					LibraryRevisionProvider(libraryConnectionProvider),
 					filePropertiesCache)))
 
-			instance = MemoryCachedImageAccess(
+			return MemoryCachedImageAccess(
 				DiskCacheImageAccess(
-					RemoteImageAccess(
-						libraryConnectionProvider),
+					RemoteImageAccess(libraryConnectionProvider),
 					imageCacheKeyLookup,
 					ImageDiskFileCacheFactory.getInstance(context)),
-				imageCacheKeyLookup)
-
-			return instance
+				imageCacheKeyLookup,
+				cache)
 		}
 	}
-
-	private val syncObject = Object()
-
-	private val imageMemoryCache = LruCache<String, ByteArray>(MAX_MEMORY_CACHE_SIZE)
-
-	@Volatile
-	private var currentCacheAccessPromise = Promise(ByteArray(0))
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> =
 		Promise(ImageOperator(libraryId, serviceFile))
@@ -74,22 +66,7 @@ class MemoryCachedImageAccess(private val sourceImages: GetRawImages, private va
 			val promiseProxy = PromiseProxy(messenger)
 			val promisedBytes = promisedCacheKey
 				.eventually { uniqueKey ->
-					val cachedBytes = imageMemoryCache[uniqueKey]
-					if (cachedBytes != null && cachedBytes.isNotEmpty()) cachedBytes.toPromise()
-					else synchronized(syncObject) {
-						currentCacheAccessPromise = currentCacheAccessPromise
-							.then({ imageMemoryCache[uniqueKey] }, { imageMemoryCache[uniqueKey] })
-							.eventually { bytes ->
-								bytes?.toPromise() ?:
-									sourceImages.promiseImageBytes(libraryId, serviceFile)
-										.then {
-											imageMemoryCache.put(uniqueKey, it)
-											it
-										}
-							}
-
-						currentCacheAccessPromise
-					}
+					cache.getOrAdd(uniqueKey) { sourceImages.promiseImageBytes(libraryId, serviceFile) }
 				}
 			promiseProxy.proxy(promisedBytes)
 		}
