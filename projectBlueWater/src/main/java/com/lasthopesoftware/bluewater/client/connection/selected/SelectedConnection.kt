@@ -106,14 +106,11 @@ class SelectedConnection(
 		private val logger = LoggerFactory.getLogger(SelectedConnection::class.java)
 
 		@JvmStatic
-		@Synchronized
-		fun getInstance(context: Context): SelectedConnection {
-			val applicationContext = context.applicationContext
-			return SelectedConnection(
-				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
-				SelectedBrowserLibraryIdentifierProvider(applicationContext.getApplicationSettingsRepository()),
-				ConnectionSessionManager.get(applicationContext)
+		fun getInstance(context: Context): SelectedConnection =
+			SelectedConnection(
+				MessageBus(LocalBroadcastManager.getInstance(context)),
+				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
+				ConnectionSessionManager.get(context)
 			)
-		}
 	}
 }

@@ -21,34 +21,28 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 		respondToCancellation(cancellationProxy)
 	}
 
-	protected fun proxy(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
+	protected fun proxy(source: ProgressingPromise<Progress, Resolution>) {
 		doCancel(source)
 
 		proxyUpdates(source)
 
 		source.then(proxyResolution, proxyRejection)
-
-		return this
 	}
 
-	protected fun proxySuccess(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
+	protected fun proxySuccess(source: ProgressingPromise<Progress, Resolution>) {
 		doCancel(source)
 
 		proxyUpdates(source)
 
 		source.then(proxyResolution)
-
-		return this
 	}
 
-	protected fun doCancel(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
+	protected fun doCancel(source: ProgressingPromise<Progress, Resolution>) {
 		cancellationProxy.doCancel(source)
-		return this
 	}
 
-	protected fun proxyUpdates(source: ProgressingPromise<Progress, Resolution>): ProgressingPromiseProxy<Progress, Resolution> {
+	protected fun proxyUpdates(source: ProgressingPromise<Progress, Resolution>) {
 		source.progress.then(proxyUpdates)
 		source.updates(proxyUpdates)
-		return this
 	}
 }

@@ -41,8 +41,7 @@ class ConnectionSessionManager(
 					promised
 						?.also {
 							doCancel(it)
-							it.progress.then { p -> p?.also(::reportProgress) }
-							it.updates(::reportProgress)
+							proxyUpdates(it)
 						}
 						?.then({ c ->
 							c?.let {
@@ -56,7 +55,8 @@ class ConnectionSessionManager(
 							} ?: updateCachedConnection()
 						}, {
 							updateCachedConnection()
-						}) ?: updateCachedConnection()
+						})
+						?: updateCachedConnection()
 				}
 
 				private fun updateCachedConnection() = proxy(libraryConnections.promiseLibraryConnection(l))

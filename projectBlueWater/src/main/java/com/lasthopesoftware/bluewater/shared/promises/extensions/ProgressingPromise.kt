@@ -10,6 +10,8 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 	private val cancellationProxy = CancellationProxy()
 	private val updateListeners = ConcurrentLinkedQueue<(Progress) -> Unit>()
 	private val atomicProgress: AtomicReference<Progress?> = AtomicReference()
+
+	@Volatile
 	private var isResolved = false
 
 	constructor(resolution: Resolution?) : super(resolution)
