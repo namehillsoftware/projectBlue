@@ -154,7 +154,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		get() = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration).usableSpace
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(DiskFileCache::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(DiskFileCache::class.java) }
 
 		private fun getTotalCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long {
 			return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute()

@@ -11,9 +11,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.response.EventualAction
@@ -121,8 +121,8 @@ class FileNameTextViewSetter(private val textView: TextView) {
 					resolve(Unit)
 				}
 				.excuse { e ->
-					LoggerUncaughtExceptionHandler
-						.getErrorExecutor()
+					ThreadPools
+						.exceptionsLogger
 						.execute { handleError(e) }
 				}
 		}

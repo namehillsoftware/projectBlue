@@ -9,6 +9,8 @@ object ThreadPools {
 
 	val compute by lazy { ForkJoinPool() }
 
+	val exceptionsLogger by lazy { CachedSingleThreadExecutor() }
+
 	val http by lazy {
 		val maxDownloadThreadPoolSize = 4
 		val downloadThreadPoolSize =
