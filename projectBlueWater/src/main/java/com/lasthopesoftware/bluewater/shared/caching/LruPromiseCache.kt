@@ -3,36 +3,36 @@ package com.lasthopesoftware.bluewater.shared.caching
 import androidx.collection.LruCache
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ConcurrentHashMap
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import java.util.concurrent.atomic.AtomicBoolean
 
 class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctions<Input, Output> {
-	private val quickAccessCache = ConcurrentHashMap<Input, Promise<Output>>()
-	private val cachedPromises = object : LruCache<Input, Promise<Output>>(maxValues) {
-		override fun entryRemoved(evicted: Boolean, key: Input, oldValue: Promise<Output>, newValue: Promise<Output>?) {
-			if (evicted || newValue == null) quickAccessCache.remove(key)
-
-			if (size() <= quickAccessCache.size) return
-
-			synchronized(this) {
-				val snapshot = snapshot()
-				quickAccessCache
-					.filterKeys { !snapshot.containsKey(it) }
-					.forEach { (k, v) -> quickAccessCache.remove(k, v) }
-			}
-		}
-	}
+	private val cachedPromises = LruCache<Input, PromiseBox<Output>>(maxValues)
 
 	override fun getOrAdd(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
 		fun produceAndStoreValue(): Promise<Output> =
 			synchronized(cachedPromises) {
 				factory(input).also { p ->
-					cachedPromises.put(input, p)
-					p.then { quickAccessCache[input] = p }
+					cachedPromises.put(input, PromiseBox(p))
 				}
 			}
 
-		return quickAccessCache[input]
-			?: synchronized(cachedPromises) { cachedPromises[input]?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() }) }
-			?: produceAndStoreValue()
+		return cachedPromises[input]?.takeIf { cp -> cp.isResolved.get() }?.promise
+			?: synchronized(cachedPromises) {
+				cachedPromises[input]?.promise?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() })
+					?: produceAndStoreValue()
+			}
+	}
+
+	private class PromiseBox<Resolution>(val promise: Promise<Resolution>) : ImmediateResponse<Resolution, Unit> {
+		val isResolved = AtomicBoolean(false)
+
+		init {
+			promise.then(this)
+		}
+
+		override fun respond(resolution: Resolution) {
+			isResolved.set(true)
+		}
 	}
 }
