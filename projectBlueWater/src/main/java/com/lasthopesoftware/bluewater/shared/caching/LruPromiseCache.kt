@@ -17,15 +17,16 @@ class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctio
 				}
 			}
 
-		return cachedPromises[input]?.takeIf { cp -> cp.isResolved.get() }?.promise
+		return cachedPromises[input]?.resolvedPromise
 			?: synchronized(cachedPromises) {
-				cachedPromises[input]?.promise?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() })
+				cachedPromises[input]?.resolvedPromise
+					?: cachedPromises[input]?.promise?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() })
 					?: produceAndStoreValue()
 			}
 	}
 
 	private class PromiseBox<Resolution>(val promise: Promise<Resolution>) : ImmediateResponse<Resolution, Unit> {
-		val isResolved = AtomicBoolean(false)
+		private val isResolved = AtomicBoolean(false)
 
 		init {
 			promise.then(this)
@@ -34,5 +35,8 @@ class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctio
 		override fun respond(resolution: Resolution) {
 			isResolved.set(true)
 		}
+
+		val resolvedPromise: Promise<Resolution>?
+			get() = promise.takeIf { isResolved.get() }
 	}
 }
