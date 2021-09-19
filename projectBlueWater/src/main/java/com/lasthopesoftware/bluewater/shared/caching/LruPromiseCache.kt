@@ -27,6 +27,4 @@ class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctio
 			?: cachedPromises[input]?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() })
 			?: produceAndStoreValue()
 	}
-
-	private data class Box<Output>(val output: Output)
 }
