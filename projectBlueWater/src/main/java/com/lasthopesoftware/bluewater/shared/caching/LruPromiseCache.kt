@@ -10,6 +10,15 @@ class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctio
 	private val cachedPromises = object : LruCache<Input, Promise<Output>>(maxValues) {
 		override fun entryRemoved(evicted: Boolean, key: Input, oldValue: Promise<Output>, newValue: Promise<Output>?) {
 			if (evicted || newValue == null) quickAccessCache.remove(key)
+
+			if (size() <= quickAccessCache.size) return
+
+			synchronized(this) {
+				val snapshot = snapshot()
+				quickAccessCache
+					.filterKeys { !snapshot.containsKey(it) }
+					.forEach { (k, v) -> quickAccessCache.remove(k, v) }
+			}
 		}
 	}
 
