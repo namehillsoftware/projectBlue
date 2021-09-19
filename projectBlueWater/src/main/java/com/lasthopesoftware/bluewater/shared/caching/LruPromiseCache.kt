@@ -16,15 +16,14 @@ class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctio
 	override fun getOrAdd(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
 		fun produceAndStoreValue(): Promise<Output> =
 			synchronized(cachedPromises) {
-				cachedPromises[input]
-					?: factory(input).also { p ->
-						cachedPromises.put(input, p)
-						p.then { quickAccessCache[input] = p }
-					}
+				factory(input).also { p ->
+					cachedPromises.put(input, p)
+					p.then { quickAccessCache[input] = p }
+				}
 			}
 
 		return quickAccessCache[input]
-			?: cachedPromises[input]?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() })
+			?: synchronized(cachedPromises) { cachedPromises[input]?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() }) }
 			?: produceAndStoreValue()
 	}
 }
