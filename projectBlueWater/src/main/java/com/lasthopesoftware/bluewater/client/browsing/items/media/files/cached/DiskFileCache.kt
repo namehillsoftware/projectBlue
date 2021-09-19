@@ -24,7 +24,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 
 	private val expirationTime = diskFileCacheConfiguration.cacheItemLifetime?.millis ?: -1
 
-	override fun put(uniqueKey: String, fileData: ByteArray): Promise<CachedFile> {
+	override fun put(uniqueKey: String, fileData: ByteArray): Promise<CachedFile?> {
 		val putPromise = cacheStreamSupplier
 			.promiseCachedFileOutputStream(uniqueKey)
 			.eventually { cachedFileOutputStream -> writeCachedFileWithRetries(uniqueKey, cachedFileOutputStream, fileData) }
@@ -35,13 +35,13 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		return putPromise
 	}
 
-	private fun writeCachedFileWithRetries(uniqueKey: String, cachedFileOutputStream: CacheOutputStream, fileData: ByteArray): Promise<CachedFile> {
+	private fun writeCachedFileWithRetries(uniqueKey: String, cachedFileOutputStream: CacheOutputStream, fileData: ByteArray): Promise<CachedFile?> {
 		return cachedFileOutputStream
 			.promiseWrite(fileData, 0, fileData.size)
 			.eventually { obj -> obj.flush() }
-			.eventually({ fos ->
-				fos.commitToCache()
-			}) { e ->
+			.eventually(
+				{ fos -> fos.commitToCache() },
+				{ e ->
 				logger.error("Unable to write to file!", e)
 
 				when (e) {
@@ -63,7 +63,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 					}
 					else -> Promise.empty()
 				}
-			}
+			})
 			.must { cachedFileOutputStream.close() }
 	}
 
