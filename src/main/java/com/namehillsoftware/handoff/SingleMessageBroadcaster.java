@@ -32,6 +32,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 		resolve(resolution, null);
 	}
 
+	@Override
 	public final void cancel() {
 		if (!isResolved())
 			super.cancel();
@@ -54,7 +55,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 
 	private void resolve(Resolution resolution, Throwable rejection) {
 		atomicMessage.compareAndSet(null, new Message<>(resolution, rejection));
-
+		clearCancellation();
 		dispatchMessage(atomicMessage.get());
 	}
 

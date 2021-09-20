@@ -1,35 +1,26 @@
 package com.namehillsoftware.handoff;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 class Cancellation {
+    private static final Runnable emptyRunnable = () -> {};
 
-	private final ReentrantLock reentrantLock = new ReentrantLock();
-	private Runnable reaction;
-	private boolean isCancelled;
+    private final AtomicReference<Runnable> reaction = new AtomicReference<>();
+    private final AtomicBoolean isCancelled = new AtomicBoolean();
 
-	public void cancel() {
-		reentrantLock.lock();
-		try {
-			isCancelled = true;
+    public void cancel() {
+        final Runnable reactionSnapshot = reaction.getAndSet(emptyRunnable);
 
-			if (reaction != null)
-				reaction.run();
+        if (reactionSnapshot != null && reactionSnapshot != emptyRunnable && !isCancelled.getAndSet(true))
+            reactionSnapshot.run();
+    }
 
-			reaction = null;
-		} finally {
-			reentrantLock.unlock();
-		}
-	}
+    public final void respondToCancellation(Runnable reaction) {
+        this.reaction.compareAndSet(null, reaction);
+    }
 
-	public final void respondToCancellation(Runnable reaction) {
-		reentrantLock.lock();
-		try {
-			this.reaction = reaction;
-			if (isCancelled)
-				cancel();
-		} finally {
-			reentrantLock.unlock();
-		}
-	}
+    public final void clearCancellation() {
+        this.reaction.set(emptyRunnable);
+    }
 }
