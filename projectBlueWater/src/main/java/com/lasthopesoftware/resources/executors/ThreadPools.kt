@@ -5,9 +5,9 @@ import java.util.concurrent.TimeUnit
 
 object ThreadPools {
 
-	val io by lazy { CachedManyThreadExecutor("io", Int.MAX_VALUE, 60, TimeUnit.SECONDS) }
+	val io by lazy { CachedManyThreadExecutor("io", Int.MAX_VALUE, 1, TimeUnit.MINUTES) }
 
-	val compute by lazy { ForkJoinPool() }
+	val compute by lazy { CachedManyThreadExecutor("compute", Runtime.getRuntime().availableProcessors(), 2, TimeUnit.MINUTES) }
 
 	val exceptionsLogger by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
 
@@ -19,7 +19,7 @@ object ThreadPools {
 	}
 
 	val httpMedia by lazy {
-		CachedManyThreadExecutor("httpMedia", 2, 60, TimeUnit.SECONDS)
+		CachedManyThreadExecutor("httpMedia", 2, 1, TimeUnit.MINUTES)
 	}
 
 	val database by lazy { CachedSingleThreadExecutor("database") }
