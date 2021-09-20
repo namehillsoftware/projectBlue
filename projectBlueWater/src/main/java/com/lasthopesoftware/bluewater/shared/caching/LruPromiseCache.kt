@@ -26,15 +26,11 @@ class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctio
 	}
 
 	private class PromiseBox<Resolution>(val promise: Promise<Resolution>) : ImmediateResponse<Resolution, Unit> {
-		private val isResolved = AtomicBoolean(false)
+		private val isResolved = AtomicBoolean()
 
-		init {
-			promise.then(this)
-		}
+		init { promise.then(this) }
 
-		override fun respond(resolution: Resolution) {
-			isResolved.set(true)
-		}
+		override fun respond(resolution: Resolution) { isResolved.set(true) }
 
 		val resolvedPromise: Promise<Resolution>?
 			get() = promise.takeIf { isResolved.get() }
