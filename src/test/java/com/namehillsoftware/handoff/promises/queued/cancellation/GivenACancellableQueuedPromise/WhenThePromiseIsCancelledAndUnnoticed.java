@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +24,7 @@ public class WhenThePromiseIsCancelledAndUnnoticed {
 				if (cancellationToken.isCancelled())
 					throw new Exception();
 
-				promiseLatch.await();
+				promiseLatch.await(10, TimeUnit.SECONDS);
 				return "test";
 			}, Executors.newSingleThreadExecutor());
 
@@ -42,7 +43,7 @@ public class WhenThePromiseIsCancelledAndUnnoticed {
 
 		promiseLatch.countDown();
 
-		resolveLatch.await();
+		resolveLatch.await(10, TimeUnit.SECONDS);
 
 		cancellablePromise.cancel();
 	}

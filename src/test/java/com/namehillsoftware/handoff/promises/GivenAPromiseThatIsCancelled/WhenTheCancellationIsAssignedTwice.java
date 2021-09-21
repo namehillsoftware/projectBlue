@@ -19,8 +19,8 @@ public class WhenTheCancellationIsAssignedTwice {
 		thrownException = new Exception();
 		final Promise<String> cancellablePromise = new Promise<>(
 			(messenger) -> {
-				messenger.cancellationRequested(() -> messenger.sendRejection(thrownException));
 				messenger.cancellationRequested(() -> messenger.sendRejection(new Exception()));
+				messenger.cancellationRequested(() -> messenger.sendRejection(thrownException));
 			});
 
 		cancellablePromise.excuse((exception) -> caughtException = exception);
@@ -29,7 +29,7 @@ public class WhenTheCancellationIsAssignedTwice {
 	}
 
 	@Test
-	public void thenTheRejectionIsTheFirstOne() {
+	public void thenTheRejectionIsTheSecondOne() {
 		Assert.assertEquals(thrownException, caughtException);
 	}
 }

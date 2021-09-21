@@ -5,6 +5,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +24,7 @@ public class WhenResolvingThePromise {
 				return null;
 			});
 
-		countDownLatch.await();
+		countDownLatch.await(10, TimeUnit.SECONDS);
 	}
 
 	@Test

@@ -7,7 +7,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation {
+public abstract class SingleMessageBroadcaster<Resolution> extends CancellableBroadcaster<Resolution> {
 
 	private static volatile UnhandledRejectionsReceiver unhandledRejectionsReceiver;
 
@@ -24,20 +24,6 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 
 	private final AtomicReference<Queue<RespondingMessenger<Resolution>>> recipients = new AtomicReference<>(unhandledErrorQueue);
 
-	protected final void reject(Throwable error) {
-		resolve(null, error);
-	}
-
-	protected final void resolve(Resolution resolution) {
-		resolve(resolution, null);
-	}
-
-	@Override
-	public final void cancel() {
-		if (!isResolved())
-			super.cancel();
-	}
-
 	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
 		recipients.compareAndSet(unhandledErrorQueue, actualQueue);
 
@@ -45,17 +31,14 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 
 		recipients.get().offer(recipient);
 
-		if (isResolved())
-			dispatchMessage(atomicMessage.get());
+		final Message<Resolution> messageSnapshot = atomicMessage.get();
+		if (messageSnapshot != null)
+			dispatchMessage(messageSnapshot);
 	}
 
-	private boolean isResolved() {
-		return atomicMessage.get() != null;
-	}
-
-	private void resolve(Resolution resolution, Throwable rejection) {
-		atomicMessage.compareAndSet(null, new Message<>(resolution, rejection));
-		clearCancellation();
+	@Override
+	protected final void resolve(Message<Resolution> message) {
+		atomicMessage.compareAndSet(null, message);
 		dispatchMessage(atomicMessage.get());
 	}
 
