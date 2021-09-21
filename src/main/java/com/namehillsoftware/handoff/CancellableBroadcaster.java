@@ -8,20 +8,20 @@ abstract class CancellableBroadcaster<Resolution> {
     private final AtomicBoolean isCancellationClosed = new AtomicBoolean();
 
     protected final void reject(Throwable error) {
-        resolve(null, error);
+        closeCancellationAndResolve(null, error);
     }
 
     protected final void resolve(Resolution resolution) {
-        resolve(resolution, null);
+        closeCancellationAndResolve(resolution, null);
     }
 
-    private void resolve(Resolution resolution, Throwable rejection) {
+    private void closeCancellationAndResolve(Resolution resolution, Throwable rejection) {
         isCancellationClosed.set(true);
         this.reaction.set(null);
-        resolve(new Message<>(resolution, rejection));
+        resolve(resolution, rejection);
     }
 
-    protected abstract void resolve(Message<Resolution> message);
+    protected abstract void resolve(Resolution resolution, Throwable rejection);
 
     public final void cancel() {
         if (isCancellationClosed.getAndSet(true)) return;

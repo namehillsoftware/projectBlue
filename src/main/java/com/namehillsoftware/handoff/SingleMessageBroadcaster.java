@@ -37,8 +37,8 @@ public abstract class SingleMessageBroadcaster<Resolution> extends CancellableBr
 	}
 
 	@Override
-	protected final void resolve(Message<Resolution> message) {
-		atomicMessage.compareAndSet(null, message);
+	protected final void resolve(Resolution resolution, Throwable rejection) {
+		atomicMessage.compareAndSet(null, new Message<>(resolution, rejection));
 		dispatchMessage(atomicMessage.get());
 	}
 
