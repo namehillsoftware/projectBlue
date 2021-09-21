@@ -12,7 +12,6 @@ public final class CancellationProxy extends CancellationToken {
 
 	public Runnable doCancel(Promise<?> promise) {
 		cancellablePromises.offer(promise);
-		promise.must(() -> cancellablePromises.remove(promise));
 
 		if (isCancelled()) run();
 

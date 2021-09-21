@@ -18,10 +18,13 @@ public class WhenThePromiseIsCancelledAndNoticed {
 	@BeforeClass
 	public static void before() throws InterruptedException {
 		thrownException = new Exception();
+		final CountDownLatch promiseBegunLatch = new CountDownLatch(1);
 		final CountDownLatch promiseLatch = new CountDownLatch(1);
 		final QueuedPromise<String> cancellablePromise = new QueuedPromise<>(
 			(cancellationToken) -> {
-				promiseLatch.await(10, TimeUnit.SECONDS);
+				promiseBegunLatch.countDown();
+
+				promiseLatch.await();
 
 				if (cancellationToken.isCancelled())
 					throw thrownException;
@@ -30,11 +33,18 @@ public class WhenThePromiseIsCancelledAndNoticed {
 			}, Executors.newSingleThreadExecutor());
 
 		final CountDownLatch rejectionLatch = new CountDownLatch(1);
-		cancellablePromise.excuse((exception) -> {
-			caughtException = exception;
-			rejectionLatch.countDown();
-			return null;
-		});
+		cancellablePromise.then(
+				(r) -> {
+					rejectionLatch.countDown();
+					return null;
+				},
+				(exception) -> {
+					caughtException = exception;
+					rejectionLatch.countDown();
+					return null;
+				});
+
+		promiseBegunLatch.await(10, TimeUnit.SECONDS);
 
 		cancellablePromise.cancel();
 

@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 abstract class CancellableBroadcaster<Resolution> {
     private final AtomicReference<Runnable> reaction = new AtomicReference<>();
-    private final AtomicBoolean isCancelled = new AtomicBoolean();
+    private final AtomicBoolean isCancellationClosed = new AtomicBoolean();
 
     protected final void reject(Throwable error) {
         resolve(null, error);
@@ -16,7 +16,7 @@ abstract class CancellableBroadcaster<Resolution> {
     }
 
     private void resolve(Resolution resolution, Throwable rejection) {
-        isCancelled.set(true);
+        isCancellationClosed.set(true);
         this.reaction.set(null);
         resolve(new Message<>(resolution, rejection));
     }
@@ -24,7 +24,7 @@ abstract class CancellableBroadcaster<Resolution> {
     protected abstract void resolve(Message<Resolution> message);
 
     public final void cancel() {
-        if (isCancelled.getAndSet(true)) return;
+        if (isCancellationClosed.getAndSet(true)) return;
 
         final Runnable reactionSnapshot = reaction.getAndSet(null);
         if (reactionSnapshot != null)
@@ -32,6 +32,7 @@ abstract class CancellableBroadcaster<Resolution> {
     }
 
     public final void respondToCancellation(Runnable reaction) {
-        if (!isCancelled.get()) this.reaction.set(reaction);
+        if (!isCancellationClosed.get())
+            this.reaction.set(reaction);
     }
 }
