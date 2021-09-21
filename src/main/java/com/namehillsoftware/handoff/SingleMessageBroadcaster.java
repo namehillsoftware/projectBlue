@@ -4,10 +4,14 @@ import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver;
 
 import java.util.Collections;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class SingleMessageBroadcaster<Resolution> extends CancellableBroadcaster<Resolution> {
+
+	@SuppressWarnings("rawtypes")
+	private static final Set unhandledErrorCollectionInstance = Collections.singleton((RespondingMessenger)UnhandledRejectionDispatcher.instance);
 
 	private static volatile UnhandledRejectionsReceiver unhandledRejectionsReceiver;
 
@@ -15,17 +19,17 @@ public abstract class SingleMessageBroadcaster<Resolution> extends CancellableBr
 		SingleMessageBroadcaster.unhandledRejectionsReceiver = receiver;
 	}
 
-	private final Queue<RespondingMessenger<Resolution>> actualQueue = new ConcurrentLinkedQueue<>();
+	private final Queue<RespondingMessenger<Resolution>> respondingMessengers = new ConcurrentLinkedQueue<>();
 
 	private final AtomicReference<Message<Resolution>> atomicMessage = new AtomicReference<>();
 
-	@SuppressWarnings("unchecked")
-	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)UnhandledRejectionDispatcher.instance));
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(unhandledErrorCollectionInstance);
 
 	private final AtomicReference<Queue<RespondingMessenger<Resolution>>> recipients = new AtomicReference<>(unhandledErrorQueue);
 
 	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
-		recipients.compareAndSet(unhandledErrorQueue, actualQueue);
+		recipients.compareAndSet(unhandledErrorQueue, respondingMessengers);
 
 		unhandledErrorQueue = null;
 
@@ -48,6 +52,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends CancellableBr
 			r.respond(message);
 	}
 
+	@SuppressWarnings("rawtypes")
 	private static final class UnhandledRejectionDispatcher implements RespondingMessenger {
 
 		private static final UnhandledRejectionDispatcher instance = new UnhandledRejectionDispatcher();
