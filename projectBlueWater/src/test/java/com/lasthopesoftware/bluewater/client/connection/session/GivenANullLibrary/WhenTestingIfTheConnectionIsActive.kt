@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenANullLibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionRepository
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
@@ -16,7 +16,7 @@ class WhenTestingIfTheConnectionIsActive {
 		@BeforeClass
 		@JvmStatic
 		fun before() {
-			val connectionSessionManager = ConnectionSessionManager(mockk(), mockk(), ConnectionRepository())
+			val connectionSessionManager = ConnectionSessionManager(mockk(), mockk(), PromisedConnectionsRepository())
 
 			isActive = connectionSessionManager.isConnectionActive(LibraryId(2))
 		}

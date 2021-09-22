@@ -9,11 +9,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise
-import com.namehillsoftware.handoff.promises.MessengerOperator
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.propagation.RejectionProxy
-import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy
 import io.reactivex.Observable
 import org.slf4j.LoggerFactory
 
@@ -25,10 +22,7 @@ class LibrarySyncsHandler(
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> {
 		val promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId)
-		return StreamedPromise.stream(Promise(MessengerOperator<Set<ServiceFile>> { messenger ->
-			val cancellationProxy = CancellationProxy()
-			messenger.cancellationRequested(cancellationProxy)
-			cancellationProxy.doCancel(promisedServiceFilesToSync)
+		return StreamedPromise.stream(CancellableProxyPromise { cancellationProxy ->
 			promisedServiceFilesToSync
 				.eventually { allServiceFilesToSync ->
 					val serviceFilesSet = allServiceFilesToSync as? Set<ServiceFile> ?: allServiceFilesToSync.toSet()
@@ -37,8 +31,7 @@ class LibrarySyncsHandler(
 					pruneFilesTask.excuse { e -> logger.warn("There was an error pruning the files", e) }
 					pruneFilesTask.then { serviceFilesSet }
 				}
-				.then(ResolutionProxy(messenger), RejectionProxy(messenger))
-		}))
+		})
 		.map { serviceFile ->
 			val promiseDownloadedStoredFile = storedFileUpdater
 				.promiseStoredFileUpdate(libraryId, serviceFile)

@@ -4,16 +4,15 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
-import com.namehillsoftware.handoff.Messenger
-import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 import java.io.*
@@ -23,7 +22,9 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 	companion object {
 		private val logger = LoggerFactory.getLogger(DiskCacheImageAccess::class.java)
 
-		fun getBytesFromFiles(file: File): ByteArray {
+		fun getBytesFromFiles(file: File, cancellationToken: CancellationToken): ByteArray {
+			if (cancellationToken.isCancelled) return ByteArray(0)
+
 			try {
 				FileInputStream(file).use { fis ->
 					ByteArrayOutputStream().use { buffer ->
@@ -42,41 +43,36 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 	}
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> =
-		Promise(ImageOperator(libraryId, serviceFile))
+		CancellableProxyPromise(ImageOperator(libraryId, serviceFile))
 
-	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : MessengerOperator<ByteArray> {
-		override fun send(messenger: Messenger<ByteArray>) {
-			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile)
-
-			val cancellationProxy = CancellationProxy()
-			messenger.cancellationRequested(cancellationProxy)
-			cancellationProxy.doCancel(promisedCacheKey)
-
-			val promiseProxy = PromiseProxy(messenger)
-			val promisedBytes = promisedCacheKey
+	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : (CancellationProxy) -> Promise<ByteArray> {
+		override fun invoke(cancellationProxy: CancellationProxy): Promise<ByteArray> =
+			imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile)
+				.also(cancellationProxy::doCancel)
 				.eventually { uniqueKey ->
 					caches.promiseCache(libraryId)
 						.eventually { cache ->
-							cache?.promiseCachedFile(uniqueKey)
+							cache
+								?.promiseCachedFile(uniqueKey)
+								?.also(cancellationProxy::doCancel)
 								?.eventually { imageFile ->
-									if (imageFile != null) QueuedPromise(ImageDiskCacheWriter(imageFile), ThreadPools.io)
-									else Promise.empty()
+									imageFile
+										?.let { f -> QueuedPromise(ImageDiskCacheWriter(f), ThreadPools.io).also(cancellationProxy::doCancel) }
+										.keepPromise()
 								}
 								?.eventually { bytes ->
 									bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
-										.then {
-											cache.put(uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
-											it
+										.also { p ->
+											cancellationProxy.doCancel(p)
+											p.then { cache.put(uniqueKey, it) }.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
 										}
 								}
 								.keepPromise()
 						}
 				}
-			promiseProxy.proxy(promisedBytes)
-		}
 	}
 
-	private class ImageDiskCacheWriter(private val imageCacheFile: File) : MessageWriter<ByteArray> {
-		override fun prepareMessage(): ByteArray = getBytesFromFiles(imageCacheFile)
+	private class ImageDiskCacheWriter(private val imageCacheFile: File) : CancellableMessageWriter<ByteArray> {
+		override fun prepareMessage(cancellationToken: CancellationToken): ByteArray = getBytesFromFiles(imageCacheFile, cancellationToken)
 	}
 }

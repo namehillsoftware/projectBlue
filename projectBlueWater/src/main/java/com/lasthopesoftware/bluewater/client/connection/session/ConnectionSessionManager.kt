@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 class ConnectionSessionManager(
 	private val connectionTester: TestConnections,
 	private val libraryConnections: ProvideLibraryConnections,
-	private val holdConnections: HoldConnections
+	private val holdConnections: HoldPromisedConnections
 ) : ManageConnectionSessions, ProvideLibraryConnections {
 
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
@@ -64,7 +64,7 @@ class ConnectionSessionManager(
 		}
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
+		holdConnections.getPromisedResolvedConnection(libraryId) ?: holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
 			object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
 					promised
@@ -79,12 +79,13 @@ class ConnectionSessionManager(
 		holdConnections.removeConnection(libraryId)?.cancel()
 	}
 
-	override fun isConnectionActive(libraryId: LibraryId): Boolean = holdConnections.isConnectionActive(libraryId)
+	override fun isConnectionActive(libraryId: LibraryId): Boolean =
+		holdConnections.getPromisedResolvedConnection(libraryId) != null
 
 	companion object Instance {
 		private const val buildConnectionTimeoutTime = 10000
 
-		private val connectionRepository by lazy { ConnectionRepository() }
+		private val connectionRepository by lazy { PromisedConnectionsRepository() }
 
 		private val serverWakeSignal by lazy { ServerWakeSignal(PacketSender()) }
 

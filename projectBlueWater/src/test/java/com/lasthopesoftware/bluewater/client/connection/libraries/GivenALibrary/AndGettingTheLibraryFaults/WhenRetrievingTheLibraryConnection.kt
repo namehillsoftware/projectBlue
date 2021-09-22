@@ -19,35 +19,15 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 class WhenRetrievingTheLibraryConnection {
-	@Test
-	fun thenAConnectionProviderIsNotReturned() {
-		assertThat(connectionProvider).isNull()
-	}
-
-	@Test
-	fun thenAnIOExceptionIsReturned() {
-		assertThat(exception).isNotNull
-	}
-
-	@Test
-	fun thenGettingLibraryIsBroadcast() {
-		assertThat(statuses)
-			.containsExactly(
-				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.GettingLibraryFailed
-			)
-	}
 
 	companion object {
-		private val urlProvider = Mockito.mock(IUrlProvider::class.java)
+		private val urlProvider = mockk<IUrlProvider>()
 		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 		private var connectionProvider: IConnectionProvider? = null
 		private var exception: IOException? = null
@@ -69,12 +49,12 @@ class WhenRetrievingTheLibraryConnection {
 			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise(urlProvider)
 
 			val libraryConnectionProvider = LibraryConnectionProvider(
-                validateConnectionSettings,
-                lookupConnection,
-                NoopServerAlarm(),
-                liveUrlProvider,
-                OkHttpFactory
-            )
+				validateConnectionSettings,
+				lookupConnection,
+				NoopServerAlarm(),
+				liveUrlProvider,
+				OkHttpFactory
+			)
 
 			val futureConnectionProvider =
 				libraryConnectionProvider
@@ -89,10 +69,27 @@ class WhenRetrievingTheLibraryConnection {
 			try {
 				connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
 			} catch (e: ExecutionException) {
-				if (e.cause is IOException) exception = e.cause as IOException?
-			} catch (e: TimeoutException) {
-				if (e.cause is IOException) exception = e.cause as IOException?
+				exception = e.cause as? IOException ?: throw e
 			}
 		}
+	}
+
+	@Test
+	fun thenAConnectionProviderIsNotReturned() {
+		assertThat(connectionProvider).isNull()
+	}
+
+	@Test
+	fun thenAnIOExceptionIsReturned() {
+		assertThat(exception).isNotNull
+	}
+
+	@Test
+	fun thenGettingLibraryIsBroadcast() {
+		assertThat(statuses)
+			.containsExactly(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.GettingLibraryFailed
+			)
 	}
 }

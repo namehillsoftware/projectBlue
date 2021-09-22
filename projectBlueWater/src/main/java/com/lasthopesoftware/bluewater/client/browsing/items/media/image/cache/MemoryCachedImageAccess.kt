@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.shared.caching.LruPromiseCache
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 
 class MemoryCachedImageAccess
@@ -58,10 +57,6 @@ class MemoryCachedImageAccess
 	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : MessengerOperator<ByteArray> {
 		override fun send(messenger: Messenger<ByteArray>) {
 			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile)
-
-			val cancellationProxy = CancellationProxy()
-			messenger.cancellationRequested(cancellationProxy)
-			cancellationProxy.doCancel(promisedCacheKey)
 
 			val promiseProxy = PromiseProxy(messenger)
 			val promisedBytes = promisedCacheKey
