@@ -15,9 +15,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.u
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
-import com.lasthopesoftware.storage.GetFreeSpace
-import com.lasthopesoftware.storage.directories.GetPrivateDirectories
-import com.lasthopesoftware.storage.directories.GetPublicDirectories
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -56,17 +53,10 @@ class WhenUpdatingTheFile : AndroidContext() {
 			filePropertiesProvider,
 			SyncDirectoryLookup(
 				fakeLibraryProvider,
-				object : GetPublicDirectories {
-					override fun promisePublicDrives(): Promise<Collection<File>> =
-						Promise<Collection<File>>(listOf(File("/my-public-drive")))
-				},
-				object : GetPrivateDirectories {
-					override fun promisePrivateDrives(): Promise<Collection<File>> =
-						Promise<Collection<File>>(listOf(File("/private-drive")))
-				},
-				object : GetFreeSpace {
-					override fun getFreeSpace(file: File): Long = 0
-				})
+				{ Promise<Collection<File>>(listOf(File("/my-public-drive"))) },
+				{ Promise<Collection<File>>(listOf(File("/private-drive"))) },
+				{ 0 }
+			)
 		)
 
 		storedFile =

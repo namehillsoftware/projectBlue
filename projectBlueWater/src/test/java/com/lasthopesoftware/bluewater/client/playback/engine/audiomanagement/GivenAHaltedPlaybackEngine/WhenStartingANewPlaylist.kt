@@ -22,7 +22,7 @@ class WhenStartingANewPlaylist {
 		private var request: AudioFocusRequestCompat? = null
 
 		private val innerPlaybackState = object : ChangePlaybackState {
-			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
+			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 				isStarted = true
 				return Unit.toPromise()
 			}
