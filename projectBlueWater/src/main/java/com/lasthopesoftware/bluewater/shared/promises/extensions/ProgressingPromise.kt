@@ -19,6 +19,8 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		get() = Promise(atomicProgress.get())
 
 	protected fun reportProgress(progress: Progress) {
+		if (isResolved.get()) return
+
 		atomicProgress.lazySet(progress)
 		for (action in updateListeners.keys) action(progress)
 	}
