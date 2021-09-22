@@ -5,9 +5,17 @@ import java.util.concurrent.TimeUnit
 
 object ThreadPools {
 
+	private fun namedForkJoinWorkerThreadFactory(prefix: String) = ForkJoinPool.ForkJoinWorkerThreadFactory { pool ->
+		ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool).apply {
+			name = "$prefix-pool-$poolIndex"
+		}
+	}
+
 	val io by lazy { CachedManyThreadExecutor("io", Int.MAX_VALUE, 1, TimeUnit.MINUTES) }
 
-	val compute by lazy { CachedManyThreadExecutor("compute", Runtime.getRuntime().availableProcessors(), 2, TimeUnit.MINUTES) }
+	val compute by lazy {
+		ForkJoinPool(Runtime.getRuntime().availableProcessors(), namedForkJoinWorkerThreadFactory("compute"), null, true)
+	}
 
 	val exceptionsLogger by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
 
@@ -15,7 +23,7 @@ object ThreadPools {
 		val maxDownloadThreadPoolSize = 4
 		val downloadThreadPoolSize =
 			maxDownloadThreadPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
-		ForkJoinPool(downloadThreadPoolSize, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true)
+		ForkJoinPool(downloadThreadPoolSize, namedForkJoinWorkerThreadFactory("http"), null, true)
 	}
 
 	val httpMedia by lazy {
