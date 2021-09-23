@@ -1,12 +1,22 @@
 package com.lasthopesoftware.resources.executors
 
 import org.joda.time.Duration
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Executors.defaultThreadFactory
 
 object ThreadPools {
 
+	// Maximum number to ensure no blocking
 	val io by lazy { CachedManyThreadExecutor("io", Int.MAX_VALUE, Duration.standardMinutes(1)) }
 
-	val compute by lazy { CachedManyThreadExecutor("compute", Runtime.getRuntime().availableProcessors(), Duration.standardMinutes(3)) }
+	val compute: ExecutorService by lazy {
+		// Fixed thread pool for fast dispatch
+		Executors.newFixedThreadPool(
+			Runtime.getRuntime().availableProcessors(),
+			PrefixedThreadFactory("compute", defaultThreadFactory())
+		)
+	}
 
 	val exceptionsLogger by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
 
