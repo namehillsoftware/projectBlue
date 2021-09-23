@@ -393,7 +393,7 @@ open class PlaybackService : Service() {
 	private val lazyAllStoredFilesInLibrary = lazy { StoredFilesCollection(this) }
 	private val playbackThread = lazy {
 			HandlerThreadCreator.promiseNewHandlerThread(
-				"Playback thread",
+				"Playback",
 				Process.THREAD_PRIORITY_AUDIO)
 		}
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }

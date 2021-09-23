@@ -1,58 +1,14 @@
 package com.lasthopesoftware.resources.executors
 
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.TimeUnit
+import org.joda.time.Duration
 
 object ThreadPools {
 
-	private fun namedForkJoinWorkerThreadFactory(prefix: String) = ForkJoinPool.ForkJoinWorkerThreadFactory { pool ->
-		ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool).apply {
-			name = "$prefix-fj-pool-$poolIndex"
-		}
-	}
+	val io by lazy { CachedManyThreadExecutor("io", Int.MAX_VALUE, Duration.standardMinutes(1)) }
 
-	val io by lazy {
-		ForkJoinPool(
-			Runtime.getRuntime().availableProcessors(),
-			namedForkJoinWorkerThreadFactory("io"),
-			null,
-			false
-		)
-	}
-
-	val compute by lazy {
-		ForkJoinPool(
-			Runtime.getRuntime().availableProcessors(),
-			namedForkJoinWorkerThreadFactory("compute"),
-			null,
-			true
-		)
-	}
+	val compute by lazy { CachedManyThreadExecutor("compute", Runtime.getRuntime().availableProcessors(), Duration.standardMinutes(3)) }
 
 	val exceptionsLogger by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
-
-	val http by lazy {
-		val maxDownloadThreadPoolSize = 4
-		val downloadThreadPoolSize =
-			maxDownloadThreadPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
-
-		ForkJoinPool(
-			downloadThreadPoolSize,
-			namedForkJoinWorkerThreadFactory("http"),
-			null,
-			true
-		)
-	}
-
-	val httpMedia by lazy {
-		CachedManyThreadExecutor("httpMedia", 2, 1, TimeUnit.MINUTES)
-		ForkJoinPool(
-			2,
-			namedForkJoinWorkerThreadFactory("httpMedia"),
-			null,
-			true
-		)
-	}
 
 	val database by lazy { CachedSingleThreadExecutor("database") }
 
