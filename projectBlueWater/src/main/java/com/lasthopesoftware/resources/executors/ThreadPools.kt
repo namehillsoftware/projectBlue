@@ -11,7 +11,14 @@ object ThreadPools {
 		}
 	}
 
-	val io by lazy { CachedManyThreadExecutor("io", Int.MAX_VALUE, 1, TimeUnit.MINUTES) }
+	val io by lazy {
+		ForkJoinPool(
+			Runtime.getRuntime().availableProcessors(),
+			namedForkJoinWorkerThreadFactory("io"),
+			null,
+			false
+		)
+	}
 
 	val compute by lazy {
 		ForkJoinPool(
