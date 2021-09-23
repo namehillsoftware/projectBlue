@@ -19,7 +19,9 @@ class HttpDataSourceFactoryProvider(
 ) : ProvideHttpDataSourceFactory {
 
 	companion object {
-		private val constrainedDispatcher by lazy { Dispatcher(ThreadPools.httpMedia) }
+		private val constrainedDispatcher by lazy {
+			Dispatcher(ThreadPools.io).apply { maxRequests = 2 }
+		}
 	}
 
 	override fun getHttpDataSourceFactory(library: Library): HttpDataSource.Factory =

@@ -15,5 +15,5 @@ class PacketSender : SendPackets {
 			val packet = DatagramPacket(packets, packets.size, address, port)
 			if (!t.isCancelled)
 				DatagramSocket().use { it.send(packet) }
-		}, ThreadPools.http)
+		}, ThreadPools.io)
 }

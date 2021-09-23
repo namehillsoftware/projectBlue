@@ -1,21 +1,22 @@
 package com.lasthopesoftware.resources.executors
 
 import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.TimeUnit
 
 object ThreadPools {
 
 	private fun namedForkJoinWorkerThreadFactory(prefix: String) = ForkJoinPool.ForkJoinWorkerThreadFactory { pool ->
 		ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool).apply {
-			name = "$prefix-pool-$poolIndex"
+			name = "$prefix-fj-pool-$poolIndex"
 		}
 	}
 
 	val io by lazy {
 		ForkJoinPool(
-			Int.MAX_VALUE,
+			32767,
 			namedForkJoinWorkerThreadFactory("io"),
 			null,
-			true
+			false
 		)
 	}
 
@@ -44,6 +45,7 @@ object ThreadPools {
 	}
 
 	val httpMedia by lazy {
+		CachedManyThreadExecutor("httpMedia", 2, 1, TimeUnit.MINUTES)
 		ForkJoinPool(
 			2,
 			namedForkJoinWorkerThreadFactory("httpMedia"),
