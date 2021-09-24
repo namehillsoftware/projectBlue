@@ -2,5 +2,4 @@
 
 docker-compose build && docker-compose run gradle \
   build \
-  jacocoTestReport \
-  coveralls
+  jacocoTestReport

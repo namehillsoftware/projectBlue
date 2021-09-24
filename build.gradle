@@ -1,24 +1,13 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '2.2.2'
-    }
-}
-
 plugins {
 	id 'maven-publish'
 	id 'signing'
     id "com.jfrog.bintray" version "1.8.1"
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.2'
+	id "com.palantir.git-version" version "0.12.3"
 }
 
 allprojects {
-    repositories {
-        jcenter()
-    }
     apply plugin: 'java'
 }
 
@@ -27,12 +16,12 @@ repositories {
 }
 
 apply plugin: 'java'
-//apply plugin: 'maven'
 apply plugin: 'signing'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
 ext.snapshotSuffix = "SNAPSHOT+<sha>"
+version = gitVersion()
 
 group = "com.namehillsoftware"
 archivesBaseName = "handoff"
@@ -106,7 +95,7 @@ publishing {
 
             groupId 'com.namehillsoftware'
             artifactId 'handoff'
-            version project.version
+            version gitVersion()
 
             pom.withXml {
                 def root = asNode()
@@ -116,7 +105,7 @@ publishing {
     }
 }
 
-if (!hasProperty('bintrayUser') || bintrayUser == null || bintrayUser.isEmpty()) {
+/*if (!hasProperty('bintrayUser') || bintrayUser == null || bintrayUser.isEmpty()) {
     logger.lifecycle('Setting bintray user to ' + System.getenv('BINTRAY_USER'))
     bintrayUser = System.getenv('BINTRAY_USER')
 }
@@ -138,13 +127,10 @@ bintray {
         vcsUrl = 'https://github.com/namehillsoftware/handoff.git'
     }
     version {
-        name = project.version
+        name = version
         released = new Date()
         gpg {
             sign = true
         }
     }
-}
-
-apply plugin: 'com.cinnober.gradle.semver-git'
-version = project.version
+}*/
