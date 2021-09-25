@@ -15,7 +15,7 @@ repositories {
 def versionDetails = versionDetails()
 version = versionDetails.lastTag
 if (!versionDetails.isCleanTag) {
-	version += "-SNAPSHOT"
+	version += "+$versionDetails.commitDistance-SNAPSHOT"
 }
 
 group = "com.namehillsoftware"
@@ -60,8 +60,8 @@ artifacts {
     archives sourcesJar
 }
 
-def sonatypeUsername = "$System.env.sonatypeUsername"
-def sonatypePassword = "$System.env.sonatypePassword"
+def sonatypeUsername = System.env.sonatypeUsername
+def sonatypePassword = System.env.sonatypePassword
 
 signing {
 	required { gradle.taskGraph.hasTask("publish") }
