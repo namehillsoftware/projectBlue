@@ -12,7 +12,11 @@ repositories {
     mavenCentral()
 }
 
-version = gitVersion()
+def versionDetails = versionDetails()
+version = versionDetails.lastTag
+if (!versionDetails.isCleanTag) {
+	version += "-SNAPSHOT"
+}
 
 group = "com.namehillsoftware"
 archivesBaseName = "handoff"
@@ -56,62 +60,13 @@ artifacts {
     archives sourcesJar
 }
 
-if (!hasProperty("sonatypeUsername")) {
-	sonatypeUsername = ""
+def sonatypeUsername = "$System.env.sonatypeUsername"
+def sonatypePassword = "$System.env.sonatypePassword"
+
+signing {
+	required { gradle.taskGraph.hasTask("publish") }
+	sign configurations.archives
 }
-
-if (!hasProperty("sonatypePassword")) {
-	sonatypePassword = ""
-}
-
-//signing {
-//	required { gradle.taskGraph.hasTask("uploadArchives") }
-//	sign configurations.archives
-//}
-
-//uploadArchives {
-//	repositories {
-//		mavenDeployer {
-//			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-//
-//			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-//				authentication(userName: sonatypeUsername, password: sonatypePassword)
-//			}
-//
-//			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-//				authentication(userName: sonatypeUsername, password: sonatypePassword)
-//			}
-//
-//			pom.project {
-////                name 'handoff'
-//				packaging 'jar'
-//				// optionally artifactId can be defined here
-//				description 'Promises Library for Java'
-//				url 'http://www.namehillsoftware.com/'
-//
-//				scm {
-//					connection 'https://github.com/namehillsoftware/handoff.git'
-//					developerConnection 'https://github.com/namehillsoftware/handoff.git'
-//					url 'https://github.com/namehillsoftware/handoff'
-//				}
-//
-//				licenses {
-//					license {
-//						url 'https://github.com/namehillsoftware/handoff/blob/master/LICENSE'
-//					}
-//				}
-//
-//				developers {
-//					developer {
-//						id 'david'
-////                        name 'David Vedvick'
-//						email 'dvedvick@gmail.com'
-//					}
-//				}
-//			}
-//		}
-//	}
-//}
 
 publishing {
 	publications {
@@ -154,7 +109,11 @@ publishing {
 			// change URLs to point to your repos, e.g. http://my.org/repo
 			def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
 			def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-			url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+			url = versionDetails.isCleanTag ? releasesRepoUrl : snapshotsRepoUrl
+			credentials {
+				username sonatypeUsername
+				password sonatypePassword
+			}
 		}
 	}
 }
