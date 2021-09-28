@@ -31,7 +31,7 @@ abstract class CancellableBroadcaster<Resolution> {
             reactionSnapshot.run();
     }
 
-    public void respondToCancellation(Runnable reaction) {
+    public final void respondToCancellation(Runnable reaction) {
         if (!isCancellationClosed.get())
             this.reaction.set(reaction);
     }
