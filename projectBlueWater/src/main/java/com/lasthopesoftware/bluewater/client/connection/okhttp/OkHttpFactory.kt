@@ -32,13 +32,10 @@ object OkHttpFactory : ProvideOkHttpClients {
             .build()
 
 	private val dispatcher by lazy {
-		val maxDownloadThreadPoolSize = 4
-		val downloadThreadPoolSize =
-			maxDownloadThreadPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
+		val maxRequestPoolSize = 6
+		val requestPoolSize =
+			maxRequestPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
 
-		// Ensure that more requests can be made than the size of the thread pool, helping ensure the request pool isn't
-		// starved by hanging connections
-		val requestPoolSize = downloadThreadPoolSize * 3
 		Dispatcher(ThreadPools.io).apply {
 			maxRequests = requestPoolSize
 			maxRequestsPerHost = requestPoolSize
