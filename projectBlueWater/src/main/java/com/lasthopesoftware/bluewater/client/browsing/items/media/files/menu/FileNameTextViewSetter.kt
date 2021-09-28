@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRe
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -24,6 +25,7 @@ import java.io.IOException
 import java.net.SocketException
 import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.net.ssl.SSLProtocolException
 
 class FileNameTextViewSetter(private val textView: TextView) {
@@ -31,6 +33,27 @@ class FileNameTextViewSetter(private val textView: TextView) {
 	companion object {
 		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
 		private val timeoutDuration = Duration.standardMinutes(1)
+
+		@Volatile
+		private var isProcessingQueue = false
+		private val sync = Any()
+		private val promisedFileUpdatesQueue = ConcurrentLinkedQueue<PromisedTextViewUpdate>()
+
+		private fun enqueueUpdate(newUpdate: PromisedTextViewUpdate) {
+			promisedFileUpdatesQueue.offer(newUpdate)
+
+			synchronized(sync) {
+				if (isProcessingQueue) return
+				isProcessingQueue = true
+
+				var promisedFileUpdate: PromisedTextViewUpdate?
+				while (promisedFileUpdatesQueue.poll().also { promisedFileUpdate = it } != null) {
+					promisedFileUpdate?.beginUpdate()
+				}
+
+				isProcessingQueue = false
+			}
+		}
 	}
 
 	private val textViewUpdateSync = Any()
@@ -51,16 +74,15 @@ class FileNameTextViewSetter(private val textView: TextView) {
 	}
 
 	@Volatile
-	private var promisedState = Promise.empty<Void>()
+	private var promisedState = Unit.toPromise()
 
 	@Volatile
 	private var currentlyPromisedTextViewUpdate: PromisedTextViewUpdate? = null
 
 	@Synchronized
-	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Void> {
+	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Unit> {
 		promisedState.cancel()
-		promisedState = promisedState
-			.inevitably(EventualTextViewUpdate(serviceFile))
+		promisedState = promisedState.inevitably(EventualTextViewUpdate(serviceFile))
 		return promisedState
 	}
 
@@ -68,9 +90,9 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		override fun promiseAction(): Promise<*> =
 			synchronized(textViewUpdateSync) {
 				PromisedTextViewUpdate(serviceFile)
-					.apply {
-						currentlyPromisedTextViewUpdate = this
-						beginUpdate()
+					.also {
+						currentlyPromisedTextViewUpdate = it
+						enqueueUpdate(it)
 					}
 			}
 	}
