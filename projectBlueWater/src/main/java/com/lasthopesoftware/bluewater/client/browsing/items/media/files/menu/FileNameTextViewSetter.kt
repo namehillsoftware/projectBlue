@@ -25,8 +25,8 @@ import java.io.IOException
 import java.net.SocketException
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLProtocolException
 
 class FileNameTextViewSetter(private val textView: TextView) {
@@ -35,21 +35,27 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
 		private val timeoutDuration = Duration.standardMinutes(1)
 
-		@Volatile
-		private var isProcessingQueue = AtomicBoolean()
-		private val promisedFileUpdatesQueue = ConcurrentLinkedQueue<PromisedTextViewUpdate>()
+		private val queueProcessorReference = AtomicReference<QueueProcessor>()
+		private val promisedFileUpdatesQueue = LinkedBlockingQueue<PromisedTextViewUpdate>()
 
 		private fun enqueueUpdate(newUpdate: PromisedTextViewUpdate) {
 			promisedFileUpdatesQueue.offer(newUpdate)
 
-			if (isProcessingQueue.getAndSet(true)) return
+			val queueProcessor = QueueProcessor(promisedFileUpdatesQueue, queueProcessorReference)
+			if (queueProcessorReference.compareAndSet(null, queueProcessor)) ThreadPools.compute.execute(queueProcessor)
+		}
 
-			var promisedFileUpdate: PromisedTextViewUpdate?
-			while (promisedFileUpdatesQueue.poll().also { promisedFileUpdate = it } != null) {
-				promisedFileUpdate?.beginUpdate()
+		private class QueueProcessor(private val promisedFileUpdatesQueue: LinkedBlockingQueue<PromisedTextViewUpdate>, private val queueProcessorReference: AtomicReference<QueueProcessor>): Runnable {
+			override fun run() {
+				try {
+					var promisedFileUpdate: PromisedTextViewUpdate?
+					while (promisedFileUpdatesQueue.poll().also { promisedFileUpdate = it } != null) {
+						promisedFileUpdate?.beginUpdate()
+					}
+				} finally {
+					queueProcessorReference.set(null)
+				}
 			}
-
-			isProcessingQueue.set(false)
 		}
 	}
 
