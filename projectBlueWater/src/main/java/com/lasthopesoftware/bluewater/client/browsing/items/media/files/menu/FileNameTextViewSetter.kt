@@ -26,6 +26,7 @@ import java.net.SocketException
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLProtocolException
 
 class FileNameTextViewSetter(private val textView: TextView) {
@@ -35,24 +36,20 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		private val timeoutDuration = Duration.standardMinutes(1)
 
 		@Volatile
-		private var isProcessingQueue = false
-		private val sync = Any()
+		private var isProcessingQueue = AtomicBoolean()
 		private val promisedFileUpdatesQueue = ConcurrentLinkedQueue<PromisedTextViewUpdate>()
 
 		private fun enqueueUpdate(newUpdate: PromisedTextViewUpdate) {
 			promisedFileUpdatesQueue.offer(newUpdate)
 
-			synchronized(sync) {
-				if (isProcessingQueue) return
-				isProcessingQueue = true
+			if (isProcessingQueue.getAndSet(true)) return
 
-				var promisedFileUpdate: PromisedTextViewUpdate?
-				while (promisedFileUpdatesQueue.poll().also { promisedFileUpdate = it } != null) {
-					promisedFileUpdate?.beginUpdate()
-				}
-
-				isProcessingQueue = false
+			var promisedFileUpdate: PromisedTextViewUpdate?
+			while (promisedFileUpdatesQueue.poll().also { promisedFileUpdate = it } != null) {
+				promisedFileUpdate?.beginUpdate()
 			}
+
+			isProcessingQueue.set(false)
 		}
 	}
 
@@ -107,6 +104,8 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		}
 
 		fun beginUpdate() {
+			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
+
 			if (handler.looper.thread === Thread.currentThread()) {
 				run()
 				return
