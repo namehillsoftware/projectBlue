@@ -1,6 +1,6 @@
-package com.lasthopesoftware.bluewater.shared.caching.lru.AndAnItemChanges
+package com.lasthopesoftware.bluewater.shared.policies.lru.AndAnItemChanges
 
-import com.lasthopesoftware.bluewater.shared.caching.LruPromiseCache
+import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat

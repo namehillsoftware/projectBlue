@@ -1,5 +1,6 @@
-package com.lasthopesoftware.bluewater.shared.caching
+package com.lasthopesoftware.bluewater.shared.policies.caching
 
+import com.lasthopesoftware.bluewater.shared.policies.ApplyExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
 class CachingPolicyFactory : ApplyExecutionPolicies {

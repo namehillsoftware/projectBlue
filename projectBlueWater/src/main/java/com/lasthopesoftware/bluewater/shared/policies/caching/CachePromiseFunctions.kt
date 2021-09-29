@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.caching
+package com.lasthopesoftware.bluewater.shared.policies.caching
 
 import com.namehillsoftware.handoff.promises.Promise
 

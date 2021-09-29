@@ -4,13 +4,11 @@ import android.os.Handler
 import android.widget.TextView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.RateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -25,8 +23,6 @@ import java.io.IOException
 import java.net.SocketException
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLProtocolException
 
 class FileNameTextViewSetter(private val textView: TextView) {
@@ -35,28 +31,7 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
 		private val timeoutDuration = Duration.standardMinutes(1)
 
-		private val queueProcessorReference = AtomicReference<QueueProcessor>()
-		private val promisedFileUpdatesQueue = LinkedBlockingQueue<PromisedTextViewUpdate>()
-
-		private fun enqueueUpdate(newUpdate: PromisedTextViewUpdate) {
-			promisedFileUpdatesQueue.offer(newUpdate)
-
-			val queueProcessor = QueueProcessor(promisedFileUpdatesQueue, queueProcessorReference)
-			if (queueProcessorReference.compareAndSet(null, queueProcessor)) ThreadPools.compute.execute(queueProcessor)
-		}
-
-		private class QueueProcessor(private val promisedFileUpdatesQueue: LinkedBlockingQueue<PromisedTextViewUpdate>, private val queueProcessorReference: AtomicReference<QueueProcessor>): Runnable {
-			override fun run() {
-				try {
-					var promisedFileUpdate: PromisedTextViewUpdate?
-					while (promisedFileUpdatesQueue.poll().also { promisedFileUpdate = it } != null) {
-						promisedFileUpdate?.beginUpdate()
-					}
-				} finally {
-					queueProcessorReference.set(null)
-				}
-			}
-		}
+		private val rateLimiter by lazy { RateLimiter<Map<String, String>>(ThreadPools.compute, 1) }
 	}
 
 	private val textViewUpdateSync = Any()
@@ -67,10 +42,13 @@ class FileNameTextViewSetter(private val textView: TextView) {
 			ScopedCachedFilePropertiesProvider(
 				c,
 				filePropertyCache,
-				ScopedFilePropertiesProvider(
-					c,
-					ScopedRevisionProvider(c),
-					filePropertyCache
+				RateControlledFilePropertiesProvider(
+					ScopedFilePropertiesProvider(
+						c,
+						ScopedRevisionProvider(c),
+						filePropertyCache
+					),
+					rateLimiter
 				)
 			)
 		}
@@ -93,9 +71,9 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		override fun promiseAction(): Promise<*> =
 			synchronized(textViewUpdateSync) {
 				PromisedTextViewUpdate(serviceFile)
-					.also {
-						currentlyPromisedTextViewUpdate = it
-						enqueueUpdate(it)
+					.apply {
+						currentlyPromisedTextViewUpdate = this
+						beginUpdate()
 					}
 			}
 	}
@@ -110,8 +88,6 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		}
 
 		fun beginUpdate() {
-			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
-
 			if (handler.looper.thread === Thread.currentThread()) {
 				run()
 				return

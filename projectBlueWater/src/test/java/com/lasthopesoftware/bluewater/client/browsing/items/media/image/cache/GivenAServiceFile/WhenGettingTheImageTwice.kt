@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawIm
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.LookupImageCacheKey
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.caching.LruPromiseCache
+import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise

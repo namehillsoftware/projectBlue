@@ -1,23 +1,24 @@
-package com.lasthopesoftware.bluewater.shared.caching
+package com.lasthopesoftware.bluewater.shared.policies.caching
 
-import androidx.collection.LruCache
 import com.lasthopesoftware.bluewater.shared.promises.ResolvedPromiseBox
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.ConcurrentHashMap
 
-class LruPromiseCache<Input : Any, Output>(maxValues: Int) : CachePromiseFunctions<Input, Output> {
-	private val cachedPromises = LruCache<Input, ResolvedPromiseBox<Output, Promise<Output>>>(maxValues)
+class PermanentPromiseFunctionCache<Input : Any, Output> : CachePromiseFunctions<Input, Output> {
+	private val cachedSyncs = ConcurrentHashMap<Input, Any>()
+	private val cachedPromises = ConcurrentHashMap<Input, ResolvedPromiseBox<Output, Promise<Output>>>()
 
 	override fun getOrAdd(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
 		fun produceAndStoreValue(): Promise<Output> =
-			synchronized(cachedPromises) {
+			synchronized(cachedSyncs.getOrPut(input, ::Any)) {
 				factory(input).also { p ->
-					cachedPromises.put(input, ResolvedPromiseBox(p))
+					cachedPromises[input] = ResolvedPromiseBox(p)
 				}
 			}
 
 		return cachedPromises[input]?.resolvedPromise
-			?: synchronized(cachedPromises) {
+			?: synchronized(cachedSyncs.getOrPut(input, ::Any)) {
 				cachedPromises[input]?.resolvedPromise
 					?: cachedPromises[input]?.originalPromise?.eventually({ o -> o.toPromise() }, { produceAndStoreValue() })
 					?: produceAndStoreValue()
