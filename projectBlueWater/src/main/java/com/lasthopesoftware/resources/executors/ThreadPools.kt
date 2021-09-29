@@ -12,7 +12,7 @@ object ThreadPools {
 
 	val compute: Executor by lazy {
 		// Use a fixed thread pool to ensure threads are always available to run computations
-		Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+		Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), PrefixedThreadFactory("compute", Executors.defaultThreadFactory()))
 	}
 
 	val exceptionsLogger: Executor by lazy { MoreExecutors.newSequentialExecutor(compute) }
