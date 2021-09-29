@@ -31,7 +31,7 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
 		private val timeoutDuration = Duration.standardMinutes(1)
 
-		private val rateLimiter by lazy { RateLimiter<Map<String, String>>(ThreadPools.compute, 1) }
+		private val rateLimiter by lazy { RateLimiter<Map<String, String>>(ThreadPools.io, 1) }
 	}
 
 	private val textViewUpdateSync = Any()

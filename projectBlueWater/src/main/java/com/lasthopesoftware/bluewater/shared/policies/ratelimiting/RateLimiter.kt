@@ -16,9 +16,7 @@ class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromis
 	override fun limit(factory: () -> Promise<T>): Promise<T> {
 		return Promise<T> { m ->
 			val promiseProxy = PromiseProxy(m)
-			queuedPromises.offer {
-				factory().also(promiseProxy::proxy)
-			}
+			queuedPromises.offer { factory().also(promiseProxy::proxy) }
 
 			if (queueProcessorReference.compareAndSet(null, this)) executor.execute(this)
 		}

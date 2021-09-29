@@ -31,16 +31,7 @@ object OkHttpFactory : ProvideOkHttpClients {
             .hostnameVerifier(getHostnameVerifier(urlProvider))
             .build()
 
-	private val dispatcher by lazy {
-		val maxRequestPoolSize = 6
-		val requestPoolSize =
-			maxRequestPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
-
-		Dispatcher(ThreadPools.io).apply {
-			maxRequests = requestPoolSize
-			maxRequestsPerHost = requestPoolSize
-		}
-	}
+	private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 
 	private val commonBuilder by lazy {
 		OkHttpClient.Builder()
