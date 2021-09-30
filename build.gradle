@@ -5,11 +5,15 @@ plugins {
 	id 'signing'
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.2'
-	id "com.palantir.git-version" version "0.12.3"
+	id 'com.palantir.git-version' version '0.12.3'
+	id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 }
 
 repositories {
     mavenCentral()
+	maven {
+		url "https://plugins.gradle.org/m2/"
+	}
 }
 
 def versionDetails = versionDetails()
@@ -62,15 +66,8 @@ artifacts {
 
 def sonatypeUsername = findProperty("sonatypeUsername")
 def sonatypePassword = findProperty("sonatypePassword")
-def signingKey = findProperty("signingKey")
+def signingKey = findProperty("signingKey")?.replace("\\n", "\n")
 def signingPassword = findProperty("signingPassword")
-
-signing {
-	required { signingKey?.trim() && gradle.taskGraph.hasTask("publish") }
-
-	useInMemoryPgpKeys(signingKey, signingPassword)
-	sign configurations.archives
-}
 
 publishing {
 	publications {
@@ -122,6 +119,19 @@ publishing {
 	}
 }
 
+nexusPublishing {
+	repositories {
+		sonatype {
+			username = sonatypeUsername
+			password = sonatypePassword
+		}
+	}
+}
+
 signing {
+	required { signingKey?.trim() && gradle.taskGraph.hasTask("publish") }
+
+	useInMemoryPgpKeys(signingKey, signingPassword)
+	sign configurations.archives
 	sign publishing.publications.mavenJava
 }

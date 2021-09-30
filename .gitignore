@@ -51,3 +51,4 @@ fabric.properties
 .gradle
 .idea
 build
+/_artifacts/
