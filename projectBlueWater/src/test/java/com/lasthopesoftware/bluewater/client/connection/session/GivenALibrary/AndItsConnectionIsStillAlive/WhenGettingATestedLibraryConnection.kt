@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -40,7 +41,8 @@ class WhenGettingATestedLibraryConnection {
 
 			val connectionSessionManager = ConnectionSessionManager(
 				connectionsTester,
-				libraryConnectionProvider
+				libraryConnectionProvider,
+				PromisedConnectionsRepository()
 			)
 
 			val libraryId = LibraryId(2)

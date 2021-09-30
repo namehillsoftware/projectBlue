@@ -54,9 +54,9 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
+	override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
-		this.playlist = playlist
+		this.playlist = playlist.toMutableList()
 		this.playlistPosition = playlistPosition
 		this.fileProgress = StaticProgressedFile(filePosition.toPromise())
 		return saveState().then { resumePlayback() }

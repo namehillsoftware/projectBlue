@@ -12,31 +12,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ConcurrentHashMap
 
 class ImageDiskFileCacheFactory private constructor(private val context: Context, private val libraryProvider: ILibraryProvider, private val diskCacheDirectoryProvider: IDiskCacheDirectoryProvider) : IProvideCaches {
 
-	private val syncObject = Object()
-	private val sessionCaches = ConcurrentHashMap<LibraryId, ICache>()
-
-	override fun promiseCache(libraryId: LibraryId): Promise<out ICache?> {
-		return getCacheFromMemory(libraryId) ?: synchronized(syncObject) {
-			getCacheFromMemory(libraryId) ?: libraryProvider.getLibrary(libraryId)
-				.then { library ->
-					if (library == null) null
-					else synchronized(syncObject) {
-						sessionCaches[libraryId] ?:
-							buildNewCache(library).also { sessionCaches[libraryId] = it }
-					}
-				}
-		}
-	}
-
-	private fun getCacheFromMemory(libraryId: LibraryId): Promise<ICache>? {
-		return sessionCaches[libraryId]?.toPromise()
-	}
+	override fun promiseCache(libraryId: LibraryId): Promise<out ICache?> =
+		libraryProvider
+			.getLibrary(libraryId)
+			.then { library -> library?.let(::buildNewCache) }
 
 	private fun buildNewCache(library: Library): ICache {
 		val imageCacheConfiguration = ImageCacheConfiguration(library)
@@ -64,19 +47,10 @@ class ImageDiskFileCacheFactory private constructor(private val context: Context
 
 	companion object {
 
-		private var instance: ImageDiskFileCacheFactory? = null
-
-		@JvmStatic
-		@Synchronized
 		fun getInstance(context: Context): ImageDiskFileCacheFactory {
-			val cachedInstance = instance
-			if (cachedInstance != null) return cachedInstance
-
 			val libraryProvider = LibraryRepository(context)
 			val diskCacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(context)
-			val newInstance = ImageDiskFileCacheFactory(context, libraryProvider, diskCacheDirectoryProvider)
-			instance = newInstance
-			return newInstance
+			return ImageDiskFileCacheFactory(context, libraryProvider, diskCacheDirectoryProvider)
 		}
 	}
 }

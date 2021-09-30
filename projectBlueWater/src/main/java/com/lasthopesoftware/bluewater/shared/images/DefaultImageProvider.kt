@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -13,7 +13,6 @@ class DefaultImageProvider(private val context: Context) {
 	fun promiseFileBitmap(): Promise<Bitmap> = promiseFillerBitmap(context)
 
 	companion object {
-		private val defaultImageAccessExecutor = lazy { CachedSingleThreadExecutor() }
 		private lateinit var fillerBitmap: Bitmap
 
 		private fun promiseFillerBitmap(context: Context) =
@@ -26,7 +25,7 @@ class DefaultImageProvider(private val context: Context) {
 					fillerBitmap = Bitmap.createScaledBitmap(fillerBitmap, maxSize, maxSize, false)
 				}
 				getBitmapCopy(fillerBitmap)
-			}, defaultImageAccessExecutor.value)
+			}, ThreadPools.compute)
 
 		private fun getBitmapCopy(src: Bitmap): Bitmap = src.copy(src.config, false)
 	}

@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess.Companion.storedFileAccessExecutor
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetStoredFiles
@@ -17,7 +17,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirec
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -102,7 +104,7 @@ class StoredFileUpdater(
 							logger.info("Stored file was not found for " + serviceFile.key + ", creating file")
 							repositoryAccessHelper.createStoredFile(libraryId, serviceFile)
 						}
-					}, storedFileAccessExecutor())
+					}, ThreadPools.databaseTableExecutor<StoredFileAccess>())
 						.eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
 			}
 			.eventually { storedFile ->
@@ -123,57 +125,62 @@ class StoredFileUpdater(
 										storedFile.storedMediaId = mediaId
 										storedFile
 									}
-							} ?: Promise(storedFile)
+							}.keepPromise()
 						}
 				}
 			}
 			.eventually { storedFile ->
-				if (storedFile.path != null) Promise(storedFile) else libraryFileProperties
-					.promiseFileProperties(libraryId, serviceFile)
-					.eventually { fileProperties ->
-						lookupSyncDirectory.promiseSyncDirectory(libraryId)
-							.then { syncDir ->
-								var fullPath = syncDir?.path ?: return@then null
+				when {
+					storedFile == null -> Promise.empty()
+					storedFile.path != null -> Promise(storedFile)
+					else -> libraryFileProperties
+						.promiseFileProperties(libraryId, serviceFile)
+						.eventually { fileProperties ->
+							lookupSyncDirectory.promiseSyncDirectory(libraryId)
+								.then { syncDir ->
+									var fullPath = syncDir?.path ?: return@then null
 
-								val artist = fileProperties[KnownFileProperties.ALBUM_ARTIST] ?: fileProperties[KnownFileProperties.ARTIST]
-								if (artist != null) fullPath = FilenameUtils.concat(
-									fullPath,
-									replaceReservedCharsAndPath(artist.trim { it <= ' ' })
-								)
+									val artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
+										?: fileProperties[KnownFileProperties.ARTIST]
+									if (artist != null) fullPath = FilenameUtils.concat(
+										fullPath,
+										replaceReservedCharsAndPath(artist.trim { it <= ' ' })
+									)
 
-								val album = fileProperties[KnownFileProperties.ALBUM]
-								if (album != null) fullPath = FilenameUtils.concat(
-									fullPath,
-									replaceReservedCharsAndPath(album.trim { it <= ' ' })
-								)
+									val album = fileProperties[KnownFileProperties.ALBUM]
+									if (album != null) fullPath = FilenameUtils.concat(
+										fullPath,
+										replaceReservedCharsAndPath(album.trim { it <= ' ' })
+									)
 
-								val fileName = fileProperties[KnownFileProperties.FILENAME]?.let { f ->
-									var lastPathIndex = f.lastIndexOf('\\')
-									if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')
-									if (lastPathIndex < 0) f
-									else {
-										var newFileName = f.substring(lastPathIndex + 1)
-										val extensionIndex = newFileName.lastIndexOf('.')
-										if (extensionIndex > -1)
-											newFileName = newFileName.substring(0, extensionIndex + 1) + "mp3"
-										newFileName
+									val fileName = fileProperties[KnownFileProperties.FILENAME]?.let { f ->
+										var lastPathIndex = f.lastIndexOf('\\')
+										if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')
+										if (lastPathIndex < 0) f
+										else {
+											var newFileName = f.substring(lastPathIndex + 1)
+											val extensionIndex = newFileName.lastIndexOf('.')
+											if (extensionIndex > -1)
+												newFileName = newFileName.substring(0, extensionIndex + 1) + "mp3"
+											newFileName
+										}
 									}
+									fullPath = FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
+									storedFile.path = fullPath
+									storedFile
 								}
-								fullPath = FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
-								storedFile.path = fullPath
-								storedFile
-							}
-					}
-			}
-			.eventually { storedFile ->
-				storedFile?.let { sf ->
-					QueuedPromise(MessageWriter {
-						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-							repositoryAccessHelper.updateStoredFile(sf)
-							sf
 						}
-					}, storedFileAccessExecutor())
-				} ?: Promise.empty()
+						.eventually {
+							it?.let { sf ->
+								QueuedPromise(MessageWriter {
+									RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+										repositoryAccessHelper.updateStoredFile(sf)
+										sf
+									}
+								}, ThreadPools.databaseTableExecutor<StoredFileAccess>())
+							}.keepPromise()
+						}
+				}
 			}
 	}
 }

@@ -105,20 +105,12 @@ class SelectedConnection(
 		val buildSessionBroadcastStatus = MagicPropertyBuilder.buildMagicPropertyName(SelectedConnection::class.java, "buildSessionBroadcastStatus")
 		private val logger = LoggerFactory.getLogger(SelectedConnection::class.java)
 
-		@Volatile
-		private lateinit var selectedConnectionInstance: SelectedConnection
-
 		@JvmStatic
-		@Synchronized
-		fun getInstance(context: Context): SelectedConnection {
-			if (Companion::selectedConnectionInstance.isInitialized) return selectedConnectionInstance
-
-			val applicationContext = context.applicationContext
-			return SelectedConnection(
-				MessageBus(LocalBroadcastManager.getInstance(applicationContext)),
-				SelectedBrowserLibraryIdentifierProvider(applicationContext.getApplicationSettingsRepository()),
-				ConnectionSessionManager.get(applicationContext)
-			).apply { selectedConnectionInstance = this }
-		}
+		fun getInstance(context: Context): SelectedConnection =
+			SelectedConnection(
+				MessageBus(LocalBroadcastManager.getInstance(context)),
+				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
+				ConnectionSessionManager.get(context)
+			)
 	}
 }

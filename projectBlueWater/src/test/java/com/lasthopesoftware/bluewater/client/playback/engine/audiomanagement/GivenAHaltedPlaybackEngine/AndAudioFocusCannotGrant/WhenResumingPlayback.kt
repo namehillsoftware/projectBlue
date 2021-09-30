@@ -26,7 +26,7 @@ class WhenResumingPlayback {
 		private var timeoutException: TimeoutException? = null
 
 		private val innerPlaybackState = object : ChangePlaybackState {
-			override fun startPlaylist(playlist: MutableList<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
+			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
 				Unit.toPromise()
 
 			override fun resume(): Promise<Unit> {

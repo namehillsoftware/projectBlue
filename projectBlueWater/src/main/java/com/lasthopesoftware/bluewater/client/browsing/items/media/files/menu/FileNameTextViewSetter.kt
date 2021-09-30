@@ -4,16 +4,15 @@ import android.os.Handler
 import android.widget.TextView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
+import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.RateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.response.EventualAction
@@ -31,6 +30,8 @@ class FileNameTextViewSetter(private val textView: TextView) {
 	companion object {
 		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
 		private val timeoutDuration = Duration.standardMinutes(1)
+
+		private val rateLimiter by lazy { RateLimiter<Map<String, String>>(ThreadPools.io, 1) }
 	}
 
 	private val textViewUpdateSync = Any()
@@ -41,26 +42,28 @@ class FileNameTextViewSetter(private val textView: TextView) {
 			ScopedCachedFilePropertiesProvider(
 				c,
 				filePropertyCache,
-				ScopedFilePropertiesProvider(
-					c,
-					ScopedRevisionProvider(c),
-					filePropertyCache
+				RateControlledFilePropertiesProvider(
+					ScopedFilePropertiesProvider(
+						c,
+						ScopedRevisionProvider(c),
+						filePropertyCache
+					),
+					rateLimiter
 				)
 			)
 		}
 	}
 
 	@Volatile
-	private var promisedState = Promise.empty<Void>()
+	private var promisedState = Unit.toPromise()
 
 	@Volatile
 	private var currentlyPromisedTextViewUpdate: PromisedTextViewUpdate? = null
 
 	@Synchronized
-	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Void> {
+	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Unit> {
 		promisedState.cancel()
-		promisedState = promisedState
-			.inevitably(EventualTextViewUpdate(serviceFile))
+		promisedState = promisedState.inevitably(EventualTextViewUpdate(serviceFile))
 		return promisedState
 	}
 
@@ -121,8 +124,8 @@ class FileNameTextViewSetter(private val textView: TextView) {
 					resolve(Unit)
 				}
 				.excuse { e ->
-					LoggerUncaughtExceptionHandler
-						.getErrorExecutor()
+					ThreadPools
+						.exceptionsLogger
 						.execute { handleError(e) }
 				}
 		}

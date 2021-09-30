@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
 
 import org.junit.BeforeClass;
@@ -20,21 +19,24 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class WhenGettingFileProperties {
 
 	private static Map<String, String> fileProperties;
 
 	@BeforeClass
-	public static void before() throws ExecutionException, InterruptedException {
+	public static void before() throws ExecutionException, InterruptedException, TimeoutException {
 		final FakeFileConnectionProvider fakeFileConnectionProvider = new FakeFileConnectionProvider();
-		fakeFileConnectionProvider.setupFile(new ServiceFile(15), new HashMap<String, String>() {
+		fakeFileConnectionProvider.setupFile(new ServiceFile(15), new HashMap<>() {
 			{
 				put(KnownFileProperties.KEY, "45");
 			}
 		});
 
-		final FakeLibraryConnectionProvider fakeLibraryConnectionProvider = new FakeLibraryConnectionProvider(new HashMap<LibraryId, IConnectionProvider>() {{ put(new LibraryId(14), fakeFileConnectionProvider); }});
+		final FakeLibraryConnectionProvider fakeLibraryConnectionProvider = new FakeLibraryConnectionProvider(new HashMap<>() {{
+			put(new LibraryId(14), fakeFileConnectionProvider);
+		}});
 
 		final FilePropertiesProvider filePropertiesProvider = new FilePropertiesProvider(
 			fakeLibraryConnectionProvider,

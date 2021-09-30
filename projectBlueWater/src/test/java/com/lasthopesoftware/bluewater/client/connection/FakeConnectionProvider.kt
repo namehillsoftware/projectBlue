@@ -63,7 +63,4 @@ open class FakeConnectionProvider : IConnectionProvider {
 	override val urlProvider: IUrlProvider
 		get() = MediaServerUrlProvider("auth", "test", 80)
 
-	override fun promiseSentPacket(packets: ByteArray): Promise<Unit> {
-		return Promise(Unit)
-	}
 }

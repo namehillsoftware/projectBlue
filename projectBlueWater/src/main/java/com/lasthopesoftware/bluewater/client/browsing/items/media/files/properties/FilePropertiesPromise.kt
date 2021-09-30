@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.resources.scheduling.ParsingScheduler
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -50,7 +50,7 @@ internal class FilePropertiesPromise(
 
 		override fun promiseResponse(response: Response?): Promise<Map<String, String>> {
 			this.response = response
-			return QueuedPromise(this, ParsingScheduler.instance().scheduler)
+			return QueuedPromise(this, ThreadPools.compute)
 		}
 
 		override fun prepareMessage(cancellationToken: CancellationToken): Map<String, String> =

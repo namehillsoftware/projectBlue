@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.okhttp
 import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
 import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustManager
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
-import com.lasthopesoftware.resources.executors.HttpThreadPoolExecutor.executor
+import com.lasthopesoftware.resources.executors.ThreadPools
 import okhttp3.Dispatcher
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -31,24 +31,15 @@ object OkHttpFactory : ProvideOkHttpClients {
             .hostnameVerifier(getHostnameVerifier(urlProvider))
             .build()
 
-	private val dispatcher by lazy {
-		val maxDownloadThreadPoolSize = 4
-		val downloadThreadPoolSize =
-			maxDownloadThreadPoolSize.coerceAtMost(Runtime.getRuntime().availableProcessors())
-		val requestPoolSize = downloadThreadPoolSize * 3
-		val dispatcher = Dispatcher(executor)
-		dispatcher.maxRequests = requestPoolSize
-		dispatcher.maxRequestsPerHost = requestPoolSize
-		dispatcher
-	}
+	private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 
 	private val commonBuilder by lazy {
 		OkHttpClient.Builder()
-			.addNetworkInterceptor(Interceptor { chain ->
+			.addNetworkInterceptor { chain ->
 				val requestBuilder =
 					chain.request().newBuilder().addHeader("Connection", "close")
 				chain.proceed(requestBuilder.build())
-			})
+			}
 			.cache(null)
 			.readTimeout(1, TimeUnit.MINUTES)
 			.dispatcher(dispatcher)

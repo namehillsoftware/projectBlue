@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.resources.executors.CachedSingleThreadExecutor
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -44,10 +44,6 @@ internal class PruneFilesTask(private val storedFileAccess: StoredFileAccess, se
 					directoryToDelete = directoryToDelete.parentFile
 				}
 			}
-		}, pruneFilesExecutor.value)
-	}
-
-	companion object {
-		private val pruneFilesExecutor = lazy { CachedSingleThreadExecutor() }
+		}, ThreadPools.io)
 	}
 }
