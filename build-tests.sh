@@ -5,7 +5,7 @@
 BUILD_ID="$(od  -vN "8" -An -tx1  /dev/urandom | tr -d " \n")"
 
 docker-compose build && docker-compose run --name "${BUILD_ID}" gradle \
-  build \
+  test \
   jacocoTestReport
 EXIT_CODE=${PIPESTATUS[0]}
 

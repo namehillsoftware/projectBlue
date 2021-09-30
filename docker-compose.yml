@@ -5,5 +5,7 @@ services:
     build:
       context: .
     environment:
-      - SONATYPE_USERNAME=${SONATYPE_USERNAME}
-      - SONATYPE_PASSWORD=${SONATYPE_PASSWORD}
+      - ORG_GRADLE_PROJECT_sonatypeUsername=${SONATYPE_USERNAME}
+      - ORG_GRADLE_PROJECT_sonatypePassword=${SONATYPE_PASSWORD}
+      - ORG_GRADLE_PROJECT_signingKey=${SIGNING_KEY}
+      - ORG_GRADLE_PROJECT_signingPassword=${SIGNING_PASSWORD}

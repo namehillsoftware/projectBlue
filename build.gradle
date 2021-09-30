@@ -60,11 +60,15 @@ artifacts {
     archives sourcesJar
 }
 
-def sonatypeUsername = System.env.SONATYPE_USERNAME
-def sonatypePassword = System.env.SONATYPE_PASSWORD
+def sonatypeUsername = findProperty("sonatypeUsername")
+def sonatypePassword = findProperty("sonatypePassword")
+def signingKey = findProperty("signingKey")
+def signingPassword = findProperty("signingPassword")
 
 signing {
-	required { gradle.taskGraph.hasTask("publish") }
+	required { signingKey?.trim() && gradle.taskGraph.hasTask("publish") }
+
+	useInMemoryPgpKeys(signingKey, signingPassword)
 	sign configurations.archives
 }
 
