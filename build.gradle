@@ -62,7 +62,7 @@ artifacts {
 
 def sonatypeUsername = findProperty("sonatypeUsername")
 def sonatypePassword = findProperty("sonatypePassword")
-def signingKey = findProperty("signingKey")
+def signingKey = findProperty("signingKey")?.replace("\\n", "\n")
 def signingPassword = findProperty("signingPassword")
 
 signing {
