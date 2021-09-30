@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  gradle:
+    build:
+      context: .
+    environment:
+      - ORG_GRADLE_PROJECT_sonatypeUsername=${SONATYPE_USERNAME}
+      - ORG_GRADLE_PROJECT_sonatypePassword=${SONATYPE_PASSWORD}
+      - ORG_GRADLE_PROJECT_signingKey=${SIGNING_KEY}
+      - ORG_GRADLE_PROJECT_signingPassword=${SIGNING_PASSWORD}
