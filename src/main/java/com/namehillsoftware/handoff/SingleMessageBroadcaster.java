@@ -4,10 +4,14 @@ import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver;
 
 import java.util.Collections;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation {
+public abstract class SingleMessageBroadcaster<Resolution> extends CancellableBroadcaster<Resolution> {
+
+	@SuppressWarnings("rawtypes")
+	private static final Set unhandledErrorCollectionInstance = Collections.singleton((RespondingMessenger)UnhandledRejectionDispatcher.instance);
 
 	private static volatile UnhandledRejectionsReceiver unhandledRejectionsReceiver;
 
@@ -15,46 +19,30 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 		SingleMessageBroadcaster.unhandledRejectionsReceiver = receiver;
 	}
 
-	private final Queue<RespondingMessenger<Resolution>> actualQueue = new ConcurrentLinkedQueue<>();
+	private final Queue<RespondingMessenger<Resolution>> respondingMessengers = new ConcurrentLinkedQueue<>();
 
 	private final AtomicReference<Message<Resolution>> atomicMessage = new AtomicReference<>();
 
-	@SuppressWarnings("unchecked")
-	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(Collections.singleton((RespondingMessenger<Resolution>)UnhandledRejectionDispatcher.instance));
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private Queue<RespondingMessenger<Resolution>> unhandledErrorQueue = new ConcurrentLinkedQueue<>(unhandledErrorCollectionInstance);
 
 	private final AtomicReference<Queue<RespondingMessenger<Resolution>>> recipients = new AtomicReference<>(unhandledErrorQueue);
 
-	protected final void reject(Throwable error) {
-		resolve(null, error);
-	}
-
-	protected final void resolve(Resolution resolution) {
-		resolve(resolution, null);
-	}
-
-	public final void cancel() {
-		if (!isResolved())
-			super.cancel();
-	}
-
 	protected final void awaitResolution(RespondingMessenger<Resolution> recipient) {
-		recipients.compareAndSet(unhandledErrorQueue, actualQueue);
+		recipients.compareAndSet(unhandledErrorQueue, respondingMessengers);
 
 		unhandledErrorQueue = null;
 
 		recipients.get().offer(recipient);
 
-		if (isResolved())
-			dispatchMessage(atomicMessage.get());
+		final Message<Resolution> messageSnapshot = atomicMessage.get();
+		if (messageSnapshot != null)
+			dispatchMessage(messageSnapshot);
 	}
 
-	private boolean isResolved() {
-		return atomicMessage.get() != null;
-	}
-
-	private void resolve(Resolution resolution, Throwable rejection) {
+	@Override
+	protected final void resolve(Resolution resolution, Throwable rejection) {
 		atomicMessage.compareAndSet(null, new Message<>(resolution, rejection));
-
 		dispatchMessage(atomicMessage.get());
 	}
 
@@ -64,6 +52,7 @@ public abstract class SingleMessageBroadcaster<Resolution> extends Cancellation 
 			r.respond(message);
 	}
 
+	@SuppressWarnings("rawtypes")
 	private static final class UnhandledRejectionDispatcher implements RespondingMessenger {
 
 		private static final UnhandledRejectionDispatcher instance = new UnhandledRejectionDispatcher();

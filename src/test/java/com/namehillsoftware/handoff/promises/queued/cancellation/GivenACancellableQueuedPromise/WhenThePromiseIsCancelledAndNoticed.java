@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,9 +18,12 @@ public class WhenThePromiseIsCancelledAndNoticed {
 	@BeforeClass
 	public static void before() throws InterruptedException {
 		thrownException = new Exception();
+		final CountDownLatch promiseBegunLatch = new CountDownLatch(1);
 		final CountDownLatch promiseLatch = new CountDownLatch(1);
 		final QueuedPromise<String> cancellablePromise = new QueuedPromise<>(
 			(cancellationToken) -> {
+				promiseBegunLatch.countDown();
+
 				promiseLatch.await();
 
 				if (cancellationToken.isCancelled())
@@ -29,17 +33,24 @@ public class WhenThePromiseIsCancelledAndNoticed {
 			}, Executors.newSingleThreadExecutor());
 
 		final CountDownLatch rejectionLatch = new CountDownLatch(1);
-		cancellablePromise.excuse((exception) -> {
-			caughtException = exception;
-			rejectionLatch.countDown();
-			return null;
-		});
+		cancellablePromise.then(
+				(r) -> {
+					rejectionLatch.countDown();
+					return null;
+				},
+				(exception) -> {
+					caughtException = exception;
+					rejectionLatch.countDown();
+					return null;
+				});
+
+		promiseBegunLatch.await(10, TimeUnit.SECONDS);
 
 		cancellablePromise.cancel();
 
 		promiseLatch.countDown();
 
-		rejectionLatch.await();
+		rejectionLatch.await(10, TimeUnit.SECONDS);
 	}
 
 	@Test
