@@ -27,7 +27,7 @@ class ScaledImageProvider(private val inner: ProvideImages, private val activity
 					?.takeUnless { b -> b.width < displayMetrics.first && b.height < displayMetrics.second }
 					?.let { b ->
 						val (width, height) = displayMetrics
-						val minShrink = minOf(b.width.toDouble() / width, b.height.toDouble() / height)
+						val minShrink = maxOf(b.width.toDouble() / width.toDouble(), b.height.toDouble() / height.toDouble())
 						Bitmap.createScaledBitmap(
 							b,
 							width.scaleInteger(minShrink),
