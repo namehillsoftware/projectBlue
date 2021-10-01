@@ -38,17 +38,17 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 						?.let { b ->
 							QueuedPromise(MessageWriter {
 								val (width, height) = displayMetrics
-								val minShrink = minOf(
+								val shrink = maxOf(
 									b.width.toDouble() / width.toDouble(),
 									b.height.toDouble() / height.toDouble()
-								)
+								).coerceAtMost(1.0)
 
 								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
 
 								Bitmap.createScaledBitmap(
 									b,
-									width.scaleInteger(minShrink),
-									height.scaleInteger(minShrink),
+									width.scaleInteger(shrink),
+									height.scaleInteger(shrink),
 									true
 								)
 							}, ThreadPools.compute)
