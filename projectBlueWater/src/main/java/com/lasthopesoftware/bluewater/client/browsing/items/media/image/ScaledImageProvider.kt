@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.image
 
-import android.content.Context
+import android.app.Activity
 import android.graphics.Bitmap
 import android.os.Build
 import android.util.DisplayMetrics
-import android.view.WindowManager
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -15,9 +14,9 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
-class ScaledImageProvider(private val inner: ProvideImages, private val context: Context) : ProvideImages {
+class ScaledImageProvider(private val inner: ProvideImages, private val activity: Activity) : ProvideImages {
 	private val displayMetrics by lazy {
-		val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+		val windowManager = activity.windowManager
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 			val metrics = windowManager.maximumWindowMetrics
 			Pair(metrics.bounds.width(), metrics.bounds.height())
@@ -37,11 +36,13 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 						?.takeUnless { b -> b.width < displayMetrics.first || b.height < displayMetrics.second }
 						?.let { b ->
 							QueuedPromise(MessageWriter {
+								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
+
 								val (width, height) = displayMetrics
 								val shrink = maxOf(
 									b.width.toDouble() / width.toDouble(),
 									b.height.toDouble() / height.toDouble()
-								).coerceAtMost(1.0)
+								)
 
 								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
 

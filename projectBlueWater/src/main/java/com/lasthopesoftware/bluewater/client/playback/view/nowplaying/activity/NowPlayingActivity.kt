@@ -29,12 +29,15 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ScaledImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
@@ -152,7 +155,14 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		}, messageHandler))
 	}
 
-	private val lazyImageProvider by lazy { CachedImageProvider.getInstance(this) }
+	private val imageProvider by lazy {
+		ScaledImageProvider(
+			ImageProvider(
+				StaticLibraryIdentifierProvider(SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository())),
+				MemoryCachedImageAccess.getInstance(this)),
+			this
+		)
+	}
 
 	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
 
@@ -482,7 +492,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			loadingProgressBar.findView().visibility = View.VISIBLE
 			nowPlayingImage.visibility = View.INVISIBLE
 			if (viewStructure.promisedNowPlayingImage == null) {
-				viewStructure.promisedNowPlayingImage = lazyImageProvider.promiseFileBitmap(serviceFile)
+				viewStructure.promisedNowPlayingImage = imageProvider.promiseFileBitmap(serviceFile)
 			}
 			viewStructure.promisedNowPlayingImage
 				?.eventually { bitmap ->

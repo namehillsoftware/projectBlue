@@ -31,7 +31,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
@@ -661,7 +662,9 @@ open class PlaybackService : Service() {
 				FilePropertyCache.getInstance(),
 				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
 
-			val imageProvider = CachedImageProvider.getInstance(this)
+			val imageProvider = ImageProvider(
+				StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
+				MemoryCachedImageAccess.getInstance(this))
 
 			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 			val broadcaster = MediaSessionBroadcaster(

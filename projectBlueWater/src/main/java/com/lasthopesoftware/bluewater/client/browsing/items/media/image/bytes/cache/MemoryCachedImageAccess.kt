@@ -26,7 +26,7 @@ class MemoryCachedImageAccess
 ): GetRawImages {
 
 	companion object {
-		private const val MAX_MEMORY_CACHE_SIZE = 5
+		private const val MAX_MEMORY_CACHE_SIZE = 10
 
 		private val cache by lazy { LruPromiseCache<String, ByteArray>(MAX_MEMORY_CACHE_SIZE) }
 
