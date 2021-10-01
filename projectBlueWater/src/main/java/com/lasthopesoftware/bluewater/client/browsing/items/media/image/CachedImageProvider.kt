@@ -1,14 +1,16 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.image
 
-import android.app.Activity
+import android.content.Context
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.RemoteImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.ImageCacheKeyLookup
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.LookupImageCacheKey
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
@@ -31,9 +33,9 @@ class CachedImageProvider(
 
 		private val cache by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
 
-		fun getInstance(activity: Activity): CachedImageProvider {
-			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(activity.getApplicationSettingsRepository())
-			val libraryConnectionProvider = ConnectionSessionManager.get(activity)
+		fun getInstance(context: Context): CachedImageProvider {
+			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository())
+			val libraryConnectionProvider = ConnectionSessionManager.get(context)
 			val filePropertiesCache = FilePropertyCache.getInstance()
 			val imageCacheKeyLookup = ImageCacheKeyLookup(
 				CachedFilePropertiesProvider(
@@ -50,8 +52,12 @@ class CachedImageProvider(
 				ScaledImageProvider(
 					ImageProvider(
 						StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
-						MemoryCachedImageAccess.getInstance(activity)),
-					activity),
+						DiskCacheImageAccess(
+							RemoteImageAccess(libraryConnectionProvider),
+							imageCacheKeyLookup,
+							ImageDiskFileCacheFactory.getInstance(context))
+					),
+					context),
 				selectedLibraryIdentifierProvider,
 				imageCacheKeyLookup,
 				cache
