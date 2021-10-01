@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.image
 
-import android.app.Activity
+import android.content.Context
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ImageDiskFileCacheFactory
@@ -29,13 +29,13 @@ class CachedImageProvider(
 	private val cache: CachePromiseFunctions<String, Bitmap?>
 ) : ProvideImages {
 	companion object {
-		private const val MAX_MEMORY_CACHE_SIZE = 10
+		private const val MAX_MEMORY_CACHE_SIZE = 5
 
 		private val cache by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
 
-		fun getInstance(activity: Activity): CachedImageProvider {
-			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(activity.getApplicationSettingsRepository())
-			val libraryConnectionProvider = ConnectionSessionManager.get(activity)
+		fun getInstance(context: Context): CachedImageProvider {
+			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository())
+			val libraryConnectionProvider = ConnectionSessionManager.get(context)
 			val filePropertiesCache = FilePropertyCache.getInstance()
 			val imageCacheKeyLookup = ImageCacheKeyLookup(
 				CachedFilePropertiesProvider(
@@ -55,9 +55,9 @@ class CachedImageProvider(
 						DiskCacheImageAccess(
 							RemoteImageAccess(libraryConnectionProvider),
 							imageCacheKeyLookup,
-							ImageDiskFileCacheFactory.getInstance(activity))
+							ImageDiskFileCacheFactory.getInstance(context))
 					),
-					activity),
+					context),
 				selectedLibraryIdentifierProvider,
 				imageCacheKeyLookup,
 				cache
