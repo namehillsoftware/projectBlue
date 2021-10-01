@@ -72,6 +72,6 @@ class CachedImageProvider(
 				libraryId
 					?.let { l -> cacheKeys.promiseImageCacheKey(l, serviceFile) }
 					?.eventually { key -> cache.getOrAdd(key) { inner.promiseFileBitmap(serviceFile) } }
-					?.keepPromise()
+					.keepPromise()
 			}
 }
