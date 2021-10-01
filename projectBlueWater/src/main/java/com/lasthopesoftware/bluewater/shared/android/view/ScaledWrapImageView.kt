@@ -11,19 +11,15 @@ class ScaledWrapImageView : AppCompatImageView {
     private var isLandscape = false
     private lateinit var bitmap: Bitmap
 
-    constructor(context: Context?) : super(context!!) {
+    constructor(context: Context) : super(context) {
         updateIsLandscape()
     }
 
-    constructor(context: Context?, attrs: AttributeSet?) : super(
-        context!!, attrs
-    ) {
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
         updateIsLandscape()
     }
 
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
-        context!!, attrs, defStyleAttr
-    ) {
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         updateIsLandscape()
     }
 

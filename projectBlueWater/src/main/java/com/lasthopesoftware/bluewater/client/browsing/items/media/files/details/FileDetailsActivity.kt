@@ -36,7 +36,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 
 class FileDetailsActivity : AppCompatActivity() {
 
@@ -47,17 +46,15 @@ class FileDetailsActivity : AppCompatActivity() {
 	private val artistTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvArtist)
 	private val fileThumbnailContainer = LazyViewFinder<RelativeLayout>(this, R.id.rlFileThumbnailContainer)
 
-	private val imgFileThumbnailBuilder = object : AbstractSynchronousLazy<ScaledWrapImageView>() {
-		override fun create(): ScaledWrapImageView {
-			val rlFileThumbnailContainer = fileThumbnailContainer.findView()
+	private val imgFileThumbnailBuilder by lazy {
+		val rlFileThumbnailContainer = fileThumbnailContainer.findView()
 
-			val imgFileThumbnail = ScaledWrapImageView(this@FileDetailsActivity)
-			imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow)
-			imgFileThumbnail.layoutParams = imgFileThumbnailLayoutParams.getObject()
+		val imgFileThumbnail = ScaledWrapImageView(this)
+		imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow)
+		imgFileThumbnail.layoutParams = imgFileThumbnailLayoutParams
 
-			rlFileThumbnailContainer.addView(imgFileThumbnail)
-			return imgFileThumbnail
-		}
+		rlFileThumbnailContainer.addView(imgFileThumbnail)
+		imgFileThumbnail
 	}
 
 	private val imageProvider by lazy {
@@ -87,7 +84,7 @@ class FileDetailsActivity : AppCompatActivity() {
 
 		lvFileDetails.findView().visibility = View.INVISIBLE
 		pbLoadingFileDetails.findView().visibility = View.VISIBLE
-		imgFileThumbnailBuilder.getObject().visibility = View.INVISIBLE
+		imgFileThumbnailBuilder.visibility = View.INVISIBLE
 		pbLoadingFileThumbnail.findView().visibility = View.VISIBLE
 		fileNameTextViewFinder.findView().text = getText(R.string.lbl_loading)
 		artistTextViewFinder.findView().text = getText(R.string.lbl_loading)
@@ -124,9 +121,9 @@ class FileDetailsActivity : AppCompatActivity() {
 				bitmap?.toPromise() ?: defaultImageProvider.promiseFileBitmap()
 			}
 			.eventually(LoopedInPromise.response({ result ->
-				imgFileThumbnailBuilder.getObject().setImageBitmap(result)
+				imgFileThumbnailBuilder.setImageBitmap(result)
 				pbLoadingFileThumbnail.findView().visibility = View.INVISIBLE
-				imgFileThumbnailBuilder.getObject().visibility = View.VISIBLE
+				imgFileThumbnailBuilder.visibility = View.VISIBLE
 			}, this))
 	}
 
@@ -179,12 +176,10 @@ class FileDetailsActivity : AppCompatActivity() {
 			KnownFileProperties.WAVEFORM,
 			KnownFileProperties.LengthInPcmBlocks)
 
-		private val imgFileThumbnailLayoutParams: AbstractSynchronousLazy<RelativeLayout.LayoutParams> = object : AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
-			override fun create(): RelativeLayout.LayoutParams {
-				val layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-				layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT)
-				return layoutParams
-			}
+		private val imgFileThumbnailLayoutParams by lazy {
+			val layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+			layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT)
+			layoutParams
 		}
 	}
 }
