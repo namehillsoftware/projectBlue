@@ -1,88 +1,80 @@
-package com.lasthopesoftware.bluewater.shared.android.view;
+package com.lasthopesoftware.bluewater.shared.android.view
 
-import android.content.Context;
-import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.util.AttributeSet;
-import androidx.appcompat.widget.AppCompatImageView;
+import android.content.Context
+import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatImageView
+import kotlin.math.roundToInt
 
-public class ScaledWrapImageView extends AppCompatImageView {
+class ScaledWrapImageView : AppCompatImageView {
+    private var isLandscape = false
+    private lateinit var bitmap: Bitmap
 
-    private boolean isLandscape;
-    private Bitmap bitmap;
-
-    public ScaledWrapImageView(Context context) {
-        super(context);
-
-        updateIsLandscape();
+    constructor(context: Context?) : super(context!!) {
+        updateIsLandscape()
     }
 
-    public ScaledWrapImageView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        updateIsLandscape();
+    constructor(context: Context?, attrs: AttributeSet?) : super(
+        context!!, attrs
+    ) {
+        updateIsLandscape()
     }
 
-    public ScaledWrapImageView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-
-        updateIsLandscape();
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context!!, attrs, defStyleAttr
+    ) {
+        updateIsLandscape()
     }
 
-    @Override
-    public void setImageBitmap(Bitmap bm) {
-        bitmap = bm;
-        super.setImageBitmap(bm);
+    override fun setImageBitmap(bm: Bitmap) {
+        bitmap = bm
+        super.setImageBitmap(bm)
     }
 
-	@Override
-    protected void onConfigurationChanged(Configuration newConfig) {
-        updateIsLandscape(newConfig);
-        super.onConfigurationChanged(newConfig);
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        updateIsLandscape(newConfig)
+        super.onConfigurationChanged(newConfig)
     }
 
-    private void updateIsLandscape() {
-        updateIsLandscape(getResources().getConfiguration());
+    private fun updateIsLandscape(configuration: Configuration = resources.configuration) {
+        isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
-    private void updateIsLandscape(Configuration configuration) {
-        isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE;
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (bitmap == null) {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            return;
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        if (!::bitmap.isInitialized) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+            return
         }
 
-        setScaleType(ScaleType.FIT_XY);
-
-        int width = getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec);
-        int height = getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec);
-
+        scaleType = ScaleType.FIT_XY
+        var width = getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
+        var height = getDefaultSize(suggestedMinimumHeight, heightMeasureSpec)
         if (isLandscape) {
-            final int newHeight = scaleInteger(bitmap.getHeight(), (double) width / (double) bitmap.getWidth());
-
+            val newHeight = scaleInteger(
+                bitmap.height, width.toDouble() / bitmap.width.toDouble()
+            )
             if (newHeight > height) {
-                width = scaleInteger(width, (double) height / (double) newHeight);
+                width = scaleInteger(width, height.toDouble() / newHeight.toDouble())
             } else {
-                height = newHeight;
+                height = newHeight
             }
         } else {
-            final int newWidth = scaleInteger(bitmap.getWidth(), (double) height / (double) bitmap.getHeight());
-
+            val newWidth = scaleInteger(
+                bitmap.width, height.toDouble() / bitmap.height.toDouble()
+            )
             if (newWidth > width) {
-                height = scaleInteger(height, (double) width / (double) newWidth );
+                height = scaleInteger(height, width.toDouble() / newWidth.toDouble())
             } else {
-                width = newWidth;
+                width = newWidth
             }
         }
-
-        setMeasuredDimension(width, height);
+        setMeasuredDimension(width, height)
     }
 
-    private static int scaleInteger(int srcInt, double scaleRatio) {
-        return (int) Math.round((double) srcInt * scaleRatio);
+    companion object {
+        private fun scaleInteger(srcInt: Int, scaleRatio: Double): Int {
+            return (srcInt.toDouble() * scaleRatio).roundToInt()
+        }
     }
 }

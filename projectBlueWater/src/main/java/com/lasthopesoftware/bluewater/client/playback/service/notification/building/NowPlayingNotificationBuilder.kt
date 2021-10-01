@@ -1,157 +1,114 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.building;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.building
 
-import android.content.Context;
-import android.graphics.Bitmap;
+import android.content.Context
+import android.graphics.Bitmap
+import androidx.core.app.NotificationCompat
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingNextIntent
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPauseIntent
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPlayingIntent
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPreviousIntent
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.namehillsoftware.handoff.promises.Promise
 
-import androidx.core.app.NotificationCompat;
-
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider;
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.CreateAndHold;
-
-import java.util.Map;
-
-public class NowPlayingNotificationBuilder
-implements
-	BuildNowPlayingNotificationContent,
-	AutoCloseable {
-
-	private final IConnectionProvider connectionProvider;
-	private final ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider;
-	private final ImageProvider imageProvider;
-	private final Context context;
-	private final SetupMediaStyleNotifications mediaStyleNotificationSetup;
-
-	private final CreateAndHold<NotificationCompat.Builder> lazyPlayingLoadingNotification = new AbstractSynchronousLazy<NotificationCompat.Builder>() {
-		@Override
-		protected NotificationCompat.Builder create() {
-			return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), true)
-				.setOngoing(true)
-				.setContentTitle(context.getString(R.string.lbl_loading));
-		}
-	};
-
-	private final CreateAndHold<NotificationCompat.Builder> lazyNotPlayingLoadingNotification = new AbstractSynchronousLazy<NotificationCompat.Builder>() {
-		@Override
-		protected NotificationCompat.Builder create() {
-			return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), false)
-				.setOngoing(false)
-				.setContentTitle(context.getString(R.string.lbl_loading));
-		}
-	};
-
-	private ViewStructure viewStructure;
-
-	public NowPlayingNotificationBuilder(Context context, SetupMediaStyleNotifications mediaStyleNotificationSetup, IConnectionProvider connectionProvider, ScopedCachedFilePropertiesProvider scopedCachedFilePropertiesProvider, ImageProvider imageProvider) {
-		this.context = context;
-		this.mediaStyleNotificationSetup = mediaStyleNotificationSetup;
-		this.connectionProvider = connectionProvider;
-		this.scopedCachedFilePropertiesProvider = scopedCachedFilePropertiesProvider;
-		this.imageProvider = imageProvider;
+class NowPlayingNotificationBuilder(
+	private val context: Context,
+	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
+	private val connectionProvider: IConnectionProvider,
+	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
+	private val imageProvider: ProvideImages
+) : BuildNowPlayingNotificationContent, AutoCloseable {
+	private val lazyPlayingLoadingNotification by lazy {
+		addButtons(mediaStyleNotificationSetup.mediaStyleNotification, true)
+			.setOngoing(true)
+			.setContentTitle(context.getString(R.string.lbl_loading))
 	}
 
-	@Override
-	public synchronized Promise<NotificationCompat.Builder> promiseNowPlayingNotification(ServiceFile serviceFile, boolean isPlaying) {
-		final UrlKeyHolder<Integer> urlKeyHolder = new UrlKeyHolder<>(connectionProvider.getUrlProvider().getBaseUrl(), serviceFile.getKey());
+	private val lazyNotPlayingLoadingNotification by lazy {
+		addButtons(mediaStyleNotificationSetup.mediaStyleNotification, false)
+			.setOngoing(false)
+			.setContentTitle(context.getString(R.string.lbl_loading))
+	}
 
-		if (viewStructure != null && !viewStructure.urlKeyHolder.equals(urlKeyHolder)) {
-			viewStructure.release();
-			viewStructure = null;
+	private var viewStructure: ViewStructure? = null
+
+	@Synchronized
+	override fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder> {
+		val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl!!, serviceFile.key)
+		if (viewStructure?.urlKeyHolder != urlKeyHolder) {
+			viewStructure?.release()
+			viewStructure = null
 		}
 
-		if (viewStructure == null)
-			viewStructure = new ViewStructure(urlKeyHolder, serviceFile);
+		val viewStructure = viewStructure ?: ViewStructure(urlKeyHolder).also { viewStructure = it }
+		viewStructure.promisedNowPlayingImage = viewStructure.promisedNowPlayingImage ?: imageProvider.promiseFileBitmap(serviceFile)
 
-		if (viewStructure.promisedNowPlayingImage == null)
-			viewStructure.promisedNowPlayingImage = imageProvider.promiseFileBitmap(serviceFile);
+		val promisedFileProperties = viewStructure.promisedFileProperties
+			?: scopedCachedFilePropertiesProvider.promiseFileProperties(serviceFile).also { viewStructure.promisedFileProperties = it }
 
-		if (viewStructure.promisedFileProperties == null)
-			viewStructure.promisedFileProperties = scopedCachedFilePropertiesProvider.promiseFileProperties(serviceFile);
-
-		return viewStructure.promisedFileProperties
-			.eventually(fileProperties -> {
-				final String artist = fileProperties.get(KnownFileProperties.ARTIST);
-				final String name = fileProperties.get(KnownFileProperties.NAME);
-
-				final NotificationCompat.Builder builder =
-					addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(), isPlaying)
-						.setOngoing(isPlaying)
-						.setContentTitle(name)
-						.setContentText(artist);
-
-				if (!viewStructure.urlKeyHolder.equals(urlKeyHolder))
-					return new Promise<>(builder);
-
-				return viewStructure
-					.promisedNowPlayingImage
-					.then(
-						bitmap -> {
-							if (bitmap != null)
-								builder.setLargeIcon(bitmap);
-
-							return builder;
-						},
-						e -> builder);
-			});
+		return promisedFileProperties
+			.eventually { fileProperties ->
+				val artist = fileProperties[KnownFileProperties.ARTIST]
+				val name = fileProperties[KnownFileProperties.NAME]
+				val builder = addButtons(mediaStyleNotificationSetup.mediaStyleNotification, isPlaying)
+					.setOngoing(isPlaying)
+					.setContentTitle(name)
+					.setContentText(artist)
+				if (viewStructure.urlKeyHolder != urlKeyHolder) return@eventually Promise(builder)
+				viewStructure.promisedNowPlayingImage
+					?.then(
+						{ bitmap -> bitmap?.let(builder::setLargeIcon) },
+						{ builder }
+					)
+					.keepPromise(builder)
+			}
 	}
 
-	@Override
-	public NotificationCompat.Builder getLoadingNotification(boolean isPlaying) {
-		return isPlaying
-			? lazyPlayingLoadingNotification.getObject()
-			: lazyNotPlayingLoadingNotification.getObject();
-	}
+	override fun getLoadingNotification(isPlaying: Boolean): NotificationCompat.Builder =
+		if (isPlaying) lazyPlayingLoadingNotification else lazyNotPlayingLoadingNotification
 
-	@Override
-	public void close() {
-		if (viewStructure != null)
-			viewStructure.release();
-	}
+	override fun close() { viewStructure?.release() }
 
-	private NotificationCompat.Builder addButtons(NotificationCompat.Builder builder, boolean isPlaying) {
-		return builder
-			.addAction(new NotificationCompat.Action(
-				R.drawable.av_rewind,
-				context.getString(R.string.btn_previous),
-				PlaybackService.pendingPreviousIntent(context)))
+	private fun addButtons(builder: NotificationCompat.Builder, isPlaying: Boolean): NotificationCompat.Builder =
+		builder
 			.addAction(
-				isPlaying
-					? new NotificationCompat.Action(
+				NotificationCompat.Action(
+					R.drawable.av_rewind,
+					context.getString(R.string.btn_previous),
+					pendingPreviousIntent(context)
+				)
+			)
+			.addAction(
+				if (isPlaying) NotificationCompat.Action(
 					R.drawable.av_pause,
 					context.getString(R.string.btn_pause),
-					PlaybackService.pendingPauseIntent(context))
-					: new NotificationCompat.Action(
+					pendingPauseIntent(context)
+				) else NotificationCompat.Action(
 					R.drawable.av_play,
 					context.getString(R.string.btn_play),
-					PlaybackService.pendingPlayingIntent(context)))
-			.addAction(new NotificationCompat.Action(
-				R.drawable.av_fast_forward,
-				context.getString(R.string.btn_next),
-				PlaybackService.pendingNextIntent(context)));
-	}
+					pendingPlayingIntent(context)
+				)
+			)
+			.addAction(
+				NotificationCompat.Action(
+					R.drawable.av_fast_forward,
+					context.getString(R.string.btn_next),
+					pendingNextIntent(context)
+				)
+			)
 
-	private static class ViewStructure {
-		final UrlKeyHolder<Integer> urlKeyHolder;
-		final ServiceFile serviceFile;
-		Promise<Map<String, String>> promisedFileProperties;
-		Promise<Bitmap> promisedNowPlayingImage;
+	private class ViewStructure(val urlKeyHolder: UrlKeyHolder<Int>) {
+		var promisedFileProperties: Promise<Map<String, String>>? = null
+		var promisedNowPlayingImage: Promise<Bitmap?>? = null
 
-		ViewStructure(UrlKeyHolder<Integer> urlKeyHolder, ServiceFile serviceFile) {
-			this.urlKeyHolder = urlKeyHolder;
-			this.serviceFile = serviceFile;
-		}
-
-		void release() {
-			if (promisedNowPlayingImage != null)
-				promisedNowPlayingImage.cancel();
+		fun release() {
+			promisedNowPlayingImage?.cancel()
 		}
 	}
 }

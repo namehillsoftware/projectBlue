@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;

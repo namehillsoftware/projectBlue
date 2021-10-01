@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache
+package com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.I
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.GetRawImages
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.RemoteImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -26,7 +26,7 @@ class MemoryCachedImageAccess
 ): GetRawImages {
 
 	companion object {
-		private const val MAX_MEMORY_CACHE_SIZE = 10
+		private const val MAX_MEMORY_CACHE_SIZE = 5
 
 		private val cache by lazy { LruPromiseCache<String, ByteArray>(MAX_MEMORY_CACHE_SIZE) }
 
@@ -47,7 +47,8 @@ class MemoryCachedImageAccess
 					imageCacheKeyLookup,
 					ImageDiskFileCacheFactory.getInstance(context)),
 				imageCacheKeyLookup,
-				cache)
+				cache
+            )
 		}
 	}
 

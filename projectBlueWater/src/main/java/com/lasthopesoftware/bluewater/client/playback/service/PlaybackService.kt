@@ -32,7 +32,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
