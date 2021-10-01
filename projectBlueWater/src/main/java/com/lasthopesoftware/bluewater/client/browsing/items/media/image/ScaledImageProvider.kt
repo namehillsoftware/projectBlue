@@ -5,7 +5,13 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.util.DisplayMetrics
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
 class ScaledImageProvider(private val inner: ProvideImages, private val activity: Activity) : ProvideImages {
@@ -21,20 +27,33 @@ class ScaledImageProvider(private val inner: ProvideImages, private val activity
 	}
 
 	override fun promiseFileBitmap(serviceFile: ServiceFile): Promise<Bitmap?> =
-		inner.promiseFileBitmap(serviceFile)
-			.then { image ->
-				image
-					?.takeUnless { b -> b.width < displayMetrics.first && b.height < displayMetrics.second }
-					?.let { b ->
-						val (width, height) = displayMetrics
-						val minShrink = maxOf(b.width.toDouble() / width.toDouble(), b.height.toDouble() / height.toDouble())
-						Bitmap.createScaledBitmap(
-							b,
-							width.scaleInteger(minShrink),
-							height.scaleInteger(minShrink),
-							true)
-					}
-			}
+		CancellableProxyPromise { cp ->
+			inner.promiseFileBitmap(serviceFile)
+				.also(cp::doCancel)
+				.eventually { image ->
+					image
+						?.takeUnless { b -> b.width < displayMetrics.first || b.height < displayMetrics.second }
+						?.let { b ->
+							QueuedPromise(MessageWriter {
+								val (width, height) = displayMetrics
+								val minShrink = maxOf(
+									b.width.toDouble() / width.toDouble(),
+									b.height.toDouble() / height.toDouble()
+								)
+
+								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
+
+								Bitmap.createScaledBitmap(
+									b,
+									width.scaleInteger(minShrink),
+									height.scaleInteger(minShrink),
+									true
+								)
+							}, ThreadPools.compute)
+						}
+						.keepPromise()
+				}
+		}
 
 	companion object {
 		private fun Int.scaleInteger(scaleRatio: Double): Int =
