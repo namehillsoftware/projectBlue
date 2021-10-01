@@ -40,21 +40,21 @@ class ScaledImageProvider(private val inner: ProvideImages, private val activity
 
 								val (width, height) = displayMetrics
 								val shrink = maxOf(
-									b.width.toDouble() / width.toDouble(),
-									b.height.toDouble() / height.toDouble()
+									width.toDouble() / b.width.toDouble(),
+									height.toDouble() / b.height.toDouble()
 								)
 
 								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
 
 								Bitmap.createScaledBitmap(
 									b,
-									width.scaleInteger(shrink),
-									height.scaleInteger(shrink),
+									b.width.scaleInteger(shrink),
+									b.height.scaleInteger(shrink),
 									true
 								)
 							}, ThreadPools.compute)
 						}
-						.keepPromise()
+						.keepPromise(image)
 				}
 		}
 
