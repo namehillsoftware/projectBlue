@@ -16,6 +16,5 @@ BUILD_CONTAINER=${BUILD_ID}
 docker container cp "${BUILD_CONTAINER}":/src/projectBlueWater/build ./_artifacts
 docker container rm "${BUILD_CONTAINER}" -v
 docker image rm "${BUILD_ID}"
-docker image rm project_blue_build
 
 exit "${EXIT_CODE}"
