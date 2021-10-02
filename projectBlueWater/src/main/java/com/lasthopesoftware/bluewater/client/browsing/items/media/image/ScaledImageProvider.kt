@@ -16,15 +16,15 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
 class ScaledImageProvider(private val inner: ProvideImages, private val context: Context) : ProvideImages {
-	private val displayMetrics by lazy {
+	private val maximumScreenDimension by lazy {
 		val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 			val metrics = windowManager.maximumWindowMetrics
-			Pair(metrics.bounds.width(), metrics.bounds.height())
+			maxOf(metrics.bounds.width(), metrics.bounds.height()).toDouble()
 		} else {
 			val displayMetrics = DisplayMetrics()
 			windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-			Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
+			maxOf(displayMetrics.widthPixels, displayMetrics.heightPixels).toDouble()
 		}
 	}
 
@@ -34,23 +34,20 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 				.also(cp::doCancel)
 				.eventually { image ->
 					image
-						?.takeUnless { b -> b.width < displayMetrics.first || b.height < displayMetrics.second }
+						?.takeIf { b -> b.width >= maximumScreenDimension && b.height >= maximumScreenDimension }
 						?.let { b ->
 							QueuedPromise(MessageWriter {
 								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
 
-								val (width, height) = displayMetrics
-								val shrink = maxOf(
-									width.toDouble() / b.width.toDouble(),
-									height.toDouble() / b.height.toDouble()
-								)
+								val minimumImageDimension = minOf(b.width, b.height).toDouble()
+								val minimumShrink = maximumScreenDimension / minimumImageDimension
 
 								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
 
 								Bitmap.createScaledBitmap(
 									b,
-									b.width.scaleInteger(shrink),
-									b.height.scaleInteger(shrink),
+									b.width.scaleInteger(minimumShrink),
+									b.height.scaleInteger(minimumShrink),
 									true
 								)
 							}, ThreadPools.compute)
