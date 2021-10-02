@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+rm -rf _artifacts
+
+docker-compose run -v "$(pwd)":/src -w /src -u "$(id -u)":"$(id -g)" gradle \
+  :projectBlueWater:testReleaseUnitTest \
+  :projectBlueWater:bundleRelease
+EXIT_CODE=${PIPESTATUS[0]}
+
+cp -r projectBlueWater/build _artifacts
+
+exit "${EXIT_CODE}"
+
 # Generate a random ID for the build, to be used for finding the build in the docker host.
 # This magic is taken from this stack overflow answer - https://stackoverflow.com/a/34329799/1189542.
 BUILD_ID="$(od  -vN "8" -An -tx1  /dev/urandom | tr -d " \n")"
