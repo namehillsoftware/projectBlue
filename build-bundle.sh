@@ -6,7 +6,7 @@ BUILD_ID="$(od  -vN "8" -An -tx1  /dev/urandom | tr -d " \n")"
 
 echo "Build ID: ${BUILD_ID}"
 
-docker-compose build && docker-compose run --name "${BUILD_ID}" gradle \
+BUILD_ID="${BUILD_ID}" docker-compose build \ && BUILD_ID="${BUILD_ID}" docker-compose run --name "${BUILD_ID}" gradle \
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:bundleRelease
 EXIT_CODE=${PIPESTATUS[0]}
