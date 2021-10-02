@@ -14,6 +14,6 @@ EXIT_CODE=${PIPESTATUS[0]}
 BUILD_CONTAINER=${BUILD_ID}
 
 docker container cp "${BUILD_CONTAINER}":/src/projectBlueWater/build ./_artifacts
-docker container rm "${BUILD_CONTAINER}"
+docker container rm "${BUILD_CONTAINER}" -v
 
 exit "${EXIT_CODE}"
