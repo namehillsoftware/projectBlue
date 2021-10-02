@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   gradle:
-    image: ${TAG_ID:-project_blue_build}
+    image: ${TAG_ID}
     build:
       context: .
     environment:
