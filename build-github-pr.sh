@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-docker-compose build && docker-compose run gradle \
+docker-compose run -v "$(pwd)":/src -w /src gradle \
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:bundleRelease

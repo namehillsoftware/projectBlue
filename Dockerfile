@@ -39,8 +39,6 @@ RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sd
 
 WORKDIR /src
 
-COPY . .
-
 ENTRYPOINT [ "gradle", "-PdisablePreDex" ]
 
 # Usage:

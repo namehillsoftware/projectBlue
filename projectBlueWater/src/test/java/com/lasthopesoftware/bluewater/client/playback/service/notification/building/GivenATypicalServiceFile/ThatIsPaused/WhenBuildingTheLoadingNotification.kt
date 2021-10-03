@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder
@@ -51,7 +51,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 				}
 			})
 		val containerRepository = FakeFilePropertiesContainer()
-		val imageProvider = mockk<ImageProvider>()
+		val imageProvider = mockk<ProvideImages>()
 		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)
 
 		val npBuilder = NowPlayingNotificationBuilder(

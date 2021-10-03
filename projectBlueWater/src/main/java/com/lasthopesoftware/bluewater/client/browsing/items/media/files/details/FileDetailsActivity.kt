@@ -19,16 +19,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.cache.MemoryCachedImageAccess
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView
@@ -36,7 +32,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 
 class FileDetailsActivity : AppCompatActivity() {
 
@@ -47,25 +42,18 @@ class FileDetailsActivity : AppCompatActivity() {
 	private val artistTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvArtist)
 	private val fileThumbnailContainer = LazyViewFinder<RelativeLayout>(this, R.id.rlFileThumbnailContainer)
 
-	private val imgFileThumbnailBuilder = object : AbstractSynchronousLazy<ScaledWrapImageView>() {
-		override fun create(): ScaledWrapImageView {
-			val rlFileThumbnailContainer = fileThumbnailContainer.findView()
+	private val imgFileThumbnailBuilder by lazy {
+		val rlFileThumbnailContainer = fileThumbnailContainer.findView()
 
-			val imgFileThumbnail = ScaledWrapImageView(this@FileDetailsActivity)
-			imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow)
-			imgFileThumbnail.layoutParams = imgFileThumbnailLayoutParams.getObject()
+		val imgFileThumbnail = ScaledWrapImageView(this)
+		imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow)
+		imgFileThumbnail.layoutParams = imgFileThumbnailLayoutParams
 
-			rlFileThumbnailContainer.addView(imgFileThumbnail)
-			return imgFileThumbnail
-		}
+		rlFileThumbnailContainer.addView(imgFileThumbnail)
+		imgFileThumbnail
 	}
 
-	private val lazyImageProvider by lazy {
-		val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository())
-		ImageProvider(
-			StaticLibraryIdentifierProvider(selectedLibraryIdentifierProvider),
-			MemoryCachedImageAccess.getInstance(this))
-	}
+	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 	private var fileKey = -1
@@ -88,7 +76,7 @@ class FileDetailsActivity : AppCompatActivity() {
 
 		lvFileDetails.findView().visibility = View.INVISIBLE
 		pbLoadingFileDetails.findView().visibility = View.VISIBLE
-		imgFileThumbnailBuilder.getObject().visibility = View.INVISIBLE
+		imgFileThumbnailBuilder.visibility = View.INVISIBLE
 		pbLoadingFileThumbnail.findView().visibility = View.VISIBLE
 		fileNameTextViewFinder.findView().text = getText(R.string.lbl_loading)
 		artistTextViewFinder.findView().text = getText(R.string.lbl_loading)
@@ -119,15 +107,15 @@ class FileDetailsActivity : AppCompatActivity() {
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 
-		lazyImageProvider
+		imageProvider
 			.promiseFileBitmap(ServiceFile(fileKey))
 			.eventually { bitmap ->
 				bitmap?.toPromise() ?: defaultImageProvider.promiseFileBitmap()
 			}
 			.eventually(LoopedInPromise.response({ result ->
-				imgFileThumbnailBuilder.getObject().setImageBitmap(result)
+				imgFileThumbnailBuilder.setImageBitmap(result)
 				pbLoadingFileThumbnail.findView().visibility = View.INVISIBLE
-				imgFileThumbnailBuilder.getObject().visibility = View.VISIBLE
+				imgFileThumbnailBuilder.visibility = View.VISIBLE
 			}, this))
 	}
 
@@ -180,12 +168,10 @@ class FileDetailsActivity : AppCompatActivity() {
 			KnownFileProperties.WAVEFORM,
 			KnownFileProperties.LengthInPcmBlocks)
 
-		private val imgFileThumbnailLayoutParams: AbstractSynchronousLazy<RelativeLayout.LayoutParams> = object : AbstractSynchronousLazy<RelativeLayout.LayoutParams>() {
-			override fun create(): RelativeLayout.LayoutParams {
-				val layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-				layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT)
-				return layoutParams
-			}
+		private val imgFileThumbnailLayoutParams by lazy {
+			val layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+			layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT)
+			layoutParams
 		}
 	}
 }
