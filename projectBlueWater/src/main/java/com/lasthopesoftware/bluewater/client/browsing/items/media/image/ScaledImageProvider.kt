@@ -33,16 +33,17 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 			inner.promiseFileBitmap(serviceFile)
 				.also(cp::doCancel)
 				.eventually { image ->
-					image
+					if (cp.isCancelled) Promise(cancellationException())
+					else image
 						?.takeIf { b -> b.width > maximumScreenDimension && b.height > maximumScreenDimension }
 						?.let { b ->
 							QueuedPromise(MessageWriter {
-								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
+								if (cp.isCancelled) throw cancellationException()
 
 								val minimumImageDimension = minOf(b.width, b.height).toDouble()
 								val minimumShrink = maximumScreenDimension / minimumImageDimension
 
-								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
+								if (cp.isCancelled) throw cancellationException()
 
 								Bitmap.createScaledBitmap(
 									b,
@@ -59,5 +60,7 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 	companion object {
 		private fun Int.scaleInteger(scaleRatio: Double): Int =
 			(this.toDouble() * scaleRatio).roundToInt()
+
+		private fun cancellationException() = CancellationException(("Cancelled while scaling bitmap"))
 	}
 }
