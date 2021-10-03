@@ -14,8 +14,6 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class WhenAddingTheFile {
 
-
-
 	companion object {
 		private val storedFile by lazy {
 			StoredFileAccess(ApplicationProvider.getApplicationContext(), mockk())

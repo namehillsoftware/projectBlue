@@ -34,7 +34,7 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 				.also(cp::doCancel)
 				.eventually { image ->
 					image
-						?.takeIf { b -> b.width >= maximumScreenDimension && b.height >= maximumScreenDimension }
+						?.takeIf { b -> b.width > maximumScreenDimension && b.height > maximumScreenDimension }
 						?.let { b ->
 							QueuedPromise(MessageWriter {
 								if (cp.isCancelled) throw CancellationException("Cancelled while scaling bitmap")
