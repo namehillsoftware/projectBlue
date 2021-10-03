@@ -58,8 +58,7 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 		}
 
 	companion object {
-		private fun Int.scaleInteger(scaleRatio: Double): Int =
-			(this.toDouble() * scaleRatio).roundToInt()
+		private fun Int.scaleInteger(scaleRatio: Double): Int = (this.toDouble() * scaleRatio).roundToInt()
 
 		private fun cancellationException() = CancellationException(("Cancelled while scaling bitmap"))
 	}
