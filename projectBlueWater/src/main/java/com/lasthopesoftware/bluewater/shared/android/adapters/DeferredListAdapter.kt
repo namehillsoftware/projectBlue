@@ -11,8 +11,8 @@ import com.namehillsoftware.handoff.promises.Promise
 
 abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 	context: Context,
-	diffCallback: DiffUtil.ItemCallback<T>)
-	: ListAdapter<T, ViewHolder>(diffCallback) {
+	diffCallback: DiffUtil.ItemCallback<T>
+) : ListAdapter<T, ViewHolder>(diffCallback) {
 
 	private val handler = lazy { Handler(context.mainLooper) }
 
@@ -20,11 +20,10 @@ abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 	private var currentUpdate: Promise<Unit> = Promise.empty()
 
 	@Synchronized
-	fun updateListEventually(list: List<T>): Promise<Unit> {
-		return currentUpdate
-			.eventually({ PromisedListUpdate(list) }, { PromisedListUpdate(list) })
+	fun updateListEventually(list: List<T>): Promise<Unit> =
+		currentUpdate
+			.inevitably { PromisedListUpdate(list) }
 			.apply { currentUpdate = this }
-	}
 
 	private inner class PromisedListUpdate(list: List<T>) : LoopedInPromise<Unit>(
 		MessengerOperator<Unit> {

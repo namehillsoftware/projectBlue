@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 
 abstract class AbstractFileListItemMenuBuilder<TViewContainer : RecyclerView.ViewHolder>
-protected constructor(@param:LayoutRes private val layoutId: Int)
+protected constructor(@param:LayoutRes private val menuLayoutId: Int)
 	: BuildListItemMenuViewContainers<TViewContainer>
 {
 	private var onViewChangedListener: OnViewChangedListener? = null
@@ -25,7 +25,7 @@ protected constructor(@param:LayoutRes private val layoutId: Int)
 		val notifyOnFlipViewAnimator = fileItemMenu.viewAnimator
 
 		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-		val fileMenu = inflater.inflate(layoutId, parent, false) as LinearLayout
+		val fileMenu = inflater.inflate(menuLayoutId, parent, false) as LinearLayout
 
 		notifyOnFlipViewAnimator.addView(fileMenu)
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)

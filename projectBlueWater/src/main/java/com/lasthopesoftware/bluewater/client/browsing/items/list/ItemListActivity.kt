@@ -5,10 +5,10 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
@@ -38,8 +38,8 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
 	private var connectionRestoreCode: Int? = null
 	private val itemProviderComplete by lazy { LoopedInPromise.response(this, this) }
-	private val itemListView = LazyViewFinder<ListView>(this, R.id.lvItems)
-	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingItems)
+	private val itemListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
+	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val lazySpecificLibraryProvider by lazy {
 			SelectedBrowserLibraryProvider(
 				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
@@ -53,7 +53,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		setContentView(R.layout.activity_view_items)
+		setContentView(R.layout.layout_list_view)
 		setSupportActionBar(findViewById(R.id.viewItemsToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 		mItemId = 0
@@ -90,31 +90,29 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	}
 
 	override fun respond(items: List<Item>?) {
-		items?.let { buildItemListView(it) }
-	}
+		fun buildItemListView(items: List<Item>) {
+			lazySpecificLibraryProvider.browserLibrary
+				.eventually(LoopedInPromise.response({ library ->
+					library?.also {
+						val storedItemAccess = StoredItemAccess(this)
+						val itemListAdapter = ItemListAdapter(
+							this,
+							FileListParameters.getInstance(),
+							lazyFileStringListProvider,
+							ItemListMenuChangeHandler(this),
+							storedItemAccess,
+							it)
+						val localItemListView = itemListView.findView()
+						localItemListView.adapter = itemListAdapter
+						localItemListView.onItemClickListener = ClickItemListener(items, pbLoading.findView())
+						localItemListView.onItemLongClickListener = LongClickViewAnimatorListener()
+						itemListView.findView().visibility = View.VISIBLE
+						pbLoading.findView().visibility = View.INVISIBLE
+					}
+				}, this))
+		}
 
-	private fun buildItemListView(items: List<Item>) {
-		lazySpecificLibraryProvider.browserLibrary
-			.eventually(LoopedInPromise.response({ library ->
-				library?.also {
-					val storedItemAccess = StoredItemAccess(this)
-					val itemListAdapter = ItemListAdapter(
-						this,
-						R.id.tvStandard,
-						items,
-						FileListParameters.getInstance(),
-						lazyFileStringListProvider,
-						ItemListMenuChangeHandler(this),
-						storedItemAccess,
-						it)
-					val localItemListView = itemListView.findView()
-					localItemListView.adapter = itemListAdapter
-					localItemListView.onItemClickListener = ClickItemListener(items, pbLoading.findView())
-					localItemListView.onItemLongClickListener = LongClickViewAnimatorListener()
-					itemListView.findView().visibility = View.VISIBLE
-					pbLoading.findView().visibility = View.INVISIBLE
-				}
-			}, this))
+		items?.let { buildItemListView(it) }
 	}
 
 	public override fun onSaveInstanceState(savedInstanceState: Bundle) {
