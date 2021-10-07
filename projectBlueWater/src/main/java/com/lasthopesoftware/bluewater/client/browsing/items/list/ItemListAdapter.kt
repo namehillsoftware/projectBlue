@@ -79,7 +79,7 @@ class ItemListAdapter internal constructor(
 		fun update(item: Item) {
 			tryFlipToPreviousView(viewFlipper)
 
-			listItemLayout.setOnClickListener(ClickItemListener(item, recyclerView, loadingProgressBar))
+			listItemLayout.setOnClickListener(ClickItemListener(item, provideItems, recyclerView, loadingProgressBar))
 
 			textView.findView().text = item.value
 			shuffleButton.findView().setOnClickListener(
