@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
@@ -47,22 +48,31 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		}
 	private val lazyFileStringListProvider by lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
 
-	private val itemListAdapter: Promise<ItemListAdapter?> by lazy {
-		specificLibraryProvider.browserLibrary
-			.then {
-				it?.let {
-					val storedItemAccess = StoredItemAccess(this)
+	private val promisedItemProvider by lazy {
+		getInstance(this).promiseSessionConnection().then { c -> c?.let(::ItemProvider) }
+	}
 
-					ItemListAdapter(
-						itemListView.findView(),
-						pbLoading.findView(),
-						FileListParameters.getInstance(),
-						lazyFileStringListProvider,
-						ItemListMenuChangeHandler(this),
-						storedItemAccess,
-						it
-					).attachAdapterToRecyclerView()
-				}
+	private val promisedItemListAdapter: Promise<ItemListAdapter?> by lazy {
+		specificLibraryProvider.browserLibrary
+			.eventually {
+				it?.let { l ->
+					promisedItemProvider.then { itemProvider ->
+						itemProvider?.let {
+							val storedItemAccess = StoredItemAccess(this)
+
+							ItemListAdapter(
+								itemListView.findView(),
+								pbLoading.findView(),
+								FileListParameters.getInstance(),
+								lazyFileStringListProvider,
+								ItemListMenuChangeHandler(this),
+								storedItemAccess,
+								itemProvider,
+								l
+							).attachAdapterToRecyclerView()
+						}
+					}
+				}.keepPromise()
 			}
 	}
 
@@ -98,27 +108,23 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	private fun hydrateItems() {
 		itemListView.findView().visibility = View.INVISIBLE
 		pbLoading.findView().visibility = View.VISIBLE
-		getInstance(this).promiseSessionConnection()
-			.eventually { c ->
-				c?.let(::ItemProvider)?.promiseItems(mItemId) ?: Promise(emptyList())
-			}
+		promisedItemProvider
+			.eventually { p -> p?.promiseItems(mItemId).keepPromise(emptyList()) }
 			.eventually(itemProviderComplete)
-			.excuse(HandleViewIoException(this) { hydrateItems() })
+			.excuse(HandleViewIoException(this, ::hydrateItems))
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 	}
 
 	override fun respond(items: List<Item>?) {
-		fun buildItemListView(items: List<Item>) {
-			itemListAdapter
-				.eventually { adapter -> adapter?.updateListEventually(items) }
-				.eventually(LoopedInPromise.response({
-					itemListView.findView().visibility = View.VISIBLE
-					pbLoading.findView().visibility = View.INVISIBLE
-				}, this))
-		}
+		items ?: return
 
-		items?.also(::buildItemListView)
+		promisedItemListAdapter
+			.eventually { adapter -> adapter?.updateListEventually(items) }
+			.eventually(LoopedInPromise.response({
+				itemListView.findView().visibility = View.VISIBLE
+				pbLoading.findView().visibility = View.INVISIBLE
+			}, this))
 	}
 
 	public override fun onSaveInstanceState(savedInstanceState: Bundle) {

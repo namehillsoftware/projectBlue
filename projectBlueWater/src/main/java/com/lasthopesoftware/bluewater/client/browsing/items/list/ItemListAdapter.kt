@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
@@ -28,6 +29,7 @@ class ItemListAdapter internal constructor(
 	private val fileStringListProvider: FileStringListProvider,
 	private val itemListMenuEvents: IItemListMenuChangeHandler,
 	private val storedItemAccess: StoredItemAccess,
+	private val provideItems: ProvideItems,
 	private val library: Library
 ) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(recyclerView.context, ItemDiffer) {
 
