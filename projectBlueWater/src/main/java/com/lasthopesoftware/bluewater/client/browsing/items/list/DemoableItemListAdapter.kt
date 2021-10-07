@@ -22,7 +22,7 @@ import tourguide.tourguide.TourGuide
 class DemoableItemListAdapter
 (
 	private val activity: Activity,
-	private val sendMessages: SendMessages,
+	sendMessages: SendMessages,
 	fileListParameterProvider: IFileListParameterProvider,
 	fileStringListProvider: FileStringListProvider,
 	itemListMenuEvents: IItemListMenuChangeHandler,
