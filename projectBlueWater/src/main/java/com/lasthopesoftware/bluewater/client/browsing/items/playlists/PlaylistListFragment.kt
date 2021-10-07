@@ -11,7 +11,6 @@ import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider.Companion.provide
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
@@ -20,7 +19,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.handlers.OnG
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -90,14 +88,8 @@ class PlaylistListFragment : Fragment() {
 				val listResolvedPromise = response(
 					OnGetLibraryViewItemResultsComplete(
 						activity,
-						listView,
 						progressBar,
-						itemListMenuChangeHandler,
-						FileListParameters.getInstance(),
-						fileStringListProvider,
-						StoredItemAccess(activity),
-						library,
-						tutorialManager
+						itemListMenuChangeHandler
 					), activity
 				)
 				val playlistFillAction = object : Runnable {
