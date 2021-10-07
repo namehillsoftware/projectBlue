@@ -4,7 +4,10 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.AbsListView
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
@@ -20,29 +23,25 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
 class ItemListAdapter internal constructor(
-	private val recyclerView: RecyclerView,
-	private val loadingProgressBar: ProgressBar,
+	context: Context,
+	private val sendMessages: SendMessages,
 	private val fileListParameterProvider: IFileListParameterProvider,
 	private val fileStringListProvider: FileStringListProvider,
 	private val itemListMenuEvents: IItemListMenuChangeHandler,
 	private val storedItemAccess: StoredItemAccess,
 	private val provideItems: ProvideItems,
 	private val library: Library
-) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(recyclerView.context, ItemDiffer) {
+) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(context, ItemDiffer) {
 
 	private val viewChangedHandler by lazy {
 		ViewChangedHandler()
 			.setOnAllMenusHidden(itemListMenuEvents)
 			.setOnAnyMenuShown(itemListMenuEvents)
 			.setOnViewChangedListener(itemListMenuEvents)
-	}
-
-	fun attachAdapterToRecyclerView(): ItemListAdapter {
-		recyclerView.adapter = this
-		return this
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -79,7 +78,7 @@ class ItemListAdapter internal constructor(
 		fun update(item: Item) {
 			tryFlipToPreviousView(viewFlipper)
 
-			listItemLayout.setOnClickListener(ClickItemListener(item, provideItems, recyclerView, loadingProgressBar))
+			listItemLayout.setOnClickListener(ClickItemListener(item, provideItems, sendMessages))
 
 			textView.findView().text = item.value
 			shuffleButton.findView().setOnClickListener(

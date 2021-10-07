@@ -1,6 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -8,6 +11,7 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -16,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.Notifications
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
@@ -28,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlaying
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
@@ -52,6 +58,8 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		getInstance(this).promiseSessionConnection().then { c -> c?.let(::ItemProvider) }
 	}
 
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+
 	private val promisedItemListAdapter: Promise<ItemListAdapter?> by lazy {
 		specificLibraryProvider.browserLibrary
 			.eventually {
@@ -61,19 +69,28 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 							val storedItemAccess = StoredItemAccess(this)
 
 							ItemListAdapter(
-								itemListView.findView(),
-								pbLoading.findView(),
+								this,
+								messageBus,
 								FileListParameters.getInstance(),
 								lazyFileStringListProvider,
 								ItemListMenuChangeHandler(this),
 								storedItemAccess,
 								itemProvider,
 								l
-							).attachAdapterToRecyclerView()
+							)
 						}
 					}
 				}.keepPromise()
 			}
+	}
+
+	private val launchingActivityReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			val isLaunching = intent?.action == Notifications.launchingActivity
+
+			itemListView.findView().visibility = ViewUtils.getVisibility(!isLaunching)
+			pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
+		}
 	}
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
@@ -85,6 +102,15 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		setContentView(R.layout.layout_list_view)
 		setSupportActionBar(findViewById(R.id.viewItemsToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+		val intentFilter = IntentFilter()
+		intentFilter.addAction(Notifications.launchingActivity)
+		intentFilter.addAction(Notifications.launchingActivityFinished)
+		messageBus.registerReceiver(
+			launchingActivityReceiver,
+			intentFilter
+		)
+
 		mItemId = 0
 		if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY)
 		if (mItemId == 0) mItemId = intent.getIntExtra(KEY, 0)
@@ -120,10 +146,15 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		items ?: return
 
 		promisedItemListAdapter
-			.eventually { adapter -> adapter?.updateListEventually(items) }
+			.eventually { adapter ->
+				adapter?.updateListEventually(items)?.then { adapter }.keepPromise(adapter)
+			}
 			.eventually(LoopedInPromise.response({
-				itemListView.findView().visibility = View.VISIBLE
-				pbLoading.findView().visibility = View.INVISIBLE
+				with (itemListView.findView()) {
+					adapter = it
+					visibility = ViewUtils.getVisibility(true)
+				}
+				pbLoading.findView().visibility = ViewUtils.getVisibility(false)
 			}, this))
 	}
 
@@ -152,6 +183,11 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	}
 
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
+
+	override fun onDestroy() {
+		messageBus.unregisterReceiver(launchingActivityReceiver)
+		super.onDestroy()
+	}
 
 	companion object {
 		private val magicPropertyBuilder = MagicPropertyBuilder(ItemListActivity::class.java)
