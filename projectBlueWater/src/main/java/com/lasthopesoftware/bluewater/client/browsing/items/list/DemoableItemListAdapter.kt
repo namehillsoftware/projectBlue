@@ -3,14 +3,14 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 import android.app.Activity
 import android.os.Build
 import android.view.View
-import android.view.ViewGroup
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.tutorials.ManageTutorials
 import com.lasthopesoftware.bluewater.tutorials.TutorialManager
@@ -22,34 +22,33 @@ import tourguide.tourguide.TourGuide
 class DemoableItemListAdapter
 (
 	private val activity: Activity,
-	resource: Int,
-	private val items: List<Item>,
+	private val sendMessages: SendMessages,
 	fileListParameterProvider: IFileListParameterProvider,
 	fileStringListProvider: FileStringListProvider,
 	itemListMenuEvents: IItemListMenuChangeHandler,
 	storedItemAccess: StoredItemAccess,
+	provideItems: ProvideItems,
 	library: Library,
 	private val manageTutorials: ManageTutorials
 ) : ItemListAdapter(
 	activity,
-	resource,
-	items,
+	sendMessages,
 	fileListParameterProvider,
 	fileStringListProvider,
 	itemListMenuEvents,
 	storedItemAccess,
+	provideItems,
 	library
 ) {
 	private var wasTutorialShown = false
 
-	override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-		val view = super.getView(position, convertView, parent)
-		if (items.isEmpty() || items.size > 1 && position != 2) return view
-		buildTutorialView(view)
-		return view
+	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+		super.onBindViewHolder(holder, position)
+		if (itemCount == 1 || position != 2)
+			bindTutorialView(holder.itemView)
 	}
 
-	private fun buildTutorialView(view: View) {
+	private fun bindTutorialView(view: View) {
 		// use this flag to ensure the least amount of possible work is done for this tutorial
 		if (wasTutorialShown) return
 
@@ -90,7 +89,7 @@ class DemoableItemListAdapter
 					showTutorial()
 					manageTutorials.promiseTutorialMarked(TutorialManager.KnownTutorials.longPressListTutorial)
 				}
-			}, context))
+			}, activity))
 	}
 
 	companion object {

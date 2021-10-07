@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapte
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
-class ItemListAdapter internal constructor(
+open class ItemListAdapter internal constructor(
 	context: Context,
 	private val sendMessages: SendMessages,
 	private val fileListParameterProvider: IFileListParameterProvider,
