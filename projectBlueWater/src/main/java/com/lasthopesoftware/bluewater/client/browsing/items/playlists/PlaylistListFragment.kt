@@ -125,7 +125,7 @@ class PlaylistListFragment : Fragment() {
 		promisedBrowserLibrary.then { library ->
 			library?.also {
 				demoableItemListAdapter
-					.then { adapter -> ItemHydration(activity, library, adapter) }
+					.then { adapter -> adapter?.also { ItemHydration(activity, library, adapter) } }
 			}
 		}
 	}
