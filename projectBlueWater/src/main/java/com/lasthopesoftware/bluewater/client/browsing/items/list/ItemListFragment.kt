@@ -156,30 +156,32 @@ class ItemListFragment : Fragment() {
 
 		demoableItemListAdapter
 			.then { adapter ->
-				if (adapter == null) return@then
-
-				val onGetLibraryViewItemResultsComplete =
-					response(
-						OnGetLibraryViewItemResultsComplete(
-							adapter,
-							recyclerView,
-							progressBar
-						), activity
-					)
-				object : Runnable {
-					override fun run() {
-						promisedItemProvider
-							.eventually { i -> i?.promiseItems(category.key).keepPromise(emptyList()) }
-							.eventually(onGetLibraryViewItemResultsComplete)
-							.excuse(HandleViewIoException(activity, this))
-							.eventuallyExcuse(
-								response(
-									UnexpectedExceptionToasterResponse(activity),
-									activity
-								)
-							)
+				adapter
+					?.let {
+						response(
+							OnGetLibraryViewItemResultsComplete(
+								it,
+								recyclerView,
+								progressBar
+							), activity
+						)
 					}
-				}.run()
+					?.also { onGetLibraryViewItemResultsComplete ->
+						object : Runnable {
+							override fun run() {
+								promisedItemProvider
+									.eventually { i -> i?.promiseItems(category.key).keepPromise(emptyList()) }
+									.eventually(onGetLibraryViewItemResultsComplete)
+									.excuse(HandleViewIoException(activity, this))
+									.eventuallyExcuse(
+										response(
+											UnexpectedExceptionToasterResponse(activity),
+											activity
+										)
+									)
+							}
+						}.run()
+					}
 			}
 	}
 

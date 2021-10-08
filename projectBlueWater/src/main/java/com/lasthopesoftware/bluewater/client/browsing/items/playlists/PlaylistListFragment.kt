@@ -133,35 +133,35 @@ class PlaylistListFragment : Fragment() {
 			library?.also {
 				demoableItemListAdapter
 					.then { adapter ->
-						adapter?.also {
-							val listResolvedPromise = response(
-								OnGetLibraryViewItemResultsComplete(
-									adapter,
-									recyclerView,
-									progressBar,
-								), activity
-							)
-
-							val playlistFillAction = object : Runnable {
-								override fun run() {
-									promisedItemProvider
-										.eventually { i ->
-											i?.promiseItems(library.selectedView).keepPromise(emptyList())
-										}
-										.eventually(listResolvedPromise)
-										.excuse(HandleViewIoException(activity, this))
-										.eventuallyExcuse(
-											response(
-												UnexpectedExceptionToasterResponse(activity),
-												activity
-											)
-										)
-								}
+						adapter
+							?.let {
+								response(
+									OnGetLibraryViewItemResultsComplete(
+										it,
+										recyclerView,
+										progressBar,
+									), activity
+								)
 							}
-							playlistFillAction.run()
-						}
+							?.also { listResolvedPromise ->
+								object : Runnable {
+									override fun run() {
+										promisedItemProvider
+											.eventually { i ->
+												i?.promiseItems(library.selectedView).keepPromise(emptyList())
+											}
+											.eventually(listResolvedPromise)
+											.excuse(HandleViewIoException(activity, this))
+											.eventuallyExcuse(
+												response(
+													UnexpectedExceptionToasterResponse(activity),
+													activity
+												)
+											)
+									}
+								}.run()
+							}
 					}
-
 			}
 		}
 	}
