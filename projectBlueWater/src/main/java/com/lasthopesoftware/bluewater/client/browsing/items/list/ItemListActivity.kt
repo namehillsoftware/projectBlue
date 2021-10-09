@@ -12,6 +12,8 @@ import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -45,7 +47,16 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
 	private var connectionRestoreCode: Int? = null
 	private val itemProviderComplete by lazy { LoopedInPromise.response(this, this) }
-	private val itemListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
+	private val itemListView by lazy {
+		val recyclerView = findViewById<RecyclerView>(R.id.loadedRecyclerView)
+		promisedItemListAdapter.eventually(LoopedInPromise.response({ adapter ->
+			recyclerView.adapter = adapter
+			val layoutManager = LinearLayoutManager(this)
+			recyclerView.layoutManager = layoutManager
+			recyclerView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
+		}, this))
+		recyclerView
+	}
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val specificLibraryProvider by lazy {
 			SelectedBrowserLibraryProvider(
@@ -88,7 +99,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		override fun onReceive(context: Context?, intent: Intent?) {
 			val isLaunching = intent?.action == MenuNotifications.launchingActivity
 
-			itemListView.findView().visibility = ViewUtils.getVisibility(!isLaunching)
+			itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
 			pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
 		}
 	}
@@ -115,7 +126,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY)
 		if (mItemId == 0) mItemId = intent.getIntExtra(KEY, 0)
 		title = intent.getStringExtra(VALUE)
-		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.rlViewItems))
+		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.asynchronousRecyclerViewContainer))
 	}
 
 	public override fun onStart() {
@@ -132,7 +143,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	}
 
 	private fun hydrateItems() {
-		itemListView.findView().visibility = View.INVISIBLE
+		itemListView.visibility = View.INVISIBLE
 		pbLoading.findView().visibility = View.VISIBLE
 		promisedItemProvider
 			.eventually { p -> p?.promiseItems(mItemId).keepPromise(emptyList()) }
@@ -150,10 +161,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 				adapter?.updateListEventually(items)?.then { adapter }.keepPromise(adapter)
 			}
 			.eventually(LoopedInPromise.response({
-				with (itemListView.findView()) {
-					adapter = it
-					visibility = ViewUtils.getVisibility(true)
-				}
+				itemListView.visibility = ViewUtils.getVisibility(true)
 				pbLoading.findView().visibility = ViewUtils.getVisibility(false)
 			}, this))
 	}

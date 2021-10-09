@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
+import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +9,8 @@ import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -18,13 +21,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.views.handlers.OnGetLibraryViewItemResultsComplete
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -33,9 +36,18 @@ import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 class ItemListFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 	private val recyclerView by lazy {
-		val listView = RecyclerView(requireContext())
-		listView.visibility = View.INVISIBLE
-		listView
+		val activity = requireActivity()
+		val recyclerView = RecyclerView(requireActivity())
+		recyclerView.visibility = View.INVISIBLE
+
+		demoableItemListAdapter.eventually(response({ adapter ->
+			recyclerView.adapter = adapter
+			val layoutManager = LinearLayoutManager(activity)
+			recyclerView.layoutManager = layoutManager
+			recyclerView.addItemDecoration(DividerItemDecoration(activity, layoutManager.orientation))
+		}, activity))
+
+		recyclerView
 	}
 
 	private val progressBar by lazy {
@@ -155,34 +167,7 @@ class ItemListFragment : Fragment() {
 		val activity = activity ?: return
 
 		demoableItemListAdapter
-			.then { adapter ->
-				adapter
-					?.let {
-						response(
-							OnGetLibraryViewItemResultsComplete(
-								it,
-								recyclerView,
-								progressBar
-							), activity
-						)
-					}
-					?.also { onGetLibraryViewItemResultsComplete ->
-						object : Runnable {
-							override fun run() {
-								promisedItemProvider
-									.eventually { i -> i?.promiseItems(category.key).keepPromise(emptyList()) }
-									.eventually(onGetLibraryViewItemResultsComplete)
-									.excuse(HandleViewIoException(activity, this))
-									.eventuallyExcuse(
-										response(
-											UnexpectedExceptionToasterResponse(activity),
-											activity
-										)
-									)
-							}
-						}.run()
-					}
-			}
+			.then { adapter -> adapter?.also { ItemHydration(activity, category, adapter) } }
 	}
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
@@ -199,6 +184,31 @@ class ItemListFragment : Fragment() {
 			args.putInt(ARG_CATEGORY_POSITION, libraryViewId)
 			returnFragment.arguments = args
 			return returnFragment
+		}
+	}
+
+	private inner class ItemHydration(private val activity: Activity, private val category: IItem, private val adapter: DemoableItemListAdapter) : Runnable {
+		init {
+			run()
+		}
+
+		override fun run() {
+			promisedItemProvider
+				.eventually { i ->
+					i?.promiseItems(category.key).keepPromise(emptyList())
+				}
+				.eventually { i -> i?.let(adapter::updateListEventually) }
+				.eventually(response({
+					progressBar.visibility = ViewUtils.getVisibility(false)
+					recyclerView.visibility = ViewUtils.getVisibility(true)
+				}, activity))
+				.excuse(HandleViewIoException(activity, this))
+				.eventuallyExcuse(
+					response(
+						UnexpectedExceptionToasterResponse(activity),
+						activity
+					)
+				)
 		}
 	}
 }

@@ -9,6 +9,8 @@ import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
@@ -35,8 +37,17 @@ class PlaylistListFragment : Fragment() {
     private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
 	private val recyclerView by lazy {
-		val recyclerView = RecyclerView(requireActivity())
+		val activity = requireActivity()
+		val recyclerView = RecyclerView(activity)
 		recyclerView.visibility = View.INVISIBLE
+
+		demoableItemListAdapter.eventually(response({ adapter ->
+			recyclerView.adapter = adapter
+			val layoutManager = LinearLayoutManager(activity)
+			recyclerView.layoutManager = layoutManager
+			recyclerView.addItemDecoration(DividerItemDecoration(activity, layoutManager.orientation))
+		}, activity))
+
 		recyclerView
 	}
 

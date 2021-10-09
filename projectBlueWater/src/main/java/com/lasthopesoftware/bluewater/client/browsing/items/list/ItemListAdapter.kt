@@ -70,7 +70,7 @@ open class ItemListAdapter internal constructor(
 
 		private val textView = LazyViewFinder<TextView>(listItemLayout, R.id.tvListItem)
 		private val shuffleButton = LazyViewFinder<ImageButton>(itemMenu, R.id.btnShuffle)
-		private val playButton = LazyViewFinder<ImageButton>(itemMenu, R.id.btnPlay)
+		private val playButton = LazyViewFinder<ImageButton>(itemMenu, R.id.btnPlayAll)
 		private val viewButton = LazyViewFinder<ImageButton>(itemMenu, R.id.btnViewFiles)
 		private val syncButton = LazyViewFinder<ImageButton>(itemMenu, R.id.btnSyncItem)
 		private var onSyncButtonLayoutChangeListener: View.OnLayoutChangeListener? = null
