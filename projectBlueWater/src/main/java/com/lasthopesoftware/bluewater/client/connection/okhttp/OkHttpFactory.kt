@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.connection.trust.SelfSignedTrustMan
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.resources.executors.ThreadPools
 import okhttp3.Dispatcher
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import java.security.KeyManagementException
 import java.security.KeyStore
@@ -18,7 +17,7 @@ import javax.net.ssl.*
 object OkHttpFactory : ProvideOkHttpClients {
     override fun getOkHttpClient(urlProvider: IUrlProvider): OkHttpClient =
         commonBuilder
-            .addNetworkInterceptor(Interceptor { chain ->
+            .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                 val authCode = urlProvider.authCode
                 if (authCode != null && authCode.isNotEmpty()) requestBuilder.addHeader(
@@ -26,17 +25,12 @@ object OkHttpFactory : ProvideOkHttpClients {
                     "basic ${urlProvider.authCode}"
                 )
                 chain.proceed(requestBuilder.build())
-            })
+            }
             .sslSocketFactory(getSslSocketFactory(urlProvider), getTrustManager(urlProvider))
             .hostnameVerifier(getHostnameVerifier(urlProvider))
             .build()
 
-	private val dispatcher by lazy {
-		Dispatcher(ThreadPools.io).apply {
-			maxRequestsPerHost = Int.MAX_VALUE
-			maxRequests = Int.MAX_VALUE
-		}
-	}
+	private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 
 	private val commonBuilder by lazy {
 		OkHttpClient.Builder()
