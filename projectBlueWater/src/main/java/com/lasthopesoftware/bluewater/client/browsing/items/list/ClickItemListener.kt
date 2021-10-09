@@ -5,7 +5,7 @@ import android.view.View
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity.Companion.startFileListActivity
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.Notifications
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import org.slf4j.LoggerFactory
 
@@ -22,7 +22,7 @@ class ClickItemListener(
 	override fun onClick(view: View?) {
 		val context = view?.context ?: return
 
-		sendMessages.sendBroadcast(Intent(Notifications.launchingActivity))
+		sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivity))
 		provideItems
 			.promiseItems(item.key)
 			.then(
@@ -44,7 +44,7 @@ class ClickItemListener(
 				}
 			)
 			.must {
-				sendMessages.sendBroadcast(Intent(Notifications.launchingActivityFinished))
+				sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivityFinished))
 			}
 	}
 }

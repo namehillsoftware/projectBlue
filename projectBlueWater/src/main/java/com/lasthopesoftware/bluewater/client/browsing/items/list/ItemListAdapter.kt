@@ -46,16 +46,16 @@ open class ItemListAdapter internal constructor(
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 		val lp = AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-		val viewAnimator = NotifyOnFlipViewAnimator(parent.context)
-		viewAnimator.layoutParams = lp
-		viewAnimator.setOnLongClickListener(LongClickViewAnimatorListener())
-		val inflater = viewAnimator.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-		val listItemLayout = inflater.inflate(R.layout.layout_list_item, viewAnimator, false) as LinearLayout
-		viewAnimator.addView(listItemLayout)
-		val itemMenu = inflater.inflate(R.layout.layout_browse_item_menu, viewAnimator, false) as LinearLayout
-		viewAnimator.addView(itemMenu)
-		viewAnimator.setViewChangedListener(viewChangedHandler)
-		return ViewHolder(viewAnimator, listItemLayout, itemMenu)
+		val viewFlipper = NotifyOnFlipViewAnimator(parent.context)
+		viewFlipper.layoutParams = lp
+		viewFlipper.setOnLongClickListener(LongClickViewAnimatorListener())
+		val inflater = viewFlipper.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+		val listItemLayout = inflater.inflate(R.layout.layout_list_item, viewFlipper, false) as LinearLayout
+		viewFlipper.addView(listItemLayout)
+		val itemMenu = inflater.inflate(R.layout.layout_browse_item_menu, viewFlipper, false) as LinearLayout
+		viewFlipper.addView(itemMenu)
+		viewFlipper.setViewChangedListener(viewChangedHandler)
+		return ViewHolder(viewFlipper, listItemLayout, itemMenu)
 	}
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {

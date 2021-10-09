@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.Notifications
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
@@ -86,7 +86,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	private val launchingActivityReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context?, intent: Intent?) {
-			val isLaunching = intent?.action == Notifications.launchingActivity
+			val isLaunching = intent?.action == MenuNotifications.launchingActivity
 
 			itemListView.findView().visibility = ViewUtils.getVisibility(!isLaunching)
 			pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
@@ -104,8 +104,8 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 		val intentFilter = IntentFilter()
-		intentFilter.addAction(Notifications.launchingActivity)
-		intentFilter.addAction(Notifications.launchingActivityFinished)
+		intentFilter.addAction(MenuNotifications.launchingActivity)
+		intentFilter.addAction(MenuNotifications.launchingActivityFinished)
 		messageBus.registerReceiver(
 			launchingActivityReceiver,
 			intentFilter
