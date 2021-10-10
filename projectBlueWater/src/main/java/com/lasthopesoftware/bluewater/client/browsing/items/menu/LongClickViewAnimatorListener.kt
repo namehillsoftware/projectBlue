@@ -4,13 +4,10 @@ import android.view.View
 import android.view.View.OnLongClickListener
 import android.widget.ViewAnimator
 
-class LongClickViewAnimatorListener : OnLongClickListener {
+class LongClickViewAnimatorListener(private val viewAnimator: ViewAnimator) : OnLongClickListener {
 	override fun onLongClick(view: View): Boolean {
-		if (view is ViewAnimator) {
-			view.showNext()
-			return true
-		}
-		return false
+		viewAnimator.showNext()
+		return true
 	}
 
 	companion object {

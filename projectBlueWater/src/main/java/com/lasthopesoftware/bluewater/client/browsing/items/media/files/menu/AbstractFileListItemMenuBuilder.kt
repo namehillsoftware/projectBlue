@@ -29,7 +29,7 @@ protected constructor(@param:LayoutRes private val menuLayoutId: Int)
 
 		notifyOnFlipViewAnimator.addView(fileMenu)
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)
-		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener())
+		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener(notifyOnFlipViewAnimator))
 
 		return newViewHolder(fileItemMenu)
 	}

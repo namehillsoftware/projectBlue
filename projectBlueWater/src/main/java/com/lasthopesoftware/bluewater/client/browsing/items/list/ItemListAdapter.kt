@@ -46,15 +46,18 @@ open class ItemListAdapter internal constructor(
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 		val lp = AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+
 		val viewFlipper = NotifyOnFlipViewAnimator(parent.context)
 		viewFlipper.layoutParams = lp
-		viewFlipper.setOnLongClickListener(LongClickViewAnimatorListener())
-		val inflater = viewFlipper.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-		val listItemLayout = inflater.inflate(R.layout.layout_list_item, viewFlipper, false) as LinearLayout
-		viewFlipper.addView(listItemLayout)
-		val itemMenu = inflater.inflate(R.layout.layout_browse_item_menu, viewFlipper, false) as LinearLayout
-		viewFlipper.addView(itemMenu)
+
 		viewFlipper.setViewChangedListener(viewChangedHandler)
+
+		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+		val listItemLayout = inflater.inflate(R.layout.layout_list_item, parent, false) as LinearLayout
+		viewFlipper.addView(listItemLayout)
+		val itemMenu = inflater.inflate(R.layout.layout_browse_item_menu, parent, false) as LinearLayout
+		viewFlipper.addView(itemMenu)
+
 		return ViewHolder(viewFlipper, listItemLayout, itemMenu)
 	}
 
@@ -78,6 +81,7 @@ open class ItemListAdapter internal constructor(
 		fun update(item: Item) {
 			tryFlipToPreviousView(viewFlipper)
 
+			listItemLayout.setOnLongClickListener(LongClickViewAnimatorListener(viewFlipper))
 			listItemLayout.setOnClickListener(ClickItemListener(item, provideItems, sendMessages))
 
 			textView.findView().text = item.value
