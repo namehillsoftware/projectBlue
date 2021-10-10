@@ -111,7 +111,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.layout_list_view)
-		setSupportActionBar(findViewById(R.id.viewItemsToolbar))
+		setSupportActionBar(findViewById(R.id.listViewToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 		val intentFilter = IntentFilter()
@@ -158,7 +158,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 		promisedItemListAdapter
 			.eventually { adapter ->
-				adapter?.updateListEventually(items)?.then { adapter }.keepPromise(adapter)
+				adapter?.updateListEventually(items).keepPromise(Unit)
 			}
 			.eventually(LoopedInPromise.response({
 				itemListView.visibility = ViewUtils.getVisibility(true)
