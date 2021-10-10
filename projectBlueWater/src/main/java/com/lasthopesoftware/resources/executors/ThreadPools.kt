@@ -1,18 +1,24 @@
 package com.lasthopesoftware.resources.executors
 
 import com.google.common.util.concurrent.MoreExecutors
-import org.joda.time.Duration
 import java.util.concurrent.Executor
-import java.util.concurrent.Executors
+import java.util.concurrent.ForkJoinPool
 
 object ThreadPools {
 
+	private fun namedThreadPoolFactory(poolName: String) = ForkJoinPool.ForkJoinWorkerThreadFactory { pool ->
+		ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool).apply {
+			name = "$poolName-pool-$poolIndex"
+		}
+	}
+
 	// Maximum number to ensure no blocking
-	val io by lazy { CachedManyThreadExecutor("io", Int.MAX_VALUE, Duration.standardMinutes(1)) }
+	val io by lazy {
+		ForkJoinPool(Runtime.getRuntime().availableProcessors(), namedThreadPoolFactory("io"), null, true)
+	}
 
 	val compute: Executor by lazy {
-		// Use a fixed thread pool to ensure threads are always available to run computations
-		Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), PrefixedThreadFactory("compute", Executors.defaultThreadFactory()))
+		ForkJoinPool(Runtime.getRuntime().availableProcessors(), namedThreadPoolFactory("compute"), null, true)
 	}
 
 	val exceptionsLogger: Executor by lazy { MoreExecutors.newSequentialExecutor(compute) }
