@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -44,23 +43,25 @@ import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 class ItemListFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
+	private val handler by lazy { Handler(requireContext().mainLooper) }
+
 	private val recyclerView by lazy {
-		val activity = requireActivity()
-		val recyclerView = RecyclerView(ContextThemeWrapper(activity, R.style.VerticalScrollbarRecyclerView))
+		val context = requireContext()
+		val recyclerView = RecyclerView(ContextThemeWrapper(context, R.style.VerticalScrollbarRecyclerView))
 		recyclerView.visibility = View.INVISIBLE
 
 		demoableItemListAdapter.eventually(response({ adapter ->
 			recyclerView.adapter = adapter
-			val layoutManager = LinearLayoutManager(activity)
+			val layoutManager = LinearLayoutManager(context)
 			recyclerView.layoutManager = layoutManager
-			recyclerView.addItemDecoration(DividerItemDecoration(activity, layoutManager.orientation))
-		}, activity))
+			recyclerView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
+		}, handler))
 
 		recyclerView
 	}
 
 	private val progressBar by lazy {
-		val pbLoading = ProgressBar(activity, null, android.R.attr.progressBarStyleLarge)
+		val pbLoading = ProgressBar(requireContext(), null, android.R.attr.progressBarStyleLarge)
 		val pbParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.WRAP_CONTENT,
 			ViewGroup.LayoutParams.WRAP_CONTENT
@@ -71,7 +72,7 @@ class ItemListFragment : Fragment() {
 	}
 
 	private val layout by lazy {
-		val layout = RelativeLayout(activity)
+		val layout = RelativeLayout(requireContext())
 		layout.layoutParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT,
 			ViewGroup.LayoutParams.MATCH_PARENT
@@ -104,8 +105,6 @@ class ItemListFragment : Fragment() {
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
-	private val handler by lazy { Handler(requireContext().mainLooper) }
-
 	private val demoableItemListAdapter by lazy {
 		promisedItemProvider.eventually { itemProvider ->
 			itemProvider
@@ -113,19 +112,33 @@ class ItemListFragment : Fragment() {
 					promisedBrowserLibrary.then {
 						it?.let { library ->
 							itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
-								val activity = requireActivity()
-
-								DemoableItemListAdapter(
-									activity,
-									messageBus.value,
-									FileListParameters.getInstance(),
-									fileStringListProvider,
-									itemListMenuChangeHandler,
-									StoredItemAccess(activity),
-									itemProvider,
-									library,
-									tutorialManager
-								)
+								activity
+									?.let { fa ->
+										DemoableItemListAdapter(
+											fa,
+											messageBus.value,
+											FileListParameters.getInstance(),
+											fileStringListProvider,
+											itemListMenuChangeHandler,
+											StoredItemAccess(fa),
+											itemProvider,
+											library,
+											tutorialManager
+										)
+									}
+									?: requireContext()
+										.let { context ->
+											ItemListAdapter(
+												context,
+												messageBus.value,
+												FileListParameters.getInstance(),
+												fileStringListProvider,
+												itemListMenuChangeHandler,
+												StoredItemAccess(context),
+												itemProvider,
+												library,
+											)
+										}
 							}
 						}
 					}
@@ -144,7 +157,8 @@ class ItemListFragment : Fragment() {
 
 	override fun onStart() {
 		super.onStart()
-		val activity = activity ?: return
+
+		val context = requireContext()
 
 		val intentFilter = IntentFilter()
 		intentFilter.addAction(MenuNotifications.launchingActivity)
@@ -182,15 +196,15 @@ class ItemListFragment : Fragment() {
 									}
 							}
 							?.also(::fillStandardItemView)
-					}, activity)
+					}, context)
 
 				object : Runnable {
 					override fun run() {
 						promisedItemProvider
 							.eventually { i -> i?.promiseItems(activeLibrary.selectedView).keepPromise(emptyList()) }
 							.eventually(onGetVisibleViewsCompleteListener)
-							.excuse(HandleViewIoException(activity, this))
-							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(activity), activity))
+							.excuse(HandleViewIoException(context, this))
+							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(context), handler))
 					}
 				}.run()
 			}
@@ -204,10 +218,10 @@ class ItemListFragment : Fragment() {
 	}
 
 	private fun fillStandardItemView(category: IItem) {
-		val activity = activity ?: return
+		val context = requireContext()
 
 		demoableItemListAdapter
-			.then { adapter -> adapter?.also { ItemHydration(activity, category, adapter) } }
+			.then { adapter -> adapter?.also { ItemHydration(category, adapter) } }
 	}
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
@@ -227,12 +241,13 @@ class ItemListFragment : Fragment() {
 		}
 	}
 
-	private inner class ItemHydration(private val activity: Activity, private val category: IItem, private val adapter: DemoableItemListAdapter) : Runnable {
+	private inner class ItemHydration(private val category: IItem, private val adapter: ItemListAdapter) : Runnable {
 		init {
 			run()
 		}
 
 		override fun run() {
+			val context = requireContext()
 			promisedItemProvider
 				.eventually { i ->
 					i?.promiseItems(category.key).keepPromise(emptyList())
@@ -242,13 +257,8 @@ class ItemListFragment : Fragment() {
 					progressBar.visibility = ViewUtils.getVisibility(false)
 					recyclerView.visibility = ViewUtils.getVisibility(true)
 				}, handler))
-				.excuse(HandleViewIoException(activity, this))
-				.eventuallyExcuse(
-					response(
-						UnexpectedExceptionToasterResponse(activity),
-						handler
-					)
-				)
+				.excuse(HandleViewIoException(context, this))
+				.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(context), handler))
 		}
 	}
 }
