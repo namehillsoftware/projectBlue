@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +16,6 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -43,9 +41,8 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
+class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 	private var connectionRestoreCode: Int? = null
 	private val handler by lazy { Handler(mainLooper) }
 	private val itemListView by lazy {
@@ -141,27 +138,22 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	}
 
 	private fun hydrateItems() {
-		itemListView.visibility = View.INVISIBLE
-		pbLoading.findView().visibility = View.VISIBLE
+		itemListView.visibility = ViewUtils.getVisibility(false)
+		pbLoading.findView().visibility = ViewUtils.getVisibility(true)
 		promisedItemProvider
 			.eventually { p -> p?.promiseItems(itemId).keepPromise(emptyList()) }
-			.eventually(response(this, handler))
-			.excuse(HandleViewIoException(this, ::hydrateItems))
-			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), handler))
-			.then { finish() }
-	}
-
-	override fun respond(items: List<Item>?) {
-		items ?: return
-
-		promisedItemListAdapter
-			.eventually { adapter ->
-				adapter?.updateListEventually(items).keepPromise(Unit)
+			.eventually { items ->
+				promisedItemListAdapter.eventually { adapter ->
+					adapter?.updateListEventually(items).keepPromise(Unit)
+				}
 			}
 			.eventually(response({
 				itemListView.visibility = ViewUtils.getVisibility(true)
 				pbLoading.findView().visibility = ViewUtils.getVisibility(false)
 			}, handler))
+			.excuse(HandleViewIoException(this, ::hydrateItems))
+			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), handler))
+			.then { finish() }
 	}
 
 	public override fun onSaveInstanceState(savedInstanceState: Bundle) {
