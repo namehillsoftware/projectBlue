@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -100,6 +101,8 @@ class PlaylistListFragment : Fragment() {
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
+	private val handler by lazy { Handler(requireContext().mainLooper) }
+
 	private val demoableItemListAdapter by lazy {
 		promisedItemProvider.eventually { itemProvider ->
 			itemProvider
@@ -186,14 +189,9 @@ class PlaylistListFragment : Fragment() {
 				.eventually(response({
 					progressBar.visibility = ViewUtils.getVisibility(false)
 					recyclerView.visibility = ViewUtils.getVisibility(true)
-				}, activity))
+				}, handler))
 				.excuse(HandleViewIoException(activity, this))
-				.eventuallyExcuse(
-					response(
-						UnexpectedExceptionToasterResponse(activity),
-						activity
-					)
-				)
+				.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(activity), handler))
 		}
 	}
 }

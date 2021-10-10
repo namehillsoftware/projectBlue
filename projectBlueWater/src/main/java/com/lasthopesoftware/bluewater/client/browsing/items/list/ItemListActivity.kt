@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -39,17 +40,17 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateResponse<List<Item>?, Unit> {
 	private var connectionRestoreCode: Int? = null
-	private val itemProviderComplete by lazy { LoopedInPromise.response(this, this) }
+	private val handler by lazy { Handler(mainLooper) }
 	private val itemListView by lazy {
 		val recyclerView = findViewById<RecyclerView>(R.id.loadedRecyclerView)
-		promisedItemListAdapter.eventually(LoopedInPromise.response({ adapter ->
+		promisedItemListAdapter.eventually(response({ adapter ->
 			recyclerView.adapter = adapter
 			val layoutManager = LinearLayoutManager(this)
 			recyclerView.layoutManager = layoutManager
@@ -97,7 +98,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
-	private var mItemId = 0
+	private var itemId = 0
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -120,19 +121,18 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 			intentFilter
 		)
 
-		mItemId = 0
-		if (savedInstanceState != null) mItemId = savedInstanceState.getInt(KEY)
-		if (mItemId == 0) mItemId = intent.getIntExtra(KEY, 0)
+		itemId = savedInstanceState?.getInt(KEY) ?: 0
+		if (itemId == 0) itemId = intent.getIntExtra(KEY, 0)
 		title = intent.getStringExtra(VALUE)
 		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.asynchronousRecyclerViewContainer))
 	}
 
 	public override fun onStart() {
 		super.onStart()
-		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+		restoreSelectedConnection(this).eventually(response({
 			connectionRestoreCode = it
 			if (it == null) hydrateItems()
-		}, this))
+		}, handler))
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -144,10 +144,10 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		itemListView.visibility = View.INVISIBLE
 		pbLoading.findView().visibility = View.VISIBLE
 		promisedItemProvider
-			.eventually { p -> p?.promiseItems(mItemId).keepPromise(emptyList()) }
-			.eventually(itemProviderComplete)
+			.eventually { p -> p?.promiseItems(itemId).keepPromise(emptyList()) }
+			.eventually(response(this, handler))
 			.excuse(HandleViewIoException(this, ::hydrateItems))
-			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), handler))
 			.then { finish() }
 	}
 
@@ -158,20 +158,20 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 			.eventually { adapter ->
 				adapter?.updateListEventually(items).keepPromise(Unit)
 			}
-			.eventually(LoopedInPromise.response({
+			.eventually(response({
 				itemListView.visibility = ViewUtils.getVisibility(true)
 				pbLoading.findView().visibility = ViewUtils.getVisibility(false)
-			}, this))
+			}, handler))
 	}
 
 	public override fun onSaveInstanceState(savedInstanceState: Bundle) {
 		super.onSaveInstanceState(savedInstanceState)
-		savedInstanceState.putInt(KEY, mItemId)
+		savedInstanceState.putInt(KEY, itemId)
 	}
 
 	public override fun onRestoreInstanceState(savedInstanceState: Bundle) {
 		super.onRestoreInstanceState(savedInstanceState)
-		mItemId = savedInstanceState.getInt(KEY)
+		itemId = savedInstanceState.getInt(KEY)
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = ViewUtils.buildStandardMenu(this, menu)
