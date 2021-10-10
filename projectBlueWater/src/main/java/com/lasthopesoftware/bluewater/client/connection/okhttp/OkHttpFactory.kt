@@ -41,6 +41,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 			}
 			.cache(null)
 			.readTimeout(1, TimeUnit.MINUTES)
+			.retryOnConnectionFailure(false)
 			.dispatcher(dispatcher)
 	}
 
