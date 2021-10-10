@@ -1,6 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
@@ -93,7 +98,7 @@ class ItemListFragment : Fragment() {
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
 	private val demoableItemListAdapter by lazy {
 		promisedItemProvider.eventually { itemProvider ->
@@ -106,7 +111,7 @@ class ItemListFragment : Fragment() {
 
 								DemoableItemListAdapter(
 									activity,
-									messageBus,
+									messageBus.value,
 									FileListParameters.getInstance(),
 									fileStringListProvider,
 									itemListMenuChangeHandler,
@@ -123,11 +128,29 @@ class ItemListFragment : Fragment() {
 		}
 	}
 
+	private val launchingActivityReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			val isLaunching = intent?.action == MenuNotifications.launchingActivity
+
+			recyclerView.visibility = ViewUtils.getVisibility(!isLaunching)
+			progressBar.visibility = ViewUtils.getVisibility(isLaunching)
+		}
+	}
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
 
 	override fun onStart() {
 		super.onStart()
 		val activity = activity ?: return
+
+		val intentFilter = IntentFilter()
+		intentFilter.addAction(MenuNotifications.launchingActivity)
+		intentFilter.addAction(MenuNotifications.launchingActivityFinished)
+		messageBus.value.registerReceiver(
+			launchingActivityReceiver,
+			intentFilter
+		)
+
 		recyclerView.visibility = View.INVISIBLE
 		progressBar.visibility = View.VISIBLE
 
@@ -161,6 +184,13 @@ class ItemListFragment : Fragment() {
 					}
 				}.run()
 			}
+	}
+
+	override fun onDestroy() {
+		super.onDestroy()
+
+		if (messageBus.isInitialized())
+			messageBus.value.unregisterReceiver(launchingActivityReceiver)
 	}
 
 	private fun fillStandardItemView(category: IItem) {
