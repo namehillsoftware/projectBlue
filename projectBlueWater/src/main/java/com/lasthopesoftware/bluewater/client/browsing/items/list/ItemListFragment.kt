@@ -218,8 +218,6 @@ class ItemListFragment : Fragment() {
 	}
 
 	private fun fillStandardItemView(category: IItem) {
-		val context = requireContext()
-
 		demoableItemListAdapter
 			.then { adapter -> adapter?.also { ItemHydration(category, adapter) } }
 	}

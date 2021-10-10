@@ -3,11 +3,13 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 import android.app.Activity
 import android.os.Build
 import android.view.View
+import android.widget.ViewAnimator
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
@@ -72,7 +74,9 @@ class DemoableItemListAdapter
 
 			view.setOnLongClickListener {
 				tourGuide.cleanUp()
-				view.setOnLongClickListener(null)
+
+				if (view is ViewAnimator)
+					view.setOnLongClickListener(LongClickViewAnimatorListener(view))
 				false
 			}
 		}
