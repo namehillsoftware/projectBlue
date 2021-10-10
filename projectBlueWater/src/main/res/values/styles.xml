@@ -17,4 +17,9 @@
         <item name="color">@android:color/white</item>
     </style>
 
+    <style name="VerticalScrollbarRecyclerView" parent="android:Widget">
+        <item name="android:scrollbars">vertical</item>
+    </style>
+
+
 </resources>

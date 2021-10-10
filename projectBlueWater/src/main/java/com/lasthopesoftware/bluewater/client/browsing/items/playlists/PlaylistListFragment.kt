@@ -12,11 +12,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -44,7 +46,7 @@ class PlaylistListFragment : Fragment() {
 
 	private val recyclerView by lazy {
 		val activity = requireActivity()
-		val recyclerView = RecyclerView(activity)
+		val recyclerView = RecyclerView(ContextThemeWrapper(activity, R.style.VerticalScrollbarRecyclerView))
 		recyclerView.visibility = View.INVISIBLE
 
 		demoableItemListAdapter.eventually(response({ adapter ->
@@ -68,7 +70,7 @@ class PlaylistListFragment : Fragment() {
 		pbLoading
 	}
 
-    private val lazyLayout by lazy {
+    private val layout by lazy {
 		val activity: Activity? = activity
 		val layout = RelativeLayout(activity)
 		layout.layoutParams = RelativeLayout.LayoutParams(
@@ -131,7 +133,7 @@ class PlaylistListFragment : Fragment() {
 		}
 	}
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = lazyLayout
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
 
     override fun onStart() {
         super.onStart()

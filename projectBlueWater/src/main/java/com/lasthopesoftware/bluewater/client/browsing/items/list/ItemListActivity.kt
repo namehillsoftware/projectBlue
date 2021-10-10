@@ -118,8 +118,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 			intentFilter
 		)
 
-		itemId = savedInstanceState?.getInt(KEY) ?: 0
-		if (itemId == 0) itemId = intent.getIntExtra(KEY, 0)
+		itemId = savedInstanceState?.getInt(KEY) ?: intent.getIntExtra(KEY, 0)
 		title = intent.getStringExtra(VALUE)
 		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.asynchronousRecyclerViewContainer))
 	}

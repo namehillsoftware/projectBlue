@@ -12,11 +12,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
@@ -41,9 +43,10 @@ import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class ItemListFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
+
 	private val recyclerView by lazy {
 		val activity = requireActivity()
-		val recyclerView = RecyclerView(requireActivity())
+		val recyclerView = RecyclerView(ContextThemeWrapper(activity, R.style.VerticalScrollbarRecyclerView))
 		recyclerView.visibility = View.INVISIBLE
 
 		demoableItemListAdapter.eventually(response({ adapter ->
