@@ -95,15 +95,6 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 			}
 	}
 
-	private val launchingActivityReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context?, intent: Intent?) {
-			val isLaunching = intent?.action == MenuNotifications.launchingActivity
-
-			itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
-			pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
-		}
-	}
-
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
 	private var mItemId = 0
@@ -118,7 +109,14 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 		intentFilter.addAction(MenuNotifications.launchingActivity)
 		intentFilter.addAction(MenuNotifications.launchingActivityFinished)
 		messageBus.registerReceiver(
-			launchingActivityReceiver,
+			object : BroadcastReceiver() {
+				override fun onReceive(context: Context?, intent: Intent?) {
+					val isLaunching = intent?.action == MenuNotifications.launchingActivity
+
+					itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
+					pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
+				}
+			},
 			intentFilter
 		)
 
@@ -193,7 +191,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, ImmediateR
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
 
 	override fun onDestroy() {
-		messageBus.unregisterReceiver(launchingActivityReceiver)
+		messageBus.clear()
 		super.onDestroy()
 	}
 

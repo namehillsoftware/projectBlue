@@ -128,15 +128,6 @@ class ItemListFragment : Fragment() {
 		}
 	}
 
-	private val launchingActivityReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context?, intent: Intent?) {
-			val isLaunching = intent?.action == MenuNotifications.launchingActivity
-
-			recyclerView.visibility = ViewUtils.getVisibility(!isLaunching)
-			progressBar.visibility = ViewUtils.getVisibility(isLaunching)
-		}
-	}
-
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
 
 	override fun onStart() {
@@ -147,7 +138,14 @@ class ItemListFragment : Fragment() {
 		intentFilter.addAction(MenuNotifications.launchingActivity)
 		intentFilter.addAction(MenuNotifications.launchingActivityFinished)
 		messageBus.value.registerReceiver(
-			launchingActivityReceiver,
+			object : BroadcastReceiver() {
+				override fun onReceive(context: Context?, intent: Intent?) {
+					val isLaunching = intent?.action == MenuNotifications.launchingActivity
+
+					recyclerView.visibility = ViewUtils.getVisibility(!isLaunching)
+					progressBar.visibility = ViewUtils.getVisibility(isLaunching)
+				}
+			},
 			intentFilter
 		)
 
@@ -190,7 +188,7 @@ class ItemListFragment : Fragment() {
 		super.onDestroy()
 
 		if (messageBus.isInitialized())
-			messageBus.value.unregisterReceiver(launchingActivityReceiver)
+			messageBus.value.clear()
 	}
 
 	private fun fillStandardItemView(category: IItem) {
