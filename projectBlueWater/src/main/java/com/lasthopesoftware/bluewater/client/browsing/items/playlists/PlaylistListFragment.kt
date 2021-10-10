@@ -70,8 +70,7 @@ class PlaylistListFragment : Fragment() {
 		pbLoading
 	}
 
-    private val layout by lazy {
-		val activity: Activity? = activity
+	private val layout by lazy {
 		val layout = RelativeLayout(activity)
 		layout.layoutParams = RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT,
@@ -133,10 +132,16 @@ class PlaylistListFragment : Fragment() {
 		}
 	}
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
+		layout.apply {
+			layoutParams = RelativeLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT,
+				ViewGroup.LayoutParams.MATCH_PARENT
+			)
+		}
 
-    override fun onStart() {
-        super.onStart()
+	override fun onStart() {
+		super.onStart()
 
 		val activity = activity ?: return
 
