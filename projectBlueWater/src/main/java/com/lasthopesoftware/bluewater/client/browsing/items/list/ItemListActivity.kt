@@ -52,7 +52,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 			val layoutManager = LinearLayoutManager(this)
 			recyclerView.layoutManager = layoutManager
 			recyclerView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
-		}, this))
+		}, handler))
 		recyclerView
 	}
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
