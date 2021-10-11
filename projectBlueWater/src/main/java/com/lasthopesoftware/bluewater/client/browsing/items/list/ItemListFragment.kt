@@ -143,8 +143,8 @@ class ItemListFragment : Fragment() {
 
 		val context = requireContext()
 
-		recyclerView?.visibility = View.GONE
-		progressBar?.visibility = View.VISIBLE
+		recyclerView?.visibility = ViewUtils.getVisibility(false)
+		progressBar?.visibility = ViewUtils.getVisibility(true)
 
 		lazySelectedLibraryProvider
 			.browserLibrary
