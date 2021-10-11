@@ -50,13 +50,6 @@ class ItemListFragment : Fragment() {
 		val recyclerView = RecyclerView(ContextThemeWrapper(context, R.style.VerticalScrollbarRecyclerView))
 		recyclerView.visibility = View.INVISIBLE
 
-		demoableItemListAdapter.eventually(response({ adapter ->
-			recyclerView.adapter = adapter
-			val layoutManager = LinearLayoutManager(context)
-			recyclerView.layoutManager = layoutManager
-			recyclerView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
-		}, handler))
-
 		recyclerView
 	}
 
@@ -103,7 +96,25 @@ class ItemListFragment : Fragment() {
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
-	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+	private val messageBus = lazy {
+		MessageBus(LocalBroadcastManager.getInstance(requireContext())).apply {
+
+			val intentFilter = IntentFilter()
+			intentFilter.addAction(MenuNotifications.launchingActivity)
+			intentFilter.addAction(MenuNotifications.launchingActivityFinished)
+			registerReceiver(
+				object : BroadcastReceiver() {
+					override fun onReceive(context: Context?, intent: Intent?) {
+						val isLaunching = intent?.action == MenuNotifications.launchingActivity
+
+						recyclerView.visibility = ViewUtils.getVisibility(!isLaunching)
+						progressBar.visibility = ViewUtils.getVisibility(isLaunching)
+					}
+				},
+				intentFilter
+			)
+		}
+	}
 
 	private val demoableItemListAdapter by lazy {
 		promisedItemProvider.eventually { itemProvider ->
@@ -147,30 +158,14 @@ class ItemListFragment : Fragment() {
 		}
 	}
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-		layout.apply { requestLayout() }
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
 
 	override fun onStart() {
 		super.onStart()
 
 		val context = requireContext()
 
-		val intentFilter = IntentFilter()
-		intentFilter.addAction(MenuNotifications.launchingActivity)
-		intentFilter.addAction(MenuNotifications.launchingActivityFinished)
-		messageBus.value.registerReceiver(
-			object : BroadcastReceiver() {
-				override fun onReceive(context: Context?, intent: Intent?) {
-					val isLaunching = intent?.action == MenuNotifications.launchingActivity
-
-					recyclerView.visibility = ViewUtils.getVisibility(!isLaunching)
-					progressBar.visibility = ViewUtils.getVisibility(isLaunching)
-				}
-			},
-			intentFilter
-		)
-
-		recyclerView.visibility = View.INVISIBLE
+		recyclerView.visibility = View.GONE
 		progressBar.visibility = View.VISIBLE
 
 		lazySelectedLibraryProvider
@@ -214,6 +209,15 @@ class ItemListFragment : Fragment() {
 
 	private fun fillStandardItemView(category: IItem) {
 		demoableItemListAdapter
+			.eventually(response({ adapter ->
+				if (recyclerView.adapter == null || recyclerView.adapter != adapter) {
+					recyclerView.adapter = adapter
+					val layoutManager = LinearLayoutManager(context)
+					recyclerView.layoutManager = layoutManager
+					recyclerView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
+				}
+				adapter
+			}, handler))
 			.then { adapter -> adapter?.also { ItemHydration(category, adapter) } }
 	}
 
