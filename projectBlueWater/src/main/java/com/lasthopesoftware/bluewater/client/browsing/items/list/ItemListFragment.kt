@@ -11,7 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -45,36 +44,6 @@ class ItemListFragment : Fragment() {
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
-	private val recyclerView by lazy {
-		val context = requireContext()
-		val recyclerView = RecyclerView(ContextThemeWrapper(context, R.style.VerticalScrollbarRecyclerView))
-		recyclerView.visibility = View.INVISIBLE
-
-		recyclerView
-	}
-
-	private val progressBar by lazy {
-		val pbLoading = ProgressBar(requireContext(), null, android.R.attr.progressBarStyleLarge)
-		val pbParams = RelativeLayout.LayoutParams(
-			ViewGroup.LayoutParams.WRAP_CONTENT,
-			ViewGroup.LayoutParams.WRAP_CONTENT
-		)
-		pbParams.addRule(RelativeLayout.CENTER_IN_PARENT)
-		pbLoading.layoutParams = pbParams
-		pbLoading
-	}
-
-	private val layout by lazy {
-		val layout = RelativeLayout(requireContext())
-		layout.layoutParams = RelativeLayout.LayoutParams(
-			ViewGroup.LayoutParams.MATCH_PARENT,
-			ViewGroup.LayoutParams.MATCH_PARENT
-		)
-		layout.addView(progressBar)
-		layout.addView(recyclerView)
-		layout
-	}
-
 	private val fileStringListProvider by lazy {
 		FileStringListProvider(SelectedConnectionProvider(requireContext()))
 	}
@@ -107,8 +76,8 @@ class ItemListFragment : Fragment() {
 					override fun onReceive(context: Context?, intent: Intent?) {
 						val isLaunching = intent?.action == MenuNotifications.launchingActivity
 
-						recyclerView.visibility = ViewUtils.getVisibility(!isLaunching)
-						progressBar.visibility = ViewUtils.getVisibility(isLaunching)
+						recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
+						progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
 					}
 				},
 				intentFilter
@@ -158,15 +127,24 @@ class ItemListFragment : Fragment() {
 		}
 	}
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View = layout
+	private var recyclerView: RecyclerView? = null
+	private var progressBar: ProgressBar? = null
+	private var layout: RelativeLayout? = null
+
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+		layout = inflater.inflate(R.layout.layout_list_view, container) as RelativeLayout
+		progressBar = layout?.findViewById(R.id.recyclerLoadingProgress)
+		recyclerView = layout?.findViewById(R.id.loadedRecyclerView)
+		return layout
+	}
 
 	override fun onStart() {
 		super.onStart()
 
 		val context = requireContext()
 
-		recyclerView.visibility = View.GONE
-		progressBar.visibility = View.VISIBLE
+		recyclerView?.visibility = View.GONE
+		progressBar?.visibility = View.VISIBLE
 
 		lazySelectedLibraryProvider
 			.browserLibrary
@@ -210,15 +188,16 @@ class ItemListFragment : Fragment() {
 	private fun fillStandardItemView(category: IItem) {
 		demoableItemListAdapter
 			.eventually(response({ adapter ->
-				if (recyclerView.adapter == null || recyclerView.adapter != adapter) {
-					recyclerView.adapter = adapter
-					val layoutManager = LinearLayoutManager(context)
-					recyclerView.layoutManager = layoutManager
-					recyclerView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
-				}
-				adapter
+				recyclerView
+					?.takeIf { it.adapter == null || it.adapter != adapter }
+					?.also {
+						it.adapter = adapter
+						val layoutManager = LinearLayoutManager(context)
+						it.layoutManager = layoutManager
+						it.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
+					}
+				adapter?.also { ItemHydration(category, adapter) }
 			}, handler))
-			.then { adapter -> adapter?.also { ItemHydration(category, adapter) } }
 	}
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
@@ -251,8 +230,8 @@ class ItemListFragment : Fragment() {
 				}
 				.eventually { i -> i?.let(adapter::updateListEventually).keepPromise(Unit) }
 				.eventually(response({
-					progressBar.visibility = ViewUtils.getVisibility(false)
-					recyclerView.visibility = ViewUtils.getVisibility(true)
+					progressBar?.visibility = ViewUtils.getVisibility(false)
+					recyclerView?.visibility = ViewUtils.getVisibility(true)
 				}, handler))
 				.excuse(HandleViewIoException(context, this))
 				.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(context), handler))
