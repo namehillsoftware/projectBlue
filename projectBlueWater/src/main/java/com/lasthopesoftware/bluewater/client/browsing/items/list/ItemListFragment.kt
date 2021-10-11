@@ -195,8 +195,9 @@ class ItemListFragment : Fragment() {
 						val layoutManager = LinearLayoutManager(context)
 						it.layoutManager = layoutManager
 						it.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
-						adapter?.also { ItemHydration(category, adapter) }
 					}
+
+				adapter?.also { ItemHydration(category, adapter) }
 			}, handler))
 	}
 

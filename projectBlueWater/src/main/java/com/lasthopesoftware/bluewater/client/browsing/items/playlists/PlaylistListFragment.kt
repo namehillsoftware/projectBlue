@@ -154,8 +154,9 @@ class PlaylistListFragment : Fragment() {
 								val layoutManager = LinearLayoutManager(context)
 								it.layoutManager = layoutManager
 								it.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
-								adapter?.also { ItemHydration(library, adapter) }
 							}
+
+						adapter?.also { ItemHydration(library, adapter) }
 					}, handler))
 			}
 		}
