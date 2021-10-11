@@ -147,12 +147,7 @@ class PlaylistListFragment : Fragment() {
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-		layout.apply {
-			layoutParams = RelativeLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT,
-				ViewGroup.LayoutParams.MATCH_PARENT
-			)
-		}
+		layout.apply { requestLayout() }
 
 	override fun onStart() {
 		super.onStart()
