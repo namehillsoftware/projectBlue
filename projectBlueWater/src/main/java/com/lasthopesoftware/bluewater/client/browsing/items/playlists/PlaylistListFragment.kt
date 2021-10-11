@@ -131,7 +131,7 @@ class PlaylistListFragment : Fragment() {
 	private var layout: RelativeLayout? = null
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		layout = inflater.inflate(R.layout.layout_list_view, container) as RelativeLayout
+		layout = inflater.inflate(R.layout.asynchronous_recycler_view, container, false) as RelativeLayout
 		progressBar = layout?.findViewById(R.id.recyclerLoadingProgress)
 		recyclerView = layout?.findViewById(R.id.loadedRecyclerView)
 		return layout
@@ -154,8 +154,8 @@ class PlaylistListFragment : Fragment() {
 								val layoutManager = LinearLayoutManager(context)
 								it.layoutManager = layoutManager
 								it.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
+								adapter?.also { ItemHydration(library, adapter) }
 							}
-						adapter?.also { ItemHydration(library, adapter) }
 					}, handler))
 			}
 		}
