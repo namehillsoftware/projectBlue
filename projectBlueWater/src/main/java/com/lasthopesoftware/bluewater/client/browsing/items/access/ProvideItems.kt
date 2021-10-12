@@ -1,11 +1,9 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.access;
+package com.lasthopesoftware.bluewater.client.browsing.items.access
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.namehillsoftware.handoff.promises.Promise
 
-import java.util.List;
-
-public interface ProvideItems {
-
-	Promise<List<Item>> promiseItems(int itemKey);
+interface ProvideItems {
+    fun promiseItems(libraryId: LibraryId, itemKey: Int): Promise<List<Item>>
 }

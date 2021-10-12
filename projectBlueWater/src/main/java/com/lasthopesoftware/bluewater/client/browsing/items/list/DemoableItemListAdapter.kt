@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -30,7 +30,7 @@ class DemoableItemListAdapter
 	itemListMenuEvents: IItemListMenuChangeHandler,
 	storedItemAccess: StoredItemAccess,
 	provideItems: ProvideItems,
-	library: Library,
+	libraryId: LibraryId,
 	private val manageTutorials: ManageTutorials
 ) : ItemListAdapter(
 	activity,
@@ -40,7 +40,7 @@ class DemoableItemListAdapter
 	itemListMenuEvents,
 	storedItemAccess,
 	provideItems,
-	library
+	libraryId
 ) {
 	private var wasTutorialShown = false
 

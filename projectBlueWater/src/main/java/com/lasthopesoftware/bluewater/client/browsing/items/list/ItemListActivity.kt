@@ -22,9 +22,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
@@ -56,11 +54,9 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 		recyclerView
 	}
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
-	private val specificLibraryProvider by lazy {
-			SelectedBrowserLibraryProvider(
-				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
-				LibraryRepository(this))
-		}
+
+	private val browserLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
+
 	private val lazyFileStringListProvider by lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
 
 	private val promisedItemProvider by lazy {
@@ -70,7 +66,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val promisedItemListAdapter: Promise<ItemListAdapter?> by lazy {
-		specificLibraryProvider.browserLibrary
+		browserLibraryIdProvider.selectedLibraryId
 			.eventually {
 				it?.let { l ->
 					promisedItemProvider.then { itemProvider ->
@@ -139,8 +135,15 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 	private fun hydrateItems() {
 		itemListView.visibility = ViewUtils.getVisibility(false)
 		pbLoading.findView().visibility = ViewUtils.getVisibility(true)
+
 		promisedItemProvider
-			.eventually { p -> p?.promiseItems(itemId).keepPromise(emptyList()) }
+			.eventually { p ->
+				p?.let { i ->
+					browserLibraryIdProvider.selectedLibraryId
+						.eventually { l ->
+							l?.let { i.promiseItems(l, itemId) }.keepPromise(emptyList())
+						}
+				}.keepPromise(emptyList()) }
 			.eventually { items ->
 				promisedItemListAdapter.eventually { adapter ->
 					adapter?.updateListEventually(items).keepPromise(Unit)

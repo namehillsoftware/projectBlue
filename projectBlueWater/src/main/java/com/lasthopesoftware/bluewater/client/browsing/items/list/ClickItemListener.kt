@@ -6,10 +6,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity.Companion.startFileListActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import org.slf4j.LoggerFactory
 
 class ClickItemListener(
+	private val libraryId: LibraryId,
 	private val item: Item,
 	private val provideItems: ProvideItems,
 	private val sendMessages: SendMessages
@@ -24,7 +26,7 @@ class ClickItemListener(
 
 		sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivity))
 		provideItems
-			.promiseItems(item.key)
+			.promiseItems(libraryId, item.key)
 			.then(
 				{ items ->
 					if (items.isNotEmpty()) {

@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotificatio
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
@@ -48,14 +49,16 @@ class ItemListFragment : Fragment() {
 		FileStringListProvider(SelectedConnectionProvider(requireContext()))
 	}
 
+	private val browserLibraryIdProvider by lazy {
+		SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository())
+	}
+
 	private val lazySelectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()),
+			browserLibraryIdProvider,
 			LibraryRepository(requireContext())
 		)
 	}
-
-	private val promisedBrowserLibrary by lazy { lazySelectedLibraryProvider.browserLibrary }
 
 	private val promisedItemProvider by lazy {
 		getInstance(requireContext())
@@ -89,8 +92,8 @@ class ItemListFragment : Fragment() {
 		promisedItemProvider.eventually { itemProvider ->
 			itemProvider
 				?.let {
-					promisedBrowserLibrary.then {
-						it?.let { library ->
+					browserLibraryIdProvider.selectedLibraryId.then {
+						it?.let { libraryId ->
 							itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
 								activity
 									?.let { fa ->
@@ -102,7 +105,7 @@ class ItemListFragment : Fragment() {
 											itemListMenuChangeHandler,
 											StoredItemAccess(fa),
 											itemProvider,
-											library,
+											libraryId,
 											tutorialManager
 										)
 									}
@@ -116,7 +119,7 @@ class ItemListFragment : Fragment() {
 												itemListMenuChangeHandler,
 												StoredItemAccess(context),
 												itemProvider,
-												library,
+												libraryId,
 											)
 										}
 							}
@@ -163,13 +166,13 @@ class ItemListFragment : Fragment() {
 										else result[result.size - 1]
 									}
 							}
-							?.also(::fillStandardItemView)
+							?.also { fillStandardItemView(activeLibrary.libraryId, it) }
 					}, context)
 
 				object : Runnable {
 					override fun run() {
 						promisedItemProvider
-							.eventually { i -> i?.promiseItems(activeLibrary.selectedView).keepPromise(emptyList()) }
+							.eventually { i -> i?.promiseItems(activeLibrary.libraryId, activeLibrary.selectedView).keepPromise(emptyList()) }
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(HandleViewIoException(context, this))
 							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(context), handler))
@@ -185,7 +188,7 @@ class ItemListFragment : Fragment() {
 			messageBus.value.clear()
 	}
 
-	private fun fillStandardItemView(category: IItem) {
+	private fun fillStandardItemView(libraryId: LibraryId, category: IItem) {
 		demoableItemListAdapter
 			.eventually(response({ adapter ->
 				recyclerView
@@ -197,7 +200,7 @@ class ItemListFragment : Fragment() {
 						it.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
 					}
 
-				adapter?.also { ItemHydration(category, adapter) }
+				adapter?.also { ItemHydration(libraryId, category, adapter) }
 			}, handler))
 	}
 
@@ -218,7 +221,7 @@ class ItemListFragment : Fragment() {
 		}
 	}
 
-	private inner class ItemHydration(private val category: IItem, private val adapter: ItemListAdapter) : Runnable {
+	private inner class ItemHydration(private val libraryId: LibraryId, private val category: IItem, private val adapter: ItemListAdapter) : Runnable {
 		init {
 			run()
 		}
@@ -227,7 +230,7 @@ class ItemListFragment : Fragment() {
 			val context = requireContext()
 			promisedItemProvider
 				.eventually { i ->
-					i?.promiseItems(category.key).keepPromise(emptyList())
+					i?.promiseItems(libraryId, category.key).keepPromise(emptyList())
 				}
 				.eventually { i -> i?.let(adapter::updateListEventually).keepPromise(Unit) }
 				.eventually(response({

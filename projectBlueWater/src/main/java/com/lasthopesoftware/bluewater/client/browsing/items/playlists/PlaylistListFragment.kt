@@ -51,9 +51,13 @@ class PlaylistListFragment : Fragment() {
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
+	private val browserLibraryIdProvider by lazy {
+		SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository())
+	}
+
 	private val promisedBrowserLibrary by lazy {
 		SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()),
+			browserLibraryIdProvider,
 			LibraryRepository(requireContext())
 		).browserLibrary
 	}
@@ -88,8 +92,8 @@ class PlaylistListFragment : Fragment() {
 		promisedItemProvider.eventually { itemProvider ->
 			itemProvider
 				?.let {
-					promisedBrowserLibrary.then {
-						it?.let { library ->
+					browserLibraryIdProvider.selectedLibraryId.then {
+						it?.let { libraryId ->
 							itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
 								activity
 									?.let { fa ->
@@ -101,7 +105,7 @@ class PlaylistListFragment : Fragment() {
 											itemListMenuChangeHandler,
 											StoredItemAccess(fa),
 											itemProvider,
-											library,
+											libraryId,
 											tutorialManager
 										)
 									}
@@ -115,7 +119,7 @@ class PlaylistListFragment : Fragment() {
 												itemListMenuChangeHandler,
 												StoredItemAccess(context),
 												itemProvider,
-												library,
+												libraryId,
 											)
 										}
 							}
@@ -182,7 +186,7 @@ class PlaylistListFragment : Fragment() {
 			val context = requireContext()
 			promisedItemProvider
 				.eventually { i ->
-					i?.promiseItems(library.selectedView).keepPromise(emptyList())
+					i?.promiseItems(library.libraryId, library.selectedView).keepPromise(emptyList())
 				}
 				.eventually { i -> i?.let(adapter::updateListEventually) }
 				.eventually(response({

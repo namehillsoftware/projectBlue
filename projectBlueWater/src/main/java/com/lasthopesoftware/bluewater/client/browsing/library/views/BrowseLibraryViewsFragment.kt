@@ -133,7 +133,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 					getInstance(context)
 						.promiseSessionConnection()
 						.eventually { c ->
-							c?.let(::ItemProvider)?.promiseItems(library.selectedView) ?: Promise(emptyList())
+							c?.let(::ItemProvider)?.promiseItems(library.libraryId, library.selectedView) ?: Promise(emptyList())
 						}
 						.eventually(fillVisibleViews.value)
 						.run {
