@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access
 
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemResponse
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
@@ -18,7 +19,7 @@ class LibraryViewsProvider(private val selectedConnectionProvider: ProvideSelect
 	private var cachedFileSystemItems: Collection<ViewItem>? = null
 	private var revision: Int? = null
 
-	override fun promiseLibraryViews(): Promise<Collection<ViewItem>> =
+	override fun promiseLibraryViews(libraryId: LibraryId): Promise<Collection<ViewItem>> =
 		checkScopedRevisions.promiseRevision()
 			.eventually { serverRevision ->
 				synchronized(browseLibraryParameter) {
