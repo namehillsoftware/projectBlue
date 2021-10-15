@@ -11,5 +11,5 @@ class ItemProvider(private val connectionProvider: ProvideLibraryConnections) : 
     	connectionProvider
 			.promiseLibraryConnection(libraryId)
 			.eventually { c -> c?.promiseResponse(LibraryViewsProvider.browseLibraryParameter, "ID=$itemKey", "Version=2") ?: Promise.empty() }
-			.then { it.body?.use { body -> body.byteStream().use(ItemResponse::GetItems) } ?: emptyList() }
+			.then { it?.body?.use { body -> body.byteStream().use(ItemResponse::GetItems) } ?: emptyList() }
 }

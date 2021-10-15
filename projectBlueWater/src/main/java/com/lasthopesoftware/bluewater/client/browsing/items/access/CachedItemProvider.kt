@@ -68,7 +68,8 @@ class CachedItemProvider(
 	}
 
 	override fun promiseItems(libraryId: LibraryId, itemKey: Int): Promise<List<Item>> =
-		revisions.promiseRevision(libraryId)
+		revisions
+			.promiseRevision(libraryId)
 			.eventually { revision ->
 				functionCache.getOrAdd(Triple(libraryId, itemKey, revision)) { (l, k, _) -> inner.promiseItems(l, k) }
 			}
