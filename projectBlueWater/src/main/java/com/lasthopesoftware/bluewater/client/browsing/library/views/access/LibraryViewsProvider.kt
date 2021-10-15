@@ -2,16 +2,16 @@ package com.lasthopesoftware.bluewater.client.browsing.library.views.access
 
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemResponse
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class LibraryViewsProvider(private val selectedConnectionProvider: ProvideSelectedConnection, private val checkScopedRevisions: CheckScopedRevisions) : ProvideLibraryViews {
+class LibraryViewsProvider(private val libraryConnectionProvider: LibraryConnectionProvider, private val revisions: CheckRevisions) : ProvideLibraryViews {
 	companion object {
 		const val browseLibraryParameter = "Browse/Children"
 	}
@@ -20,11 +20,11 @@ class LibraryViewsProvider(private val selectedConnectionProvider: ProvideSelect
 	private var revision: Int? = null
 
 	override fun promiseLibraryViews(libraryId: LibraryId): Promise<Collection<ViewItem>> =
-		checkScopedRevisions.promiseRevision()
+		revisions.promiseRevision(libraryId)
 			.eventually { serverRevision ->
 				synchronized(browseLibraryParameter) {
 					cachedFileSystemItems?.takeIf { revision == serverRevision }?.toPromise()
-				} ?: selectedConnectionProvider.promiseSessionConnection().eventually { c ->
+				} ?: libraryConnectionProvider.promiseLibraryConnection(libraryId).eventually { c ->
 					c?.promiseResponse(browseLibraryParameter)
 						?.then { response ->
 							response.body?.use { b ->
