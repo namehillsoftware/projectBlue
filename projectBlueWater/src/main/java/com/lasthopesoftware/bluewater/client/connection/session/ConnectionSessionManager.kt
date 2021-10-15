@@ -24,9 +24,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
-import okhttp3.OkHttpClient
-import org.joda.time.Duration
-import java.util.concurrent.TimeUnit
 
 class ConnectionSessionManager(
 	private val connectionTester: TestConnections,
@@ -83,23 +80,12 @@ class ConnectionSessionManager(
 		holdConnections.getPromisedResolvedConnection(libraryId) != null
 
 	companion object Instance {
-		private const val buildConnectionTimeoutTime = 10000
-
 		private val connectionRepository by lazy { PromisedConnectionsRepository() }
 
 		private val serverWakeSignal by lazy { ServerWakeSignal(PacketSender()) }
 
-		private val alarmConfiguration by lazy { AlarmConfiguration(3, Duration.standardSeconds(5)) }
-
-		private fun newServerLookup(context: Context): ServerLookup {
-			val client = OkHttpClient.Builder()
-				.connectTimeout(buildConnectionTimeoutTime.toLong(), TimeUnit.MILLISECONDS)
-				.build()
-			return ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), client))
-		}
-
 		fun get(context: Context): ConnectionSessionManager {
-			val serverLookup = newServerLookup(context)
+			val serverLookup = ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory))
 			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 
 			return ConnectionSessionManager(
@@ -107,7 +93,7 @@ class ConnectionSessionManager(
 				LibraryConnectionProvider(
 					ConnectionSettingsValidation,
 					connectionSettingsLookup,
-					ServerAlarm(serverLookup, serverWakeSignal, alarmConfiguration),
+					ServerAlarm(serverLookup, serverWakeSignal, AlarmConfiguration.standard),
 					LiveUrlProvider(
 						ActiveNetworkFinder(context),
 						UrlScanner(

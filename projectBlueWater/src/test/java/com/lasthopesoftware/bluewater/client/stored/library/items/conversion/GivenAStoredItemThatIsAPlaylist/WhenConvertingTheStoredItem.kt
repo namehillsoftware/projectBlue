@@ -65,8 +65,8 @@ class WhenConvertingTheStoredItem {
 			storedItem.serviceId = 15
 			storedItem.itemType = ItemType.PLAYLIST
 			val playlistItem = mockk<FindPlaylistItem>()
-			every { playlistItem.promiseItem(any()) } returns Promise.empty()
-			every { playlistItem.promiseItem(match { p -> p.key == 15 }) } returns Promise(Item(34))
+			every { playlistItem.promiseItem(any(), any()) } returns Promise.empty()
+			every { playlistItem.promiseItem(LibraryId(14), match { p -> p.key == 15 }) } returns Promise(Item(34))
 			val playlistItemsConverter = StoredPlaylistItemsConverter(
 				{ Promise(Library().setId(14)) },
 				playlistItem,

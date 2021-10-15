@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -60,7 +60,7 @@ class PlaylistListFragment : Fragment() {
 		).browserLibrary
 	}
 
-	private val itemProvider by lazy { CachingItemProvider.getInstance(requireContext()) }
+	private val itemProvider by lazy { CachedItemProvider.getInstance(requireContext()) }
 
 	private val messageBus = lazy {
 		val messageBus = MessageBus(LocalBroadcastManager.getInstance(requireContext()))

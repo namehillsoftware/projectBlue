@@ -12,7 +12,7 @@ import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -129,7 +129,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 		override fun run() {
 			selectedBrowserLibrary
 				.then { it?.let { library ->
-					CachingItemProvider.getInstance(context)
+					CachedItemProvider.getInstance(context)
 						.promiseItems(library.libraryId, library.selectedView)
 						.eventually(fillVisibleViews.value)
 						.run {

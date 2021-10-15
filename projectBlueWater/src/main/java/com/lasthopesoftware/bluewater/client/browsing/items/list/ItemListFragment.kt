@@ -19,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
@@ -59,7 +59,7 @@ class ItemListFragment : Fragment() {
 		)
 	}
 
-	private val itemProvider by lazy { CachingItemProvider.getInstance(requireContext()) }
+	private val itemProvider by lazy { CachedItemProvider.getInstance(requireContext()) }
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 

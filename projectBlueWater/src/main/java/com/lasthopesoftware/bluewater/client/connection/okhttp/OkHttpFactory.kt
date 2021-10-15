@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.resources.executors.ThreadPools
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
+import org.joda.time.Duration
 import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -15,6 +16,8 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.*
 
 object OkHttpFactory : ProvideOkHttpClients {
+	private val buildConnectionTime = Duration.standardSeconds(10)
+
     override fun getOkHttpClient(urlProvider: IUrlProvider): OkHttpClient =
         commonBuilder
             .addNetworkInterceptor { chain ->
@@ -29,6 +32,11 @@ object OkHttpFactory : ProvideOkHttpClients {
             .sslSocketFactory(getSslSocketFactory(urlProvider), getTrustManager(urlProvider))
             .hostnameVerifier(getHostnameVerifier(urlProvider))
             .build()
+
+	override fun getJriverCentralClient(): OkHttpClient =
+		commonBuilder
+			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
+			.build()
 
 	private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 

@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
@@ -58,7 +58,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 	private val lazyFileStringListProvider by lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
 
-	private val itemProvider by lazy { CachingItemProvider.getInstance(this) }
+	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 

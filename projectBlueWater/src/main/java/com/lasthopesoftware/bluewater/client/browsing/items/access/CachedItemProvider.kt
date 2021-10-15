@@ -24,42 +24,27 @@ import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.OkHttpClient
-import org.joda.time.Duration
-import java.util.concurrent.TimeUnit
 
-class CachingItemProvider(
+class CachedItemProvider(
 	private val inner: ProvideItems,
 	private val revisions: CheckRevisions,
 	private val functionCache: CachePromiseFunctions<Triple<LibraryId, Int, Int>, List<Item>>
 ) : ProvideItems {
 
 	companion object {
-		private const val buildConnectionTimeoutTime = 10000
-
-		private val serverWakeSignal by lazy { ServerWakeSignal(PacketSender()) }
-
-		private val alarmConfiguration by lazy { AlarmConfiguration(3, Duration.standardSeconds(5)) }
-
-		private fun newServerLookup(context: Context): ServerLookup {
-			val client = OkHttpClient.Builder()
-				.connectTimeout(buildConnectionTimeoutTime.toLong(), TimeUnit.MILLISECONDS)
-				.build()
-			return ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), client))
-		}
 
 		private val functionCache = LruPromiseCache<Triple<LibraryId, Int, Int>, List<Item>>(100)
 
-		fun getInstance(context: Context): CachingItemProvider {
-			val serverLookup = newServerLookup(context)
+		fun getInstance(context: Context): CachedItemProvider {
+			val serverLookup = ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory))
 			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
 			val libraryConnectionProvider = LibraryConnectionProvider(
 				ConnectionSettingsValidation,
 				connectionSettingsLookup,
 				ServerAlarm(
 					serverLookup,
-					serverWakeSignal,
-					alarmConfiguration
+					ServerWakeSignal(PacketSender()),
+					AlarmConfiguration.standard
 				),
 				LiveUrlProvider(
 					ActiveNetworkFinder(context),
@@ -74,7 +59,7 @@ class CachingItemProvider(
 				OkHttpFactory
 			)
 
-			return CachingItemProvider(
+			return CachedItemProvider(
 				ItemProvider(libraryConnectionProvider),
 				LibraryRevisionProvider(libraryConnectionProvider),
 				functionCache
