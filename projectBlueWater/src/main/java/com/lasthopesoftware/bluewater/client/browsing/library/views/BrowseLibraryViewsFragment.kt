@@ -12,7 +12,7 @@ import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
@@ -130,11 +129,8 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 		override fun run() {
 			selectedBrowserLibrary
 				.then { it?.let { library ->
-					getInstance(context)
-						.promiseSessionConnection()
-						.eventually { c ->
-							c?.let(::ItemProvider)?.promiseItems(library.libraryId, library.selectedView) ?: Promise(emptyList())
-						}
+					CachingItemProvider.getInstance(context)
+						.promiseItems(library.libraryId, library.selectedView)
 						.eventually(fillVisibleViews.value)
 						.run {
 							if (savedInstanceState == null) this

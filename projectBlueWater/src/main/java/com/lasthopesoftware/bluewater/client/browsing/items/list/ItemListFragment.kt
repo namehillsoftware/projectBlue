@@ -19,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -60,11 +59,7 @@ class ItemListFragment : Fragment() {
 		)
 	}
 
-	private val promisedItemProvider by lazy {
-		getInstance(requireContext())
-			.promiseSessionConnection()
-			.then { c -> c?.let(::ItemProvider) }
-	}
+	private val itemProvider by lazy { CachingItemProvider.getInstance(requireContext()) }
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
@@ -89,44 +84,38 @@ class ItemListFragment : Fragment() {
 	}
 
 	private val demoableItemListAdapter by lazy {
-		promisedItemProvider.eventually { itemProvider ->
-			itemProvider
-				?.let {
-					browserLibraryIdProvider.selectedLibraryId.then {
-						it?.let { libraryId ->
-							itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
-								activity
-									?.let { fa ->
-										DemoableItemListAdapter(
-											fa,
-											messageBus.value,
-											FileListParameters.getInstance(),
-											fileStringListProvider,
-											itemListMenuChangeHandler,
-											StoredItemAccess(fa),
-											itemProvider,
-											libraryId,
-											tutorialManager
-										)
-									}
-									?: requireContext()
-										.let { context ->
-											ItemListAdapter(
-												context,
-												messageBus.value,
-												FileListParameters.getInstance(),
-												fileStringListProvider,
-												itemListMenuChangeHandler,
-												StoredItemAccess(context),
-												itemProvider,
-												libraryId,
-											)
-										}
-							}
+		browserLibraryIdProvider.selectedLibraryId.then {
+			it?.let { libraryId ->
+				itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
+					activity
+						?.let { fa ->
+							DemoableItemListAdapter(
+								fa,
+								messageBus.value,
+								FileListParameters.getInstance(),
+								fileStringListProvider,
+								itemListMenuChangeHandler,
+								StoredItemAccess(fa),
+								itemProvider,
+								libraryId,
+								tutorialManager
+							)
 						}
-					}
+						?: requireContext()
+							.let { context ->
+								ItemListAdapter(
+									context,
+									messageBus.value,
+									FileListParameters.getInstance(),
+									fileStringListProvider,
+									itemListMenuChangeHandler,
+									StoredItemAccess(context),
+									itemProvider,
+									libraryId,
+								)
+							}
 				}
-				.keepPromise()
+			}
 		}
 	}
 
@@ -171,8 +160,7 @@ class ItemListFragment : Fragment() {
 
 				object : Runnable {
 					override fun run() {
-						promisedItemProvider
-							.eventually { i -> i?.promiseItems(activeLibrary.libraryId, activeLibrary.selectedView).keepPromise(emptyList()) }
+						itemProvider.promiseItems(activeLibrary.libraryId, activeLibrary.selectedView)
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(HandleViewIoException(context, this))
 							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(context), handler))
@@ -228,10 +216,7 @@ class ItemListFragment : Fragment() {
 
 		override fun run() {
 			val context = requireContext()
-			promisedItemProvider
-				.eventually { i ->
-					i?.promiseItems(libraryId, category.key).keepPromise(emptyList())
-				}
+			itemProvider.promiseItems(libraryId, category.key)
 				.eventually { i -> i?.let(adapter::updateListEventually).keepPromise(Unit) }
 				.eventually(response({
 					progressBar?.visibility = ViewUtils.getVisibility(false)

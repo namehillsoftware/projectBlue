@@ -10,7 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class PlaylistItemFinder(private val libraryViews: ProvideLibraryViews, private val itemProvider: ProvideItems) : FindPlaylistItem {
 	override fun promiseItem(libraryId: LibraryId, playlist: Playlist): Promise<Item?> =
-		libraryViews.promiseLibraryViews()
+		libraryViews.promiseLibraryViews(libraryId)
 			.eventually { v ->
 				val playlistItem = v.single { i -> KnownViews.Playlists == i.value }
 				recursivelySearchForPlaylist(libraryId, playlistItem, playlist)

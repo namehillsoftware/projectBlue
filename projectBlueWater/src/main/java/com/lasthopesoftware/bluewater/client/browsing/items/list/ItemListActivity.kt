@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotificatio
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
@@ -59,33 +58,27 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 	private val lazyFileStringListProvider by lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
 
-	private val promisedItemProvider by lazy {
-		getInstance(this).promiseSessionConnection().then { c -> c?.let(::ItemProvider) }
-	}
+	private val itemProvider by lazy { CachingItemProvider.getInstance(this) }
 
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val promisedItemListAdapter: Promise<ItemListAdapter?> by lazy {
 		browserLibraryIdProvider.selectedLibraryId
-			.eventually {
+			.then {
 				it?.let { l ->
-					promisedItemProvider.then { itemProvider ->
-						itemProvider?.let {
-							val storedItemAccess = StoredItemAccess(this)
+					val storedItemAccess = StoredItemAccess(this)
 
-							ItemListAdapter(
-								this,
-								messageBus,
-								FileListParameters.getInstance(),
-								lazyFileStringListProvider,
-								ItemListMenuChangeHandler(this),
-								storedItemAccess,
-								itemProvider,
-								l
-							)
-						}
-					}
-				}.keepPromise()
+					ItemListAdapter(
+						this,
+						messageBus,
+						FileListParameters.getInstance(),
+						lazyFileStringListProvider,
+						ItemListMenuChangeHandler(this),
+						storedItemAccess,
+						itemProvider,
+						l
+					)
+				}
 			}
 	}
 
@@ -136,14 +129,11 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 		itemListView.visibility = ViewUtils.getVisibility(false)
 		pbLoading.findView().visibility = ViewUtils.getVisibility(true)
 
-		promisedItemProvider
-			.eventually { p ->
-				p?.let { i ->
-					browserLibraryIdProvider.selectedLibraryId
-						.eventually { l ->
-							l?.let { i.promiseItems(l, itemId) }.keepPromise(emptyList())
-						}
-				}.keepPromise(emptyList()) }
+
+		browserLibraryIdProvider.selectedLibraryId
+			.eventually { l ->
+				l?.let { itemProvider.promiseItems(l, itemId) }.keepPromise(emptyList())
+			}
 			.eventually { items ->
 				promisedItemListAdapter.eventually { adapter ->
 					adapter?.updateListEventually(items).keepPromise(Unit)

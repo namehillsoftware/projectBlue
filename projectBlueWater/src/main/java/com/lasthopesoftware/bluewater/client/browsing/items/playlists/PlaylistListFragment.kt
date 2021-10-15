@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -37,7 +36,6 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class PlaylistListFragment : Fragment() {
@@ -62,11 +60,7 @@ class PlaylistListFragment : Fragment() {
 		).browserLibrary
 	}
 
-	private val promisedItemProvider by lazy {
-		getInstance(requireContext())
-			.promiseSessionConnection()
-			.then { c -> c?.let(::ItemProvider) }
-	}
+	private val itemProvider by lazy { CachingItemProvider.getInstance(requireContext()) }
 
 	private val messageBus = lazy {
 		val messageBus = MessageBus(LocalBroadcastManager.getInstance(requireContext()))
@@ -89,44 +83,38 @@ class PlaylistListFragment : Fragment() {
 	}
 
 	private val demoableItemListAdapter by lazy {
-		promisedItemProvider.eventually { itemProvider ->
-			itemProvider
-				?.let {
-					browserLibraryIdProvider.selectedLibraryId.then {
-						it?.let { libraryId ->
-							itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
-								activity
-									?.let { fa ->
-										DemoableItemListAdapter(
-											fa,
-											messageBus.value,
-											FileListParameters.getInstance(),
-											fileStringListProvider,
-											itemListMenuChangeHandler,
-											StoredItemAccess(fa),
-											itemProvider,
-											libraryId,
-											tutorialManager
-										)
-									}
-									?: requireContext()
-										.let { context ->
-											ItemListAdapter(
-												context,
-												messageBus.value,
-												FileListParameters.getInstance(),
-												fileStringListProvider,
-												itemListMenuChangeHandler,
-												StoredItemAccess(context),
-												itemProvider,
-												libraryId,
-											)
-										}
-							}
+		browserLibraryIdProvider.selectedLibraryId.then {
+			it?.let { libraryId ->
+				itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
+					activity
+						?.let { fa ->
+							DemoableItemListAdapter(
+								fa,
+								messageBus.value,
+								FileListParameters.getInstance(),
+								fileStringListProvider,
+								itemListMenuChangeHandler,
+								StoredItemAccess(fa),
+								itemProvider,
+								libraryId,
+								tutorialManager
+							)
 						}
-					}
+						?: requireContext()
+							.let { context ->
+								ItemListAdapter(
+									context,
+									messageBus.value,
+									FileListParameters.getInstance(),
+									fileStringListProvider,
+									itemListMenuChangeHandler,
+									StoredItemAccess(context),
+									itemProvider,
+									libraryId,
+								)
+							}
 				}
-				.keepPromise()
+			}
 		}
 	}
 
@@ -184,10 +172,7 @@ class PlaylistListFragment : Fragment() {
 
 		override fun run() {
 			val context = requireContext()
-			promisedItemProvider
-				.eventually { i ->
-					i?.promiseItems(library.libraryId, library.selectedView).keepPromise(emptyList())
-				}
+			itemProvider.promiseItems(library.libraryId, library.selectedView)
 				.eventually { i -> i?.let(adapter::updateListEventually) }
 				.eventually(response({
 					progressBar?.visibility = ViewUtils.getVisibility(false)
