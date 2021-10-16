@@ -18,7 +18,7 @@ class CachedItemProvider(
 
 	companion object {
 
-		private val functionCache = LruPromiseCache<Triple<LibraryId, Int, Int>, List<Item>>(100)
+		private val functionCache = LruPromiseCache<Triple<LibraryId, Int, Int>, List<Item>>(20)
 
 		fun getInstance(context: Context): CachedItemProvider {
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
