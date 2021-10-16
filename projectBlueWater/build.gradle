@@ -131,7 +131,7 @@ dependencies {
 	implementation 'com.namehillsoftware:handoff:0.19.5'
 	implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
 	implementation 'com.namehillsoftware:lazy-j:0.11.0'
-	implementation 'com.github.danrien:xmlwise:master-SNAPSHOT'
+	implementation 'com.github.danrien:xmlwise:-SNAPSHOT'
 	implementation "com.google.android.exoplayer:exoplayer-core:${exoplayer_version}"
 	implementation "com.google.android.exoplayer:extension-okhttp:${exoplayer_version}"
 	implementation 'com.squareup.okio:okio:2.10.0'

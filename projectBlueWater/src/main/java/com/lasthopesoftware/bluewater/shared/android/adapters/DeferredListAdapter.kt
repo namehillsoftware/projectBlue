@@ -6,25 +6,25 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 
 abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 	context: Context,
-	diffCallback: DiffUtil.ItemCallback<T>)
-	: ListAdapter<T, ViewHolder>(diffCallback) {
+	diffCallback: DiffUtil.ItemCallback<T>
+) : ListAdapter<T, ViewHolder>(diffCallback) {
 
-	private val handler = lazy { Handler(context.mainLooper) }
+	private val handler by lazy { Handler(context.mainLooper) }
 
 	@Volatile
-	private var currentUpdate: Promise<Unit> = Promise.empty()
+	private var currentUpdate: Promise<Unit> = Unit.toPromise()
 
 	@Synchronized
-	fun updateListEventually(list: List<T>): Promise<Unit> {
-		return currentUpdate
-			.eventually({ PromisedListUpdate(list) }, { PromisedListUpdate(list) })
+	fun updateListEventually(list: List<T>): Promise<Unit> =
+		currentUpdate
+			.inevitably { PromisedListUpdate(list) }
 			.apply { currentUpdate = this }
-	}
 
 	private inner class PromisedListUpdate(list: List<T>) : LoopedInPromise<Unit>(
 		MessengerOperator<Unit> {
@@ -34,5 +34,5 @@ abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 				it.sendRejection(e)
 			}
 		},
-		handler.value)
+		handler)
 }

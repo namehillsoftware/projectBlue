@@ -16,9 +16,7 @@ class ShuffleClickHandler(
 	private val fileListParameterProvider: IFileListParameterProvider,
 	private val fileStringListProvider: FileStringListProvider,
 	private val item: Item
-) : AbstractMenuClickHandler(
-	menuContainer
-) {
+) : AbstractMenuClickHandler(menuContainer) {
 	override fun onClick(v: View) {
 		fileStringListProvider
 			.promiseFileStringList(
