@@ -109,8 +109,6 @@ class FileNameTextViewSetter(private val textView: TextView) {
 
 			val delayPromise = delay<Unit>(timeoutDuration)
 
-			cancellationProxy.doCancel(filePropertiesPromise)
-			cancellationProxy.doCancel(delayPromise)
 			whenAny(promisedViewSetting, delayPromise)
 				.must {
 
@@ -125,6 +123,9 @@ class FileNameTextViewSetter(private val textView: TextView) {
 						.exceptionsLogger
 						.execute { handleError(e) }
 				}
+
+			cancellationProxy.doCancel(filePropertiesPromise)
+			cancellationProxy.doCancel(delayPromise)
 		}
 
 		override fun respond(properties: Map<String, String>) {
