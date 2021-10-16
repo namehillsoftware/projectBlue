@@ -30,28 +30,14 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectViewAdapter
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.PacketSender
-import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
-import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfoXmlRequest
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsValidation
-import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
-import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
-import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
-import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
@@ -62,8 +48,6 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.resources.network.ActiveNetworkFinder
-import com.lasthopesoftware.resources.strings.Base64Encoder
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -77,31 +61,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val libraryRepository by lazy { LibraryRepository(this)	}
 
-	private val libraryViewsProvider by lazy {
-		val serverLookup = ServerLookup(ServerInfoXmlRequest(LibraryRepository(this), OkHttpFactory))
-		val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(this))
-		val libraryConnectionProvider = LibraryConnectionProvider(
-			ConnectionSettingsValidation,
-			connectionSettingsLookup,
-			ServerAlarm(
-				serverLookup,
-				ServerWakeSignal(PacketSender()),
-				AlarmConfiguration.standard
-			),
-			LiveUrlProvider(
-				ActiveNetworkFinder(this),
-				UrlScanner(
-					Base64Encoder,
-					ConnectionTester,
-					serverLookup,
-					connectionSettingsLookup,
-					OkHttpFactory
-				)
-			),
-			OkHttpFactory
-		)
-		LibraryViewsProvider(libraryConnectionProvider, LibraryRevisionProvider(libraryConnectionProvider))
-	}
+	private val libraryViewsProvider by lazy { CachedLibraryViewsProvider.getInstance(this) }
 
 	private val selectedLibraryViews by lazy {
 		SelectedLibraryViewProvider(selectedBrowserLibraryProvider, libraryViewsProvider, libraryRepository)
