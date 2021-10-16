@@ -7,4 +7,5 @@ object MenuNotifications {
 
 	val launchingActivity by lazy { magicPropertyBuilder.buildProperty("launchingActivity") }
 	val launchingActivityFinished by lazy { magicPropertyBuilder.buildProperty("launchingActivityFinished") }
+	val launchingActivityHalted by lazy { magicPropertyBuilder.buildProperty("launchingActivityHalted") }
 }

@@ -43,8 +43,8 @@ class ClickItemListener(
 					)
 				}
 			)
-			.must {
-				sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivityFinished))
-			}
+			.then(
+				{ sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivityFinished)) },
+				{ sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivityHalted)) })
 	}
 }
