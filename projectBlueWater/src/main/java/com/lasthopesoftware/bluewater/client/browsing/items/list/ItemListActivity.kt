@@ -94,7 +94,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 		val intentFilter = IntentFilter()
 		intentFilter.addAction(MenuNotifications.launchingActivity)
-		intentFilter.addAction(MenuNotifications.launchingActivityFinished)
+		intentFilter.addAction(MenuNotifications.launchingActivityHalted)
 		messageBus.registerReceiver(
 			object : BroadcastReceiver() {
 				override fun onReceive(context: Context?, intent: Intent?) {

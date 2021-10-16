@@ -68,11 +68,11 @@ class ItemListFragment : Fragment() {
 
 			val intentFilter = IntentFilter()
 			intentFilter.addAction(MenuNotifications.launchingActivity)
-			intentFilter.addAction(MenuNotifications.launchingActivityFinished)
+			intentFilter.addAction(MenuNotifications.launchingActivityHalted)
 			registerReceiver(
 				object : BroadcastReceiver() {
 					override fun onReceive(context: Context?, intent: Intent?) {
-						val isLaunching = intent?.action == MenuNotifications.launchingActivity
+						val isLaunching = intent?.action != MenuNotifications.launchingActivity
 
 						recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
 						progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
