@@ -6,10 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.namehillsoftware.handoff.promises.Promise
 
-class LibraryViewsProvider(private val libraryConnectionProvider: LibraryConnectionProvider) : ProvideLibraryViews {
+class LibraryViewsProvider(private val libraryConnectionProvider: ProvideLibraryConnections) : ProvideLibraryViews {
 	companion object {
 		const val browseLibraryParameter = "Browse/Children"
 	}
