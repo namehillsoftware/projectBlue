@@ -21,7 +21,7 @@ object ThreadPools {
 		ForkJoinPool(Runtime.getRuntime().availableProcessors(), namedThreadPoolFactory("compute"), null, true)
 	}
 
-	val exceptionsLogger: Executor by lazy { CachedSingleThreadExecutor("exceptions") }
+	val exceptionsLogger: Executor by lazy { CachedSingleThreadExecutor("exceptionsLogger") }
 
 	val database: Executor by lazy { MoreExecutors.newSequentialExecutor(io) }
 
