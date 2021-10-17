@@ -3,12 +3,13 @@ package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
-class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromises<T>, Runnable, ImmediateAction {
+class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromises<T>, Runnable, ImmediateAction, ImmediateResponse<Throwable, Unit> {
 	private val queueProcessorReference = AtomicReference<RateLimiter<T>>()
 	private val semaphore = Semaphore(rate)
 	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<T>>()
@@ -27,7 +28,7 @@ class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromis
 			var promiseFactory: (() -> Promise<T>)?
 			while (queuedPromises.poll().also { promiseFactory = it } != null) {
 				semaphore.acquire()
-				promiseFactory?.invoke()?.must(this)
+				promiseFactory?.invoke()?.must(this)?.excuse(this)
 			}
 		} finally {
 			queueProcessorReference.set(null)
@@ -36,5 +37,9 @@ class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromis
 
 	override fun act() {
 		semaphore.release()
+	}
+
+	override fun respond(resolution: Throwable?) {
+		// swallow the exception so it doesn't appear unhandled
 	}
 }
