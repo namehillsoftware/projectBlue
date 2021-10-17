@@ -67,9 +67,8 @@ open class MainApplication : MultiDexApplication() {
 
 		initializeLogging()
 
-		val loggerUncaughtExceptionHandler = LoggerUncaughtExceptionHandler()
-		Thread.setDefaultUncaughtExceptionHandler(loggerUncaughtExceptionHandler)
-		Promise.Rejections.setUnhandledRejectionsReceiver(loggerUncaughtExceptionHandler)
+		Thread.setDefaultUncaughtExceptionHandler(LoggerUncaughtExceptionHandler)
+		Promise.Rejections.setUnhandledRejectionsReceiver(LoggerUncaughtExceptionHandler)
 
 		registerAppBroadcastReceivers()
 
