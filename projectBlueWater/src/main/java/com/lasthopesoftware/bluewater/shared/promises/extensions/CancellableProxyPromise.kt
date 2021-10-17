@@ -9,7 +9,7 @@ class CancellableProxyPromise<Resolution>(cancellableMessenger: (CancellationPro
 	: Promise<Resolution>({ m ->
 		val cancellationProxy = CancellationProxy()
 		m.cancellationRequested(cancellationProxy)
-		cancellableMessenger(cancellationProxy)
-			.also(cancellationProxy::doCancel)
-			.then(ResolutionProxy(m), RejectionProxy(m))
+		val cancellablePromise = cancellableMessenger(cancellationProxy)
+		cancellablePromise.then(ResolutionProxy(m), RejectionProxy(m))
+		cancellationProxy.doCancel(cancellablePromise)
 	})

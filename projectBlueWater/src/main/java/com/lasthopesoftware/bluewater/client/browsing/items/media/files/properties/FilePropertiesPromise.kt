@@ -14,6 +14,9 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationTok
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
 import xmlwise.Xmlwise
+import java.io.IOException
+import java.util.*
+import kotlin.collections.HashMap
 
 internal class FilePropertiesPromise(
 	connectionProvider: IConnectionProvider,
@@ -26,7 +29,6 @@ internal class FilePropertiesPromise(
 		val cancellationProxy = CancellationProxy()
 		respondToCancellation(cancellationProxy)
 		val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
-		cancellationProxy.doCancel(filePropertiesResponse)
 		val promisedProperties = filePropertiesResponse
 			.eventually(
 				FilePropertiesWriter(
@@ -34,9 +36,13 @@ internal class FilePropertiesPromise(
 					filePropertiesContainerProvider,
 					serviceFile,
 					serverRevision
-				)
+				),
+				CancelledFilePropertyErrorHandler
 			)
+
+		cancellationProxy.doCancel(filePropertiesResponse)
 		cancellationProxy.doCancel(promisedProperties)
+
 		promisedProperties.then(::resolve, ::reject)
 	}
 
@@ -54,7 +60,7 @@ internal class FilePropertiesPromise(
 		}
 
 		override fun prepareMessage(cancellationToken: CancellationToken): Map<String, String> =
-			if (cancellationToken.isCancelled) HashMap()
+			if (cancellationToken.isCancelled) emptyMap()
 			else connectionProvider.urlProvider.baseUrl?.let { baseUrl ->
 				response?.body
 					?.use { body -> Xmlwise.createXml(body.string()) }
@@ -68,6 +74,21 @@ internal class FilePropertiesPromise(
 						)
 						returnProperties
 				}
-			} ?: HashMap()
+			} ?: emptyMap()
+	}
+
+	private object CancelledFilePropertyErrorHandler : PromisedResponse<Throwable, Map<String, String>> {
+		private val emptyPropertiesPromise by lazy { Promise(emptyMap<String, String>()) }
+
+		override fun promiseResponse(resolution: Throwable?): Promise<Map<String, String>> {
+			return when (resolution) {
+				is IOException -> {
+					val message = resolution.message
+					if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) emptyPropertiesPromise
+					else Promise(resolution)
+				}
+				else -> Promise(resolution)
+			}
+		}
 	}
 }
