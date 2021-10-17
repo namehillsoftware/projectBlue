@@ -62,8 +62,9 @@ class FileNameTextViewSetter(private val textView: TextView) {
 
 	@Synchronized
 	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Unit> {
-		promisedState.cancel()
-		promisedState = promisedState.inevitably(EventualTextViewUpdate(serviceFile))
+		val currentPromisedState = promisedState
+		promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(serviceFile))
+		currentPromisedState.cancel()
 		return promisedState
 	}
 
