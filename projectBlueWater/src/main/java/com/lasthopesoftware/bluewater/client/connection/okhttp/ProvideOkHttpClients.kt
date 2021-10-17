@@ -5,4 +5,6 @@ import okhttp3.OkHttpClient
 
 interface ProvideOkHttpClients {
     fun getOkHttpClient(urlProvider: IUrlProvider): OkHttpClient
+
+    fun getJriverCentralClient(): OkHttpClient
 }

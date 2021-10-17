@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -29,15 +30,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.LibraryViewsProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectStaticViewAdapter
 import com.lasthopesoftware.bluewater.client.browsing.library.views.adapters.SelectViewAdapter
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
@@ -47,10 +46,8 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -64,10 +61,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val libraryRepository by lazy { LibraryRepository(this)	}
 
-	private val libraryViewsProvider by lazy {
-		val selectedConnectionProvider = SelectedConnectionProvider(this)
-		LibraryViewsProvider(selectedConnectionProvider, SelectedConnectionRevisionProvider(selectedConnectionProvider))
-	}
+	private val libraryViewsProvider by lazy { CachedLibraryViewsProvider.getInstance(this) }
 
 	private val selectedLibraryViews by lazy {
 		SelectedLibraryViewProvider(selectedBrowserLibraryProvider, libraryViewsProvider, libraryRepository)
@@ -80,31 +74,31 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			libraryRepository)
 	}
 
+	private val messageHandler by lazy { Handler(mainLooper) }
+
 	private val lazyLocalBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
 
-	private val drawerToggle = object : AbstractSynchronousLazy<ActionBarDrawerToggle>() {
-		override fun create(): ActionBarDrawerToggle {
-			val selectViewTitle = getText(R.string.select_view_title)
-			return object : ActionBarDrawerToggle(
-				this@BrowserEntryActivity,  /* host Activity */
-				drawerLayout.findView(),  /* DrawerLayout object */
-				R.string.drawer_open,  /* "open drawer" description */
-				R.string.drawer_close /* "close drawer" description */
-			) {
-				/** Called when a drawer has settled in a completely closed state.  */
-				override fun onDrawerClosed(view: View) {
-					super.onDrawerClosed(view)
-					supportActionBar?.title = oldTitle
-					invalidateOptionsMenu() // creates resultFrom to onPrepareOptionsMenu()
-				}
+	private val drawerToggle = lazy {
+		val selectViewTitle = getText(R.string.select_view_title)
+		object : ActionBarDrawerToggle(
+			this@BrowserEntryActivity,  /* host Activity */
+			drawerLayout.findView(),  /* DrawerLayout object */
+			R.string.drawer_open,  /* "open drawer" description */
+			R.string.drawer_close /* "close drawer" description */
+		) {
+			/** Called when a drawer has settled in a completely closed state.  */
+			override fun onDrawerClosed(view: View) {
+				super.onDrawerClosed(view)
+				supportActionBar?.title = oldTitle
+				invalidateOptionsMenu() // creates resultFrom to onPrepareOptionsMenu()
+			}
 
-				/** Called when a drawer has settled in a completely open state.  */
-				override fun onDrawerOpened(drawerView: View) {
-					super.onDrawerOpened(drawerView)
-					oldTitle = supportActionBar?.title
-					supportActionBar?.title = selectViewTitle
-					invalidateOptionsMenu() // creates resultFrom to onPrepareOptionsMenu()
-				}
+			/** Called when a drawer has settled in a completely open state.  */
+			override fun onDrawerOpened(drawerView: View) {
+				super.onDrawerOpened(drawerView)
+				oldTitle = supportActionBar?.title
+				supportActionBar?.title = selectViewTitle
+				invalidateOptionsMenu() // creates resultFrom to onPrepareOptionsMenu()
 			}
 		}
 	}
@@ -158,17 +152,17 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		val drawerLayout = drawerLayout.findView()
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
-		drawerLayout.addDrawerListener(drawerToggle.getObject())
+		drawerLayout.addDrawerListener(drawerToggle.value)
 
 		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, _, _ -> updateSelectedView(ViewType.DownloadView, 0) }
 	}
 
 	override fun onStart() {
 		super.onStart()
-		InstantiateSelectedConnectionActivity.restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+		InstantiateSelectedConnectionActivity.restoreSelectedConnection(this).eventually(response({
 			connectionRestoreCode = it
 			if (it == null) startLibrary()
-		}, this))
+		}, messageHandler))
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -189,7 +183,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		selectedBrowserLibraryProvider
 			.browserLibrary
-			.eventually(LoopedInPromise.response({ library ->
+			.eventually(response({ library ->
 				when {
 					library == null -> {
 						// No library, must bail out
@@ -199,7 +193,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 						library.setSelectedView(0)
 						library.setSelectedViewType(ViewType.DownloadView)
 						libraryRepository.saveLibrary(library)
-							.eventually(LoopedInPromise.response(this::displayLibrary, this))
+							.eventually(response(::displayLibrary, messageHandler))
 
 						// Clear the action
 						intent.action = null
@@ -208,7 +202,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 						displayLibrary(library)
 					}
 				}
-			}, this))
+			}, messageHandler))
 	}
 
 	private fun displayLibrary(library: Library?) {
@@ -221,18 +215,23 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		selectedLibraryViews
 			.promiseSelectedOrDefaultView()
 			.eventually { selectedView ->
-				selectedView?.let {
-					libraryViewsProvider.promiseLibraryViews()
-						.eventually(
-							LoopedInPromise.response(
-								{ items -> updateLibraryView(it, items) },
-								this
-							)
-						)
-				} ?: Unit.toPromise()
+				selectedView
+					?.let { lv ->
+						selectedBrowserLibraryProvider.browserLibrary
+							.eventually { l ->
+								l?.libraryId
+									?.let { libraryId ->
+										libraryViewsProvider
+											.promiseLibraryViews(libraryId)
+											.eventually(response({ items -> updateLibraryView(lv, items) }, messageHandler))
+									}
+									.keepPromise(Unit)
+							}
+					}
+					.keepPromise(Unit)
 			}
 			.excuse(HandleViewIoException(this, this))
-			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
 				ApplicationSettingsActivity.launch(this)
 				finish()
@@ -286,42 +285,39 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private fun updateSelectedView(selectedViewType: ViewType, selectedViewKey: Int) {
 		drawerLayout.findView().closeDrawer(GravityCompat.START)
-		drawerToggle.getObject().syncState()
+		drawerToggle.value.syncState()
 
 		selectedBrowserLibraryProvider
 			.browserLibrary
-			.then(ImmediateResponse { library ->
-				library?.let {
-					if (selectedViewType === it.selectedViewType && it.selectedView == selectedViewKey)
-						return@ImmediateResponse
-
-					it.setSelectedView(selectedViewKey)
-					it.setSelectedViewType(selectedViewType)
-					libraryRepository.saveLibrary(it)
-						.eventually(LoopedInPromise.response(this::displayLibrary, this))
-				}
-			})
+			.then { library ->
+				library
+					?.takeUnless { selectedViewType === it.selectedViewType && it.selectedView == selectedViewKey }
+					?.run {
+						setSelectedView(selectedViewKey)
+						setSelectedViewType(selectedViewType)
+						libraryRepository
+							.saveLibrary(this)
+							.eventually(response(::displayLibrary, messageHandler))
+					}
+			}
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean {
-		return ViewUtils.buildStandardMenu(this, menu)
-	}
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = ViewUtils.buildStandardMenu(this, menu)
 
-	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		return drawerToggle.isCreated
-			&& drawerToggle.getObject().onOptionsItemSelected(item)
+	override fun onOptionsItemSelected(item: MenuItem): Boolean =
+		drawerToggle.isInitialized()
+			&& drawerToggle.value.onOptionsItemSelected(item)
 			|| ViewUtils.handleMenuClicks(this, item)
-	}
 
 	override fun onPostCreate(savedInstanceState: Bundle?) {
 		super.onPostCreate(savedInstanceState)
 		// Sync the toggle state after onRestoreInstanceState has occurred.
-		if (drawerToggle.isCreated) drawerToggle.getObject().syncState()
+		if (drawerToggle.isInitialized()) drawerToggle.value.syncState()
 	}
 
 	override fun onConfigurationChanged(newConfig: Configuration) {
 		super.onConfigurationChanged(newConfig)
-		if (drawerToggle.isCreated) drawerToggle.getObject().onConfigurationChanged(newConfig)
+		if (drawerToggle.isInitialized()) drawerToggle.value.onConfigurationChanged(newConfig)
 	}
 
 	private fun showProgressBar() {

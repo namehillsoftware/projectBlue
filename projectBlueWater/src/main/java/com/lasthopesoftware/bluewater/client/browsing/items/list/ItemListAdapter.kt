@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.*
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
@@ -34,7 +34,7 @@ open class ItemListAdapter internal constructor(
 	private val itemListMenuEvents: IItemListMenuChangeHandler,
 	private val storedItemAccess: StoredItemAccess,
 	private val provideItems: ProvideItems,
-	private val library: Library
+	private val libraryId: LibraryId
 ) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(context, ItemDiffer) {
 
 	private val viewChangedHandler by lazy {
@@ -82,7 +82,7 @@ open class ItemListAdapter internal constructor(
 			tryFlipToPreviousView(viewFlipper)
 
 			listItemLayout.setOnLongClickListener(LongClickViewAnimatorListener(viewFlipper))
-			listItemLayout.setOnClickListener(ClickItemListener(item, provideItems, sendMessages))
+			listItemLayout.setOnClickListener(ClickItemListener(libraryId, item, provideItems, sendMessages))
 
 			textView.findView().text = item.value
 			shuffleButton.findView().setOnClickListener(
@@ -112,7 +112,7 @@ open class ItemListAdapter internal constructor(
 					viewFlipper,
 					this,
 					storedItemAccess,
-					library,
+					libraryId,
 					item
 				).also { onSyncButtonLayoutChangeListener = it })
 			}
