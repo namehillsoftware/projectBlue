@@ -11,14 +11,20 @@ import java.util.concurrent.atomic.AtomicReference
 class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromises<T>, Runnable {
 	private val queueProcessorReference = AtomicReference<RateLimiter<T>>()
 	private val semaphore = Semaphore(rate)
-	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<T>>()
-	private val resolutionHandler = ImmediateResponse<T, Unit> { semaphore.release() }
-	private val rejectionHandler = ImmediateResponse<Throwable, Unit> { semaphore.release() }
+	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<Unit>>()
+	private val semaphoreReleasingResolveHandler = ImmediateResponse<T, Unit> { semaphore.release() }
+	private val semaphoreReleasingRejectionHandler = ImmediateResponse<Throwable, Unit> { semaphore.release() }
 
 	override fun limit(factory: () -> Promise<T>): Promise<T> {
 		return Promise<T> { m ->
 			val promiseProxy = PromiseProxy(m)
-			queuedPromises.offer { factory().also(promiseProxy::proxy) }
+			queuedPromises.offer {
+				val innerPromise = factory()
+				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
+				val returnPromise = innerPromise.then(semaphoreReleasingResolveHandler, semaphoreReleasingRejectionHandler)
+				promiseProxy.proxy(innerPromise)
+				returnPromise
+			}
 
 			if (queueProcessorReference.compareAndSet(null, this)) executor.execute(this)
 		}
@@ -26,11 +32,10 @@ class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromis
 
 	override fun run() {
 		try {
-			var promiseFactory: (() -> Promise<T>)?
+			var promiseFactory: (() -> Promise<Unit>)?
 			while (queuedPromises.poll().also { promiseFactory = it } != null) {
 				semaphore.acquire()
-				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
-				promiseFactory?.invoke()?.then(resolutionHandler, rejectionHandler)
+				promiseFactory?.invoke()
 			}
 		} finally {
 			queueProcessorReference.set(null)
