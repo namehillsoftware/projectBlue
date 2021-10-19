@@ -11,6 +11,7 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
 import xmlwise.Xmlwise
@@ -23,7 +24,7 @@ internal class FilePropertiesPromise(
 	filePropertiesContainerProvider: IFilePropertiesContainerRepository,
 	serviceFile: ServiceFile,
 	serverRevision: Int
-) : Promise<Map<String, String>>() {
+) : Promise<Map<String, String>>(), ImmediateResponse<Throwable, Unit> {
 
 	init {
 		val cancellationProxy = CancellationProxy()
@@ -36,14 +37,13 @@ internal class FilePropertiesPromise(
 					filePropertiesContainerProvider,
 					serviceFile,
 					serverRevision
-				),
-				CancelledFilePropertyErrorHandler
+				)
 			)
 
-		cancellationProxy.doCancel(filePropertiesResponse)
-		cancellationProxy.doCancel(promisedProperties)
+		promisedProperties.then(::resolve, this)
 
-		promisedProperties.then(::resolve, ::reject)
+		cancellationProxy.doCancel(promisedProperties)
+		cancellationProxy.doCancel(filePropertiesResponse)
 	}
 
 	private class FilePropertiesWriter(
@@ -77,18 +77,14 @@ internal class FilePropertiesPromise(
 			} ?: emptyMap()
 	}
 
-	private object CancelledFilePropertyErrorHandler : PromisedResponse<Throwable, Map<String, String>> {
-		private val emptyPropertiesPromise by lazy { Promise(emptyMap<String, String>()) }
-
-		override fun promiseResponse(resolution: Throwable?): Promise<Map<String, String>> {
-			return when (resolution) {
-				is IOException -> {
-					val message = resolution.message
-					if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) emptyPropertiesPromise
-					else Promise(resolution)
-				}
-				else -> Promise(resolution)
+	override fun respond(resolution: Throwable) {
+		when (resolution) {
+			is IOException -> {
+				val message = resolution.message
+				if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) resolve(emptyMap())
+				else reject(resolution)
 			}
+			else -> reject(resolution)
 		}
 	}
 }
