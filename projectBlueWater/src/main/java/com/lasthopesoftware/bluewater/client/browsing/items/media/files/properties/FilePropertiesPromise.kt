@@ -40,6 +40,7 @@ internal class FilePropertiesPromise(
 				)
 			)
 
+		// Handle cancellation errors directly in stack so that they don't become unhandled
 		promisedProperties.then(::resolve, this)
 
 		cancellationProxy.doCancel(promisedProperties)
