@@ -56,13 +56,13 @@ internal class FilePropertiesPromise(
 				?.use { body -> Xmlwise.createXml(body.string()) }
 				?.let { xml ->
 					val parent = xml[0]
-					val returnProperties =
-						parent.associateTo(HashMap(), { el -> Pair(el.getAttribute("Name"), el.value) })
+					parent.associateTo(HashMap(), { el -> Pair(el.getAttribute("Name"), el.value) })
+				}
+				?.also { properties ->
 					filePropertiesContainerProvider.putFilePropertiesContainer(
 						UrlKeyHolder(baseUrl, serviceFile),
-						FilePropertiesContainer(serverRevision, returnProperties)
+						FilePropertiesContainer(serverRevision, properties)
 					)
-					returnProperties
 				}
 		} ?: emptyMap()
 
