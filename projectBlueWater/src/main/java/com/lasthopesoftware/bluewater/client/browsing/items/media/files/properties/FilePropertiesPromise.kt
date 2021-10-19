@@ -8,9 +8,8 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
@@ -27,13 +26,13 @@ internal class FilePropertiesPromise(
 ) :
 	Promise<Map<String, String>>(),
 	PromisedResponse<Response, Unit>,
-	CancellableMessageWriter<Unit>,
+	MessageWriter<Unit>,
 	ImmediateResponse<Throwable, Unit>
 {
+	private val cancellationProxy = CancellationProxy()
 	private lateinit var response: Response
 
 	init {
-		val cancellationProxy = CancellationProxy()
 		respondToCancellation(cancellationProxy)
 		val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
 		val promisedProperties = filePropertiesResponse.eventually(this)
@@ -50,8 +49,8 @@ internal class FilePropertiesPromise(
 		return QueuedPromise(this, ThreadPools.compute)
 	}
 
-	override fun prepareMessage(cancellationToken: CancellationToken) {
-		val result = if (cancellationToken.isCancelled) emptyMap()
+	override fun prepareMessage() {
+		val result = if (cancellationProxy.isCancelled) emptyMap()
 		else connectionProvider.urlProvider.baseUrl?.let { baseUrl ->
 			response.body
 				?.use { body -> Xmlwise.createXml(body.string()) }
