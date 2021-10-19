@@ -128,7 +128,7 @@ dependencies {
 		exclude group: 'com.google.android', module: 'android'
 	}
 	implementation 'org.slf4j:slf4j-api:1.7.30'
-	implementation 'com.namehillsoftware:handoff:0.19.5'
+	implementation 'com.namehillsoftware:handoff:0.19.6'
 	implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
 	implementation 'com.namehillsoftware:lazy-j:0.11.0'
 	implementation 'com.github.danrien:xmlwise:-SNAPSHOT'
