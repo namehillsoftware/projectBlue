@@ -136,19 +136,23 @@ class FileNameTextViewSetter(private val textView: TextView) {
 
 		private fun handleError(e: Throwable) {
 			if (isUpdateCancelled) return
-			if (e is CancellationException) return
-			if (e is SocketException) {
-				val message = e.message
-				if (message != null && message.lowercase(Locale.getDefault()).contains("socket closed")) return
+
+			when (e) {
+				is CancellationException -> return
+				is SocketException -> {
+					val message = e.message
+					if (message != null && message.lowercase(Locale.getDefault()).contains("socket closed")) return
+				}
+				is SSLProtocolException -> {
+					val message = e.message
+					if (message != null && message.lowercase(Locale.getDefault()).contains("ssl handshake aborted")) return
+				}
+				is IOException -> {
+					val message = e.message
+					if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) return
+				}
 			}
-			if (e is IOException) {
-				val message = e.message
-				if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) return
-			}
-			if (e is SSLProtocolException) {
-				val message = e.message
-				if (message != null && message.lowercase(Locale.getDefault()).contains("ssl handshake aborted")) return
-			}
+
 			logger.error(
 				"An error occurred getting the file properties for the file with ID " + serviceFile.key,
 				e
