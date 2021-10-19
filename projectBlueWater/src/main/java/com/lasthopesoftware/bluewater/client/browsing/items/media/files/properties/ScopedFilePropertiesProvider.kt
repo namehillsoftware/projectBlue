@@ -10,15 +10,10 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 open class ScopedFilePropertiesProvider(private val scopedConnection: IConnectionProvider, private val checkScopedRevisions: CheckScopedRevisions, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideScopedFileProperties {
-	companion object {
-		private val emptyPropertiesPromise by lazy { Promise(emptyMap<String, String>()) }
-	}
-
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
 		CancellableProxyPromise { cp ->
-			if (cp.isCancelled) emptyPropertiesPromise
-			else checkScopedRevisions.promiseRevision().eventually { revision ->
-				if (cp.isCancelled) emptyPropertiesPromise
+			checkScopedRevisions.promiseRevision().also(cp::doCancel).eventually { revision ->
+				if (cp.isCancelled) Promise(emptyMap())
 				else scopedConnection.urlProvider.baseUrl
 					?.let { filePropertiesContainerProvider.getFilePropertiesContainer(UrlKeyHolder(it, serviceFile)) }
 					?.takeIf { it.properties.isNotEmpty() && revision == it.revision }
