@@ -18,13 +18,8 @@ class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromis
 	override fun limit(factory: () -> Promise<T>): Promise<T> {
 		return Promise<T> { m ->
 			val promiseProxy = PromiseProxy(m)
-			queuedPromises.offer {
-				val innerPromise = factory()
-				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
-				val returnPromise = innerPromise.then(semaphoreReleasingResolveHandler, semaphoreReleasingRejectionHandler)
-				promiseProxy.proxy(innerPromise)
-				returnPromise
-			}
+			// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
+			queuedPromises.offer { factory().also(promiseProxy::proxy).then(semaphoreReleasingResolveHandler, semaphoreReleasingRejectionHandler) }
 
 			if (queueProcessorReference.compareAndSet(null, this)) executor.execute(this)
 		}
