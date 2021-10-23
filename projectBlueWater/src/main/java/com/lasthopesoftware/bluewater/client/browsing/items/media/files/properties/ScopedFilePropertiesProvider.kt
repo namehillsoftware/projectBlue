@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProx
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-open class ScopedFilePropertiesProvider(private val scopedConnection: IConnectionProvider, private val checkScopedRevisions: CheckScopedRevisions, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideScopedFileProperties {
+class ScopedFilePropertiesProvider(private val scopedConnection: IConnectionProvider, private val checkScopedRevisions: CheckScopedRevisions, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideScopedFileProperties {
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
 		CancellableProxyPromise { cp ->
 			checkScopedRevisions.promiseRevision().also(cp::doCancel).eventually { revision ->
