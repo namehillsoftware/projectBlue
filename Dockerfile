@@ -1,17 +1,5 @@
 FROM gradle:7.1.1-jdk11
 
-# set default build arguments
-ARG SDK_VERSION=commandlinetools-linux-6609375_latest.zip
-#ARG USER
-#ARG GROUP
-
-# set default environment variables
-ENV ADB_INSTALL_TIMEOUT=10
-ENV ANDROID_HOME=/opt/android
-ENV ANDROID_SDK_HOME=${ANDROID_HOME}
-
-ENV PATH ${ANDROID_HOME}/cmdline-tools/tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
-
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
         apt-transport-https \
@@ -22,16 +10,22 @@ RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
         gnupg2 \
     && rm -rf /var/lib/apt/lists/*;
 
-#USER ${USER}:${GROUP}
+# set default environment variables
+ENV ADB_INSTALL_TIMEOUT=10
+ENV ANDROID_HOME=/opt/android
+ENV ANDROID_SDK_HOME=${ANDROID_HOME}
 
-ARG ANDROID_BUILD_VERSION=30
-ARG ANDROID_TOOLS_VERSION=30.0.2
+ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
+
+# set default build arguments
+ARG SDK_VERSION=commandlinetools-linux-7583922_latest.zip
+ARG ANDROID_BUILD_VERSION=31
+ARG ANDROID_TOOLS_VERSION=31.0.0
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # download and unpack android
 RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk.zip \
     && mkdir ${ANDROID_HOME} \
-    && chmod 755 ${ANDROID_HOME} \
     && unzip -q -d ${ANDROID_HOME}/cmdline-tools /tmp/sdk.zip \
     && rm /tmp/sdk.zip \
     && yes | sdkmanager --licenses \
