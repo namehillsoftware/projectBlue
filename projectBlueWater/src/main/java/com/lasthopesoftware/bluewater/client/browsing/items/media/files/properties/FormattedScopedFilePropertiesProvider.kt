@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -12,8 +10,8 @@ import org.joda.time.format.PeriodFormatterBuilder
 import java.util.*
 import kotlin.math.ceil
 
-class FormattedScopedFilePropertiesProvider(connectionProvider: IConnectionProvider, checkScopedRevisions: CheckScopedRevisions, filePropertiesContainerProvider: IFilePropertiesContainerRepository)
-	: ScopedFilePropertiesProvider(connectionProvider, checkScopedRevisions, filePropertiesContainerProvider) {
+class FormattedScopedFilePropertiesProvider(private val inner:  ProvideScopedFileProperties)
+	: ProvideScopedFileProperties {
 
 	companion object {
 		private val yearFormatter = lazy { DateTimeFormatterBuilder().appendYear(4, 4).toFormatter() }
@@ -55,6 +53,8 @@ class FormattedScopedFilePropertiesProvider(connectionProvider: IConnectionProvi
 		private val dateTimeProperties = lazy {
 			setOf(
 				KnownFileProperties.LAST_PLAYED,
+				KnownFileProperties.LAST_PLAYED_ALBUM,
+				KnownFileProperties.LAST_LYRICS_LOOKUP,
 				KnownFileProperties.LAST_SKIPPED,
 				KnownFileProperties.DATE_CREATED,
 				KnownFileProperties.DATE_IMPORTED,
@@ -101,9 +101,11 @@ class FormattedScopedFilePropertiesProvider(connectionProvider: IConnectionProvi
 		}
 	}
 
-	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> {
-		return super
-			.promiseFileProperties(serviceFile)
-			.then { unformattedProperties -> buildFormattedReadonlyProperties(unformattedProperties) }
-	}
+	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
+		CancellableProxyPromise { cp ->
+			inner
+				.promiseFileProperties(serviceFile)
+				.apply(cp::doCancel)
+				.then(::buildFormattedReadonlyProperties)
+		}
 }
