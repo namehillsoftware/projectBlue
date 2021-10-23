@@ -1,153 +1,155 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools" package="com.lasthopesoftware.bluewater">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.lasthopesoftware.bluewater">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-            android:name=".MainApplication"
-            android:allowBackup="true"
-            android:icon="@drawable/clearstream_launcher"
-            android:label="@string/app_name"
-            android:logo="@drawable/clearstream_logo_dark"
-            android:theme="@style/AppTheme"
-            android:usesCleartextTraffic="true"
-            tools:ignore="GoogleAppIndexingWarning"
-            tools:targetApi="m">
+        android:name=".MainApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/clearstream_launcher"
+        android:label="@string/app_name"
+        android:logo="@drawable/clearstream_logo_dark"
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
+        tools:ignore="GoogleAppIndexingWarning"
+        tools:targetApi="m">
         <meta-data
-                android:name="android.app.default_searchable"
-                android:value=".client.library.items.media.files.list.SearchFilesActivity"/>
+            android:name="android.app.default_searchable"
+            android:value=".client.library.items.media.files.list.SearchFilesActivity" />
 
         <!-- Begin Connection intents -->
         <activity
-                android:name=".client.connection.selected.InstantiateSelectedConnectionActivity"
-                android:label="@string/app_name"
-                android:launchMode="singleTop"
-                android:noHistory="true">
-        </activity>
+            android:name=".client.connection.selected.InstantiateSelectedConnectionActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:noHistory="true" />
         <activity
-                android:name=".client.connection.polling.WaitForConnectionActivity"
-                android:label="@string/title_activity_wait_for_connection"
-                android:launchMode="singleTop"
-                android:noHistory="true">
-        </activity>
+            android:name=".client.connection.polling.WaitForConnectionActivity"
+            android:label="@string/title_activity_wait_for_connection"
+            android:launchMode="singleTop"
+            android:noHistory="true" />
         <activity
-                android:name=".client.settings.EditClientSettingsActivity"
-                android:label="@string/title_activity_set_up_connection">
+            android:name=".client.settings.EditClientSettingsActivity"
+            android:label="@string/title_activity_set_up_connection">
             <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value=".settings.ApplicationSettingsActivity"/>
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".settings.ApplicationSettingsActivity" />
         </activity>
         <!-- End Connection intents -->
 
         <activity
-                android:name=".settings.ApplicationSettingsActivity"
-                android:label="@string/layout_settings">
-        </activity>
+            android:name=".settings.ApplicationSettingsActivity"
+            android:label="@string/layout_settings" />
         <activity
-                android:name=".about.AboutActivity"
-                android:label="@string/title_activity_about">
-        </activity>
+            android:name=".about.AboutActivity"
+            android:label="@string/title_activity_about" />
         <activity
-                android:name=".settings.hidden.HiddenSettingsActivity"
-                android:label="@string/layout_settings">
-        </activity>
+            android:name=".settings.hidden.HiddenSettingsActivity"
+            android:label="@string/layout_settings" />
         <activity
-                android:name=".client.browsing.BrowserEntryActivity"
-                android:label="@string/app_name"
-                android:launchMode="singleTop">
+            android:name=".client.browsing.BrowserEntryActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-                android:name=".client.browsing.items.list.ItemListActivity"
-                android:label="@string/title_activity_file_view">
+            android:name=".client.browsing.items.list.ItemListActivity"
+            android:label="@string/title_activity_file_view">
             <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity"/>
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity" />
         </activity>
         <activity
-                android:name=".client.browsing.items.media.files.list.FileListActivity"
-                android:label="@string/title_activity_file_view">
+            android:name=".client.browsing.items.media.files.list.FileListActivity"
+            android:label="@string/title_activity_file_view">
             <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity"/>
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity" />
         </activity>
         <activity
-                android:name=".client.browsing.items.media.files.details.FileDetailsActivity"
-                android:label="@string/title_activity_file_view"
-                android:launchMode="singleTask">
+            android:name=".client.browsing.items.media.files.details.FileDetailsActivity"
+            android:label="@string/title_activity_file_view"
+            android:launchMode="singleTask">
             <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity"/>
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity" />
         </activity>
         <activity
-                android:name=".client.browsing.items.media.files.list.SearchFilesActivity"
-                android:label="@string/title_activity_search_files"
-                android:launchMode="singleTop">
+            android:name=".client.browsing.items.media.files.list.SearchFilesActivity"
+            android:exported="false"
+            android:label="@string/title_activity_search_files"
+            android:launchMode="singleTop">
             <intent-filter>
-                <action android:name="android.intent.action.SEARCH"/>
+                <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
 
             <meta-data
-                    android:name="android.app.searchable"
-                    android:resource="@xml/searchable"/>
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
             <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity"/>
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity" />
         </activity>
         <activity
-                android:name="com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity"
-                android:label="@string/title_activity_view_now_playing"
-                android:launchMode="singleTask"
-                android:theme="@style/NowPlayingTheme">
-        </activity>
+            android:name="com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity"
+            android:label="@string/title_activity_view_now_playing"
+            android:launchMode="singleTask"
+            android:theme="@style/NowPlayingTheme" />
 
-        <receiver android:name=".client.playback.service.receivers.AudioBecomingNoisyReceiver">
+        <receiver
+            android:name=".client.playback.service.receivers.AudioBecomingNoisyReceiver"
+            android:exported="true">
             <intent-filter android:priority="1000">
-                <action android:name="android.media.AUDIO_BECOMING_NOISY"/>
+                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".client.playback.service.receivers.RemoteControlReceiver">
+        <receiver
+            android:name=".client.playback.service.receivers.RemoteControlReceiver"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".client.stored.service.DeviceBootSyncScheduler"
-                  android:enabled="true">
+        <receiver
+            android:name=".client.stored.service.DeviceBootSyncScheduler"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
         <service
-                android:name=".client.playback.service.PlaybackService"
-                android:enabled="true"
-                android:exported="false">
-        </service>
+            android:name=".client.playback.service.PlaybackService"
+            android:enabled="true"
+            android:exported="false" />
         <service
-                android:name=".client.connection.polling.PollConnectionService"
-                android:enabled="true"
-                android:exported="false">
-        </service>
-        <service android:name=".client.stored.service.StoredSyncService"
-                 android:enabled="true"
-                 android:exported="false"/>
+            android:name=".client.connection.polling.PollConnectionService"
+            android:enabled="true"
+            android:exported="false" />
+        <service
+            android:name=".client.stored.service.StoredSyncService"
+            android:enabled="true"
+            android:exported="false" />
 
         <provider
             android:name="androidx.work.impl.WorkManagerInitializer"
             android:authorities="com.lasthopesoftware.bluewater.workmanager-init"
-            android:exported="false"
-            android:enabled="false"/>
+            android:enabled="false"
+            android:exported="false" />
     </application>
 
 </manifest>
