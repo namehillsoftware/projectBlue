@@ -2,6 +2,8 @@ FROM gradle:7.1.1-jdk11
 
 # set default build arguments
 ARG SDK_VERSION=commandlinetools-linux-6609375_latest.zip
+#ARG USER
+#ARG GROUP
 
 # set default environment variables
 ENV ADB_INSTALL_TIMEOUT=10
@@ -20,6 +22,8 @@ RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
         gnupg2 \
     && rm -rf /var/lib/apt/lists/*;
 
+#USER ${USER}:${GROUP}
+
 ARG ANDROID_BUILD_VERSION=30
 ARG ANDROID_TOOLS_VERSION=30.0.2
 
@@ -27,6 +31,7 @@ ARG ANDROID_TOOLS_VERSION=30.0.2
 # download and unpack android
 RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk.zip \
     && mkdir ${ANDROID_HOME} \
+    && chmod 755 ${ANDROID_HOME} \
     && unzip -q -d ${ANDROID_HOME}/cmdline-tools /tmp/sdk.zip \
     && rm /tmp/sdk.zip \
     && yes | sdkmanager --licenses \

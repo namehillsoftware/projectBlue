@@ -2,7 +2,7 @@
 
 rm -rf _artifacts
 
-docker-compose run -v "$(pwd)":/src -w /src -u "$(id -u)":"$(id -g)" gradle \
+USER="$(id -u)" GROUP="$(id -g)" docker-compose build && docker-compose run -v "$(pwd)":/src -w /src -u "$(id -u)":"$(id -g)" gradle \
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:assembleRelease
 EXIT_CODE=${PIPESTATUS[0]}

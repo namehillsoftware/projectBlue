@@ -5,6 +5,9 @@ services:
     image: ${TAG_ID:-project_blue_build}
     build:
       context: .
+      args:
+        - USER=${USER:-0}
+        - GROUP=${GROUP:-0}
     environment:
       - ANDROID_STORE_PASSWORD=${ANDROID_STORE_PASSWORD}
       - ANDROID_KEY_STORE_PASSWORD=${ANDROID_KEY_STORE_PASSWORD}
