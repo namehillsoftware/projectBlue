@@ -55,6 +55,8 @@ class FormattedScopedFilePropertiesProvider(connectionProvider: IConnectionProvi
 		private val dateTimeProperties = lazy {
 			setOf(
 				KnownFileProperties.LAST_PLAYED,
+				KnownFileProperties.LAST_PLAYED_ALBUM,
+				KnownFileProperties.LAST_LYRICS_LOOKUP,
 				KnownFileProperties.LAST_SKIPPED,
 				KnownFileProperties.DATE_CREATED,
 				KnownFileProperties.DATE_IMPORTED,

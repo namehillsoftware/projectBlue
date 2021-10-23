@@ -11,6 +11,8 @@ object KnownFileProperties {
 	const val TRACK = "Track #"
 	const val NUMBER_PLAYS = "Number Plays"
 	const val LAST_PLAYED = "Last Played"
+	const val LAST_PLAYED_ALBUM = "Last Played (album)"
+	const val LAST_LYRICS_LOOKUP = "Last Lyrics Lookup"
 	const val AUDIO_ANALYSIS_INFO = "Audio Analysis Info"
 	const val GET_COVER_ART_INFO = "Get Cover Art Info"
 	const val IMAGE_FILE = "Image File"
