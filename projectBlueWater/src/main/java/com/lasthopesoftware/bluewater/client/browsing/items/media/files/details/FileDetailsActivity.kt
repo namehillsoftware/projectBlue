@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
@@ -85,7 +86,8 @@ class FileDetailsActivity : AppCompatActivity() {
 		selectedConnectionProvider.promiseSessionConnection()
 			.eventually { connectionProvider ->
 				connectionProvider
-					?.let { c -> FormattedScopedFilePropertiesProvider(c, ScopedRevisionProvider(c), FilePropertyCache.getInstance()) }
+					?.let { c -> ScopedFilePropertiesProvider(c,  ScopedRevisionProvider(c), FilePropertyCache.getInstance()) }
+					?.let(::FormattedScopedFilePropertiesProvider)
 					?.promiseFileProperties(ServiceFile(fileKey))
 					?.eventually(LoopedInPromise.response({ fileProperties ->
 						setFileNameFromProperties(fileProperties)

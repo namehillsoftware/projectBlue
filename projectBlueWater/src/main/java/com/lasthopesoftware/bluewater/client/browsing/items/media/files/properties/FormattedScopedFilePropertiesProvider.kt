@@ -1,9 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.IFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -12,8 +9,8 @@ import org.joda.time.format.PeriodFormatterBuilder
 import java.util.*
 import kotlin.math.ceil
 
-class FormattedScopedFilePropertiesProvider(connectionProvider: IConnectionProvider, checkScopedRevisions: CheckScopedRevisions, filePropertiesContainerProvider: IFilePropertiesContainerRepository)
-	: ScopedFilePropertiesProvider(connectionProvider, checkScopedRevisions, filePropertiesContainerProvider) {
+class FormattedScopedFilePropertiesProvider(private val inner:  ProvideScopedFileProperties)
+	: ProvideScopedFileProperties {
 
 	companion object {
 		private val yearFormatter = lazy { DateTimeFormatterBuilder().appendYear(4, 4).toFormatter() }
@@ -103,9 +100,8 @@ class FormattedScopedFilePropertiesProvider(connectionProvider: IConnectionProvi
 		}
 	}
 
-	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> {
-		return super
+	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
+		inner
 			.promiseFileProperties(serviceFile)
-			.then { unformattedProperties -> buildFormattedReadonlyProperties(unformattedProperties) }
-	}
+			.then(::buildFormattedReadonlyProperties)
 }
