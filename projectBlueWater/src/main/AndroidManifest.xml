@@ -150,6 +150,11 @@
             android:authorities="${applicationId}.androidx-startup"
             android:enabled="false"
             android:exported="false" />
+        <!-- If you are using androidx.startup to initialize other components -->
+<!--        <meta-data-->
+<!--            android:name="androidx.work.impl.WorkManagerInitializer"-->
+<!--            android:value="androidx.startup"-->
+<!--            tools:node="remove" />-->
     </application>
 
 </manifest>
