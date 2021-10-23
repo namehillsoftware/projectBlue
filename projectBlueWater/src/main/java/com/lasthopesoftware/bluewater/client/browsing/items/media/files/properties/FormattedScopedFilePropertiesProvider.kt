@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -101,7 +102,10 @@ class FormattedScopedFilePropertiesProvider(private val inner:  ProvideScopedFil
 	}
 
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Map<String, String>> =
-		inner
-			.promiseFileProperties(serviceFile)
-			.then(::buildFormattedReadonlyProperties)
+		CancellableProxyPromise { cp ->
+			inner
+				.promiseFileProperties(serviceFile)
+				.apply(cp::doCancel)
+				.then(::buildFormattedReadonlyProperties)
+		}
 }
