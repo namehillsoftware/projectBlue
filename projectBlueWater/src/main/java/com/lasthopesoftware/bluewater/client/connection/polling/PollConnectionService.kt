@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelAc
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
+import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -153,7 +154,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		val intent = Intent(this, PollConnectionService::class.java)
 		intent.action = stopWaitingForConnectionAction
 
-		val pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+		val pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		val notificationsConfiguration = lazyNotificationsConfiguration.value
 

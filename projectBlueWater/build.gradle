@@ -19,15 +19,14 @@ if (!hasAndroidStorePassword()) {
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion '30.0.2'
+    compileSdkVersion 31
+    buildToolsVersion '31.0.0'
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 21
-        targetSdkVersion 30
-        versionCode getGeneratedVersionCode()
-        versionName project.version
+        targetSdkVersion 31
+		versionName project.version
 		multiDexEnabled true
 		archivesBaseName = "project-blue-" + project.version
 	}
@@ -76,7 +75,9 @@ android {
     }
 
     defaultConfig {
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+		versionCode getGeneratedVersionCode()
+		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     testOptions {
@@ -104,20 +105,20 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	def exoplayer_version = '2.15.0'
+	def exoplayer_version = '2.15.1'
 	def core_version = "1.6.0"
 
 	implementation "androidx.core:core-ktx:$core_version"
 	implementation 'androidx.annotation:annotation:1.2.0'
 	implementation 'androidx.multidex:multidex:2.0.1'
-	implementation 'androidx.work:work-runtime:2.5.0'
-	implementation 'androidx.media:media:1.4.1'
+	implementation 'androidx.work:work-runtime:2.7.0'
+	implementation 'androidx.media:media:1.4.3'
 	implementation "androidx.preference:preference-ktx:1.1.1"
 	implementation 'com.google.android.material:material:1.4.0'
 	implementation 'com.android.support:multidex:1.0.3'
 	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
 	implementation 'com.google.guava:guava:30.1-android'
-	implementation 'joda-time:joda-time:2.10.10'
+	implementation 'joda-time:joda-time:2.10.12'
 	implementation 'commons-io:commons-io:2.8.0'
 	implementation('com.github.worker8:tourguide:1.0.19-SNAPSHOT@aar') {
 		transitive = true
@@ -140,8 +141,8 @@ dependencies {
 	testImplementation 'androidx.test.ext:junit:1.1.3'
 	testImplementation 'com.annimon:stream:1.2.2'
 	testImplementation 'junit:junit:4.13.2'
-	testImplementation 'org.mockito:mockito-core:3.11.2'
-	testImplementation 'org.assertj:assertj-core:3.20.2'
+	testImplementation 'org.mockito:mockito-core:4.0.0'
+	testImplementation 'org.assertj:assertj-core:3.21.0'
 	testImplementation 'org.robolectric:robolectric:4.6.1'
     testImplementation 'commons-codec:commons-codec:1.15'
     testImplementation 'androidx.test:core:1.4.0'

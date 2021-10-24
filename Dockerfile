@@ -1,15 +1,5 @@
 FROM gradle:7.1.1-jdk11
 
-# set default build arguments
-ARG SDK_VERSION=commandlinetools-linux-6609375_latest.zip
-
-# set default environment variables
-ENV ADB_INSTALL_TIMEOUT=10
-ENV ANDROID_HOME=/opt/android
-ENV ANDROID_SDK_HOME=${ANDROID_HOME}
-
-ENV PATH ${ANDROID_HOME}/cmdline-tools/tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
-
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
         apt-transport-https \
@@ -20,8 +10,19 @@ RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
         gnupg2 \
     && rm -rf /var/lib/apt/lists/*;
 
-ARG ANDROID_BUILD_VERSION=30
-ARG ANDROID_TOOLS_VERSION=30.0.2
+# set default environment variables
+ENV ADB_INSTALL_TIMEOUT=10
+ENV ANDROID_HOME=/opt/android
+ENV ANDROID_SDK_HOME=${ANDROID_HOME}
+
+ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
+
+# set default build arguments
+ARG SDK_VERSION=commandlinetools-linux-7583922_latest.zip
+
+# Set these to the same versions as in build.gradle to avoid downloading updated tools
+ARG ANDROID_BUILD_VERSION=31
+ARG ANDROID_TOOLS_VERSION=31.0.0
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # download and unpack android
@@ -32,8 +33,8 @@ RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sd
     && yes | sdkmanager --licenses \
     && yes | sdkmanager "platform-tools" \
 #        "emulator" \ # keeping just in case it is needed
-        "platforms;android-$ANDROID_BUILD_VERSION" \
-        "build-tools;$ANDROID_TOOLS_VERSION" \
+        "platforms;android-${ANDROID_BUILD_VERSION}" \
+        "build-tools;${ANDROID_TOOLS_VERSION}" \
 #        "add-ons;addon-google_apis-google-23" \ # keeping in case addons are needed
         "extras;android;m2repository"
 
