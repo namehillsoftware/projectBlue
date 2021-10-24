@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
+import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaybackStartingNotificationBuilder(
@@ -41,6 +42,6 @@ class PlaybackStartingNotificationBuilder(
 		// Set the notification area
 		val viewIntent = Intent(context, NowPlayingActivity::class.java)
 		viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-		return PendingIntent.getActivity(context, 0, viewIntent, 0)
+		return PendingIntent.getActivity(context, 0, viewIntent, 0.makePendingIntentImmutable())
 	}
 }

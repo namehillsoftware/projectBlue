@@ -1,31 +1,17 @@
-package com.lasthopesoftware.bluewater.client.settings;
+package com.lasthopesoftware.bluewater.client.settings
 
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 
-/**
- * Created by david on 7/3/16.
- */
-public class EditClientSettingsPendingIntentBuilder implements IEditClientSettingsPendingIntentBuilder {
-
-	private final Context context;
-	private final IEditClientSettingsActivityIntentBuilder editClientSettingsActivityIntentBuilder;
-
-	public EditClientSettingsPendingIntentBuilder(Context context) {
-		this(context, new EditClientSettingsActivityIntentBuilder(context));
-	}
-
-	public EditClientSettingsPendingIntentBuilder(Context context, IEditClientSettingsActivityIntentBuilder editClientSettingsActivityIntentBuilder) {
-		this.context = context;
-		this.editClientSettingsActivityIntentBuilder = editClientSettingsActivityIntentBuilder;
-	}
-
-	@Override
-	public PendingIntent buildEditServerSettingsPendingIntent(int libraryId) {
-		final Intent settingsIntent = editClientSettingsActivityIntentBuilder.buildIntent(libraryId);
-		settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-		return PendingIntent.getActivity(context, 0, settingsIntent, 0);
-	}
+class EditClientSettingsPendingIntentBuilder @JvmOverloads constructor(
+    private val context: Context,
+    private val editClientSettingsActivityIntentBuilder: IEditClientSettingsActivityIntentBuilder = EditClientSettingsActivityIntentBuilder(context)
+) : IEditClientSettingsPendingIntentBuilder {
+    override fun buildEditServerSettingsPendingIntent(libraryId: Int): PendingIntent {
+        val settingsIntent = editClientSettingsActivityIntentBuilder.buildIntent(libraryId)
+        settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return PendingIntent.getActivity(context, 0, settingsIntent, 0.makePendingIntentImmutable())
+    }
 }

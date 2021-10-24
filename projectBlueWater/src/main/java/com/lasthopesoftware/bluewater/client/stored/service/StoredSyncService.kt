@@ -57,6 +57,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
@@ -253,7 +254,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 			this,
 			0,
 			browseLibraryIntent,
-			0)
+			0.makePendingIntentImmutable())
 	}
 
 	private val lazyCancelIntent by lazy {
@@ -261,7 +262,7 @@ class StoredSyncService : Service(), PostSyncNotification {
 			this,
 			0,
 			getSelfIntent(this, cancelSyncAction),
-			PendingIntent.FLAG_UPDATE_CURRENT)
+			PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 	}
 
 	private val broadcastReceivers: MutableList<BroadcastReceiver> = ArrayList()

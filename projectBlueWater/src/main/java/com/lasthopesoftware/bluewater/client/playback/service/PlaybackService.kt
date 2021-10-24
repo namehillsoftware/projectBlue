@@ -11,7 +11,6 @@ import android.os.*
 import android.os.PowerManager.WakeLock
 import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -95,6 +94,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.control.Notif
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.observe
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -108,7 +108,6 @@ import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.internal.schedulers.ExecutorScheduler
@@ -169,7 +168,7 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(
 					context,
 					Action.play),
-				PendingIntent.FLAG_UPDATE_CURRENT)
+				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		@JvmStatic
 		fun pause(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.pause))
@@ -182,7 +181,7 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(
 					context,
 					Action.pause),
-				PendingIntent.FLAG_UPDATE_CURRENT)
+				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		@JvmStatic
 		fun togglePlayPause(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.togglePlayPause))
@@ -198,7 +197,7 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(
 					context,
 					Action.next),
-				PendingIntent.FLAG_UPDATE_CURRENT)
+				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		@JvmStatic
 		fun previous(context: Context) {
@@ -213,7 +212,7 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(
 					context,
 					Action.previous),
-				PendingIntent.FLAG_UPDATE_CURRENT)
+				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 		}
 
 		@JvmStatic
@@ -253,7 +252,7 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(
 					context,
 					Action.killMusicService),
-				PendingIntent.FLAG_UPDATE_CURRENT)
+				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 		}
 
 		@JvmStatic
@@ -354,19 +353,16 @@ open class PlaybackService : Service() {
 	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
 	private val remoteControlReceiver = lazy { ComponentName(packageName, RemoteControlReceiver::class.java.name) }
-	private val lazyMediaSession = object : AbstractSynchronousLazy<MediaSessionCompat>() {
-		@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-		override fun create(): MediaSessionCompat {
-			val newMediaSession = MediaSessionCompat(
-				this@PlaybackService,
-				mediaSessionTag)
-			newMediaSession.setCallback(MediaSessionCallbackReceiver(this@PlaybackService))
-			val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
-			mediaButtonIntent.component = remoteControlReceiver.value
-			val mediaPendingIntent = PendingIntent.getBroadcast(this@PlaybackService, 0, mediaButtonIntent, 0)
-			newMediaSession.setMediaButtonReceiver(mediaPendingIntent)
-			return newMediaSession
-		}
+	private val lazyMediaSession = lazy {
+		val newMediaSession = MediaSessionCompat(
+			this@PlaybackService,
+			mediaSessionTag)
+		newMediaSession.setCallback(MediaSessionCallbackReceiver(this@PlaybackService))
+		val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
+		mediaButtonIntent.component = remoteControlReceiver.value
+		val mediaPendingIntent = PendingIntent.getBroadcast(this@PlaybackService, 0, mediaButtonIntent, 0.makePendingIntentImmutable())
+		newMediaSession.setMediaButtonReceiver(mediaPendingIntent)
+		newMediaSession
 	}
 	private val lazyMessageBus = lazy { MessageBus(localBroadcastManagerLazy.value) }
 	private val lazyPlaybackBroadcaster = lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
@@ -387,7 +383,7 @@ open class PlaybackService : Service() {
 				this,
 				NotificationBuilderProducer(this),
 				lazyPlaybackNotificationsConfiguration.value,
-				lazyMediaSession.getObject())
+				lazyMediaSession.value)
 		}
 	private val lazyAllStoredFilesInLibrary = lazy { StoredFilesCollection(this) }
 	private val playbackThread = lazy {
@@ -401,7 +397,7 @@ open class PlaybackService : Service() {
 			this,
 			NotificationBuilderProducer(this),
 			lazyPlaybackNotificationsConfiguration.value,
-			lazyMediaSession.getObject())
+			lazyMediaSession.value)
 	}
 	private val lazySelectedLibraryProvider = lazy {
 		SelectedBrowserLibraryProvider(
@@ -490,7 +486,7 @@ open class PlaybackService : Service() {
 	}
 
 	private fun registerRemoteClientControl() {
-		lazyMediaSession.getObject().isActive = true
+		lazyMediaSession.value.isActive = true
 	}
 
 	private fun registerListeners() {
@@ -668,7 +664,7 @@ open class PlaybackService : Service() {
 				this,
 				cachedSessionFilePropertiesProvider,
 				imageProvider,
-				lazyMediaSession.getObject())
+				lazyMediaSession.value)
 			remoteControlProxy = RemoteControlProxy(broadcaster)
 				.also { rcp ->
 					localBroadcastManagerLazy
@@ -1054,9 +1050,9 @@ open class PlaybackService : Service() {
 		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
 		if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
 
-		if (lazyMediaSession.isCreated) {
-			lazyMediaSession.getObject().isActive = false
-			lazyMediaSession.getObject().release()
+		if (lazyMediaSession.isInitialized()) {
+			lazyMediaSession.value.isActive = false
+			lazyMediaSession.value.release()
 		}
 
 		filePositionSubscription?.dispose()
