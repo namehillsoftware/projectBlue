@@ -16,9 +16,9 @@ import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncW
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class SyncSchedulingWorker(private val context: Context, workerParams: WorkerParameters) : ListenableWorker(context, workerParams) {
@@ -46,7 +46,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 
 	companion object {
 		private val workName = MagicPropertyBuilder.buildMagicPropertyName(SyncSchedulingWorker::class.java, "")
-		@JvmStatic
+
 		fun scheduleSync(context: Context): Promise<Operation> {
 			return constraints(context).then { c ->
 				val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncSchedulingWorker::class.java, 3, TimeUnit.HOURS)
@@ -67,21 +67,7 @@ class SyncSchedulingWorker(private val context: Context, workerParams: WorkerPar
 		}
 
 		private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> {
-			return object : Promise<List<WorkInfo>>() {
-				init {
-					val workInfosByName = WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName)
-					respondToCancellation { workInfosByName.cancel(false) }
-					workInfosByName.addListener({
-						try {
-							resolve(workInfosByName.get())
-						} catch (e: ExecutionException) {
-							reject(e)
-						} catch (e: InterruptedException) {
-							reject(e)
-						}
-					}, ThreadPools.compute)
-				}
-			}
+			return WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName).toPromise(ThreadPools.compute)
 		}
 	}
 }

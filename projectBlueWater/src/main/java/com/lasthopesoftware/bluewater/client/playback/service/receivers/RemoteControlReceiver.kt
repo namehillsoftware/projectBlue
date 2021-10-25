@@ -1,36 +1,25 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.view.KeyEvent;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.view.KeyEvent
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.next
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pause
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.play
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.previous
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.togglePlayPause
 
-public class RemoteControlReceiver extends BroadcastReceiver {
-	
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		final KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-	    if (event.getAction() != KeyEvent.ACTION_UP) return;
-	    
-	    switch (event.getKeyCode()) {
-	        case KeyEvent.KEYCODE_MEDIA_PLAY:
-	        	PlaybackService.play(context);
-	        	break;
-			case KeyEvent.KEYCODE_MEDIA_STOP:
-			case KeyEvent.KEYCODE_MEDIA_PAUSE:
-	        	PlaybackService.pause(context);
-	        	break;
-	        case KeyEvent.KEYCODE_HEADSETHOOK:
-	        case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-				PlaybackService.togglePlayPause(context);
-	            break;
-	        case KeyEvent.KEYCODE_MEDIA_NEXT:
-	            PlaybackService.next(context);
-	            break;
-	        case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-	            PlaybackService.previous(context);
-	            break;
-	    }
+class RemoteControlReceiver : BroadcastReceiver() {
+	override fun onReceive(context: Context, intent: Intent) {
+		val event = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+		if (event?.action != KeyEvent.ACTION_UP) return
+		when (event.keyCode) {
+			KeyEvent.KEYCODE_MEDIA_PLAY -> play(context)
+			KeyEvent.KEYCODE_MEDIA_STOP, KeyEvent.KEYCODE_MEDIA_PAUSE -> pause(context)
+			KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> togglePlayPause(context)
+			KeyEvent.KEYCODE_MEDIA_NEXT -> next(context)
+			KeyEvent.KEYCODE_MEDIA_PREVIOUS -> previous(context)
+		}
 	}
 }

@@ -135,6 +135,7 @@
         <service
             android:name=".client.playback.service.PlaybackService"
             android:enabled="true"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
         <service
             android:name=".client.connection.polling.PollConnectionService"
@@ -143,6 +144,7 @@
         <service
             android:name=".client.stored.service.StoredSyncService"
             android:enabled="true"
+            android:foregroundServiceType="dataSync"
             android:exported="false" />
 
         <provider
