@@ -141,7 +141,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 	private val notificationManagerLazy by lazy { context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val lazyChannelConfiguration by lazy { SyncChannelProperties(context) }
-	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(context)) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(context)) }
 	private val lazyStoredFileAccess by lazy { StoredFileAccess(context, StoredFilesCollection(context)) }
 	private val lazyReadPermissionArbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(context) }
 	private val lazyLibraryRepository by lazy { LibraryRepository(context) }
@@ -199,7 +199,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		)
 		StoredFileSynchronization(
 			lazyLibraryRepository,
-			lazyMessageBus.value,
+			messageBus.value,
 			syncHandler)
 	}
 
@@ -215,11 +215,11 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		)
 		val storedFileReadPermissionsReceiver = StoredFileReadPermissionsReceiver(
 			lazyReadPermissionArbitratorForOs,
-			StorageReadPermissionsRequestedBroadcaster(lazyMessageBus.value),
+			StorageReadPermissionsRequestedBroadcaster(messageBus),
 			lazyStoredFileAccess)
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
 			ExternalStorageWritePermissionsArbitratorForOs(context),
-			StorageWritePermissionsRequestedBroadcaster(lazyMessageBus.value),
+			StorageWritePermissionsRequestedBroadcaster(messageBus),
 			lazyStoredFileAccess)
 
 		arrayOf(
@@ -281,7 +281,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value) {
 				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
 				if (!broadcastReceivers.add(broadcastReceiver)) continue
-				lazyMessageBus.value.registerReceiver(
+				messageBus.registerReceiver(
 					broadcastReceiver,
 					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
 						i.addAction(e)
@@ -291,7 +291,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		}
 
 		if (!lazySyncStartedReceiver.isInitialized()) {
-			lazyMessageBus.value.registerReceiver(
+			messageBus.registerReceiver(
 				lazySyncStartedReceiver.value,
 				lazySyncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
 					i.addAction(e)
@@ -307,9 +307,13 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		isSyncRunning = true
 		return Promise.whenAll(
 			promisedNotifications.keys
-				.plus(lazyStoredFilesSynchronization.streamFileSynchronization()
-				.toPromise().also { promisedSynchronization = it }))
-			.unitResponse()
+				.plus(
+					lazyStoredFilesSynchronization.streamFileSynchronization()
+						.toPromise()
+						.must { messageBus.clear() }
+						.also { promisedSynchronization = it }
+				)
+		).unitResponse()
 	}
 
 	override fun onStopped() {
