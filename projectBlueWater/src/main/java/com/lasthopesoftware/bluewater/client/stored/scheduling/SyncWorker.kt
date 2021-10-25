@@ -54,13 +54,11 @@ import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStarte
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -75,7 +73,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
@@ -87,9 +84,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(SyncWorker::class.java) }
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(SyncWorker::class.java) }
-		private val doSyncAction by lazy { magicPropertyBuilder.buildProperty("doSyncAction") }
-		private val isUninterruptedSyncSetting by lazy { magicPropertyBuilder.buildProperty("isUninterruptedSyncSetting") }
-		private val cancelSyncAction by lazy { magicPropertyBuilder.buildProperty("cancelSyncAction") }
 		private const val notificationId = 23
 		private val workName by lazy { magicPropertyBuilder.buildProperty("") }
 
@@ -114,21 +108,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		}
 
 		private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> {
-			return object : Promise<List<WorkInfo>>() {
-				init {
-					val workInfosByName = WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName)
-					respondToCancellation { workInfosByName.cancel(false) }
-					workInfosByName.addListener({
-						try {
-							resolve(workInfosByName.get())
-						} catch (e: ExecutionException) {
-							reject(e)
-						} catch (e: InterruptedException) {
-							reject(e)
-						}
-					}, ThreadPools.compute)
-				}
-			}
+			return WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName).toPromise(ThreadPools.compute)
 		}
 	}
 
@@ -144,26 +124,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	}
 
 	private val applicationSettings by lazy { context.getApplicationSettingsRepository() }
-
-	private val onWifiStateChangedReceiver = lazy {
-		object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				applicationSettings.promiseApplicationSettings()
-					.eventually(LoopedInPromise.response({ s ->
-						if (s.isSyncOnWifiOnly && !IoCommon.isWifiConnected(context)) StoredSyncService.cancelSync(this@StoredSyncService)
-					}, context))
-			}
-		}
-	}
-
-	private val onPowerDisconnectedReceiver = lazy {
-		object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				applicationSettings.promiseApplicationSettings()
-					.then { a -> if (a.isSyncOnPowerOnly) StoredSyncService.cancelSync(context) }
-			}
-		}
-	}
 
 	private val lazyActiveNotificationChannelId by lazy {
 		val notificationChannelActivator =
@@ -285,11 +245,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	}
 
 	private val lazyCancelIntent by lazy {
-		PendingIntent.getService(
-			context,
-			0,
-			StoredSyncService.getSelfIntent(context, StoredSyncService.cancelSyncAction),
-			PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
+		WorkManager.getInstance(context).createCancelPendingIntent(id)
 	}
 
 	private val broadcastReceivers: MutableList<BroadcastReceiver> = ArrayList()
