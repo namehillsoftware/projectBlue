@@ -6,9 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.wifi.WifiManager
 import android.os.Build
-import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.*
@@ -47,7 +45,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHan
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
 import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
-import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification
 import com.lasthopesoftware.bluewater.client.stored.service.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver
@@ -79,15 +76,21 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	ListenableWorker(context, workerParams),
 	PostSyncNotification
 {
-
-
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(SyncWorker::class.java) }
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(SyncWorker::class.java) }
 		private const val notificationId = 23
 		private val workName by lazy { magicPropertyBuilder.buildProperty("") }
 
-		@JvmStatic
+		fun syncImmediately(context: Context): Promise<Operation> {
+			return constraints(context).then { c ->
+				val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
+				oneTimeWorkRequest.setConstraints(c)
+				WorkManager.getInstance(context)
+					.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
+			}
+		}
+
 		fun scheduleSync(context: Context): Promise<Operation> {
 			return constraints(context).then { c ->
 				val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncWorker::class.java, 3, TimeUnit.HOURS)
@@ -102,17 +105,15 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			return SyncWorkerConstraints(applicationSettings).currentConstraints
 		}
 
-		fun promiseIsScheduled(context: Context): Promise<Boolean> {
-			return promiseWorkInfos(context)
-				.then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.ENQUEUED } }
-		}
+		fun promiseIsSyncing(context: Context): Promise<Boolean> =
+			promiseWorkInfos(context).then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.RUNNING } }
 
-		private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> {
-			return WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName).toPromise(ThreadPools.compute)
-		}
+		fun promiseIsScheduled(context: Context): Promise<Boolean> =
+			promiseWorkInfos(context).then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.ENQUEUED } }
+
+		private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> =
+			WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName).toPromise(ThreadPools.compute)
 	}
-
-	private var isSyncRunning = false
 
 	private val lazySyncChecker by lazy {
 			SyncChecker(
@@ -199,7 +200,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		)
 		StoredFileSynchronization(
 			lazyLibraryRepository,
-			messageBus.value,
+			messageBus,
 			syncHandler)
 	}
 
@@ -231,11 +232,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 	private val lazySyncStartedReceiver = lazy { SyncStartedReceiver(this) }
 
-	private val wakeLock = lazy {
-		val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-		powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MagicPropertyBuilder.buildMagicPropertyName(StoredSyncService::class.java, "wakeLock"))
-	}
-
 	private val lazyShowDownloadsIntent by lazy {
 		PendingIntent.getActivity(
 			context,
@@ -266,17 +262,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	}
 
 	private fun doWork(): Promise<Unit> {
-		val isUninterruptedSync = false
-
-		if (isSyncRunning) {
-			if (isUninterruptedSync) {
-				if (onWifiStateChangedReceiver.isInitialized()) context.unregisterReceiver(onWifiStateChangedReceiver.value)
-				if (onPowerDisconnectedReceiver.isInitialized()) context.unregisterReceiver(onPowerDisconnectedReceiver.value)
-			}
-			logger.info("Sync already running, not starting again")
-			return Unit.toPromise()
-		}
-
 		if (!lazyStoredFileEventReceivers.isInitialized()) {
 			for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value) {
 				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
@@ -299,12 +284,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 				}))
 		}
 
-		if (!isUninterruptedSync) {
-			context.registerReceiver(onWifiStateChangedReceiver.value, IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION))
-			context.registerReceiver(onPowerDisconnectedReceiver.value, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
-		}
-
-		isSyncRunning = true
 		return Promise.whenAll(
 			promisedNotifications.keys
 				.plus(
