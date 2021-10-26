@@ -83,22 +83,19 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		private val workName by lazy { magicPropertyBuilder.buildProperty("") }
 
 		fun syncImmediately(context: Context): Promise<Operation> {
-			return constraints(context).then { c ->
-				val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
-				oneTimeWorkRequest.setConstraints(c)
-				WorkManager.getInstance(context)
-					.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
-			}
+			val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
+			return WorkManager.getInstance(context)
+				.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
+				.toPromise()
 		}
 
-		fun scheduleSync(context: Context): Promise<Operation> {
-			return constraints(context).then { c ->
+		fun scheduleSync(context: Context): Promise<Operation> =
+			constraints(context).then { c ->
 				val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncWorker::class.java, 3, TimeUnit.HOURS)
 				periodicWorkRequest.setConstraints(c)
 				WorkManager.getInstance(context)
 					.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build())
 			}
-		}
 
 		private fun constraints(context: Context): Promise<Constraints> {
 			val applicationSettings = context.getApplicationSettingsRepository()

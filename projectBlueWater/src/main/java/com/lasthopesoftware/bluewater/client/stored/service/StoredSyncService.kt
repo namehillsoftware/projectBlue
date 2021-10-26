@@ -87,14 +87,6 @@ class StoredSyncService : Service(), PostSyncNotification {
 			safelyStartService(context, intent)
 		}
 
-		@JvmStatic
-		fun doSyncUninterruptedFromUiThread(context: Context) {
-			val intent = Intent(context, StoredSyncService::class.java)
-			intent.action = doSyncAction
-			intent.putExtra(isUninterruptedSyncSetting, true)
-			context.startService(intent)
-		}
-
 		fun cancelSync(context: Context) {
 			context.startService(getSelfIntent(context, cancelSyncAction))
 		}
