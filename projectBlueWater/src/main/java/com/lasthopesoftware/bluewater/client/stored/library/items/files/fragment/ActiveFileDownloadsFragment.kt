@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
+import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncWorker
 import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -135,7 +136,12 @@ class ActiveFileDownloadsFragment : Fragment() {
 			}.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
-		toggleSyncButton.setOnClickListener { v-> if (StoredSyncService.isSyncRunning) StoredSyncService.cancelSync(v.context) else StoredSyncService.doSyncUninterruptedFromUiThread(v.context) }
+		toggleSyncButton.setOnClickListener { v->
+			SyncWorker.promiseIsSyncing(v.context).then { isSyncRunning ->
+				if (isSyncRunning) SyncWorker.cancelSync(v.context)
+				else SyncWorker.syncImmediately(context)
+			}
+		}
 		toggleSyncButton.isEnabled = true
 		return viewFilesLayout
 	}

@@ -113,6 +113,14 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 		private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> =
 			WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName).toPromise(ThreadPools.compute)
+
+		fun cancelSync(context: Context): Promise<Unit> {
+			return promiseWorkInfos(context).then { wi ->
+				val workManager = WorkManager.getInstance(context)
+				for (item in wi.filter { it.state == WorkInfo.State.RUNNING })
+					workManager.cancelWorkById(item.id)
+			}
+		}
 	}
 
 	private val lazySyncChecker by lazy {

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.settings
 
 import android.widget.CheckBox
 import android.widget.CompoundButton
-import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.scheduleSync
+import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncWorker
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -14,7 +14,7 @@ internal class HandleSyncCheckboxPreference private constructor(private val appl
 				updateSetting(s)(isChecked)
 				applicationSettings.promiseUpdatedSettings(s)
 			}
-			.eventually(LoopedInPromise.response({ scheduleSync(buttonView.context) }, buttonView.context))
+			.eventually(LoopedInPromise.response({ SyncWorker.scheduleSync(buttonView.context) }, buttonView.context))
 	}
 
 	companion object {
