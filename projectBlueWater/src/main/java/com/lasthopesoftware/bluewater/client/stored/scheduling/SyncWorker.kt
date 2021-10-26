@@ -289,8 +289,8 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 				.plus(
 					lazyStoredFilesSynchronization.streamFileSynchronization()
 						.toPromise()
-						.must { messageBus.clear() }
 						.also { promisedSynchronization = it }
+						.must { messageBus.clear() }
 				)
 		).unitResponse()
 	}
