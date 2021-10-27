@@ -116,7 +116,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val stopSyncLabel = context.getText(R.string.stop_sync_button)
 		toggleSyncButton.isEnabled = false
 		SyncWorker.promiseIsSyncing(context).eventually(LoopedInPromise.response({ isRunning ->
-			toggleSyncButton.text = if (isRunning) startSyncLabel else stopSyncLabel
+			toggleSyncButton.text = if (!isRunning) startSyncLabel else stopSyncLabel
 			toggleSyncButton.isEnabled = true
 		}, context))
 
@@ -139,7 +139,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 			}.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
-		toggleSyncButton.setOnClickListener { v->
+		toggleSyncButton.setOnClickListener { v ->
 			SyncWorker.promiseIsSyncing(v.context).then { isSyncRunning ->
 				if (isSyncRunning) SyncWorker.cancelSync(v.context)
 				else SyncWorker.syncImmediately(context)
