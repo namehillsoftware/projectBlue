@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncWorker
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncWorker
 
 /**
  * Created by david on 7/18/15.

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.scheduling
+package com.lasthopesoftware.bluewater.client.stored.sync
 
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -44,12 +44,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
-import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
-import com.lasthopesoftware.bluewater.client.stored.service.notifications.PostSyncNotification
-import com.lasthopesoftware.bluewater.client.stored.service.notifications.SyncChannelProperties
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.*
-import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.client.stored.sync.constraints.SyncWorkerConstraints
+import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
+import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
@@ -213,10 +212,11 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			lazyFileProperties,
 			this,
 			context)
-		val storedFileMediaScannerNotifier = StoredFileMediaScannerNotifier(
-			lazyStoredFileAccess,
-			ScanMediaFileBroadcaster(context)
-		)
+		val storedFileMediaScannerNotifier =
+			StoredFileMediaScannerNotifier(
+				lazyStoredFileAccess,
+				ScanMediaFileBroadcaster(context)
+			)
 		val storedFileReadPermissionsReceiver = StoredFileReadPermissionsReceiver(
 			lazyReadPermissionArbitratorForOs,
 			StorageReadPermissionsRequestedBroadcaster(messageBus),

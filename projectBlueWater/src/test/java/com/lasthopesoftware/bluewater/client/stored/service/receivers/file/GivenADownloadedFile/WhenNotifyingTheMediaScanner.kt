@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.service.receivers.file.Give
 import com.annimon.stream.Stream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileMediaScannerNotifier
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileMediaScannerNotifier
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
@@ -31,9 +31,10 @@ class WhenNotifyingTheMediaScanner {
 			)
 			Mockito.`when`(storedFileAccess.getStoredFile(14))
 				.thenReturn(Promise(StoredFile().setId(14).setLibraryId(22).setPath("test")))
-			val storedFileMediaScannerNotifier = StoredFileMediaScannerNotifier(
-				storedFileAccess
-			) { e: File -> collectedFiles.add(e) }
+			val storedFileMediaScannerNotifier =
+                StoredFileMediaScannerNotifier(
+                    storedFileAccess
+                ) { e: File -> collectedFiles.add(e) }
 			FuturePromise(storedFileMediaScannerNotifier.receive(14)).get()
 		}
 	}

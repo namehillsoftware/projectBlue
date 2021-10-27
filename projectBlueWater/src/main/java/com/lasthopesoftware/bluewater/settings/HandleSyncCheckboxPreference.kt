@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.settings
 
 import android.widget.CheckBox
 import android.widget.CompoundButton
-import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncWorker
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncWorker
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.GivenPowerOnlyIsSet
 
 import androidx.work.Constraints
-import com.lasthopesoftware.bluewater.client.stored.scheduling.constraints.SyncWorkerConstraints
+import com.lasthopesoftware.bluewater.client.stored.sync.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture

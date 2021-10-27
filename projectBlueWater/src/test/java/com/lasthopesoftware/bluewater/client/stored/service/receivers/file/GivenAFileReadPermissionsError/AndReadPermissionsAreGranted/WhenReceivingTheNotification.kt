@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.service.receivers.file.Give
 
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileReadPermissionsReceiver
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileReadPermissionsReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions
