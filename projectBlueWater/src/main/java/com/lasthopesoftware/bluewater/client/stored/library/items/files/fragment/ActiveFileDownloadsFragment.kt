@@ -68,7 +68,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 					StoredFilesCollection(context))
 
 				storedFileAccess.downloadingStoredFiles
-					.eventually<Unit>(LoopedInPromise.response({ storedFiles ->
+					.eventually(LoopedInPromise.response({ storedFiles ->
 						val localStoredFiles = storedFiles.groupBy { sf -> sf.id }.values.map { sf -> sf.first() }.toMutableList()
 
 						activeFileDownloadsAdapter.updateListEventually(localStoredFiles)
@@ -145,7 +145,6 @@ class ActiveFileDownloadsFragment : Fragment() {
 				else SyncWorker.syncImmediately(context)
 			}
 		}
-		toggleSyncButton.isEnabled = true
 		return viewFilesLayout
 	}
 

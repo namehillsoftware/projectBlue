@@ -39,14 +39,15 @@ private class UnitResponse<Resolution> private constructor() : ImmediateResponse
 }
 
 private class CompletablePromise(completable: Completable) : Promise<Unit>(), CompletableObserver, Runnable {
-	private lateinit var disposable: Disposable
+	private var disposable: Disposable? = null
 
 	init {
 		completable.subscribe(this)
+		respondToCancellation(this)
 	}
 
 	override fun run() {
-		disposable.dispose()
+		disposable?.dispose()
 	}
 
 	override fun onSubscribe(d: Disposable) {
