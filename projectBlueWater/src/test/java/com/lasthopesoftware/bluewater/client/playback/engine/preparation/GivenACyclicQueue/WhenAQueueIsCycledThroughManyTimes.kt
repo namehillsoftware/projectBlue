@@ -47,7 +47,7 @@ class WhenAQueueIsCycledThroughManyTimes {
 
     @Test
     fun thenEachFileIsPreparedTheAppropriateAmountOfTimes() {
-		fileActionMap!!.values.forEach { v -> assertThat(v.preparedTimes).isEqualTo(expectedCycles) }
+		assertThat(fileActionMap!!.values.map { it.preparedTimes }).allMatch { it == expectedCycles }
     }
 
     @Test

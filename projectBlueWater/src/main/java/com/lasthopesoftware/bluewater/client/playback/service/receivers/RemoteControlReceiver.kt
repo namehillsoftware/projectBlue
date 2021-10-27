@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 
 class RemoteControlReceiver : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
-		val event = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+		val event = intent.getParcelableExtra<KeyEvent?>(Intent.EXTRA_KEY_EVENT)
 		if (event?.action != KeyEvent.ACTION_UP) return
 		when (event.keyCode) {
 			KeyEvent.KEYCODE_MEDIA_PLAY -> play(context)
