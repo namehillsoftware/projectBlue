@@ -67,7 +67,6 @@ import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -77,7 +76,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	PostSyncNotification
 {
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(SyncWorker::class.java) }
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(SyncWorker::class.java) }
 		private const val notificationId = 23
 		private val workName by lazy { magicPropertyBuilder.buildProperty("") }
@@ -97,6 +95,14 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 					.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build())
 			}
 
+		fun cancelSync(context: Context): Promise<Unit> {
+			return promiseWorkInfos(context).then { wi ->
+				val workManager = WorkManager.getInstance(context)
+				for (item in wi.filter { it.state == WorkInfo.State.RUNNING })
+					workManager.cancelWorkById(item.id)
+			}
+		}
+
 		private fun constraints(context: Context): Promise<Constraints> {
 			val applicationSettings = context.getApplicationSettingsRepository()
 			return SyncWorkerConstraints(applicationSettings).currentConstraints
@@ -110,14 +116,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 		private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> =
 			WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName).toPromise(ThreadPools.compute)
-
-		fun cancelSync(context: Context): Promise<Unit> {
-			return promiseWorkInfos(context).then { wi ->
-				val workManager = WorkManager.getInstance(context)
-				for (item in wi.filter { it.state == WorkInfo.State.RUNNING })
-					workManager.cancelWorkById(item.id)
-			}
-		}
 	}
 
 	private val lazySyncChecker by lazy {

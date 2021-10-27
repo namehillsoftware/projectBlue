@@ -5,23 +5,17 @@ import android.content.Context
 import android.os.Build
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.ChannelConfiguration
-import com.namehillsoftware.lazyj.Lazy
 
 class SyncChannelProperties(private val context: Context) : ChannelConfiguration {
-	private val lazyChannelName = Lazy<String> { context.getString(R.string.app_name) + " sync" }
-	private val lazyChannelDescription = Lazy<String> { String.format("Notifications for %1\$s", lazyChannelName.getObject()) }
-
 	override val channelId: String
-		get() {	return Companion.channelId }
+		get() = Companion.channelId
 
-	override val channelName: String
-		get() { return lazyChannelName.getObject()	}
+	override val channelName by lazy { context.getString(R.string.app_name) + " sync" }
 
-	override val channelDescription: String
-		get() {	return lazyChannelDescription.getObject() }
+	override val channelDescription by lazy { String.format("Notifications for %1\$s", channelName) }
 
 	override val channelImportance: Int
-		get() {	return Companion.channelImportance }
+		get() = Companion.channelImportance
 
 	companion object {
 		private const val channelId = "ProjectBlueSync"

@@ -141,11 +141,6 @@
             android:name=".client.connection.polling.PollConnectionService"
             android:enabled="true"
             android:exported="false" />
-        <service
-            android:name=".client.stored.service.StoredSyncService"
-            android:enabled="true"
-            android:foregroundServiceType="dataSync"
-            android:exported="false" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

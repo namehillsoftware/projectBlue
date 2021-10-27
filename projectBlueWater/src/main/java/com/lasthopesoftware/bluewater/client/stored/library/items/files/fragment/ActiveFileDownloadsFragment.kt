@@ -24,7 +24,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncWorker
-import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -115,7 +114,11 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val toggleSyncButton = viewFilesLayout.findViewById<Button>(R.id.toggleSyncButton)
 		val startSyncLabel = context.getText(R.string.start_sync_button)
 		val stopSyncLabel = context.getText(R.string.stop_sync_button)
-		toggleSyncButton.text = if (!StoredSyncService.isSyncRunning) startSyncLabel else stopSyncLabel
+		toggleSyncButton.isEnabled = false
+		SyncWorker.promiseIsSyncing(context).eventually(LoopedInPromise.response({ isRunning ->
+			toggleSyncButton.text = if (isRunning) startSyncLabel else stopSyncLabel
+			toggleSyncButton.isEnabled = true
+		}, context))
 
 		onSyncStartedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
 
