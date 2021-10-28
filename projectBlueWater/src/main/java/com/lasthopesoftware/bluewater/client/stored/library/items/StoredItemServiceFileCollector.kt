@@ -11,10 +11,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.propagation.RejectionProxy
-import com.namehillsoftware.handoff.promises.propagation.ResolutionProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
@@ -26,10 +25,7 @@ class StoredItemServiceFileCollector(
 	private val fileListParameters: IFileListParameterProvider) : CollectServiceFilesForSync {
 
 	override fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Collection<ServiceFile>> {
-		return Promise { serviceFileMessenger ->
-			val cancellationProxy = CancellationProxy()
-			serviceFileMessenger.cancellationRequested(cancellationProxy)
-
+		return CancellableProxyPromise { cancellationProxy ->
 			val promisedStoredItems = storedItemAccess.promiseStoredItems(libraryId)
 			cancellationProxy.doCancel(promisedStoredItems)
 
@@ -42,8 +38,7 @@ class StoredItemServiceFileCollector(
 			cancellationProxy.doCancel(promisedServiceFileLists)
 
 			promisedServiceFileLists
-				.then<Collection<ServiceFile>> { serviceFiles -> serviceFiles.flatten() }
-				.then(ResolutionProxy(serviceFileMessenger), RejectionProxy(serviceFileMessenger))
+				.then { serviceFiles -> serviceFiles.flatten() }
 		}
 	}
 
