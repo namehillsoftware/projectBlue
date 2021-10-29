@@ -6,6 +6,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Completable
 import io.reactivex.CompletableObserver
 import io.reactivex.disposables.Disposable
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 
 fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)
@@ -63,12 +64,14 @@ private class CompletablePromise(completable: Completable) : Promise<Unit>(), Co
 	}
 }
 
-private class PromisedListenableFuture<Resolution>(private val listenableFuture: ListenableFuture<Resolution>, executor: Executor) : Promise<Resolution>() {
+private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableFuture<Resolution>, executor: Executor) : Promise<Resolution>() {
 	init {
 		respondToCancellation { listenableFuture.cancel(false) }
 		listenableFuture.addListener({
 			try {
 				resolve(listenableFuture.get())
+			} catch (e: ExecutionException) {
+				reject(e.cause ?: e)
 			} catch (t: Throwable) {
 				reject(t)
 			}
