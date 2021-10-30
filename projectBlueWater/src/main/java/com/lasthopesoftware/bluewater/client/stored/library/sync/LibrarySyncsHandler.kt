@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Proc
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
-import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise
-import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise
+import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.Companion.observe
+import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise.Companion.stream
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
@@ -22,7 +22,7 @@ class LibrarySyncsHandler(
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> {
 		val promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId)
-		return StreamedPromise.stream(CancellableProxyPromise { cancellationProxy ->
+		return CancellableProxyPromise { cancellationProxy ->
 			promisedServiceFilesToSync
 				.eventually { allServiceFilesToSync ->
 					val serviceFilesSet = allServiceFilesToSync as? Set<ServiceFile> ?: allServiceFilesToSync.toSet()
@@ -31,7 +31,8 @@ class LibrarySyncsHandler(
 					pruneFilesTask.excuse { e -> logger.warn("There was an error pruning the files", e) }
 					pruneFilesTask.then { serviceFilesSet }
 				}
-		})
+		}
+		.stream()
 		.map { serviceFile ->
 			storedFileUpdater
 				.promiseStoredFileUpdate(libraryId, serviceFile)
@@ -43,11 +44,9 @@ class LibrarySyncsHandler(
 		.toList()
 		.toObservable()
 		.flatMap { promiseStoredFileJobs ->
-			val observablePromise = Promise.whenAll(promiseStoredFileJobs)
-				.then { storedFileJobs ->
-					storedFileJobsProcessor.observeStoredFileDownload(storedFileJobs.filterNotNull())
-				}
-			ObservedPromise.observe(observablePromise)
+			Promise.whenAll(promiseStoredFileJobs)
+				.then { storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(storedFileJobs.filterNotNull()) }
+				.observe()
 		}
 		.flatMap { it }
 	}

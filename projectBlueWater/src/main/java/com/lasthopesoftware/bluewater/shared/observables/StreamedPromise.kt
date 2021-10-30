@@ -1,46 +1,35 @@
-package com.lasthopesoftware.bluewater.shared.observables;
+package com.lasthopesoftware.bluewater.shared.observables
 
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
-import io.reactivex.Observable;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+import com.namehillsoftware.handoff.promises.Promise
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 
-public class StreamedPromise<T, S extends Iterable<T>> extends Observable<T> implements Disposable {
+class StreamedPromise<T, S : Iterable<T>> private constructor(private val promise: Promise<S>) :
+	Observable<T>(), Disposable
+{
+	@Volatile
+	private var isCancelled = false
 
-	public static <T, S extends Iterable<T>> Observable<T> stream(Promise<S> promise) {
-		return new StreamedPromise<>(promise);
-	}
-
-	private final Promise<S> promise;
-
-	private volatile boolean isCancelled;
-
-	private StreamedPromise(Promise<S> promise) {
-		this.promise = promise;
-	}
-
-	@Override
-	protected void subscribeActual(Observer<? super T> observer) {
-		observer.onSubscribe(this);
-
+	override fun subscribeActual(observer: Observer<in T>) {
+		observer.onSubscribe(this)
 		promise
 			.then(
-				new VoidResponse<>(ts -> {
-					for (final T t : ts) observer.onNext(t);
-					observer.onComplete();
-				}),
-				new VoidResponse<>(observer::onError));
+				{ ts ->
+					for (t in ts) observer.onNext(t)
+					observer.onComplete()
+				},
+				observer::onError)
 	}
 
-	@Override
-	public void dispose() {
-		isCancelled = true;
-		promise.cancel();
+	override fun dispose() {
+		isCancelled = true
+		promise.cancel()
 	}
 
-	@Override
-	public boolean isDisposed() {
-		return isCancelled;
+	override fun isDisposed(): Boolean = isCancelled
+
+	companion object {
+		fun <T, S : Iterable<T>> Promise<S>.stream(): Observable<T> = StreamedPromise(this)
 	}
 }
