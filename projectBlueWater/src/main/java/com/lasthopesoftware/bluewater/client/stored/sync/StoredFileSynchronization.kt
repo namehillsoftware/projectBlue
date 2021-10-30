@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
-import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise.Companion.stream
+import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import io.reactivex.Completable
 import io.reactivex.exceptions.CompositeException
