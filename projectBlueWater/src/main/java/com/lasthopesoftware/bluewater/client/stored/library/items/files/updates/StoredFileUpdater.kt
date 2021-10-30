@@ -115,17 +115,19 @@ class StoredFileUpdater(
 						?: mediaFileUriProvider
 						.promiseFileUri(serviceFile)
 						.eventually { localUri ->
-							localUri?.let { u ->
-								storedFile.path = u.path
-								storedFile.setIsDownloadComplete(true)
-								storedFile.setIsOwner(false)
-								mediaFileIdProvider
-									.getMediaId(libraryId, serviceFile)
-									.then { mediaId ->
-										storedFile.storedMediaId = mediaId
-										storedFile
-									}
-							}.keepPromise()
+							localUri
+								?.let { u ->
+									storedFile.path = u.path
+									storedFile.setIsDownloadComplete(true)
+									storedFile.setIsOwner(false)
+									mediaFileIdProvider
+										.getMediaId(libraryId, serviceFile)
+										.then { mediaId ->
+											storedFile.storedMediaId = mediaId
+											storedFile
+										}
+								}
+								.keepPromise(storedFile)
 						}
 				}
 			}

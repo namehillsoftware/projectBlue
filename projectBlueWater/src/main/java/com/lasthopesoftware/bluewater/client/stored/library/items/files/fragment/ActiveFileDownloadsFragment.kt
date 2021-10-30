@@ -23,8 +23,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
-import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncWorker
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -68,7 +68,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 					StoredFilesCollection(context))
 
 				storedFileAccess.downloadingStoredFiles
-					.eventually<Unit>(LoopedInPromise.response({ storedFiles ->
+					.eventually(LoopedInPromise.response({ storedFiles ->
 						val localStoredFiles = storedFiles.groupBy { sf -> sf.id }.values.map { sf -> sf.first() }.toMutableList()
 
 						activeFileDownloadsAdapter.updateListEventually(localStoredFiles)
@@ -114,7 +114,11 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val toggleSyncButton = viewFilesLayout.findViewById<Button>(R.id.toggleSyncButton)
 		val startSyncLabel = context.getText(R.string.start_sync_button)
 		val stopSyncLabel = context.getText(R.string.stop_sync_button)
-		toggleSyncButton.text = if (!StoredSyncService.isSyncRunning) startSyncLabel else stopSyncLabel
+		toggleSyncButton.isEnabled = false
+		SyncWorker.promiseIsSyncing(context).eventually(LoopedInPromise.response({ isRunning ->
+			toggleSyncButton.text = if (!isRunning) startSyncLabel else stopSyncLabel
+			toggleSyncButton.isEnabled = true
+		}, context))
 
 		onSyncStartedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
 
@@ -135,8 +139,12 @@ class ActiveFileDownloadsFragment : Fragment() {
 			}.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
-		toggleSyncButton.setOnClickListener { v-> if (StoredSyncService.isSyncRunning) StoredSyncService.cancelSync(v.context) else StoredSyncService.doSyncUninterruptedFromUiThread(v.context) }
-		toggleSyncButton.isEnabled = true
+		toggleSyncButton.setOnClickListener { v ->
+			SyncWorker.promiseIsSyncing(v.context).then { isSyncRunning ->
+				if (isSyncRunning) SyncWorker.cancelSync(v.context)
+				else SyncWorker.syncImmediately(context)
+			}
+		}
 		return viewFilesLayout
 	}
 

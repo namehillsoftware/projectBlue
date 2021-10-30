@@ -7,10 +7,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Proc
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
-import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise
-import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise
+import com.lasthopesoftware.bluewater.shared.observables.stream
+import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
 import org.slf4j.LoggerFactory
 
@@ -20,10 +19,10 @@ class LibrarySyncsHandler(
 	private val storedFileUpdater: UpdateStoredFiles,
 	private val storedFileJobsProcessor: ProcessStoredFileJobs) : ControlLibrarySyncs {
 
-	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> {
-		val promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId)
-		return StreamedPromise.stream(CancellableProxyPromise { cancellationProxy ->
-			promisedServiceFilesToSync
+	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> =
+		CancellableProxyPromise { cancellationProxy ->
+			serviceFilesToSyncCollector
+				.promiseServiceFilesToSync(libraryId)
 				.eventually { allServiceFilesToSync ->
 					val serviceFilesSet = allServiceFilesToSync as? Set<ServiceFile> ?: allServiceFilesToSync.toSet()
 					val pruneFilesTask = storedFileAccess.pruneStoredFiles(libraryId, serviceFilesSet)
@@ -31,32 +30,21 @@ class LibrarySyncsHandler(
 					pruneFilesTask.excuse { e -> logger.warn("There was an error pruning the files", e) }
 					pruneFilesTask.then { serviceFilesSet }
 				}
-		})
-		.map { serviceFile ->
-			val promiseDownloadedStoredFile = storedFileUpdater
+		}
+		.stream()
+		.flatMapMaybe { serviceFile ->
+			storedFileUpdater
 				.promiseStoredFileUpdate(libraryId, serviceFile)
 				.then { storedFile ->
 					if (storedFile == null || storedFile.isDownloadComplete) null
 					else StoredFileJob(libraryId, serviceFile, storedFile)
 				}
-
-			promiseDownloadedStoredFile
-				.excuse { r -> logger.warn("An error occurred creating or updating $serviceFile", r) }
-			promiseDownloadedStoredFile
+				.toMaybeObservable()
 		}
 		.toList()
-		.toObservable()
-		.flatMap { promises ->
-			val observablePromise = Promise.whenAll(promises)
-				.then { storedFileJobs ->
-					storedFileJobsProcessor.observeStoredFileDownload(storedFileJobs.filterNotNull())
-				}
-			ObservedPromise.observe(observablePromise)
-		}
-		.flatMap { it }
-	}
+		.flatMapObservable(storedFileJobsProcessor::observeStoredFileDownload)
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(LibrarySyncsHandler::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
 	}
 }

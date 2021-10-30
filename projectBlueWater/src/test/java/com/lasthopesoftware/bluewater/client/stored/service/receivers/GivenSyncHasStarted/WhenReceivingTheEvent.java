@@ -1,19 +1,19 @@
 package com.lasthopesoftware.bluewater.client.stored.service.receivers.GivenSyncHasStarted;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
 import android.content.Context;
 import android.content.Intent;
 
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.SyncStartedReceiver;
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class WhenReceivingTheEvent {
 

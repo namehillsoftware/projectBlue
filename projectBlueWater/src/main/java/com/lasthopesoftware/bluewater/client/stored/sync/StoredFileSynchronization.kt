@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
-import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise
+import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import io.reactivex.Completable
 import io.reactivex.exceptions.CompositeException
@@ -25,7 +25,8 @@ class StoredFileSynchronization(
 	override fun streamFileSynchronization(): Completable {
 		logger.info("Starting sync.")
 		messenger.sendBroadcast(Intent(onSyncStartEvent))
-		return StreamedPromise.stream(libraryProvider.allLibraries)
+		return libraryProvider.allLibraries
+			.stream()
 			.flatMap({ library -> syncHandler.observeLibrarySync(library.libraryId) }, true)
 			.flatMapCompletable({ storedFileJobStatus: StoredFileJobStatus ->
 				when (storedFileJobStatus.storedFileJobState) {
