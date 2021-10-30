@@ -295,11 +295,9 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 		return storedFilesSynchronization.streamFileSynchronization()
 			.toPromise()
-			.also {
-				promisedSynchronization = it
-				it.inevitably { Promise.whenAll(promisedNotifications.keys) }
-					.must { messageBus.clear() }
-			}
+			.also { promisedSynchronization = it }
+			.inevitably { Promise.whenAll(promisedNotifications.keys) }
+			.must { messageBus.clear() }
 	}
 
 	override fun onStopped() {
