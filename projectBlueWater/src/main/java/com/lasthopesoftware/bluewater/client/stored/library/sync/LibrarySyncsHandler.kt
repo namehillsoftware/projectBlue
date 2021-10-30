@@ -21,7 +21,8 @@ class LibrarySyncsHandler(
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> =
 		CancellableProxyPromise { cancellationProxy ->
-			serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId)
+			serviceFilesToSyncCollector
+				.promiseServiceFilesToSync(libraryId)
 				.eventually { allServiceFilesToSync ->
 					val serviceFilesSet = allServiceFilesToSync as? Set<ServiceFile> ?: allServiceFilesToSync.toSet()
 					val pruneFilesTask = storedFileAccess.pruneStoredFiles(libraryId, serviceFilesSet)
@@ -41,7 +42,7 @@ class LibrarySyncsHandler(
 				.toMaybeObservable()
 		}
 		.toList()
-		.flatMapObservable { storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(storedFileJobs) }
+		.flatMapObservable(storedFileJobsProcessor::observeStoredFileDownload)
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }

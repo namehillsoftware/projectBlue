@@ -54,6 +54,7 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
+			signingConfig (isSignedExternally() ? signingConfigs.release : null)
 		}
         release {
             minifyEnabled true

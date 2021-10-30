@@ -102,27 +102,30 @@ class StoredFileJobProcessor(
 			observer.onNext(StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading))
 			val promisedDownload = storedFiles.promiseDownload(libraryId, storedFile)
 			cancellationProxy.doCancel(promisedDownload)
-			return promisedDownload.then({ inputStream ->
-				try {
-					if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
-					else inputStream.use { s ->
-						fileStreamWriter.writeStreamToFile(s, file)
-						storedFileAccess.markStoredFileAsDownloaded(storedFile)
-						StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded)
+			return promisedDownload.then(
+					{ inputStream ->
+					try {
+						if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
+						else inputStream.use { s ->
+							fileStreamWriter.writeStreamToFile(s, file)
+							storedFileAccess.markStoredFileAsDownloaded(storedFile)
+							StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded)
+						}
+					} catch (ioe: IOException) {
+						logger.error("Error writing file!", ioe)
+						StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+					} catch (t: Throwable) {
+						throw StoredFileJobException(storedFile, t)
 					}
-				} catch (ioe: IOException) {
-					logger.error("Error writing file!", ioe)
-					StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
-				} catch (t: Throwable) {
-					throw StoredFileJobException(storedFile, t)
-				}
-			}) { error ->
-				when (error) {
-					is IOException -> StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
-					is StoredFileJobException -> throw error
-					else -> throw StoredFileJobException(storedFile, error)
-				}
-			}.eventually(this)
+				},
+				{ error ->
+					when (error) {
+						is IOException -> StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+						is StoredFileJobException -> throw error
+						else -> throw StoredFileJobException(storedFile, error)
+					}
+				})
+				.eventually(this)
 		}
 
 		override fun promiseResponse(status: StoredFileJobStatus): Promise<Void> {
@@ -130,13 +133,9 @@ class StoredFileJobProcessor(
 			return processQueue()
 		}
 
-		override fun dispose() {
-			cancellationProxy.run()
-		}
+		override fun dispose() = cancellationProxy.run()
 
-		override fun isDisposed(): Boolean {
-			return cancellationProxy.isCancelled
-		}
+		override fun isDisposed(): Boolean = cancellationProxy.isCancelled
 	}
 
 	companion object {
