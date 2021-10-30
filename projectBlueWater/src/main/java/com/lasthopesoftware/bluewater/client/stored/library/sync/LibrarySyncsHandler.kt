@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Proc
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
-import com.lasthopesoftware.bluewater.shared.observables.ObservedPromise.Companion.observe
+import com.lasthopesoftware.bluewater.shared.observables.SinglePromise.Companion.toSingle
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise.Companion.stream
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import io.reactivex.Observable
@@ -31,17 +31,18 @@ class LibrarySyncsHandler(
 				}
 		}
 		.stream()
-		.flatMap { serviceFile ->
+		.flatMapSingle { serviceFile ->
 			storedFileUpdater
 				.promiseStoredFileUpdate(libraryId, serviceFile)
 				.then { storedFile ->
-					if (storedFile == null || storedFile.isDownloadComplete) null
+					if (storedFile == null || storedFile.isDownloadComplete) StoredFileJob.Empty
 					else StoredFileJob(libraryId, serviceFile, storedFile)
 				}
-				.observe()
+				.toSingle()
 		}
+		.filter { sf -> sf != StoredFileJob.Empty }
 		.toList()
-		.flatMapObservable { storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(storedFileJobs.filterNotNull()) }
+		.flatMapObservable { storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(storedFileJobs) }
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
