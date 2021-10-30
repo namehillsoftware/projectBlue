@@ -7,8 +7,4 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 data class StoredFileJob(
 	val libraryId: LibraryId,
 	val serviceFile: ServiceFile,
-	val storedFile: StoredFile) {
-	companion object {
-		val Empty = StoredFileJob(LibraryId(-1), ServiceFile(-1), StoredFile())
-	}
-}
+	val storedFile: StoredFile)

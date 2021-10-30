@@ -1,22 +1,22 @@
 package com.lasthopesoftware.bluewater.shared.observables
 
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.Single
-import io.reactivex.SingleObserver
+import io.reactivex.Maybe
+import io.reactivex.MaybeObserver
 import io.reactivex.disposables.Disposable
 
-class SinglePromise<T> private constructor(private val promise: Promise<T>) :
-	Single<T>(),
+class MaybePromise<T> private constructor(private val promise: Promise<T>) :
+	Maybe<T>(),
 	Disposable
 {
 	@Volatile
 	private var isCancelled = false
 
-	override fun subscribeActual(observer: SingleObserver<in T>) {
+	override fun subscribeActual(observer: MaybeObserver<in T>) {
 		observer.onSubscribe(this)
 		promise
 			.then(
-				observer::onSuccess,
+				{ t -> if (t != null) observer.onSuccess(t) else observer.onComplete() },
 				observer::onError)
 	}
 
@@ -28,6 +28,6 @@ class SinglePromise<T> private constructor(private val promise: Promise<T>) :
 	override fun isDisposed(): Boolean = isCancelled
 
 	companion object {
-		fun <T> Promise<T>.toSingle(): Single<T> = SinglePromise(this)
+		fun <T> Promise<T>.toMaybe(): Maybe<T> = MaybePromise(this)
 	}
 }
