@@ -6,9 +6,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.namehillsoftware.handoff.promises.Promise
 
-interface IStoredFileAccess {
+interface AccessStoredFiles {
 	fun getStoredFile(storedFileId: Int): Promise<StoredFile?>
 	fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?>
+	fun promiseDanglingFiles(): Promise<List<StoredFile>>
 	val downloadingStoredFiles: Promise<List<StoredFile>>
 	fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile>
 	fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit>

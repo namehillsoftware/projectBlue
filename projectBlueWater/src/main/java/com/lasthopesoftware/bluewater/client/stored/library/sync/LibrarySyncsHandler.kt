@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.ProcessStoredFileJobs
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
@@ -16,9 +16,14 @@ import org.slf4j.LoggerFactory
 
 class LibrarySyncsHandler(
 	private val serviceFilesToSyncCollector: CollectServiceFilesForSync,
-	private val storedFileAccess: IStoredFileAccess,
+	private val storedFileAccess: AccessStoredFiles,
 	private val storedFileUpdater: UpdateStoredFiles,
-	private val storedFileJobsProcessor: ProcessStoredFileJobs) : ControlLibrarySyncs {
+	private val storedFileJobsProcessor: ProcessStoredFileJobs) : ControlLibrarySyncs
+{
+
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
+	}
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> {
 		val promisedServiceFilesToSync = serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId)
@@ -50,9 +55,5 @@ class LibrarySyncsHandler(
 			ObservedPromise.observe(observablePromise)
 		}
 		.flatMap { it }
-	}
-
-	companion object {
-		private val logger = LoggerFactory.getLogger(LibrarySyncsHandler::class.java)
 	}
 }

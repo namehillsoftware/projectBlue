@@ -1,5 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.annimon.stream.Stream;
 import com.lasthopesoftware.bluewater.client.browsing.items.Item;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
@@ -9,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
@@ -29,12 +35,6 @@ import java.util.List;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 
@@ -57,7 +57,7 @@ public class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				new ServiceFile(4),
 				new ServiceFile(10))));
 
-		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
+		final AccessStoredFiles storedFileAccess = mock(AccessStoredFiles.class);
 		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
 
 		final LibrarySyncsHandler librarySyncHandler = new LibrarySyncsHandler(

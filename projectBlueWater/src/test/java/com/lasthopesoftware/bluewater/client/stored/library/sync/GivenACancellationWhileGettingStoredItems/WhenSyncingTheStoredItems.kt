@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeDeferredStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -32,7 +32,7 @@ open class WhenSyncingTheStoredItems {
 
 	companion object {
 		private val storedFileJobResults: MutableList<StoredFile> = ArrayList()
-		private val storedFileAccess = mockk<IStoredFileAccess>()
+		private val storedFileAccess = mockk<AccessStoredFiles>()
 
 		@JvmStatic
 		@BeforeClass

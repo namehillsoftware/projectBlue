@@ -10,9 +10,7 @@ class SyncLibraryProvider(private val libraryProvider: ILibraryProvider) : ILibr
 		get() = libraryProvider.allLibraries.then { l -> l.map { it.transformConnectionSetting() } }
 
 	override fun getLibrary(libraryId: LibraryId): Promise<Library?> =
-		libraryProvider.getLibrary(libraryId).then {
-			it?.transformConnectionSetting()
-		}
+		libraryProvider.getLibrary(libraryId).then { it?.transformConnectionSetting() }
 
-	private fun Library.transformConnectionSetting(): Library = this.setLocalOnly(this.isSyncLocalConnectionsOnly)
+	private fun Library.transformConnectionSetting() = setLocalOnly(isSyncLocalConnectionsOnly)
 }

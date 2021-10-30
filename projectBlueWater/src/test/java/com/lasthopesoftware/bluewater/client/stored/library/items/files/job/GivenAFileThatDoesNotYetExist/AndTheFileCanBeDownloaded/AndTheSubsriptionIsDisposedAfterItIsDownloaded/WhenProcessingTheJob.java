@@ -1,10 +1,15 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheSubsriptionIsDisposedAfterItIsDownloaded;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
@@ -24,15 +29,10 @@ import java.util.List;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 public class WhenProcessingTheJob {
 
 	private static final StoredFile storedFile = new StoredFile(new LibraryId(13), 1, new ServiceFile(1), "test-path", true);
-	private static final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
+	private static final AccessStoredFiles storedFileAccess = mock(AccessStoredFiles.class);
 	private static final List<StoredFileJobState> states = new ArrayList<>();
 
 	@BeforeClass

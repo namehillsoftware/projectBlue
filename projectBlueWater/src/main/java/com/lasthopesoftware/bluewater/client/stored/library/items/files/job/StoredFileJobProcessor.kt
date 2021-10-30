@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.io.IFileStreamWriter
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -24,7 +23,7 @@ import java.util.*
 
 class StoredFileJobProcessor(
 	private val storedFileFileProvider: IStoredFileSystemFileProducer,
-	private val storedFileAccess: IStoredFileAccess,
+	private val storedFileAccess: AccessStoredFiles,
 	private val storedFiles: DownloadStoredFiles,
 	private val fileReadPossibleArbitrator: IFileReadPossibleArbitrator,
 	private val fileWritePossibleArbitrator: IFileWritePossibleArbitrator,
@@ -38,10 +37,10 @@ class StoredFileJobProcessor(
 		Observable<StoredFileJobStatus>(), PromisedResponse<StoredFileJobStatus, Void>,
 		Disposable
 	{
-		private var isRunning = false
 		private val cancellationProxy = CancellationProxy()
 		private val jobsQueue = LinkedList<StoredFileJob>()
 		private lateinit var observer: Observer<in StoredFileJobStatus>
+		private var isRunning = false
 
 		@Synchronized
 		override fun subscribeActual(observer: Observer<in StoredFileJobStatus>) {
@@ -102,27 +101,30 @@ class StoredFileJobProcessor(
 			observer.onNext(StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading))
 			val promisedDownload = storedFiles.promiseDownload(libraryId, storedFile)
 			cancellationProxy.doCancel(promisedDownload)
-			return promisedDownload.then({ inputStream ->
-				try {
-					if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
-					else inputStream.use { s ->
-						fileStreamWriter.writeStreamToFile(s, file)
-						storedFileAccess.markStoredFileAsDownloaded(storedFile)
-						StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded)
+			return promisedDownload.then(
+				{ inputStream ->
+					try {
+						if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
+						else inputStream.use { s ->
+							fileStreamWriter.writeStreamToFile(s, file)
+							storedFileAccess.markStoredFileAsDownloaded(storedFile)
+							StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded)
+						}
+					} catch (ioe: IOException) {
+						logger.error("Error writing file!", ioe)
+						StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+					} catch (t: Throwable) {
+						throw StoredFileJobException(storedFile, t)
 					}
-				} catch (ioe: IOException) {
-					logger.error("Error writing file!", ioe)
-					StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
-				} catch (t: Throwable) {
-					throw StoredFileJobException(storedFile, t)
-				}
-			}) { error ->
-				when (error) {
-					is IOException -> StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
-					is StoredFileJobException -> throw error
-					else -> throw StoredFileJobException(storedFile, error)
-				}
-			}.eventually(this)
+				},
+				{ error ->
+					when (error) {
+						is IOException -> StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+						is StoredFileJobException -> throw error
+						else -> throw StoredFileJobException(storedFile, error)
+					}
+				})
+				.eventually(this)
 		}
 
 		override fun promiseResponse(status: StoredFileJobStatus): Promise<Void> {
@@ -130,13 +132,9 @@ class StoredFileJobProcessor(
 			return processQueue()
 		}
 
-		override fun dispose() {
-			cancellationProxy.run()
-		}
+		override fun dispose() = cancellationProxy.run()
 
-		override fun isDisposed(): Boolean {
-			return cancellationProxy.isCancelled
-		}
+		override fun isDisposed(): Boolean = cancellationProxy.isCancelled
 	}
 
 	companion object {

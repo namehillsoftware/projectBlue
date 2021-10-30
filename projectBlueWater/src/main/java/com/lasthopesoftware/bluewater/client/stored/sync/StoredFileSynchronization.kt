@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.sync
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
@@ -27,7 +26,7 @@ class StoredFileSynchronization(
 		messenger.sendBroadcast(Intent(onSyncStartEvent))
 		return StreamedPromise.stream(libraryProvider.allLibraries)
 			.flatMap({ library -> syncHandler.observeLibrarySync(library.libraryId) }, true)
-			.flatMapCompletable({ storedFileJobStatus: StoredFileJobStatus ->
+			.flatMapCompletable({ storedFileJobStatus ->
 				when (storedFileJobStatus.storedFileJobState) {
 					StoredFileJobState.Queued -> {
 						sendStoredFileBroadcast(onFileQueuedEvent, storedFileJobStatus.storedFile)

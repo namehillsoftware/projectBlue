@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.receivers.file
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.broadcasts.IScanMediaFileBroadcaster
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.namehillsoftware.handoff.promises.Promise
@@ -9,7 +9,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.File
 
 class StoredFileMediaScannerNotifier(
-	private val storedFileAccess: IStoredFileAccess,
+	private val storedFileAccess: AccessStoredFiles,
 	private val mediaFileBroadcaster: IScanMediaFileBroadcaster
 ) : ReceiveStoredFileEvent, ImmediateResponse<StoredFile?, Unit> {
 	override fun receive(storedFileId: Int): Promise<Unit> {

@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
@@ -21,26 +22,55 @@ import org.slf4j.LoggerFactory
 
 class StoredFileAccess(
 	private val context: Context,
-	private val getAllStoredFilesInLibrary: GetAllStoredFilesInLibrary) : IStoredFileAccess {
-
+	private val getAllStoredFilesInLibrary: GetAllStoredFilesInLibrary
+) : AccessStoredFiles
+{
 	private val storedFileAccessExecutor by lazy { ThreadPools.databaseTableExecutor<StoredFileAccess>() }
 
-	override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> {
-		return QueuedPromise(MessageWriter<StoredFile> { RepositoryAccessHelper(context).use { repositoryAccessHelper -> getStoredFile(repositoryAccessHelper, storedFileId) } }, storedFileAccessExecutor)
-	}
+	override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> =
+		QueuedPromise(MessageWriter<StoredFile> {
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				getStoredFile(repositoryAccessHelper, storedFileId)
+			}
+		}, storedFileAccessExecutor)
 
 	override fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
 		getStoredFileTask(library, serviceFile)
 
+	override fun promiseDanglingFiles(): Promise<List<StoredFile>> =
+		QueuedPromise(MessageWriter{
+			RepositoryAccessHelper(context).use { helper ->
+				helper
+					.mapSql(
+						"""SELECT DISTINCT *
+							FROM ${StoredFileEntityInformation.tableName}
+							WHERE ${StoredFileEntityInformation.libraryIdColumnName} NOT IN (
+								SELECT id FROM ${LibraryEntityInformation.tableName})"""
+					)
+					.fetch()
+			}
+		}, storedFileAccessExecutor)
+
 	private fun getStoredFileTask(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
-		QueuedPromise(MessageWriter<StoredFile> { RepositoryAccessHelper(context).use { repositoryAccessHelper -> getStoredFile(library, repositoryAccessHelper, serviceFile) } }, storedFileAccessExecutor)
+		QueuedPromise(MessageWriter<StoredFile> {
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				getStoredFile(
+					library,
+					repositoryAccessHelper,
+					serviceFile
+				)
+			}
+		}, storedFileAccessExecutor)
 
 	override val downloadingStoredFiles: Promise<List<StoredFile>>
 		get() = QueuedPromise(MessageWriter {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql(
-						selectFromStoredFiles + " WHERE " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = @" + StoredFileEntityInformation.isDownloadCompleteColumnName)
+						selectFromStoredFiles +
+							" WHERE " + StoredFileEntityInformation.isDownloadCompleteColumnName +
+							" = @" + StoredFileEntityInformation.isDownloadCompleteColumnName
+					)
 					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, false)
 					.fetch()
 			}
@@ -52,9 +82,10 @@ class StoredFileAccess(
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
 						.mapSql(
-							" UPDATE " + StoredFileEntityInformation.tableName +
-								" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
-								" WHERE id = @id")
+						" UPDATE " + StoredFileEntityInformation.tableName +
+							" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
+							" WHERE id = @id"
+						)
 						.addParameter("id", storedFile.id)
 						.execute()
 					closeableTransaction.setTransactionSuccessful()
@@ -89,7 +120,8 @@ class StoredFileAccess(
 				" SELECT * " +
 					" FROM " + StoredFileEntityInformation.tableName + " " +
 					" WHERE " + StoredFileEntityInformation.serviceIdColumnName + " = @" + StoredFileEntityInformation.serviceIdColumnName +
-					" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
+					" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName
+			)
 			.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
 			.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.id)
 			.fetchFirst()
@@ -100,7 +132,11 @@ class StoredFileAccess(
 			.addParameter("id", storedFileId)
 			.fetchFirst()
 
-	private fun createStoredFile(library: Library, repositoryAccessHelper: RepositoryAccessHelper, serviceFile: ServiceFile) =
+	private fun createStoredFile(
+		library: Library,
+		repositoryAccessHelper: RepositoryAccessHelper,
+		serviceFile: ServiceFile
+	) =
 		repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 			repositoryAccessHelper
 				.mapSql(insertSql)
@@ -129,7 +165,7 @@ class StoredFileAccess(
 		}
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(StoredFileAccess::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(StoredFileAccess::class.java) }
 		private const val selectFromStoredFiles = "SELECT * FROM " + StoredFileEntityInformation.tableName
 
 		private val insertSql by lazy {
@@ -162,7 +198,10 @@ class StoredFileAccess(
 					.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.storedMediaId)
 					.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
 					.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner)
-					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, storedFile.isDownloadComplete)
+					.addParameter(
+						StoredFileEntityInformation.isDownloadCompleteColumnName,
+						storedFile.isDownloadComplete
+					)
 					.addParameter("id", storedFile.id)
 					.execute()
 				closeableTransaction.setTransactionSuccessful()

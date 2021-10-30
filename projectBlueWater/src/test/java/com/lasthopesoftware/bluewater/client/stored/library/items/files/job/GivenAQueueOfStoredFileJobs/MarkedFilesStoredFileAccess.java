@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
 import com.namehillsoftware.handoff.promises.Promise;
 
@@ -16,7 +16,7 @@ import java.util.Set;
 
 import kotlin.Unit;
 
-public class MarkedFilesStoredFileAccess implements IStoredFileAccess {
+public class MarkedFilesStoredFileAccess implements AccessStoredFiles {
 	public final List<StoredFile> storedFilesMarkedAsDownloaded = new ArrayList<>();
 
 	@NotNull
