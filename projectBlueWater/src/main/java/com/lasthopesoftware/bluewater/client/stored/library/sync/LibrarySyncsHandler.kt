@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Proc
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
-import com.lasthopesoftware.bluewater.shared.observables.MaybePromise.Companion.toMaybe
 import com.lasthopesoftware.bluewater.shared.observables.StreamedPromise.Companion.stream
+import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import io.reactivex.Observable
 import org.slf4j.LoggerFactory
@@ -38,7 +38,7 @@ class LibrarySyncsHandler(
 					if (storedFile == null || storedFile.isDownloadComplete) null
 					else StoredFileJob(libraryId, serviceFile, storedFile)
 				}
-				.toMaybe()
+				.toMaybeObservable()
 		}
 		.toList()
 		.flatMapObservable { storedFileJobs -> storedFileJobsProcessor.observeStoredFileDownload(storedFileJobs) }

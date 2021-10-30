@@ -95,7 +95,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
-import com.lasthopesoftware.bluewater.shared.observables.MaybePromise.Companion.toMaybe
+import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -975,7 +975,7 @@ open class PlaybackService : Service() {
 		}
 		val promisedPlayedFile = playingFile.promisePlayedFile()
 		val localSubscription = Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
-			.flatMapMaybe { promisedPlayedFile.progress.toMaybe() }
+			.flatMapMaybe { promisedPlayedFile.progress.toMaybeObservable() }
 			.distinctUntilChanged()
 			.subscribe(TrackPositionBroadcaster(lazyMessageBus.value, playingFile))
 

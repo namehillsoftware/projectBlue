@@ -5,7 +5,9 @@ import io.reactivex.Maybe
 import io.reactivex.MaybeObserver
 import io.reactivex.disposables.Disposable
 
-class MaybePromise<T> private constructor(private val promise: Promise<T>) :
+fun <T> Promise<T>.toMaybeObservable(): Maybe<T> = MaybePromise(this)
+
+private class MaybePromise<T>(private val promise: Promise<T>) :
 	Maybe<T>(),
 	Disposable
 {
@@ -26,8 +28,4 @@ class MaybePromise<T> private constructor(private val promise: Promise<T>) :
 	}
 
 	override fun isDisposed(): Boolean = isCancelled
-
-	companion object {
-		fun <T> Promise<T>.toMaybe(): Maybe<T> = MaybePromise(this)
-	}
 }
