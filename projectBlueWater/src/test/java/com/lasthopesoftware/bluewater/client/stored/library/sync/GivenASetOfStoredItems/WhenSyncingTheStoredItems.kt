@@ -1,90 +1,102 @@
-package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems;
+package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems
 
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import io.reactivex.Observable
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenSyncingTheStoredItems {
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+	companion object {
+		private val storedFileJobResults by lazy {
+			val storedItemAccessMock = mockk<IStoredItemAccess>()
+			every { storedItemAccessMock.promiseStoredItems(LibraryId(52)) } returns Promise(
+				setOf(StoredItem(52, 14, StoredItem.ItemType.PLAYLIST))
+			)
 
-import io.reactivex.Observable;
+			val fileListParameters = FileListParameters.getInstance()
+			val mockFileProvider = mockk<ProvideLibraryFiles>()
+			every {
+				mockFileProvider.promiseFiles(
+					LibraryId(52),
+					FileListParameters.Options.None,
+					*fileListParameters.getFileListParameters(Playlist(14))
+				)
+			} returns Promise(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(4),
+					ServiceFile(19),
+					ServiceFile(10)
+				)
+			)
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+			val storedFileAccess = mockk<IStoredFileAccess>()
+			every { storedFileAccess.pruneStoredFiles(any(), any()) } returns Promise.empty()
 
-public class WhenSyncingTheStoredItems {
+			val storedFilesUpdater = mockk<UpdateStoredFiles>()
+			every { storedFilesUpdater.promiseStoredFileUpdate(any(), any()) } answers {
+				Promise(StoredFile(firstArg(), 1, lastArg(), "fake-file-name", true))
+			}
 
-	private static List<StoredFile> storedFileJobResults = new ArrayList<>();
+			every { storedFilesUpdater.promiseStoredFileUpdate(any(), ServiceFile(19)) } returns Promise(
+				StoredFile(LibraryId(52), 1, ServiceFile(19), "fake", true).setIsDownloadComplete(true)
+			)
 
-	@BeforeClass
-	public static void before() {
-		final IStoredItemAccess storedItemAccessMock = mock(IStoredItemAccess.class);
-		when(storedItemAccessMock.promiseStoredItems(new LibraryId(52)))
-			.thenReturn(new Promise<>(Collections.singleton(
-				new StoredItem(52, 14, StoredItem.ItemType.PLAYLIST))));
+			val librarySyncHandler = LibrarySyncsHandler(
+				StoredItemServiceFileCollector(
+					storedItemAccessMock,
+					mockFileProvider,
+					fileListParameters
+				),
+				storedFileAccess,
+				storedFilesUpdater
+			) { jobs ->
+				Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
+					Observable.just(
+						StoredFileJobStatus(
+							mockk(),
+							storedFile,
+							StoredFileJobState.Downloading
+						),
+						StoredFileJobStatus(
+							mockk(),
+							storedFile,
+							StoredFileJobState.Downloaded
+						)
+					)
+				}
+			}
 
-		final FileListParameters fileListParameters = FileListParameters.getInstance();
-
-		final ProvideLibraryFiles mockFileProvider = mock(ProvideLibraryFiles.class);
-		when(mockFileProvider.promiseFiles(new LibraryId(52), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(14))))
-			.thenReturn(new Promise<>(Arrays.asList(
-				new ServiceFile(1),
-				new ServiceFile(2),
-				new ServiceFile(4),
-				new ServiceFile(10))));
-
-		final IStoredFileAccess storedFileAccess = mock(IStoredFileAccess.class);
-		when(storedFileAccess.pruneStoredFiles(any(), anySet())).thenReturn(Promise.empty());
-
-		final LibrarySyncsHandler librarySyncHandler = new LibrarySyncsHandler(
-			new StoredItemServiceFileCollector(
-				storedItemAccessMock,
-				mockFileProvider,
-				fileListParameters),
-			storedFileAccess,
-			(l, sf) -> new Promise<>(new StoredFile(l, 1, sf, "fake-file-name", true)),
-			jobs -> Observable.fromIterable(jobs).flatMap(job ->
-				Observable.just(new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloading),
-				new StoredFileJobStatus(
-					mock(File.class),
-					job.getStoredFile(),
-					StoredFileJobState.Downloaded)))
-		);
-
-		storedFileJobResults = librarySyncHandler.observeLibrarySync(new LibraryId(52))
-			.filter(j -> j.storedFileJobState == StoredFileJobState.Downloaded)
-			.map(j -> j.storedFile)
-			.toList()
-			.blockingGet();
+			librarySyncHandler.observeLibrarySync(LibraryId(52))
+				.filter { j: StoredFileJobStatus -> j.storedFileJobState == StoredFileJobState.Downloaded }
+				.map { j: StoredFileJobStatus -> j.storedFile }
+				.toList()
+				.blockingGet()
+		}
 	}
 
-	@Test
-	public void thenTheFilesInTheStoredItemsAreSynced() {
-		assertThat(Stream.of(storedFileJobResults).map(StoredFile::getServiceId).toList())
-			.containsExactly(1, 2, 4, 10);
-	}
+    @Test
+    fun thenTheFilesInTheStoredItemsAreSynced() {
+        assertThat(
+            storedFileJobResults.map { obj: StoredFile -> obj.serviceId })
+            .containsExactly(1, 2, 4, 10)
+    }
 }
