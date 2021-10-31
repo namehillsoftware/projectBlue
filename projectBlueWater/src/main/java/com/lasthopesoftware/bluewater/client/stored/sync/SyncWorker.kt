@@ -83,7 +83,11 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
 			return WorkManager.getInstance(context)
 				.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
+				.result
 				.toPromise()
+				.eventually(
+					{ scheduleSync(context) },
+					{ scheduleSync(context) })
 		}
 
 		fun scheduleSync(context: Context): Promise<Operation> =
@@ -91,7 +95,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 				val periodicWorkRequest = PeriodicWorkRequest.Builder(SyncWorker::class.java, 3, TimeUnit.HOURS)
 				periodicWorkRequest.setConstraints(c)
 				WorkManager.getInstance(context)
-					.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest.build())
+					.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest.build())
 			}
 
 		fun cancelSync(context: Context): Promise<Unit> =
@@ -295,11 +299,9 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 		return storedFilesSynchronization.streamFileSynchronization()
 			.toPromise()
-			.also {
-				promisedSynchronization = it
-				it.inevitably { Promise.whenAll(promisedNotifications.keys) }
-					.must { messageBus.clear() }
-			}
+			.also { promisedSynchronization = it }
+			.inevitably { Promise.whenAll(promisedNotifications.keys) }
+			.must { messageBus.clear() }
 	}
 
 	override fun onStopped() {

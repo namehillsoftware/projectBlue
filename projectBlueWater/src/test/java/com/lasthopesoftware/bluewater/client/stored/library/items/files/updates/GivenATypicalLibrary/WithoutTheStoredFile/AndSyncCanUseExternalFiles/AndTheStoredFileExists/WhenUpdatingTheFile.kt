@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithoutTheStoredFile.AndTheStoredFileExists
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithoutTheStoredFile.AndSyncCanUseExternalFiles.AndTheStoredFileExists
 
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
