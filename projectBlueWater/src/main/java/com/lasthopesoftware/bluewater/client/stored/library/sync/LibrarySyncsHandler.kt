@@ -48,8 +48,4 @@ class LibrarySyncsHandler(
 		}
 		.toList()
 		.flatMapObservable(storedFileJobsProcessor::observeStoredFileDownload)
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
-	}
 }
