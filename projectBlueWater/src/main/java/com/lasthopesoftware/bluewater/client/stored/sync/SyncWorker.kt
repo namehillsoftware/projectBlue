@@ -84,7 +84,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			return WorkManager.getInstance(context)
 				.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
 				.result
-				.toPromise()
+				.toPromise(ThreadPools.compute)
 				.eventually(
 					{ scheduleSync(context) },
 					{ scheduleSync(context) })
