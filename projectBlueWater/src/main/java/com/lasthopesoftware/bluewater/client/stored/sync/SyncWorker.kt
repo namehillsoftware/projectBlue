@@ -257,10 +257,43 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 	private val promisedNotifications = ConcurrentHashMap<Promise<Unit>, Unit>()
 
-	private var promisedSynchronization: Promise<Unit>? = null
-
 	override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
+
+		fun doWork(): Promise<Unit> {
+			if (futureResult.isCancelled) return Unit.toPromise()
+
+			if (!lazyStoredFileEventReceivers.isInitialized()) {
+				for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value.distinct()) {
+					val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
+					messageBus.registerReceiver(
+						broadcastReceiver,
+						receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
+							i.addAction(e)
+							i
+						}))
+				}
+			}
+
+			if (!syncStartedReceiver.isInitialized()) {
+				messageBus.registerReceiver(
+					syncStartedReceiver.value,
+					syncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
+						i.addAction(e)
+						i
+					}))
+			}
+
+			return if (futureResult.isCancelled) Unit.toPromise()
+			else storedFilesSynchronization.streamFileSynchronization()
+				.toPromise()
+				.apply {
+					futureResult.addListener(::cancel, ThreadPools.compute)
+				}
+				.inevitably { Promise.whenAll(promisedNotifications.keys) }
+				.must { messageBus.clear() }
+		}
+
 		syncChecker.promiseIsSyncNeeded()
 			.eventually { isNeeded ->
 				if (isNeeded) doWork()
@@ -273,39 +306,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 					futureResult.setException(e)
 				})
 		return futureResult
-	}
-
-	private fun doWork(): Promise<Unit> {
-		if (!lazyStoredFileEventReceivers.isInitialized()) {
-			for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value.distinct()) {
-				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
-				messageBus.registerReceiver(
-					broadcastReceiver,
-					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
-						i.addAction(e)
-						i
-					}))
-			}
-		}
-
-		if (!syncStartedReceiver.isInitialized()) {
-			messageBus.registerReceiver(
-				syncStartedReceiver.value,
-				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
-					i.addAction(e)
-					i
-				}))
-		}
-
-		return storedFilesSynchronization.streamFileSynchronization()
-			.toPromise()
-			.also { promisedSynchronization = it }
-			.inevitably { Promise.whenAll(promisedNotifications.keys) }
-			.must { messageBus.clear() }
-	}
-
-	override fun onStopped() {
-		promisedSynchronization?.cancel()
 	}
 
 	override fun notify(notificationText: String?) {
