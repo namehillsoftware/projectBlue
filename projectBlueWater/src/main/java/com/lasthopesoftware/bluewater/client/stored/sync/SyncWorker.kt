@@ -287,9 +287,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			return if (futureResult.isCancelled) Unit.toPromise()
 			else storedFilesSynchronization.streamFileSynchronization()
 				.toPromise()
-				.apply {
-					futureResult.addListener(::cancel, ThreadPools.compute)
-				}
+				.apply { futureResult.addListener(::cancel, ThreadPools.compute) }
 				.inevitably { Promise.whenAll(promisedNotifications.keys) }
 				.must { messageBus.clear() }
 		}
