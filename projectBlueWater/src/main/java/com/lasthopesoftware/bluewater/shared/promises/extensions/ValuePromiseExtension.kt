@@ -8,6 +8,7 @@ import io.reactivex.CompletableObserver
 import io.reactivex.disposables.Disposable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
+import java.util.concurrent.atomic.AtomicBoolean
 
 fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)
 
@@ -40,7 +41,8 @@ private class UnitResponse<Resolution> private constructor() : ImmediateResponse
 }
 
 private class CompletablePromise(completable: Completable) : Promise<Unit>(), CompletableObserver, Runnable {
-	private var disposable: Disposable? = null
+	private val isCancelled = AtomicBoolean()
+	private lateinit var disposable: Disposable
 
 	init {
 		completable.subscribe(this)
@@ -48,20 +50,18 @@ private class CompletablePromise(completable: Completable) : Promise<Unit>(), Co
 	}
 
 	override fun run() {
-		disposable?.dispose()
+		isCancelled.set(true)
+		disposable.dispose()
 	}
 
 	override fun onSubscribe(d: Disposable) {
 		disposable = d
+		if (isCancelled.get()) d.dispose()
 	}
 
-	override fun onComplete() {
-		resolve(Unit)
-	}
+	override fun onComplete() = resolve(Unit)
 
-	override fun onError(e: Throwable) {
-		reject(e)
-	}
+	override fun onError(e: Throwable) = reject(e)
 }
 
 private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableFuture<Resolution>, executor: Executor) : Promise<Resolution>() {
