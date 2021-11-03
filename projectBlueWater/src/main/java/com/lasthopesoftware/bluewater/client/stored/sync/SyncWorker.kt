@@ -49,7 +49,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChann
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
@@ -65,7 +64,7 @@ import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -74,10 +73,8 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	PostSyncNotification
 {
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(SyncWorker::class.java) }
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(SyncWorker::class.java) }
 		private const val notificationId = 23
-		private val workName by lazy { magicPropertyBuilder.buildProperty("") }
+		private const val workName = "StoredFilesSync"
 
 		fun syncImmediately(context: Context): Promise<Operation> {
 			val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
@@ -251,50 +248,14 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			0.makePendingIntentImmutable())
 	}
 
-	private val cancelIntent by lazy {
-		WorkManager.getInstance(context).createCancelPendingIntent(id)
-	}
+	private val cancelIntent by lazy { WorkManager.getInstance(context).createCancelPendingIntent(id) }
+
+	private val cancellationProxy = CancellationProxy()
 
 	private val promisedNotifications = ConcurrentHashMap<Promise<Unit>, Unit>()
 
 	override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
-
-		fun doWork(): Promise<Unit> {
-			if (futureResult.isCancelled) return Unit.toPromise()
-
-			if (!lazyStoredFileEventReceivers.isInitialized()) {
-				for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value.distinct()) {
-					val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
-					messageBus.registerReceiver(
-						broadcastReceiver,
-						receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
-							i.addAction(e)
-							i
-						}))
-				}
-			}
-
-			if (!syncStartedReceiver.isInitialized()) {
-				messageBus.registerReceiver(
-					syncStartedReceiver.value,
-					syncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
-						i.addAction(e)
-						i
-					}))
-			}
-
-			return if (futureResult.isCancelled) Unit.toPromise()
-			else storedFilesSynchronization.streamFileSynchronization()
-				.toPromise()
-				.also { p ->
-					futureResult.addListener({
-						if (futureResult.isCancelled) p.cancel()
-					}, ThreadPools.compute)
-				}
-				.inevitably { Promise.whenAll(promisedNotifications.keys) }
-				.must { messageBus.clear() }
-		}
 
 		syncChecker.promiseIsSyncNeeded()
 			.eventually { isNeeded ->
@@ -303,12 +264,11 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			}
 			.then(
 				{ futureResult.set(Result.success()) },
-				{ e ->
-					logger.error("An error occurred while synchronizing stored files", e)
-					futureResult.setException(e)
-				})
+				futureResult::setException)
 		return futureResult
 	}
+
+	override fun onStopped() = cancellationProxy.run()
 
 	override fun notify(notificationText: String?) {
 		val notifyBuilder = NotificationCompat.Builder(context, activeNotificationChannelId)
@@ -328,5 +288,37 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			.unitResponse()
 		promisedNotifications.putIfAbsent(promisedForegroundNotification, Unit)
 		promisedForegroundNotification.must { promisedNotifications.remove(promisedForegroundNotification) }
+	}
+
+	private fun doWork(): Promise<Unit> {
+		if (cancellationProxy.isCancelled) return Unit.toPromise()
+
+		if (!lazyStoredFileEventReceivers.isInitialized()) {
+			for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value.distinct()) {
+				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
+				messageBus.registerReceiver(
+					broadcastReceiver,
+					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
+						i.addAction(e)
+						i
+					}))
+			}
+		}
+
+		if (!syncStartedReceiver.isInitialized()) {
+			messageBus.registerReceiver(
+				syncStartedReceiver.value,
+				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
+					i.addAction(e)
+					i
+				}))
+		}
+
+		return if (cancellationProxy.isCancelled) Unit.toPromise()
+		else storedFilesSynchronization.streamFileSynchronization()
+			.toPromise()
+			.also(cancellationProxy::doCancel)
+			.inevitably { Promise.whenAll(promisedNotifications.keys) }
+			.must { messageBus.clear() }
 	}
 }
