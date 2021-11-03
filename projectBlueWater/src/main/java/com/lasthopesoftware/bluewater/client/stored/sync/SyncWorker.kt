@@ -84,7 +84,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			return WorkManager.getInstance(context)
 				.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
 				.result
-				.toPromise()
+				.toPromise(ThreadPools.compute)
 				.eventually(
 					{ scheduleSync(context) },
 					{ scheduleSync(context) })
@@ -287,8 +287,10 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			return if (futureResult.isCancelled) Unit.toPromise()
 			else storedFilesSynchronization.streamFileSynchronization()
 				.toPromise()
-				.apply {
-					futureResult.addListener(::cancel, ThreadPools.compute)
+				.also { p ->
+					futureResult.addListener({
+						if (futureResult.isCancelled) p.cancel()
+					}, ThreadPools.compute)
 				}
 				.inevitably { Promise.whenAll(promisedNotifications.keys) }
 				.must { messageBus.clear() }

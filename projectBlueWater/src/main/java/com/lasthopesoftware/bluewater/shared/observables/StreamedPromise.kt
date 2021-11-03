@@ -2,32 +2,15 @@ package com.lasthopesoftware.bluewater.shared.observables
 
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
-import io.reactivex.Observer
-import io.reactivex.disposables.Disposable
+import io.reactivex.functions.Function
 
-fun <T, S : Iterable<T>> Promise<S>.stream(): Observable<T> = StreamedPromise(this)
+fun <T, S : Iterable<T>> Promise<S>.stream(): Observable<T> = this.toMaybeObservable().flattenAsObservable(flatten())
 
-private class StreamedPromise<T, S : Iterable<T>> constructor(private val promise: Promise<S>) :
-	Observable<T>(), Disposable
-{
-	@Volatile
-	private var isCancelled = false
+@Suppress("UNCHECKED_CAST")
+private fun <T> flatten(): Flattener<T> = singleFlattener as Flattener<T>
 
-	override fun subscribeActual(observer: Observer<in T>) {
-		observer.onSubscribe(this)
-		promise
-			.then(
-				{ ts ->
-					for (t in ts) observer.onNext(t)
-					observer.onComplete()
-				},
-				observer::onError)
-	}
+private val singleFlattener by lazy { Flattener<Any?>() }
 
-	override fun dispose() {
-		isCancelled = true
-		promise.cancel()
-	}
-
-	override fun isDisposed(): Boolean = isCancelled
+private class Flattener<T> : Function<T, T> {
+	override fun apply(t: T): T = t
 }

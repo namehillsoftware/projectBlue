@@ -14,13 +14,13 @@ import java.io.InputStream
 class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServiceFileUriQueryParamsProvider, private val libraryConnections: ProvideLibraryConnections) : DownloadStoredFiles {
 	override fun promiseDownload(libraryId: LibraryId, storedFile: StoredFile): Promise<InputStream> =
 		CancellableProxyPromise { cp ->
-			val promisedResponse = libraryConnections
+			libraryConnections
 				.promiseLibraryConnection(libraryId)
-				.eventually { c -> c?.promiseResponse(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(ServiceFile(storedFile.serviceId))) ?: Promise.empty() }
-
-			cp.doCancel(promisedResponse)
-
-			promisedResponse
+				.eventually { c ->
+					c?.promiseResponse(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(ServiceFile(storedFile.serviceId)))
+						?.also(cp::doCancel)
+						?: Promise.empty()
+				}
 				.then { r ->
 					r?.body
 						?.takeIf { r.code != 404 }
@@ -30,7 +30,7 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 		}
 
 	private class StreamedResponse(private val responseBody: ResponseBody) : InputStream() {
-		private val byteStream: InputStream = responseBody.byteStream()
+		private val byteStream = responseBody.byteStream()
 
 		override fun read(): Int {
 			return byteStream.read()
