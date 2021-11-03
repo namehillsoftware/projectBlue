@@ -32,6 +32,14 @@ android {
 	}
 
 	signingConfigs {
+		debug {
+			// You need to specify either an absolute path or include the
+			// keystore file in the same directory as the build.gradle file.
+			storeFile file("androidstore")
+			storePassword androidStorePassword
+			keyAlias "store"
+			keyPassword androidKeyStorePassword
+		}
 		release {
 			// You need to specify either an absolute path or include the
 			// keystore file in the same directory as the build.gradle file.
@@ -54,14 +62,14 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
-			signingConfig (isSignedExternally() ? signingConfigs.release : null)
+			signingConfig = (isSignedExternally() ? signingConfigs.debug : signingConfig)
 		}
         release {
             minifyEnabled true
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-			signingConfig (isSignedExternally() ? signingConfigs.release : null)
+			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
         }
     }
 
