@@ -13,7 +13,6 @@ import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
@@ -35,7 +34,7 @@ class StoredFileJobProcessor(
 		RecursiveQueueProcessor(jobs)
 
 	private inner class RecursiveQueueProcessor(private val jobs: Iterable<StoredFileJob>) :
-		Observable<StoredFileJobStatus>(), PromisedResponse<StoredFileJobStatus, Void>,
+		Observable<StoredFileJobStatus>(),
 		Disposable
 	{
 		private var isRunning = false
@@ -100,37 +99,35 @@ class StoredFileJobProcessor(
 			}
 
 			observer.onNext(StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading))
-			val promisedDownload = storedFiles.promiseDownload(libraryId, storedFile)
-			cancellationProxy.doCancel(promisedDownload)
-			return promisedDownload.then(
+			return storedFiles.promiseDownload(libraryId, storedFile)
+				.also(cancellationProxy::doCancel)
+				.then(
 					{ inputStream ->
-					try {
-						if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
-						else inputStream.use { s ->
-							fileStreamWriter.writeStreamToFile(s, file)
-							storedFileAccess.markStoredFileAsDownloaded(storedFile)
-							StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded)
+						try {
+							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
+							else inputStream.use { s ->
+								fileStreamWriter.writeStreamToFile(s, file)
+								storedFileAccess.markStoredFileAsDownloaded(storedFile)
+								StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded)
+							}
+						} catch (ioe: IOException) {
+							logger.error("Error writing file!", ioe)
+							StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+						} catch (t: Throwable) {
+							throw StoredFileJobException(storedFile, t)
 						}
-					} catch (ioe: IOException) {
-						logger.error("Error writing file!", ioe)
-						StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
-					} catch (t: Throwable) {
-						throw StoredFileJobException(storedFile, t)
-					}
-				},
-				{ error ->
-					when (error) {
-						is IOException -> StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
-						is StoredFileJobException -> throw error
-						else -> throw StoredFileJobException(storedFile, error)
-					}
-				})
-				.eventually(this)
-		}
-
-		override fun promiseResponse(status: StoredFileJobStatus): Promise<Void> {
-			observer.onNext(status)
-			return processQueue()
+					},
+					{ error ->
+						when (error) {
+							is IOException -> StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+							is StoredFileJobException -> throw error
+							else -> throw StoredFileJobException(storedFile, error)
+						}
+					})
+				.eventually { status ->
+					observer.onNext(status)
+					processQueue()
+				}
 		}
 
 		override fun dispose() = cancellationProxy.run()
