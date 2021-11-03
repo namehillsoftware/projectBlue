@@ -32,6 +32,12 @@ android {
 	}
 
 	signingConfigs {
+		debug {
+			storeFile file('/home/david/workspace/projectBlue/projectBlueWater/keystore')
+			storePassword '6. 3 Libras'
+			keyAlias 'store'
+			keyPassword '7. Going to California'
+		}
 		release {
 			// You need to specify either an absolute path or include the
 			// keystore file in the same directory as the build.gradle file.
@@ -54,14 +60,14 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
-			signingConfig (isSignedExternally() ? signingConfigs.release : null)
+			signingConfig = (isSignedExternally() ? signingConfigs.release : signingConfig)
 		}
         release {
             minifyEnabled true
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-			signingConfig (isSignedExternally() ? signingConfigs.release : null)
+			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
         }
     }
 
