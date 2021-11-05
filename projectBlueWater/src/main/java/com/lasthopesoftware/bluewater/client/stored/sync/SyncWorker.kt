@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -283,9 +284,10 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		notifyBuilder.setContentTitle(context.getText(R.string.title_sync_files))
 		notifyBuilder.setContentText(notificationText)
 		val syncNotification = notifyBuilder.build()
-		val promisedForegroundNotification = setForegroundAsync(ForegroundInfo(notificationId, syncNotification))
-			.toPromise(ThreadPools.compute)
-			.unitResponse()
+		val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
+		val promisedForegroundNotification = setForegroundAsync(ForegroundInfo(notificationId, syncNotification, serviceType))
+				.toPromise(ThreadPools.compute)
+				.unitResponse()
 		promisedNotifications.putIfAbsent(promisedForegroundNotification, Unit)
 		promisedForegroundNotification.must { promisedNotifications.remove(promisedForegroundNotification) }
 	}

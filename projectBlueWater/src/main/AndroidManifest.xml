@@ -124,7 +124,7 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".client.stored.service.DeviceBootSyncScheduler"
+            android:name=".client.stored.sync.DeviceBootSyncScheduler"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -141,6 +141,10 @@
             android:name=".client.connection.polling.PollConnectionService"
             android:enabled="true"
             android:exported="false" />
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
