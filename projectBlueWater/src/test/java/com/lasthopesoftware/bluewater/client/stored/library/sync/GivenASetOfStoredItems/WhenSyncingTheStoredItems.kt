@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -48,7 +48,7 @@ class WhenSyncingTheStoredItems {
 				)
 			)
 
-			val storedFileAccess = mockk<IStoredFileAccess>()
+			val storedFileAccess = mockk<AccessStoredFiles>()
 			every { storedFileAccess.pruneStoredFiles(any(), any()) } returns Promise.empty()
 
 			val storedFilesUpdater = mockk<UpdateStoredFiles>()
@@ -86,8 +86,8 @@ class WhenSyncingTheStoredItems {
 			}
 
 			librarySyncHandler.observeLibrarySync(LibraryId(52))
-				.filter { j: StoredFileJobStatus -> j.storedFileJobState == StoredFileJobState.Downloaded }
-				.map { j: StoredFileJobStatus -> j.storedFile }
+				.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
+				.map { j -> j.storedFile }
 				.toList()
 				.blockingGet()
 		}

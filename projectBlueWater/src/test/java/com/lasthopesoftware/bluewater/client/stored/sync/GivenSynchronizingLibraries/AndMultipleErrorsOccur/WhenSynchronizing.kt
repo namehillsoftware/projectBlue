@@ -1,147 +1,143 @@
-package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.AndMultipleErrorsOccur;
+package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.AndMultipleErrorsOccur
 
-import androidx.test.core.app.ApplicationProvider;
+import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.resources.FakeMessageBus
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import io.reactivex.Observable
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
+import java.util.*
 
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs;
-import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.resources.FakeMessageBus;
-import com.namehillsoftware.handoff.promises.Promise;
+class WhenSynchronizing : AndroidContext() {
 
-import org.junit.Test;
+	companion object {
+		private val random = Random()
+		private val storedFiles = arrayOf(
+			StoredFile().setId(random.nextInt()).setServiceId(1).setLibraryId(4),
+			StoredFile().setId(random.nextInt()).setServiceId(2).setLibraryId(4),
+			StoredFile().setId(random.nextInt()).setServiceId(4).setLibraryId(4),
+			StoredFile().setId(random.nextInt()).setServiceId(5).setLibraryId(4),
+			StoredFile().setId(random.nextInt()).setServiceId(7).setLibraryId(4),
+			StoredFile().setId(random.nextInt()).setServiceId(114).setLibraryId(4),
+			StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4)
+		)
+		private val faultingStoredFileServiceIds = listOf(7, 92)
+		private val expectedStoredFileJobs = storedFiles.filter { f -> !faultingStoredFileServiceIds.contains(f.serviceId) }
+		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
+	}
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+	override fun before() {
+		val libraryProvider = mockk<ILibraryProvider>()
+		every { libraryProvider.allLibraries } returns Promise(listOf(Library().setId(4)))
+		val librarySyncHandler = mockk<ControlLibrarySyncs>()
+		every { librarySyncHandler.observeLibrarySync(LibraryId(4)) } returns Observable.concatArrayDelayError(
+			Observable
+				.fromArray(*storedFiles)
+				.filter { f -> f.serviceId == 92 }
+				.flatMap({ f ->
+					Observable.concat(
+						Observable.just(
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading)
+						),
+						Observable.error(StoredFileReadException(mockk(), f))
+					)
+				}, true),
+			Observable
+				.fromArray(*storedFiles)
+				.filter { f -> !faultingStoredFileServiceIds.contains(f.serviceId) }
+				.flatMap { f ->
+					Observable.just(
+						StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
+						StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
+						StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
+					)
+				},
+			Observable
+				.fromArray(*storedFiles)
+				.filter { f -> f.serviceId == 7 }
+				.flatMap({ f ->
+					Observable.concat(
+						Observable.just(
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
+						),
+						Observable.error(StoredFileWriteException(mockk(), f))
+					)
+				}, true)
+		)
 
-import io.reactivex.Observable;
-
-import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileDownloadedEvent;
-import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileDownloadingEvent;
-import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileQueuedEvent;
-import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onFileWriteErrorEvent;
-import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.onSyncStopEvent;
-import static com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization.storedFileEventKey;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenSynchronizing extends AndroidContext {
-
-	private static final Random random = new Random();
-
-	private static final StoredFile[] storedFiles = new StoredFile[] {
-		new StoredFile().setId(random.nextInt()).setServiceId(1).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(2).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(4).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(5).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(7).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(114).setLibraryId(4),
-		new StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4)
-	};
-
-	private static final List<Integer> faultingStoredFileServiceIds = Arrays.asList(7, 92);
-
-	private static final List<StoredFile> expectedStoredFileJobs = Stream.of(storedFiles).filter(f -> !faultingStoredFileServiceIds.contains(f.getServiceId())).toList();
-
-	private static final FakeMessageBus fakeMessageSender = new FakeMessageBus(ApplicationProvider.getApplicationContext());
-
-	@Override
-	public void before() {
-		final ILibraryProvider libraryProvider = mock(ILibraryProvider.class);
-		when(libraryProvider.getAllLibraries())
-			.thenReturn(new Promise<>(Collections.singletonList(new Library().setId(4))));
-
-		final ControlLibrarySyncs librarySyncHandler = mock(ControlLibrarySyncs.class);
-		when(librarySyncHandler.observeLibrarySync(new LibraryId(4)))
-			.thenReturn(Observable.concatArrayDelayError(
-				Observable
-					.fromArray(storedFiles)
-					.filter(f -> f.getServiceId() == 92)
-					.flatMap(f ->
-						Observable.concat(Observable.just(
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading)),
-							Observable.error(new StoredFileReadException(mock(File.class), f))), true),
-				Observable
-					.fromArray(storedFiles)
-					.filter(f -> !faultingStoredFileServiceIds.contains(f.getServiceId()))
-					.flatMap(f -> Observable.just(
-						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
-						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading),
-						new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloaded))),
-				Observable
-					.fromArray(storedFiles)
-					.filter(f -> f.getServiceId() == 7)
-					.flatMap(f ->
-						Observable.concat(Observable.just(
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Queued),
-							new StoredFileJobStatus(mock(File.class), f, StoredFileJobState.Downloading)),
-							Observable.error(new StoredFileWriteException(mock(File.class), f))), true)));
-
-		final StoredFileSynchronization synchronization = new StoredFileSynchronization(
+		val synchronization = StoredFileSynchronization(
 			libraryProvider,
 			fakeMessageSender,
-			librarySyncHandler);
-
-		synchronization.streamFileSynchronization().blockingAwait();
+			librarySyncHandler
+		)
+		synchronization.streamFileSynchronization().blockingAwait()
 	}
 
 	@Test
-	public void thenTheStoredFilesAreBroadcastAsQueued() {
-		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
-			.filter(i -> onFileQueuedEvent.equals(i.getAction()))
-			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).isSubsetOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
+	fun thenTheStoredFilesAreBroadcastAsQueued() {
+		assertThat(
+			fakeMessageSender.recordedIntents
+				.filter { i -> StoredFileSynchronization.onFileQueuedEvent == i.action }
+				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
+			.isSubsetOf(storedFiles.map { obj -> obj.id })
 	}
 
 	@Test
-	public void thenTheStoredFilesAreBroadcastAsDownloading() {
-		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
-			.filter(i -> onFileDownloadingEvent.equals(i.getAction()))
-			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).isSubsetOf(Stream.of(storedFiles).map(StoredFile::getId).toList());
+	fun thenTheStoredFilesAreBroadcastAsDownloading() {
+		assertThat(
+			fakeMessageSender.recordedIntents
+				.filter { i -> StoredFileSynchronization.onFileDownloadingEvent == i.action }
+				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
+			.isSubsetOf(storedFiles.map { obj -> obj.id })
 	}
 
 	@Test
-	public void thenTheWriteErrorsIsBroadcast() {
-		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
-			.filter(i -> onFileWriteErrorEvent.equals(i.getAction()))
-			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).filter(f -> f.getServiceId() == 7).map(StoredFile::getId).toList());
+	fun thenTheWriteErrorsIsBroadcast() {
+		assertThat(
+			fakeMessageSender.recordedIntents
+				.filter { i -> StoredFileSynchronization.onFileWriteErrorEvent == i.action }
+				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
+			.containsExactlyElementsOf(storedFiles.filter { f -> f.serviceId == 7 }.map { obj -> obj.id })
 	}
 
 	@Test
-	public void thenTheReadErrorsIsBroadcast() {
-		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
-			.filter(i -> onFileWriteErrorEvent.equals(i.getAction()))
-			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).containsExactlyElementsOf(Stream.of(storedFiles).filter(f -> f.getServiceId() == 7).map(StoredFile::getId).toList());
+	fun thenTheReadErrorsIsBroadcast() {
+		assertThat(
+			fakeMessageSender.recordedIntents
+				.filter { i -> StoredFileSynchronization.onFileWriteErrorEvent == i.action }
+				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
+			.containsExactlyElementsOf(storedFiles.filter { f -> f.serviceId == 7 }.map { obj -> obj.id })
 	}
 
 	@Test
-	public void thenTheStoredFilesAreBroadcastAsDownloaded() {
-		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
-			.filter(i -> onFileDownloadedEvent.equals(i.getAction()))
-			.map(i -> i.getIntExtra(storedFileEventKey, -1))
-			.toList()).isSubsetOf(Stream.of(expectedStoredFileJobs).map(StoredFile::getId).toList());
+	fun thenTheStoredFilesAreBroadcastAsDownloaded() {
+		assertThat(
+			fakeMessageSender.recordedIntents
+				.filter { i -> StoredFileSynchronization.onFileDownloadedEvent == i.action }
+				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
+			.isSubsetOf(expectedStoredFileJobs.map { obj -> obj.id })
 	}
 
 	@Test
-	public void thenASyncStoppedEventOccurs() {
-		assertThat(Stream.of(fakeMessageSender.getRecordedIntents())
-			.filter(i -> onSyncStopEvent.equals(i.getAction()))
-			.single()).isNotNull();
+	fun thenASyncStoppedEventOccurs() {
+		assertThat(
+			fakeMessageSender.recordedIntents
+				.singleOrNull { i -> StoredFileSynchronization.onSyncStopEvent == i.action })
+			.isNotNull
 	}
 }

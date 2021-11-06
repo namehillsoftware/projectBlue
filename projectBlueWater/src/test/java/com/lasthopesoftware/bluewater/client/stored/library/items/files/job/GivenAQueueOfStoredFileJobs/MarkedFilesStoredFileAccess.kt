@@ -1,58 +1,43 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
+import java.util.*
 
-import org.jetbrains.annotations.NotNull;
+class MarkedFilesStoredFileAccess : AccessStoredFiles {
+    @JvmField
+	val storedFilesMarkedAsDownloaded: MutableList<StoredFile> = ArrayList()
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+    override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> {
+        return Promise.empty()
+    }
 
-import kotlin.Unit;
+    override fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> {
+        return Promise.empty()
+    }
 
-public class MarkedFilesStoredFileAccess implements AccessStoredFiles {
-	public final List<StoredFile> storedFilesMarkedAsDownloaded = new ArrayList<>();
+    override val downloadingStoredFiles: Promise<List<StoredFile>>
+        get() = Promise(emptyList())
 
-	@NotNull
-	@Override
-	public Promise<StoredFile> getStoredFile(int storedFileId) {
-		return Promise.empty();
-	}
+    override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> {
+        storedFilesMarkedAsDownloaded.add(storedFile)
+        return Promise(storedFile)
+    }
 
-	@NotNull
-	@Override
-	public Promise<StoredFile> getStoredFile(@NotNull Library library, @NotNull ServiceFile serviceServiceFile) {
-		return Promise.empty();
-	}
+    override fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> {
+        return Unit.toPromise()
+    }
 
-	@NotNull
-	@Override
-	public Promise<List<StoredFile>> getDownloadingStoredFiles() {
-		return new Promise<>(Collections.emptyList());
-	}
+    override fun pruneStoredFiles(libraryId: LibraryId, serviceFilesToKeep: Set<ServiceFile>): Promise<Unit> {
+		return Unit.toPromise()
+    }
 
-	@NotNull
-	@Override
-	public Promise<StoredFile> markStoredFileAsDownloaded(StoredFile storedFile) {
-		storedFilesMarkedAsDownloaded.add(storedFile);
-		return new Promise<>(storedFile);
-	}
-
-	@NotNull
-	@Override
-	public Promise<Unit> addMediaFile(@NotNull Library library, @NotNull ServiceFile serviceFile, int mediaFileId, String filePath) {
-		return new Promise<>(Unit.INSTANCE);
-	}
-
-	@NotNull
-	@Override
-	public Promise<Unit> pruneStoredFiles(@NotNull LibraryId libraryId, @NotNull Set<ServiceFile> serviceFilesToKeep) {
-		return new Promise<>(Unit.INSTANCE);
-	}
+    override fun promiseDanglingFiles(): Promise<List<StoredFile>> {
+        return Promise.empty()
+    }
 }
