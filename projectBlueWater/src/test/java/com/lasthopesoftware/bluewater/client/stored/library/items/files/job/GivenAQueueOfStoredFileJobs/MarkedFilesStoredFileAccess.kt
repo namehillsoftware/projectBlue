@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -33,11 +32,11 @@ class MarkedFilesStoredFileAccess : AccessStoredFiles {
         return Unit.toPromise()
     }
 
-    override fun pruneStoredFiles(libraryId: LibraryId, serviceFilesToKeep: Set<ServiceFile>): Promise<Unit> {
+	override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> {
 		return Unit.toPromise()
-    }
+	}
 
-    override fun promiseDanglingFiles(): Promise<List<StoredFile>> {
+	override fun promiseDanglingFiles(): Promise<Collection<StoredFile>> {
         return Promise.empty()
     }
 }

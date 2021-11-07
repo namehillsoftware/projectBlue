@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
-import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +15,7 @@ class WhenAddingTheFile {
 
 	companion object {
 		private val storedFile by lazy {
-			StoredFileAccess(ApplicationProvider.getApplicationContext(), mockk())
+			StoredFileAccess(ApplicationProvider.getApplicationContext())
 				.addMediaFile(
 					Library().setId(13),
 					ServiceFile(3),
@@ -26,7 +25,7 @@ class WhenAddingTheFile {
 				.toFuture()
 				.get()
 
-			val storedFileAccess = StoredFileAccess(ApplicationProvider.getApplicationContext(), mockk())
+			val storedFileAccess = StoredFileAccess(ApplicationProvider.getApplicationContext())
 			storedFileAccess
 				.addMediaFile(
 					Library().setId(15),

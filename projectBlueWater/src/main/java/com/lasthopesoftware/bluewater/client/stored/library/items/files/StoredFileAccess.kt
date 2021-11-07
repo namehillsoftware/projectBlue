@@ -5,10 +5,8 @@ import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
@@ -20,11 +18,7 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import org.slf4j.LoggerFactory
 
-class StoredFileAccess(
-	private val context: Context,
-	private val getAllStoredFilesInLibrary: GetAllStoredFilesInLibrary
-) : AccessStoredFiles
-{
+class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 	private val storedFileAccessExecutor by lazy { ThreadPools.databaseTableExecutor<StoredFileAccess>() }
 
 	override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> =
@@ -37,7 +31,7 @@ class StoredFileAccess(
 	override fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
 		getStoredFileTask(library, serviceFile)
 
-	override fun promiseDanglingFiles(): Promise<List<StoredFile>> =
+	override fun promiseDanglingFiles(): Promise<Collection<StoredFile>> =
 		QueuedPromise(MessageWriter{
 			RepositoryAccessHelper(context).use { helper ->
 				helper
@@ -92,7 +86,6 @@ class StoredFileAccess(
 				}
 			}
 			storedFile.setIsDownloadComplete(true)
-			storedFile
 		}, storedFileAccessExecutor)
 
 	override fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> =
@@ -109,10 +102,6 @@ class StoredFileAccess(
 				updateStoredFile(repositoryAccessHelper, storedFile)
 			}
 		}, storedFileAccessExecutor)
-
-	override fun pruneStoredFiles(libraryId: LibraryId, serviceFilesToKeep: Set<ServiceFile>): Promise<Unit> =
-		getAllStoredFilesInLibrary.promiseAllStoredFiles(libraryId)
-			.eventually(PruneFilesTask(this, serviceFilesToKeep))
 
 	private fun getStoredFile(library: Library, helper: RepositoryAccessHelper, serviceFile: ServiceFile): StoredFile? =
 		helper
@@ -132,11 +121,7 @@ class StoredFileAccess(
 			.addParameter("id", storedFileId)
 			.fetchFirst()
 
-	private fun createStoredFile(
-		library: Library,
-		repositoryAccessHelper: RepositoryAccessHelper,
-		serviceFile: ServiceFile
-	) =
+	private fun createStoredFile(library: Library, repositoryAccessHelper: RepositoryAccessHelper, serviceFile: ServiceFile) =
 		repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 			repositoryAccessHelper
 				.mapSql(insertSql)
@@ -147,8 +132,8 @@ class StoredFileAccess(
 			closeableTransaction.setTransactionSuccessful()
 		}
 
-	fun deleteStoredFile(storedFile: StoredFile) =
-		storedFileAccessExecutor.execute {
+	override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> =
+		QueuedPromise(MessageWriter {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -162,7 +147,7 @@ class StoredFileAccess(
 					logger.error("There was an error deleting serviceFile " + storedFile.id, e)
 				}
 			}
-		}
+		}, storedFileAccessExecutor)
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(StoredFileAccess::class.java) }

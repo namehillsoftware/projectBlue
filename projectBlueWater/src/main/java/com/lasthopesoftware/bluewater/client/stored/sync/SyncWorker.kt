@@ -33,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
@@ -146,7 +147,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	private val notificationManager by lazy { context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val channelConfiguration by lazy { SyncChannelProperties(context) }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(context)) }
-	private val storedFileAccess by lazy { StoredFileAccess(context, StoredFilesCollection(context)) }
+	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(context) }
 	private val libraryRepository by lazy { LibraryRepository(context) }
 	private val libraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
@@ -189,12 +190,19 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			fileProperties,
 			SyncDirectoryLookup(libraryRepository, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
 		)
+
+		val serviceFilesCollector = StoredItemServiceFileCollector(
+			storedItemAccess,
+			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
+			FileListParameters.getInstance())
+
 		val syncHandler = LibrarySyncsHandler(
-			StoredItemServiceFileCollector(
-				storedItemAccess,
-				LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
-				FileListParameters.getInstance()),
-			storedFileAccess,
+			serviceFilesCollector,
+			StoredFilesPruner(
+				serviceFilesCollector,
+				StoredFilesCollection(context),
+				storedFileAccess
+			),
 			storedFileUpdater,
 			StoredFileJobProcessor(
 				StoredFileSystemFileProducer(),

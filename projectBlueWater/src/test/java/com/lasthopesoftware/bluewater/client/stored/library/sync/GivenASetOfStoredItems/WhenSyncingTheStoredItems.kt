@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -48,8 +48,8 @@ class WhenSyncingTheStoredItems {
 				)
 			)
 
-			val storedFileAccess = mockk<AccessStoredFiles>()
-			every { storedFileAccess.pruneStoredFiles(any(), any()) } returns Promise.empty()
+			val storedFileAccess = mockk<PruneStoredFiles>()
+			every { storedFileAccess.pruneStoredFiles(any()) } returns Promise.empty()
 
 			val storedFilesUpdater = mockk<UpdateStoredFiles>()
 			every { storedFilesUpdater.promiseStoredFileUpdate(any(), any()) } answers {
@@ -96,7 +96,7 @@ class WhenSyncingTheStoredItems {
     @Test
     fun thenTheFilesInTheStoredItemsAreSynced() {
         assertThat(
-            storedFileJobResults.map { obj: StoredFile -> obj.serviceId })
+            storedFileJobResults.map { obj -> obj.serviceId })
             .containsExactly(1, 2, 4, 10)
     }
 }

@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.lazyj.Lazy
-import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,9 +17,8 @@ class WhenAddingTheFile {
 	companion object {
 		private val storedFile = Lazy {
 			val storedFileAccess = StoredFileAccess(
-				ApplicationProvider.getApplicationContext(),
-				mockk()
-			)
+                ApplicationProvider.getApplicationContext()
+            )
 			val library = Library().setId(15)
 			storedFileAccess
 				.addMediaFile(

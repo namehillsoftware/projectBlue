@@ -714,7 +714,7 @@ open class PlaybackService : Service() {
 						library,
 						StoredFileUriProvider(
 							lazySelectedLibraryProvider.value,
-							StoredFileAccess(this, lazyAllStoredFilesInLibrary.value),
+							StoredFileAccess(this),
 							arbitratorForOs),
 						CachedAudioFileUriProvider(
 							remoteFileUriProvider,

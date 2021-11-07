@@ -22,7 +22,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncWorker
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -64,8 +63,8 @@ class ActiveFileDownloadsFragment : Fragment() {
 			.browserLibrary
 			.then { library ->
 				val storedFileAccess = StoredFileAccess(
-					context,
-					StoredFilesCollection(context))
+                    context
+                )
 
 				storedFileAccess.downloadingStoredFiles
 					.eventually(LoopedInPromise.response({ storedFiles ->
