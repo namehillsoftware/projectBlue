@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.request.read.Stora
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.stored.library.items.CachedStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -55,6 +56,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -120,12 +122,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	}
 
 	private val syncChecker by lazy {
-		SyncChecker(
-			LibraryRepository(context),
-			StoredItemServiceFileCollector(
-				StoredItemAccess(context),
-				LibraryFileProvider(LibraryFileStringListProvider(ConnectionSessionManager.get(context))),
-				FileListParameters.getInstance()))
+		SyncChecker(LibraryRepository(context), serviceFilesCollector)
 	}
 
 	private val applicationSettings by lazy { context.getApplicationSettingsRepository() }
@@ -166,6 +163,18 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		)
 	}
 
+	private val serviceFilesCollector by lazy {
+		val serviceFilesCollector = StoredItemServiceFileCollector(
+			StoredItemAccess(context),
+			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
+			FileListParameters.getInstance())
+
+		CachedStoredItemServiceFileCollector(
+			serviceFilesCollector,
+			CachingPolicyFactory()
+		)
+	}
+
 	private val storedFilesSynchronization by lazy {
 		val storedItemAccess = StoredItemAccess(context)
 		val cursorProvider = MediaQueryCursorProvider(
@@ -190,11 +199,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			fileProperties,
 			SyncDirectoryLookup(libraryRepository, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
 		)
-
-		val serviceFilesCollector = StoredItemServiceFileCollector(
-			storedItemAccess,
-			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
-			FileListParameters.getInstance())
 
 		val syncHandler = LibrarySyncsHandler(
 			serviceFilesCollector,
