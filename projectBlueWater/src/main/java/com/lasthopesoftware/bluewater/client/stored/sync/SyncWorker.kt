@@ -29,7 +29,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.request.read.Stora
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.stored.library.items.CachedStoredItemServiceFileCollector
+import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -169,7 +169,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
 			FileListParameters.getInstance())
 
-		CachedStoredItemServiceFileCollector(
+		DelegatingStoredItemServiceFileCollector(
 			serviceFilesCollector,
 			CachingPolicyFactory()
 		)
