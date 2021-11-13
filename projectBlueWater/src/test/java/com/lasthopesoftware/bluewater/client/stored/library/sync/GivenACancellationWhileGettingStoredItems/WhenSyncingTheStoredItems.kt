@@ -89,8 +89,7 @@ open class WhenSyncingTheStoredItems {
 				}
 
 				override fun onError(e: Throwable) {}
-				override fun onComplete() {
-				}
+				override fun onComplete() {}
 			})
 
 			deferredStoredItemAccess.resolveStoredItems()
