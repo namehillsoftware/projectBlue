@@ -49,7 +49,10 @@ open class WhenSyncingTheStoredItems {
 						ServiceFile(10)))
 
 			val pruneStoredFiles = mockk<PruneStoredFiles>()
-			every { pruneStoredFiles.pruneStoredFiles(any()) } returns Unit.toPromise()
+				.apply {
+					every { pruneStoredFiles(any()) } returns Unit.toPromise()
+					every { pruneDanglingFiles() } returns Unit.toPromise()
+				}
 			val librarySyncHandler = LibrarySyncsHandler(
 				StoredItemServiceFileCollector(
 					deferredStoredItemAccess,

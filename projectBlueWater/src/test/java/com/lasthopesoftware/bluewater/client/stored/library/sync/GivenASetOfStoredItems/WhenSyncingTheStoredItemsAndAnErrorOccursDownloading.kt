@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -46,7 +47,8 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			)
 
 			val storedFilesPruner = mockk<PruneStoredFiles>()
-			every { storedFilesPruner.pruneStoredFiles(any()) } returns Promise.empty()
+			every { storedFilesPruner.pruneDanglingFiles() } returns Unit.toPromise()
+			every { storedFilesPruner.pruneStoredFiles(any()) } returns Unit.toPromise()
 
 			val storedFilesUpdater = mockk<UpdateStoredFiles>()
 			every { storedFilesUpdater.promiseStoredFileUpdate(any(), any()) } answers {
@@ -76,9 +78,8 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 					StoredFileSystemFileProducer(),
 					accessStoredFiles,
 					{ _, f ->
-						if (f.serviceId == 2) Promise(IOException()) else Promise(
-							ByteArrayInputStream(ByteArray(0))
-						)
+						if (f.serviceId == 2) Promise(IOException())
+						else Promise(ByteArrayInputStream(ByteArray(0)))
 					},
 					{ true },
 					{ true },
