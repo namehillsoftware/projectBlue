@@ -176,7 +176,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	}
 
 	private val storedFilesSynchronization by lazy {
-		val storedItemAccess = StoredItemAccess(context)
 		val cursorProvider = MediaQueryCursorProvider(
 			context,
 			fileProperties
