@@ -175,8 +175,15 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		)
 	}
 
+	private val storedFilesPruner by lazy {
+		StoredFilesPruner(
+			serviceFilesCollector,
+			StoredFilesCollection(context),
+			storedFileAccess
+		)
+	}
+
 	private val storedFilesSynchronization by lazy {
-		val storedItemAccess = StoredItemAccess(context)
 		val cursorProvider = MediaQueryCursorProvider(
 			context,
 			fileProperties
@@ -202,11 +209,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 		val syncHandler = LibrarySyncsHandler(
 			serviceFilesCollector,
-			StoredFilesPruner(
-				serviceFilesCollector,
-				StoredFilesCollection(context),
-				storedFileAccess
-			),
+			storedFilesPruner,
 			storedFileUpdater,
 			StoredFileJobProcessor(
 				StoredFileSystemFileProducer(),
@@ -220,6 +223,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		StoredFileSynchronization(
 			libraryRepository,
 			messageBus,
+			storedFilesPruner,
 			syncHandler
 		)
 	}

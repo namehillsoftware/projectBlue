@@ -1,32 +1,41 @@
-package com.lasthopesoftware.bluewater.client.stored.service.receivers.GivenSyncHasStarted;
+package com.lasthopesoftware.bluewater.client.stored.service.receivers.GivenSyncHasStarted
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import android.content.Intent
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions
+import org.junit.BeforeClass
+import org.junit.Test
+import java.util.*
 
-import android.content.Context;
-import android.content.Intent;
+class WhenReceivingTheEvent {
 
-import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization;
-import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver;
+    companion object {
+        private val notifications: MutableCollection<String?> = ArrayList()
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+		@JvmStatic
+        @BeforeClass
+        fun context() {
+			val syncNotification = mockk<PostSyncNotification>()
+			with(syncNotification) {
+				every { notify(any()) } answers {
+					notifications.add(firstArg())
+				}
+			}
 
-import java.util.ArrayList;
-import java.util.Collection;
-
-public class WhenReceivingTheEvent {
-
-	private static final Collection<String> notifications = new ArrayList<>();
-
-	@BeforeClass
-	public static void context() {
-		final SyncStartedReceiver receiver = new SyncStartedReceiver(notifications::add);
-		receiver.onReceive(mock(Context.class), new Intent(StoredFileSynchronization.onSyncStartEvent));
-	}
+            val receiver = SyncStartedReceiver(syncNotification)
+            receiver.onReceive(
+                mockk(),
+                Intent(StoredFileSynchronization.onSyncStartEvent)
+            )
+        }
+    }
 
 	@Test
-	public void thenNotificationsBegin() {
-		assertThat(notifications).containsExactly((String)null);
+	fun thenNotificationsBegin() {
+		Assertions.assertThat(notifications).containsExactly(null as String?)
 	}
 }

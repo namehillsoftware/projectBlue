@@ -4,12 +4,14 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.FakeMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -36,6 +38,12 @@ class WhenSynchronizing : AndroidContext() {
 		)
 		private val expectedStoredFileJobs = storedFiles.filter { it.serviceId != 7 }
 		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
+		private val filePruner by lazy {
+			mockk<PruneStoredFiles>()
+				.apply {
+					every { pruneDanglingFiles() } returns Unit.toPromise()
+				}
+		}
 	}
 
 	override fun before() {
@@ -68,7 +76,7 @@ class WhenSynchronizing : AndroidContext() {
 						)
 					}, true))
 
-		val synchronization = StoredFileSynchronization(libraryProvider, fakeMessageSender, librarySyncHandler)
+		val synchronization = StoredFileSynchronization(libraryProvider, fakeMessageSender, filePruner, librarySyncHandler)
 		synchronization.streamFileSynchronization().blockingAwait()
 	}
 
