@@ -48,7 +48,7 @@ class LibrarySyncsHandler(
 				.promiseStoredFileUpdate(libraryId, serviceFile)
 				.then { storedFile ->
 					storedFile
-						?.takeIf { sf -> sf.isDownloadComplete }
+						?.takeUnless { sf -> sf.isDownloadComplete }
 						?.let { sf -> StoredFileJob(libraryId, serviceFile, sf) }
 				}
 				.toMaybeObservable()
