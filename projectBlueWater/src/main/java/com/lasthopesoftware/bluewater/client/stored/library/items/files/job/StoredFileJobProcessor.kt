@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.io.IFileStreamWriter
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -23,7 +22,7 @@ import java.util.*
 
 class StoredFileJobProcessor(
 	private val storedFileFileProvider: IStoredFileSystemFileProducer,
-	private val storedFileAccess: IStoredFileAccess,
+	private val storedFileAccess: AccessStoredFiles,
 	private val storedFiles: DownloadStoredFiles,
 	private val fileReadPossibleArbitrator: IFileReadPossibleArbitrator,
 	private val fileWritePossibleArbitrator: IFileWritePossibleArbitrator,
@@ -37,10 +36,10 @@ class StoredFileJobProcessor(
 		Observable<StoredFileJobStatus>(),
 		Disposable
 	{
-		private var isRunning = false
 		private val cancellationProxy = CancellationProxy()
 		private val jobsQueue = LinkedList<StoredFileJob>()
 		private lateinit var observer: Observer<in StoredFileJobStatus>
+		private var isRunning = false
 
 		@Synchronized
 		override fun subscribeActual(observer: Observer<in StoredFileJobStatus>) {
@@ -102,7 +101,7 @@ class StoredFileJobProcessor(
 			return storedFiles.promiseDownload(libraryId, storedFile)
 				.also(cancellationProxy::doCancel)
 				.then(
-					{ inputStream ->
+				{ inputStream ->
 						try {
 							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
 							else inputStream.use { s ->

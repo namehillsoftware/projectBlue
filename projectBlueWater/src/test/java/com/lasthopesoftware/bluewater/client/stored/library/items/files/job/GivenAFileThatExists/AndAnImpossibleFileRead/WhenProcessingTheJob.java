@@ -1,8 +1,12 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatExists.AndAnImpossibleFileRead;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
@@ -18,10 +22,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class WhenProcessingTheJob {
 
 	private static List<StoredFileJobState> jobStates;
@@ -34,7 +34,7 @@ public class WhenProcessingTheJob {
 				when(mockFile.exists()).thenReturn(true);
 				return mockFile;
 			},
-			mock(IStoredFileAccess.class),
+			mock(AccessStoredFiles.class),
 			(libraryId, f) -> Promise.empty(),
 			mock(IFileReadPossibleArbitrator.class),
 			mock(IFileWritePossibleArbitrator.class),

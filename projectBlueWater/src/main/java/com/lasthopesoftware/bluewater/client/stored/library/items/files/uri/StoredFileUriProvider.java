@@ -6,18 +6,18 @@ import android.os.Environment;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedBrowserLibraryProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import java.io.File;
 
 public class StoredFileUriProvider implements IFileUriProvider {
-	private final IStoredFileAccess storedFileAccess;
+	private final AccessStoredFiles storedFileAccess;
 	private final ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider;
 	private final IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator;
 
-	public StoredFileUriProvider(ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider, IStoredFileAccess storedFileAccess, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
+	public StoredFileUriProvider(ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider, AccessStoredFiles storedFileAccess, IStorageReadPermissionArbitratorForOs externalStorageReadPermissionsArbitrator) {
 		this.selectedBrowserLibraryProvider = selectedBrowserLibraryProvider;
 		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
 		this.storedFileAccess = storedFileAccess;

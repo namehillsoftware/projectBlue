@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.ProcessStoredFileJobs
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
@@ -15,20 +15,28 @@ import org.slf4j.LoggerFactory
 
 class LibrarySyncsHandler(
 	private val serviceFilesToSyncCollector: CollectServiceFilesForSync,
-	private val storedFileAccess: IStoredFileAccess,
+	private val storedFilePruner: PruneStoredFiles,
 	private val storedFileUpdater: UpdateStoredFiles,
-	private val storedFileJobsProcessor: ProcessStoredFileJobs) : ControlLibrarySyncs {
+	private val storedFileJobsProcessor: ProcessStoredFileJobs
+) : ControlLibrarySyncs
+{
+
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
+	}
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> =
 		CancellableProxyPromise { cancellationProxy ->
+			val pruneFilesTasks = storedFilePruner.pruneStoredFiles(libraryId)
+
+			cancellationProxy.doCancel(pruneFilesTasks)
+
 			serviceFilesToSyncCollector
 				.promiseServiceFilesToSync(libraryId)
 				.eventually { allServiceFilesToSync ->
 					val serviceFilesSet = allServiceFilesToSync as? Set<ServiceFile> ?: allServiceFilesToSync.toSet()
-					val pruneFilesTask = storedFileAccess.pruneStoredFiles(libraryId, serviceFilesSet)
-					cancellationProxy.doCancel(pruneFilesTask)
-					pruneFilesTask.excuse { e -> logger.warn("There was an error pruning the files", e) }
-					pruneFilesTask.then { serviceFilesSet }
+					pruneFilesTasks.excuse { e -> logger.warn("There was an error pruning the files", e) }
+					pruneFilesTasks.then { serviceFilesSet }
 				}
 		}
 		.stream()
@@ -36,15 +44,12 @@ class LibrarySyncsHandler(
 			storedFileUpdater
 				.promiseStoredFileUpdate(libraryId, serviceFile)
 				.then { storedFile ->
-					if (storedFile == null || storedFile.isDownloadComplete) null
-					else StoredFileJob(libraryId, serviceFile, storedFile)
+					storedFile
+						?.takeUnless { sf -> sf.isDownloadComplete }
+						?.let { sf -> StoredFileJob(libraryId, serviceFile, sf) }
 				}
 				.toMaybeObservable()
 		}
 		.toList()
 		.flatMapObservable(storedFileJobsProcessor::observeStoredFileDownload)
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
-	}
 }

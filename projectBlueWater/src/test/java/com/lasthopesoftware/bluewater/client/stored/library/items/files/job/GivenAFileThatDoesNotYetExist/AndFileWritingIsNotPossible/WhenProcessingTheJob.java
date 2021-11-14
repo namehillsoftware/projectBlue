@@ -1,8 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndFileWritingIsNotPossible;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
@@ -16,9 +19,6 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
 public class WhenProcessingTheJob {
 
 	private static StoredFileWriteException storedFileWriteException;
@@ -30,7 +30,7 @@ public class WhenProcessingTheJob {
 
 		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
 			$ -> mock(File.class),
-			mock(IStoredFileAccess.class),
+			mock(AccessStoredFiles.class),
 			(libraryId, f) -> Promise.empty(),
 			f -> false,
 			mock(IFileWritePossibleArbitrator.class),

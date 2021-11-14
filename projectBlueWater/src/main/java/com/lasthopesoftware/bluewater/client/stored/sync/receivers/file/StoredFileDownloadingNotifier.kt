@@ -6,14 +6,14 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
 import com.namehillsoftware.handoff.promises.Promise
 
 class StoredFileDownloadingNotifier(
-	private val storedFileAccess: IStoredFileAccess,
+	private val storedFileAccess: AccessStoredFiles,
 	private val fileProperties: ProvideLibraryFileProperties,
 	private val syncNotification: PostSyncNotification,
 	private val context: Context

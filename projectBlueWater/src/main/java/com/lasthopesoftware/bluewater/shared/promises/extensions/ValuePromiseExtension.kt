@@ -8,8 +8,6 @@ import io.reactivex.CompletableObserver
 import io.reactivex.disposables.Disposable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 
 fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)
 
@@ -42,21 +40,19 @@ private class UnitResponse<Resolution> private constructor() : ImmediateResponse
 }
 
 private class CompletablePromise(completable: Completable) : Promise<Unit>(), CompletableObserver, Runnable {
-	private val isCancelled = AtomicBoolean()
-	private val disposable = AtomicReference<Disposable?>()
+	private lateinit var disposable: Disposable
 
 	init {
-		respondToCancellation(this)
 		completable.subscribe(this)
+		respondToCancellation(this)
 	}
 
 	override fun run() {
-		isCancelled.set(true)
-		disposable.get()?.dispose()
+		disposable.dispose()
 	}
 
 	override fun onSubscribe(d: Disposable) {
-		if (disposable.compareAndSet(null, d) && isCancelled.get()) d.dispose()
+		disposable = d
 	}
 
 	override fun onComplete() = resolve(Unit)
