@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
 import org.slf4j.LoggerFactory
 
@@ -28,9 +27,7 @@ class LibrarySyncsHandler(
 
 	override fun observeLibrarySync(libraryId: LibraryId): Observable<StoredFileJobStatus> =
 		CancellableProxyPromise { cancellationProxy ->
-			val pruneFilesTasks = Promise.whenAll(
-				storedFilePruner.pruneStoredFiles(libraryId),
-				storedFilePruner.pruneDanglingFiles())
+			val pruneFilesTasks = storedFilePruner.pruneStoredFiles(libraryId)
 
 			cancellationProxy.doCancel(pruneFilesTasks)
 

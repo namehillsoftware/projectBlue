@@ -1,6 +1,6 @@
-package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries
+package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries.AndNoSynchronizationIsNeeded
 
-import android.content.IntentFilter
+import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
@@ -23,7 +23,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.*
 
-class WhenSynchronizationIsDisposing : AndroidContext() {
+class WhenSynchronizing : AndroidContext() {
 
 	companion object {
 		private val random = Random()
@@ -42,43 +42,42 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
 		)
 		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
-		private val filePruner by lazy {
-			mockk<PruneStoredFiles>()
-				.apply {
-					every { pruneDanglingFiles() } returns Unit.toPromise()
-				}
-		}
+		private var danglingFilesWerePruned = false
 	}
 
 	override fun before() {
 		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.allLibraries } returns Promise(
-			listOf(
-				Library().setId(4),
-				Library().setId(10)
-			)
-		)
+		with(libraryProvider) {
+			every { allLibraries } returns Promise(listOf(Library().setId(4), Library().setId(10)))
+		}
 
 		val librarySyncHandler = mockk<ControlLibrarySyncs>()
-		every { librarySyncHandler.observeLibrarySync(any()) } answers {
-			Observable
-				.fromArray(*storedFiles)
-				.filter { f -> f.libraryId == firstArg<LibraryId>().id }
-				.flatMap { f ->
-					Observable.concat(
+		with(librarySyncHandler) {
+			every { observeLibrarySync(any()) } answers {
+				Observable
+					.fromArray(*storedFiles)
+					.filter { f -> f.libraryId == firstArg<LibraryId>().id }
+					.flatMap { f ->
 						Observable.just(
 							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
 							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
 							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
-						),
-						Observable.never()
-					)
-				}
+						)
+					}
+			}
+		}
+
+		val filePruner = mockk<PruneStoredFiles>()
+		with(filePruner) {
+			every { pruneDanglingFiles() } answers {
+				danglingFilesWerePruned = true
+				Unit.toPromise()
+			}
 		}
 
 		val checkSync = mockk<CheckForSync>()
 		with (checkSync) {
-			every { promiseIsSyncNeeded() } returns Promise(true)
+			every { promiseIsSyncNeeded() } returns Promise(false)
 		}
 
 		val synchronization = StoredFileSynchronization(
@@ -88,13 +87,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 			checkSync,
 			librarySyncHandler
 		)
-
-		val intentFilter = IntentFilter(StoredFileSynchronization.onFileDownloadedEvent)
-		intentFilter.addAction(StoredFileSynchronization.onFileDownloadingEvent)
-		intentFilter.addAction(StoredFileSynchronization.onSyncStartEvent)
-		intentFilter.addAction(StoredFileSynchronization.onSyncStopEvent)
-		intentFilter.addAction(StoredFileSynchronization.onFileQueuedEvent)
-		synchronization.streamFileSynchronization().subscribe().dispose()
+		synchronization.streamFileSynchronization().blockingAwait()
 	}
 
 	@Test
@@ -105,36 +98,23 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheStoredFilesAreBroadcastAsQueued() {
-		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileQueuedEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
-			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
-	}
-
-	@Test
-	fun thenTheStoredFilesAreBroadcastAsDownloading() {
-		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileDownloadingEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
-			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
-	}
-
-	@Test
-	fun thenTheStoredFilesAreBroadcastAsDownloaded() {
-		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileDownloadedEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
-			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
+	fun thenNoStoredFileEventsAreBroadcast() {
+		assertThat(fakeMessageSender.recordedIntents.map { i -> i.action })
+			.doesNotContain(
+				StoredFileSynchronization.onFileQueuedEvent,
+				StoredFileSynchronization.onFileDownloadingEvent,
+				StoredFileSynchronization.onFileDownloadedEvent)
 	}
 
 	@Test
 	fun thenASyncStoppedEventOccurs() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.single { i -> StoredFileSynchronization.onSyncStopEvent == i.action }).isNotNull
+			fakeMessageSender.recordedIntents.single { i: Intent -> StoredFileSynchronization.onSyncStopEvent == i.action })
+			.isNotNull
+	}
+
+	@Test
+	fun thenDanglingFilesWereStillPruned() {
+		assertThat(danglingFilesWerePruned).isTrue
 	}
 }

@@ -144,7 +144,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		val browseLibraryIntent = Intent(context, BrowserEntryActivity::class.java)
 		browseLibraryIntent.action = BrowserEntryActivity.showDownloadsAction
 		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-		browseLibraryIntent
 	}
 
 	private val notificationManager by lazy { context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
@@ -181,6 +180,14 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		)
 	}
 
+	private val storedFilesPruner by lazy {
+		StoredFilesPruner(
+			serviceFilesCollector,
+			StoredFilesCollection(context),
+			storedFileAccess
+		)
+	}
+
 	private val storedFilesSynchronization by lazy {
 		val cursorProvider = MediaQueryCursorProvider(
 			context,
@@ -207,11 +214,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 
 		val syncHandler = LibrarySyncsHandler(
 			serviceFilesCollector,
-			StoredFilesPruner(
-				serviceFilesCollector,
-				StoredFilesCollection(context),
-				storedFileAccess
-			),
+			storedFilesPruner,
 			storedFileUpdater,
 			StoredFileJobProcessor(
 				StoredFileSystemFileProducer(),
@@ -225,6 +228,8 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		StoredFileSynchronization(
 			libraryRepository,
 			messageBus,
+			storedFilesPruner,
+			syncChecker,
 			syncHandler
 		)
 	}
@@ -275,14 +280,8 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
 
-		syncChecker.promiseIsSyncNeeded()
-			.eventually { isNeeded ->
-				if (isNeeded) doWork()
-				else Unit.toPromise()
-			}
-			.then(
-				{ futureResult.set(Result.success()) },
-				futureResult::setException)
+		doWork().then({ futureResult.set(Result.success()) }, futureResult::setException)
+
 		return futureResult
 	}
 

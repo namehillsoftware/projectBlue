@@ -18,7 +18,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
@@ -33,7 +32,6 @@ class WhenSyncingTheStoredItems {
 			mockk<PruneStoredFiles>()
 				.apply {
 					every { pruneStoredFiles(any()) } returns Unit.toPromise()
-					every { pruneDanglingFiles() } returns Unit.toPromise()
 				}
 		}
 
@@ -119,9 +117,4 @@ class WhenSyncingTheStoredItems {
             storedFileJobResults.map { obj -> obj.serviceId })
             .containsExactly(1, 2, 4, 10)
     }
-
-	@Test
-	fun thenDanglingFilesArePruned() {
-		verify { storedFileAccess.pruneDanglingFiles() }
-	}
 }
