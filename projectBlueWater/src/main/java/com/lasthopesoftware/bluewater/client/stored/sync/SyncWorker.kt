@@ -30,10 +30,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.request.write.Stor
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
@@ -122,7 +124,11 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	}
 
 	private val syncChecker by lazy {
-		SyncChecker(LibraryRepository(context), serviceFilesCollector)
+		SyncChecker(
+			LibraryRepository(context),
+			serviceFilesCollector,
+			StoredFilesChecker(StoredFilesCounter(StoredFilesCollection(context)))
+		)
 	}
 
 	private val applicationSettings by lazy { context.getApplicationSettingsRepository() }

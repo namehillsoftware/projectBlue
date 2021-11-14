@@ -1,6 +1,5 @@
-package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenLibrariesToSync
+package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenNoLibrariesWithFilesToSync.AndOneLibraryWithExistingFiles
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -20,18 +19,6 @@ class WhenCheckingIfSyncIsNecessary {
 		private val isSyncNeeded by lazy {
 			val collector = mockk<CollectServiceFilesForSync>()
 			every { collector.promiseServiceFilesToSync(any()) } returns Promise(emptySet())
-			every { collector.promiseServiceFilesToSync(LibraryId(3)) } returns Promise(
-				listOf(
-					ServiceFile(1),
-					ServiceFile(18)
-				)
-			)
-			every { collector.promiseServiceFilesToSync(LibraryId(10)) } returns Promise(
-				listOf(
-					ServiceFile(3),
-					ServiceFile(6)
-				)
-			)
 
 			val checkStoredFiles = mockk<CheckForAnyStoredFiles>()
 			with(checkStoredFiles) {
