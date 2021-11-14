@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.SyncWorker
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.internal.toImmutableList
+import java.util.concurrent.ConcurrentHashMap
 
 class ActiveFileDownloadsFragment : Fragment() {
 	private var onSyncStartedReceiver: BroadcastReceiver? = null
@@ -68,17 +68,17 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 				storedFileAccess.downloadingStoredFiles
 					.eventually(LoopedInPromise.response({ storedFiles ->
-						val localStoredFiles = storedFiles.groupBy { sf -> sf.id }.values.map { sf -> sf.first() }.toMutableList()
+						val localStoredFiles = ConcurrentHashMap(storedFiles.groupBy { sf -> sf.id }.values.associate { sf -> Pair(sf.first().id, sf.first()) })
 
-						activeFileDownloadsAdapter.updateListEventually(localStoredFiles)
+						activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 
 						onFileDownloadedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this)	}
 						localBroadcastManager.value.registerReceiver(
 							object : BroadcastReceiver() {
 								override fun onReceive(context: Context, intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
-									localStoredFiles.removeAll {  sf -> sf.id == storedFileId }
-									activeFileDownloadsAdapter.updateListEventually(localStoredFiles.toImmutableList())
+									localStoredFiles.remove(storedFileId)
+									activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 								}
 							}.apply { onFileDownloadedReceiver = this },
 							IntentFilter(StoredFileSynchronization.onFileDownloadedEvent))
@@ -89,14 +89,14 @@ class ActiveFileDownloadsFragment : Fragment() {
 								override fun onReceive(context: Context, intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
 									if (storedFileId == -1) return
-									if (localStoredFiles.any { sf -> sf.id == storedFileId }) return
+									if (localStoredFiles.containsKey(storedFileId)) return
 
 									storedFileAccess
 										.getStoredFile(storedFileId)
 										.eventually { storedFile ->
 											if (storedFile != null && storedFile.libraryId == library?.id) {
-												localStoredFiles.add(storedFile)
-												activeFileDownloadsAdapter.updateListEventually(localStoredFiles.toImmutableList())
+												localStoredFiles[storedFileId] = storedFile
+												activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 											} else {
 												Promise.empty()
 											}
