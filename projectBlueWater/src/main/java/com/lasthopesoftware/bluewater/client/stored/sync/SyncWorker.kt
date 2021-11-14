@@ -138,7 +138,6 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 		val browseLibraryIntent = Intent(context, BrowserEntryActivity::class.java)
 		browseLibraryIntent.action = BrowserEntryActivity.showDownloadsAction
 		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-		browseLibraryIntent
 	}
 
 	private val notificationManager by lazy { context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
@@ -275,10 +274,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
 
-		doWork()
-			.then(
-				{ futureResult.set(Result.success()) },
-				futureResult::setException)
+		doWork().then({ futureResult.set(Result.success()) }, futureResult::setException)
 
 		return futureResult
 	}
