@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
@@ -43,7 +44,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncWorker
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
@@ -75,8 +76,13 @@ open class MainApplication : MultiDexApplication() {
 			isWorkManagerInitialized = true
 		}
 
-		SyncWorker.promiseIsScheduled(this)
-			.then { isScheduled -> if (!isScheduled) SyncWorker.scheduleSync(this) }
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			SyncScheduler.syncLoudlyAndImmediatelyWithinConstraints(this)
+		} else {
+			SyncScheduler
+				.promiseIsScheduled(this)
+				.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
+		}
 	}
 
 	private fun registerAppBroadcastReceivers() {

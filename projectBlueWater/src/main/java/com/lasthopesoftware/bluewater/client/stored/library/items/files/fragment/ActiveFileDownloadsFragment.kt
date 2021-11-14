@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncWorker
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -114,7 +114,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val startSyncLabel = context.getText(R.string.start_sync_button)
 		val stopSyncLabel = context.getText(R.string.stop_sync_button)
 		toggleSyncButton.isEnabled = false
-		SyncWorker.promiseIsSyncing(context).eventually(LoopedInPromise.response({ isRunning ->
+		SyncScheduler.promiseIsSyncing(context).eventually(LoopedInPromise.response({ isRunning ->
 			toggleSyncButton.text = if (!isRunning) startSyncLabel else stopSyncLabel
 			toggleSyncButton.isEnabled = true
 		}, context))
@@ -139,9 +139,9 @@ class ActiveFileDownloadsFragment : Fragment() {
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
 		toggleSyncButton.setOnClickListener { v ->
-			SyncWorker.promiseIsSyncing(v.context).then { isSyncRunning ->
-				if (isSyncRunning) SyncWorker.cancelSync(v.context)
-				else SyncWorker.syncImmediately(context)
+			SyncScheduler.promiseIsSyncing(v.context).then { isSyncRunning ->
+				if (isSyncRunning) SyncScheduler.cancelSync(v.context)
+				else SyncScheduler.syncImmediately(context)
 			}
 		}
 		return viewFilesLayout
