@@ -224,6 +224,7 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 			libraryRepository,
 			messageBus,
 			storedFilesPruner,
+			syncChecker,
 			syncHandler
 		)
 	}
@@ -274,14 +275,11 @@ class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
 
-		syncChecker.promiseIsSyncNeeded()
-			.eventually { isNeeded ->
-				if (isNeeded) doWork()
-				else Unit.toPromise()
-			}
+		doWork()
 			.then(
 				{ futureResult.set(Result.success()) },
 				futureResult::setException)
+
 		return futureResult
 	}
 

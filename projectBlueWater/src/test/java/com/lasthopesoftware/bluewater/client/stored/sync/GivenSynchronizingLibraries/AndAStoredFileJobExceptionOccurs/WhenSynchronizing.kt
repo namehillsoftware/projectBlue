@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -76,7 +77,12 @@ class WhenSynchronizing : AndroidContext() {
 							Observable.error(StoredFileJobException(f, Exception())))
 					})
 
-		val synchronization = StoredFileSynchronization(libraryProvider, fakeMessageSender, filePruner, librarySyncHandler)
+		val checkSync = mockk<CheckForSync>()
+		with (checkSync) {
+			every { promiseIsSyncNeeded() } returns Promise(false)
+		}
+
+		val synchronization = StoredFileSynchronization(libraryProvider, fakeMessageSender, filePruner, checkSync, librarySyncHandler)
 		val intentFilter = IntentFilter(StoredFileSynchronization.onFileDownloadedEvent)
 		intentFilter.addAction(StoredFileSynchronization.onFileDownloadingEvent)
 		intentFilter.addAction(StoredFileSynchronization.onFileQueuedEvent)

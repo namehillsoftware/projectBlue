@@ -8,12 +8,14 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
+import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Completable
 import io.reactivex.exceptions.CompositeException
 import org.slf4j.LoggerFactory
@@ -22,11 +24,13 @@ class StoredFileSynchronization(
 	private val libraryProvider: ILibraryProvider,
 	private val messenger: SendMessages,
 	private val pruneStoredFiles: PruneStoredFiles,
+	private val checkSync: CheckForSync,
 	private val syncHandler: ControlLibrarySyncs) : SynchronizeStoredFiles {
 
 	companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(StoredFileSynchronization::class.java) }
+		private val logger by lazy { LoggerFactory.getLogger(StoredFileSynchronization::class.java) }
 
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(StoredFileSynchronization::class.java) }
 		val onSyncStartEvent by lazy { magicPropertyBuilder.buildProperty("onSyncStartEvent") }
 		val onSyncStopEvent by lazy { magicPropertyBuilder.buildProperty("onSyncStopEvent") }
 		val onFileQueuedEvent by lazy { magicPropertyBuilder.buildProperty("onFileQueuedEvent") }
@@ -35,7 +39,6 @@ class StoredFileSynchronization(
 		val onFileWriteErrorEvent by lazy { magicPropertyBuilder.buildProperty("onFileWriteErrorEvent") }
 		val onFileReadErrorEvent by lazy { magicPropertyBuilder.buildProperty("onFileReadErrorEvent") }
 		val storedFileEventKey by lazy { magicPropertyBuilder.buildProperty("storedFileEventKey") }
-		private val logger by lazy { LoggerFactory.getLogger(StoredFileSynchronization::class.java) }
 	}
 
 	override fun streamFileSynchronization(): Completable {
@@ -45,7 +48,11 @@ class StoredFileSynchronization(
 				pruneStoredFiles
 					.pruneDanglingFiles()
 					.also(cp::doCancel)
-					.eventually { libraryProvider.allLibraries }
+					.eventually { checkSync.promiseIsSyncNeeded() }
+					.eventually { isNeeded ->
+						if (isNeeded) libraryProvider.allLibraries
+						else Promise(emptyList())
+					}
 			}
 			.stream()
 			.flatMap({ library -> syncHandler.observeLibrarySync(library.libraryId) }, true)
