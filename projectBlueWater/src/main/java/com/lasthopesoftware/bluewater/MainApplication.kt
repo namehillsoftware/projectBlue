@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
@@ -76,13 +75,9 @@ open class MainApplication : MultiDexApplication() {
 			isWorkManagerInitialized = true
 		}
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-			SyncScheduler.syncLoudlyAndImmediatelyWithinConstraints(this)
-		} else {
-			SyncScheduler
-				.promiseIsScheduled(this)
-				.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
-		}
+		SyncScheduler
+			.promiseIsScheduled(this)
+			.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
 	}
 
 	private fun registerAppBroadcastReceivers() {

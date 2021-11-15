@@ -14,7 +14,7 @@ object SyncScheduler {
 	private const val workName = "StoredFilesSync"
 
 	fun syncImmediately(context: Context): Promise<Operation> {
-		val oneTimeWorkRequest = OneTimeWorkRequest.Builder(NotifyingSyncWorker::class.java)
+		val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
 		return WorkManager.getInstance(context)
 			.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
 			.result
@@ -24,25 +24,11 @@ object SyncScheduler {
 				{ scheduleSync(context) })
 	}
 
-	fun syncLoudlyAndImmediatelyWithinConstraints(context: Context): Promise<Operation> =
-		constraints(context)
-			.eventually { c ->
-				val oneTimeWorkRequest = OneTimeWorkRequest.Builder(NotifyingSyncWorker::class.java)
-				oneTimeWorkRequest.setConstraints(c)
-				WorkManager.getInstance(context)
-					.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
-					.result
-					.toPromise(ThreadPools.compute)
-			}
-			.eventually(
-				{ scheduleSync(context) },
-				{ scheduleSync(context) })
-
 	fun scheduleSync(context: Context): Promise<Operation> =
 		constraints(context).then { c ->
 			val workerClass =
-				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) NotifyingSyncWorker::class.java
-				else SilentSyncWorker::class.java
+				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) SyncWorker::class.java
+				else MutedSyncWorker::class.java
 			val periodicWorkRequest = PeriodicWorkRequest.Builder(workerClass, 3, TimeUnit.HOURS)
 			periodicWorkRequest.setConstraints(c)
 			WorkManager.getInstance(context)
