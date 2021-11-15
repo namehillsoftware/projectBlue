@@ -1,12 +1,22 @@
 package com.lasthopesoftware.bluewater.client.stored.sync
 
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo
+import android.os.Build
+import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.work.ForegroundInfo
 import androidx.work.ListenableWorker
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -16,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.io.FileS
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
@@ -42,12 +53,18 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHan
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
+import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
+import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
@@ -57,11 +74,16 @@ import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermis
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import java.util.concurrent.ConcurrentHashMap
 
-abstract class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
+open class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	ListenableWorker(context, workerParams),
 	PostSyncNotification
 {
+	companion object {
+		private const val notificationId = 23
+	}
+
 	private val syncChecker by lazy {
 		SyncChecker(
 			LibraryRepository(context),
@@ -75,9 +97,11 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(context)) }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(context) }
-	private val libraryRepository by lazy { LibraryRepository(context) }
 	private val libraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
+	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
+
+	private val libraryProvider by lazy { DelegatingLibraryProvider(LibraryRepository(context), cachingPolicyFactory) }
 
 	private val fileProperties by lazy {
 		val filePropertyCache = FilePropertyCache.getInstance()
@@ -100,7 +124,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 
 		DelegatingStoredItemServiceFileCollector(
 			serviceFilesCollector,
-			CachingPolicyFactory()
+			cachingPolicyFactory
 		)
 	}
 
@@ -117,6 +141,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 			context,
 			fileProperties
 		)
+
 		val storedFileUpdater = StoredFileUpdater(
 			context,
 			MediaFileUriProvider(
@@ -131,9 +156,9 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 				readPermissionArbitratorForOs
 			),
 			StoredFileQuery(context),
-			libraryRepository,
+			libraryProvider,
 			fileProperties,
-			SyncDirectoryLookup(libraryRepository, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
+			SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
 		)
 
 		val syncHandler = LibrarySyncsHandler(
@@ -150,7 +175,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 			)
 		)
 		StoredFileSynchronization(
-			libraryRepository,
+			libraryProvider,
 			messageBus,
 			storedFilesPruner,
 			syncChecker,
@@ -187,9 +212,37 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 
 	private val syncStartedReceiver = lazy { SyncStartedReceiver(this) }
 
+	private val notificationManager by lazy { context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val channelConfiguration by lazy { SyncChannelProperties(context) }
+
+	private val activeNotificationChannelId by lazy {
+		val notificationChannelActivator =
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager)
+			else NoOpChannelActivator()
+		notificationChannelActivator.activateChannel(channelConfiguration)
+	}
+
+	private val browseLibraryIntent by lazy {
+		val browseLibraryIntent = Intent(context, BrowserEntryActivity::class.java)
+		browseLibraryIntent.action = BrowserEntryActivity.showDownloadsAction
+		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+	}
+
+	private val showDownloadsIntent by lazy {
+		PendingIntent.getActivity(
+			context,
+			0,
+			browseLibraryIntent,
+			0.makePendingIntentImmutable())
+	}
+
+	private val cancelIntent by lazy { WorkManager.getInstance(context).createCancelPendingIntent(id) }
+
+	private val promisedNotifications = ConcurrentHashMap<Promise<Unit>, Unit>()
+
 	private val cancellationProxy = CancellationProxy()
 
-	override fun startWork(): ListenableFuture<Result> {
+	final override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
 
 		doWork().then({ futureResult.set(Result.success()) }, futureResult::setException)
@@ -197,7 +250,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 		return futureResult
 	}
 
-	override fun onStopped() = cancellationProxy.run()
+	final override fun onStopped() = cancellationProxy.run()
 
 	private fun doWork(): Promise<Unit> {
 		if (cancellationProxy.isCancelled) return Unit.toPromise()
@@ -227,9 +280,28 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 		else storedFilesSynchronization.streamFileSynchronization()
 			.toPromise()
 			.also(cancellationProxy::doCancel)
-			.inevitably { continueWork(cancellationProxy) }
+			.inevitably { Promise.whenAll(promisedNotifications.keys) }
 			.must { messageBus.clear() }
 	}
 
-	abstract fun continueWork(cancellationProxy: CancellationProxy): Promise<Unit>
+	override fun notify(notificationText: String?) {
+		val notifyBuilder = NotificationCompat.Builder(context, activeNotificationChannelId)
+		notifyBuilder
+			.setSmallIcon(R.drawable.ic_stat_water_drop_white)
+			.setContentIntent(showDownloadsIntent)
+			.addAction(0, context.getString(R.string.stop_sync_button), cancelIntent)
+			.setOngoing(true)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+			.setPriority(NotificationCompat.PRIORITY_MIN)
+			.setCategory(NotificationCompat.CATEGORY_PROGRESS)
+		notifyBuilder.setContentTitle(context.getText(R.string.title_sync_files))
+		notifyBuilder.setContentText(notificationText)
+		val syncNotification = notifyBuilder.build()
+		val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
+		val promisedForegroundNotification = setForegroundAsync(ForegroundInfo(notificationId, syncNotification, serviceType))
+			.toPromise(ThreadPools.compute)
+			.unitResponse()
+		promisedNotifications.putIfAbsent(promisedForegroundNotification, Unit)
+		promisedForegroundNotification.must { promisedNotifications.remove(promisedForegroundNotification) }
+	}
 }

@@ -12,8 +12,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.Ite
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
@@ -38,7 +41,12 @@ class StoredItemServiceFileCollector(
 			cancellationProxy.doCancel(promisedServiceFileLists)
 
 			promisedServiceFileLists
-				.then { serviceFiles -> serviceFiles.flatten() }
+				.eventually { serviceFiles ->
+					QueuedPromise(
+						MessageWriter{ serviceFiles.flatten().toSet() },
+						ThreadPools.compute
+					)
+				}
 		}
 	}
 
