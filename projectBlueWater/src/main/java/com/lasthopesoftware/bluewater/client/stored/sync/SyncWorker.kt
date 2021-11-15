@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.io.FileS
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
@@ -38,7 +39,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.M
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
-import com.lasthopesoftware.bluewater.client.stored.library.sync.CachingSyncDirectoryLookup
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
@@ -76,11 +76,11 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(context)) }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(context) }
-	private val libraryRepository by lazy { LibraryRepository(context) }
 	private val libraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
-
 	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
+
+	private val libraryProvider by lazy { DelegatingLibraryProvider(LibraryRepository(context), cachingPolicyFactory) }
 
 	private val fileProperties by lazy {
 		val filePropertyCache = FilePropertyCache.getInstance()
@@ -135,12 +135,9 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 				readPermissionArbitratorForOs
 			),
 			StoredFileQuery(context),
-			libraryRepository,
+			libraryProvider,
 			fileProperties,
-			CachingSyncDirectoryLookup(
-				SyncDirectoryLookup(libraryRepository, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup),
-				cachingPolicyFactory
-			)
+			SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
 		)
 
 		val syncHandler = LibrarySyncsHandler(
@@ -157,7 +154,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 			)
 		)
 		StoredFileSynchronization(
-			libraryRepository,
+			libraryProvider,
 			messageBus,
 			storedFilesPruner,
 			syncChecker,
