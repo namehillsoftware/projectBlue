@@ -38,6 +38,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.M
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
+import com.lasthopesoftware.bluewater.client.stored.library.sync.CachingSyncDirectoryLookup
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
@@ -117,6 +118,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 			context,
 			fileProperties
 		)
+
 		val storedFileUpdater = StoredFileUpdater(
 			context,
 			MediaFileUriProvider(
@@ -133,7 +135,10 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 			StoredFileQuery(context),
 			libraryRepository,
 			fileProperties,
-			SyncDirectoryLookup(libraryRepository, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
+			CachingSyncDirectoryLookup(
+				SyncDirectoryLookup(libraryRepository, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup),
+				CachingPolicyFactory()
+			)
 		)
 
 		val syncHandler = LibrarySyncsHandler(
