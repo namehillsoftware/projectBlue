@@ -80,6 +80,8 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 	private val libraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
 
+	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
+
 	private val fileProperties by lazy {
 		val filePropertyCache = FilePropertyCache.getInstance()
 		CachedFilePropertiesProvider(
@@ -101,7 +103,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 
 		DelegatingStoredItemServiceFileCollector(
 			serviceFilesCollector,
-			CachingPolicyFactory()
+			cachingPolicyFactory
 		)
 	}
 
@@ -137,7 +139,7 @@ abstract class SyncWorker(private val context: Context, workerParams: WorkerPara
 			fileProperties,
 			CachingSyncDirectoryLookup(
 				SyncDirectoryLookup(libraryRepository, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup),
-				CachingPolicyFactory()
+				cachingPolicyFactory
 			)
 		)
 
