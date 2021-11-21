@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,7 +11,6 @@ import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.multidex.MultiDexApplication
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import ch.qos.logback.classic.AsyncAppender
@@ -52,7 +52,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
 
-open class MainApplication : MultiDexApplication() {
+open class MainApplication : Application() {
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
