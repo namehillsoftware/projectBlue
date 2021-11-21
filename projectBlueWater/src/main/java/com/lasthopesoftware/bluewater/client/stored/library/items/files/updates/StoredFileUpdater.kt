@@ -79,8 +79,6 @@ class StoredFileUpdater(
 			}
 		}
 
-
-
 		private fun RepositoryAccessHelper.createStoredFile(libraryId: LibraryId, serviceFile: ServiceFile) {
 			beginTransaction().use { closeableTransaction ->
 				mapSql(insertSql.value)
@@ -94,6 +92,46 @@ class StoredFileUpdater(
 	}
 
 	override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> {
+		fun storedFileWithFilePath(storedFile: StoredFile): Promise<StoredFile?> =
+			if (storedFile.path != null) Promise(storedFile)
+			else libraryFileProperties
+				.promiseFileProperties(libraryId, serviceFile)
+				.eventually { fileProperties ->
+					lookupSyncDirectory
+						.promiseSyncDirectory(libraryId)
+						.then { syncDir ->
+							var fullPath = syncDir?.path ?: return@then null
+
+							val artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
+								?: fileProperties[KnownFileProperties.ARTIST]
+							if (artist != null) fullPath = FilenameUtils.concat(
+								fullPath,
+								replaceReservedCharsAndPath(artist.trim { it <= ' ' })
+							)
+
+							val album = fileProperties[KnownFileProperties.ALBUM]
+							if (album != null) fullPath = FilenameUtils.concat(
+								fullPath,
+								replaceReservedCharsAndPath(album.trim { it <= ' ' })
+							)
+
+							val fileName = fileProperties[KnownFileProperties.FILENAME]?.let { f ->
+								var lastPathIndex = f.lastIndexOf('\\')
+								if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')
+								if (lastPathIndex < 0) f
+								else {
+									var newFileName = f.substring(lastPathIndex + 1)
+									val extensionIndex = newFileName.lastIndexOf('.')
+									if (extensionIndex > -1)
+										newFileName = newFileName.substring(0, extensionIndex + 1) + "mp3"
+									newFileName
+								}
+							}
+							fullPath = FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
+							storedFile.setPath(fullPath)
+						}
+				}
+
 		val promisedLibrary = libraryProvider.getLibrary(libraryId)
 		return storedFiles.promiseStoredFile(libraryId, serviceFile)
 			.eventually { storedFile ->
@@ -115,72 +153,36 @@ class StoredFileUpdater(
 						?: mediaFileUriProvider
 						.promiseFileUri(serviceFile)
 						.eventually { localUri ->
-							localUri?.let { u ->
-								storedFile.path = u.path
-								storedFile.setIsDownloadComplete(true)
-								storedFile.setIsOwner(false)
-								mediaFileIdProvider
-									.getMediaId(libraryId, serviceFile)
-									.then { mediaId ->
-										storedFile.storedMediaId = mediaId
-										storedFile
-									}
-							}.keepPromise()
+							localUri
+								?.let { u ->
+									storedFile.path = u.path
+									storedFile.setIsDownloadComplete(true)
+									storedFile.setIsOwner(false)
+									mediaFileIdProvider
+										.getMediaId(libraryId, serviceFile)
+										.then { mediaId ->
+											storedFile.storedMediaId = mediaId
+											storedFile
+										}
+								}
+								.keepPromise(storedFile)
 						}
 				}
 			}
 			.eventually { storedFile ->
-				when {
-					storedFile == null -> Promise.empty()
-					storedFile.path != null -> Promise(storedFile)
-					else -> libraryFileProperties
-						.promiseFileProperties(libraryId, serviceFile)
-						.eventually { fileProperties ->
-							lookupSyncDirectory.promiseSyncDirectory(libraryId)
-								.then { syncDir ->
-									var fullPath = syncDir?.path ?: return@then null
-
-									val artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
-										?: fileProperties[KnownFileProperties.ARTIST]
-									if (artist != null) fullPath = FilenameUtils.concat(
-										fullPath,
-										replaceReservedCharsAndPath(artist.trim { it <= ' ' })
-									)
-
-									val album = fileProperties[KnownFileProperties.ALBUM]
-									if (album != null) fullPath = FilenameUtils.concat(
-										fullPath,
-										replaceReservedCharsAndPath(album.trim { it <= ' ' })
-									)
-
-									val fileName = fileProperties[KnownFileProperties.FILENAME]?.let { f ->
-										var lastPathIndex = f.lastIndexOf('\\')
-										if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')
-										if (lastPathIndex < 0) f
-										else {
-											var newFileName = f.substring(lastPathIndex + 1)
-											val extensionIndex = newFileName.lastIndexOf('.')
-											if (extensionIndex > -1)
-												newFileName = newFileName.substring(0, extensionIndex + 1) + "mp3"
-											newFileName
-										}
-									}
-									fullPath = FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
-									storedFile.path = fullPath
-									storedFile
-								}
+				storedFile
+					?.let(::storedFileWithFilePath)
+					.keepPromise()
+			}
+			.eventually {
+				it?.let { sf ->
+					QueuedPromise(MessageWriter {
+						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+							repositoryAccessHelper.updateStoredFile(sf)
+							sf
 						}
-						.eventually {
-							it?.let { sf ->
-								QueuedPromise(MessageWriter {
-									RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-										repositoryAccessHelper.updateStoredFile(sf)
-										sf
-									}
-								}, ThreadPools.databaseTableExecutor<StoredFileAccess>())
-							}.keepPromise()
-						}
-				}
+					}, ThreadPools.databaseTableExecutor<StoredFileAccess>())
+				}.keepPromise()
 			}
 	}
 }

@@ -31,6 +31,14 @@ android {
 	}
 
 	signingConfigs {
+		debug {
+			// You need to specify either an absolute path or include the
+			// keystore file in the same directory as the build.gradle file.
+			storeFile file("androidstore")
+			storePassword androidStorePassword
+			keyAlias "store"
+			keyPassword androidKeyStorePassword
+		}
 		release {
 			// You need to specify either an absolute path or include the
 			// keystore file in the same directory as the build.gradle file.
@@ -53,13 +61,14 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
+			signingConfig = (isSignedExternally() ? signingConfigs.debug : signingConfig)
 		}
         release {
             minifyEnabled true
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-			signingConfig (isSignedExternally() ? signingConfigs.release : null)
+			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
         }
     }
 
@@ -105,13 +114,14 @@ def getGeneratedVersionCode() {
 
 dependencies {
 	def exoplayer_version = '2.15.1'
-	def core_version = "1.6.0"
+	def core_version = "1.7.0"
 
 	implementation "androidx.core:core-ktx:$core_version"
 	implementation 'androidx.annotation:annotation:1.2.0'
 	implementation 'androidx.work:work-runtime:2.7.0'
 	implementation 'androidx.media:media:1.4.3'
-	implementation "androidx.preference:preference-ktx:1.1.1"
+	implementation 'androidx.preference:preference-ktx:1.1.1'
+	implementation 'androidx.lifecycle:lifecycle-process:2.4.0'
 	implementation 'com.google.android.material:material:1.4.0'
 	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
 	implementation 'com.google.guava:guava:30.1-android'

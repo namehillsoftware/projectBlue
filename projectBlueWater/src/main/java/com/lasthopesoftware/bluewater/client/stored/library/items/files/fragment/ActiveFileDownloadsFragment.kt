@@ -22,13 +22,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
-import com.lasthopesoftware.bluewater.client.stored.service.StoredSyncService
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.internal.toImmutableList
+import java.util.concurrent.ConcurrentHashMap
 
 class ActiveFileDownloadsFragment : Fragment() {
 	private var onSyncStartedReceiver: BroadcastReceiver? = null
@@ -64,22 +63,22 @@ class ActiveFileDownloadsFragment : Fragment() {
 			.browserLibrary
 			.then { library ->
 				val storedFileAccess = StoredFileAccess(
-					context,
-					StoredFilesCollection(context))
+                    context
+                )
 
 				storedFileAccess.downloadingStoredFiles
-					.eventually<Unit>(LoopedInPromise.response({ storedFiles ->
-						val localStoredFiles = storedFiles.groupBy { sf -> sf.id }.values.map { sf -> sf.first() }.toMutableList()
+					.eventually(LoopedInPromise.response({ storedFiles ->
+						val localStoredFiles = ConcurrentHashMap(storedFiles.groupBy { sf -> sf.id }.values.associate { sf -> Pair(sf.first().id, sf.first()) })
 
-						activeFileDownloadsAdapter.updateListEventually(localStoredFiles)
+						activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 
 						onFileDownloadedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this)	}
 						localBroadcastManager.value.registerReceiver(
 							object : BroadcastReceiver() {
 								override fun onReceive(context: Context, intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
-									localStoredFiles.removeAll {  sf -> sf.id == storedFileId }
-									activeFileDownloadsAdapter.updateListEventually(localStoredFiles.toImmutableList())
+									localStoredFiles.remove(storedFileId)
+									activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 								}
 							}.apply { onFileDownloadedReceiver = this },
 							IntentFilter(StoredFileSynchronization.onFileDownloadedEvent))
@@ -90,14 +89,14 @@ class ActiveFileDownloadsFragment : Fragment() {
 								override fun onReceive(context: Context, intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
 									if (storedFileId == -1) return
-									if (localStoredFiles.any { sf -> sf.id == storedFileId }) return
+									if (localStoredFiles.containsKey(storedFileId)) return
 
 									storedFileAccess
 										.getStoredFile(storedFileId)
 										.eventually { storedFile ->
 											if (storedFile != null && storedFile.libraryId == library?.id) {
-												localStoredFiles.add(storedFile)
-												activeFileDownloadsAdapter.updateListEventually(localStoredFiles.toImmutableList())
+												localStoredFiles[storedFileId] = storedFile
+												activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 											} else {
 												Promise.empty()
 											}
@@ -114,7 +113,11 @@ class ActiveFileDownloadsFragment : Fragment() {
 		val toggleSyncButton = viewFilesLayout.findViewById<Button>(R.id.toggleSyncButton)
 		val startSyncLabel = context.getText(R.string.start_sync_button)
 		val stopSyncLabel = context.getText(R.string.stop_sync_button)
-		toggleSyncButton.text = if (!StoredSyncService.isSyncRunning) startSyncLabel else stopSyncLabel
+		toggleSyncButton.isEnabled = false
+		SyncScheduler.promiseIsSyncing(context).eventually(LoopedInPromise.response({ isRunning ->
+			toggleSyncButton.text = if (!isRunning) startSyncLabel else stopSyncLabel
+			toggleSyncButton.isEnabled = true
+		}, context))
 
 		onSyncStartedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
 
@@ -135,8 +138,12 @@ class ActiveFileDownloadsFragment : Fragment() {
 			}.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
-		toggleSyncButton.setOnClickListener { v-> if (StoredSyncService.isSyncRunning) StoredSyncService.cancelSync(v.context) else StoredSyncService.doSyncUninterruptedFromUiThread(v.context) }
-		toggleSyncButton.isEnabled = true
+		toggleSyncButton.setOnClickListener { v ->
+			SyncScheduler.promiseIsSyncing(v.context).then { isSyncRunning ->
+				if (isSyncRunning) SyncScheduler.cancelSync(v.context)
+				else SyncScheduler.syncImmediately(context)
+			}
+		}
 		return viewFilesLayout
 	}
 

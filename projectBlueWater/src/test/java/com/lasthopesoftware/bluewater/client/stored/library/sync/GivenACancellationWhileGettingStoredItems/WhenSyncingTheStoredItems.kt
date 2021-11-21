@@ -7,20 +7,20 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeDeferredStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
@@ -31,8 +31,7 @@ open class WhenSyncingTheStoredItems {
 
 
 	companion object {
-		private val storedFileJobResults: MutableList<StoredFile> = ArrayList()
-		private val storedFileAccess = mockk<IStoredFileAccess>()
+		private val storedFileJobResults = ArrayList<StoredFile>()
 
 		@JvmStatic
 		@BeforeClass
@@ -49,13 +48,17 @@ open class WhenSyncingTheStoredItems {
 						ServiceFile(4),
 						ServiceFile(10)))
 
-			every { storedFileAccess.pruneStoredFiles(any(), any()) } returns Promise.empty()
+			val pruneStoredFiles = mockk<PruneStoredFiles>()
+				.apply {
+					every { pruneStoredFiles(any()) } returns Unit.toPromise()
+					every { pruneDanglingFiles() } returns Unit.toPromise()
+				}
 			val librarySyncHandler = LibrarySyncsHandler(
 				StoredItemServiceFileCollector(
 					deferredStoredItemAccess,
 					mockFileProvider,
 					FileListParameters.getInstance()),
-				storedFileAccess,
+				pruneStoredFiles,
 				object : UpdateStoredFiles {
 					override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
 						Promise(StoredFile(libraryId,1, serviceFile, "fake-file-name", true))
@@ -89,8 +92,7 @@ open class WhenSyncingTheStoredItems {
 				}
 
 				override fun onError(e: Throwable) {}
-				override fun onComplete() {
-				}
+				override fun onComplete() {}
 			})
 
 			deferredStoredItemAccess.resolveStoredItems()
@@ -101,11 +103,6 @@ open class WhenSyncingTheStoredItems {
 
 	@Test
 	fun thenTheFilesInTheStoredItemsAreNotSynced() {
-		Assertions.assertThat(storedFileJobResults).isEmpty()
-	}
-
-	@Test
-	fun thenFilesAreNotPruned() {
-		verify(exactly = 0) { storedFileAccess.pruneStoredFiles(any(), any()) }
+		assertThat(storedFileJobResults).isEmpty()
 	}
 }

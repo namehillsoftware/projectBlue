@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.service.receivers.file.GivenAFileReadPermissionsError.AndReadPermissionsAreGranted
 
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.service.receivers.file.StoredFileReadPermissionsReceiver
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileReadPermissionsReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions
@@ -23,7 +23,7 @@ class WhenReceivingTheNotification {
         @Throws(Exception::class)
         fun before() {
             val storedFileAccess = Mockito.mock(
-                IStoredFileAccess::class.java
+                AccessStoredFiles::class.java
             )
             Mockito.`when`(storedFileAccess.getStoredFile(14))
                 .thenReturn(Promise(StoredFile().setId(14).setLibraryId(22)))

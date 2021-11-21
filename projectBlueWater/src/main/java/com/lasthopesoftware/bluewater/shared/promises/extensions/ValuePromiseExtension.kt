@@ -1,7 +1,17 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
+import com.google.common.util.concurrent.ListenableFuture
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import io.reactivex.Completable
+import io.reactivex.CompletableObserver
+import io.reactivex.disposables.Disposable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executor
+
+fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)
+
+fun <T> ListenableFuture<T>.toPromise(executor: Executor): Promise<T> = PromisedListenableFuture(this, executor)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> T.toPromise(): Promise<T> = when (this) {
@@ -26,5 +36,41 @@ private class UnitResponse<Resolution> private constructor() : ImmediateResponse
 
 		@Suppress("UNCHECKED_CAST")
 		fun <Resolution> respond(): UnitResponse<Resolution> = singleUnitResponse as UnitResponse<Resolution>
+	}
+}
+
+private class CompletablePromise(completable: Completable) : Promise<Unit>(), CompletableObserver, Runnable {
+	private lateinit var disposable: Disposable
+
+	init {
+		completable.subscribe(this)
+		respondToCancellation(this)
+	}
+
+	override fun run() {
+		disposable.dispose()
+	}
+
+	override fun onSubscribe(d: Disposable) {
+		disposable = d
+	}
+
+	override fun onComplete() = resolve(Unit)
+
+	override fun onError(e: Throwable) = reject(e)
+}
+
+private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableFuture<Resolution>, executor: Executor) : Promise<Resolution>() {
+	init {
+		respondToCancellation { listenableFuture.cancel(false) }
+		listenableFuture.addListener({
+			try {
+				resolve(listenableFuture.get())
+			} catch (e: ExecutionException) {
+				reject(e.cause ?: e)
+			} catch (t: Throwable) {
+				reject(t)
+			}
+		}, executor)
 	}
 }

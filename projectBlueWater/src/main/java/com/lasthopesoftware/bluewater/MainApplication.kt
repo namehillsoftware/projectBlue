@@ -42,10 +42,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker
-import com.lasthopesoftware.bluewater.client.stored.scheduling.SyncSchedulingWorker.Companion.scheduleSync
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
@@ -77,8 +75,9 @@ open class MainApplication : Application() {
 			isWorkManagerInitialized = true
 		}
 
-		SyncSchedulingWorker.promiseIsScheduled(this)
-			.then { isScheduled -> if (!isScheduled) scheduleSync(this) }
+		SyncScheduler
+			.promiseIsScheduled(this)
+			.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
 	}
 
 	private fun registerAppBroadcastReceivers() {
@@ -101,8 +100,8 @@ open class MainApplication : Application() {
 					.then { library ->
 						if (library != null) {
 							val storedFileAccess = StoredFileAccess(
-								context,
-								StoredFilesCollection(context))
+								context
+							)
 							storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
 						}
 					}

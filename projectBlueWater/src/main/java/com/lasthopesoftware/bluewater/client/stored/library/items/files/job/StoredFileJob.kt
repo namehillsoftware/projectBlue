@@ -4,4 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 
-data class StoredFileJob(val libraryId: LibraryId, val serviceFile: ServiceFile, val storedFile: StoredFile)
+data class StoredFileJob(
+	val libraryId: LibraryId,
+	val serviceFile: ServiceFile,
+	val storedFile: StoredFile)
