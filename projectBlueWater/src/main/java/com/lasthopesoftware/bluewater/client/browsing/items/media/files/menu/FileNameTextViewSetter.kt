@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.RateLimiter
+import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -31,7 +31,7 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
 		private val timeoutDuration = Duration.standardMinutes(1)
 
-		private val rateLimiter by lazy { RateLimiter<Map<String, String>>(ThreadPools.io, 1) }
+		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 	}
 
 	private val textViewUpdateSync = Any()
