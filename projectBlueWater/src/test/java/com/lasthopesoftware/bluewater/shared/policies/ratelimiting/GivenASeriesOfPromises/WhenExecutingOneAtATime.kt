@@ -1,13 +1,12 @@
 package com.lasthopesoftware.bluewater.shared.policies.ratelimiting.GivenASeriesOfPromises
 
-import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.RateLimiter
+import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.Executors
 
 class WhenExecutingOneAtATime {
 
@@ -27,7 +26,7 @@ class WhenExecutingOneAtATime {
 		@BeforeClass
 		fun before() {
 
-			val rateLimiter = RateLimiter<Any>(Executors.newCachedThreadPool(), 1)
+			val rateLimiter = PromisingRateLimiter<Any>(1)
 
 			fun enqueuePromise(promise: Promise<Any>) =
 				rateLimiter.limit { promise.also(activePromises::add).must { activePromises.remove(promise) } }
@@ -44,7 +43,7 @@ class WhenExecutingOneAtATime {
 	}
 
 	@Test
-	fun thenThereAreThreeActivePromises() {
+	fun thenThereIsOneActivePromise() {
 		assertThat(activePromises).containsOnly(fourthPromise)
 	}
 
