@@ -37,7 +37,6 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T> {
 
 	private fun finishCurrentDoNext(): Promise<Unit> = synchronized(activePromiseSync) {
 		activePromises = max(activePromises - 1, 0)
-
-		return doNext()
+		doNext()
 	}
 }
