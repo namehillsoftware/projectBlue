@@ -4,11 +4,13 @@ package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
 import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
+import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.max
 
-class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T> {
-	private val activePromises = List(rate) { AtomicReference<() -> Promise<T>>() }
+class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction {
+	private val availablePromises = AtomicInteger(rate)
 	private val queuedPromises = ConcurrentLinkedDeque<() -> Promise<T>>()
 
 	override fun limit(factory: () -> Promise<T>): Promise<T> =
@@ -22,15 +24,25 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T> {
 	private fun doNext() {
 		val p = queuedPromises.poll() ?: return
 
-		val reference = activePromises.firstOrNull { it.compareAndSet(null, p) }
-		if (reference == null) {
+		// Essentially getAndAccumulate from more recent versions of Java SDK
+		var prev: Int
+		var next: Int
+		do {
+			prev = this.availablePromises.get()
+			next = max(prev - 1, 0)
+		} while (!this.availablePromises.compareAndSet(prev, next))
+
+		if (prev == 0) {
 			queuedPromises.push(p)
 			return
 		}
 
-		p().ignore().must {
-			reference.compareAndSet(p, null)
-			doNext()
-		}
+		p().ignore().must(this)
+		return
+	}
+
+	override fun act() {
+		this.availablePromises.incrementAndGet()
+		doNext()
 	}
 }
