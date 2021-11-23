@@ -32,7 +32,15 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 			next = max(prev - 1, 0)
 		} while (!availablePromises.compareAndSet(prev, next))
 
-		if (prev > 0) queuedPromises.poll()?.invoke()?.ignore()?.must(this)
+		if (prev == 0) return
+
+		val p = queuedPromises.poll()
+		if (p == null) {
+			availablePromises.incrementAndGet()
+			return
+		}
+
+		p().ignore().must(this)
 	}
 
 	override fun act() {
