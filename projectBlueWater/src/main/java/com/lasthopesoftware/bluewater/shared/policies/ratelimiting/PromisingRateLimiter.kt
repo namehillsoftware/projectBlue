@@ -5,13 +5,13 @@ import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ign
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction {
 	private val availablePromises = AtomicInteger(rate)
-	private val queuedPromises = ConcurrentLinkedDeque<() -> Promise<T>>()
+	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<T>>()
 
 	override fun limit(factory: () -> Promise<T>): Promise<T> =
 		Promise<T> { m ->
@@ -22,7 +22,7 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 		}
 
 	private fun doNext() {
-		val p = queuedPromises.poll() ?: return
+		queuedPromises.peek() ?: return
 
 		// Essentially getAndAccumulate from more recent versions of the JDK
 		var prev: Int
@@ -32,12 +32,7 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 			next = max(prev - 1, 0)
 		} while (!availablePromises.compareAndSet(prev, next))
 
-		if (prev == 0) {
-			queuedPromises.push(p)
-			return
-		}
-
-		p().ignore().must(this)
+		if (prev > 0) queuedPromises.poll()?.invoke()?.ignore()?.must(this)
 	}
 
 	override fun act() {
