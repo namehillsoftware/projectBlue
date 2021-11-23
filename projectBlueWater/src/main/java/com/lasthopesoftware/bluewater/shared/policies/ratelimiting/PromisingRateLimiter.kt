@@ -5,12 +5,12 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicReference
 
 class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T> {
 	private val activePromises = List(rate) { AtomicReference<() -> Promise<Unit>>() }
-	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<Unit>>()
+	private val queuedPromises = ConcurrentLinkedDeque<() -> Promise<Unit>>()
 
 	override fun limit(factory: () -> Promise<T>): Promise<T> =
 		Promise<T> { m ->
@@ -24,7 +24,7 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T> {
 		val p = queuedPromises.poll() ?: return Unit.toPromise()
 		val reference = activePromises.firstOrNull { it.compareAndSet(null, p) }
 		if (reference == null) {
-			queuedPromises.offer(p)
+			queuedPromises.push(p)
 			return Unit.toPromise()
 		}
 
