@@ -24,13 +24,13 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 	private fun doNext() {
 		val p = queuedPromises.poll() ?: return
 
-		// Essentially getAndAccumulate from more recent versions of Java SDK
+		// Essentially getAndAccumulate from more recent versions of the JDK
 		var prev: Int
 		var next: Int
 		do {
-			prev = this.availablePromises.get()
+			prev = availablePromises.get()
 			next = max(prev - 1, 0)
-		} while (!this.availablePromises.compareAndSet(prev, next))
+		} while (!availablePromises.compareAndSet(prev, next))
 
 		if (prev == 0) {
 			queuedPromises.push(p)
@@ -38,11 +38,10 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 		}
 
 		p().ignore().must(this)
-		return
 	}
 
 	override fun act() {
-		this.availablePromises.incrementAndGet()
+		availablePromises.incrementAndGet()
 		doNext()
 	}
 }
