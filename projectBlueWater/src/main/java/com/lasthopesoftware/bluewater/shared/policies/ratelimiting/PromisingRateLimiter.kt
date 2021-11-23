@@ -29,10 +29,9 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 		var next: Int
 		do {
 			prev = availablePromises.get()
+			if (prev == 0) return
 			next = max(prev - 1, 0)
 		} while (!availablePromises.compareAndSet(prev, next))
-
-		if (prev == 0) return
 
 		val p = queuedPromises.poll()
 		if (p == null) {
