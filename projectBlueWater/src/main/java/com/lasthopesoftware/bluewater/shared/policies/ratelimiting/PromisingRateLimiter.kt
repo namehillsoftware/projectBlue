@@ -1,7 +1,7 @@
 
 package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
 
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
@@ -20,23 +20,18 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T> {
 			doNext()
 		}
 
-	private fun doNext(): Promise<Unit> {
-		val p = queuedPromises.poll() ?: return Unit.toPromise()
+	private fun doNext() {
+		val p = queuedPromises.poll() ?: return
+
 		val reference = activePromises.firstOrNull { it.compareAndSet(null, p) }
 		if (reference == null) {
 			queuedPromises.push(p)
-			return Unit.toPromise()
+			return
 		}
 
-		return p().eventually(
-			{
-				reference.compareAndSet(p, null)
-				doNext()
-			},
-			{
-				reference.compareAndSet(p, null)
-				doNext()
-			}
-		)
+		p().ignore().must {
+			reference.compareAndSet(p, null)
+			doNext()
+		}
 	}
 }
