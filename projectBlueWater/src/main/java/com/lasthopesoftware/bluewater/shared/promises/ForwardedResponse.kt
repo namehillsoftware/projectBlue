@@ -7,12 +7,12 @@ class ForwardedResponse<Resolution : Response, Response> private constructor() :
 	override fun respond(resolution: Resolution): Response = resolution
 
 	companion object {
-		private val singlePassThrough = lazy { ForwardedResponse<Any, Any>() }
+		private val singlePassThrough by lazy { ForwardedResponse<Any, Any>() }
 
 		@Suppress("UNCHECKED_CAST")
 		@JvmStatic
 		fun <Resolution : Response, Response> forward(): ForwardedResponse<Resolution, Response> =
-			singlePassThrough.value as ForwardedResponse<Resolution, Response>
+			singlePassThrough as ForwardedResponse<Resolution, Response>
 
 		fun <Resolution: Response, Response> Promise<Resolution>.forward(): Promise<Response> =
 			this.then(Companion.forward())
