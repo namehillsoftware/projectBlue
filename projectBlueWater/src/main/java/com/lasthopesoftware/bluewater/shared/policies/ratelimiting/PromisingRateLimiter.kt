@@ -8,8 +8,9 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
+import kotlin.math.min
 
-class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction {
+class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, ImmediateAction {
 	private val availablePromises = AtomicInteger(rate)
 	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<T>>()
 
@@ -22,28 +23,40 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 		}
 
 	private fun doNext() {
-		// Essentially getAndAccumulate from more recent versions of the JDK
-		var prev: Int
-		var next: Int
-		do {
-			queuedPromises.peek() ?: return
-			prev = availablePromises.get()
-			next = max(prev - 1, 0)
-		} while (!availablePromises.compareAndSet(prev, next))
+		// Drain the queue or max out number of open promises
+		while (availablePromises.get() > 0 && !queuedPromises.isEmpty()) {
+			// Essentially getAndAccumulate from more recent versions of the JDK
+			var prev: Int
+			var next: Int
+			do {
+				if (queuedPromises.isEmpty()) return
+				prev = availablePromises.get()
+				next = max(prev - 1, 0)
+			} while (!availablePromises.compareAndSet(prev, next))
 
-		if (prev == 0) return
+			if (prev == 0) return
 
-		val p = queuedPromises.poll()
-		if (p == null) {
-			availablePromises.incrementAndGet()
-			return
+			val p = queuedPromises.poll()
+			if (p == null) {
+				makePromiseAvailable()
+				return
+			}
+
+			p().ignore().must(this)
 		}
-
-		p().ignore().must(this)
 	}
 
 	override fun act() {
-		availablePromises.incrementAndGet()
+		makePromiseAvailable()
 		doNext()
+	}
+
+	private fun makePromiseAvailable() {
+		var prev: Int
+		var next: Int
+		do {
+			prev = availablePromises.get()
+			next = min(prev + 1, rate)
+		} while (!availablePromises.compareAndSet(prev, next))
 	}
 }
