@@ -22,12 +22,11 @@ class PromisingRateLimiter<T>(rate: Int): RateLimitPromises<T>, ImmediateAction 
 		}
 
 	private fun doNext() {
-		queuedPromises.peek() ?: return
-
 		// Essentially getAndAccumulate from more recent versions of the JDK
 		var prev: Int
 		var next: Int
 		do {
+			queuedPromises.peek() ?: return
 			prev = availablePromises.get()
 			next = max(prev - 1, 0)
 		} while (!availablePromises.compareAndSet(prev, next))
