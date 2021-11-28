@@ -23,12 +23,12 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, Imme
 		}
 
 	private fun doNext() {
-		// Drain the queue or max out number of open promises
-		while (availablePromises.get() > 0 && !queuedPromises.isEmpty()) {
+		while (true) {
 			// Essentially getAndAccumulate from more recent versions of the JDK
 			var prev: Int
 			var next: Int
 			do {
+				// Drain the queue or max out number of open promises
 				if (queuedPromises.isEmpty()) return
 				prev = availablePromises.get()
 				next = max(prev - 1, 0)
@@ -37,12 +37,8 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, Imme
 			if (prev == 0) return
 
 			val p = queuedPromises.poll()
-			if (p == null) {
-				makePromiseAvailable()
-				return
-			}
-
-			p().ignore().must(this)
+			if (p != null) p().ignore().must(this)
+			else makePromiseAvailable()
 		}
 	}
 
