@@ -42,7 +42,7 @@ class FileListActivity :
 	IItemListViewContainer,
 	Runnable {
 
-	private val lazyFileProvider = lazy {
+	private val fileProvider by lazy {
 		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(this))
 		FileProvider(stringListProvider)
 	}
@@ -75,7 +75,7 @@ class FileListActivity :
 
 	override fun run() {
 		val parameters = FileListParameters.getInstance().getFileListParameters(Item(itemId))
-		lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
+		fileProvider.promiseFiles(FileListParameters.Options.None, *parameters)
 			.eventually { serviceFiles ->
 				fromActiveLibrary(this)
 					.eventually(LoopedInPromise.response({ l ->
