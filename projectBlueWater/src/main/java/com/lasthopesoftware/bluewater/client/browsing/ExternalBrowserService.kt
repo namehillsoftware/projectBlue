@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemPro
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
@@ -27,6 +28,12 @@ import kotlin.math.max
 
 class ExternalBrowserService : MediaBrowserServiceCompat() {
 	companion object {
+		// Potentially useful magic android strings (see https://github.com/android/uamp/blob/99e44c1c5106218c62eff552b64bbc12f1883a22/common/src/main/java/com/example/android/uamp/media/MusicService.kt)
+		private const val mediaSearchSupported = "android.media.browse.SEARCH_SUPPORTED"
+		private const val contentStyleBrowsableHint = "android.media.browse.CONTENT_STYLE_BROWSABLE_HINT"
+		private const val contentStylePlayableHint = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT"
+		private const val contentStyleSupport = "android.media.browse.CONTENT_STYLE_SUPPORTED"
+
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ExternalBrowserService::class.java) }
@@ -76,9 +83,14 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		}
 	}
 
-	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot =
-		if (packageValidator.isKnownCaller(clientPackageName, clientUid)) BrowserRoot(rootBrowserId, Bundle.EMPTY)
-		else BrowserRoot(rejectionBrowserId, Bundle.EMPTY)
+	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
+		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) return null
+
+		val bundle = Bundle().apply {
+			putBoolean(mediaSearchSupported, true)
+		}
+		return BrowserRoot(rootBrowserId, bundle)
+	}
 
 	override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
 		if (parentId == rejectionBrowserId) {
@@ -110,6 +122,15 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 					}
 					?: Promise(emptyList())
 			}
+			.then { items -> result.sendResult(items.toMutableList()) }
+			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
+	}
+
+	override fun onSearch(query: String, extras: Bundle?, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
+		val parameters = SearchFileParameterProvider.getFileListParameters(query)
+		fileProvider
+			.promiseFiles(FileListParameters.Options.None, *parameters)
+			.eventually { files -> Promise.whenAll(files.map(::promiseMediaItem)) }
 			.then { items -> result.sendResult(items.toMutableList()) }
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
