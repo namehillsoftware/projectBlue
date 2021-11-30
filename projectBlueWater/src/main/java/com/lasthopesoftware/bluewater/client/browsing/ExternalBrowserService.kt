@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -20,6 +21,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.PackageValidator
 import com.namehillsoftware.handoff.promises.Promise
 import kotlin.math.max
 
@@ -42,6 +44,8 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
 			)
 	}
+
+	private val packageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
 	private val browserLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
@@ -72,9 +76,9 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		}
 	}
 
-	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot {
-		return BrowserRoot(rootBrowserId, Bundle.EMPTY)
-	}
+	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot =
+		if (packageValidator.isKnownCaller(clientPackageName, clientUid)) BrowserRoot(rootBrowserId, Bundle.EMPTY)
+		else BrowserRoot(rejectionBrowserId, Bundle.EMPTY)
 
 	override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
 		if (parentId == rejectionBrowserId) {
