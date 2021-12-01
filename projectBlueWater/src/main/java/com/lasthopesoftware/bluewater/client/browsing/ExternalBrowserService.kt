@@ -33,22 +33,26 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		private const val contentStyleBrowsableHint = "android.media.browse.CONTENT_STYLE_BROWSABLE_HINT"
 		private const val contentStylePlayableHint = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT"
 		private const val contentStyleSupport = "android.media.browse.CONTENT_STYLE_SUPPORTED"
+		private const val serviceFileMediaIdPrefix = "sf:"
+		private const val itemFileMediaIdPrefix = "it:"
+		private const val playlistFileMediaIdPrefix = "pl:"
 
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ExternalBrowserService::class.java) }
-		private val rootBrowserId by lazy { magicPropertyBuilder.buildProperty("rootBrowserId") }
-		private val rejectionBrowserId by lazy { magicPropertyBuilder.buildProperty("rejectionBrowserId") }
+
+		private val root by lazy { magicPropertyBuilder.buildProperty("root") }
+		private val rejection by lazy { magicPropertyBuilder.buildProperty("rejection") }
 		val error by lazy { magicPropertyBuilder.buildProperty("error") }
 
 		private fun toMediaItem(item: Item): MediaBrowserCompat.MediaItem =
 			MediaBrowserCompat.MediaItem(
 				MediaDescriptionCompat
 					.Builder()
-					.setMediaId(item.key.toString())
+					.setMediaId(itemFileMediaIdPrefix + item.key)
 					.setTitle(item.value)
 					.build(),
-				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE or MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 			)
 	}
 
@@ -89,22 +93,25 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		val bundle = Bundle().apply {
 			putBoolean(mediaSearchSupported, true)
 		}
-		return BrowserRoot(rootBrowserId, bundle)
+		return BrowserRoot(root, bundle)
 	}
 
 	override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
-		if (parentId == rejectionBrowserId) {
+		if (parentId == rejection) {
 			result.sendResult(ArrayList())
 			return
 		}
 
+		result.detach()
 		browserLibraryIdProvider
 			.selectedLibraryId
 			.eventually { maybeId ->
 				maybeId
 					?.let { libraryId ->
 						parentId
-							.toIntOrNull()
+							.takeIf { id -> id.startsWith(itemFileMediaIdPrefix) }
+							?.substring(3)
+							?.toIntOrNull()
 							?.let { id ->
 								itemProvider
 									.promiseItems(libraryId, id)
@@ -126,7 +133,28 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
 
+	override fun onLoadItem(itemId: String?, result: Result<MediaBrowserCompat.MediaItem>) {
+		val itemIdParts = itemId?.split(':')
+		if (itemIdParts == null || itemIdParts.size < 2) {
+			result.sendResult(null)
+			return
+		}
+		val type = itemIdParts[0]
+		val id = itemIdParts[1].toIntOrNull()
+		if (id == null || type != serviceFileMediaIdPrefix) {
+			result.sendResult(null)
+			return
+		}
+
+		result.detach()
+
+		promiseMediaItem(ServiceFile(id))
+			.then(result::sendResult)
+			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
+	}
+
 	override fun onSearch(query: String, extras: Bundle?, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
+		result.detach()
 		val parameters = SearchFileParameterProvider.getFileListParameters(query)
 		fileProvider
 			.promiseFiles(FileListParameters.Options.None, *parameters)
@@ -141,7 +169,7 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 				MediaBrowserCompat.MediaItem(
 					MediaDescriptionCompat
 						.Builder()
-						.setMediaId(serviceFile.key.toString())
+						.setMediaId(serviceFileMediaIdPrefix + p[KnownFileProperties.KEY])
 						.setTitle(p[KnownFileProperties.NAME])
 						.build(),
 					MediaBrowserCompat.MediaItem.FLAG_PLAYABLE

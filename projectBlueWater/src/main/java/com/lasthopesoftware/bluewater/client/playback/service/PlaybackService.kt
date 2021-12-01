@@ -77,7 +77,6 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.N
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
@@ -385,7 +384,6 @@ open class PlaybackService : Service() {
 				lazyPlaybackNotificationsConfiguration.value,
 				lazyMediaSession.value)
 		}
-	private val lazyAllStoredFilesInLibrary = lazy { StoredFilesCollection(this) }
 	private val playbackThread = lazy {
 			HandlerThreadCreator.promiseNewHandlerThread(
 				"Playback",
