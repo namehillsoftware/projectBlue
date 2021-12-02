@@ -138,10 +138,13 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 			nowPlayingRepository
 				.eventually { r ->
 					r?.nowPlaying
-						?.eventually { np -> promiseMediaItem(np.playlist[np.playlistPosition]) }
-						?.then { mi -> result.sendResult(mutableListOf(mi)) }
-						.keepPromise(Unit)
+						?.eventually { np ->
+							if (np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty()
+							else promiseMediaItem(np.playlist[np.playlistPosition])
+						}
+						.keepPromise()
 				}
+				.then { it?.let { mutableListOf(it) }.apply(result::sendResult) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return
 		}
