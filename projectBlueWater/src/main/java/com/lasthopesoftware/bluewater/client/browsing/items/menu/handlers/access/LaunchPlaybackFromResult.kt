@@ -4,6 +4,6 @@ import android.content.Context
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.launchMusicService
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-class OnGetFileStringListForClickCompleteListener(private val context: Context) : ImmediateResponse<String?, Unit> {
+class LaunchPlaybackFromResult(private val context: Context) : ImmediateResponse<String?, Unit> {
     override fun respond(result: String?) = launchMusicService(context, result)
 }

@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access.OnGetFileStringListForClickCompleteListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access.LaunchPlaybackFromResult
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -54,6 +54,6 @@ class MediaSessionCallbackReceiver(
 			.promiseFileStringList(
 				FileListParameters.Options.None,
 				*fileListParameterProvider.getFileListParameters(Item(id)))
-			.then(OnGetFileStringListForClickCompleteListener(context))
+			.then(LaunchPlaybackFromResult(context))
 	}
 }
