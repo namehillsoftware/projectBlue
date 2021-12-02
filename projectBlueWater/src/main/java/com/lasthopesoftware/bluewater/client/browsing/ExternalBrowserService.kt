@@ -137,8 +137,7 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		if (parentId == recentRoot) {
 			nowPlayingRepository
 				.eventually { np -> np?.nowPlaying.keepPromise() }
-				.eventually { it?.let { np -> promiseMediaItem(np.playlist[np.playlistPosition]) } ?: Promise.empty() }
-				.then { it?.also { mi -> result.sendResult(mutableListOf(mi)) } }
+				.eventually { it?.let { np -> promiseMediaItem(np.playlist[np.playlistPosition]).then { mi -> result.sendResult(mutableListOf(mi)) } }.keepPromise(Unit) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return
 		}
